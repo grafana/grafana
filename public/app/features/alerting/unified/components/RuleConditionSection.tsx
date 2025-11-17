@@ -50,7 +50,7 @@ function createExpressionQueries(
       datasourceUid: ExpressionDatasourceUID,
       queryType: 'expression',
       model: { refId: reduceRefId },
-    } as AlertQuery,
+    },
   ];
   const thresholdRefId = existingExpressions[1]?.refId || getNextRefId(tempQueries);
 
