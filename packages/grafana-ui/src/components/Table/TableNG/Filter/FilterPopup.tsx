@@ -126,11 +126,10 @@ export const FilterPopup = ({
               onChange={setOperator}
               value={operator}
               tooltip={operator.description}
+              narrow
               root={containerRef.current ?? undefined}
             />
           </Stack>
-
-          <div className={styles.listDivider} />
 
           <Stack gap={1}>
             <FilterInput
@@ -159,21 +158,17 @@ export const FilterPopup = ({
             operator={operator}
           />
 
-          <Stack gap={3}>
-            <Stack>
-              <Button size="sm" onClick={onFilter}>
-                <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
-              </Button>
-              <Button size="sm" variant="secondary" onClick={onCancel}>
-                <Trans i18nKey="grafana-ui.table.filter-popup-cancel">Cancel</Trans>
-              </Button>
-            </Stack>
+          <Stack justifyContent="end" direction="row-reverse">
+            <Button size="sm" onClick={onFilter}>
+              <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
+            </Button>
+            <Button size="sm" variant="secondary" onClick={onCancel}>
+              <Trans i18nKey="grafana-ui.table.filter-popup-cancel">Cancel</Trans>
+            </Button>
             {clearFilterVisible && (
-              <Stack>
-                <Button fill="text" size="sm" onClick={onClearFilter}>
-                  <Trans i18nKey="grafana-ui.table.filter-popup-clear">Clear filter</Trans>
-                </Button>
-              </Stack>
+              <Button fill="text" size="sm" onClick={onClearFilter}>
+                <Trans i18nKey="grafana-ui.table.filter-popup-clear">Clear filter</Trans>
+              </Button>
             )}
           </Stack>
         </Stack>
@@ -186,7 +181,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   filterContainer: css({
     label: 'filterContainer',
     width: '100%',
-    minWidth: '250px',
+    minWidth: '320px',
     height: '100%',
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
