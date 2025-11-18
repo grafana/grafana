@@ -616,10 +616,10 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 	return keeperConfig, nil
 }
 
-func (s *keeperMetadataStorage) SetAsActive(ctx context.Context, namespace, name string) error {
+func (s *keeperMetadataStorage) SetAsActive(ctx context.Context, namespace xkube.Namespace, name string) error {
 	req := setKeeperAsActive{
 		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace,
+		Namespace:   namespace.String(),
 		Name:        name,
 	}
 
@@ -631,7 +631,7 @@ func (s *keeperMetadataStorage) SetAsActive(ctx context.Context, namespace, name
 	// Check keeper exists. No need to worry about time of check to time of use
 	// since trying to activate a just deleted keeper will result in all
 	// keepers being inactive and defaulting to the system keeper.
-	if _, err := s.read(ctx, namespace, name, contracts.ReadOpts{}); err != nil {
+	if _, err := s.read(ctx, namespace.String(), name, contracts.ReadOpts{}); err != nil {
 		return fmt.Errorf("reading keeper before setting as active: %w", err)
 	}
 

@@ -370,7 +370,7 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 	return sv, nil
 }
 
-func (s *SecureValueService) SetKeeperAsActive(ctx context.Context, namespace, name string) error {
+func (s *SecureValueService) SetKeeperAsActive(ctx context.Context, namespace xkube.Namespace, name string) error {
 	if err := s.keeperMetadataStorage.SetAsActive(ctx, namespace, name); err != nil {
 		return fmt.Errorf("calling keeper metadata storage to set keeper as active: %w", err)
 	}

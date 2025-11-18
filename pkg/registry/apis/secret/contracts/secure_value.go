@@ -47,7 +47,7 @@ type SecureValueService interface {
 	List(ctx context.Context, namespace xkube.Namespace) (*secretv1beta1.SecureValueList, error)
 	Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
-	SetKeeperAsActive(ctx context.Context, namespace, keeperName string) error
+	SetKeeperAsActive(ctx context.Context, namespace xkube.Namespace, keeperName string) error
 }
 
 type SecureValueClient interface {
