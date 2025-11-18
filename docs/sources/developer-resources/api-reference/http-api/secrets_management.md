@@ -364,7 +364,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example update request**:
+**Example delete request**:
 
 ```http
 DELETE /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
