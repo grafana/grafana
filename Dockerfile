@@ -98,6 +98,7 @@ COPY apps/shorturl apps/shorturl
 COPY apps/annotation apps/annotation
 COPY apps/correlations apps/correlations
 COPY apps/preferences apps/preferences
+COPY apps/collections apps/collections
 COPY apps/provisioning apps/provisioning
 COPY apps/secret apps/secret
 COPY apps/scope apps/scope
