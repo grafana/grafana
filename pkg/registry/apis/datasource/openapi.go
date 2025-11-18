@@ -7,6 +7,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
 func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -68,6 +69,16 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 				},
 			},
 		},
+	}
+
+	// Mark all alias APIServers as deprecated
+	if b.isAlias {
+		oas.Info.Description = "Deprecated.  Please use: " + b.pluginJSON.ID
+		for _, p := range oas.Paths.Paths {
+			for _, op := range builder.GetPathOperations(p) {
+				op.Deprecated = true
+			}
+		}
 	}
 
 	return oas, nil

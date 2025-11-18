@@ -37,6 +37,7 @@ var (
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	datasourceResourceInfo utils.ResourceInfo
+	isAlias                bool // The datasourceResourceInfo group is an alias and the API should be deprecated
 
 	pluginJSON           plugins.JSONData
 	client               PluginClient // will only ever be called with the same plugin id!
@@ -58,9 +59,16 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	useQueryService := !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections)
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	experimental := features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)
+	if !experimental && !useQueryService {
 		return nil, nil
 	}
+
+	// Include CRUD when running local dev mode
+	configCrudUseNewApis := experimental
 
 	var err error
 	var builder *DataSourceAPIBuilder
@@ -84,13 +92,25 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			false,
+			configCrudUseNewApis, // register the CRUD endpoints
 		)
 		if err != nil {
 			return nil, err
 		}
 
+		// The group is a calculated FQDN (eg testdata.datasource.grafana.app)
+		// and should be replaced with with the raw plugin ID
+		aliasIDs := append(pluginJSON.AliasIDs, builder.datasourceResourceInfo.GroupResource().Group)
+		builder.datasourceResourceInfo = builder.datasourceResourceInfo.WithGroupAndShortName(pluginJSON.ID, "")
 		apiRegistrar.RegisterAPI(builder)
+
+		// Register a deprecated copy with the previous routes
+		for _, aliasId := range aliasIDs {
+			copy := *builder
+			copy.isAlias = true
+			copy.datasourceResourceInfo = builder.datasourceResourceInfo.WithGroupAndShortName(aliasId, "")
+			apiRegistrar.RegisterAPI(&copy)
+		}
 	}
 	return builder, nil // only used for wire
 }
