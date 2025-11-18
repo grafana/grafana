@@ -43,14 +43,14 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 
 	switch cfg.ZanzanaClient.Mode {
 	case setting.ZanzanaModeClient:
-		return NewRemoteZanzanaClient(
-			fmt.Sprintf("stacks-%s", cfg.StackID),
-			ZanzanaClientConfig{
-				URL:              cfg.ZanzanaClient.Addr,
-				Token:            cfg.ZanzanaClient.Token,
-				TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
-				ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
-			})
+		zanzanaConfig := ZanzanaClientConfig{
+			URL:              cfg.ZanzanaClient.Addr,
+			Token:            cfg.ZanzanaClient.Token,
+			TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
+			TokenNamespace:   cfg.ZanzanaClient.TokenNamespace,
+			ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
+		}
+		return NewRemoteZanzanaClient(zanzanaConfig, reg)
 
 	case setting.ZanzanaModeEmbedded:
 		logger := log.New("zanzana.server")
@@ -97,7 +97,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 
 // ProvideStandaloneZanzanaClient provides a standalone Zanzana client, without registering the Zanzana service.
 // Client connects to a remote Zanzana server specified in the configuration.
-func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
+func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zClient.NewNoopClient(), nil
@@ -107,21 +107,23 @@ func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.Featu
 		URL:              cfg.ZanzanaClient.Addr,
 		Token:            cfg.ZanzanaClient.Token,
 		TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
+		TokenNamespace:   cfg.ZanzanaClient.TokenNamespace,
 		ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
 	}
 
-	return NewRemoteZanzanaClient(cfg.ZanzanaClient.TokenNamespace, zanzanaConfig)
+	return NewRemoteZanzanaClient(zanzanaConfig, reg)
 }
 
 type ZanzanaClientConfig struct {
 	URL              string
 	Token            string
 	TokenExchangeURL string
+	TokenNamespace   string
 	ServerCertFile   string
 }
 
 // NewRemoteZanzanaClient creates a new Zanzana client that connects to remote Zanzana server.
-func NewRemoteZanzanaClient(namespace string, cfg ZanzanaClientConfig) (zanzana.Client, error) {
+func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) (zanzana.Client, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            cfg.Token,
 		TokenExchangeURL: cfg.TokenExchangeURL,
@@ -143,7 +145,7 @@ func NewRemoteZanzanaClient(namespace string, cfg ZanzanaClientConfig) (zanzana.
 		grpc.WithPerRPCCredentials(
 			NewGRPCTokenAuth(
 				AuthzServiceAudience,
-				namespace,
+				cfg.TokenNamespace,
 				tokenClient,
 			),
 		),
