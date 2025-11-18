@@ -1117,4 +1117,8 @@ const (
 	// FlagDashboardTemplates
 	// Enable template dashboards
 	FlagDashboardTemplates = "dashboardTemplates"
+
+	// FlagElasticsearchRawDSLQuery
+	// Enables the raw DSL query editor in the Elasticsearch data source
+	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
 )

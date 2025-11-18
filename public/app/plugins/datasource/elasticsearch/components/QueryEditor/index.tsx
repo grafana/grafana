@@ -3,6 +3,7 @@ import { useEffect, useId, useState } from 'react';
 import { SemVer } from 'semver';
 
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
 
 import { ElasticsearchDataQuery } from '../../dataquery.gen';
@@ -100,6 +101,7 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
   const firstMetric = value.metrics?.[0];
   const queryType = firstMetric ? metricAggregationConfig[firstMetric.type].impliedQueryType : 'metrics';
   const isRawDSL = queryType === 'raw_dsl';
+  const rawDSLFeatureEnabled = config.featureToggles.elasticsearchRawDSLQuery;
 
   const showBucketAggregationsEditor = value.metrics?.every(
     (metric) => metricAggregationConfig[metric.type].impliedQueryType === 'metrics'
@@ -114,13 +116,15 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
         </div>
       </div>
 
-      {isRawDSL ? (
+      {isRawDSL && rawDSLFeatureEnabled && (
         <RawQueryEditor
           value={value.rawDSLQuery}
           onChange={(rawDSLQuery) => dispatch(changeRawQuery(rawDSLQuery))}
           onRunQuery={onRunQuery}
         />
-      ) : (
+      )}
+
+      {!isRawDSL && (
         <>
           <div className={styles.root}>
             <InlineLabel width={17}>Lucene Query</InlineLabel>

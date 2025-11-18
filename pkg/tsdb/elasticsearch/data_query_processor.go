@@ -26,6 +26,11 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 
 	// Handle raw DSL queries
 	if q.RawDSLQuery.Query != nil {
+		cfg := backend.GrafanaConfigFromContext(e.ctx)
+		if !cfg.FeatureToggles().IsEnabled("elasticsearchRawDSLQuery") {
+			return backend.DownstreamError(fmt.Errorf("raw DSL query feature is disabled. Enable the elasticsearchRawDSLQuery feature toggle to use this query type"))
+		}
+
 		// Check for empty query
 		if *q.RawDSLQuery.Query == "" {
 			return backend.DownstreamError(fmt.Errorf("raw DSL query is empty"))

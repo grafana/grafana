@@ -2158,6 +2158,13 @@ var (
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
 		},
+		{
+			Name:        "elasticsearchRawDSLQuery",
+			Description: "Enables the raw DSL query editor in the Elasticsearch data source",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
 	}
 )
 

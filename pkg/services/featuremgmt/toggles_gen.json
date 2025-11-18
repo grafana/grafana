@@ -1383,6 +1383,19 @@
     },
     {
       "metadata": {
+        "name": "elasticsearchRawDSLQuery",
+        "resourceVersion": "1763508396079",
+        "creationTimestamp": "2025-11-18T23:26:36Z"
+      },
+      "spec": {
+        "description": "Enables the raw DSL query editor in the Elasticsearch data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableAppChromeExtensions",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-30T04:32:08Z"

@@ -1246,4 +1246,9 @@ export interface FeatureToggles {
   * Enable template dashboards
   */
   dashboardTemplates?: boolean;
+  /**
+  * Enables the raw DSL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchRawDSLQuery?: boolean;
 }
