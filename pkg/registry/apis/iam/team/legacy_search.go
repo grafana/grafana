@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 const (
@@ -99,18 +98,8 @@ func getResourceKey(t *team.TeamDTO, namespace string) *resourcepb.ResourceKey {
 }
 
 func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
-	columns := defaultColumns()
-	for _, field := range fields {
-		switch field {
-		case res.SEARCH_FIELD_TITLE:
-			columns = append(columns, search.TableColumnDefinitions[res.SEARCH_FIELD_TITLE])
-		}
-	}
-	return columns
-}
-
-func defaultColumns() []*resourcepb.ResourceTableColumnDefinition {
 	searchFields := res.StandardSearchFields()
+
 	return []*resourcepb.ResourceTableColumnDefinition{
 		searchFields.Field(res.SEARCH_FIELD_NAME),
 		searchFields.Field(res.SEARCH_FIELD_TITLE),
