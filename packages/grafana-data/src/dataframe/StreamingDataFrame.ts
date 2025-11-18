@@ -420,9 +420,7 @@ export class StreamingDataFrame implements DataFrame {
   };
 
   getMatchingFieldIndexes = (fieldPredicate: (f: Field) => boolean): number[] =>
-    this.fields
-      .map((f, index) => (fieldPredicate(f) ? index : undefined))
-      .filter((val) => val !== undefined) as number[];
+    this.fields.map((f, index) => (fieldPredicate(f) ? index : undefined)).filter((val) => val !== undefined);
 
   getValuesFromLastPacket = (): unknown[][] =>
     this.fields.map((f) => {

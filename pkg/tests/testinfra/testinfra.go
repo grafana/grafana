@@ -526,6 +526,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
+	if opts.UnifiedStorageEnableSearch {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_search", "true")
+		require.NoError(t, err)
+	}
 	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -622,6 +628,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	UnifiedStorageEnableSearch            bool
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	GrafanaComSSOAPIToken                 string
@@ -631,6 +638,10 @@ type GrafanaOpts struct {
 	APIServerRuntimeConfig                string
 	DisableControllers                    bool
 	SecretsManagerEnableDBMigrations      bool
+
+	// Allow creating grafana dir beforehand
+	Dir     string
+	DirPath string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType

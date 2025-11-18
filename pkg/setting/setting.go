@@ -215,6 +215,7 @@ type Cfg struct {
 	ForwardHostEnvVars               []string
 	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
+	PreinstallAutoUpdate             bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -389,14 +390,15 @@ type Cfg struct {
 	LocalFileSystemAvailable bool
 
 	// Analytics
-	CheckForGrafanaUpdates              bool
-	CheckForPluginUpdates               bool
-	ReportingDistributor                string
-	ReportingEnabled                    bool
-	ApplicationInsightsConnectionString string
-	ApplicationInsightsEndpointUrl      string
-	FeedbackLinksEnabled                bool
-	ReportingStaticContext              map[string]string
+	CheckForGrafanaUpdates               bool
+	CheckForPluginUpdates                bool
+	ReportingDistributor                 string
+	ReportingEnabled                     bool
+	ApplicationInsightsConnectionString  string
+	ApplicationInsightsEndpointUrl       string
+	ApplicationInsightsAutoRouteTracking bool
+	FeedbackLinksEnabled                 bool
+	ReportingStaticContext               map[string]string
 
 	// Frontend analytics
 	GoogleAnalyticsID                   string
@@ -602,6 +604,7 @@ type Cfg struct {
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
+	EnableSearch                               bool
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -1272,6 +1275,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
+	cfg.ApplicationInsightsAutoRouteTracking = analytics.Key("application_insights_connection_string").MustBool(true)
 	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
 
 	// parse reporting static context string of key=value, key=value pairs into an object
