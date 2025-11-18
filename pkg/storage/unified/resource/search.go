@@ -668,6 +668,8 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	// backend to decide whether to build index in-memory or as file-based.
 	nsr := NamespacedResource{
 		Namespace: req.Namespace,
+		Group:     req.Group,
+		Resource:  req.Resource,
 	}
 	stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
