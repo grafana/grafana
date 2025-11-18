@@ -200,7 +200,7 @@ The following screen recordings show this interaction in the time series and x v
 Double-click anywhere on the panel to zoom out the time range.
 
 The range doubles with each double-click, adding equal time to each side of the range.
-For example, if the original time range is from 9:00 to 9:59, the time range changes as follow with each double-click:
+For example, if the original time range is from 9:00 to 9:59, the time range changes as follows with each double-click:
 
 - Next range: 8:30 - 10:29
 - Next range: 7:30 - 11:29
