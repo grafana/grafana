@@ -1198,4 +1198,9 @@ export interface FeatureToggles {
   * Enable TTL plugin instance manager
   */
   ttlPluginInstanceManager?: boolean;
+  /**
+  * Enables the new version of rudderstack
+  * @default false
+  */
+  rudderstackUpgrade?: boolean;
 }

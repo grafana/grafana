@@ -3662,6 +3662,20 @@
     },
     {
       "metadata": {
+        "name": "rudderstackUpgrade",
+        "resourceVersion": "1763481217872",
+        "creationTimestamp": "2025-11-18T15:53:37Z"
+      },
+      "spec": {
+        "description": "Enables the new version of rudderstack",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "savedQueries",
         "resourceVersion": "1756920131554",
         "creationTimestamp": "2025-08-25T21:22:09Z",
