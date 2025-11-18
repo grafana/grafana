@@ -273,6 +273,7 @@ datasources:
       prometheusVersion: 3.3.0
       cacheLevel: 'High'
       disableRecordingRules: false
+      seriesEndpoint: false
       timeInterval: 10s # Prometheus scrape interval
       incrementalQueryOverlapWindow: 10m
       exemplarTraceIdDestinations:
