@@ -5908,7 +5908,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "添加转换"
+      "add-transformation": "添加转换",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -9114,6 +9117,9 @@
     "category-legend": "图例",
     "category-tooltip": "工具提示",
     "category-y-axis": "Y 轴",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "不透明度",
       "label-scheme": "方案"
@@ -12326,6 +12332,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "收起",
+      "exchange": "",
       "expand": "展开",
       "loading": "正在加载数据面板",
       "noResultsForFilter": "未找到与您的查询相关的结果",

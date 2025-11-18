@@ -5974,7 +5974,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Přidat transformaci"
+      "add-transformation": "Přidat transformaci",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -9222,6 +9225,9 @@
     "category-legend": "Legenda",
     "category-tooltip": "Popisek",
     "category-y-axis": "Osa Y",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Neprůhlednost",
       "label-scheme": "Schéma"
@@ -12491,6 +12497,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Sbalit",
+      "exchange": "",
       "expand": "Rozbalit",
       "loading": "Načítání nástěnek",
       "noResultsForFilter": "Nebyly nalezeny žádné výsledky pro váš dotaz",
