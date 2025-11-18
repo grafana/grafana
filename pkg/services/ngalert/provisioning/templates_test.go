@@ -858,6 +858,7 @@ func TestUpdateTemplate(t *testing.T) {
 
 	t.Run("rejects rename operation if template with the new name exists", func(t *testing.T) {
 		sut, store, prov := createTemplateServiceSut()
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
 				Config: &definitions.PostableUserConfig{
