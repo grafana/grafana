@@ -81,7 +81,7 @@
             "Segoe UI Symbol";
         }
 
-        .fs-variant-loader, .fs-variant-error {
+        .fs-variant-loader, .fs-variant-error, .fs-custom-domain-error {
           display: contents;
         }
 
@@ -118,6 +118,10 @@
           opacity: 1;
         }
 
+        .fs-custom-domain-error .fs-loader-text {
+          opacity: 1;
+        }
+
         .fs-error-icon {
           fill: var(--fs-color-error);
         }
@@ -150,6 +154,20 @@
         </svg>
 
         <p class="fs-loader-text">Error loading Grafana</p>
+      </div>
+      <div class="fs-custom-domain-error fs-hidden">
+        <svg
+          width="32"
+          height="32"
+          class="fs-error-icon"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M12,14a1.25,1.25,0,1,0,1.25,1.25A1.25,1.25,0,0,0,12,14Zm0-1.5a1,1,0,0,0,1-1v-3a1,1,0,0,0-2,0v3A1,1,0,0,0,12,12.5ZM12,2A10,10,0,1,0,22,12,10.01114,10.01114,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8.00917,8.00917,0,0,1,12,20Z"/>
+        </svg>
+
+        <p class="fs-loader-text">Error loading Grafana</p>
+        <p class="fs-loader-text">Please, use your URL custom domain directly</p>
       </div>
     </div>
 
@@ -185,6 +203,14 @@
             console.error('Failed to report boot error to backend: ', err);
           });
         };
+        // Needed to stop retrying boot data when custom domain error occurs
+        // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
+        const CUSTOM_DOMAIN_ERROR = "Custom domain error";
+        window.__grafana_custom_domain_failed = function(err) {
+          console.error('Failed to load Grafana due to custom domain issue', err);
+          document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
+          document.querySelector('.fs-custom-domain-error').classList.remove('fs-hidden');
+        }
 
         window.onload = function() {
           if (window.__grafana_app_bundle_loaded) {
@@ -219,8 +245,12 @@
             bootDataUrl.searchParams.append(key, value);
           }
 
-          const resp = await fetch(bootDataUrl);
-
+          const resp = await fetch(bootDataUrl, {redirect: 'manual'});
+          // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
+          if (resp.type === 'opaqueredirect') {
+            window.__grafana_custom_domain_failed();
+            return CUSTOM_DOMAIN_ERROR;
+          }
           // manual redirect for custom domains
           // see pkg/middleware/validate_host.go
           if (resp.status === 204) {
@@ -265,6 +295,9 @@
                   setLoading();
                   setTimeout(attemptFetch, CHECK_INTERVAL);
                   return;
+                // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
+                } else if (bootData === CUSTOM_DOMAIN_ERROR) {
+                  return;
                 }
 
                 resolve(bootData);
@@ -288,16 +321,21 @@
             user: [[.DefaultUser]],
           }
 
-          // tenant-specific config
-          // TODO split this into separate API calls
+          // Preserve a mix of values from the initial boot data, and from the backend
+          // - nav tree and user info come from the backend
+          // - merge settings from both. FS settings contains less values
+          // - build info edition comes from the backend
           const { navTree, settings, user } = await loadBootData();
 
           window.grafanaBootData.settings = {
             ...settings,
-            ...window.grafanaBootData.settings, // preserve frontend-service settings
+            ...window.grafanaBootData.settings,
           }
           window.grafanaBootData.navTree = navTree;
           window.grafanaBootData.user = user;
+          if (settings?.buildInfo?.edition) {
+            window.grafanaBootData.settings.buildInfo.edition = settings.buildInfo.edition;
+          }
 
           // The per-theme CSS still contains some global styles needed
           // to render the page correctly.

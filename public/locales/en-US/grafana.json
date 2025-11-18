@@ -5930,7 +5930,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Add transformation"
+      "add-transformation": "Add transformation",
+      "show-more": "Show more",
+      "sql-name": "SQL Expressions",
+      "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -9150,6 +9153,9 @@
     "category-legend": "Legend",
     "category-tooltip": "Tooltip",
     "category-y-axis": "Y Axis",
+    "error": {
+      "no-y-fields": "No numeric fields found for heatmap"
+    },
     "mode-options": {
       "label-opacity": "Opacity",
       "label-scheme": "Scheme"
@@ -12381,6 +12387,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Collapse",
+      "exchange": "Change root scope to {{scope}}",
       "expand": "Expand",
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
