@@ -151,9 +151,12 @@ message RebuildIndexesRequest {
 
 message RebuildIndexesResponse {
   // Total count of rebuilt indexes
-  int64 rebuiltCount = 1;
+  int64 rebuildCount = 1;
+
+  // Result message
+  string details = 2;
 
   // Error details
-  ErrorResult error = 2;
+  ErrorResult error = 3;
 }
 

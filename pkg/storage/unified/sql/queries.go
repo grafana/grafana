@@ -484,7 +484,6 @@ func (r sqlResourceLastImportTimeInsertRequest) Validate() error {
 }
 
 type sqlResourceLastImportTimeQueryRequest struct {
-	FilterKeys []resource.NamespacedResource
 	sqltemplate.SQLTemplate
 }
 

@@ -126,7 +126,7 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 	}
 }
 
-func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context, filterKeys []NamespacedResource) iter.Seq2[ResourceLastImportTime, error] {
+func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
 		for _, ti := range m.lastImportTimes {
 			if !yield(ti, nil) {

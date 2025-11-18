@@ -126,7 +126,7 @@ type StorageBackend interface {
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
 
 	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
-	GetResourceLastImportTimes(ctx context.Context, filterKeys []NamespacedResource) iter.Seq2[ResourceLastImportTime, error]
+	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
 }
 
 type ModifiedResource struct {

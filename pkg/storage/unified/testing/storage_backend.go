@@ -1564,7 +1564,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context) map[resource.NamespacedResource]time.Time {
 	result := map[resource.NamespacedResource]time.Time{}
-	for lm, err := range backend.GetResourceLastImportTimes(ctx, nil) {
+	for lm, err := range backend.GetResourceLastImportTimes(ctx) {
 		require.NoError(t, err)
 		result[lm.NamespacedResource] = lm.LastImportTime
 	}

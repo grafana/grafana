@@ -977,7 +977,7 @@ func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, 
 const limitLastImportTimesDeletion = 1 * time.Hour
 
 // GetResourceLastImportTimes provides an iterator for Last Import times and accepts an optional filter for NamespacedResources
-func (b *backend) GetResourceLastImportTimes(ctx context.Context, filterKeys []resource.NamespacedResource) iter.Seq2[resource.ResourceLastImportTime, error] {
+func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetLastImportTimes")
 	defer span.End()
 
@@ -1006,7 +1006,6 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context, filterKeys []r
 
 	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
-		FilterKeys:  filterKeys,
 	})
 	if err != nil {
 		return func(yield func(resource.ResourceLastImportTime, error) bool) {
