@@ -68,6 +68,7 @@ interface K8sMetadata {
 
 interface K8sSnapshotInfo {
   title: string;
+  external: boolean;
   externalUrl?: string;
   expires?: number;
 }
@@ -106,7 +107,7 @@ class K8sAPI implements DashboardSnapshotSrv {
       return {
         key: r.metadata.name,
         name: r.spec.title,
-        external: r.spec.externalUrl != null,
+        external: r.spec.external,
         externalUrl: r.spec.externalUrl,
       };
     });

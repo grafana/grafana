@@ -856,8 +856,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 					},
 					OperationProps: spec3.OperationProps{
 						Tags:        tags,
-						Summary:     "Full dashboard",
-						Description: "longer description here?",
+						Description: "Creates a new Snapshot",
 						Parameters: []*spec3.Parameter{
 							{
 								ParameterProps: spec3.ParameterProps{
@@ -947,8 +946,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 		{
 			Path: prefix + "/delete/{deleteKey}",
 			Spec: &spec3.PathProps{
-				Summary:     "an example at the root level",
-				Description: "longer description here?",
+				Description: "Delete snapshot by delete key",
 				Delete: &spec3.Operation{
 					OperationProps: spec3.OperationProps{
 						Tags: tags,

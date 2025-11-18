@@ -27,6 +27,7 @@ func convertSnapshotDTOToK8sResource(v *dashboardsnapshots.DashboardSnapshotDTO,
 		},
 		Spec: snapshot.SnapshotSpec{
 			Title:       &v.Name,
+			External:    &v.External,
 			ExternalUrl: &v.ExternalURL,
 			Expires:     &expires,
 		},
@@ -53,6 +54,7 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 		},
 		Spec: snapshot.SnapshotSpec{
 			Title:       &v.Name,
+			External:    &v.External,
 			ExternalUrl: &v.ExternalURL,
 			Expires:     &expires,
 			Dashboard:   v.Dashboard.Interface().(map[string]interface{}),
