@@ -5930,7 +5930,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Adicionar transformação"
+      "add-transformation": "Adicionar transformação",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -9150,6 +9153,9 @@
     "category-legend": "Legenda",
     "category-tooltip": "Dica de uso",
     "category-y-axis": "Eixo Y",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Opacidade",
       "label-scheme": "Esquema"
@@ -12381,6 +12387,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Recolher",
+      "exchange": "",
       "expand": "Expandir",
       "loading": "Carregando painéis de controle",
       "noResultsForFilter": "Nenhum resultado encontrado para sua consulta",
