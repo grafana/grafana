@@ -66,49 +66,6 @@ func newStarQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int
 	}
 }
 
-type preferencesQuery struct {
-	sqltemplate.SQLTemplate
-
-	OrgID     int64 // required
-	UserUID   string
-	UserTeams []string // also requires user UID
-	TeamUID   string
-
-	UserTable        string
-	TeamTable        string
-	PreferencesTable string
-}
-
-func (r preferencesQuery) CheckTeams() bool {
-	return r.UserTeams != nil
-}
-
-func (r preferencesQuery) HasTeams() bool {
-	return len(r.UserTeams) > 0
-}
-
-func (r preferencesQuery) Validate() error {
-	if r.OrgID < 1 {
-		return fmt.Errorf("must include an orgID")
-	}
-	if len(r.UserTeams) > 0 && r.UserUID == "" {
-		return fmt.Errorf("user required when filtering by a set of teams")
-	}
-	return nil
-}
-
-func newPreferencesQueryReq(sql *legacysql.LegacyDatabaseHelper, orgId int64) preferencesQuery {
-	return preferencesQuery{
-		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
-
-		OrgID: orgId,
-
-		PreferencesTable: sql.Table("preferences"),
-		UserTable:        sql.Table("user"),
-		TeamTable:        sql.Table("team"),
-	}
-}
-
 type teamQuery struct {
 	sqltemplate.SQLTemplate
 

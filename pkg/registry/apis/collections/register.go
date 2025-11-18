@@ -36,7 +36,6 @@ var (
 type APIBuilder struct {
 	authorizer  authorizer.Authorizer
 	legacyStars *legacy.DashboardStarsStorage
-	legacyPrefs rest.Storage
 }
 
 func RegisterAPIService(
