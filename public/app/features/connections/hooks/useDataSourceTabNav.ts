@@ -79,6 +79,7 @@ export function useDataSourceTabNav(pageName: string, pageIdParam?: string) {
     active: true,
     text: datasource.name || '',
     subTitle: dataSourceMeta.name ? `Type: ${dataSourceMeta.name}` : '',
+    url: `/connections/datasources/edit/${uid}/`,
     children: (pageNav.main.children || []).map((navModelItem) => ({
       ...navModelItem,
       url: navModelItem.url?.replace('datasources/edit/', '/connections/datasources/edit/'),
