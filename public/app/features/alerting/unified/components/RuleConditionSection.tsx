@@ -42,7 +42,6 @@ function createExpressionQueries(
   const reduceRefId = existingExpressions[0]?.refId || getNextRefId(dataQueries);
 
   // Create a temporary query for threshold refId calculation
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const tempQueries = [
     ...dataQueries,
     {
