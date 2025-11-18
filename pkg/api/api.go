@@ -164,7 +164,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)
 	r.Get("/dashboard/new", reqSignedIn, hs.Index)
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardLibrary) || hs.Features.IsEnabledGlobally(featuremgmt.FlagSuggestedDashboards) || hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardTemplates) {
+	if featuremgmt.AnyEnabled(hs.Features, featuremgmt.FlagDashboardLibrary, featuremgmt.FlagSuggestedDashboards, featuremgmt.FlagDashboardTemplates) {
 		r.Get("/dashboard/template", reqSignedIn, hs.Index)
 	}
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
