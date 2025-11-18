@@ -206,7 +206,7 @@
     "fishery": "^2.2.2",
     "fork-ts-checker-webpack-plugin": "9.1.0",
     "github-codeowners": "^0.2.1",
-    "glob": "11.0.3",
+    "glob": "11.1.0",
     "html-loader": "5.1.0",
     "html-webpack-plugin": "5.6.3",
     "http-server": "14.1.1",

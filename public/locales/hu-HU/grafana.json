@@ -5930,7 +5930,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Transzformáció hozzáadása"
+      "add-transformation": "Transzformáció hozzáadása",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -9150,6 +9153,9 @@
     "category-legend": "Jelmagyarázat",
     "category-tooltip": "Elemleírás",
     "category-y-axis": "Y tengely",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Átlátszóság",
       "label-scheme": "Séma"
@@ -12381,6 +12387,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Összecsukás",
+      "exchange": "",
       "expand": "Kibontás",
       "loading": "Irányítópultok betöltése",
       "noResultsForFilter": "Nincs találat a lekérdezésre",

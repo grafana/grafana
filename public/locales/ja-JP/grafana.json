@@ -5908,7 +5908,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "変換を追加"
+      "add-transformation": "変換を追加",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -9114,6 +9117,9 @@
     "category-legend": "凡例",
     "category-tooltip": "ツールチップ",
     "category-y-axis": "Y軸",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "不透明度",
       "label-scheme": "配色"
@@ -12326,6 +12332,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "折りたたみ表示",
+      "exchange": "",
       "expand": "展開",
       "loading": "ダッシュボードを読み込んでいます",
       "noResultsForFilter": "クエリに一致する結果が見つかりませんでした。",
