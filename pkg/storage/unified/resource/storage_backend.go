@@ -66,9 +66,14 @@ type kvStorageBackend struct {
 	withExperimentalClusterScope bool
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
+
+	// lifecycle management
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 var _ StorageBackend = &kvStorageBackend{}
+var _ LifecycleHooks = &kvStorageBackend{}
 
 type KVBackendOptions struct {
 	KvStore                      KV
@@ -81,7 +86,6 @@ type KVBackendOptions struct {
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
-	ctx := context.Background()
 	kv := opts.KvStore
 
 	s, err := snowflake.NewNode(rand.Int64N(1024))
@@ -100,6 +104,9 @@ func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
 		eventPruningInterval = defaultEventPruningInterval
 	}
 
+	// Create a cancellable context for lifecycle management
+	ctx, cancel := context.WithCancel(context.Background())
+
 	backend := &kvStorageBackend{
 		kv:                           kv,
 		dataStore:                    newDataStore(kv),
@@ -111,16 +118,37 @@ func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
 		eventRetentionPeriod:         eventRetentionPeriod,
 		eventPruningInterval:         eventPruningInterval,
 		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
+		ctx:                          ctx,
+		cancel:                       cancel,
 	}
-	err = backend.initPruner(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
-	}
-
-	// Start the event cleanup background job
-	go backend.runCleanupOldEvents(ctx)
 
 	return backend, nil
+}
+
+// Init implements LifecycleHooks
+func (k *kvStorageBackend) Init(ctx context.Context) error {
+	// Initialize the pruner
+	if err := k.initPruner(ctx); err != nil {
+		return fmt.Errorf("failed to initialize pruner: %w", err)
+	}
+
+	// Start the event cleanup background job using the backend's lifecycle context
+	go k.runCleanupOldEvents(k.ctx)
+
+	// Start the pruner if it was configured
+	if k.historyPruner != nil {
+		k.historyPruner.Start(k.ctx)
+	}
+
+	return nil
+}
+
+// Stop implements LifecycleHooks
+func (k *kvStorageBackend) Stop(ctx context.Context) error {
+	// Cancel the context to stop background goroutines
+	// This will stop both runCleanupOldEvents and the pruner (via debouncer)
+	k.cancel()
+	return nil
 }
 
 // runCleanupOldEvents starts a background goroutine that periodically cleans up old events
@@ -217,7 +245,6 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 	}
 
 	k.historyPruner = pruner
-	k.historyPruner.Start(ctx)
 	return nil
 }
 

@@ -121,8 +121,9 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				return nil, fmt.Errorf("create KV backend: %w", err)
 			}
 			serverOptions.Backend = kvBackend
-			// Note: kvStorageBackend doesn't implement Diagnostics/Lifecycle yet
-			// For now, we'll leave these nil and they will be handled by the server
+			serverOptions.Lifecycle = kvBackend.(resource.LifecycleHooks)
+			// Note: kvStorageBackend doesn't implement Diagnostics yet
+			// The server will use noopService for diagnostics
 		} else {
 			// Use existing SQL backend
 			backend, err := NewBackend(BackendOptions{
