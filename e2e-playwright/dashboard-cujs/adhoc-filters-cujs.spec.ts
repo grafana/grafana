@@ -169,7 +169,7 @@ test.describe(
 
         await setScopes(page);
 
-        await expect(scopesSelectorInput).toHaveValue(/.+/);
+        await expect(scopesSelectorInput).toHaveAttribute('data-value', /.+/);
 
         expect(await adHocFilterPills.count()).toBe(3);
 

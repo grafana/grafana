@@ -47,6 +47,7 @@ const type = async (selector: () => HTMLInputElement, value: string) => {
 export const updateScopes = async (service: ScopesService, scopes: string[]) =>
   act(async () => service.changeScopes(scopes));
 export const openSelector = async () => click(getSelectorInput);
+export const hoverSelector = async () => fireEvent.mouseOver(getSelectorInput());
 export const clearSelector = async () => click(getSelectorClear);
 export const applyScopes = async () => {
   await click(getSelectorApply);

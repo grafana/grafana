@@ -35,7 +35,7 @@ const selectors = {
   },
 };
 
-export const getSelectorInput = () => screen.getByTestId<HTMLInputElement>(selectors.selector.input);
+export const getSelectorInput = () => screen.getByTestId(selectors.selector.input);
 export const getSelectorClear = () => screen.getByTestId(selectors.selector.clear);
 export const querySelectorApply = () => screen.queryByTestId(selectors.selector.apply);
 export const getSelectorApply = () => screen.getByTestId(selectors.selector.apply);

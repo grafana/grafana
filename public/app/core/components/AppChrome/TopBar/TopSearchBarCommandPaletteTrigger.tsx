@@ -112,18 +112,5 @@ const getStyles = (theme: GrafanaTheme2) => {
         '&:focus-visible': getFocusStyles(theme),
       },
     ]),
-
-    button: css({
-      // height: 32,
-      width: '100%',
-      textAlign: 'center',
-
-      '> *': {
-        width: '100%',
-        textAlign: 'center',
-        justifyContent: 'center',
-        gap: '1ch',
-      },
-    }),
   };
 };
