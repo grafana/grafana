@@ -153,12 +153,13 @@ export function hasClientSideFilters(filterState: RulesFilter): boolean {
   const useBackendFilters = shouldUseBackendFilters();
 
   return (
-    // When backend filters are disabled, title search, type filter, and dashboard filter need client-side filtering
+    // When backend filters are disabled, title search, type filter, dashboard filter, and group name filter need client-side filtering
     (!useBackendFilters &&
       (filterState.freeFormWords.length > 0 ||
         Boolean(filterState.ruleName) ||
         Boolean(filterState.ruleType) ||
-        Boolean(filterState.dashboardUid))) ||
+        Boolean(filterState.dashboardUid) ||
+        Boolean(filterState.groupName))) ||
     // Client-side only filters:
     Boolean(filterState.namespace) ||
     filterState.dataSourceNames.length > 0 ||

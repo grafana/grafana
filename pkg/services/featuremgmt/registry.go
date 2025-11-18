@@ -546,14 +546,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:         "addFieldFromCalculationStatFunctions",
-			Description:  "Add cumulative and window functions to the add field from calculation transformation",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:        "alertmanagerRemoteSecondary",
 			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -1551,15 +1543,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:              "unifiedStorageHistoryPruner",
-			Description:       "Enables the unified storage history pruner",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Expression:        "true", // will be removed soon
-		},
-		{
 			Name:        "azureMonitorLogsBuilderEditor",
 			Description: "Enables the logs builder mode for the Azure Monitor data source",
 			Stage:       FeatureStagePublicPreview,
@@ -2088,6 +2071,13 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
+		},
+		{
+			Name:         "ttlPluginInstanceManager",
+			Description:  "Enable TTL plugin instance manager",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )

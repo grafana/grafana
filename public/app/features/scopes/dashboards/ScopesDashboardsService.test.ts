@@ -5,8 +5,10 @@ import { ScopeDashboardBinding } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 
 import { ScopesApiClient } from '../ScopesApiClient';
+// Import mock data for subScope tests
+import { navigationWithSubScope, navigationWithSubScope2, navigationWithSubScopeAndGroups } from '../tests/utils/mocks';
 
-import { ScopesDashboardsService } from './ScopesDashboardsService';
+import { ScopesDashboardsService, filterItemsWithSubScopesInPath } from './ScopesDashboardsService';
 import { ScopeNavigation } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -15,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
     featureToggles: {
       useScopesNavigationEndpoint: false,
     },
+    apps: {},
   },
   locationService: {
     getLocation: jest.fn(),
@@ -388,6 +391,310 @@ describe('ScopesDashboardsService', () => {
         expect(service.state.folders[''].folders['group1'].expanded).toBe(true);
         expect(service.state.folders[''].folders['group2'].expanded).toBe(false);
       });
+    });
+  });
+
+  describe('groupSuggestedItems with subScopes', () => {
+    it('Creates subScope folders for items with subScope', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScope]);
+
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-1');
+      expect(result[''].folders['mimir-subscope-nav-1']).toEqual({
+        title: 'Mimir Dashboards',
+        expanded: false,
+        folders: {},
+        suggestedNavigations: {},
+        subScopeName: 'mimir',
+      });
+    });
+
+    it('Creates separate folders for multiple items with same subScope', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScope, navigationWithSubScope2]);
+
+      // Should create separate folders
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-1');
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-2');
+
+      // Both should reference the same subScope
+      expect(result[''].folders['mimir-subscope-nav-1'].subScopeName).toBe('mimir');
+      expect(result[''].folders['mimir-subscope-nav-2'].subScopeName).toBe('mimir');
+    });
+
+    it('Ignores groups for subScope items', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScopeAndGroups]);
+
+      // Should create folder, not add to group folders
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-groups');
+      expect(result[''].folders['mimir-subscope-nav-groups'].subScopeName).toBe('mimir');
+
+      // Should not add to any group folders
+      expect(Object.keys(result[''].folders).length).toBe(1);
+      expect(result[''].suggestedNavigations).toEqual({});
+    });
+
+    it('Does not add navigation items for subScope entries', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScope]);
+
+      // Should only create folder, not add navigation item
+      expect(result[''].folders['mimir-subscope-nav-1'].suggestedNavigations).toEqual({});
+      expect(result[''].suggestedNavigations).toEqual({});
+    });
+
+    it('Mixes subScope and regular items correctly', () => {
+      const regularItem: ScopeNavigation = {
+        metadata: { name: 'regular-nav' },
+        spec: {
+          scope: 'grafana',
+          url: '/d/regular-dashboard',
+        },
+        status: {
+          title: 'Regular Dashboard',
+          groups: ['General'],
+        },
+      };
+
+      const result = service.groupSuggestedItems([navigationWithSubScope, regularItem]);
+
+      // Should have subScope folder
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-1');
+      expect(result[''].folders['mimir-subscope-nav-1'].subScopeName).toBe('mimir');
+
+      // Should have regular group folder
+      expect(result[''].folders).toHaveProperty('General');
+      expect(result[''].folders['General'].subScopeName).toBeUndefined();
+
+      // Regular item should be in group folder
+      expect(result[''].folders['General'].suggestedNavigations).toHaveProperty('/d/regular-dashboard');
+    });
+  });
+
+  describe('fetchSubScopeItems infinite loop prevention', () => {
+    beforeEach(() => {
+      config.featureToggles.useScopesNavigationEndpoint = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.useScopesNavigationEndpoint = false;
+    });
+
+    it('should filter out items with subScope matching any subScope in the path', async () => {
+      // Mock current location
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+
+      // Create initial navigation with subScope 'mimir'
+      const initialNavigation: ScopeNavigation = {
+        metadata: { name: 'subscope-nav-1' },
+        spec: {
+          scope: 'grafana',
+          subScope: 'mimir',
+          url: '/d/mimir-dashboards',
+        },
+        status: {
+          title: 'Mimir Dashboards',
+        },
+      };
+
+      // Mock items returned when fetching 'mimir' subScope
+      // One of them has the same subScope 'mimir', which should be filtered out
+      const subScopeItemsWithSameSubScope: ScopeNavigation[] = [
+        {
+          metadata: { name: 'mimir-item-1' },
+          spec: {
+            scope: 'mimir',
+            url: '/d/mimir-dashboard-1',
+          },
+          status: {
+            title: 'Mimir Dashboard 1',
+            groups: ['General'],
+          },
+        },
+        {
+          metadata: { name: 'mimir-item-2' },
+          spec: {
+            scope: 'mimir',
+            subScope: 'mimir', // This should be filtered out - same subScope as in path
+            url: '/d/mimir-dashboard-2',
+          },
+          status: {
+            title: 'Mimir Dashboard 2',
+          },
+        },
+        {
+          metadata: { name: 'mimir-item-3' },
+          spec: {
+            scope: 'mimir',
+            url: '/d/mimir-dashboard-3',
+          },
+          status: {
+            title: 'Mimir Dashboard 3',
+            groups: ['Observability'],
+          },
+        },
+      ];
+
+      // Set up mock to return items based on scope being fetched
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('grafana')) {
+          return Promise.resolve([initialNavigation]);
+        }
+        if (scopeNames.includes('mimir')) {
+          return Promise.resolve(subScopeItemsWithSameSubScope);
+        }
+        return Promise.resolve([]);
+      });
+
+      // Initial fetch to create the subScope folder
+      await service.fetchDashboards(['grafana']);
+
+      // The folder key is based on the pattern: ${subScope}-${metadata.name}
+      const subScopeFolderKey = 'mimir-subscope-nav-1';
+
+      // Test the filtering logic directly
+      const filteredItems = filterItemsWithSubScopesInPath(
+        subScopeItemsWithSameSubScope,
+        ['', subScopeFolderKey],
+        'mimir',
+        service.state.folders
+      );
+
+      // Verify that the item with the same subScope was filtered out
+      const hasFilteredItem = filteredItems.some(
+        (item) => 'subScope' in item.spec && item.spec.subScope === 'mimir' && item.metadata.name === 'mimir-item-2'
+      );
+      expect(hasFilteredItem).toBe(false);
+
+      // Verify that valid items are still present
+      expect(filteredItems.length).toBe(2); // Should have 2 items (mimir-item-1 and mimir-item-3)
+      expect(filteredItems.some((item) => item.metadata.name === 'mimir-item-1')).toBe(true);
+      expect(filteredItems.some((item) => item.metadata.name === 'mimir-item-3')).toBe(true);
+    });
+
+    it('should filter out items with subScope matching nested subScope in the path', async () => {
+      // Mock current location
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+
+      // Create nested subScope structure: grafana -> mimir -> loki
+      const grafanaNavigation: ScopeNavigation = {
+        metadata: { name: 'mimir-nav' },
+        spec: {
+          scope: 'grafana',
+          subScope: 'mimir',
+          url: '/d/mimir-dashboards',
+        },
+        status: {
+          title: 'Mimir Dashboards',
+        },
+      };
+
+      // Mock items returned when fetching 'mimir' subScope
+      // One of them has subScope 'loki', which is fine
+      const mimirSubScopeItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'mimir-item-1' },
+          spec: {
+            scope: 'mimir',
+            url: '/d/mimir-dashboard-1',
+          },
+          status: {
+            title: 'Mimir Dashboard 1',
+            groups: ['General'],
+          },
+        },
+        {
+          metadata: { name: 'loki-nav' },
+          spec: {
+            scope: 'mimir',
+            subScope: 'loki', // This is fine - different subScope
+            url: '/d/loki-dashboards',
+          },
+          status: {
+            title: 'Loki Dashboards',
+          },
+        },
+      ];
+
+      // Mock items returned when fetching 'loki' subScope
+      // One of them has subScope 'mimir', which should be filtered out since 'mimir' is already in the path
+      const lokiSubScopeItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'loki-item-1' },
+          spec: {
+            scope: 'loki',
+            url: '/d/loki-dashboard-1',
+          },
+          status: {
+            title: 'Loki Dashboard 1',
+            groups: ['General'],
+          },
+        },
+        {
+          metadata: { name: 'mimir-nav-again' },
+          spec: {
+            scope: 'loki',
+            subScope: 'mimir', // This should be filtered out - 'mimir' is already in the path
+            url: '/d/mimir-dashboards-again',
+          },
+          status: {
+            title: 'Mimir Dashboards Again',
+          },
+        },
+      ];
+
+      // Set up mock to return items based on scope being fetched
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('grafana')) {
+          return Promise.resolve([grafanaNavigation]);
+        }
+        if (scopeNames.includes('mimir')) {
+          return Promise.resolve(mimirSubScopeItems);
+        }
+        if (scopeNames.includes('loki')) {
+          return Promise.resolve(lokiSubScopeItems);
+        }
+        return Promise.resolve([]);
+      });
+
+      // Initial fetch to create the first subScope folder
+      await service.fetchDashboards(['grafana']);
+
+      // Set up the folder structure to simulate nested path
+      const folders = service.groupSuggestedItems([grafanaNavigation]);
+      const mimirFolders = service.groupSuggestedItems(mimirSubScopeItems);
+
+      // Manually construct the nested folder structure for testing
+      const testFolders: typeof service.state.folders = {
+        '': {
+          ...folders[''],
+          folders: {
+            ...folders[''].folders,
+            'mimir-mimir-nav': {
+              ...folders[''].folders['mimir-mimir-nav'],
+              folders: {
+                ...mimirFolders[''].folders,
+              },
+            },
+          },
+        },
+      };
+
+      // Test the filtering logic for nested path
+      const filteredItems = filterItemsWithSubScopesInPath(
+        lokiSubScopeItems,
+        ['', 'mimir-mimir-nav', 'loki-loki-nav'],
+        'loki',
+        testFolders
+      );
+
+      // Verify that the item with 'mimir' subScope was filtered out
+      const hasFilteredItem = filteredItems.some(
+        (item) => 'subScope' in item.spec && item.spec.subScope === 'mimir' && item.metadata.name === 'mimir-nav-again'
+      );
+
+      expect(hasFilteredItem).toBe(false);
+
+      // Verify that valid items are still present
+      expect(filteredItems.length).toBe(1); // Should have 1 item (loki-item-1)
+      expect(filteredItems.some((item) => item.metadata.name === 'loki-item-1')).toBe(true);
     });
   });
 });
