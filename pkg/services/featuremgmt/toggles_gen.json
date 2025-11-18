@@ -861,15 +861,18 @@
     {
       "metadata": {
         "name": "azureResourcePickerUpdates",
-        "resourceVersion": "1754910058337",
-        "creationTimestamp": "2025-09-02T10:02:01Z"
+        "resourceVersion": "1763468231033",
+        "creationTimestamp": "2025-09-02T10:02:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-18 12:17:11.033281 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the updated Azure Monitor resource picker",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/partner-datasources",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
