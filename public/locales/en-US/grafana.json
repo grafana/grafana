@@ -3635,11 +3635,11 @@
       "title-folder": "This folder doesn't have any dashboards yet"
     },
     "folder-actions-button": {
-      "delete": "Delete",
+      "delete": "Delete this folder",
       "delete-folder-error": "Error deleting folder. Please try again later.",
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
-      "move": "Move"
+      "move": "Move this folder"
     },
     "folder-picker": {
       "accessible-label": "Select folder: {{ label }} currently selected",
