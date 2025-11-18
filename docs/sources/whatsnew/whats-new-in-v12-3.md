@@ -47,7 +47,7 @@ weight: -52
 
 Welcome to Grafana 12.3!
 
-This release reimagines how you explore logs, more ways to connect your data and more intuitive sharing, so you can spend less time navigating tools and more time turning signals into action. It starts with a completely redesigned logs panel that brings faster pattern recognition, clearer context, and a smoother exploration experience. We’ve also expanded what you can do with new data sources and query improvements, from SolarWinds Enterprise to advanced Honeycomb and OpenSearch capabilities.
+This release reimagines how you explore logs, delivers more ways to connect your data, and enables more intuitive sharing, so you can spend less time navigating tools and more time turning signals into action. It starts with a completely redesigned logs panel that brings faster pattern recognition, clearer context, and a smoother exploration experience. We’ve also expanded what you can do with new data sources and query improvements, from SolarWinds Enterprise to advanced Honeycomb and OpenSearch capabilities.
 
 Sharing insights is easier too, with streamlined dashboard image exports and consolidated panel time controls that make comparisons and overrides more intuitive. And to help you learn as you go, a new interactive learning experience now brings contextual guidance directly into Grafana, giving you tips, tutorials, and documentation right when you need them. All of this comes together to make open observability easier, more accessible, and more powerful for every team.
 
