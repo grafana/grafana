@@ -141,6 +141,13 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}
 	}()
 
+	if res.StatusCode != 200 {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("OpenTSDB suggest endpoint returned status %d", res.StatusCode),
+		}, nil
+	}
+
 	return &backend.CheckHealthResult{
 		Status:  backend.HealthStatusOk,
 		Message: "Data source is working",
