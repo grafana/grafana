@@ -665,7 +665,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   // ------------------------ Legacy Code - Before Backend Migration ---------------
 
   isMigrationToggleOnAndIsAccessProxy() {
-    return config.featureToggles.influxdbBackendMigration && this.access === 'proxy';
+    return this.access === 'proxy';
   }
 
   /**

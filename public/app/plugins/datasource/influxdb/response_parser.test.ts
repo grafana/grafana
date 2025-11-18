@@ -355,7 +355,6 @@ describe('influxdb response parser', () => {
         return of(annotationMockResponse);
       });
 
-      config.featureToggles.influxdbBackendMigration = true;
       response = await ctx.ds.annotationEvents(queryOptions, annotation);
     });
 
