@@ -7792,6 +7792,14 @@
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "Gauge",
+      "circular": "Circular gauge",
+      "style": {
+        "circular": "Glowing",
+        "simple": "Simple"
+      }
+    },
     "threshold": "Threshold {{value}}"
   },
   "gen-ai": {

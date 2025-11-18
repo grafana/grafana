@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { CSSProperties } from 'react';
 
-import { GrafanaTheme2, PanelData, VisualizationSuggestion } from '@grafana/data';
+import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -13,7 +13,7 @@ import { VizTypeChangeDetails } from './types';
 export interface Props {
   data: PanelData;
   width: number;
-  suggestion: VisualizationSuggestion;
+  suggestion: PanelPluginVisualizationSuggestion;
   onChange: (details: VizTypeChangeDetails) => void;
 }
 
