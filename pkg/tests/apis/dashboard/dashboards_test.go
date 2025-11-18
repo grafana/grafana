@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -307,20 +306,15 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 	t.Run(fmt.Sprintf("search types with dual writer mode %d", mode), func(t *testing.T) {
 		ctx := context.Background()
 
-		flags := []string{}
-		if mode >= rest.Mode3 {
-			flags = append(flags, featuremgmt.FlagUnifiedStorageSearch)
-		}
-
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
-			EnableFeatureToggles: flags,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
+			UnifiedStorageEnableSearch: mode >= rest.Mode3,
 		})
 		defer helper.Shutdown()
 
