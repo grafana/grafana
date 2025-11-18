@@ -1,5 +1,10 @@
 import { VariableModel } from '@grafana/schema/dist/esm/index';
-import { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import {
+  AdhocVariableKind,
+  DatasourceVariableKind,
+  QueryVariableKind,
+  VariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DashboardModel } from '../state/DashboardModel';
@@ -41,12 +46,22 @@ export function getPanelPluginCounts(panels: string[]) {
 }
 
 export function getV1SchemaVariables(variableList: VariableModel[]) {
-  return variableList
+  const list = variableList
     .map((v) => v.type)
     .reduce((r: Record<string, number>, k) => {
       r[variableName(k)] = 1 + r[variableName(k)] || 1;
       return r;
     }, {});
+  const varsWithDataSource: Array<{ type: string; datasource: string }> = [];
+  variableList.forEach((v) => {
+    if (v.datasource?.type) {
+      varsWithDataSource.push({
+        type: v.type,
+        datasource: v.datasource.type,
+      });
+    }
+  });
+  return { ...list, varsWithDataSource };
 }
 
 function mapNewToOldTypes(type: VariableKind['kind']): VariableModel['type'] | undefined {
@@ -73,14 +88,48 @@ function mapNewToOldTypes(type: VariableKind['kind']): VariableModel['type'] | u
 }
 
 export function getV2SchemaVariables(variableList: VariableKind[]) {
-  return variableList
+  const list = variableList
     .map((v) => mapNewToOldTypes(v.kind))
     .filter((v) => v !== undefined)
     .reduce((r: Record<string, number>, k) => {
       r[variableName(k)] = 1 + r[variableName(k)] || 1;
       return r;
     }, {});
+
+  return {
+    ...list,
+    varsWithDataSource: getV2SchemaVariablesWithDatasource(variableList),
+  };
 }
 
 export const variableName = (type: string) => `variable_type_${type}_count`;
 const panelName = (type: string) => `panel_type_${type}_count`;
+
+export const getV2SchemaVariablesWithDatasource = (variableList: VariableKind[]) => {
+  const variablesWithDS: Array<{ type: string; datasource: string }> = [];
+  variableList.forEach((v) => {
+    let datasource = '';
+    const type = mapNewToOldTypes(v.kind);
+    /* eslint-disable @typescript-eslint/consistent-type-assertions  */
+    switch (v.kind) {
+      case 'AdhocVariable':
+        datasource = (v as AdhocVariableKind).datasource?.name ?? '';
+        break;
+      case 'DatasourceVariable':
+        datasource = (v as DatasourceVariableKind).spec.pluginId ?? '';
+        break;
+      case 'QueryVariable':
+        datasource = (v as QueryVariableKind).spec.query?.group ?? '';
+        break;
+      default:
+        break;
+    }
+    if (datasource && type) {
+      variablesWithDS.push({
+        type,
+        datasource,
+      });
+    }
+  });
+  return variablesWithDS;
+};

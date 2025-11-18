@@ -1133,6 +1133,13 @@
       }
     },
     {
+      "kind": "AdhocVariable",
+      "datasource": {
+        "name": "opensearch"
+      },
+      "spec": {}
+    },
+    {
       "kind": "CustomVariable",
       "spec": {
         "allowCustomValue": true,
@@ -1153,6 +1160,13 @@
         ],
         "query": "test",
         "skipUrlSync": false
+      }
+    },
+    {
+      "kind": "DatasourceVariable",
+      "spec": {
+        "name": "datasourceVar",
+        "pluginId": "bigquery"
       }
     }
   ]

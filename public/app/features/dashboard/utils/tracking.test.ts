@@ -1,3 +1,4 @@
+import { data } from 'jquery';
 import { getDashboardModel } from 'test/helpers/getDashboardModel';
 
 import * as runtime from '@grafana/runtime';
@@ -20,9 +21,9 @@ describe('trackDashboardLoaded', () => {
       ],
       templating: {
         list: [
-          { type: 'query', name: 'Query 1' },
+          { type: 'query', name: 'Query 1', datasource: { type: 'prometheus' } },
           { type: 'interval', name: 'Interval 1' },
-          { type: 'query', name: 'Query 2' },
+          { type: 'query', name: 'Query 2', datasource: { type: 'cloudwatch' } },
         ],
       },
       timepicker: {
@@ -52,6 +53,10 @@ describe('trackDashboardLoaded', () => {
       panel_type_geomap_count: 2,
       settings_nowdelay: '1m',
       settings_livenow: true,
+      variablesWithDS: [
+        { type: 'query', datasource: 'prometheus' },
+        { type: 'query', datasource: 'cloudwatch' },
+      ]
     });
   });
 });
