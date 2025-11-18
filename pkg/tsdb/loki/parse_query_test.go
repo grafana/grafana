@@ -175,8 +175,8 @@ func TestParseQuery(t *testing.T) {
 		require.Equal(t, time.Second*15, models[0].Step)
 		require.Equal(t, `count_over_time({service_name="apache", __stream_shard__="2"}[15s])`, models[0].Expr)
 		require.Equal(t, `count_over_time({service_name="apache"}[15s])`, models[0].LimitsContext.Expr)
-		require.Equal(t, to.Round(time.Millisecond), models[0].LimitsContext.To)
-		require.Equal(t, fullFrom.Round(time.Millisecond), models[0].LimitsContext.From)
+		require.Equal(t, to.Truncate(time.Millisecond), models[0].LimitsContext.To)
+		require.Equal(t, fullFrom.Truncate(time.Millisecond), models[0].LimitsContext.From)
 	})
 
 	t.Run("interpolate variables, range between 1s and 0.5s", func(t *testing.T) {

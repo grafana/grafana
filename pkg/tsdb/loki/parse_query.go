@@ -189,13 +189,14 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 
 		rawQueryLimitExpr := parseLimitsContextExpr(model.LimitsContext)
 
-		// If a limits expression was provided, interpolate it and parse the time range
 		if rawQueryLimitExpr != "" {
-			limitsConfig.Expr = interpolateVariables(rawQueryLimitExpr, interval, timeRange, queryType, step)
 			limitsConfigTo = parseLimitsContextTo(model.LimitsContext)
 			limitsConfigFrom = parseLimitsContextFrom(model.LimitsContext)
 
+			// Only supply limits context config if we have expression, and from and to
 			if !limitsConfigFrom.Equal(time.Time{}) && !limitsConfigTo.Equal(time.Time{}) {
+				// If a limits expression was provided, interpolate it and parse the time range
+				limitsConfig.Expr = interpolateVariables(rawQueryLimitExpr, interval, timeRange, queryType, step)
 				limitsConfig.From = limitsConfigFrom
 				limitsConfig.To = limitsConfigTo
 			}

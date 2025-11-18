@@ -117,15 +117,11 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 }
 
 func addQueryLimitsHeader(query lokiQuery, req *http.Request) {
-	var queryLimit QueryLimitsContext
 	if len(query.LimitsContext.Expr) > 0 {
-		queryLimit.Expr = query.LimitsContext.Expr
-		queryLimit.To = query.LimitsContext.To
-		queryLimit.From = query.LimitsContext.From
-	}
-	queryLimitStr, err := json.Marshal(queryLimit)
-	if err == nil {
-		req.Header.Set("X-Loki-Query-Limits-Context", string(queryLimitStr))
+		queryLimitStr, err := json.Marshal(query.LimitsContext)
+		if err == nil {
+			req.Header.Set("X-Loki-Query-Limits-Context", string(queryLimitStr))
+		}
 	}
 }
 
