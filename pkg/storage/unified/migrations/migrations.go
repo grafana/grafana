@@ -52,7 +52,8 @@ func ProvideUnifiedStorageMigrationProvider(
 // This blocks until migrations complete. If migrations fail, an error is returned
 // which will prevent Grafana from starting.
 func (p *UnifiedStorageMigrationProviderImpl) Run(ctx context.Context) error {
-	if os.Getenv("GRAFANA_TEST_DB") != "" || p.cfg.Env == "testing" {
+	// skip migrations in test environments to prevent integration test timeouts.
+	if os.Getenv("GRAFANA_TEST_DB") != "" {
 		return nil
 	}
 
