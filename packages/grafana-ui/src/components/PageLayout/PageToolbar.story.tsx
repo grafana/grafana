@@ -9,16 +9,12 @@ import { PageToolbar } from './PageToolbar';
 const meta: Meta<typeof PageToolbar> = {
   title: 'Navigation/Deprecated/PageToolbar',
   component: PageToolbar,
-  parameters: {
-    // TODO fix a11y issue in story and remove this
-    // a11y: { test: 'off' },
-  },
 };
 
 export const WithNonClickableTitle = () => {
   return (
     <PageToolbar pageIcon="bell" title="Dashboard">
-      <ToolbarButton icon="panel-add" />
+      <ToolbarButton icon="panel-add" tooltip="Add panel" />
       <ToolbarButton icon="sync">Sync</ToolbarButton>
     </PageToolbar>
   );
@@ -37,8 +33,8 @@ export const WithClickableTitleAndParent = () => {
         <IconButton name="favorite" iconType="mono" size="lg" key="favorite" tooltip="Add to favourites" />,
       ]}
     >
-      <ToolbarButton icon="panel-add" />
-      <ToolbarButton icon="share-alt" />
+      <ToolbarButton icon="panel-add" tooltip="Add panel" />
+      <ToolbarButton icon="share-alt" tooltip="Share" />
       <ToolbarButton icon="sync">Sync</ToolbarButton>
       <ToolbarButton icon="cog">Settings </ToolbarButton>
     </PageToolbar>
@@ -48,8 +44,8 @@ export const WithClickableTitleAndParent = () => {
 export const GoBackVersion = () => {
   return (
     <PageToolbar title="Service overview / Edit panel" onGoBack={() => action('Go back')}>
-      <ToolbarButton icon="cog" />
-      <ToolbarButton icon="save" />
+      <ToolbarButton icon="cog" tooltip="Settings" />
+      <ToolbarButton icon="save" aria-label="Save" />
       <ToolbarButton>Discard</ToolbarButton>
       <ToolbarButton>Apply</ToolbarButton>
     </PageToolbar>
