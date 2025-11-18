@@ -55,18 +55,11 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 	sort.Strings(names)
 	for _, name := range names {
 		content := revision.Config.TemplateFiles[name]
-		tmpl := definitions.NotificationTemplate{
-			UID:             legacy_storage.NameToUid(name),
-			Name:            name,
-			Template:        content,
-			ResourceVersion: calculateTemplateFingerprint(content),
-		}
-		provenance, ok := provenances[tmpl.ResourceID()]
+		provenance, ok := provenances[(&definitions.NotificationTemplate{Name: name}).ResourceID()]
 		if !ok {
 			provenance = models.ProvenanceNone
 		}
-		tmpl.Provenance = definitions.Provenance(provenance)
-		templates = append(templates, tmpl)
+		templates = append(templates, newNotificationTemplate(name, content, provenance))
 	}
 
 	return templates, nil
@@ -86,20 +79,11 @@ func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, nameOrUi
 	if !ok {
 		return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
 	}
-
-	tmpl := definitions.NotificationTemplate{
-		UID:             legacy_storage.NameToUid(existingName),
-		Name:            existingName,
-		Template:        existingContent,
-		ResourceVersion: calculateTemplateFingerprint(existingContent),
-	}
-
-	provenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
+	provenance, err := t.provenanceStore.GetProvenance(ctx, &definitions.NotificationTemplate{Name: existingName}, orgID)
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
-	tmpl.Provenance = definitions.Provenance(provenance)
-	return tmpl, nil
+	return newNotificationTemplate(existingName, existingContent, provenance), nil
 }
 
 func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
@@ -164,13 +148,7 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 		return definitions.NotificationTemplate{}, err
 	}
 
-	return definitions.NotificationTemplate{
-		UID:             legacy_storage.NameToUid(tmpl.Name),
-		Name:            tmpl.Name,
-		Template:        tmpl.Template,
-		Provenance:      tmpl.Provenance,
-		ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-	}, nil
+	return newNotificationTemplate(tmpl.Name, tmpl.Template, models.Provenance(tmpl.Provenance)), nil
 }
 
 func (t *TemplateService) UpdateTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
@@ -214,7 +192,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	}
 
 	// check that provenance is not changed in an invalid way
-	storedProvenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
+	storedProvenance, err := t.provenanceStore.GetProvenance(ctx, &definitions.NotificationTemplate{Name: existingName}, orgID)
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
@@ -222,7 +200,9 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		return definitions.NotificationTemplate{}, err
 	}
 
-	err = t.checkOptimisticConcurrency(tmpl.Name, existingContent, models.Provenance(tmpl.Provenance), tmpl.ResourceVersion, "update")
+	cur := newNotificationTemplate(existingName, existingContent, storedProvenance)
+
+	err = t.checkOptimisticConcurrency(existingName, existingContent, models.Provenance(tmpl.Provenance), tmpl.ResourceVersion, "update")
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
@@ -230,9 +210,9 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	revision.Config.TemplateFiles[tmpl.Name] = tmpl.Template
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if existingName != tmpl.Name { // if template by was found by UID and it's name is different, then this is the rename operation. Delete old resources.
-			delete(revision.Config.TemplateFiles, existingName)
-			err := t.provenanceStore.DeleteProvenance(ctx, &definitions.NotificationTemplate{Name: existingName}, orgID)
+		if cur.Name != tmpl.Name { // if template by was found by UID and it's name is different, then this is the rename operation. Delete old resources.
+			delete(revision.Config.TemplateFiles, cur.Name)
+			err := t.provenanceStore.DeleteProvenance(ctx, &cur, orgID)
 			if err != nil {
 				return err
 			}
@@ -247,13 +227,8 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		return definitions.NotificationTemplate{}, err
 	}
 
-	return definitions.NotificationTemplate{
-		UID:             legacy_storage.NameToUid(tmpl.Name), // if name was changed, this UID will not match the incoming one
-		Name:            tmpl.Name,
-		Template:        tmpl.Template,
-		Provenance:      tmpl.Provenance,
-		ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-	}, nil
+	// if name was changed, this UID needs to be recalculated
+	return newNotificationTemplate(tmpl.Name, tmpl.Template, models.Provenance(tmpl.Provenance)), nil
 }
 
 func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error {
@@ -330,4 +305,15 @@ func getTemplateByUid(templates map[string]string, uid string) (string, string, 
 		}
 	}
 	return "", "", false
+}
+
+func newNotificationTemplate(name, content string, provenance models.Provenance) definitions.NotificationTemplate {
+	tmpl := definitions.NotificationTemplate{
+		UID:        legacy_storage.NameToUid(name),
+		Name:       name,
+		Template:   content,
+		Provenance: definitions.Provenance(provenance),
+	}
+	tmpl.ResourceVersion = calculateTemplateFingerprint(content)
+	return tmpl
 }

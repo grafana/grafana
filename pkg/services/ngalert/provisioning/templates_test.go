@@ -45,27 +45,21 @@ func TestGetTemplates(t *testing.T) {
 		require.NoError(t, err)
 
 		expected := []definitions.NotificationTemplate{
-			{
-				UID:             legacy_storage.NameToUid("template1"),
-				Name:            "template1",
-				Template:        "test1",
-				Provenance:      definitions.Provenance(models.ProvenanceAPI),
-				ResourceVersion: calculateTemplateFingerprint("test1"),
-			},
-			{
-				UID:             legacy_storage.NameToUid("template2"),
-				Name:            "template2",
-				Template:        "test2",
-				Provenance:      definitions.Provenance(models.ProvenanceFile),
-				ResourceVersion: calculateTemplateFingerprint("test2"),
-			},
-			{
-				UID:             legacy_storage.NameToUid("template3"),
-				Name:            "template3",
-				Template:        "test3",
-				Provenance:      definitions.Provenance(models.ProvenanceNone),
-				ResourceVersion: calculateTemplateFingerprint("test3"),
-			},
+			newNotificationTemplate(
+				"template1",
+				"test1",
+				models.ProvenanceAPI,
+			),
+			newNotificationTemplate(
+				"template2",
+				"test2",
+				models.ProvenanceFile,
+			),
+			newNotificationTemplate(
+				"template3",
+				"test3",
+				models.ProvenanceNone,
+			),
 		}
 
 		require.EqualValues(t, expected, result)
@@ -146,13 +140,11 @@ func TestGetTemplate(t *testing.T) {
 		result, err := sut.GetTemplate(context.Background(), orgID, templateName)
 		require.NoError(t, err)
 
-		expected := definitions.NotificationTemplate{
-			UID:             legacy_storage.NameToUid(templateName),
-			Name:            templateName,
-			Template:        templateContent,
-			Provenance:      definitions.Provenance(models.ProvenanceAPI),
-			ResourceVersion: calculateTemplateFingerprint(templateContent),
-		}
+		expected := newNotificationTemplate(
+			templateName,
+			templateContent,
+			models.ProvenanceAPI,
+		)
 
 		require.Equal(t, expected, result)
 
@@ -247,13 +239,11 @@ func TestUpsertTemplate(t *testing.T) {
 		result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		require.Equal(t, definitions.NotificationTemplate{
-			UID:             legacy_storage.NameToUid(tmpl.Name),
-			Name:            tmpl.Name,
-			Template:        tmpl.Template,
-			Provenance:      tmpl.Provenance,
-			ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-		}, result)
+		require.Equal(t, newNotificationTemplate(
+			tmpl.Name,
+			tmpl.Template,
+			models.Provenance(tmpl.Provenance),
+		), result)
 
 		require.Len(t, store.Calls, 2)
 
@@ -289,13 +279,11 @@ func TestUpsertTemplate(t *testing.T) {
 			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 			require.NoError(t, err)
-			assert.Equal(t, definitions.NotificationTemplate{
-				UID:             legacy_storage.NameToUid(tmpl.Name),
-				Name:            tmpl.Name,
-				Template:        tmpl.Template,
-				Provenance:      tmpl.Provenance,
-				ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-			}, result)
+			assert.Equal(t, newNotificationTemplate(
+				tmpl.Name,
+				tmpl.Template,
+				models.Provenance(tmpl.Provenance),
+			), result)
 
 			require.Len(t, store.Calls, 2)
 			require.Equal(t, "Save", store.Calls[1].Method)
@@ -326,13 +314,11 @@ func TestUpsertTemplate(t *testing.T) {
 			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 			require.NoError(t, err)
-			assert.Equal(t, definitions.NotificationTemplate{
-				UID:             legacy_storage.NameToUid(tmpl.Name),
-				Name:            tmpl.Name,
-				Template:        tmpl.Template,
-				Provenance:      tmpl.Provenance,
-				ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-			}, result)
+			assert.Equal(t, newNotificationTemplate(
+				tmpl.Name,
+				tmpl.Template,
+				models.Provenance(tmpl.Provenance),
+			), result)
 
 			require.Equal(t, "Save", store.Calls[1].Method)
 			saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
@@ -361,13 +347,11 @@ func TestUpsertTemplate(t *testing.T) {
 		result, _ := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 		expectedContent := fmt.Sprintf("{{ define \"%s\" }}\n  content\n{{ end }}", templateName)
-		require.Equal(t, definitions.NotificationTemplate{
-			UID:             legacy_storage.NameToUid(tmpl.Name),
-			Name:            tmpl.Name,
-			Template:        expectedContent,
-			Provenance:      tmpl.Provenance,
-			ResourceVersion: calculateTemplateFingerprint(expectedContent),
-		}, result)
+		require.Equal(t, newNotificationTemplate(
+			tmpl.Name,
+			expectedContent,
+			models.Provenance(tmpl.Provenance),
+		), result)
 	})
 
 	t.Run("does not reject template with unknown field", func(t *testing.T) {
@@ -588,13 +572,11 @@ func TestCreateTemplate(t *testing.T) {
 		result, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		require.Equal(t, definitions.NotificationTemplate{
-			UID:             legacy_storage.NameToUid(tmpl.Name),
-			Name:            tmpl.Name,
-			Template:        tmpl.Template,
-			Provenance:      tmpl.Provenance,
-			ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-		}, result)
+		require.Equal(t, newNotificationTemplate(
+			tmpl.Name,
+			tmpl.Template,
+			models.Provenance(tmpl.Provenance),
+		), result)
 
 		require.Len(t, store.Calls, 2)
 
@@ -791,13 +773,11 @@ func TestUpdateTemplate(t *testing.T) {
 				result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 				require.NoError(t, err)
-				assert.Equal(t, definitions.NotificationTemplate{
-					UID:             legacy_storage.NameToUid(tmpl.Name),
-					Name:            tmpl.Name,
-					Template:        tmpl.Template,
-					Provenance:      tmpl.Provenance,
-					ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-				}, result)
+				assert.Equal(t, newNotificationTemplate(
+					tmpl.Name,
+					tmpl.Template,
+					models.Provenance(tmpl.Provenance),
+				), result)
 
 				require.Len(t, store.Calls, 2)
 				require.Equal(t, "Save", store.Calls[1].Method)
@@ -821,13 +801,11 @@ func TestUpdateTemplate(t *testing.T) {
 				result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 				require.NoError(t, err)
-				assert.Equal(t, definitions.NotificationTemplate{
-					UID:             legacy_storage.NameToUid(tmpl.Name),
-					Name:            tmpl.Name,
-					Template:        tmpl.Template,
-					Provenance:      tmpl.Provenance,
-					ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-				}, result)
+				assert.Equal(t, newNotificationTemplate(
+					tmpl.Name,
+					tmpl.Template,
+					models.Provenance(tmpl.Provenance),
+				), result)
 
 				require.Equal(t, "Save", store.Calls[1].Method)
 				saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
@@ -858,13 +836,11 @@ func TestUpdateTemplate(t *testing.T) {
 		result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		assert.Equal(t, definitions.NotificationTemplate{
-			UID:             legacy_storage.NameToUid(tmpl.Name),
-			Name:            tmpl.Name,
-			Template:        tmpl.Template,
-			Provenance:      tmpl.Provenance,
-			ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-		}, result)
+		assert.Equal(t, newNotificationTemplate(
+			tmpl.Name,
+			tmpl.Template,
+			models.Provenance(tmpl.Provenance),
+		), result)
 
 		require.Len(t, store.Calls, 2)
 		require.Equal(t, "Save", store.Calls[1].Method)
