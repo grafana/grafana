@@ -41,8 +41,7 @@ export function ScopesInput({
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
 
   // Prioritize scope node subtitle over parent node title
-  const displayTitle =
-    scopeNode?.spec.subTitle ?? parentNode?.spec.title ?? (appliedScopes.length > 0 ? 'Mimir' : undefined);
+  const displayTitle = scopeNode?.spec.subTitle ?? parentNode?.spec.title;
   const isLoadingTitle = scopeNodeLoading || parentNodeLoading;
   const placeholderText = t('scopes.selector.input.placeholder', 'No scopes');
 

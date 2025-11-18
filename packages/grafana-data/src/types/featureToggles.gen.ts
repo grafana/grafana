@@ -1194,4 +1194,8 @@ export interface FeatureToggles {
   * Show transformation quick-start cards in empty transformations state
   */
   transformationsEmptyPlaceholder?: boolean;
+  /**
+  * Enable TTL plugin instance manager
+  */
+  ttlPluginInstanceManager?: boolean;
 }

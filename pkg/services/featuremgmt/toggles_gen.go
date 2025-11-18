@@ -1073,4 +1073,8 @@ const (
 	// FlagTransformationsEmptyPlaceholder
 	// Show transformation quick-start cards in empty transformations state
 	FlagTransformationsEmptyPlaceholder = "transformationsEmptyPlaceholder"
+
+	// FlagTtlPluginInstanceManager
+	// Enable TTL plugin instance manager
+	FlagTtlPluginInstanceManager = "ttlPluginInstanceManager"
 )
