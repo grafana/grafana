@@ -17,11 +17,11 @@ labels:
     - cloud
 title: Secrets Management HTTP API
 refs:
-	rbac-permissions:
-		- pattern: /docs/grafana/
-		  destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
-		- pattern: /docs/grafana-cloud/
-		  destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
+  rbac-permissions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
 ---
 
 # Secrets Management API
