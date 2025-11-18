@@ -46,7 +46,7 @@ The options in this section control the branding and theming of the report attac
 - **Company logo** - Company logo displayed in the report PDF.
   Configure it by specifying a URL or uploading a file.
   The maximum file size is 16 MB.
-  If not set, defaults to the Grafana logo. If the URL specified is not correct, the logo will appear as broken link logo.
+  If not set, defaults to the Grafana logo. If the specified URL isn't valid, the logo image appears as broken.
 
 - **Theme** - Theme of the PDF attached to the report.
   The selected theme is also applied to the PDFs generated when you click **Preview PDF** during report creation or select the **Export as PDF** option on a dashboard.
