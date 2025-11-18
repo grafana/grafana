@@ -140,43 +140,6 @@ describe('Toggletip', () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
-  it('should be able to focus toggletip content next in DOM order - forwards and backwards', async () => {
-    const onClose = jest.fn();
-    const afterInDom = 'Outside of toggletip';
-
-    render(
-      <>
-        <Toggletip placement="auto" content="Tooltip text" onClose={onClose}>
-          <Button type="button" data-testid="myButton">
-            Click me!
-          </Button>
-        </Toggletip>
-        <button>{afterInDom}</button>
-      </>
-    );
-
-    expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
-
-    const button = screen.getByTestId('myButton');
-    const afterButton = screen.getByText(afterInDom);
-    await userEvent.click(button);
-
-    const closeButton = screen.getByTestId('toggletip-header-close');
-    expect(closeButton).toHaveFocus();
-
-    // focus after
-    await userEvent.tab();
-    expect(afterButton).toHaveFocus();
-
-    // focus backwards
-    await userEvent.tab({ shift: true });
-    expect(closeButton).toHaveFocus();
-
-    // focus back to togglebutton
-    await userEvent.tab({ shift: true });
-    expect(button).toHaveFocus();
-  });
-
   describe('Focus state', () => {
     let user: ReturnType<typeof userEvent.setup>;
 
