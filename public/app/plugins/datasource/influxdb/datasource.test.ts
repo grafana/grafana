@@ -1,14 +1,11 @@
-import { lastValueFrom, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { AdHocVariableFilter } from '@grafana/data';
-import { BackendSrvRequest, TemplateSrv } from '@grafana/runtime';
-import config from 'app/core/config';
+import { TemplateSrv } from '@grafana/runtime';
 
 import { queryBuilder } from '../../../features/variables/shared/testing/builders';
 
-import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
-import InfluxDatasource from './datasource';
-import { getMockDSInstanceSettings, getMockInfluxDS, mockBackendService, replaceMock } from './mocks/datasource';
+import { getMockDSInstanceSettings, getMockInfluxDS, mockBackendService } from './mocks/datasource';
 import { mockInfluxQueryRequest } from './mocks/request';
 import { mockInfluxFetchResponse, mockMetricFindQueryResponse } from './mocks/response';
 import { InfluxQuery, InfluxVersion } from './types';
