@@ -140,6 +140,65 @@ describe('Toggletip', () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
+  it('should trap content within the overlay', async () => {
+    const onClose = jest.fn();
+    const afterInDom = 'Outside of toggletip';
+
+    render(
+      <>
+        <Toggletip placement="auto" content="Tooltip text" onClose={onClose}>
+          <Button type="button" data-testid="myButton">
+            Click me!
+          </Button>
+        </Toggletip>
+        <button>{afterInDom}</button>
+      </>
+    );
+
+    expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+
+    const button = screen.getByTestId('myButton');
+    const afterButton = screen.getByText(afterInDom);
+    await userEvent.click(button);
+
+    const closeButton = screen.getByTestId('toggletip-header-close');
+    expect(closeButton).toHaveFocus();
+
+    // tab forwards
+    await userEvent.keyboard('{tab}');
+    // need to waitFor here to wait for the floating-ui focus manager to take effect
+    await waitFor(() => {
+      expect(closeButton).toHaveFocus();
+    });
+    expect(afterButton).not.toHaveFocus();
+
+    // tab forwards again
+    await userEvent.keyboard('{tab}');
+    // need to waitFor here to wait for the floating-ui focus manager to take effect
+    await waitFor(() => {
+      expect(closeButton).toHaveFocus();
+    });
+    expect(afterButton).not.toHaveFocus();
+
+    // tab backwards
+    await userEvent.keyboard('{shift}{tab}');
+    // need to waitFor here to wait for the floating-ui focus manager to take effect
+    await waitFor(() => {
+      expect(closeButton).toHaveFocus();
+    });
+    expect(afterButton).not.toHaveFocus();
+
+    // close overlay, focus back to togglebutton
+    await userEvent.keyboard('{escape}');
+    expect(button).toHaveFocus();
+    expect(afterButton).not.toHaveFocus();
+
+    // tab forwards with overlay closed
+    await userEvent.tab();
+    expect(closeButton).not.toHaveFocus();
+    expect(afterButton).toHaveFocus();
+  });
+
   describe('Focus state', () => {
     let user: ReturnType<typeof userEvent.setup>;
 
