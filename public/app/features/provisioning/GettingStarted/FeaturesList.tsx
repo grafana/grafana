@@ -48,9 +48,7 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
           Want to learn more? See our{' '}
           <TextLink
             external
-            href={
-              'https://grafana.com/docs/grafana-cloud/developer-resources/observability-as-code/provision-resources'
-            }
+            href={'https://grafana.com/docs/grafana-cloud/as-code/observability-as-code/provision-resources/'}
           >
             documentation
           </TextLink>
