@@ -1,0 +1,37 @@
+{
+  "title": "Malformed Dashboard with Empty Keys",
+  "description": "Test dashboard with empty string keys in panels",
+  "schemaVersion": 41,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Valid Panel",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "default.uid"
+      },
+      "description": "This panel is valid"
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Malformed Panel",
+      "": {
+        "type": "prometheus",
+        "uid": "default.uid"
+      },
+      "description": "This panel has an empty string key instead of datasource"
+    },
+    {
+      "id": 3,
+      "type": "graph",
+      "title": "Another Valid Panel",
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      }
+    }
+  ]
+}
+
