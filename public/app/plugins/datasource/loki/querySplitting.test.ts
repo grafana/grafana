@@ -328,15 +328,13 @@ describe('runSplitQuery()', () => {
   });
 
   test('Handles and reports errors', async () => {
-    jest
-      .spyOn(datasource, 'runQuery')
-      .mockReturnValue(
-        of({
-          state: LoadingState.Error,
-          error: { refId: 'A', message: 'the query would read too many bytes...' },
-          data: [],
-        })
-      );
+    jest.spyOn(datasource, 'runQuery').mockReturnValue(
+      of({
+        state: LoadingState.Error,
+        error: { refId: 'A', message: 'the query would read too many bytes...' },
+        data: [],
+      })
+    );
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
       expect(values).toHaveLength(1);
       expect(values[0]).toEqual(
