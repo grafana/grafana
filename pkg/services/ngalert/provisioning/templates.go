@@ -56,28 +56,38 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 		return nil, err
 	}
 
-	if len(revision.Config.TemplateFiles) == 0 {
-		return nil, nil
-	}
+	var templates []definitions.NotificationTemplate
 
-	provenances, err := t.provenanceStore.GetProvenances(ctx, orgID, (&definitions.NotificationTemplate{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-
-	templates := make([]definitions.NotificationTemplate, 0, len(revision.Config.TemplateFiles))
-	names := slices.Collect(maps.Keys(revision.Config.TemplateFiles))
-	sort.Strings(names)
-	for _, name := range names {
-		content := revision.Config.TemplateFiles[name]
-		provenance, ok := provenances[(&definitions.NotificationTemplate{Name: name}).ResourceID()]
-		if !ok {
-			provenance = models.ProvenanceNone
+	if len(revision.Config.TemplateFiles) > 0 {
+		provenances, err := t.provenanceStore.GetProvenances(ctx, orgID, (&definitions.NotificationTemplate{}).ResourceType())
+		if err != nil {
+			return nil, err
 		}
-		templates = append(templates, newNotificationTemplate(name, content, provenance, definition.GrafanaTemplateKind))
+		templates = make([]definitions.NotificationTemplate, 0, len(revision.Config.TemplateFiles))
+		names := slices.Collect(maps.Keys(revision.Config.TemplateFiles))
+		sort.Strings(names)
+		for _, name := range names {
+			content := revision.Config.TemplateFiles[name]
+			provenance, ok := provenances[(&definitions.NotificationTemplate{Name: name}).ResourceID()]
+			if !ok {
+				provenance = models.ProvenanceNone
+			}
+			templates = append(templates, newNotificationTemplate(name, content, provenance, definition.GrafanaTemplateKind))
+		}
 	}
 
-	return templates, nil
+	var importedTemplates []definitions.NotificationTemplate
+	if t.includeImported && len(revision.Config.ExtraConfigs) > 0 && len(revision.Config.ExtraConfigs[0].TemplateFiles) > 0 {
+		imported := revision.Config.ExtraConfigs[0].TemplateFiles
+		importedTemplates = make([]definitions.NotificationTemplate, 0, len(imported))
+		names := slices.Collect(maps.Keys(imported))
+		sort.Strings(names)
+		for _, name := range names {
+			content := imported[name]
+			templates = append(templates, newNotificationTemplate(name, content, models.ProvenanceConvertedPrometheus, definition.MimirTemplateKind))
+		}
+	}
+	return append(templates, importedTemplates...), nil
 }
 
 func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (definitions.NotificationTemplate, error) {
@@ -219,6 +229,9 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	if existing.Kind != tmpl.Kind {
 		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(errors.New("cannot change template kind"))
 	}
+	if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
+		return definitions.NotificationTemplate{}, makeErrTemplateOrigin(existing, "update")
+	}
 	if err := t.validator(models.Provenance(existing.Provenance), models.Provenance(tmpl.Provenance)); err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
@@ -269,6 +282,9 @@ func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameO
 	}
 	if !found {
 		return nil
+	}
+	if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
+		return makeErrTemplateOrigin(existing, "delete")
 	}
 
 	err = t.checkOptimisticConcurrency(existing.Name, existing.Template, models.Provenance(provenance), version, "delete")
@@ -347,6 +363,12 @@ func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy
 	var provenance models.Provenance
 	name, content, ok := find(revision.Config.TemplateFiles, uid)
 	if !ok {
+		if t.includeImported && len(revision.Config.ExtraConfigs) > 0 {
+			name, content, ok = find(revision.Config.ExtraConfigs[0].TemplateFiles, uid)
+			if ok {
+				return newNotificationTemplate(name, content, definitions.Provenance(models.ProvenanceConvertedPrometheus), definitions.NotificationTemplateKindMimir), true, nil
+			}
+		}
 		return definitions.NotificationTemplate{}, false, nil
 	}
 	var err error
