@@ -12413,8 +12413,10 @@
       "cancel": "Cancel",
       "error-title": "An unexpected error happened",
       "input": {
-        "placeholder": "Select scopes...",
-        "removeAll": "Remove all scopes"
+        "placeholder": "No scopes",
+        "remove-all": "Remove all",
+        "removeAll": "Remove all scopes",
+        "tooltip": "Select scope"
       },
       "title": "Select scopes"
     },
