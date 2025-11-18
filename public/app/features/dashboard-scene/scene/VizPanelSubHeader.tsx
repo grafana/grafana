@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import { DataSourceRef } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneObjectState,
@@ -11,12 +10,15 @@ import {
   SceneQueryRunner,
   VizPanel,
   SceneDataState,
+  sceneUtils,
 } from '@grafana/scenes';
 
 import { PanelNonApplicableDrilldownsSubHeader } from './PanelNonApplicableDrilldownsSubHeader';
 
 export interface VizPanelSubHeaderState extends SceneObjectState {
   hideNonApplicableDrilldowns?: boolean;
+  adhocFiltersVar?: AdHocFiltersVariable;
+  groupByVar?: GroupByVariable;
 }
 
 export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
@@ -35,6 +37,12 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     if (!this.parent || !(this.parent instanceof VizPanel)) {
       throw new Error('VizPanelSubHeader can be used only with VizPanel');
     }
+
+    const variables = sceneGraph.getVariables(this).state.variables;
+    const adhocFiltersVariable = variables.find((variable) => variable instanceof AdHocFiltersVariable);
+    const groupByVariable = variables.find((variable) => variable instanceof GroupByVariable);
+
+    this.setState({ adhocFiltersVar: adhocFiltersVariable, groupByVar: groupByVariable });
   };
 
   public getData() {
@@ -55,77 +63,31 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 }
 
 export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
-  const data = model.getData();
-  const queryRunner = model.getQueryRunner(data);
+  const { adhocFiltersVar, groupByVar } = model.useState();
+  const queryRunner = model.getQueryRunner(model.getData());
 
-  const queries = data?.data?.request?.targets ?? [];
-
-  const { variables } = sceneGraph.getVariables(model).useState();
-  const datasourceUid = queryRunner?.state.datasource?.uid;
-
-  const interpolatedUid = useMemo(
-    () => (queryRunner ? sceneGraph.interpolate(queryRunner, datasourceUid) : undefined),
-    [queryRunner, datasourceUid]
-  );
-
-  const adhocFiltersVariable = useMemo(
-    () => variables.find((variable) => variable instanceof AdHocFiltersVariable),
-    [variables]
-  );
-  const groupByVariable = useMemo(() => variables.find((variable) => variable instanceof GroupByVariable), [variables]);
-
-  const adHocFiltersState = adhocFiltersVariable?.useState();
-  const groupByState = groupByVariable?.useState();
+  const { applicabilityEnabled: filtersApplicabilityEnabled, datasource: filtersDatasource } =
+    adhocFiltersVar?.useState() ?? { applicabilityEnabled: false, datasource: null };
+  const { applicabilityEnabled: groupByApplicabilityEnabled, datasource: groupByDatasource } =
+    groupByVar?.useState() ?? { applicabilityEnabled: false, datasource: null };
+  const { datasource } = queryRunner?.useState() ?? { datasource: undefined };
 
   const supportsApplicability = useMemo(
     () =>
-      supportsDrilldownsApplicability(
-        interpolatedUid,
-        adhocFiltersVariable,
-        groupByVariable,
-        adHocFiltersState,
-        groupByState
-      ),
-    [interpolatedUid, adhocFiltersVariable, groupByVariable, adHocFiltersState, groupByState]
+      sceneUtils.verifyDrilldownApplicability(model, datasource, filtersDatasource, filtersApplicabilityEnabled) ||
+      sceneUtils.verifyDrilldownApplicability(model, datasource, groupByDatasource, groupByApplicabilityEnabled),
+    [datasource, filtersApplicabilityEnabled, filtersDatasource, groupByApplicabilityEnabled, groupByDatasource, model]
   );
 
-  if (!datasourceUid || model.state.hideNonApplicableDrilldowns || !supportsApplicability) {
+  if (!queryRunner || model.state.hideNonApplicableDrilldowns || !supportsApplicability) {
     return null;
   }
 
   return (
     <PanelNonApplicableDrilldownsSubHeader
-      filtersVar={adhocFiltersVariable}
-      groupByVar={groupByVariable}
-      queries={queries}
+      filtersVar={adhocFiltersVar}
+      groupByVar={groupByVar}
+      queryRunner={queryRunner}
     />
   );
-}
-
-function supportsDrilldownsApplicability(
-  dsUid: string | undefined,
-  filtersVar?: AdHocFiltersVariable,
-  groupByVar?: GroupByVariable,
-  adHocFiltersState?: { applicabilityEnabled?: boolean; datasource?: DataSourceRef | null },
-  groupByState?: { applicabilityEnabled?: boolean; datasource?: DataSourceRef | null }
-) {
-  if (
-    dsUid &&
-    filtersVar &&
-    adHocFiltersState?.applicabilityEnabled &&
-    dsUid === sceneGraph.interpolate(filtersVar, adHocFiltersState?.datasource?.uid)
-  ) {
-    return true;
-  }
-
-  if (
-    dsUid &&
-    groupByVar &&
-    groupByState?.applicabilityEnabled &&
-    dsUid === sceneGraph.interpolate(groupByVar, groupByState?.datasource?.uid)
-  ) {
-    return true;
-  }
-
-  return false;
 }

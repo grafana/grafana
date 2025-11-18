@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable, GroupByVariable, SceneQueryRunner, sceneUtils } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 const GAP_SIZE = 8;
@@ -13,49 +13,42 @@ const FONT_SIZE = 12;
 interface Props {
   filtersVar?: AdHocFiltersVariable;
   groupByVar?: GroupByVariable;
-  queries: DataQuery[];
+  queryRunner: SceneQueryRunner;
 }
 
-export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, queries }: Props) {
+export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, queryRunner }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
-  const filtersState = filtersVar?.useState();
-  const groupByState = groupByVar?.useState();
-
-  const filters = useMemo(
-    () => [...(filtersState?.filters ?? []), ...(filtersState?.originFilters ?? [])],
-    [filtersState]
-  );
-  const groupByValues = useMemo(
-    () => (Array.isArray(groupByState?.value) ? groupByState?.value : groupByState?.value ? [groupByState?.value] : []),
-    [groupByState]
-  );
+  const { filters, originFilters } = filtersVar?.useState() ?? { filters: [], originFilters: [] };
+  const { value } = groupByVar?.useState() ?? { value: [] };
 
   const [nonApplicable, setNonApplicable] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(0);
 
   const fetchApplicability = useCallback(async () => {
+    const filterValues = [...(filters ?? []), ...(originFilters ?? [])];
+    const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
+
     const labels: string[] = [];
 
-    if (filtersVar && filters.length) {
-      const applicability = await filtersVar.getFiltersApplicabilityForQueries(filters, queries);
-      const nonApplicableFilters = filters.filter((filter) => {
+    const applicability = await sceneUtils.getDrilldownApplicability(queryRunner!, filtersVar, groupByVar);
+    if (filterValues.length) {
+      const nonApplicableFilters = filterValues.filter((filter) => {
         const result = applicability?.find((entry) => entry.key === filter.key && entry.origin === filter.origin);
         return !result?.applicable;
       });
       labels.push(...nonApplicableFilters.map((filter) => `${filter.key} ${filter.operator} ${filter.value}`));
     }
 
-    if (groupByVar && groupByValues.length) {
-      const applicability = await groupByVar.getGroupByApplicabilityForQueries(groupByValues, queries);
+    if (groupByValues.length) {
       const nonApplicableKeys = applicability?.filter((entry) => !entry.applicable).map((entry) => entry.key) ?? [];
       labels.push(...nonApplicableKeys);
     }
 
     setNonApplicable(labels);
-  }, [filtersVar, groupByVar, filters, groupByValues, queries]);
+  }, [filters, filtersVar, groupByVar, originFilters, queryRunner, value]);
 
   useEffect(() => {
     fetchApplicability();
