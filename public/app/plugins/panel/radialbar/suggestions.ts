@@ -15,12 +15,6 @@ const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
 ): VisualizationSuggestion<Options, GraphFieldConfig> =>
   defaultsDeep(suggestion, {
-    options: {
-      reduceOptions: {
-        values: false,
-        calcs: ['lastNotNull'],
-      },
-    },
     cardOptions: {
       previewModifier: (s) => {
         if (s.options?.reduceOptions) {
@@ -71,17 +65,23 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
     dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10;
 
   return suggestions.map((s) => {
+    s.options = s.options ?? {};
+    s.fieldConfig = s.fieldConfig ?? {
+      defaults: {},
+      overrides: [],
+    };
+
     if (shouldDeaggregate) {
-      s.options = s.options ?? {};
       s.options.reduceOptions = {
         values: true,
         calcs: [],
       };
-      s.fieldConfig = s.fieldConfig ?? {
-        defaults: {},
-        overrides: [],
-      };
       s.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
+    } else {
+      s.options.reduceOptions = {
+        values: false,
+        calcs: ['lastNotNull'],
+      };
     }
 
     return withDefaults(s);
