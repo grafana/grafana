@@ -451,7 +451,7 @@ describe('getDefaultExpressions', () => {
         type: 'and',
       },
       query: {
-        params: ['B'],
+        params: ['A'],
       },
       reducer: {
         params: [],
@@ -488,7 +488,7 @@ describe('getDefaultExpressions', () => {
         type: 'and',
       },
       query: {
-        params: ['C'],
+        params: ['B'],
       },
       reducer: {
         params: [],
@@ -512,7 +512,7 @@ describe('getDefaultExpressions', () => {
 
     expect(result[0].refId).toBe('X');
     expect(reduceModel.refId).toBe('X');
-    expect(reduceModel.conditions?.[0].query.params[0]).toBe('X');
+    expect(reduceModel.conditions?.[0].query.params[0]).toBe('A');
 
     expect(result[1].refId).toBe('Y');
     expect(thresholdModel.refId).toBe('Y');
