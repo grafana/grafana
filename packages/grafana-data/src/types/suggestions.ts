@@ -34,8 +34,9 @@ export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldCo
      * mutate the suggestion object which is passed in as the first argument.
      */
     previewModifier?: (suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) => void;
+    /** @deprecated this will no longer be supported in the new Suggestions UI. */
     icon?: string;
-    /** @deprecated this will be removed with the new suggestions. */
+    /** @deprecated this will no longer be supported in the new Suggestions UI. */
     imgSrc?: string;
   };
 }
