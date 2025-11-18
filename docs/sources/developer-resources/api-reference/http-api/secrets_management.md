@@ -17,6 +17,11 @@ labels:
     - cloud
 title: Secrets Management HTTP API
 refs:
+  api-overview:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/apis/
   rbac-permissions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
@@ -28,10 +33,10 @@ refs:
 
 > If you are running Grafana Enterprise, you need to have specific permissions for some endpoints . Refer to [Role-based access control permissions](ref:rbac-permissions) for more information.
 
-> To view more about the new API structure, refer to [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+> To view more about the new API structure, refer to [API overview](ref:api-overview).
 
 {{< admonition type="caution" >}}
-The API is currently in beta and might be subject to changes.
+The API is currently in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview) and might be subject to changes.
 {{< /admonition >}}
 
 The Grafana Secrets Management API allows you to manage secrets that are used by other services and applications within your Grafana instance.
@@ -53,11 +58,11 @@ Creates a new secure value.
 
 **URL parameters**
 
-- `namespace`: To read more about which namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
 
 **Request body**
 
-- `metadata.name`: The Grafana unique identifier. If you do not want to provide this, set `metadata.generateName` instead to the prefix you would like for the randomly generated uid (cannot be an empty string).
+- `metadata.name`: The Grafana unique identifier. If you do not want to provide this, set `metadata.generateName` instead to the prefix you would like for the randomly generated uid (can't be an empty string).
 - `spec.description`: Short description that explains the purpose of this secure value. Required. Up to 25 characters long.
 - `spec.value`: The secret value to store. Required. Up to 24576 bytes long.
 - `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters](#decrypters) for a list of supported values.
@@ -137,7 +142,7 @@ List all secure values in a namespace.
 
 **URL parameters**
 
-- `namespace`: To read more about which namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
 
 **Query parameters**
 
@@ -209,7 +214,7 @@ Get the details of a specific secure value. It will not return the secret value.
 
 **URL parameters**
 
-- `namespace`: To read more about which namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
 - `name`: The name of the secure value.
 
 **Required permissions**
@@ -271,14 +276,14 @@ Replace an existing secure value with a new specification.
 
 **URL parameters**
 
-- `namespace`: To read more about which namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
 - `name`: The name of the secure value.
 
 **Request body**
 
 - `spec.description`: Short description that explains the purpose of this secure value. Required. Up to 25 characters long.
 - `spec.value`: The secret value to store. Required. Up to 24576 bytes long.
-- `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters]({{< ref "#decrypters" >}}) for a list of supported values.
+- `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters](#decrypters) for a list of supported values.
 
 **Required permissions**
 
@@ -350,7 +355,7 @@ Permanently delete a secure value. This also deletes the underlying stored secre
 
 **URL parameters**
 
-- `namespace`: To read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- `namespace`: To read more about the namespace to use, see the [API overview](ref:api-overview).
 - `name`: The name of the secure value.
 
 **Required permissions**
