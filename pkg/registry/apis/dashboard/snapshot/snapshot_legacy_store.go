@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"context"
+	"fmt"
 
 	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -31,6 +32,7 @@ type SnapshotLegacyStore struct {
 	ResourceInfo utils.ResourceInfo
 	Service      dashboardsnapshots.Service
 	Namespacer   request.NamespaceMapper
+	Options      SharingOptionGetter
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -132,11 +134,15 @@ func (s *SnapshotLegacyStore) List(ctx context.Context, options *internalversion
 }
 
 func (s *SnapshotLegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	//info, err := request.NamespaceInfoFrom(ctx, true)
-	//if err == nil {
-	//	err = s.checkEnabled(info.Value)
-	//}
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
 
+	err = s.checkEnabled(info.Value)
+	if err != nil {
+		return nil, err
+	}
 	query := dashboardsnapshots.GetDashboardSnapshotQuery{
 		Key: name,
 	}
@@ -152,16 +158,16 @@ func (s *SnapshotLegacyStore) Get(ctx context.Context, name string, options *met
 	return nil, s.ResourceInfo.NewNotFound(name)
 }
 
-//func (s *SnapshotLegacyStore) checkEnabled(ns string) error {
-//	opts, err := s.options(ns)
-//	if err != nil {
-//		return err
-//	}
-//	if !opts.Spec.SnapshotsEnabled {
-//		return fmt.Errorf("snapshots not enabled")
-//	}
-//	return nil
-//}
+func (s *SnapshotLegacyStore) checkEnabled(ns string) error {
+	opts, err := s.Options(ns)
+	if err != nil {
+		return err
+	}
+	if !*opts.Spec.SnapshotsEnabled {
+		return fmt.Errorf("snapshots not enabled")
+	}
+	return nil
+}
 
 // snapshotStorageWrapper wraps a storage implementation and disables Create and Update operations
 // This is used for the unified store to ensure snapshots can't be created/updated via standard REST endpoints

@@ -709,6 +709,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			ResourceInfo: *snapshots,
 			Service:      b.snapshotService,
 			Namespacer:   b.namespacer,
+			Options:      b.snapshotOptions,
 		}
 
 		snapshotUnifiedStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *snapshots, opts.OptsGetter)

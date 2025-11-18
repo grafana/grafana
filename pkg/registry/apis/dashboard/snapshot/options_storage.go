@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,21 +22,21 @@ var (
 	_ rest.Storage              = (*optionsStorage)(nil)
 )
 
-type SharingOptionGetter = func(namespace string) (*snapshot.SharingOption, error)
+type SharingOptionGetter = func(namespace string) (*v0alpha1.SharingOption, error)
 
 func NewSharingOptionGetter(cfg *setting.Cfg) SharingOptionGetter {
-	s := &snapshot.SharingOption{
+	s := &v0alpha1.SharingOption{
 		ObjectMeta: metav1.ObjectMeta{
 			CreationTimestamp: metav1.Now(),
 		},
-		Spec: snapshot.SharingOptionSpec{
+		Spec: v0alpha1.SharingOptionSpec{
 			SnapshotsEnabled:     &cfg.SnapshotEnabled,
 			ExternalSnapshotURL:  &cfg.ExternalSnapshotUrl,
 			ExternalSnapshotName: &cfg.ExternalSnapshotName,
 			ExternalEnabled:      &cfg.ExternalEnabled,
 		},
 	}
-	return func(namespace string) (*snapshot.SharingOption, error) {
+	return func(namespace string) (*v0alpha1.SharingOption, error) {
 		return s, nil
 	}
 }
@@ -47,7 +47,7 @@ type optionsStorage struct {
 }
 
 func (s *optionsStorage) New() runtime.Object {
-	return &snapshot.SharingOption{}
+	return &v0alpha1.SharingOption{}
 }
 
 func (s *optionsStorage) Destroy() {}
@@ -57,11 +57,11 @@ func (s *optionsStorage) NamespaceScoped() bool {
 }
 
 func (s *optionsStorage) GetSingularName() string {
-	return "options"
+	return "Options"
 }
 
 func (s *optionsStorage) NewList() runtime.Object {
-	return &snapshot.SharingOptionList{}
+	return &v0alpha1.SharingOptionList{}
 }
 
 func (s *optionsStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -80,8 +80,8 @@ func (s *optionsStorage) List(ctx context.Context, options *internalversion.List
 	if err != nil {
 		return nil, err
 	}
-	list := &snapshot.SharingOptionList{
-		Items: []snapshot.SharingOption{*v},
+	list := &v0alpha1.SharingOptionList{
+		Items: []v0alpha1.SharingOption{*v},
 	}
 	return list, nil
 }
