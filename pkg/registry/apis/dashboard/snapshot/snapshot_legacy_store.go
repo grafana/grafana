@@ -2,11 +2,11 @@ package snapshot
 
 import (
 	"context"
-	"fmt"
 
 	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -55,12 +55,14 @@ func (s *SnapshotLegacyStore) ConvertToTable(ctx context.Context, object runtime
 	return s.ResourceInfo.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *SnapshotLegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("method not yet implemented")
+// Create is not supported for snapshots - use the /snapshots/create custom endpoint instead
+func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(s.ResourceInfo.GroupResource(), "create")
 }
 
-func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("method not yet implemented")
+// Update is not supported for snapshots
+func (s *SnapshotLegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(s.ResourceInfo.GroupResource(), "update")
 }
 
 // GracefulDeleter
@@ -160,3 +162,34 @@ func (s *SnapshotLegacyStore) Get(ctx context.Context, name string, options *met
 //	}
 //	return nil
 //}
+
+// snapshotStorageWrapper wraps a storage implementation and disables Create and Update operations
+// This is used for the unified store to ensure snapshots can't be created/updated via standard REST endpoints
+type snapshotStorageWrapper struct {
+	grafanarest.Storage
+	resourceInfo utils.ResourceInfo
+}
+
+var (
+	_ rest.Creater        = (*snapshotStorageWrapper)(nil)
+	_ rest.Updater        = (*snapshotStorageWrapper)(nil)
+	_ grafanarest.Storage = (*snapshotStorageWrapper)(nil)
+)
+
+// Create is not supported for snapshots - use the /snapshots/create custom endpoint instead
+func (w *snapshotStorageWrapper) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(w.resourceInfo.GroupResource(), "create")
+}
+
+// Update is not supported for snapshots
+func (w *snapshotStorageWrapper) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(w.resourceInfo.GroupResource(), "update")
+}
+
+// WrapSnapshotStore wraps a storage to disable Create and Update operations
+func WrapSnapshotStore(store grafanarest.Storage, resourceInfo utils.ResourceInfo) grafanarest.Storage {
+	return &snapshotStorageWrapper{
+		Storage:      store,
+		resourceInfo: resourceInfo,
+	}
+}

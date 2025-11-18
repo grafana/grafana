@@ -762,6 +762,18 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 	// Add dashboard hits manually
 	if oas.Info.Title == "dashboard.grafana.app/v0alpha1" {
+		// Remove POST from collection path (prevents creating snapshots)
+		snapshotCollectionPath := "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/snapshots"
+		if path := oas.Paths.Paths[snapshotCollectionPath]; path != nil {
+			path.Post = nil
+		}
+
+		// Remove PUT and PATCH from individual resource path (prevents updating snapshots)
+		snapshotPath := "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/snapshots/{name}"
+		if path := oas.Paths.Paths[snapshotPath]; path != nil {
+			path.Put = nil
+			path.Patch = nil
+		}
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 		defsBase := "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1."
 		refsBase := "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1."
