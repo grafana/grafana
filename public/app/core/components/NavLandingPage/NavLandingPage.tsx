@@ -15,7 +15,7 @@ interface Props {
 }
 
 const EXTENSION_ID = (nodeId: string) => `grafana/dynamic/nav-landing-page/nav-id-${nodeId}/v1`;
-const CARD_EXTENSION_ID = (nodeId: string) => `grafana/dynamic/nav-landing-page/nav-id-${nodeId}/card/v1`;
+const CARDS_EXTENSION_ID = (nodeId: string) => `grafana/dynamic/nav-landing-page/nav-id-${nodeId}/cards/v1`;
 
 export function NavLandingPage({ navId, header }: Props) {
   const { node } = useNavModel(navId);
@@ -29,7 +29,7 @@ export function NavLandingPage({ navId, header }: Props) {
   });
 
   const { links: additionalCards, isLoading: isLoadingCards } = usePluginLinks({
-    extensionPointId: CARD_EXTENSION_ID(node.id ?? ''),
+    extensionPointId: CARDS_EXTENSION_ID(node.id ?? ''),
     context: { node },
   });
 

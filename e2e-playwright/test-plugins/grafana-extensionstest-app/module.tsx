@@ -80,7 +80,7 @@ export const plugin = new AppPlugin<{}>()
     },
   })
   .addLink({
-    targets: 'grafana/dynamic/nav-landing-page/nav-id-cfg/card/v1',
+    targets: 'grafana/dynamic/nav-landing-page/nav-id-cfg/cards/v1',
     title: 'Extensions Test App',
     description: 'This card tests the admin page card extension point',
     path: `/a/${pluginJson.id}/`,
