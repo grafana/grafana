@@ -1026,6 +1026,10 @@ const (
 	// Enable new visualization suggestions
 	FlagNewVizSuggestions = "newVizSuggestions"
 
+	// FlagExternalVizSuggestions
+	// Enable all plugins to supply visualization suggestions (including 3rd party plugins)
+	FlagExternalVizSuggestions = "externalVizSuggestions"
+
 	// FlagPreventPanelChromeOverflow
 	// Restrict PanelChrome contents with overflow: hidden;
 	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"

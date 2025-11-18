@@ -10,6 +10,8 @@ import {
 import { config } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
+import { getAllPanelPluginMeta } from '../state/util';
+
 export const panelsToCheckFirst = [
   'timeseries',
   'barchart',
@@ -28,12 +30,18 @@ export const panelsToCheckFirst = [
   'heatmap',
 ];
 
+/**
+ * gather and cache the plugins which provide visualization suggestions so they can be invoked to build suggestions
+ */
 let _pluginCache: PanelPlugin[] | null = null;
 async function getPanelsWithSuggestions(): Promise<PanelPlugin[]> {
   if (!_pluginCache) {
     _pluginCache = [];
-    const pluginList = panelsToCheckFirst; // TODO: swap this out in the flag
-    for (const pluginId of pluginList) {
+    let pluginIds: string[] = panelsToCheckFirst;
+    if (config.featureToggles.externalVizSuggestions) {
+      pluginIds = (await getAllPanelPluginMeta()).map((m) => m.id);
+    }
+    for (const pluginId of pluginIds) {
       _pluginCache.push(await importPanelPlugin(pluginId));
     }
   }
@@ -50,7 +58,7 @@ const OVERRIDE_PREFERRED_VISUALISATION_TYPE_TO_PLUGIN: Partial<Record<PreferredV
 /**
  * given a list of suggestions, sort them in place based on score and preferred visualisation type
  */
-async function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[], dataSummary: PanelDataSummary): void {
+function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[], dataSummary: PanelDataSummary) {
   suggestions.sort((a, b) => {
     if (dataSummary.preferredVisualisationType) {
       const mappedPlugin =
