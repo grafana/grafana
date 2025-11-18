@@ -190,8 +190,17 @@ func (p *termsParser) Parse(id, aggType string, aggValue map[string]any) (*dslAg
 	}
 
 	if order := p.extractor.getMap(aggValue, "order"); order != nil {
-		orderJSON, _ := json.Marshal(order)
-		settings["order"] = string(orderJSON)
+
+		for k := range order {
+			settings["orderBy"] = k
+			orderJSON := p.extractor.getString(order, k)
+			settings["order"] = orderJSON
+		}
+	}
+
+	if minDocCount := p.extractor.getInt(aggValue, "min_doc_count"); minDocCount != 0 {
+		minDocCountJSON, _ := json.Marshal(minDocCount)
+		settings["min_doc_count"] = string(minDocCountJSON)
 	}
 
 	if missing := p.extractor.getString(aggValue, "missing"); missing != "" {
@@ -286,8 +295,14 @@ func (p *filtersParser) Parse(id, aggType string, aggValue map[string]any) (*dsl
 	settings := make(map[string]any)
 
 	if filters := p.extractor.getMap(aggValue, "filters"); filters != nil {
-		filtersJSON, _ := json.Marshal(filters)
-		settings["filters"] = string(filtersJSON)
+		filtersArray := make([]any, 0, len(filters))
+		for k, v := range filters {
+			if queryString := p.extractor.getMap(v.(map[string]any), "query_string"); filters != nil {
+				queryString["label"] = k
+				filtersArray = append(filtersArray, queryString)
+			}
+		}
+		settings["filters"] = filtersArray
 	}
 
 	return &dslAgg{
