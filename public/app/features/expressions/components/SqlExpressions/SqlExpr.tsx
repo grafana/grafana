@@ -245,19 +245,15 @@ LIMIT
   const renderSQLButtons = () => (
     <div className={styles.sqlButtons}>
       <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
-        {isSchemasFeatureEnabled && (
+        {isSchemasFeatureEnabled && !isSchemaInspectorOpen && (
           <Button
-            icon={isSchemaInspectorOpen ? 'table-collapse-all' : 'table-expand-all'}
-            onClick={() => setIsSchemaInspectorOpen(!isSchemaInspectorOpen)}
+            icon="table-expand-all"
+            onClick={() => setIsSchemaInspectorOpen(true)}
             size="sm"
             variant="secondary"
             fill="outline"
           >
-            {isSchemaInspectorOpen ? (
-              <Trans i18nKey="expressions.sql-schema.close-button">Close schema</Trans>
-            ) : (
-              <Trans i18nKey="expressions.sql-schema.inspect-button">Inspect schema</Trans>
-            )}
+            <Trans i18nKey="expressions.sql-schema.inspect-button">Inspect schema</Trans>
           </Button>
         )}
         <Button icon="play" onClick={executeQuery} size="sm">
@@ -327,6 +323,7 @@ LIMIT
                 schemas={schemas?.sqlSchemas ?? null}
                 loading={schemasLoading}
                 error={schemasError}
+                onClose={() => setIsSchemaInspectorOpen(false)}
               />
             )}
           </div>

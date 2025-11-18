@@ -7660,7 +7660,7 @@
       "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
     },
     "sql-schema": {
-      "close-button": "Close schema",
+      "close-schema-inspector": "Close schema inspector",
       "error-title": "Error",
       "inspect-button": "Inspect schema",
       "loading": "Loading schema information...",

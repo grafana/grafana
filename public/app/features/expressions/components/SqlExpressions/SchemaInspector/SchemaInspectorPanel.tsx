@@ -16,6 +16,7 @@ import {
   ScrollContainer,
   Alert,
   Spinner,
+  IconButton,
 } from '@grafana/ui';
 
 import { SQLSchemas, SQLSchemaField, SQLSchemaData } from '../hooks/useSQLSchemas';
@@ -32,9 +33,10 @@ interface SchemaInspectorPanelProps {
   schemas: SQLSchemas | null;
   loading: boolean;
   error: Error | null;
+  onClose: () => void;
 }
 
-export const SchemaInspectorPanel = ({ schemas, loading, error }: SchemaInspectorPanelProps) => {
+export const SchemaInspectorPanel = ({ schemas, loading, error, onClose }: SchemaInspectorPanelProps) => {
   const styles = useStyles2(getStyles);
 
   const schemaResponse: SQLSchemas = schemas ?? {};
@@ -183,11 +185,23 @@ export const SchemaInspectorPanel = ({ schemas, loading, error }: SchemaInspecto
 
   return (
     <div className={styles.schemaInspector}>
-      <TabsBar className={styles.tabsBar}>
-        {refIds.map((refId) => (
-          <Tab key={refId} label={refId} active={activeSchemaTab === refId} onChangeTab={() => setSelectedTab(refId)} />
-        ))}
-      </TabsBar>
+      <div className={styles.tabsBarWrapper}>
+        <TabsBar>
+          {refIds.map((refId) => (
+            <Tab
+              key={refId}
+              label={refId}
+              active={activeSchemaTab === refId}
+              onChangeTab={() => setSelectedTab(refId)}
+            />
+          ))}
+        </TabsBar>
+        <IconButton
+          name="times"
+          onClick={onClose}
+          tooltip={t('expressions.sql-schema.close-schema-inspector', 'Close schema inspector')}
+        />
+      </div>
       <ScrollContainer backgroundColor="primary">
         <TabContent>{renderSchemaTabContent(activeSchemaData)}</TabContent>
       </ScrollContainer>
@@ -204,8 +218,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
   }),
-  tabsBar: css({
+  // Unfortunate hack to get the close button to align with the tabs since we need to
+  // override the default styles of the TabsBar component.
+  tabsBarWrapper: css({
     flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: `0 ${theme.spacing(1)}`,
   }),
   tableCell: css({
     fontSize: theme.typography.bodySmall.fontSize,
