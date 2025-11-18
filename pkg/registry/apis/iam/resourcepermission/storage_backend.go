@@ -60,7 +60,7 @@ func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *Resourc
 	}
 }
 
-func (s *ResourcePermSqlBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
+func (s *ResourcePermSqlBackend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
 	return []resource.ResourceStats{}, errNotImplemented
 }
 

@@ -262,7 +262,10 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	require.NoError(t, err)
 
 	t.Run("Get stats for ns1", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-stats-ns1", 0)
+		nsr := resource.NamespacedResource{
+			Namespace: nsPrefix + "-stats-ns1",
+		}
+		stats, err := backend.GetResourceStats(ctx, nsr, 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 2)
 
@@ -285,7 +288,10 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 
 	t.Run("Get stats for ns2", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-stats-ns2", 0)
+		nsr := resource.NamespacedResource{
+			Namespace: nsPrefix + "-stats-ns2",
+		}
+		stats, err := backend.GetResourceStats(ctx, nsr, 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 1)
 
@@ -297,7 +303,10 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 
 	t.Run("Get stats with minimum count", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-stats-ns1", 1)
+		nsr := resource.NamespacedResource{
+			Namespace: nsPrefix + "-stats-ns1",
+		}
+		stats, err := backend.GetResourceStats(ctx, nsr, 1)
 		require.NoError(t, err)
 		require.Len(t, stats, 1)
 
@@ -308,7 +317,10 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 
 	t.Run("Get stats for non-existent namespace", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, "non-existent", 0)
+		nsr := resource.NamespacedResource{
+			Namespace: "non-existent",
+		}
+		stats, err := backend.GetResourceStats(ctx, nsr, 0)
 		require.NoError(t, err)
 		require.Empty(t, stats)
 	})
