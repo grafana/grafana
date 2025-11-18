@@ -650,6 +650,31 @@ describe('grafana-managed rules', () => {
         expect(frontendFilter.ruleMatches(ruleWithDashboard)).toBe(true);
       });
 
+      it('should include searchGroupName in backend filter when provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ groupName: 'my-group' }));
+
+        expect(backendFilter.searchGroupName).toBe('my-group');
+      });
+
+      it('should not include searchGroupName in backend filter when not provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({}));
+
+        expect(backendFilter.searchGroupName).toBeUndefined();
+      });
+
+      it('should skip groupName filtering on frontend when backend filtering is enabled', () => {
+        const group: PromRuleGroupDTO = {
+          name: 'CPU Usage Alerts',
+          file: 'production/alerts',
+          rules: [],
+          interval: 60,
+        };
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ groupName: 'memory' }));
+        // Should return true because groupName filter is null (handled by backend)
+        expect(frontendFilter.groupMatches(group)).toBe(true);
+      });
+
       it('should still apply other frontend filters', () => {
         const rule = mockGrafanaPromAlertingRule({
           name: 'High CPU Usage',
@@ -738,6 +763,27 @@ describe('grafana-managed rules', () => {
         const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ dashboardUid: 'dashboard-b' }));
         expect(frontendFilter2.ruleMatches(ruleDashboardA)).toBe(false);
         expect(frontendFilter2.ruleMatches(ruleDashboardB)).toBe(true);
+      });
+
+      it('should not include searchGroupName in backend filter', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ groupName: 'my-group' }));
+
+        expect(backendFilter.searchGroupName).toBeUndefined();
+      });
+
+      it('should perform groupName filtering on frontend', () => {
+        const group: PromRuleGroupDTO = {
+          name: 'CPU Usage Alerts',
+          file: 'production/alerts',
+          rules: [],
+          interval: 60,
+        };
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ groupName: 'cpu' }));
+        expect(frontendFilter.groupMatches(group)).toBe(true);
+
+        const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ groupName: 'memory' }));
+        expect(frontendFilter2.groupMatches(group)).toBe(false);
       });
     });
   });
