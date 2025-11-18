@@ -138,14 +138,6 @@ var (
 			Owner:       grafanaBackendGroup,
 		},
 		{
-			Name:         "influxdbBackendMigration",
-			Description:  "Query InfluxDB InfluxQL without the proxy",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaPartnerPluginsSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:         "starsFromAPIServer",
 			Description:  "populate star status from apiserver",
 			Stage:        FeatureStageExperimental,
