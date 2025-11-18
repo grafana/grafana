@@ -5908,7 +5908,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "변환 추가"
+      "add-transformation": "변환 추가",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -9114,6 +9117,9 @@
     "category-legend": "범례",
     "category-tooltip": "도구 설명",
     "category-y-axis": "Y축",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "투명도",
       "label-scheme": "체계"
@@ -12326,6 +12332,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "접기",
+      "exchange": "",
       "expand": "펼치기",
       "loading": "대시보드 로딩 중",
       "noResultsForFilter": "쿼리에 대해 찾은 결과 없음",
