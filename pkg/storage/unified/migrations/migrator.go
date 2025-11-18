@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,12 +22,12 @@ type StorageMigrator interface {
 
 type unifiedStorageMigrator struct {
 	migrator        legacy.LegacyMigrator
-	bulkStoreClient resourcepb.BulkStoreClient
+	bulkStoreClient resource.ResourceClient
 	resources       []schema.GroupResource
 	log             log.Logger
 }
 
-func newUnifiedStorageMigrator(migrator legacy.LegacyMigrator, bulkStoreClient resourcepb.BulkStoreClient, resources []schema.GroupResource, logPrefix string) StorageMigrator {
+func newUnifiedStorageMigrator(migrator legacy.LegacyMigrator, bulkStoreClient resource.ResourceClient, resources []schema.GroupResource, logPrefix string) StorageMigrator {
 	return &unifiedStorageMigrator{
 		migrator:        migrator,
 		bulkStoreClient: bulkStoreClient,
@@ -131,8 +133,8 @@ func (m *unifiedStorageMigrator) getLegacyCount(sess *xorm.Session, group, resou
 		return 0, fmt.Errorf("unknown resource type: %s.%s", resourceType, group)
 	}
 
-	// Count items in legacy table
-	count, err := sess.Where(whereClause, orgID).Count(tableName)
+	// Count items in legacy table using Table() before Count()
+	count, err := sess.Table(tableName).Where(whereClause, orgID).Count()
 	if err != nil {
 		return 0, fmt.Errorf("failed to count %s: %w", tableName, err)
 	}
@@ -155,16 +157,10 @@ func (m *unifiedStorageMigrator) getLegacyTableInfo(group, resource string) (tab
 }
 
 func ParseOrgIDFromNamespace(namespace string) (int64, error) {
-	// Namespace format is typically "org-<id>" or "orgId-<id>"
-	// For now, assume format is known - this should use authlib.ParseNamespace in practice
-	var orgID int64
-	n, err := fmt.Sscanf(namespace, "org-%d", &orgID)
-	if err != nil || n != 1 {
-		// Try alternative format
-		n, err = fmt.Sscanf(namespace, "orgId-%d", &orgID)
-		if err != nil || n != 1 {
-			return 0, fmt.Errorf("invalid namespace format: %s", namespace)
-		}
+	// Use authlib to properly parse all namespace formats including "default" for org 1
+	info, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse namespace: %w", err)
 	}
-	return orgID, nil
+	return info.OrgID, nil
 }

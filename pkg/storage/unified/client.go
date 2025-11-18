@@ -106,7 +106,6 @@ func newClient(opts options.StorageOptions,
 	ctx := context.Background()
 
 	switch opts.StorageType {
-	// skip file storage type that for now
 	case options.StorageTypeFile:
 		if opts.DataPath == "" {
 			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")

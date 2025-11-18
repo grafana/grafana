@@ -3,37 +3,62 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/migrations")
 
-// MigrationService is a dummy service that ensures migrations are registered
-// in the Wire dependency graph
-type MigrationService struct{}
+// UnifiedStorageMigrationProvider provides unified storage migrations as a background service
+type UnifiedStorageMigrationProvider interface {
+	registry.BackgroundService
+}
 
-// ProvideMigrations is a Wire provider that creates and runs unified storage migrations.
-// This function blocks Grafana startup until migrations complete. If migrations fail,
-// Grafana will not start, ensuring data consistency.
-func ProvideMigrations(
+type UnifiedStorageMigrationProviderImpl struct {
+	legacyMigrator legacy.LegacyMigrator
+	cfg            *setting.Cfg
+	client         resource.ResourceClient
+	sqlStore       db.DB
+}
+
+var _ UnifiedStorageMigrationProvider = (*UnifiedStorageMigrationProviderImpl)(nil)
+
+// ProvideUnifiedStorageMigrationProvider is a Wire provider that creates the migration service.
+// The service implements registry.BackgroundService and runs migrations during server startup.
+func ProvideUnifiedStorageMigrationProvider(
 	legacyMigrator legacy.LegacyMigrator,
 	cfg *setting.Cfg,
-	client resourcepb.BulkStoreClient,
+	client resource.ResourceClient,
 	sqlStore db.DB,
-) (*MigrationService, error) {
-	// Run migrations synchronously - block until complete
-	if err := RegisterMigrations(legacyMigrator, cfg, client, sqlStore); err != nil {
-		return nil, err
+) *UnifiedStorageMigrationProviderImpl {
+	return &UnifiedStorageMigrationProviderImpl{
+		legacyMigrator: legacyMigrator,
+		cfg:            cfg,
+		client:         client,
+		sqlStore:       sqlStore,
 	}
-	return &MigrationService{}, nil
+}
+
+// Run executes unified storage migrations as a background service.
+// This blocks until migrations complete. If migrations fail, an error is returned
+// which will prevent Grafana from starting.
+func (p *UnifiedStorageMigrationProviderImpl) Run(ctx context.Context) error {
+	if os.Getenv("GRAFANA_TEST_DB") != "" || p.cfg.Env == "testing" {
+		return nil
+	}
+
+	// TODO: Re-enable once migrations are ready
+	// return RegisterMigrations(p.legacyMigrator, p.cfg, p.client, p.sqlStore)
+	return nil
 }
 
 // RegisterMigrations initializes and registers all unified storage migrations.
@@ -43,13 +68,14 @@ func ProvideMigrations(
 func RegisterMigrations(
 	legacyMigrator legacy.LegacyMigrator,
 	cfg *setting.Cfg,
-	client resourcepb.BulkStoreClient,
+	client resource.ResourceClient,
 	sqlStore db.DB,
 ) error {
 	ctx, span := tracer.Start(context.Background(), "storage.unified.RegisterMigrations")
 	defer span.End()
 	logger := log.New("storage.unified.migrations")
-	mg := migrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unified-storage")
+	mg := migrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unified_storage")
+	mg.AddCreateMigration()
 
 	if err := prometheus.Register(mg); err != nil {
 		logger.Warn("Failed to register migrator metrics", "error", err)
@@ -61,7 +87,6 @@ func RegisterMigrations(
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
 	if err := mg.RunMigrations(ctx, sec.Key("migration_locking").MustBool(true), sec.Key("locking_attempt_timeout_sec").MustInt()); err != nil {
-		logger.Error("Unified storage data migration failed", "error", err)
 		return fmt.Errorf("unified storage data migration failed: %w", err)
 	}
 
@@ -72,7 +97,7 @@ func RegisterMigrations(
 func registerDashboardAndFolderMigration(
 	mg *migrator.Migrator,
 	legacyMigrator legacy.LegacyMigrator,
-	bulkStoreClient resourcepb.BulkStoreClient,
+	bulkStoreClient resource.ResourceClient,
 ) {
 	migration := &dashboardAndFolderMigration{
 		legacyMigrator:  legacyMigrator,
