@@ -33,6 +33,17 @@ export function NavLandingPage({ navId, header }: Props) {
     context: { node },
   });
 
+  // Warn if both extension points are being used (they are mutually exclusive)
+  React.useEffect(() => {
+    if (components && components.length > 0 && additionalCards && additionalCards.length > 0) {
+      console.warn(
+        `[NavLandingPage] Both NavLandingPage and NavLandingPageCards extensions are registered for "${node.id}". ` +
+          `The NavLandingPage extension will take precedence and NavLandingPageCards will be ignored. ` +
+          `Please use only one extension point.`
+      );
+    }
+  }, [components, additionalCards, node.id]);
+
   if (isLoading || isLoadingCards) {
     return null;
   }
