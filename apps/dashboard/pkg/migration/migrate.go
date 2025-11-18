@@ -9,24 +9,31 @@ import (
 )
 
 // Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
-func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
-	migratorInstance.init(dsInfoProvider)
+func Initialize(dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) {
+	migratorInstance.init(dsIndexProvider, leIndexProvider)
 }
 
-// GetDataSourceInfoProvider returns the datasource info provider instance that was initialized.
-// This allows reuse of the same provider instance across migrations and conversions.
-func GetDataSourceInfoProvider() schemaversion.DataSourceInfoProvider {
+// GetDataSourceIndexProvider returns the datasource index provider instance that was initialized.
+func GetDataSourceIndexProvider() schemaversion.DataSourceIndexProvider {
 	// Wait for initialization to complete
 	<-migratorInstance.ready
-	return migratorInstance.dsInfoProvider
+	return migratorInstance.dsIndexProvider
+}
+
+// GetLibraryElementIndexProvider returns the library element index provider instance that was initialized.
+func GetLibraryElementIndexProvider() schemaversion.LibraryElementIndexProvider {
+	// Wait for initialization to complete
+	<-migratorInstance.ready
+	return migratorInstance.leIndexProvider
 }
 
 // ResetForTesting resets the migrator singleton for testing purposes.
 func ResetForTesting() {
 	migratorInstance = &migrator{
-		migrations:     map[int]schemaversion.SchemaVersionMigrationFunc{},
-		ready:          make(chan struct{}),
-		dsInfoProvider: nil,
+		migrations:      map[int]schemaversion.SchemaVersionMigrationFunc{},
+		ready:           make(chan struct{}),
+		dsIndexProvider: nil,
+		leIndexProvider: nil,
 	}
 	initOnce = sync.Once{}
 }
@@ -46,15 +53,17 @@ var (
 )
 
 type migrator struct {
-	ready          chan struct{}
-	migrations     map[int]schemaversion.SchemaVersionMigrationFunc
-	dsInfoProvider schemaversion.DataSourceInfoProvider
+	ready           chan struct{}
+	migrations      map[int]schemaversion.SchemaVersionMigrationFunc
+	dsIndexProvider schemaversion.DataSourceIndexProvider
+	leIndexProvider schemaversion.LibraryElementIndexProvider
 }
 
-func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider) {
+func (m *migrator) init(dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) {
 	initOnce.Do(func() {
-		m.dsInfoProvider = dsInfoProvider
-		m.migrations = schemaversion.GetMigrations(dsInfoProvider)
+		m.dsIndexProvider = dsIndexProvider
+		m.leIndexProvider = leIndexProvider
+		m.migrations = schemaversion.GetMigrations(dsIndexProvider, leIndexProvider)
 		close(m.ready)
 	})
 }

@@ -981,6 +981,9 @@ type ListAlertRulesQuery struct {
 	// SearchTitle allows searching for alert rules that contain
 	// the given string in their title (case insensitive)
 	SearchTitle string
+	// SearchRuleGroup allows searching for alert rules in groups that contain
+	// the given string in their name (case insensitive)
+	SearchRuleGroup string
 
 	HasPrometheusRuleDefinition *bool
 }
@@ -991,6 +994,7 @@ type ListAlertRulesExtendedQuery struct {
 	RuleType RuleTypeFilter
 
 	Limit         int64
+	RuleLimit     int64
 	ContinueToken string
 }
 
