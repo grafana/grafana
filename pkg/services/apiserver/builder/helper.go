@@ -22,6 +22,7 @@ import (
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
@@ -114,6 +115,7 @@ func SetupConfig(
 	gvs []schema.GroupVersion,
 	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
 	reg prometheus.Registerer,
+	apiResourceConfig *serverstorage.ResourceConfig,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
@@ -126,7 +128,7 @@ func SetupConfig(
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs)
+	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs, apiResourceConfig)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
 		meta := r.Metadata()
 		kind := ""
@@ -287,6 +289,7 @@ func InstallAPIs(
 	features featuremgmt.FeatureToggles,
 	dualWriterMetrics *grafanarest.DualWriterMetrics,
 	builderMetrics *BuilderMetrics,
+	apiResourceConfig *serverstorage.ResourceConfig,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
@@ -413,6 +416,18 @@ func InstallAPIs(
 			}
 			if len(g.PrioritizedVersions) < 1 {
 				continue
+			}
+
+			// filter out api groups that are disabled in APIEnablementOptions
+			for version := range g.VersionedResourcesStorageMap {
+				gvr := schema.GroupVersionResource{
+					Group:   group,
+					Version: version,
+				}
+				if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gvr) {
+					klog.InfoS("Skipping storage for disabled resource", "gvr", gvr.String())
+					delete(g.VersionedResourcesStorageMap, version)
+				}
 			}
 
 			// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed

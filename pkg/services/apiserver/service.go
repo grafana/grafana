@@ -316,7 +316,9 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildBranch,
 	)
 
-	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, appinstaller.NewAPIResourceConfig(s.appInstallers), s.scheme); err != nil {
+	apiResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
+
+	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
 		return err
 	}
 
@@ -359,6 +361,7 @@ func (s *service) start(ctx context.Context) error {
 		groupVersions,
 		defGetters,
 		s.metrics,
+		apiResourceConfig,
 	)
 	if err != nil {
 		return err
@@ -400,6 +403,7 @@ func (s *service) start(ctx context.Context) error {
 		s.features,
 		s.dualWriterMetrics,
 		s.builderMetrics,
+		apiResourceConfig,
 	)
 	if err != nil {
 		return err
