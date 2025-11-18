@@ -98,7 +98,6 @@ interface Collapsible {
    */
   onToggleCollapse?: (collapsed: boolean) => void;
   hoverHeader?: never;
-  /** @deprecated */
   hoverHeaderOffset?: never;
 }
 
@@ -108,7 +107,6 @@ interface HoverHeader {
   showMenuAlways?: never;
   onToggleCollapse?: never;
   hoverHeader?: boolean;
-  /** @deprecated */
   hoverHeaderOffset?: number;
 }
 
@@ -371,6 +369,7 @@ export function PanelChrome({
               menu={menu}
               title={typeof title === 'string' ? title : undefined}
               dragClass={dragClass}
+              offset={hoverHeaderOffset}
               onOpenMenu={onOpenMenu}
             >
               {headerContent}

@@ -14,11 +14,12 @@ interface Props {
   children?: React.ReactNode;
   menu?: ReactElement | (() => ReactElement);
   title?: string;
+  offset?: number;
   dragClass?: string;
   onOpenMenu?: () => void;
 }
 
-export function HoverWidget({ menu, title, dragClass, children, onOpenMenu }: Props) {
+export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
   const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
@@ -36,7 +37,7 @@ export function HoverWidget({ menu, title, dragClass, children, onOpenMenu }: Pr
   }
 
   return (
-    <div className={cx(styles.container, 'show-on-hover')} data-testid={selectors.container}>
+    <div className={cx(styles.container, 'show-on-hover')} style={{ top: offset }} data-testid={selectors.container}>
       {dragClass && (
         <div
           className={cx(styles.square, styles.draggable, dragClass)}
