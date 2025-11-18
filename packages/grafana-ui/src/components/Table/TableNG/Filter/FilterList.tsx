@@ -5,7 +5,7 @@ import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { Checkbox } from '../../../Forms/Checkbox';
@@ -24,7 +24,7 @@ interface Props {
 }
 
 const ITEM_HEIGHT = 28;
-const MIN_HEIGHT = ITEM_HEIGHT * 5;
+const MIN_HEIGHT = ITEM_HEIGHT * 4.5; // split an item in the middle to imply there are more items to scroll
 
 export const REGEX_OPERATOR = operatorSelectableValues['Contains'];
 const XPR_OPERATOR = operatorSelectableValues['Expression'];
@@ -109,21 +109,31 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
     () => selectedItems.length > 0 && items.length > selectedItems.length,
     [items, selectedItems]
   );
-  const selectCheckLabel = useMemo(
-    () => (selectedItems.length ? `${selectedItems.length} selected` : `Select all`),
-    [selectedItems]
-  );
+  const selectCheckLabel = useMemo(() => {
+    if (!values.length) {
+      return t('grafana-ui.table.filter.select-all', 'Select all');
+    }
+    if (values.length !== selectedItems.length) {
+      return t('grafana-ui.table.filter.selected-some-hidden', '{{ numSelected }} selected ({{ numHidden }} hidden)', {
+        numSelected: values.length,
+        numHidden: values.length - selectedItems.length,
+      });
+    }
+    return t('grafana-ui.table.filter.selected', '{{ numSelected }} selected', {
+      numSelected: values.length,
+    });
+  }, [selectedItems.length, values.length]);
   const selectCheckDescription = useMemo(
     () =>
       items.length !== selectedItems.length
-        ? 'Add all displayed values to the filter'
-        : 'Remove all displayed values from the filter',
+        ? t('grafana-ui.table.filter.add-all', 'Add all displayed values to the filter')
+        : t('grafana-ui.table.filter.remove-all', 'Remove all displayed values from the filter'),
     [items, selectedItems]
   );
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const gutter = theme.spacing.gridSize;
+  const gutter = theme.spacing.gridSize / 2;
   const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [gutter, items.length]);
 
   const onCheckedChanged = useCallback(
@@ -207,9 +217,8 @@ function ItemRenderer({ index, style, data: { onCheckedChanged, items, values, c
 const getStyles = (theme: GrafanaTheme2) => ({
   filterList: css({
     label: 'filterList',
-    backgroundColor: theme.components.input.background,
-    border: `1px solid ${theme.colors.border.medium}`,
-    borderRadius: theme.shape.radius.default,
+    marginBottom: theme.spacing(0.5),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
   filterListRow: css({
     label: 'filterListRow',
@@ -222,12 +231,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     ':hover': {
       backgroundColor: theme.colors.action.hover,
     },
-  }),
-  selectDivider: css({
-    label: 'selectDivider',
-    width: '100%',
-    borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(0.5, 2),
   }),
   noValuesLabel: css({
     paddingTop: theme.spacing(1),
