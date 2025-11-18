@@ -18,8 +18,7 @@ test.use({
   viewport: { width: 1920, height: 1080 },
 });
 
-// Skipping due to failing test in CI
-test.skip(
+test.describe(
   'Grouping panels',
   {
     tag: ['@dashboards'],
@@ -164,7 +163,7 @@ test.skip(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(1);
 
-      thirdRow.scrollIntoViewIfNeeded();
+      await thirdRow.scrollIntoViewIfNeeded();
       await expect(thirdRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: thirdRow })
@@ -239,7 +238,7 @@ test.skip(
       const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row'));
       await expect(firstRow).toBeVisible();
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
@@ -247,7 +246,7 @@ test.skip(
       const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 1'));
       await expect(secondRow).toBeVisible();
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
@@ -264,12 +263,12 @@ test.skip(
       await expect(firstRow).toBeVisible();
       await expect(secondRow).toBeVisible();
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
@@ -298,7 +297,7 @@ test.skip(
       const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row'));
       await expect(firstRow).toBeVisible();
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
@@ -306,7 +305,7 @@ test.skip(
       const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 1'));
       await expect(secondRow).toBeVisible();
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
@@ -323,12 +322,12 @@ test.skip(
       await expect(firstRow).toBeVisible();
       await expect(secondRow).toBeVisible();
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
@@ -357,7 +356,7 @@ test.skip(
       const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row'));
       await expect(firstRow).toBeVisible();
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
@@ -365,7 +364,7 @@ test.skip(
       const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 1'));
       await expect(secondRow).toBeVisible();
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
@@ -503,6 +502,60 @@ test.skip(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
+    });
+    test('cannot add a row without a title', async ({ dashboardPage, selectors, page }) => {
+      await importTestDashboard(page, selectors, 'Cannot add row without title');
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+
+      await groupIntoRow(page, dashboardPage, selectors);
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
+      ).toBeVisible();
+
+      // edit row title to a non-default and click away to trigger onBlur
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
+        .fill('Test row 1');
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+
+      // clear the title input to simulate no title and click away to trigger onBlur
+      await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('Test row 1')).click();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
+        .fill('');
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+
+      // title should be set to a default name
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
+      ).toBeVisible();
+
+      // add another row
+      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow).click();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
+      ).toBeVisible();
+
+      // edit row title to a non-default and click away to trigger onBlur
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
+        .fill('Test row 2');
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+
+      // clear the title input to simulate no title and click away to trigger onBlur
+      await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('Test row 2')).click();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
+        .fill('');
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+
+      // title should be set to a default name + 1 to avoid duplicates
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
+      ).toBeVisible();
     });
 
     /*
@@ -724,7 +777,7 @@ test.skip(
       const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 1'));
       const thirdRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 2'));
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(firstRow).toBeVisible();
       // Wait for panels to load
       await expect(
@@ -735,13 +788,13 @@ test.skip(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(secondRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
 
-      thirdRow.scrollIntoViewIfNeeded();
+      await thirdRow.scrollIntoViewIfNeeded();
       await expect(thirdRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: thirdRow })
@@ -768,13 +821,13 @@ test.skip(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(secondRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
 
-      thirdRow.scrollIntoViewIfNeeded();
+      await thirdRow.scrollIntoViewIfNeeded();
       await expect(thirdRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: thirdRow })
@@ -835,6 +888,52 @@ test.skip(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
+    });
+
+    test('cannot add a tab without a title', async ({ dashboardPage, selectors, page }) => {
+      await importTestDashboard(page, selectors, 'Cannot add tab without title');
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+
+      await groupIntoTab(page, dashboardPage, selectors);
+
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab'))).toBeVisible();
+
+      // edit tab title to a non-default and click away to trigger onBlur
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
+        .fill('Test tab 1');
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+
+      // clear the title input to simulate no title and click away to trigger onBlur
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Test tab 1')).click();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
+        .fill('');
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+
+      // title should be set to a default name
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab'))).toBeVisible();
+
+      // add another tab
+      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addTab).click();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab 1'))).toBeVisible();
+
+      // edit tab title to a non-default and click away to trigger onBlur
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
+        .fill('Test tab 2');
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+
+      // clear the title input to simulate no title and click away to trigger onBlur
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Test tab 2')).click();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
+        .fill('');
+      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+
+      // title should be set to a default name + 1 to avoid duplicates
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab 1'))).toBeVisible();
     });
   }
 );
