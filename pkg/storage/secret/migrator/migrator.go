@@ -221,4 +221,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add active column index to "+TableNameKeeper, migrator.NewAddIndexMigration(keeperTable, &migrator.Index{
 		Cols: []string{"namespace", "name", "active"},
 	}))
+	mg.AddMigration("set secret_secure_value.keeper to 'system' where keeper is null in "+TableNameSecureValue, migrator.NewRawSQLMigration(
+		fmt.Sprintf("UPDATE %s SET keeper = '%s' WHERE keeper IS NULL", TableNameSecureValue, contracts.SystemKeeperName),
+	))
 }
