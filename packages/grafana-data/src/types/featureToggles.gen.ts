@@ -1194,4 +1194,9 @@ export interface FeatureToggles {
   * Show transformation quick-start cards in empty transformations state
   */
   transformationsEmptyPlaceholder?: boolean;
+  /**
+  * Run queries through the data source backend
+  * @default false
+  */
+  opentsdbBackendMigration?: boolean;
 }

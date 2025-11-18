@@ -1073,4 +1073,8 @@ const (
 	// FlagTransformationsEmptyPlaceholder
 	// Show transformation quick-start cards in empty transformations state
 	FlagTransformationsEmptyPlaceholder = "transformationsEmptyPlaceholder"
+
+	// FlagOpentsdbBackendMigration
+	// Run queries through the data source backend
+	FlagOpentsdbBackendMigration = "opentsdbBackendMigration"
 )
