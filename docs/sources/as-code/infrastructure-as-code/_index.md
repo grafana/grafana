@@ -4,17 +4,23 @@ keywords:
   - Quickstart
   - Grafana Cloud
 menuTitle: Infrastructure as code
-title: Provision Grafana Cloud with infrastructure as code
+title: Provision Grafana Cloud with Infrastructure as code
 weight: 800
+labels:
+  products:
+    - cloud
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/
 ---
 
-# Provision Grafana Cloud with infrastructure as code
+# Provision Grafana Cloud with Infrastructure as code
 
-With Grafana Cloud, you can create dashboards via configuration files in source code. This enables you to review code, reuse it, and create better workflows.
+With Grafana Cloud, you can use as-code tools to _declaratively_ create and manage resources via code, and incorporate them efficiently into your own use cases. This enables you to review code, reuse it, and create better workflows.
 
-Via code, you can _declaratively_ manage _what_ Grafana resources to use.
-The as-code tools and tutorials that follow show you what do to, to declaratively manage Grafana resources, and incorporate them efficiently into your own use cases.
+{{< admonition type="note" >}}
+
+Most of the tools defined here can be used with one another.
+
+{{< /admonition >}}
 
 ## Grafana Terraform provider
 
@@ -152,16 +158,15 @@ To use the Crossplane provider, you must have the Crossplane CLI and Crossplane 
 
 ## Grafana as code comparison
 
-Most of the tools defined here can be used with one another.
 The following chart compares the properties and tools mentioned above.
 
-| Property/Tool                          | Grafana Terraform Provider  | Grafana Ansible Collection                                                    | Grafana Operator                                                 | Grizzly                                                                                                                                  | Grafana Crossplane Provider                                      |
-| -------------------------------------- | --------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Grafana resources supported            | All major Grafana resources | Grafana Cloud stack, plugins, API keys, dashboards, data sources, and folders | Dashboards, Datasources, Folders                                 | Synthetic Monitoring checks, dashboards, data sources, folders, and Prometheus rules                                                     | All major Grafana resources                                      |
-| Tool format                            | HCL/JSON                    | YAML                                                                          | YAML                                                             | Jsonnet/YAML/JSON                                                                                                                        | YAML/JSON                                                        |
-| Follows Kubernetes-style manifests     |                             |                                                                               | ✓                                                                | ✓                                                                                                                                        | ✓                                                                |
-| Easy dashboard building process        |                             |                                                                               | ✓                                                                | ✓                                                                                                                                        |                                                                  |
-| Manage resources using Kubernetes      |                             |                                                                               | ✓                                                                |                                                                                                                                          | ✓                                                                |
-| Retrieves Grafana resource information | ✓                           |                                                                               |                                                                  |                                                                                                                                          |                                                                  |
-| Built-in resource sync process         |                             |                                                                               | ✓                                                                | ✓                                                                                                                                        | ✓                                                                |
-| Recommended for                        | Existing Terraform users    | Existing Ansible users                                                        | Users looking to manage Grafana resources from within Kubernetes | Users looking to define Grafana resources in a Kubernetes-style YAML and users looking to get built-in workflow support and sync process | Users looking to manage Grafana resources from within Kubernetes |
+| Property/Tool     | Grafana Terraform Provider  | Grafana Ansible Collection     | Grafana Operator   |  Grafana Crossplane Provider  |
+| -------------------- | --------- | ------------- | ------------------------------------------ | ----------------------------------- | 
+| Grafana resources supported            | All major Grafana resources | Grafana Cloud stack, plugins, API keys, dashboards, data sources, and folders | Dashboards, Datasources, Folders         |  All major Grafana resources      |
+| Tool format            | HCL/JSON             | YAML                    |  YAML      | YAML/JSON           |
+| Follows Kubernetes-style manifests     |        |           | ✓            |  ✓                     |
+| Easy dashboard building process        |          |          | ✓      |    |
+| Manage resources using Kubernetes      |     |         | ✓           |  ✓       |
+| Retrieves Grafana resource information | ✓        |      |           |          |
+| Built-in resource sync process     |        |             | ✓              |  ✓          |
+| Recommended for     | Existing Terraform users    | Existing Ansible users      | Users looking to manage Grafana resources from within Kubernetes |  Users looking to manage Grafana resources from within Kubernetes |
