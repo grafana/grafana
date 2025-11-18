@@ -127,11 +127,11 @@ export function QueryVariableEditorForm({
             VariableQueryEditor={VariableQueryEditor}
             timeRange={timeRange}
           />
+          {/* TODO: remove me after finished testing - each DS can/should implement their own UI */}
           <Field
-            // TODO: add translation
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             label="Enable access to all the fields of the query results"
             description={
-              // TODO: add translation
               <Trans i18nKey="">
                 Check{' '}
                 <TextLink href="https://grafana.com/docs/grafana/latest/variables/xxx" external>
