@@ -8,10 +8,12 @@ const flamegraphConfigOptions = [FieldConfigProperty.Unit, FieldConfigProperty.D
 
 export const plugin = new PanelPlugin(FlameGraphPanel)
   // check that the first frame of the data has the required fields for a flamegraph
-  .setSuggestionsSupplier(showDefaultSuggestion((ds) => {
-    const firstFrame = ds._data?.[0];
-    return Boolean(firstFrame && !checkFields(firstFrame));
-  }))
+  .setSuggestionsSupplier(
+    showDefaultSuggestion((ds) => {
+      const firstFrame = ds._data?.[0];
+      return Boolean(firstFrame && !checkFields(firstFrame));
+    })
+  )
   .useFieldConfig({
     disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => !flamegraphConfigOptions.includes(v)),
   });
