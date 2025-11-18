@@ -1,4 +1,5 @@
 import { PromQuery } from '@grafana/prometheus';
+import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   AlertDataQuery,
@@ -8,6 +9,7 @@ import {
   RulerAlertingRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { EvalFunction } from '../../state/alertDef';
 import { mockDataSource, mockRuleWithLocation, mockRulerGrafanaRecordingRule } from '../mocks';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { setupDataSources } from '../testSetup/datasources';
@@ -21,6 +23,7 @@ import {
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
+  getDefaultExpressions,
   getInstantFromDataQuery,
   getNotificationSettingsForDTO,
   rulerRuleToFormValues,
@@ -415,5 +418,104 @@ describe('getInstantFromDataQuery', () => {
     });
 
     expect(result).toBe(false);
+  });
+});
+
+describe('getDefaultExpressions', () => {
+  it('should create a reduce expression as the first query', () => {
+    const result = getDefaultExpressions('B', 'C');
+    const reduceQuery = result[0];
+    const model = reduceQuery.model as ExpressionQuery;
+
+    expect(reduceQuery.refId).toBe('B');
+    expect(reduceQuery.datasourceUid).toBe(ExpressionDatasourceUID);
+    expect(reduceQuery.queryType).toBe('');
+    expect(model.type).toBe(ExpressionQueryType.reduce);
+    expect(model.datasource?.uid).toBe(ExpressionDatasourceUID);
+    expect(model.reducer).toBe('last');
+  });
+
+  it('should create reduce expression with proper conditions structure', () => {
+    const result = getDefaultExpressions('B', 'C');
+    const reduceQuery = result[0];
+    const model = reduceQuery.model as ExpressionQuery;
+
+    expect(model.conditions).toHaveLength(1);
+    expect(model.conditions?.[0]).toEqual({
+      type: 'query',
+      evaluator: {
+        params: [],
+        type: EvalFunction.IsAbove,
+      },
+      operator: {
+        type: 'and',
+      },
+      query: {
+        params: ['B'],
+      },
+      reducer: {
+        params: [],
+        type: 'last',
+      },
+    });
+  });
+
+  it('should create a threshold expression as the second query', () => {
+    const result = getDefaultExpressions('B', 'C');
+    const thresholdQuery = result[1];
+    const model = thresholdQuery.model as ExpressionQuery;
+
+    expect(thresholdQuery.refId).toBe('C');
+    expect(thresholdQuery.datasourceUid).toBe(ExpressionDatasourceUID);
+    expect(thresholdQuery.queryType).toBe('');
+    expect(model.type).toBe(ExpressionQueryType.threshold);
+    expect(model.datasource?.uid).toBe(ExpressionDatasourceUID);
+  });
+
+  it('should create threshold expression with proper conditions structure', () => {
+    const result = getDefaultExpressions('B', 'C');
+    const thresholdQuery = result[1];
+    const model = thresholdQuery.model as ExpressionQuery;
+
+    expect(model.conditions).toHaveLength(1);
+    expect(model.conditions?.[0]).toEqual({
+      type: 'query',
+      evaluator: {
+        params: [0],
+        type: EvalFunction.IsAbove,
+      },
+      operator: {
+        type: 'and',
+      },
+      query: {
+        params: ['C'],
+      },
+      reducer: {
+        params: [],
+        type: 'last',
+      },
+    });
+  });
+
+  it('should reference the reduce expression in the threshold expression', () => {
+    const result = getDefaultExpressions('B', 'C');
+    const thresholdQuery = result[1];
+    const model = thresholdQuery.model as ExpressionQuery;
+
+    expect(model.expression).toBe('B');
+  });
+
+  it('should properly use different refIds throughout the structure', () => {
+    const result = getDefaultExpressions('X', 'Y');
+    const reduceModel = result[0].model as ExpressionQuery;
+    const thresholdModel = result[1].model as ExpressionQuery;
+
+    expect(result[0].refId).toBe('X');
+    expect(reduceModel.refId).toBe('X');
+    expect(reduceModel.conditions?.[0].query.params[0]).toBe('X');
+
+    expect(result[1].refId).toBe('Y');
+    expect(thresholdModel.refId).toBe('Y');
+    expect(thresholdModel.expression).toBe('X');
   });
 });

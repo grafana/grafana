@@ -536,7 +536,8 @@ export const getDefaultRecordingRulesQueries = (
     },
   ];
 };
-const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
+
+export const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
 
