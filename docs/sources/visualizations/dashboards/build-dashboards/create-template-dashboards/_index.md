@@ -21,7 +21,7 @@ weight: 3
 Grafana provides a variety of pre-built dashboard templates that you can use to quickly set up visualizations for your data.
 These templates are designed to work with specific types of data sources and metrics, making it easier to get started with monitoring and analysis.
 
-{{< figure src="screenshot-dashboard-templates.png" max-width="750px" alt="Selection of dashboard templates" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-templates-v12.3.png" max-width="750px" alt="Selection of dashboard templates" >}}
 
 To create a dashboard from a template, follow these steps:
 
@@ -31,7 +31,7 @@ To create a dashboard from a template, follow these steps:
 
    The dashboard created includes a banner panel indicating the dashboard is using sample data:
 
-   {{< figure src="screenshot-sample-data-dashboard.png" max-width="750px" alt="Dashboard with sample data" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-sample-data-dashboard-v12.3.png" max-width="750px" alt="Dashboard with sample data" >}}
 
 1. Click **Save dashboard** in the top-right corner.
 1. Click **Edit**.
@@ -39,6 +39,6 @@ To create a dashboard from a template, follow these steps:
 1. (Optional) Make any other edits to the dashboard to most effectively display your data.
 1. When you've made all of your changes, remove the banner panel.
 
-   {{< figure src="screenshot-remove-banner.png" max-width="750px" alt="Removing the sample data banner panel" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-remove-banner-v12.3.png" max-width="750px" alt="Removing the sample data banner panel" >}}
 
 1. Click **Save dashboard**.
