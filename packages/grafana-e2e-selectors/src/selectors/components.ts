@@ -683,6 +683,11 @@ export const versionedComponents = {
           '12.2.0': 'data-testid tab title input',
         },
       },
+      RowsLayout: {
+        titleInput: {
+          '12.3.0': 'data-testid row title input',
+        },
+      },
     },
   },
   PanelInspector: {

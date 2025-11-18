@@ -13,7 +13,7 @@ import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
+import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { RowItem } from './RowItem';
 
@@ -108,6 +108,7 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
         onFocus={() => (prevTitle.current = title || '')}
         onBlur={() => editRowTitleAction(row, title || '', prevTitle.current || '')}
         onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
+        data-testid={selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput}
       />
     </Field>
   );
@@ -175,8 +176,16 @@ function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
 }
 
 function editRowTitleAction(row: RowItem, title: string, prevTitle: string) {
-  if (title === prevTitle) {
+  if (title !== '' && title === prevTitle) {
     return;
+  }
+
+  if (title === '') {
+    const rowsLayout = row.getParentLayout();
+    const existingNames = new Set(
+      rowsLayout.state.rows.map((row) => row.state.title).filter((title) => title !== undefined)
+    );
+    title = generateUniqueTitle('New row', existingNames);
   }
 
   dashboardEditActions.edit({
