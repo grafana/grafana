@@ -1,38 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-const DASHBOARD_UID = '5Y0jv6pVz';
-const TIME_RANGE_PAN_DASHBOARD_UID = 'YoacZIq7z';
-
-test.describe('Panels test: Heatmap', { tag: ['@panels', '@heatmap'] }, () => {
-  test('renders successfully', async ({ gotoDashboardPage, selectors, page }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
-    });
-
-    // check that gauges are rendered
-    const uplot = page.locator('.uplot');
-    await expect(uplot, 'panels are rendered').toHaveCount(2);
-
-    // check that no panel errors exist
-    const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
-    await expect(errorInfo, 'no errors in the panels').toBeHidden();
-  });
-
-  test('"no data"', async ({ gotoDashboardPage, selectors, page }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '7' }),
-    });
-
-    const uplot = page.locator('.uplot');
-    await expect(uplot, "that uplot doesn't appear").toBeHidden();
-
-    const emptyMessage = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage);
-    await expect(emptyMessage, 'that the empty text appears').toHaveText('No data');
-  });
-
-  // TODO tooltips, legends, and panel editing
-});
+const DASHBOARD_UID = 'MP-Di9F7k';
 
 test.use({
   featureToggles: {
@@ -40,7 +8,7 @@ test.use({
   },
 });
 
-test.describe('Panels test: Heatmap X-axis panning', { tag: ['@panels', '@heatmap'] }, () => {
+test.describe('Panels test: Candlestick X-axis panning', { tag: ['@panels', '@candlestick'] }, () => {
   test('x-axis panning functionality', async ({ gotoDashboardPage, page, selectors }) => {
     let centerX: number;
     let centerY: number;
@@ -48,12 +16,12 @@ test.describe('Panels test: Heatmap X-axis panning', { tag: ['@panels', '@heatma
     let initialToTime: number;
 
     const dashboardPage = await test.step('Load dashboard and verify cursor changes to grab', async () => {
-      const dashboardPage = await gotoDashboardPage({ uid: TIME_RANGE_PAN_DASHBOARD_UID });
+      const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
-      const heatmapPanel = page.locator('.uplot').first();
-      await expect(heatmapPanel, 'panel rendered').toBeVisible();
+      const candlestickPanel = page.locator('.uplot').first();
+      await expect(candlestickPanel, 'panel rendered').toBeVisible();
 
-      const xAxis = heatmapPanel.locator('.u-axis').first();
+      const xAxis = candlestickPanel.locator('.u-axis').first();
       await expect(xAxis, 'x-axis rendered').toBeVisible();
 
       await xAxis.hover();
@@ -65,8 +33,8 @@ test.describe('Panels test: Heatmap X-axis panning', { tag: ['@panels', '@heatma
     });
 
     await test.step('Capture initial time range', async () => {
-      const heatmapPanel = page.locator('.uplot').first();
-      const xAxis = heatmapPanel.locator('.u-axis').first();
+      const candlestickPanel = page.locator('.uplot').first();
+      const xAxis = candlestickPanel.locator('.u-axis').first();
 
       const timePickerButton = dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.openButton);
       await timePickerButton.click();

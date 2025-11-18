@@ -8,6 +8,7 @@
         "name": "addFieldFromCalculationStatFunctions",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-11-03T14:39:58Z",
+        "deletionTimestamp": "2025-11-12T14:07:50Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
@@ -4213,7 +4214,8 @@
       "metadata": {
         "name": "unifiedStorageHistoryPruner",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-17T10:36:38Z"
+        "creationTimestamp": "2025-03-17T10:36:38Z",
+        "deletionTimestamp": "2025-11-17T12:35:33Z"
       },
       "spec": {
         "description": "Enables the unified storage history pruner",
