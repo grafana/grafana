@@ -2,6 +2,8 @@ import { DataFrame, ExplorePanelsState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataQuery, DataSourceRef, Panel } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
+import { LOG_LINE_BODY_FIELD_NAME, TABLE_TIME_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
+import { parseLogsFrame } from 'app/features/logs/logsFrame';
 import { ExplorePanelData } from 'app/types/explore';
 
 interface ExploreToDashboardPanelOptions {
@@ -34,18 +36,40 @@ function getLogsTableTransformations(
         },
       });
     }
+
+    // Map constant field names to actual field names from the data frame
+    // Find the first logs frame to get the actual field names
+    const logsFrame = options.queryResponse.logsFrames.find(
+      (frame) => frame.refId === options.panelState?.logs?.refId || !options.panelState?.logs?.refId
+    );
+    const parsedLogsFrame = logsFrame ? parseLogsFrame(logsFrame) : null;
+
+    // Map displayedFields from constant names to actual field names
+    const mappedDisplayedFields = options.panelState.logs.displayedFields.map((fieldName) => {
+      // Map LOG_LINE_BODY_FIELD_NAME to actual body field name
+      if (fieldName === LOG_LINE_BODY_FIELD_NAME) {
+        return parsedLogsFrame?.bodyField?.name ?? fieldName;
+      }
+      // Map TABLE_TIME_FIELD_NAME to actual time field name
+      if (fieldName === TABLE_TIME_FIELD_NAME) {
+        return parsedLogsFrame?.timeField?.name ?? fieldName;
+      }
+      // Return as-is for other fields (including extracted labels)
+      return fieldName;
+    });
+
     // Show the columns that the user selected in explore
     transformations.push({
       id: 'organize',
       options: {
-        indexByName: options.panelState.logs.displayedFields.reduce(
+        indexByName: mappedDisplayedFields.reduce(
           (acc: Record<string, number>, value: string, idx) => ({
             ...acc,
             [value]: idx,
           }),
           {}
         ),
-        includeByName: options.panelState.logs.displayedFields.reduce(
+        includeByName: mappedDisplayedFields.reduce(
           (acc: Record<string, boolean>, value: string) => ({
             ...acc,
             [value]: true,
