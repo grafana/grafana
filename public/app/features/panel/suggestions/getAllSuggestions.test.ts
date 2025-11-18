@@ -11,7 +11,6 @@ import {
 import {
   BarGaugeDisplayMode,
   BigValueColorMode,
-  GraphDrawStyle,
   GraphFieldConfig,
   ReduceDataOptions,
   StackingMode,
