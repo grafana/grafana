@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { SceneObject, useSceneObjectState } from '@grafana/scenes';
+import { SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 
 import { ConditionalRenderingGroup } from '../group/ConditionalRenderingGroup';
 
@@ -26,6 +26,34 @@ export function useIsConditionallyHidden(scene: SceneObject): [boolean, string |
 
   return [
     !result,
+    result ? undefined : 'dashboard-visible-hidden-element',
+    result ? null : <ConditionalRenderingOverlay />,
+    renderHidden,
+  ];
+}
+
+export function useIsConditionallyHiddenForTarget(
+  owner: SceneObject,
+  target: SceneObject
+): [boolean, string | undefined, ReactNode | null, boolean] {
+  const group =
+    'conditionalRendering' in owner.state && owner.state.conditionalRendering instanceof ConditionalRenderingGroup
+      ? owner.state.conditionalRendering
+      : getPlaceholderConditionalRendering();
+
+  const { renderHidden } = useSceneObjectState(group, {
+    shouldActivateOrKeepAlive: true,
+  });
+
+  // Subscribe to relevant target inputs so this hook re-renders on changes
+  sceneGraph.getVariables(target).useState();
+  sceneGraph.getTimeRange(target).useState();
+  sceneGraph.getData(target)?.useState();
+
+  const result = group.evaluate(target);
+
+  return [
+    !(result ?? true),
     result ? undefined : 'dashboard-visible-hidden-element',
     result ? null : <ConditionalRenderingOverlay />,
     renderHidden,

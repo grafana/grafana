@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data/';
 import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
+import { useIsConditionallyHiddenForTarget } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
@@ -17,8 +17,6 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const { body, repeatedPanels = [], key } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
   const { isEditing, preload } = useDashboardState(model);
-  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
-    useIsConditionallyHidden(model);
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
@@ -39,18 +37,25 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged: boolean;
           isDragging: boolean;
           isRepeat?: boolean;
-        }) =>
-          isConditionallyHidden && !isEditing && !renderHidden ? null : (
+        }) => {
+          const [isHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
+            useIsConditionallyHiddenForTarget(model, item);
+
+          if (isHidden && !isEditing && !renderHidden) {
+            return null;
+          }
+
+          return (
             <div
               {...(addDndContainer
                 ? { ref: model.containerRef, ['data-auto-grid-item-drop-target']: isDragging ? key : undefined }
                 : {})}
-              className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
+              className={cx(isHidden && !isEditing && styles.hidden)}
             >
               {isDragged && <div className={styles.draggedPlaceholder} />}
               {
                 // The lazy loader causes issues when used with conditional rendering
-                isLazy && (!isConditionallyHidden || !renderHidden) ? (
+                isLazy && (!isHidden || !renderHidden) ? (
                   <LazyLoader
                     key={item.state.key!}
                     className={cx(
@@ -78,19 +83,10 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                 )
               }
             </div>
-          )
+          );
+        }
       ),
-    [
-      conditionalRenderingClass,
-      conditionalRenderingOverlay,
-      isLazy,
-      key,
-      model.containerRef,
-      styles,
-      isConditionallyHidden,
-      isEditing,
-      renderHidden,
-    ]
+    [isLazy, key, model, styles, isEditing]
   );
 
   if (soloPanelContext) {

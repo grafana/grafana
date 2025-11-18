@@ -7,6 +7,7 @@ import {
   SceneComponentProps,
   SceneDataProvider,
   sceneGraph,
+  SceneObject,
   SceneObjectBase,
   SceneObjectState,
   VizPanel,
@@ -92,7 +93,7 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
   }
 
   private _check() {
-    const result = this._evaluate();
+    const result = this.evaluate();
 
     if (result !== this.state.result) {
       this.setState({ ...this.state, result });
@@ -100,17 +101,18 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
     }
   }
 
-  private _evaluate(): boolean | undefined {
+  public evaluate(target: SceneObject = this): boolean | undefined {
+    const dataProvider = target === this ? this._dataProvider : sceneGraph.getData(target);
     if (
-      !this._dataProvider ||
-      !this._dataProvider.state.data ||
-      this._dataProvider.state.data.state === LoadingState.Loading ||
-      this._dataProvider.state.data.state === LoadingState.NotStarted
+      !dataProvider ||
+      !dataProvider.state.data ||
+      dataProvider.state.data.state === LoadingState.Loading ||
+      dataProvider.state.data.state === LoadingState.NotStarted
     ) {
       return undefined;
     }
 
-    const series = this._dataProvider?.state.data?.series ?? [];
+    const series = dataProvider?.state.data?.series ?? [];
     let hasData = false;
 
     for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {

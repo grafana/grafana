@@ -2,7 +2,7 @@ import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { rangeUtil, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Field, Select } from '@grafana/ui';
 
@@ -48,7 +48,7 @@ export class ConditionalRenderingTimeRangeSize extends SceneObjectBase<Condition
   }
 
   private _check() {
-    const result = this._evaluate();
+    const result = this.evaluate();
 
     if (result !== this.state.result) {
       this.setState({ ...this.state, result });
@@ -58,14 +58,14 @@ export class ConditionalRenderingTimeRangeSize extends SceneObjectBase<Condition
     return result;
   }
 
-  private _evaluate(): boolean | undefined {
+  public evaluate(target: SceneObject = this): boolean | undefined {
     try {
       if (!this.validateIntervalRegex.test(this.state.value)) {
         return undefined;
       }
 
       const interval = rangeUtil.intervalToSeconds(this.state.value);
-      const timeRange = sceneGraph.getTimeRange(this);
+      const timeRange = sceneGraph.getTimeRange(target);
 
       return timeRange.state.value.to.unix() - timeRange.state.value.from.unix() <= interval;
     } catch {

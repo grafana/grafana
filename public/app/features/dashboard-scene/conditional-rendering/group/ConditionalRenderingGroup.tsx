@@ -2,7 +2,7 @@ import { lowerCase } from 'lodash';
 import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Stack } from '@grafana/ui';
 
@@ -157,6 +157,21 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
         items: this.state.conditions.map((condition) => condition.serialize()),
       },
     };
+  }
+
+  public evaluate(target: SceneObject): boolean | undefined {
+    const results = this.state.conditions.map((c: ConditionalRenderingConditions) => c.evaluate(target));
+
+    const valid = results.filter((v): v is boolean => v !== undefined);
+    if (valid.length === 0) {
+      return true;
+    }
+
+    let res = this.state.condition === 'and' ? valid.every((v) => v === true) : valid.some((v) => v === true);
+    if (!this._shouldShow) {
+      res = !res;
+    }
+    return res;
   }
 
   public static createEmpty(): ConditionalRenderingGroup {

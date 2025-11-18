@@ -4,6 +4,7 @@ import { t } from '@grafana/i18n';
 import {
   SceneComponentProps,
   sceneGraph,
+  SceneObject,
   SceneObjectBase,
   SceneObjectState,
   VariableDependencyConfig,
@@ -65,7 +66,7 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
   }
 
   public _check() {
-    const result = this._evaluate();
+    const result = this.evaluate();
 
     if (result !== this.state.result) {
       this.setState({ result });
@@ -73,12 +74,12 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
     }
   }
 
-  private _evaluate(): boolean | undefined {
+  public evaluate(target: SceneObject = this): boolean | undefined {
     if (!this.state.variable) {
       return undefined;
     }
 
-    const variable = sceneGraph.getVariables(this).getByName(this.state.variable);
+    const variable = sceneGraph.getVariables(target).getByName(this.state.variable);
 
     if (!variable) {
       return undefined;
