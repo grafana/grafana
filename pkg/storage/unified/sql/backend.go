@@ -62,10 +62,6 @@ type BackendOptions struct {
 	IsHA            bool
 	storageMetrics  *resource.StorageMetrics
 
-	// If true, the backend will prune history on write events.
-	// Will be removed once fully rolled out.
-	withPruner bool
-
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
 
@@ -101,7 +97,6 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
-		withPruner:              opts.withPruner,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 	}, nil
 }
@@ -141,7 +136,6 @@ type backend struct {
 	simulatedNetworkLatency time.Duration
 
 	historyPruner resource.Pruner
-	withPruner    bool
 
 	lastImportTimeMaxAge       time.Duration
 	lastImportTimeDeletionTime atomic.Time
@@ -198,11 +192,6 @@ func (b *backend) initLocked(ctx context.Context) error {
 }
 
 func (b *backend) initPruner(ctx context.Context) error {
-	if !b.withPruner {
-		b.log.Debug("using noop history pruner")
-		b.historyPruner = &resource.NoopPruner{}
-		return nil
-	}
 	b.log.Debug("using debounced history pruner")
 	// Initialize history pruner.
 	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[resource.PruningKey]{
@@ -273,13 +262,15 @@ func (b *backend) Stop(_ context.Context) error {
 }
 
 // GetResourceStats implements Backend.
-func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
+func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
 	defer span.End()
 
 	req := &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
-		Namespace:   namespace,
+		Namespace:   nsr.Namespace,
+		Group:       nsr.Group,
+		Resource:    nsr.Resource,
 		MinCount:    minCount, // not used in query... yet?
 	}
 

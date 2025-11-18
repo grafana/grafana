@@ -93,6 +93,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   mergeValues,
   getValueColor,
   hoverMulti,
+  xAxisConfig,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -155,7 +156,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: coreConfig.xRange,
+    range: (u) => {
+      const state = builder.getState();
+      if (state.isPanning) {
+        return [state.min, state.max];
+      }
+      return coreConfig.xRange(u);
+    },
   });
 
   builder.addScale({
@@ -167,7 +174,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   });
 
   const xField = frame.fields[0];
-
   const xAxisHidden = xField.config.custom.axisPlacement === AxisPlacement.Hidden;
 
   builder.addAxis({
@@ -181,6 +187,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     formatValue: xField.config.unit?.startsWith('time:')
       ? (v, decimals) => xField.display!(v, decimals).text
       : undefined,
+    ...xAxisConfig,
   });
 
   const yCustomConfig = frame.fields[1].config.custom;

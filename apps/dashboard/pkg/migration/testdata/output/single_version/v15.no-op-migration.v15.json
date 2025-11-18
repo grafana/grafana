@@ -14,7 +14,10 @@
         "type": "dashboard"
       },
       {
-        "datasource": "grafana",
+        "datasource": {
+          "type": "grafana",
+          "uid": "grafana"
+        },
         "enable": true,
         "name": "Annotations \u0026 Alerts"
       }

@@ -1,0 +1,187 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "v13.graph_thresholds.v42"
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "links": [],
+    "panels": [
+      {
+        "autoMigrateFrom": "graph",
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "grid": {
+          "threshold1": 200,
+          "threshold1Color": "yellow",
+          "threshold2": 400,
+          "threshold2Color": "red",
+          "thresholdLine": true
+        },
+        "id": 1,
+        "targets": [
+          {
+            "datasource": {
+              "apiVersion": "v1",
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Graph with Line Thresholds",
+        "type": "timeseries"
+      },
+      {
+        "autoMigrateFrom": "graph",
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "grid": {
+          "threshold1": 100,
+          "threshold1Color": "green",
+          "threshold2": 300,
+          "threshold2Color": "blue",
+          "thresholdLine": false
+        },
+        "id": 2,
+        "targets": [
+          {
+            "datasource": {
+              "apiVersion": "v1",
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Graph with Fill Thresholds",
+        "type": "timeseries"
+      },
+      {
+        "autoMigrateFrom": "graph",
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "grid": {
+          "threshold1": 150,
+          "threshold1Color": "orange",
+          "thresholdLine": true
+        },
+        "id": 3,
+        "targets": [
+          {
+            "datasource": {
+              "apiVersion": "v1",
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Graph with Single Threshold",
+        "type": "timeseries"
+      },
+      {
+        "autoMigrateFrom": "graph",
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "grid": {
+          "threshold1": 200,
+          "threshold1Color": "yellow",
+          "thresholdLine": false
+        },
+        "id": 4,
+        "targets": [
+          {
+            "datasource": {
+              "apiVersion": "v1",
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "thresholds": [
+          {
+            "color": "purple",
+            "colorMode": "custom",
+            "value": 50
+          }
+        ],
+        "title": "Graph with Existing Thresholds",
+        "type": "timeseries"
+      },
+      {
+        "autoMigrateFrom": "singlestat",
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "id": 5,
+        "targets": [
+          {
+            "datasource": {
+              "apiVersion": "v1",
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Non-Graph Panel",
+        "type": "stat"
+      }
+    ],
+    "refresh": "",
+    "schemaVersion": 42,
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "V13 Graph Thresholds Migration Test",
+    "weekStart": ""
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
+}

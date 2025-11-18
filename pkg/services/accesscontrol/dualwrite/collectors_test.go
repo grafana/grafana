@@ -246,6 +246,14 @@ func (m *mockZanzanaClient) Mutate(ctx context.Context, req *authzextv1.MutateRe
 	return nil
 }
 
+func (m *mockZanzanaClient) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*authzextv1.QueryResponse), args.Error(1)
+}
+
 func TestIntegrationTeamMembershipCollector(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
