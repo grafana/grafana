@@ -28,15 +28,15 @@ VariableValuesPreview.displayName = 'VariableValuesPreview';
 function VariableValuesWithPropsPreview({ options }: { options: VariableValueOption[] }) {
   const styles = useStyles2(getStyles);
   const data = options.map((o) => ({ label: String(o.label), value: String(o.value), ...o.properties }));
-  const columns = Object.keys(data[0]).map((id) => ({ id, header: id, sortType: 'alphanumeric' as const }));
+  // the first item in data may be the "All" option which does not have any extra properties, so we try the 2nd item to determine the column names
+  const columns = Object.keys(data[1] || data[0]).map((id) => ({ id, header: id, sortType: 'alphanumeric' as const }));
 
   return (
     <div className={styles.previewContainer} style={{ gap: '8px' }}>
       <Text variant="bodySmall" weight="medium">
         <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
       </Text>
-      {/* TODO: pageSize=20 */}
-      <InteractiveTable columns={columns} data={data} getRowId={(r) => String(r.value)} pageSize={2} />
+      <InteractiveTable columns={columns} data={data} getRowId={(r) => String(r.value)} pageSize={10} />
     </div>
   );
 }
