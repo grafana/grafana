@@ -365,17 +365,15 @@ export class PanelPlugin<
   /**
    * @deprecated use VisualizationSuggestionsSupplierFn
    */
-  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier): PanelPlugin<TOptions, TFieldConfigOptions>;
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier): this;
   /**
    * @alpha
    * sets function that can return visualization examples and suggestions.
    */
-  setSuggestionsSupplier(
-    supplier: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>
-  ): PanelPlugin<TOptions, TFieldConfigOptions>;
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>): this;
   setSuggestionsSupplier(
     supplier: VisualizationSuggestionsSupplier | VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>
-  ): PanelPlugin<TOptions, TFieldConfigOptions> {
+  ): this {
     this.suggestionsSupplier =
       typeof supplier === 'function'
         ? {
