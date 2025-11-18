@@ -41,6 +41,7 @@ The Grafana Secrets Management API allows you to manage secrets that are used by
 The decrypters field is an allowlist that lets the secure value know which services and apps can decrypt the secret value.
 
 Currently available decrypters:
+
 - `synthetic-monitoring` (for Synthetic Monitoring checks)
 - `provisioning.grafana.app` (for GitSync/Provisioning)
 
@@ -163,6 +164,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
 **Example response**:
+
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
