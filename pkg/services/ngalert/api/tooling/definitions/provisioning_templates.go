@@ -1,5 +1,7 @@
 package definitions
 
+import "github.com/grafana/alerting/definition"
+
 // swagger:route GET /v1/provisioning/templates provisioning stable RouteGetTemplates
 //
 // Get all notification template groups.
@@ -55,11 +57,12 @@ type RouteDeleteTemplateParam struct {
 
 // swagger:model
 type NotificationTemplate struct {
-	UID             string     `json:"-" yaml:"-"`
-	Name            string     `json:"name"`
-	Template        string     `json:"template"`
-	Provenance      Provenance `json:"provenance,omitempty"`
-	ResourceVersion string     `json:"version,omitempty"`
+	UID             string                  `json:"-" yaml:"-"`
+	Name            string                  `json:"name"`
+	Template        string                  `json:"template"`
+	Provenance      Provenance              `json:"provenance,omitempty"`
+	ResourceVersion string                  `json:"version,omitempty"`
+	Kind            definition.TemplateKind `json:"-" yaml:"-"`
 }
 
 // swagger:model

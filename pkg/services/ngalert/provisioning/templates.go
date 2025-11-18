@@ -10,6 +10,8 @@ import (
 	"sort"
 	"unsafe"
 
+	"github.com/grafana/alerting/definition"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -59,7 +61,7 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 		if !ok {
 			provenance = models.ProvenanceNone
 		}
-		templates = append(templates, newNotificationTemplate(name, content, provenance))
+		templates = append(templates, newNotificationTemplate(name, content, provenance, definition.GrafanaTemplateKind))
 	}
 
 	return templates, nil
@@ -120,6 +122,10 @@ func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl 
 	if err != nil {
 		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(err)
 	}
+	if tmpl.Kind == definition.MimirTemplateKind {
+		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(errors.New("templates of kind 'Mimir' cannot be created"))
+	}
+
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
@@ -128,6 +134,10 @@ func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl 
 }
 
 func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
+	if tmpl.Kind == definition.MimirTemplateKind {
+		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(errors.New("templates of kind 'Mimir' cannot be created"))
+	}
+
 	if revision.Config.TemplateFiles == nil {
 		revision.Config.TemplateFiles = map[string]string{}
 	}
@@ -149,7 +159,7 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 		return definitions.NotificationTemplate{}, err
 	}
 
-	return newNotificationTemplate(tmpl.Name, tmpl.Template, models.Provenance(tmpl.Provenance)), nil
+	return newNotificationTemplate(tmpl.Name, tmpl.Template, models.Provenance(tmpl.Provenance), tmpl.Kind), nil
 }
 
 func (t *TemplateService) UpdateTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
@@ -193,7 +203,9 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 			return definitions.NotificationTemplate{}, ErrTemplateExists.Errorf("")
 		}
 	}
-
+	if existing.Kind != tmpl.Kind {
+		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(errors.New("cannot change template kind"))
+	}
 	if err := t.validator(models.Provenance(existing.Provenance), models.Provenance(tmpl.Provenance)); err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
@@ -224,7 +236,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	}
 
 	// if name was changed, this UID needs to be recalculated
-	return newNotificationTemplate(tmpl.Name, tmpl.Template, models.Provenance(tmpl.Provenance)), nil
+	return newNotificationTemplate(tmpl.Name, tmpl.Template, models.Provenance(tmpl.Provenance), tmpl.Kind), nil
 }
 
 func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error {
@@ -286,12 +298,13 @@ func calculateTemplateFingerprint(t string) string {
 	return fmt.Sprintf("%016x", sum.Sum64())
 }
 
-func newNotificationTemplate(name, content string, provenance models.Provenance) definitions.NotificationTemplate {
+func newNotificationTemplate(name, content string, provenance models.Provenance, kind definition.TemplateKind) definitions.NotificationTemplate {
 	tmpl := definitions.NotificationTemplate{
 		UID:        legacy_storage.NameToUid(name),
 		Name:       name,
 		Template:   content,
 		Provenance: definitions.Provenance(provenance),
+		Kind:       kind,
 	}
 	tmpl.ResourceVersion = calculateTemplateFingerprint(content)
 	return tmpl
@@ -306,7 +319,7 @@ func (t *TemplateService) getTemplateByName(ctx context.Context, revision *legac
 	if err != nil {
 		return definitions.NotificationTemplate{}, false, err
 	}
-	return newNotificationTemplate(name, existingContent, provenance), true, nil
+	return newNotificationTemplate(name, existingContent, provenance, definition.GrafanaTemplateKind), true, nil
 }
 
 func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, uid string) (definitions.NotificationTemplate, bool, error) {
@@ -328,5 +341,5 @@ func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy
 	if err != nil {
 		return definitions.NotificationTemplate{}, false, err
 	}
-	return newNotificationTemplate(name, content, provenance), true, nil
+	return newNotificationTemplate(name, content, provenance, definition.GrafanaTemplateKind), true, nil
 }

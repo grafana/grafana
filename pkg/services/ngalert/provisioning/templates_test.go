@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -49,16 +50,19 @@ func TestGetTemplates(t *testing.T) {
 				"template1",
 				"test1",
 				models.ProvenanceAPI,
+				definition.GrafanaTemplateKind,
 			),
 			newNotificationTemplate(
 				"template2",
 				"test2",
 				models.ProvenanceFile,
+				definition.GrafanaTemplateKind,
 			),
 			newNotificationTemplate(
 				"template3",
 				"test3",
 				models.ProvenanceNone,
+				definition.GrafanaTemplateKind,
 			),
 		}
 
@@ -144,6 +148,7 @@ func TestGetTemplate(t *testing.T) {
 			templateName,
 			templateContent,
 			models.ProvenanceAPI,
+			definition.GrafanaTemplateKind,
 		)
 
 		require.Equal(t, expected, result)
@@ -234,6 +239,7 @@ func TestUpsertTemplate(t *testing.T) {
 			Template:        "{{ define \"test\"}} test {{ end }}",
 			Provenance:      definitions.Provenance(models.ProvenanceAPI),
 			ResourceVersion: "",
+			Kind:            definition.GrafanaTemplateKind,
 		}
 
 		result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
@@ -243,6 +249,7 @@ func TestUpsertTemplate(t *testing.T) {
 			tmpl.Name,
 			tmpl.Template,
 			models.Provenance(tmpl.Provenance),
+			tmpl.Kind,
 		), result)
 
 		require.Len(t, store.Calls, 2)
@@ -274,6 +281,7 @@ func TestUpsertTemplate(t *testing.T) {
 				Template:        "{{ define \"test\"}} test {{ end }}",
 				Provenance:      definitions.Provenance(models.ProvenanceAPI),
 				ResourceVersion: calculateTemplateFingerprint("test1"),
+				Kind:            definition.GrafanaTemplateKind,
 			}
 
 			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
@@ -283,6 +291,7 @@ func TestUpsertTemplate(t *testing.T) {
 				tmpl.Name,
 				tmpl.Template,
 				models.Provenance(tmpl.Provenance),
+				tmpl.Kind,
 			), result)
 
 			require.Len(t, store.Calls, 2)
@@ -318,6 +327,7 @@ func TestUpsertTemplate(t *testing.T) {
 				tmpl.Name,
 				tmpl.Template,
 				models.Provenance(tmpl.Provenance),
+				definition.GrafanaTemplateKind,
 			), result)
 
 			require.Equal(t, "Save", store.Calls[1].Method)
@@ -342,6 +352,7 @@ func TestUpsertTemplate(t *testing.T) {
 			Template:        "content",
 			Provenance:      definitions.Provenance(models.ProvenanceNone),
 			ResourceVersion: calculateTemplateFingerprint(currentTemplateContent),
+			Kind:            definition.GrafanaTemplateKind,
 		}
 
 		result, _ := sut.UpsertTemplate(context.Background(), orgID, tmpl)
@@ -351,6 +362,7 @@ func TestUpsertTemplate(t *testing.T) {
 			tmpl.Name,
 			expectedContent,
 			models.Provenance(tmpl.Provenance),
+			tmpl.Kind,
 		), result)
 	})
 
@@ -546,6 +558,7 @@ func TestCreateTemplate(t *testing.T) {
 		Name:       "new-template",
 		Template:   "{{ define \"test\"}} test {{ end }}",
 		Provenance: definitions.Provenance(models.ProvenanceAPI),
+		Kind:       definition.GrafanaTemplateKind,
 	}
 
 	revision := func() *legacy_storage.ConfigRevision {
@@ -576,6 +589,7 @@ func TestCreateTemplate(t *testing.T) {
 			tmpl.Name,
 			tmpl.Template,
 			models.Provenance(tmpl.Provenance),
+			tmpl.Kind,
 		), result)
 
 		require.Len(t, store.Calls, 2)
@@ -631,8 +645,31 @@ func TestCreateTemplate(t *testing.T) {
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
+		t.Run("invalid kind", func(t *testing.T) {
+			tmpl := definitions.NotificationTemplate{
+				Name:     "new-template",
+				Template: "{{ define \"test\"}} test {{ end }}",
+				Kind:     "unknown",
+			}
+			_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+			require.ErrorIs(t, err, ErrTemplateInvalid)
+		})
+
 		require.Empty(t, store.Calls)
 		prov.AssertExpectations(t)
+	})
+
+	t.Run("rejects templates with mimir kind", func(t *testing.T) {
+		sut, _, _ := createTemplateServiceSut()
+
+		tmpl := definitions.NotificationTemplate{
+			Name:     "new-template",
+			Template: "{{ define \"test\"}} test {{ end }}",
+			Kind:     definition.MimirTemplateKind,
+		}
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+		require.ErrorIs(t, err, ErrTemplateInvalid)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
@@ -688,6 +725,7 @@ func TestUpdateTemplate(t *testing.T) {
 		Template:        "{{ define \"test\"}} test {{ end }}",
 		Provenance:      definitions.Provenance(models.ProvenanceAPI),
 		ResourceVersion: "",
+		Kind:            definition.GrafanaTemplateKind,
 	}
 
 	amConfigToken := util.GenerateShortUID()
@@ -777,6 +815,7 @@ func TestUpdateTemplate(t *testing.T) {
 					tmpl.Name,
 					tmpl.Template,
 					models.Provenance(tmpl.Provenance),
+					tmpl.Kind,
 				), result)
 
 				require.Len(t, store.Calls, 2)
@@ -805,6 +844,7 @@ func TestUpdateTemplate(t *testing.T) {
 					tmpl.Name,
 					tmpl.Template,
 					models.Provenance(tmpl.Provenance),
+					tmpl.Kind,
 				), result)
 
 				require.Equal(t, "Save", store.Calls[1].Method)
@@ -840,6 +880,7 @@ func TestUpdateTemplate(t *testing.T) {
 			tmpl.Name,
 			tmpl.Template,
 			models.Provenance(tmpl.Provenance),
+			tmpl.Kind,
 		), result)
 
 		require.Len(t, store.Calls, 2)
@@ -902,6 +943,16 @@ func TestUpdateTemplate(t *testing.T) {
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
+		t.Run("invalid kind", func(t *testing.T) {
+			tmpl := definitions.NotificationTemplate{
+				Name:     "",
+				Template: "",
+				Kind:     "unknown",
+			}
+			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+			require.ErrorIs(t, err, ErrTemplateInvalid)
+		})
+
 		require.Empty(t, store.Calls)
 		prov.AssertExpectations(t)
 	})
@@ -949,6 +1000,27 @@ func TestUpdateTemplate(t *testing.T) {
 		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
 
 		require.ErrorIs(t, err, ErrVersionConflict)
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("rejects existing templates if kind changes", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(), nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
+
+		template := definitions.NotificationTemplate{
+			Name:            "template1",
+			Template:        "asdf-new",
+			ResourceVersion: "bad-version",
+			Provenance:      definitions.Provenance(models.ProvenanceNone),
+			Kind:            definition.MimirTemplateKind,
+		}
+
+		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
+
+		require.ErrorIs(t, err, ErrTemplateInvalid)
 		prov.AssertExpectations(t)
 	})
 

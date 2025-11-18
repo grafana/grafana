@@ -1,6 +1,7 @@
 package templategroup
 
 import (
+	"github.com/grafana/alerting/definition"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
@@ -50,5 +51,6 @@ func convertToDomainModel(template *model.TemplateGroup) definitions.Notificatio
 		Template:        template.Spec.Content,
 		ResourceVersion: template.ResourceVersion,
 		Provenance:      definitions.Provenance(ngmodels.ProvenanceNone),
+		Kind:            definition.GrafanaTemplateKind,
 	}
 }
