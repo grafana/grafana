@@ -76,6 +76,7 @@
     "plugin:test:ci": "nx run-many -t test:ci --projects='tag:scope:plugin' --maxParallel=2",
     "plugin:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:plugin'",
     "generate-apis": "yarn workspace @grafana/api-clients generate-apis",
+    "generate-enterprise-apis": "yarn workspace @grafana/api-clients process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts",
     "generate:api-client": "yarn workspace @grafana/api-clients generate:api-client"
   },
   "grafana": {
