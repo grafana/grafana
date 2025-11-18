@@ -197,51 +197,51 @@ type TestLibraryElementProvider struct {
 // NewTestLibraryElementProvider creates a new test library element provider with sample library panels
 func NewTestLibraryElementProvider() *TestLibraryElementProvider {
 	// Create library panel models with repeat options
-	libPanelWithRepeatH := map[string]interface{}{
+	libPanelWithRepeatH := map[string]any{
 		"id":              1,
 		"type":            "timeseries",
 		"title":           "Library Panel with Horizontal Repeat",
 		"repeat":          "server",
 		"repeatDirection": "h",
 		"maxPerRow":       3,
-		"gridPos": map[string]interface{}{
+		"gridPos": map[string]any{
 			"x": 0,
 			"y": 0,
 			"w": 12,
 			"h": 8,
 		},
-		"targets": []interface{}{},
-		"options": map[string]interface{}{},
+		"targets": []any{},
+		"options": map[string]any{},
 	}
 
-	libPanelWithRepeatV := map[string]interface{}{
+	libPanelWithRepeatV := map[string]any{
 		"id":              2,
 		"type":            "stat",
 		"title":           "Library Panel with Vertical Repeat",
 		"repeat":          "datacenter",
 		"repeatDirection": "v",
-		"gridPos": map[string]interface{}{
+		"gridPos": map[string]any{
 			"x": 0,
 			"y": 0,
 			"w": 6,
 			"h": 4,
 		},
-		"targets": []interface{}{},
-		"options": map[string]interface{}{},
+		"targets": []any{},
+		"options": map[string]any{},
 	}
 
-	libPanelWithoutRepeat := map[string]interface{}{
+	libPanelWithoutRepeat := map[string]any{
 		"id":    3,
 		"type":  "text",
 		"title": "Library Panel without Repeat",
-		"gridPos": map[string]interface{}{
+		"gridPos": map[string]any{
 			"x": 0,
 			"y": 0,
 			"w": 6,
 			"h": 3,
 		},
-		"targets": []interface{}{},
-		"options": map[string]interface{}{},
+		"targets": []any{},
+		"options": map[string]any{},
 	}
 
 	// Marshal models to JSON

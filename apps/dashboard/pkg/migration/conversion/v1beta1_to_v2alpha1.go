@@ -698,7 +698,7 @@ func buildGridItemKind(ctx context.Context, panelMap map[string]interface{}, ele
 }
 
 // getRepeatOptionsFromPanel extracts repeat options from a panel map (dashboard instance level)
-func getRepeatOptionsFromPanel(panelMap map[string]interface{}) *dashv2alpha1.DashboardRepeatOptions {
+func getRepeatOptionsFromPanel(panelMap map[string]any) *dashv2alpha1.DashboardRepeatOptions {
 	repeat := schemaversion.GetStringValue(panelMap, "repeat")
 	if repeat == "" {
 		return nil
@@ -746,7 +746,7 @@ func getRepeatOptionsFromLibraryPanel(ctx context.Context, libraryPanelUID strin
 	}
 
 	// Parse the library panel model JSON
-	var panelModel map[string]interface{}
+	var panelModel map[string]any
 	if err := json.Unmarshal(libraryPanelModel, &panelModel); err != nil {
 		return nil
 	}
