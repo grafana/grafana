@@ -11,15 +11,16 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/transport"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/app"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/transport"
 
 	"github.com/grafana/authlib/authn"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
@@ -95,7 +96,7 @@ func buildIAMConfigFromSettings(cfg *setting.Cfg, registerer prometheus.Register
 	if zanzanaURL == "" {
 		return nil, fmt.Errorf("zanzana_url is required in [operator] section")
 	}
-	iamCfg.AppConfig.ZanzanaClientCfg.URL = zanzanaURL
+	iamCfg.AppConfig.ZanzanaClientCfg.Addr = zanzanaURL
 
 	iamCfg.AppConfig.InformerConfig.MaxConcurrentWorkers = operatorSec.Key("max_concurrent_workers").MustUint64(20)
 

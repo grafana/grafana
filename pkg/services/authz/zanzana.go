@@ -44,7 +44,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 	switch cfg.ZanzanaClient.Mode {
 	case setting.ZanzanaModeClient:
 		zanzanaConfig := ZanzanaClientConfig{
-			URL:              cfg.ZanzanaClient.Addr,
+			Addr:             cfg.ZanzanaClient.Addr,
 			Token:            cfg.ZanzanaClient.Token,
 			TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
 			TokenNamespace:   cfg.ZanzanaClient.TokenNamespace,
@@ -104,7 +104,7 @@ func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.Featu
 	}
 
 	zanzanaConfig := ZanzanaClientConfig{
-		URL:              cfg.ZanzanaClient.Addr,
+		Addr:             cfg.ZanzanaClient.Addr,
 		Token:            cfg.ZanzanaClient.Token,
 		TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
 		TokenNamespace:   cfg.ZanzanaClient.TokenNamespace,
@@ -115,7 +115,7 @@ func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.Featu
 }
 
 type ZanzanaClientConfig struct {
-	URL              string
+	Addr             string
 	Token            string
 	TokenExchangeURL string
 	TokenNamespace   string
@@ -143,15 +143,11 @@ func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) 
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCredentials),
 		grpc.WithPerRPCCredentials(
-			NewGRPCTokenAuth(
-				AuthzServiceAudience,
-				cfg.TokenNamespace,
-				tokenClient,
-			),
+			NewGRPCTokenAuth(AuthzServiceAudience, cfg.TokenNamespace, tokenClient),
 		),
 	}
 
-	conn, err := grpc.NewClient(cfg.URL, dialOptions...)
+	conn, err := grpc.NewClient(cfg.Addr, dialOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 	}
