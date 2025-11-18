@@ -25,6 +25,7 @@ type TemplateService struct {
 	xact            TransactionManager
 	log             log.Logger
 	validator       validation.ProvenanceStatusTransitionValidator
+	includeImported bool
 }
 
 func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *TemplateService {
@@ -34,6 +35,18 @@ func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, 
 		xact:            xact,
 		validator:       validation.ValidateProvenanceRelaxed,
 		log:             log,
+		includeImported: false,
+	}
+}
+
+func (t *TemplateService) WithIncludeImported() *TemplateService {
+	return &TemplateService{
+		configStore:     t.configStore,
+		provenanceStore: t.provenanceStore,
+		xact:            t.xact,
+		validator:       t.validator,
+		log:             t.log,
+		includeImported: true,
 	}
 }
 
