@@ -28,12 +28,14 @@ afterAll(() => {
 
 describe('runShardSplitQuery()', () => {
   let datasource: LokiDatasource;
+  const from = dateTime('2023-02-08T04:00:00.000Z');
+  const to = dateTime('2023-02-08T11:00:00.000Z');
   const range = {
-    from: dateTime('2023-02-08T04:00:00.000Z'),
-    to: dateTime('2023-02-08T11:00:00.000Z'),
+    from,
+    to,
     raw: {
-      from: dateTime('2023-02-08T04:00:00.000Z'),
-      to: dateTime('2023-02-08T11:00:00.000Z'),
+      from,
+      to,
     },
   };
 
@@ -139,6 +141,11 @@ describe('runShardSplitQuery()', () => {
         targets: [
           {
             expr: '{a="b", __stream_shard__=~"20|10"}',
+            limitsContext: {
+              expr: `{a="b"}`,
+              from: from.valueOf(),
+              to: to.valueOf(),
+            },
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -209,6 +216,11 @@ describe('runShardSplitQuery()', () => {
         targets: [
           {
             expr: '{service_name="test", filter="true", __stream_shard__=~"20|10"}',
+            limitsContext: {
+              expr: `{service_name="test", filter="true"}`,
+              from: from.valueOf(),
+              to: to.valueOf(),
+            },
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -425,6 +437,11 @@ describe('runShardSplitQuery()', () => {
         targets: [
           {
             expr: '{a="b", __stream_shard__=~"20|10|9"}',
+            limitsContext: {
+              expr: `{a="b"}`,
+              from: from.valueOf(),
+              to: to.valueOf(),
+            },
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },

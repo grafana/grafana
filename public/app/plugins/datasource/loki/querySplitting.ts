@@ -46,7 +46,7 @@ export function partitionTimeRange(
   });
 }
 
-export interface QuerySplittingOptions {
+interface QuerySplittingOptions {
   /**
    * Tells the query splitting code to not emit partial updates. Only emit on error or when it finishes querying.
    */
@@ -55,7 +55,10 @@ export interface QuerySplittingOptions {
    * Do not retry failed queries.
    */
   disableRetry?: boolean;
-  isInitialQuery?: boolean;
+  /**
+   * The current index of all query attempts
+   */
+  shardQueryIndex?: number;
 }
 
 /**
@@ -86,10 +89,38 @@ export function adjustTargetsFromResponseState(targets: LokiQuery[], response: D
     })
     .filter((target) => target.maxLines === undefined || target.maxLines > 0);
 }
+
+const addLimitsToSplitRequests = (splitQueryIndex: number, shardQueryIndex: number, requests: LokiGroupedRequest[]) => {
+  // @todo requests has already been mutated
+  if (splitQueryIndex === 0 && shardQueryIndex === 0) {
+    return requests.map((r) => ({
+      ...r,
+      request: {
+        ...r.request,
+        targets: r.request.targets.map((t) => {
+          // Don't pull from request if it has already been added by `addLimitsToShardGroups`
+          if (t.limitsContext === undefined) {
+            return addQueryLimitsContext(t, r.request);
+          }
+          return t;
+        }),
+      },
+    }));
+  } else {
+    return requests.map((r) => ({
+      ...r,
+      request: {
+        ...r.request,
+        targets: r.request.targets.map((t) => ({ ...t, limitsContext: undefined })),
+      },
+    }));
+  }
+};
+
 export function runSplitGroupedQueries(
   datasource: LokiDatasource,
   requests: LokiGroupedRequest[],
-  options: QuerySplittingOptions = { isInitialQuery: true }
+  options: QuerySplittingOptions = {}
 ) {
   const responseKey = requests.length ? requests[0].request.queryGroupId : uuidv4();
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: responseKey };
@@ -100,8 +131,12 @@ export function runSplitGroupedQueries(
   let subquerySubscription: Subscription | null = null;
   let retriesMap = new Map<string, number>();
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let splitQueryIndex = 0;
+  const shardQueryIndex = options.shardQueryIndex ?? 0;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestGroup: number) => {
+    requests = addLimitsToSplitRequests(splitQueryIndex, shardQueryIndex, requests);
+    splitQueryIndex++;
     let retrying = false;
 
     if (subquerySubscription != null) {
@@ -178,7 +213,6 @@ export function runSplitGroupedQueries(
       subRequest.requestId = `${group.request.requestId}_${requestN}`;
     }
 
-    // @todo remove plan if not first request?
     subquerySubscription = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
@@ -293,18 +327,12 @@ function querySupportsSplitting(query: LokiQuery) {
 export function runSplitQuery(
   datasource: LokiDatasource,
   request: DataQueryRequest<LokiQuery>,
-  options: QuerySplittingOptions = { isInitialQuery: true }
+  options: QuerySplittingOptions = {}
 ) {
   const queries = request.targets
     .filter((query) => !query.hide)
     .filter((query) => query.expr)
-    .map((query) =>
-      addQueryLimitsContext(
-        datasource.applyTemplateVariables(query, request.scopedVars, request.filters),
-        request,
-        options
-      )
-    );
+    .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
   const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 

@@ -145,6 +145,41 @@ func TestParseQuery(t *testing.T) {
 		require.Equal(t, "equals", string(models[0].Scopes[0].Operator))
 		require.Equal(t, `{namespace="logish"} |= "problems"`, models[0].Expr)
 	})
+
+	t.Run("parsing query model with invalid query limits context expr", func(t *testing.T) {
+		from := time.Now().Add(-3000 * time.Second)
+		fullFrom := time.Now().Add(-1 * time.Hour)
+		to := time.Now()
+
+		queryContext := &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					JSON: []byte(`
+					{
+						"expr": "count_over_time({service_name=\"apache\", __stream_shard__=\"2\"}[$__auto])",
+						"format": "time_series",
+						"refId": "A",
+						"limitsContext": {"expr": "", "from": ` + strconv.FormatInt(fullFrom.UnixMilli(), 10) + `, "to": ` + strconv.FormatInt(to.UnixMilli(), 10) + `}
+					}`,
+					),
+					TimeRange: backend.TimeRange{
+						From: from,
+						To:   to,
+					},
+					Interval:      time.Second * 15,
+					MaxDataPoints: 200,
+				},
+			},
+		}
+		models, err := parseQuery(queryContext, true)
+		require.NoError(t, err)
+		require.Equal(t, `count_over_time({service_name="apache", __stream_shard__="2"}[15s])`, models[0].Expr)
+		// If the limits context expression is missing, we don't set any limits context
+		require.Equal(t, ``, models[0].LimitsContext.Expr)
+		require.Equal(t, time.Time{}, models[0].LimitsContext.To)
+		require.Equal(t, time.Time{}, models[0].LimitsContext.From)
+	})
+
 	t.Run("parsing query model with query limits context", func(t *testing.T) {
 		from := time.Now().Add(-3000 * time.Second)
 		fullFrom := time.Now().Add(-1 * time.Hour)

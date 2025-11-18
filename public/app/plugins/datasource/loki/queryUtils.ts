@@ -438,27 +438,13 @@ export const getSelectorForShardValues = (query: string) => {
  * @param request
  * @param options
  */
-export const addQueryLimitsContext = (
-  lokiQuery: LokiQuery,
-  request: DataQueryRequest<LokiQuery>,
-  options: QuerySplittingOptions
-) => {
-  if (options.isInitialQuery) {
-    console.log('initial query', {
+export const addQueryLimitsContext = (lokiQuery: LokiQuery, request: DataQueryRequest<LokiQuery>) => {
+  return {
+    ...lokiQuery,
+    limitsContext: {
       expr: lokiQuery.expr,
-      options,
-    });
-    const lokiQueryWithPlan: LokiQuery = {
-      ...lokiQuery,
-      limitsContext: {
-        expr: lokiQuery.expr,
-        from: request.range.from.toDate().getTime(),
-        to: request.range.to.toDate().getTime(),
-      },
-    };
-
-    return lokiQueryWithPlan;
-  }
-
-  return lokiQuery;
+      from: request.range.from.toDate().getTime(),
+      to: request.range.to.toDate().getTime(),
+    },
+  };
 };

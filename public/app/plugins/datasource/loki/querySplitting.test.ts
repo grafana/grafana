@@ -35,13 +35,12 @@ afterAll(() => {
 
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
+  const from = dateTime('2023-02-08T05:00:00.000Z');
+  const to = dateTime('2023-02-10T06:00:00.000Z');
   const range = {
-    from: dateTime('2023-02-08T05:00:00.000Z'),
-    to: dateTime('2023-02-10T06:00:00.000Z'),
-    raw: {
-      from: dateTime('2023-02-08T05:00:00.000Z'),
-      to: dateTime('2023-02-10T06:00:00.000Z'),
-    },
+    from,
+    to,
+    raw: { from, to },
   };
 
   const createRequest = (targets: LokiQuery[], overrides?: Partial<DataQueryRequest<LokiQuery>>) => {
@@ -165,6 +164,19 @@ describe('runSplitQuery()', () => {
               _i: 1676008800000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: undefined,
+              limitsContext: {
+                expr: 'count_over_time({a="b"}[1m])',
+                from: from.valueOf(),
+                to: to.valueOf(),
+              },
+            },
+          ],
         })
       );
 
@@ -183,6 +195,15 @@ describe('runSplitQuery()', () => {
               _i: 1676005140000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: undefined,
+              limitsContext: undefined,
+            },
+          ],
         })
       );
 
@@ -201,6 +222,15 @@ describe('runSplitQuery()', () => {
               _i: 1675918740000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: undefined,
+              limitsContext: undefined,
+            },
+          ],
         })
       );
     });
@@ -225,6 +255,19 @@ describe('runSplitQuery()', () => {
               _i: 1676008800000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: '10s',
+              limitsContext: {
+                expr: 'count_over_time({a="b"}[1m])',
+                from: from.valueOf(),
+                to: to.valueOf(),
+              },
+            },
+          ],
         })
       );
 
@@ -243,6 +286,15 @@ describe('runSplitQuery()', () => {
               _i: 1676005190000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: '10s',
+              limitsContext: undefined,
+            },
+          ],
         })
       );
 
@@ -261,6 +313,15 @@ describe('runSplitQuery()', () => {
               _i: 1675918790000,
             }),
           }),
+          targets: [
+            {
+              expr: 'count_over_time({a="b"}[1m])',
+              legendFormat: undefined,
+              refId: 'A',
+              step: '10s',
+              limitsContext: undefined,
+            },
+          ],
         })
       );
     });
@@ -269,13 +330,24 @@ describe('runSplitQuery()', () => {
   test('Handles and reports errors', async () => {
     jest
       .spyOn(datasource, 'runQuery')
-      .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
+      .mockReturnValue(
+        of({
+          state: LoadingState.Error,
+          error: { refId: 'A', message: 'the query would read too many bytes...' },
+          data: [],
+        })
+      );
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
       expect(values).toHaveLength(1);
       expect(values[0]).toEqual(
-        expect.objectContaining({ error: { refId: 'A', message: 'Error' }, state: LoadingState.Streaming })
+        expect.objectContaining({
+          error: { refId: 'A', message: 'the query would read too many bytes...' },
+          state: LoadingState.Streaming,
+        })
       );
     });
+    // Errors are not retried
+    expect(datasource.runQuery).toHaveBeenCalledTimes(1);
   });
 
   describe('Hidden and empty queries', () => {

@@ -1,4 +1,4 @@
-import { groupBy, partition, cloneDeep } from 'lodash';
+import { groupBy, partition } from 'lodash';
 import { Observable, Subscriber, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -50,22 +50,25 @@ import { LokiQuery } from './types';
  */
 
 export function runShardSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  const requestCloned = cloneDeep(request);
-  const queries = requestCloned.targets
+  const queries = request.targets
     .filter((query) => query.expr)
     .filter((query) => !query.hide)
-    .map((query) =>
-      addQueryLimitsContext(
-        datasource.applyTemplateVariables(query, requestCloned.scopedVars, requestCloned.filters),
-        request,
-        {
-          isInitialQuery: true,
-        }
-      )
-    );
+    .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
 
-  return splitQueriesByStreamShard(datasource, requestCloned, queries);
+  return splitQueriesByStreamShard(datasource, request, queries);
 }
+
+const addLimitsToShardGroups = (
+  queryIndex: number,
+  groups: ShardedQueryGroup[],
+  request: DataQueryRequest<LokiQuery>
+) => {
+  if (queryIndex === 0) {
+    return groups.map((g) => ({ ...g, targets: g.targets.map((t) => addQueryLimitsContext(t, request)) }));
+  } else {
+    return groups.map((g) => ({ ...g, targets: g.targets.map((t) => ({ ...t, limitsContext: undefined })) }));
+  }
+};
 
 function splitQueriesByStreamShard(
   datasource: LokiDatasource,
@@ -77,8 +80,11 @@ function splitQueriesByStreamShard(
   let subquerySubscription: Subscription | null = null;
   let retriesMap = new Map<string, number>();
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let queryIndex = 0;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, group: number, groups: ShardedQueryGroup[]) => {
+    groups = addLimitsToShardGroups(queryIndex, groups, request);
+    queryIndex++;
     let nextGroupSize = groups[group].groupSize;
     const { shards, groupSize, cycle } = groups[group];
     let retrying = false;
@@ -177,7 +183,7 @@ function splitQueriesByStreamShard(
     subquerySubscription = runSplitQuery(datasource, subRequest, {
       skipPartialUpdates: true,
       disableRetry: true,
-      isInitialQuery: false,
+      shardQueryIndex: queryIndex - 1,
     }).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
