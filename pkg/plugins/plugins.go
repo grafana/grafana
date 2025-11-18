@@ -133,6 +133,9 @@ type JSONData struct {
 
 	// List of languages supported by the plugin
 	Languages []string `json:"languages,omitempty"`
+
+	// Build mode of the plugin (set automatically at build time)
+	BuildMode string `json:"buildMode,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
