@@ -181,8 +181,11 @@ You can zoom the panel time range in and out, which in turn, changes the dashboa
 
 This feature is supported for the following visualizations:
 
+- Candlestick
+- Heatmap
+- State timeline
+- Status history
 - Time series
-TBD
 
 ### Zoom in
 
