@@ -194,9 +194,9 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 			return &DashboardDocumentBuilder{
-				Namespace: namespace,
-				Blob:      blob,
-				Stats:     nil,
+				Namespace:        namespace,
+				Blob:             blob,
+				Stats:            nil,
 				DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{
 					// empty values (does not resolve anything)
 				}),
