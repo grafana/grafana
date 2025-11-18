@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, PanelData, PanelModel, VisualizationSuggestion } from '@grafana/data';
+import { GrafanaTheme2, PanelData, PanelModel, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
@@ -80,8 +80,8 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel, t
 
 function filterSuggestionsBySearch(
   searchQuery: string,
-  suggestions?: VisualizationSuggestion[]
-): VisualizationSuggestion[] {
+  suggestions?: PanelPluginVisualizationSuggestion[]
+): PanelPluginVisualizationSuggestion[] {
   if (!searchQuery || !suggestions) {
     return suggestions || [];
   }
