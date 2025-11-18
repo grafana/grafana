@@ -19,6 +19,19 @@ export interface PanelDataSummary {
   preferredVisualisationType?: PreferredVisualisationType;
   /** pass along a reference to the raw data in case it's needed by the plugin */
   _data?: DataFrame[];
+  /* --- DEPRECATED FIELDS BELOW --- */
+  /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.number) */
+  numberFieldCount: number;
+  /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.time) */
+  timeFieldCount: number;
+  /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.string) */
+  stringFieldCount: number;
+  /** @deprecated use PanelDataSummary.hasFieldType(FieldType.number) */
+  hasNumberField?: boolean;
+  /** @deprecated use PanelDataSummary.hasFieldType(FieldType.time) */
+  hasTimeField?: boolean;
+  /** @deprecated use PanelDataSummary.hasFieldType(FieldType.string) */
+  hasStringField?: boolean;
 }
 
 /**
@@ -68,5 +81,12 @@ export function getPanelDataSummary(frames?: DataFrame[]): PanelDataSummary {
     hasFieldType: (f: FieldType) => fieldCountByType(f) > 0,
     fieldCountByType,
     _data: frames,
+    // deprecated
+    numberFieldCount: fieldCountByType(FieldType.number),
+    timeFieldCount: fieldCountByType(FieldType.time),
+    stringFieldCount: fieldCountByType(FieldType.string),
+    hasTimeField: fieldCountByType(FieldType.time) > 0,
+    hasNumberField: fieldCountByType(FieldType.number) > 0,
+    hasStringField: fieldCountByType(FieldType.string) > 0,
   };
 }
