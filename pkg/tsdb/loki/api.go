@@ -102,7 +102,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		return nil, backend.DownstreamError(fmt.Errorf("failed to create request: %w", err))
 	}
 
-	addQueryLimitsHeader(query, err, req)
+	addQueryLimitsHeader(query, req)
 
 	if query.SupportingQueryType != SupportingQueryNone {
 		value := getSupportingQueryHeaderValue(query.SupportingQueryType)
@@ -116,7 +116,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 	return req, nil
 }
 
-func addQueryLimitsHeader(query lokiQuery, err error, req *http.Request) {
+func addQueryLimitsHeader(query lokiQuery, req *http.Request) {
 	var queryLimit QueryLimitsContext
 	if len(query.LimitsContext.Expr) > 0 {
 		queryLimit.Expr = query.LimitsContext.Expr

@@ -136,9 +136,17 @@ export function isRetriableError(errorResponse: DataQueryResponse) {
   const message = errorResponse.errors
     ? (errorResponse.errors[0].message ?? '').toLowerCase()
     : (errorResponse.error?.message ?? '');
+
+  // @todo make this more generic by not retrying on any 4xx
+
+  // max_query_bytes_read exceeded
+  if (message.includes('the query would read too many bytes')) {
+    throw new Error(message);
+  }
   if (message.includes('timeout')) {
     return true;
-  } else if (errorResponse.data.length > 0 && errorResponse.data[0].fields.length > 0) {
+  }
+  if (errorResponse.data.length > 0 && errorResponse.data[0].fields.length > 0) {
     // Error response but we're receiving data, continue querying.
     return false;
   }
