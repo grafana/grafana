@@ -5932,7 +5932,7 @@
     "empty-transformations-message": {
       "add-transformation": "Add transformation",
       "show-more": "Show more",
-      "sql-name": "SQL Expressions",
+      "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
     "general-settings-edit-view": {
