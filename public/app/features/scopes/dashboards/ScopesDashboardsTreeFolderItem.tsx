@@ -66,7 +66,12 @@ export function ScopesDashboardsTreeFolderItem({
 
       {folder.expanded && (
         <div className={styles.children}>
-          <ScopesDashboardsTree folders={folders} folderPath={folderPath} onFolderUpdate={onFolderUpdate} />
+          <ScopesDashboardsTree
+            subScope={folder.subScopeName}
+            folders={folders}
+            folderPath={folderPath}
+            onFolderUpdate={onFolderUpdate}
+          />
         </div>
       )}
     </div>
