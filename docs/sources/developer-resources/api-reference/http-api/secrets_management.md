@@ -64,7 +64,7 @@ Creates a new secure value.
 
 **Required permissions**
 
-See note in the [introduction](#secrets-management-apis) for an explanation.
+See note in the [introduction](#secrets-management-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action                       | Scope                                     |
@@ -145,7 +145,7 @@ List all secure values in a namespace.
 
 **Required permissions**
 
-See note in the [introduction](#secrets-management-apis) for an explanation.
+See note in the [introduction](#secrets-management-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action                       | Scope                                     |
@@ -214,7 +214,7 @@ Get the details of a specific secure value. It will not return the secret value.
 
 **Required permissions**
 
-See note in the [introduction](#secrets-management-apis) for an explanation.
+See note in the [introduction](#secrets-management-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action                       | Scope                                     |
@@ -282,12 +282,12 @@ Replace an existing secure value with a new specification.
 
 **Required permissions**
 
-See note in the [introduction](#secrets-management-apis) for an explanation.
+See note in the [introduction](#secrets-management-api) for an explanation.
 
 <!-- prettier-ignore-start -->
-| Action                       | Scope                                     |
-| ---------------------------- | ----------------------------------------- |
-| `secret.securevalues:update` | <ul><li>`secret.securevalues:*`</li></ul> |
+| Action                      | Scope                                     |
+| --------------------------- | ----------------------------------------- |
+| `secret.securevalues:write` | <ul><li>`secret.securevalues:*`</li></ul> |
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
@@ -355,7 +355,7 @@ Permanently delete a secure value. This also deletes the underlying stored secre
 
 **Required permissions**
 
-See note in the [introduction](#secrets-management-apis) for an explanation.
+See note in the [introduction](#secrets-management-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action                       | Scope                                     |
