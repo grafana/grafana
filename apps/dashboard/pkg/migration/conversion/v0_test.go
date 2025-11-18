@@ -19,7 +19,8 @@ import (
 func TestV0ConversionErrorHandling(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	tests := []struct {
 		name            string
@@ -130,7 +131,8 @@ func TestV0ConversionErrorHandling(t *testing.T) {
 func TestV0ConversionErrorPropagation(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	t.Run("ConvertDashboard_V0_to_V1beta1 returns error on migration failure", func(t *testing.T) {
 		source := &dashv0.Dashboard{
@@ -203,7 +205,8 @@ func TestV0ConversionErrorPropagation(t *testing.T) {
 func TestV0ConversionSuccessPaths(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	t.Run("Convert_V0_to_V1beta1 success path returns nil", func(t *testing.T) {
 		source := &dashv0.Dashboard{
@@ -271,7 +274,8 @@ func TestV0ConversionSuccessPaths(t *testing.T) {
 func TestV0ConversionSecondStepErrors(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	t.Run("Convert_V0_to_V2alpha1 sets status on first step error", func(t *testing.T) {
 		// Create a dashboard that will fail v0->v1beta1 conversion

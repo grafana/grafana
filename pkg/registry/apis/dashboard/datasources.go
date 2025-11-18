@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 )
 
 type datasourceIndexProvider struct {
@@ -73,4 +76,62 @@ func (d *datasourceIndexProvider) Index(ctx context.Context) *schemaversion.Data
 	}
 
 	return index
+}
+
+type libraryElementIndexProvider struct {
+	libraryElementService libraryelements.Service
+}
+
+func (l *libraryElementIndexProvider) GetLibraryElementInfo(ctx context.Context) []schemaversion.LibraryElementInfo {
+	if l.libraryElementService == nil {
+		return []schemaversion.LibraryElementInfo{}
+	}
+
+	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return []schemaversion.LibraryElementInfo{}
+	}
+
+	user := &identity.StaticRequester{
+		OrgID:   nsInfo.OrgID,
+		OrgRole: identity.RoleAdmin,
+	}
+
+	const perPage = 1_000
+	info := make([]schemaversion.LibraryElementInfo, 0)
+	// For some reason the index starts at page 1 here:
+	// https://github.com/grafana/grafana/blob/main/pkg/services/libraryelements/database.go#L418
+	page := 1
+	for {
+		result, err := l.libraryElementService.GetAllElements(ctx, user, model.SearchLibraryElementsQuery{
+			PerPage: perPage,
+			Page:    page,
+		})
+		if err != nil {
+			return []schemaversion.LibraryElementInfo{}
+		}
+
+		for _, elem := range result.Elements {
+			info = append(info, schemaversion.LibraryElementInfo{
+				UID:         elem.UID,
+				Name:        elem.Name,
+				Kind:        elem.Kind,
+				Type:        elem.Type,
+				Description: elem.Description,
+				FolderUID:   elem.FolderUID,
+			})
+		}
+
+		if len(result.Elements) < perPage {
+			break
+		}
+		page++
+
+		// Bound pages to avoid inf loops
+		if page > 100 {
+			break
+		}
+	}
+
+	return info
 }

@@ -6,6 +6,19 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
+// EmptyLibraryElementProvider provides an empty library element list for tests
+type EmptyLibraryElementProvider struct{}
+
+// NewLibraryElementProvider creates a new empty library element provider for tests
+func NewLibraryElementProvider() *EmptyLibraryElementProvider {
+	return &EmptyLibraryElementProvider{}
+}
+
+// GetLibraryElementInfo returns an empty list for tests
+func (p *EmptyLibraryElementProvider) GetLibraryElementInfo(_ context.Context) []schemaversion.LibraryElementInfo {
+	return []schemaversion.LibraryElementInfo{}
+}
+
 // DataSourceConfig defines different test configurations
 type DataSourceConfig string
 
