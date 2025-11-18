@@ -60,12 +60,7 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
     setError(null);
 
     try {
-      // Filter to only datasource queries (not expression queries)
-      const datasourceQueries = currentQueries.filter(({ datasource }: DataQuery) => {
-        return datasource && datasource.type !== '__expr__' && datasource.uid !== '__expr__';
-      });
-
-      if (datasourceQueries.length === 0) {
+      if (currentQueries.length === 0) {
         setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} });
         setLoading(false);
         return;
@@ -77,7 +72,7 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
       const response = await getBackendSrv().post<SQLSchemasResponse>(
         `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas/name`,
         {
-          queries: datasourceQueries,
+          queries: currentQueries,
           from: currentTimeRange.from.toISOString(),
           to: currentTimeRange.to.toISOString(),
         }
