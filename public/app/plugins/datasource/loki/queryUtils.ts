@@ -30,7 +30,6 @@ import {
 import { DataQuery } from '@grafana/schema';
 
 import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
-import { QuerySplittingOptions } from './querySplitting';
 import { ErrorId } from './querybuilder/parsingUtils';
 import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
