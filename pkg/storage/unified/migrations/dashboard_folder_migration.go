@@ -62,10 +62,6 @@ func (sp *dashboardAndFolderMigration) Exec(sess *xorm.Session, mg *migrator.Mig
 	logger.Info("Starting migration for all organizations", "org_count", len(orgs))
 
 	for _, org := range orgs {
-		if org.ID <= 0 {
-			logger.Warn("Skipping invalid organization", "org_id", org.ID, "org_name", org.Name)
-			continue
-		}
 		namespace := types.OrgNamespaceFormatter(org.ID)
 		logger.Info("Migrating organization", "org_id", org.ID, "org_name", org.Name, "namespace", namespace)
 
@@ -89,7 +85,7 @@ type orgInfo struct {
 
 func (sp *dashboardAndFolderMigration) getAllOrgs(sess *xorm.Session) ([]orgInfo, error) {
 	var orgs []orgInfo
-	err := sess.Table("org").Where("id > 0").Cols("id", "name").Find(&orgs)
+	err := sess.Table("org").Cols("id", "name").Find(&orgs)
 	if err != nil {
 		return nil, err
 	}

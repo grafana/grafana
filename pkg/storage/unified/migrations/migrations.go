@@ -74,7 +74,7 @@ func RegisterMigrations(
 ) error {
 	ctx, span := tracer.Start(context.Background(), "storage.unified.RegisterMigrations")
 	defer span.End()
-	logger := log.New("storage.unified.migrations")
+	logger := log.New("storage.unified.migrations.folders-dashboards")
 	mg := migrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unified_storage")
 	mg.AddCreateMigration()
 
