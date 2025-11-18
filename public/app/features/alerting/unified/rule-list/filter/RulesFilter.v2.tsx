@@ -104,31 +104,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   };
 
   const handleAdvancedFilters: SubmitHandler<AdvancedFilters> = (values) => {
-    // Build search query parts for namespace and group when they contain free-form text
-    const searchParts: string[] = [];
-
-    if (values.namespace) {
-      searchParts.push(`namespace:${values.namespace}`);
-    }
-    if (values.groupName) {
-      searchParts.push(`group:${values.groupName}`);
-    }
-
-    // Apply filters based on whether we have search parts
-    if (searchParts.length > 0) {
-      const newQuery = [searchQuery, ...searchParts].filter(Boolean).join(' ');
-      const parsedFilter = getSearchFilterFromQuery(newQuery);
-
-      // Clear namespace and groupName from form values since they're now in the search query
-      const modifiedValues = { ...values, namespace: null, groupName: null };
-      const combinedFilter = { ...formAdvancedFiltersToRuleFilter(modifiedValues), ...parsedFilter };
-
-      updateFilters(combinedFilter);
-      setSearchQuery(newQuery);
-    } else {
-      updateFilters(formAdvancedFiltersToRuleFilter(values));
-    }
-
+    updateFilters(formAdvancedFiltersToRuleFilter(values));
     trackFilterButtonApplyClick(values, pluginsFilterEnabled);
     setIsPopupOpen(false);
   };
