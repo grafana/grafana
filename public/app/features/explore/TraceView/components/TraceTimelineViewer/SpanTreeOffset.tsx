@@ -66,6 +66,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     right: 0,
     height: '100%',
     paddingTop: '1px',
+    width: '1rem',
   }),
 }));
 
@@ -156,20 +157,15 @@ const UnthemedSpanTreeOffset = React.memo<TProps>((props) => {
     ));
   const styles = getStyles(theme);
 
-  // If span has no children, don't show the last indent guide
-  const displayedAncestorIds = hasChildren ? ancestorIds : ancestorIds.slice(0, -1);
-
   return (
     <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>
-      {displayedAncestorIds.map((ancestorId, index) => (
+      {ancestorIds.map((ancestorId, index) => (
         <span
           key={ancestorId}
           className={cx(styles.indentGuide, {
             [styles.indentGuideActive]: hoverIndentGuideIds.has(ancestorId),
             [styles.indentGuideThin]:
-              index !== displayedAncestorIds.length - 1 &&
-              ancestorId !== 'root' &&
-              !visibleSpanIds.includes(ancestorId),
+              index !== ancestorIds.length - 1 && ancestorId !== 'root' && !visibleSpanIds.includes(ancestorId),
           })}
           data-ancestor-id={ancestorId}
           data-testid="SpanTreeOffset--indentGuide"
@@ -177,16 +173,14 @@ const UnthemedSpanTreeOffset = React.memo<TProps>((props) => {
           onMouseLeave={(event) => handleMouseLeave(event, ancestorId)}
         />
       ))}
-      {icon && (
-        <span
-          className={cx(styles.iconWrapper, 'icon-wrapper')}
-          onMouseEnter={(event) => handleMouseEnter(event, spanID)}
-          onMouseLeave={(event) => handleMouseLeave(event, spanID)}
-          data-testid="icon-wrapper"
-        >
-          {icon}
-        </span>
-      )}
+      <span
+        className={cx(styles.iconWrapper, 'icon-wrapper')}
+        onMouseEnter={(event) => icon && handleMouseEnter(event, spanID)}
+        onMouseLeave={(event) => icon && handleMouseLeave(event, spanID)}
+        data-testid="icon-wrapper"
+      >
+        {icon}
+      </span>
     </span>
   );
 });
