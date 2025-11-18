@@ -242,11 +242,6 @@ export interface FeatureToggles {
   */
   disableClassicHTTPHistogram?: boolean;
   /**
-  * Enable format string transformer
-  * @default true
-  */
-  formatString?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;
@@ -331,11 +326,6 @@ export interface FeatureToggles {
   * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  /**
-  * Add cumulative and window functions to the add field from calculation transformation
-  * @default true
-  */
-  addFieldFromCalculationStatFunctions?: boolean;
   /**
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   */
@@ -899,11 +889,6 @@ export interface FeatureToggles {
   */
   alertingImportYAMLUI?: boolean;
   /**
-  * Enables the unified storage history pruner
-  * @default true
-  */
-  unifiedStorageHistoryPruner?: boolean;
-  /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
   */
@@ -1205,4 +1190,12 @@ export interface FeatureToggles {
   * @default false
   */
   awsDatasourcesHttpProxy?: boolean;
+  /**
+  * Show transformation quick-start cards in empty transformations state
+  */
+  transformationsEmptyPlaceholder?: boolean;
+  /**
+  * Enable TTL plugin instance manager
+  */
+  ttlPluginInstanceManager?: boolean;
 }
