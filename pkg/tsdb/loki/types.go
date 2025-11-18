@@ -13,8 +13,8 @@ type SupportingQueryType = dataquery.SupportingQueryType
 type Direction = dataquery.LokiQueryDirection
 type QueryPlan struct {
 	Expr string
-	From int64
-	To   int64
+	From time.Time
+	To   time.Time
 }
 
 const (

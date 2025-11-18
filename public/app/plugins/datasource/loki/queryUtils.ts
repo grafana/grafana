@@ -30,7 +30,7 @@ import {
 import { DataQuery } from '@grafana/schema';
 
 import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
-import { QuerySplittingOptions } from './querySplitting.ts';
+import { QuerySplittingOptions } from './querySplitting';
 import { ErrorId } from './querybuilder/parsingUtils';
 import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
@@ -444,6 +444,10 @@ export const addQueryPlan = (
   options: QuerySplittingOptions
 ) => {
   if (options.isInitialQuery) {
+    console.log('initial query', {
+      expr: lokiQuery.expr,
+      options,
+    });
     const lokiQueryWithPlan: LokiQuery = {
       ...lokiQuery,
       plan: {

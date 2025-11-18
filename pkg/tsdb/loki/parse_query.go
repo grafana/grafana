@@ -92,21 +92,22 @@ func parseQueryPlanExpr(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) 
 }
 
 // There has to be a less stupid way of doing this
-func parseQueryPlanFrom(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) int64 {
+func parseQueryPlanFrom(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) (time.Time, error) {
 	if jsonPointerValue == nil {
-		return 0
+		return time.Time{}, backend.DownstreamError(fmt.Errorf("invalid query plan \"from\": %s", jsonPointerValue))
 	} else {
 		jsonValue := *jsonPointerValue
-		return jsonValue.From
+		return time.UnixMilli(jsonValue.From), nil
 	}
 }
 
-func parseQueryPlanTo(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) int64 {
+func parseQueryPlanTo(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) (time.Time, error) {
 	if jsonPointerValue == nil {
-		return 0
+		return time.Time{}, backend.DownstreamError(fmt.Errorf("invalid query plan \"to\": %s", jsonPointerValue))
 	} else {
 		jsonValue := *jsonPointerValue
-		return jsonValue.To
+		//time.UnixMilli(model.Plan.From)
+		return time.UnixMilli(jsonValue.To), nil
 	}
 }
 
@@ -157,8 +158,8 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
 		var exprPlan string
-		var toPlan int64
-		var fromPlan int64
+		var toPlan time.Time
+		var fromPlan time.Time
 		model, err := parseQueryModel(query.JSON)
 		if err != nil {
 			return nil, err
@@ -193,8 +194,8 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 			exprPlan = interpolateVariables(uninterpolatedExprPlan, interval, timeRange, queryType, step)
 		}
 
-		toPlan = parseQueryPlanTo(model.Plan)
-		fromPlan = parseQueryPlanFrom(model.Plan)
+		toPlan, err = parseQueryPlanTo(model.Plan)
+		fromPlan, err = parseQueryPlanFrom(model.Plan)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {

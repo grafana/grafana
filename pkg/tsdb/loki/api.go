@@ -39,6 +39,12 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
+type QueryLimitsContext struct {
+	Expr string    `json:"expr"`
+	From time.Time `json:"from"`
+	To   time.Time `json:"to"`
+}
+
 func newLokiAPI(client *http.Client, url string, log log.Logger, tracer trace.Tracer) *LokiAPI {
 	return &LokiAPI{client: client, url: url, log: log, tracer: tracer}
 }
@@ -96,16 +102,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		return nil, backend.DownstreamError(fmt.Errorf("failed to create request: %w", err))
 	}
 
-	// @todo better
-	if len(query.Plan.Expr) > 0 {
-		req.Header.Set("X-Query-Limits-Expr", query.Plan.Expr)
-	}
-	if query.Plan.From > 0 {
-		req.Header.Set("X-Query-Limits-From", strconv.FormatInt(query.Plan.From, 10))
-	}
-	if query.Plan.To > 0 {
-		req.Header.Set("X-Query-Limits-To", strconv.FormatInt(query.Plan.To, 10))
-	}
+	addQueryLimitsHeader(query, err, req)
 
 	if query.SupportingQueryType != SupportingQueryNone {
 		value := getSupportingQueryHeaderValue(query.SupportingQueryType)
@@ -117,6 +114,19 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 	setXScopeOrgIDHeader(req, ctx)
 
 	return req, nil
+}
+
+func addQueryLimitsHeader(query lokiQuery, err error, req *http.Request) {
+	var queryLimit QueryLimitsContext
+	if len(query.Plan.Expr) > 0 {
+		queryLimit.Expr = query.Plan.Expr
+		queryLimit.To = query.Plan.To
+		queryLimit.From = query.Plan.From
+	}
+	queryLimitStr, err := json.Marshal(queryLimit)
+	if err == nil {
+		req.Header.Set("X-Loki-Query-Limits-Context", string(queryLimitStr))
+	}
 }
 
 type lokiResponseError struct {
