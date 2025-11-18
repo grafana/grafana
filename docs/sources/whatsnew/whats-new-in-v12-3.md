@@ -34,6 +34,7 @@ posts:
       - whats-new/2025-10-01-raw-query-support-in-honeycomb-data-source.md
       - whats-new/2025-11-04-cloudwatch-logs-anomaly-detection-and-pattern-analysis.md
       - whats-new/2025-11-04-opensearch-ppl-language-support-and-sample-queries.md
+      - whats-new/2025-10-22-solarwinds-enterprise-data-source-for-grafana/
   - title: Breaking changes
     items:
       - whats-new/2025-10-03-removal-of-api-key-associated-permissions.md
