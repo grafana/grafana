@@ -445,6 +445,7 @@ const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
   }),
   schemaInspectorOpen: css({
     border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
   }),
   schemaFields: css({
     display: 'flex',
