@@ -497,7 +497,7 @@ func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVa
 	return referencedDs
 }
 
-// will always return strings for now
+// nolint:gocyclo
 func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath string, lc map[string]any) (PanelSummaryInfo, bool) {
 	panel := PanelSummaryInfo{}
 
