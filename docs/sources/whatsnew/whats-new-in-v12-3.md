@@ -52,7 +52,7 @@ This release reimagines how you explore logs, delivers more ways to connect your
 
 Sharing insights is easier too, with streamlined dashboard image exports and consolidated panel time controls that make comparisons and overrides more intuitive. And to help you learn as you go, a new interactive learning experience now brings contextual guidance directly into Grafana, giving you tips, tutorials, and documentation right when you need them. All of this comes together to make open observability easier, more accessible, and more powerful for every team.
 
-{{< youtube id=I9JCTBemMGQ >}}
+{{< youtube id=VidGeu4PRZw >}}
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v12.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v12.3/).
 
