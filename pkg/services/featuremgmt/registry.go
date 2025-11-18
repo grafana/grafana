@@ -2072,6 +2072,14 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
 		},
+		{
+			Name:            "opentsdbBackendMigration",
+			Description:     "Run queries through the data source backend",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaOSSBigTent,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
 	}
 )
 

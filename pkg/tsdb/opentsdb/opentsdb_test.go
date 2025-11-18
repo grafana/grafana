@@ -18,6 +18,58 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCheckHealth(t *testing.T) {
+	tests := []struct {
+		name            string
+		httpStatusCode  int
+		expectedStatus  backend.HealthStatus
+		expectedMessage string
+	}{
+		{
+			name:            "successful health check",
+			httpStatusCode:  200,
+			expectedStatus:  backend.HealthStatusOk,
+			expectedMessage: "Data source is working",
+		},
+		{
+			name:            "http error",
+			httpStatusCode:  500,
+			expectedStatus:  backend.HealthStatusError,
+			expectedMessage: "OpenTSDB suggest endpoint returned status 500",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/api/suggest", r.URL.Path)
+				assert.Equal(t, "cpu", r.URL.Query().Get("q"))
+				assert.Equal(t, "metrics", r.URL.Query().Get("type"))
+				w.WriteHeader(tt.httpStatusCode)
+			}))
+			defer server.Close()
+
+			pluginCtx := backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					URL:      server.URL,
+					JSONData: []byte(`{}`),
+				},
+			}
+
+			im := datasource.NewInstanceManager(newInstanceSettings(httpclient.NewProvider()))
+			service := &Service{im: im}
+			ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+			result, err := service.CheckHealth(ctx, &backend.CheckHealthRequest{
+				PluginContext: pluginCtx,
+			})
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatus, result.Status)
+			assert.Contains(t, result.Message, tt.expectedMessage)
+		})
+	}
+}
+
 func TestOpenTsdbExecutor(t *testing.T) {
 	service := &Service{}
 
