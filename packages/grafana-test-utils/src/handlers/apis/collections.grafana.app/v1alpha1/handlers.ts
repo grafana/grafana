@@ -3,10 +3,10 @@ import { HttpResponse, http } from 'msw';
 import { mockStarredDashboardsMap } from '../../../../fixtures/starred';
 
 const getStarsHandler = () =>
-  http.get('/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/stars', () => {
+  http.get('/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars', () => {
     const mockStarsResponse = {
       kind: 'StarsList',
-      apiVersion: 'preferences.grafana.app/v1alpha1',
+      apiVersion: 'collections.grafana.app/v1alpha1',
       metadata: {
         resourceVersion: '1758126936000',
       },
@@ -35,7 +35,7 @@ const getStarsHandler = () =>
   });
 
 const UPDATE_STARS_URL =
-  '/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id';
+  '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id';
 
 type UpdateOrDeleteStarsParams = {
   namespace: string;
