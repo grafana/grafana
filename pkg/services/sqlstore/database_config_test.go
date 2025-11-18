@@ -100,7 +100,7 @@ var databaseConfigTestCases = []databaseConfigTest{
 		name:       "MySQL with ANSI_QUOTES mode",
 		dbType:     "mysql",
 		dbHost:     "[::1]",
-		features:   featuremgmt.WithFeatures(featuremgmt.FlagMysqlAnsiQuotes),
+		features:   featuremgmt.WithFeatures(),
 		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&sql_mode='ANSI_QUOTES'",
 	},
 }

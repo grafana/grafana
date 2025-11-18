@@ -2743,7 +2743,8 @@
       "metadata": {
         "name": "mysqlAnsiQuotes",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2022-10-12T11:43:35Z"
+        "creationTimestamp": "2022-10-12T11:43:35Z",
+        "deletionTimestamp": "2025-11-18T19:38:17Z"
       },
       "spec": {
         "description": "Use double quotes to escape keyword in a MySQL query",
