@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
@@ -186,4 +187,102 @@ func (p *ConfigurableDataSourceProvider) getDevDashboardDataSources() []schemave
 			ID:         6,
 		},
 	}
+}
+
+// TestLibraryElementProvider provides library elements with models for testing repeat options migration
+type TestLibraryElementProvider struct {
+	elements []schemaversion.LibraryElementInfo
+}
+
+// NewTestLibraryElementProvider creates a new test library element provider with sample library panels
+func NewTestLibraryElementProvider() *TestLibraryElementProvider {
+	// Create library panel models with repeat options
+	libPanelWithRepeatH := map[string]interface{}{
+		"id":              1,
+		"type":            "timeseries",
+		"title":           "Library Panel with Horizontal Repeat",
+		"repeat":          "server",
+		"repeatDirection": "h",
+		"maxPerRow":       3,
+		"gridPos": map[string]interface{}{
+			"x": 0,
+			"y": 0,
+			"w": 12,
+			"h": 8,
+		},
+		"targets": []interface{}{},
+		"options": map[string]interface{}{},
+	}
+
+	libPanelWithRepeatV := map[string]interface{}{
+		"id":              2,
+		"type":            "stat",
+		"title":           "Library Panel with Vertical Repeat",
+		"repeat":          "datacenter",
+		"repeatDirection": "v",
+		"gridPos": map[string]interface{}{
+			"x": 0,
+			"y": 0,
+			"w": 6,
+			"h": 4,
+		},
+		"targets": []interface{}{},
+		"options": map[string]interface{}{},
+	}
+
+	libPanelWithoutRepeat := map[string]interface{}{
+		"id":    3,
+		"type":  "text",
+		"title": "Library Panel without Repeat",
+		"gridPos": map[string]interface{}{
+			"x": 0,
+			"y": 0,
+			"w": 6,
+			"h": 3,
+		},
+		"targets": []interface{}{},
+		"options": map[string]interface{}{},
+	}
+
+	// Marshal models to JSON
+	modelWithRepeatH, _ := json.Marshal(libPanelWithRepeatH)
+	modelWithRepeatV, _ := json.Marshal(libPanelWithRepeatV)
+	modelWithoutRepeat, _ := json.Marshal(libPanelWithoutRepeat)
+
+	return &TestLibraryElementProvider{
+		elements: []schemaversion.LibraryElementInfo{
+			{
+				UID:         "lib-panel-repeat-h",
+				Name:        "Library Panel with Horizontal Repeat",
+				Kind:        1, // Panel element
+				Type:        "timeseries",
+				Description: "A library panel with horizontal repeat options",
+				FolderUID:   "",
+				Model:       modelWithRepeatH,
+			},
+			{
+				UID:         "lib-panel-repeat-v",
+				Name:        "Library Panel with Vertical Repeat",
+				Kind:        1, // Panel element
+				Type:        "stat",
+				Description: "A library panel with vertical repeat options",
+				FolderUID:   "",
+				Model:       modelWithRepeatV,
+			},
+			{
+				UID:         "lib-panel-no-repeat",
+				Name:        "Library Panel without Repeat",
+				Kind:        1, // Panel element
+				Type:        "text",
+				Description: "A library panel without repeat options",
+				FolderUID:   "",
+				Model:       modelWithoutRepeat,
+			},
+		},
+	}
+}
+
+// GetLibraryElementInfo returns the test library elements
+func (p *TestLibraryElementProvider) GetLibraryElementInfo(_ context.Context) []schemaversion.LibraryElementInfo {
+	return p.elements
 }

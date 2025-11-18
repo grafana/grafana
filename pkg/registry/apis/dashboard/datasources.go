@@ -119,6 +119,7 @@ func (l *libraryElementIndexProvider) GetLibraryElementInfo(ctx context.Context)
 				Type:        elem.Type,
 				Description: elem.Description,
 				FolderUID:   elem.FolderUID,
+				Model:       elem.Model,
 			})
 		}
 

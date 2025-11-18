@@ -34,6 +34,7 @@ type LibraryElementInfo struct {
 	Type        string
 	Description string
 	FolderUID   string
+	Model       []byte // JSON model of the library element, used to extract repeat options during migration
 }
 
 type LibraryElementIndexProvider interface {

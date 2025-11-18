@@ -99,8 +99,13 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     const layoutElement = vizPanel.parent!;
 
-    // Migrate repeat options to layout element
-    if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
+    // Skip migrating repeat options from library panel when using dynamic dashboards (dashboardNewLayouts),
+    // as repeat options should only come from the dashboard panel instance (grid item),
+    // not from the library panel definition.
+    const shouldSkipRepeatMigration = config.featureToggles.dashboardNewLayouts;
+
+    // Migrate repeat options to layout element (only for legacy dashboards)
+    if (!shouldSkipRepeatMigration && libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
       layoutElement.setState({
         variableName: libPanelModel.repeat,
         repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
