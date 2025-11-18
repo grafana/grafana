@@ -1,6 +1,7 @@
+import { isObject } from 'lodash';
 import { FormEvent, useCallback, useState } from 'react';
 
-import { CustomVariableModel } from '@grafana/data';
+import { CustomVariableModel, shallowCompare } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { CustomVariable, SceneVariable } from '@grafana/scenes';
 
@@ -16,6 +17,7 @@ interface CustomVariableEditorProps {
 
 export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEditorProps) {
   const { query, valuesFormat, isMulti, allValue, includeAll, allowCustomValue } = variable.useState();
+  const [queryValidationError, setQueryValidationError] = useState<Error>();
 
   const [prevQuery, setPrevQuery] = useState('');
   const onValuesFormatChange = useCallback(
@@ -26,6 +28,7 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
       variable.setState({ allValue: undefined });
       onRunQuery();
 
+      setQueryValidationError(undefined);
       if (query !== prevQuery) {
         setPrevQuery(query);
       }
@@ -49,10 +52,18 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
 
   const onQueryChange = useCallback(
     (event: FormEvent<HTMLTextAreaElement>) => {
+      if (valuesFormat === 'json') {
+        const validationError = validateJsonQuery(event.currentTarget.value);
+        setQueryValidationError(validationError);
+        if (validationError) {
+          return;
+        }
+      }
+
       variable.setState({ query: event.currentTarget.value });
       onRunQuery();
     },
-    [variable, onRunQuery]
+    [valuesFormat, variable, onRunQuery]
   );
 
   const onAllValueChange = useCallback(
@@ -77,9 +88,10 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
       allValue={allValue ?? ''}
       includeAll={!!includeAll}
       allowCustomValue={allowCustomValue}
+      queryValidationError={queryValidationError}
+      onQueryChange={onQueryChange}
       onMultiChange={onMultiChange}
       onIncludeAllChange={onIncludeAllChange}
-      onQueryChange={onQueryChange}
       onAllValueChange={onAllValueChange}
       onAllowCustomValueChange={onAllowCustomValueChange}
       onValuesFormatChange={onValuesFormatChange}
@@ -100,3 +112,47 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
     }),
   ];
 }
+
+const validateJsonQuery = (rawQuery: string): Error | undefined => {
+  const query = rawQuery.trim();
+  if (!query) {
+    return;
+  }
+
+  try {
+    const options = JSON.parse(query);
+
+    if (!Array.isArray(options)) {
+      throw new Error('Enter a valid JSON array of objects');
+    }
+
+    if (!options.length) {
+      return;
+    }
+
+    let errorIndex = options.findIndex((item) => !isObject(item));
+    if (errorIndex !== -1) {
+      throw new Error(`All items must be objects. The item at index ${errorIndex} is not an object.`);
+    }
+
+    const keys = Object.keys(options[0]);
+    if (!keys.includes('value')) {
+      throw new Error('Each object in the array must include at least a "value" property');
+    }
+    if (keys.includes('')) {
+      throw new Error('Object property names cannot be empty strings');
+    }
+
+    errorIndex = options.findIndex((o) => !shallowCompare(keys, Object.keys(o)));
+    if (errorIndex !== -1) {
+      throw new Error(
+        `All objects must have the same set of properties. The object at index ${errorIndex} does not match the expected properties`
+      );
+    }
+
+    return;
+  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return error as Error;
+  }
+};

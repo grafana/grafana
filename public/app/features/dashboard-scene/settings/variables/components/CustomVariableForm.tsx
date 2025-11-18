@@ -1,7 +1,6 @@
-import { isObject } from 'lodash';
-import { FormEvent, useState } from 'react';
+import { FormEvent } from 'react';
 
-import { CustomVariableModel, shallowCompare } from '@grafana/data';
+import { CustomVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, Icon, RadioButtonGroup, Stack, TextLink, Tooltip } from '@grafana/ui';
@@ -17,6 +16,7 @@ interface CustomVariableFormProps {
   allValue?: string | null;
   includeAll: boolean;
   allowCustomValue?: boolean;
+  queryValidationError?: Error;
   onQueryChange: (event: FormEvent<HTMLTextAreaElement>) => void;
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
@@ -34,6 +34,7 @@ export function CustomVariableForm({
   allValue,
   includeAll,
   allowCustomValue,
+  queryValidationError,
   onQueryChange,
   onMultiChange,
   onIncludeAllChange,
@@ -41,20 +42,6 @@ export function CustomVariableForm({
   onAllowCustomValueChange,
   onValuesFormatChange,
 }: CustomVariableFormProps) {
-  const [validationError, setValidationError] = useState<Error>();
-
-  const onChangeFormat = (newFormat: CustomVariableModel['valuesFormat']) => {
-    onValuesFormatChange?.(newFormat);
-    setValidationError(undefined);
-  };
-
-  const onQueryBlur = (e: FormEvent<HTMLTextAreaElement>) => {
-    if (valuesFormat === 'json') {
-      setValidationError(validateJsonQuery(e.currentTarget.value));
-    }
-    onQueryChange(e);
-  };
-
   return (
     <>
       <VariableLegend>
@@ -64,7 +51,7 @@ export function CustomVariableForm({
       <Stack direction="row" gap={1}>
         <RadioButtonGroup
           value={valuesFormat}
-          onChange={onChangeFormat}
+          onChange={onValuesFormatChange}
           options={[
             {
               value: 'csv',
@@ -72,7 +59,6 @@ export function CustomVariableForm({
             },
             {
               value: 'json',
-              // TODO: add translation
               label: t('dashboard-scene.custom-variable-form.name-json-values', 'Object values in a JSON array'),
             },
           ]}
@@ -91,17 +77,17 @@ export function CustomVariableForm({
         placeholder={
           valuesFormat === 'json'
             ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-              '[{ "text": "text1", "propA": "a1", "propB": "b1" },\n{ "text": "text2", "propA": "a2", "propB": "b2" }]'
+              '[{ "text":"text1", "value":"val1", "propA":"a1", "propB":"b1" },\n{ "text":"text2", "value":"val2", "propA":"a2", "propB":"b2" }]'
             : // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               '1, 10, mykey : myvalue, myvalue, escaped\,value'
         }
         defaultValue={query}
-        onBlur={onQueryBlur}
+        onBlur={onQueryChange}
         required
         width={52}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
       />
-      {validationError && <FieldValidationMessage>{validationError.message}</FieldValidationMessage>}
+      {queryValidationError && <FieldValidationMessage>{queryValidationError.message}</FieldValidationMessage>}
 
       <VariableLegend>
         <Trans i18nKey="dashboard-scene.custom-variable-form.selection-options">Selection options</Trans>
@@ -124,8 +110,7 @@ export function CustomVariableForm({
 
 function TooltipJsonFormat() {
   return (
-    // TODO: add translation
-    <Trans i18nKey="">
+    <Trans i18nKey="dashboard-scene.custom-variable-form.json-values-tooltip">
       Provide a JSON representing an array of objects, where each object can have any number of properties.
       <br />
       Check{' '}
@@ -136,42 +121,3 @@ function TooltipJsonFormat() {
     </Trans>
   );
 }
-
-const validateJsonQuery = (rawQuery: string): Error | undefined => {
-  const query = rawQuery.trim();
-  if (!query) {
-    return;
-  }
-
-  try {
-    const options = JSON.parse(query);
-
-    if (!Array.isArray(options)) {
-      throw new Error('Invalid JSON array!');
-    }
-
-    if (!options.length) {
-      return;
-    }
-
-    const keys = Object.keys(options[0]);
-    if (!keys.length || !keys.some((k) => k === 'value')) {
-      throw new Error('The objects in the array must have at least a "value" key!');
-    }
-
-    for (let i = 0; i < options.length; i += 1) {
-      if (!isObject(options[i])) {
-        throw new Error(`All items in the array must be objects. Item at index=${i} is incorrect!`);
-      }
-
-      if (!shallowCompare(keys, Object.keys(options[i]))) {
-        throw new Error(`All objects in the array must have the same keys. Object at index=${i} is incorrect!`);
-      }
-    }
-
-    return;
-  } catch (error) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return error as Error;
-  }
-};

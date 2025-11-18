@@ -335,10 +335,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       defaultToAll: Boolean(variable.spec.includeAll),
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
-      valuesFormat:
-        variable.spec.valuesFormat === 'csv' || variable.spec.valuesFormat === 'json'
-          ? variable.spec.valuesFormat
-          : undefined,
+      valuesFormat: variable.spec.valuesFormat || 'csv',
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
     return new QueryVariable({
