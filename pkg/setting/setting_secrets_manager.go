@@ -36,8 +36,6 @@ type SecretsManagerSettings struct {
 	// How long to wait for the process to clean up a secure value to complete.
 	GCWorkerPerSecureValueCleanupTimeout time.Duration
 
-	// Whether to register the MT CRUD API
-	RegisterAPIServer bool
 	// Whether to create the MT secrets management database
 	RunSecretsDBMigrations bool
 	// Whether to run the data key id migration. Requires that RunSecretsDBMigrations is also true.
@@ -62,7 +60,6 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.GCWorkerPollInterval = secretsMgmt.Key("gc_worker_poll_interval").MustDuration(1 * time.Minute)
 	cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout = secretsMgmt.Key("gc_worker_per_request_timeout").MustDuration(5 * time.Second)
 
-	cfg.SecretsManagement.RegisterAPIServer = secretsMgmt.Key("register_api_server").MustBool(true)
 	cfg.SecretsManagement.RunSecretsDBMigrations = secretsMgmt.Key("run_secrets_db_migrations").MustBool(true)
 	cfg.SecretsManagement.RunDataKeyMigration = secretsMgmt.Key("run_data_key_migration").MustBool(true)
 

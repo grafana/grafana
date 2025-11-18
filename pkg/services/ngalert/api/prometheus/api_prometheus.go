@@ -479,6 +479,18 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	ruleGroups := opts.Query["rule_group"]
 
 	receiverName := opts.Query.Get("receiver_name")
+	title := opts.Query.Get("search.rule_name")
+	searchRuleGroup := opts.Query.Get("search.rule_group")
+
+	var ruleType ngmodels.RuleTypeFilter
+	switch ngmodels.RuleType(opts.Query.Get("rule_type")) {
+	case ngmodels.RuleTypeAlerting:
+		ruleType = ngmodels.RuleTypeFilterAlerting
+	case ngmodels.RuleTypeRecording:
+		ruleType = ngmodels.RuleTypeFilterRecording
+	default:
+		ruleType = ngmodels.RuleTypeFilterAll
+	}
 
 	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
 	nextToken := opts.Query.Get("group_next_token")
@@ -489,13 +501,16 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
-			OrgID:         opts.OrgID,
-			NamespaceUIDs: namespaceUIDs,
-			DashboardUID:  dashboardUID,
-			PanelID:       panelID,
-			RuleGroups:    ruleGroups,
-			ReceiverName:  receiverName,
+			OrgID:           opts.OrgID,
+			NamespaceUIDs:   namespaceUIDs,
+			DashboardUID:    dashboardUID,
+			PanelID:         panelID,
+			RuleGroups:      ruleGroups,
+			ReceiverName:    receiverName,
+			SearchTitle:     title,
+			SearchRuleGroup: searchRuleGroup,
 		},
+		RuleType:      ruleType,
 		Limit:         maxGroups,
 		ContinueToken: nextToken,
 	}
@@ -624,14 +639,18 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	ruleGroups := opts.Query["rule_group"]
 
 	receiverName := opts.Query.Get("receiver_name")
+	title := opts.Query.Get("search.rule_name")
+	searchRuleGroup := opts.Query.Get("search.rule_group")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:         opts.OrgID,
-		NamespaceUIDs: namespaceUIDs,
-		DashboardUID:  dashboardUID,
-		PanelID:       panelID,
-		RuleGroups:    ruleGroups,
-		ReceiverName:  receiverName,
+		OrgID:           opts.OrgID,
+		NamespaceUIDs:   namespaceUIDs,
+		DashboardUID:    dashboardUID,
+		PanelID:         panelID,
+		RuleGroups:      ruleGroups,
+		ReceiverName:    receiverName,
+		SearchTitle:     title,
+		SearchRuleGroup: searchRuleGroup,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {

@@ -855,6 +855,28 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
+	if query.SearchTitle != "" {
+		words := strings.Fields(query.SearchTitle)
+		if len(words) > 0 {
+			// Build sequential pattern: %word1%word2%word3%
+			pattern := strings.Join(words, "%")
+			sql, param := st.SQLStore.GetDialect().LikeOperator("title", true, pattern, true)
+			q = q.And(sql, param)
+		}
+	}
+
+	if query.SearchRuleGroup != "" {
+		normalizedInput := strings.ToLower(query.SearchRuleGroup)
+		words := strings.Fields(normalizedInput)
+
+		if len(words) > 0 {
+			pattern := "%" + strings.Join(words, "%") + "%"
+			// In MySQL rule_group field has case-sensitive collation by default,
+			// so we need to use LOWER to perform case-insensitive search.
+			q = q.And("LOWER(rule_group) LIKE ?", pattern)
+		}
+	}
+
 	if query.HasPrometheusRuleDefinition != nil {
 		q, err = st.filterWithPrometheusRuleDefinition(*query.HasPrometheusRuleDefinition, q)
 		if err != nil {

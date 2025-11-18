@@ -19,6 +19,7 @@ import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
+  const styles = useStyles2(getStyles);
 
   return (
     <>
@@ -27,7 +28,11 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
         .map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}
-      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
+      {config.featureToggles.dashboardNewLayouts ? (
+        <div className={styles.addButton}>
+          <AddVariableButton dashboard={dashboard} />
+        </div>
+      ) : null}
     </>
   );
 }
@@ -105,7 +110,7 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
       onPointerDown={onPointerDown}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
     >
-      <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable)} />
+      <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
       <variable.Component model={variable} />
     </div>
   );
@@ -145,12 +150,16 @@ function VariableLabel({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    display: 'flex',
+    display: 'inline-flex',
+    alignItems: 'center',
+    verticalAlign: 'middle',
     // No border for second element (inputs) as label and input border is shared
     '> :nth-child(2)': css({
       borderTopLeftRadius: 'unset',
       borderBottomLeftRadius: 'unset',
     }),
+    marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(1),
   }),
   verticalContainer: css({
     display: 'flex',
@@ -175,5 +184,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   labelSelectable: css({
     cursor: 'pointer',
+  }),
+  label: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  addButton: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    verticalAlign: 'middle',
+    marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(1),
   }),
 });
