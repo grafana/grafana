@@ -1,4 +1,4 @@
-import { addDays, addHours, differenceInCalendarDays, differenceInMinutes, isBefore, parseISO, toDate } from 'date-fns';
+import { differenceInMinutes, parseISO, toDate } from 'date-fns';
 import { Page } from 'playwright-core';
 
 import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
@@ -17,7 +17,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test.fixme('Tests dashboard time zone scenarios', async ({ page, gotoDashboardPage, selectors }) => {
+    test('Tests dashboard time zone scenarios', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({ uid: TIMEZONE_DASHBOARD_UID });
 
       const fromTimeZone = 'UTC';
@@ -106,12 +106,18 @@ test.describe(
         zone: 'Browser',
       });
 
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel with relative time override'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
+      const relativeTimeRow = dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel with relative time override'))
+        .locator('[role="row"]')
+        .filter({ hasText: '00:00:00' })
+        .first();
+      const timezoneRow = dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel in timezone'))
+        .locator('[role="row"]')
+        .filter({ hasText: '00:00:00' })
+        .first();
+
+      await expect(relativeTimeRow).toBeVisible();
 
       // Today so far, still in Browser timezone
       await setTimeRange(page, dashboardPage, selectors, {
@@ -119,19 +125,8 @@ test.describe(
         to: 'now',
       });
 
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel with relative time override'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
-
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel in timezone'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
+      await expect(relativeTimeRow).toBeVisible();
+      await expect(timezoneRow).toBeVisible();
 
       // Test UTC timezone
       await setTimeRange(page, dashboardPage, selectors, {
@@ -140,12 +135,7 @@ test.describe(
         zone: 'Coordinated Universal Time',
       });
 
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel with relative time override'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
+      await expect(relativeTimeRow).toBeVisible();
 
       // Today so far, still in UTC timezone
       await setTimeRange(page, dashboardPage, selectors, {
@@ -153,19 +143,8 @@ test.describe(
         to: 'now',
       });
 
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel with relative time override'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
-
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel in timezone'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
+      await expect(relativeTimeRow).toBeVisible();
+      await expect(timezoneRow).toBeVisible();
 
       // Test Tokyo timezone
       await setTimeRange(page, dashboardPage, selectors, {
@@ -174,12 +153,7 @@ test.describe(
         zone: 'Asia/Tokyo',
       });
 
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel with relative time override'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
+      await expect(relativeTimeRow).toBeVisible();
 
       // Today so far, still in Tokyo timezone
       await setTimeRange(page, dashboardPage, selectors, {
@@ -187,19 +161,8 @@ test.describe(
         to: 'now',
       });
 
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel with relative time override'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
-
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel in timezone'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
+      await expect(relativeTimeRow).toBeVisible();
+      await expect(timezoneRow).toBeVisible();
 
       // Test LA timezone
       await setTimeRange(page, dashboardPage, selectors, {
@@ -208,12 +171,7 @@ test.describe(
         zone: 'America/Los Angeles',
       });
 
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel with relative time override'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
+      await expect(relativeTimeRow).toBeVisible();
 
       // Today so far, still in LA timezone
       await setTimeRange(page, dashboardPage, selectors, {
@@ -221,19 +179,8 @@ test.describe(
         to: 'now',
       });
 
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel with relative time override'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
-
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel in timezone'))
-          .locator('[role="row"]')
-          .filter({ hasText: '00:00:00' })
-      ).toBeVisible();
+      await expect(relativeTimeRow).toBeVisible();
+      await expect(timezoneRow).toBeVisible();
     });
   }
 );
@@ -266,10 +213,7 @@ const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => 
   }
 
   const utcDate = toDate(parseISO(inUtc));
-  const utcDateWithOffset = addHours(toDate(parseISO(inUtc)), offset);
-  const dayDifference = differenceInCalendarDays(utcDate, utcDateWithOffset); // if the utcDate +/- offset is the day before/after then we need to adjust reference
-  const dayOffset = isBefore(utcDateWithOffset, utcDate) ? dayDifference * -1 : dayDifference;
-  const tzDate = addDays(toDate(parseISO(inTz)), dayOffset); // adjust tzDate with any dayOffset
+  const tzDate = toDate(parseISO(inTz));
   const diff = Math.abs(differenceInMinutes(utcDate, tzDate)); // use Math.abs if tzDate is in future
 
   return diff <= Math.abs(offset * 60);

@@ -15,6 +15,7 @@ service AuthzExtentionService {
   rpc Write(WriteRequest) returns (WriteResponse);
 
   rpc Mutate(MutateRequest) returns (MutateResponse);
+  rpc Query(QueryRequest) returns (QueryResponse);
 }
 
 message MutateRequest {
@@ -32,6 +33,7 @@ message MutateOperation {
     DeletePermissionOperation delete_permission = 4;
     UpdateUserOrgRoleOperation update_user_org_role = 5;
     DeleteUserOrgRoleOperation delete_user_org_role = 6;
+    AddUserOrgRoleOperation add_user_org_role = 7;
   }
 }
 
@@ -63,6 +65,14 @@ message DeletePermissionOperation {
   Permission permission = 2;
 }
 
+message AddUserOrgRoleOperation {
+  // User UID
+  string user = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+// UpdateUserOrgRoleOperation assigns the user's basic role and deletes existing basic role assignments.
 message UpdateUserOrgRoleOperation {
   // User UID
   string user = 1;
@@ -173,4 +183,31 @@ message BatchCheckResponse {
 
 message BatchCheckGroupResource {
   map<string, bool> items = 1;
+}
+
+message QueryRequest {
+  string namespace = 1;
+  QueryOperation operation = 2;
+}
+
+message QueryResponse {
+  oneof result {
+    GetFolderParentsResult folder_parents = 1;
+  }
+}
+
+message QueryOperation {
+  oneof operation {
+    GetFolderParentsQuery get_folder_parents = 1;
+  }
+}
+
+message GetFolderParentsQuery {
+  // UID of the folder
+  string folder = 1;
+}
+
+message GetFolderParentsResult {
+  // List of parent folder UIDs
+  repeated string parent_uids = 1;
 }

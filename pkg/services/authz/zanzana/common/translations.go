@@ -1,6 +1,8 @@
 package common
 
 import (
+	"slices"
+
 	authlib "github.com/grafana/authlib/types"
 
 	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -21,6 +23,14 @@ var basicRolesTranslations = map[string]string{
 	roleEditor:       "basic_editor",
 	roleViewer:       "basic_viewer",
 	roleNone:         "basic_none",
+}
+
+var basicRolesUIDs = []string{
+	"basic_grafana_admin",
+	"basic_admin",
+	"basic_editor",
+	"basic_viewer",
+	"basic_none",
 }
 
 type resourceTranslation struct {
@@ -148,4 +158,8 @@ func TranslateToGroupResource(kind string) string {
 
 func TranslateBasicRole(name string) string {
 	return basicRolesTranslations[name]
+}
+
+func IsBasicRole(name string) bool {
+	return slices.Contains(basicRolesUIDs, name)
 }

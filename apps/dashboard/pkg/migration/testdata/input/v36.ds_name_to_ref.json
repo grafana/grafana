@@ -34,6 +34,8 @@
       {
         "name": "Unknown Datasource Annotation - Tests unknown datasource preserved as UID",
         "datasource": {
+          "type": "prometheus",
+          "apiVersion": "v1",
           "uid": "unknown-datasource-name"
         }
       }
@@ -119,7 +121,9 @@
         {
           "refId": "B",
           "datasource": {
-            "uid": "existing-target-uid"
+            "uid": "existing-target-uid",
+            "type": "elasticsearch",
+            "apiVersion": "v2"
           }
         }
       ]
@@ -137,7 +141,8 @@
           "refId": "A",
           "datasource": {
             "uid": "existing-target-uid",
-            "type": "elasticsearch"
+            "type": "elasticsearch",
+            "apiVersion": "v2"
           }
         }
       ]
@@ -167,7 +172,9 @@
         {
           "refId": "A",
           "datasource": {
-            "uid": "existing-target-uid"
+            "uid": "existing-target-uid",
+            "type": "elasticsearch",
+            "apiVersion": "v2"
           }
         },
         {
@@ -188,7 +195,9 @@
         {
           "refId": "A",
           "datasource": {
-            "uid": "existing-target-uid"
+            "uid": "existing-target-uid",
+            "type": "elasticsearch",
+            "apiVersion": "v2"
           }
         }
       ]
@@ -257,7 +266,9 @@
             {
               "refId": "A",
               "datasource": {
-                "uid": "existing-target-uid"
+                "uid": "existing-target-uid",
+                "type": "elasticsearch",
+                "apiVersion": "v2"
               }
             }
           ]

@@ -25,7 +25,7 @@ const logsQueryLanguageOptions: Array<SelectableValue<LogsQueryLanguage>> = [
 
 const logsModeOptions: Array<SelectableValue<LogsMode>> = [
   { label: 'Logs Insights', value: LogsMode.Insights },
-  { label: 'Logs Anomalies', value: LogsMode.Anomalies },
+  { label: 'Log Anomalies', value: LogsMode.Anomalies },
 ];
 
 export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
