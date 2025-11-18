@@ -16,7 +16,6 @@ import {
 import { GrafanaPlugin } from '../types/plugin';
 import {
   VisualizationSuggestionsSupplierFn,
-  VisualizationSuggestionsSupplier,
   VisualizationSuggestion,
   PanelPluginVisualizationSuggestion,
 } from '../types/suggestions';
@@ -371,15 +370,13 @@ export class PanelPlugin<
   /**
    * @deprecated use VisualizationSuggestionsSupplierFn
    */
-  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier): this;
+  setSuggestionsSupplier(supplier: object): this;
   /**
    * @alpha
    * sets function that can return visualization examples and suggestions.
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>): this;
-  setSuggestionsSupplier(
-    supplier: VisualizationSuggestionsSupplier | VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>
-  ): this {
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions> | object): this {
     if (typeof supplier !== 'function') {
       deprecationWarning(
         'PanelPlugin',

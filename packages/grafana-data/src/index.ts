@@ -714,7 +714,6 @@ export {
 } from './types/fieldOverrides';
 export {
   type VisualizationSuggestion,
-  type VisualizationSuggestionsSupplier,
   type VisualizationSuggestionsSupplierFn,
   type PanelPluginVisualizationSuggestion,
   VisualizationSuggestionScore,

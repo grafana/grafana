@@ -483,4 +483,8 @@ describe('PanelPlugin', () => {
       });
     });
   });
+
+  describe('suggestions', () => {
+    // TODO: add tests for suggestions methods, including test to ensure deprecated signature does not throw
+  });
 });
