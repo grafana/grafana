@@ -297,7 +297,7 @@ func (p *filtersParser) Parse(id, aggType string, aggValue map[string]any) (*dsl
 	if filters := p.extractor.getMap(aggValue, "filters"); filters != nil {
 		filtersArray := make([]any, 0, len(filters))
 		for k, v := range filters {
-			if queryString := p.extractor.getMap(v.(map[string]any), "query_string"); filters != nil {
+			if queryString := p.extractor.getMap(v.(map[string]any), "query_string"); queryString != nil {
 				queryString["label"] = k
 				filtersArray = append(filtersArray, queryString)
 			}

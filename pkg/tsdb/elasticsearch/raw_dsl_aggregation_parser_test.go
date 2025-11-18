@@ -76,17 +76,18 @@ func TestDateHistogramParser(t *testing.T) {
 		assert.False(t, parser.CanParse("terms"))
 	})
 
-	t.Run("ParseBucket with fixed_interval", func(t *testing.T) {
+	t.Run("Parse with fixed_interval", func(t *testing.T) {
 		aggValue := map[string]any{
 			"field":          "@timestamp",
 			"fixed_interval": "30s",
 			"min_doc_count":  1,
 		}
 
-		bucket, err := parser.ParseBucket("1", dateHistType, aggValue)
+		agg, err := parser.Parse("1", dateHistType, aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, bucket)
+		require.NotNil(t, agg)
 
+		bucket := agg.toBucketAgg()
 		assert.Equal(t, "1", bucket.ID)
 		assert.Equal(t, dateHistType, bucket.Type)
 		assert.Equal(t, "@timestamp", bucket.Field)
@@ -94,25 +95,27 @@ func TestDateHistogramParser(t *testing.T) {
 		assert.Equal(t, "1", bucket.Settings.Get("min_doc_count").MustString())
 	})
 
-	t.Run("ParseBucket with calendar_interval", func(t *testing.T) {
+	t.Run("Parse with calendar_interval", func(t *testing.T) {
 		aggValue := map[string]any{
 			"field":             "@timestamp",
 			"calendar_interval": "1d",
 			"time_zone":         "UTC",
 		}
 
-		bucket, err := parser.ParseBucket("2", dateHistType, aggValue)
+		agg, err := parser.Parse("2", dateHistType, aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, bucket)
+		require.NotNil(t, agg)
 
+		bucket := agg.toBucketAgg()
 		assert.Equal(t, "1d", bucket.Settings.Get("interval").MustString())
 		assert.Equal(t, "UTC", bucket.Settings.Get("time_zone").MustString())
 	})
 
-	t.Run("ParseMetric returns nil", func(t *testing.T) {
-		metric, err := parser.ParseMetric("1", dateHistType, map[string]any{})
+	t.Run("Parse returns bucket aggregation", func(t *testing.T) {
+		agg, err := parser.Parse("1", dateHistType, map[string]any{"field": "@timestamp"})
 		assert.NoError(t, err)
-		assert.Nil(t, metric)
+		assert.NotNil(t, agg)
+		assert.Equal(t, aggTypeBucket, agg.AggType)
 	})
 }
 
@@ -125,17 +128,18 @@ func TestTermsParser(t *testing.T) {
 		assert.False(t, parser.CanParse("histogram"))
 	})
 
-	t.Run("ParseBucket", func(t *testing.T) {
+	t.Run("Parse", func(t *testing.T) {
 		aggValue := map[string]any{
 			"field": "hostname.keyword",
 			"size":  10,
 			"order": map[string]any{"_count": "desc"},
 		}
 
-		bucket, err := parser.ParseBucket("3", termsType, aggValue)
+		agg, err := parser.Parse("3", termsType, aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, bucket)
+		require.NotNil(t, agg)
 
+		bucket := agg.toBucketAgg()
 		assert.Equal(t, "3", bucket.ID)
 		assert.Equal(t, termsType, bucket.Type)
 		assert.Equal(t, "hostname.keyword", bucket.Field)
@@ -152,16 +156,17 @@ func TestHistogramParser(t *testing.T) {
 		assert.False(t, parser.CanParse("terms"))
 	})
 
-	t.Run("ParseBucket", func(t *testing.T) {
+	t.Run("Parse", func(t *testing.T) {
 		aggValue := map[string]any{
 			"field":    "response_time",
 			"interval": 50.0,
 		}
 
-		bucket, err := parser.ParseBucket("4", histogramType, aggValue)
+		agg, err := parser.Parse("4", histogramType, aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, bucket)
+		require.NotNil(t, agg)
 
+		bucket := agg.toBucketAgg()
 		assert.Equal(t, "4", bucket.ID)
 		assert.Equal(t, histogramType, bucket.Type)
 		assert.Equal(t, "response_time", bucket.Field)
@@ -178,7 +183,7 @@ func TestFiltersParser(t *testing.T) {
 		assert.False(t, parser.CanParse("terms"))
 	})
 
-	t.Run("ParseBucket", func(t *testing.T) {
+	t.Run("Parse", func(t *testing.T) {
 		aggValue := map[string]any{
 			"filters": map[string]any{
 				"errors":   map[string]any{"query_string": map[string]any{"query": "level:error"}},
@@ -186,13 +191,16 @@ func TestFiltersParser(t *testing.T) {
 			},
 		}
 
-		bucket, err := parser.ParseBucket("filters", filtersType, aggValue)
+		agg, err := parser.Parse("filters", filtersType, aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, bucket)
+		require.NotNil(t, agg)
 
+		bucket := agg.toBucketAgg()
 		assert.Equal(t, "filters", bucket.ID)
 		assert.Equal(t, filtersType, bucket.Type)
-		assert.NotEmpty(t, bucket.Settings.Get("filters").MustString())
+		filtersArray := bucket.Settings.Get("filters").MustArray()
+		assert.NotEmpty(t, filtersArray)
+		assert.Len(t, filtersArray, 2)
 	})
 }
 
@@ -209,24 +217,26 @@ func TestSimpleMetricParser(t *testing.T) {
 		assert.False(t, parser.CanParse("bucket_script"))
 	})
 
-	t.Run("ParseMetric avg", func(t *testing.T) {
+	t.Run("Parse avg", func(t *testing.T) {
 		aggValue := map[string]any{
 			"field": "response_time",
 		}
 
-		metric, err := parser.ParseMetric("1", "avg", aggValue)
+		agg, err := parser.Parse("1", "avg", aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, metric)
+		require.NotNil(t, agg)
 
+		metric := agg.toMetricAgg()
 		assert.Equal(t, "1", metric.ID)
 		assert.Equal(t, "avg", metric.Type)
 		assert.Equal(t, "response_time", metric.Field)
 	})
 
-	t.Run("ParseBucket returns nil", func(t *testing.T) {
-		bucket, err := parser.ParseBucket("1", "avg", map[string]any{})
+	t.Run("Parse returns metric aggregation", func(t *testing.T) {
+		agg, err := parser.Parse("1", "avg", map[string]any{})
 		assert.NoError(t, err)
-		assert.Nil(t, bucket)
+		assert.NotNil(t, agg)
+		assert.Equal(t, aggTypeMetric, agg.AggType)
 	})
 }
 
@@ -239,16 +249,17 @@ func TestExtendedStatsParser(t *testing.T) {
 		assert.False(t, parser.CanParse("avg"))
 	})
 
-	t.Run("ParseMetric", func(t *testing.T) {
+	t.Run("Parse", func(t *testing.T) {
 		aggValue := map[string]any{
 			"field": "response_time",
 			"sigma": 2,
 		}
 
-		metric, err := parser.ParseMetric("stats", extendedStatsType, aggValue)
+		agg, err := parser.Parse("stats", extendedStatsType, aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, metric)
+		require.NotNil(t, agg)
 
+		metric := agg.toMetricAgg()
 		assert.Equal(t, "stats", metric.ID)
 		assert.Equal(t, extendedStatsType, metric.Type)
 		assert.Equal(t, "response_time", metric.Field)
@@ -264,16 +275,17 @@ func TestPercentilesParser(t *testing.T) {
 		assert.False(t, parser.CanParse("avg"))
 	})
 
-	t.Run("ParseMetric", func(t *testing.T) {
+	t.Run("Parse", func(t *testing.T) {
 		aggValue := map[string]any{
 			"field":    "response_time",
 			"percents": []any{50.0, 95.0, 99.0},
 		}
 
-		metric, err := parser.ParseMetric("percentiles", percentilesType, aggValue)
+		agg, err := parser.Parse("percentiles", percentilesType, aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, metric)
+		require.NotNil(t, agg)
 
+		metric := agg.toMetricAgg()
 		assert.Equal(t, "percentiles", metric.ID)
 		assert.Equal(t, percentilesType, metric.Type)
 		assert.Equal(t, "response_time", metric.Field)
@@ -291,15 +303,16 @@ func TestPipelineParser(t *testing.T) {
 		assert.False(t, parser.CanParse("bucket_script"))
 	})
 
-	t.Run("ParseMetric", func(t *testing.T) {
+	t.Run("Parse", func(t *testing.T) {
 		aggValue := map[string]any{
 			"buckets_path": "1",
 		}
 
-		metric, err := parser.ParseMetric("moving", "moving_avg", aggValue)
+		agg, err := parser.Parse("moving", "moving_avg", aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, metric)
+		require.NotNil(t, agg)
 
+		metric := agg.toMetricAgg()
 		assert.Equal(t, "moving", metric.ID)
 		assert.Equal(t, "moving_avg", metric.Type)
 		assert.Equal(t, "1", metric.Field)
@@ -315,7 +328,7 @@ func TestBucketScriptParser(t *testing.T) {
 		assert.False(t, parser.CanParse("moving_avg"))
 	})
 
-	t.Run("ParseMetric with map buckets_path", func(t *testing.T) {
+	t.Run("Parse with map buckets_path", func(t *testing.T) {
 		aggValue := map[string]any{
 			"buckets_path": map[string]any{
 				"count": "total",
@@ -323,25 +336,27 @@ func TestBucketScriptParser(t *testing.T) {
 			"script": "params.count / 60",
 		}
 
-		metric, err := parser.ParseMetric("rate", "bucket_script", aggValue)
+		agg, err := parser.Parse("rate", "bucket_script", aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, metric)
+		require.NotNil(t, agg)
 
+		metric := agg.toMetricAgg()
 		assert.Equal(t, "rate", metric.ID)
 		assert.Equal(t, "bucket_script", metric.Type)
 		assert.Equal(t, "total", metric.PipelineVariables["count"])
 		assert.Equal(t, "params.count / 60", metric.Settings.Get("script").MustString())
 	})
 
-	t.Run("ParseMetric with string buckets_path", func(t *testing.T) {
+	t.Run("Parse with string buckets_path", func(t *testing.T) {
 		aggValue := map[string]any{
 			"buckets_path": "1",
 		}
 
-		metric, err := parser.ParseMetric("rate", "bucket_script", aggValue)
+		agg, err := parser.Parse("rate", "bucket_script", aggValue)
 		require.NoError(t, err)
-		require.NotNil(t, metric)
+		require.NotNil(t, agg)
 
+		metric := agg.toMetricAgg()
 		assert.Equal(t, "1", metric.PipelineVariables["var1"])
 	})
 }
