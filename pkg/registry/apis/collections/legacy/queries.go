@@ -65,36 +65,3 @@ func newStarQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int
 		QueryHistoryTable:      sql.Table("query_history"),
 	}
 }
-
-type teamQuery struct {
-	sqltemplate.SQLTemplate
-
-	OrgID   int64
-	UserUID string
-	IsAdmin bool
-
-	TeamMemberTable string
-	TeamTable       string
-	UserTable       string
-}
-
-func (r teamQuery) Validate() error {
-	if r.UserUID != "" && r.OrgID < 1 {
-		return fmt.Errorf("requests with a userid, must include an orgID")
-	}
-	return nil
-}
-
-func newTeamsQueryReq(sql *legacysql.LegacyDatabaseHelper, orgId int64, user string, admin bool) teamQuery {
-	return teamQuery{
-		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
-
-		OrgID:   orgId,
-		UserUID: user,
-		IsAdmin: admin,
-
-		TeamMemberTable: sql.Table("team_member"),
-		TeamTable:       sql.Table("team"),
-		UserTable:       sql.Table("user"),
-	}
-}
