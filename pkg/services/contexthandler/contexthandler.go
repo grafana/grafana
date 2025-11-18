@@ -244,9 +244,7 @@ func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context 
 		}
 	}
 
-	for _, item := range GetAuthHTTPHeaders(&cfg.JWTAuth, &cfg.AuthProxy) {
-		list.Items = append(list.Items, item)
-	}
+	list.Items = append(list.Items, GetAuthHTTPHeaders(&cfg.JWTAuth, &cfg.AuthProxy)...)
 
 	return context.WithValue(ctx, authHTTPHeaderListKey, list)
 }
