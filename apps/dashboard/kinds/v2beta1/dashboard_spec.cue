@@ -906,7 +906,7 @@ CustomVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
-	valuesFormat?: string
+	valuesFormat?: "csv" | "json"
 }
 
 // Custom variable kind
