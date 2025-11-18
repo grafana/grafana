@@ -56,6 +56,9 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
   if (query.maxNodes) {
     collapsedInfo.push(`Max nodes: ${query.maxNodes}`);
   }
+  if (query.includeExemplars) {
+    collapsedInfo.push(`With exemplars`);
+  }
 
   return (
     <Stack gap={0} direction="column">
@@ -139,6 +142,14 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               value={query.annotations || false}
               onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
                 onQueryChange({ ...query, annotations: event.currentTarget.checked });
+              }}
+            />
+          </EditorField>
+          <EditorField label={'Exemplars'} tooltip={<>Include profile exemplars in the time series.</>}>
+            <InlineSwitch
+              value={query.includeExemplars || false}
+              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                onQueryChange({ ...query, includeExemplars: event.currentTarget.checked });
               }}
             />
           </EditorField>
