@@ -3,7 +3,7 @@ import { testWithFeatureToggles } from 'test/test-utils';
 import { PromAlertingRuleState, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaPromAlertingRule, mockPromRecordingRule } from '../../mocks';
-import { RuleHealth, RuleSource } from '../../search/rulesSearchParser';
+import { RuleHealth } from '../../search/rulesSearchParser';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid } from '../../utils/datasource';
 import { getFilter } from '../../utils/search';
