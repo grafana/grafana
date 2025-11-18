@@ -8,7 +8,7 @@ import { LokiDatasource } from './datasource';
 import { combineResponses, replaceResponses } from './mergeResponses';
 import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
 import {
-  addQueryPlan,
+  addQueryLimitsContext,
   getSelectorForShardValues,
   interpolateShardingSelector,
   requestSupportsSharding,
@@ -50,15 +50,18 @@ import { LokiQuery } from './types';
  */
 
 export function runShardSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  console.log('runShardSplitQuery', JSON.parse(JSON.stringify(request.targets)));
   const requestCloned = cloneDeep(request);
   const queries = requestCloned.targets
     .filter((query) => query.expr)
     .filter((query) => !query.hide)
     .map((query) =>
-      addQueryPlan(datasource.applyTemplateVariables(query, requestCloned.scopedVars, requestCloned.filters), request, {
-        isInitialQuery: true,
-      })
+      addQueryLimitsContext(
+        datasource.applyTemplateVariables(query, requestCloned.scopedVars, requestCloned.filters),
+        request,
+        {
+          isInitialQuery: true,
+        }
+      )
     );
 
   return splitQueriesByStreamShard(datasource, requestCloned, queries);

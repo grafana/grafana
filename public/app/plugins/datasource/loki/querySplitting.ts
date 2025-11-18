@@ -17,7 +17,7 @@ import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { combineResponses } from './mergeResponses';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
-import { addQueryPlan, isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
+import { addQueryLimitsContext, isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { isRetriableError } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { LokiGroupedRequest, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
@@ -299,7 +299,11 @@ export function runSplitQuery(
     .filter((query) => !query.hide)
     .filter((query) => query.expr)
     .map((query) =>
-      addQueryPlan(datasource.applyTemplateVariables(query, request.scopedVars, request.filters), request, options)
+      addQueryLimitsContext(
+        datasource.applyTemplateVariables(query, request.scopedVars, request.filters),
+        request,
+        options
+      )
     );
   const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));

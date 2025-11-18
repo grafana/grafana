@@ -438,7 +438,7 @@ export const getSelectorForShardValues = (query: string) => {
  * @param request
  * @param options
  */
-export const addQueryPlan = (
+export const addQueryLimitsContext = (
   lokiQuery: LokiQuery,
   request: DataQueryRequest<LokiQuery>,
   options: QuerySplittingOptions
@@ -450,7 +450,7 @@ export const addQueryPlan = (
     });
     const lokiQueryWithPlan: LokiQuery = {
       ...lokiQuery,
-      plan: {
+      limitsContext: {
         expr: lokiQuery.expr,
         from: request.range.from.toDate().getTime(),
         to: request.range.to.toDate().getTime(),

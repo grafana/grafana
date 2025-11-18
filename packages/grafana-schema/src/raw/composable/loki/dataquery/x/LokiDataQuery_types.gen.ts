@@ -51,17 +51,17 @@ export interface LokiDataQuery extends common.DataQuery {
    */
   legendFormat?: string;
   /**
-   * Used to limit the number of log rows returned.
+   * The full query plan for split/shard queries. Encoded and sent to Loki via `X-Loki-Query-Limits-Context` header. Requires feature flag @todo
    */
-  maxLines?: number;
-  /**
-   * The full query plan, for split/shard queries
-   */
-  plan?: {
+  limitsContext?: {
     expr: string;
     from: number;
     to: number;
   };
+  /**
+   * Used to limit the number of log rows returned.
+   */
+  maxLines?: number;
   /**
    * @deprecated, now use queryType.
    */

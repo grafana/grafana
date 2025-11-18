@@ -11,7 +11,7 @@ import (
 type QueryType = dataquery.LokiQueryType
 type SupportingQueryType = dataquery.SupportingQueryType
 type Direction = dataquery.LokiQueryDirection
-type QueryPlan struct {
+type LimitsContext struct {
 	Expr string
 	From time.Time
 	To   time.Time
@@ -47,5 +47,5 @@ type lokiQuery struct {
 	RefID               string
 	SupportingQueryType SupportingQueryType
 	Scopes              []scope.ScopeFilter
-	Plan                QueryPlan
+	LimitsContext       LimitsContext
 }

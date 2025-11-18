@@ -82,7 +82,7 @@ func parseQueryType(jsonPointerValue *string) (QueryType, error) {
 	}
 }
 
-func parseQueryPlanExpr(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) string {
+func parseLimitsContextExpr(jsonPointerValue *dataquery.DataqueryLokiDataQueryLimitsContext) string {
 	if jsonPointerValue == nil {
 		return ""
 	} else {
@@ -92,22 +92,21 @@ func parseQueryPlanExpr(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) 
 }
 
 // There has to be a less stupid way of doing this
-func parseQueryPlanFrom(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) (time.Time, error) {
+func parseLimitsContextFrom(jsonPointerValue *dataquery.DataqueryLokiDataQueryLimitsContext) time.Time {
 	if jsonPointerValue == nil {
-		return time.Time{}, backend.DownstreamError(fmt.Errorf("invalid query plan \"from\": %s", jsonPointerValue))
+		return time.Time{}
 	} else {
 		jsonValue := *jsonPointerValue
-		return time.UnixMilli(jsonValue.From), nil
+		return time.UnixMilli(jsonValue.From)
 	}
 }
 
-func parseQueryPlanTo(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) (time.Time, error) {
+func parseLimitsContextTo(jsonPointerValue *dataquery.DataqueryLokiDataQueryLimitsContext) time.Time {
 	if jsonPointerValue == nil {
-		return time.Time{}, backend.DownstreamError(fmt.Errorf("invalid query plan \"to\": %s", jsonPointerValue))
+		return time.Time{}
 	} else {
 		jsonValue := *jsonPointerValue
-		//time.UnixMilli(model.Plan.From)
-		return time.UnixMilli(jsonValue.To), nil
+		return time.UnixMilli(jsonValue.To)
 	}
 }
 
@@ -157,9 +156,9 @@ func parseSupportingQueryType(jsonPointerValue *string) SupportingQueryType {
 func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
-		var exprPlan string
-		var toPlan time.Time
-		var fromPlan time.Time
+		var limitsConfig LimitsContext
+		var limitsConfigTo time.Time
+		var limitsConfigFrom time.Time
 		model, err := parseQueryModel(query.JSON)
 		if err != nil {
 			return nil, err
@@ -188,14 +187,19 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 
 		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
 
-		uninterpolatedExprPlan := parseQueryPlanExpr(model.Plan)
+		rawQueryLimitExpr := parseLimitsContextExpr(model.LimitsContext)
 
-		if uninterpolatedExprPlan != "" {
-			exprPlan = interpolateVariables(uninterpolatedExprPlan, interval, timeRange, queryType, step)
+		// If a limits expression was provided, interpolate it and parse the time range
+		if rawQueryLimitExpr != "" {
+			limitsConfig.Expr = interpolateVariables(rawQueryLimitExpr, interval, timeRange, queryType, step)
+			limitsConfigTo = parseLimitsContextTo(model.LimitsContext)
+			limitsConfigFrom = parseLimitsContextFrom(model.LimitsContext)
+
+			if !limitsConfigFrom.Equal(time.Time{}) && !limitsConfigTo.Equal(time.Time{}) {
+				limitsConfig.From = limitsConfigFrom
+				limitsConfig.To = limitsConfigTo
+			}
 		}
-
-		toPlan, err = parseQueryPlanTo(model.Plan)
-		fromPlan, err = parseQueryPlanFrom(model.Plan)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {
@@ -233,11 +237,7 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 			RefID:               query.RefID,
 			SupportingQueryType: supportingQueryType,
 			Scopes:              model.Scopes,
-			Plan: QueryPlan{
-				Expr: exprPlan,
-				From: fromPlan,
-				To:   toPlan,
-			},
+			LimitsContext:       limitsConfig,
 		})
 	}
 

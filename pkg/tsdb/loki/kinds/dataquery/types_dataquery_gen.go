@@ -59,8 +59,8 @@ type LokiDataQuery struct {
 	Instant *bool `json:"instant,omitempty"`
 	// Used to set step value for range queries.
 	Step *string `json:"step,omitempty"`
-	// The full query plan, for split/shard queries
-	Plan *DataqueryLokiDataQueryPlan `json:"plan,omitempty"`
+	// The full query plan for split/shard queries. Encoded and sent to Loki via `X-Loki-Query-Limits-Context` header. Requires feature flag @todo
+	LimitsContext *DataqueryLokiDataQueryLimitsContext `json:"limitsContext,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
@@ -82,13 +82,13 @@ func NewLokiDataQuery() *LokiDataQuery {
 	return &LokiDataQuery{}
 }
 
-type DataqueryLokiDataQueryPlan struct {
+type DataqueryLokiDataQueryLimitsContext struct {
 	Expr string `json:"expr"`
 	From int64  `json:"from"`
 	To   int64  `json:"to"`
 }
 
-// NewDataqueryLokiDataQueryPlan creates a new DataqueryLokiDataQueryPlan object.
-func NewDataqueryLokiDataQueryPlan() *DataqueryLokiDataQueryPlan {
-	return &DataqueryLokiDataQueryPlan{}
+// NewDataqueryLokiDataQueryLimitsContext creates a new DataqueryLokiDataQueryLimitsContext object.
+func NewDataqueryLokiDataQueryLimitsContext() *DataqueryLokiDataQueryLimitsContext {
+	return &DataqueryLokiDataQueryLimitsContext{}
 }
