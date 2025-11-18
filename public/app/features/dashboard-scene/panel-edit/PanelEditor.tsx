@@ -130,8 +130,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._subs.add(
       dataObject.subscribeToState(async () => {
         const { data } = dataObject.state;
-        const hasData =
-          data && data?.series && data.series.length > 0 && !data.series.every((frame) => frame.length === 0);
+        const hasData = data && data.series && data.series.length > 0 && data.series.some((frame) => frame.length > 0);
 
         if (hasData && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
           const panelModel = new PanelModelCompatibilityWrapper(panel);
