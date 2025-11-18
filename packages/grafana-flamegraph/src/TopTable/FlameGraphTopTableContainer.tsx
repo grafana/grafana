@@ -145,7 +145,6 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
     callStack.push(label);
   }
 
-  console.log({ filteredTable });
   return filteredTable;
 }
 
@@ -247,8 +246,6 @@ function buildTableDataFrame(
 
     frame = { fields: [actionField, symbolField, selfField, totalField], length: symbolField.values.length };
   }
-
-  console.log({ frame });
 
   const dataFrames = applyFieldOverrides({
     data: [frame],

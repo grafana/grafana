@@ -27,7 +27,6 @@ export default meta;
 export const Basic: StoryObj<typeof meta> = {
   render: (args) => {
     const dataContainer = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
-    console.log({ dataContainer });
 
     return (
       <FlameGraphTopTableContainer
