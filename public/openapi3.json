@@ -1757,7 +1757,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/Receiver"
+                "$ref": "#/components/schemas/ReceiverStatus"
               },
               "type": "array"
             }
@@ -6030,6 +6030,12 @@
             },
             "type": "array"
           },
+          "msteamsv2_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsV2Config"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -6840,6 +6846,32 @@
         "title": "InspectType is a type for the Inspect property of a Notice.",
         "type": "integer"
       },
+      "IntegrationStatus": {
+        "properties": {
+          "lastNotifyAttempt": {
+            "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastNotifyAttemptDuration": {
+            "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+            "type": "string"
+          },
+          "lastNotifyAttemptError": {
+            "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the integration.",
+            "type": "string"
+          },
+          "sendResolved": {
+            "description": "Whether the integration is configured to send resolved notifications.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "InternalDataLink": {
         "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
         "properties": {
@@ -7221,6 +7253,29 @@
           },
           "summary": {
             "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "webhook_url": {
+            "$ref": "#/components/schemas/SecretURL"
+          },
+          "webhook_url_file": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MSTeamsV2Config": {
+        "properties": {
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "send_resolved": {
+            "type": "boolean"
           },
           "text": {
             "type": "string"
@@ -8459,6 +8514,12 @@
             },
             "type": "array"
           },
+          "msteamsv2_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsV2Config"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -9541,6 +9602,12 @@
             },
             "type": "array"
           },
+          "msteamsv2_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsV2Config"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -9625,6 +9692,26 @@
           }
         },
         "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+        "type": "object"
+      },
+      "ReceiverStatus": {
+        "properties": {
+          "active": {
+            "description": "Whether the receiver is used in a route or not.",
+            "type": "boolean"
+          },
+          "integrations": {
+            "description": "Integrations configured for this receiver.",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationStatus"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the receiver.",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "Record": {

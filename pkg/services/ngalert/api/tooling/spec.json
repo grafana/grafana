@@ -1825,14 +1825,127 @@
           {
             "type": "string",
             "description": "Filter the list of rules to those that belong to the specified dashboard UID.",
-            "name": "DashboardUID",
+            "name": "dashboard_uid",
             "in": "query"
           },
           {
             "type": "integer",
             "format": "int64",
             "description": "Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.",
-            "name": "PanelID",
+            "name": "panel_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter the list of rules to those that belong to the specified folder UID.",
+            "name": "folder_uid",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter the list of rules to those that belong to the specified rule group(s). Can be specified multiple times.",
+            "name": "rule_group",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter the list of rules to those that reference the specified receiver/contact point.",
+            "name": "receiver_name",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Search rules by title (case insensitive substring match).",
+            "name": "search.rule_name",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Search rules by rule group name (case insensitive substring match).",
+            "name": "search.rule_group",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter the list of rules to those whose titles exactly match the specified values. Can be specified multiple times.",
+            "name": "rule_name",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by rule type: \"alerting\" or \"recording\".",
+            "name": "rule_type",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by alert state: \"normal\" (or \"inactive\"), \"pending\", \"alerting\" (or \"firing\"), \"nodata\", \"error\", \"recovering\".",
+            "name": "state",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by rule health: \"ok\", \"error\", \"nodata\".",
+            "name": "health",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": -1,
+            "description": "Limit the number of alert instances per rule.",
+            "name": "limit_alerts",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": -1,
+            "description": "Limit the number of rules per group.",
+            "name": "limit_rules",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": -1,
+            "description": "Limit the number of rule groups returned.",
+            "name": "group_limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": -1,
+            "description": "Limit the total number of rules returned across all groups. Returns complete groups until the limit is met or exceeded.",
+            "name": "rule_limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Continuation token for pagination. Use the value returned in the previous response's \"groupNextToken\" field.",
+            "name": "group_next_token",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by label matchers encoded as JSON representations of Prometheus matchers (for example, {\"type\":0,\"name\":\"severity\",\"value\":\"critical\"}). Provide one matcher per query string value.",
+            "name": "matcher",
             "in": "query"
           }
         ],
@@ -5834,6 +5947,12 @@
             "$ref": "#/definitions/MSTeamsConfig"
           }
         },
+        "msteamsv2_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsV2Config"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -6417,6 +6536,32 @@
       "format": "int64",
       "title": "InspectType is a type for the Inspect property of a Notice."
     },
+    "IntegrationStatus": {
+      "type": "object",
+      "properties": {
+        "lastNotifyAttempt": {
+          "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastNotifyAttemptDuration": {
+          "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+          "type": "string"
+        },
+        "lastNotifyAttemptError": {
+          "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the integration.",
+          "type": "string"
+        },
+        "sendResolved": {
+          "description": "Whether the integration is configured to send resolved notifications.",
+          "type": "boolean"
+        }
+      }
+    },
     "InternalDataLink": {
       "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
       "type": "object",
@@ -6551,6 +6696,29 @@
         },
         "summary": {
           "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "webhook_url": {
+          "$ref": "#/definitions/SecretURL"
+        },
+        "webhook_url_file": {
+          "type": "string"
+        }
+      }
+    },
+    "MSTeamsV2Config": {
+      "type": "object",
+      "properties": {
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "send_resolved": {
+          "type": "boolean"
         },
         "text": {
           "type": "string"
@@ -7106,6 +7274,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
+        "msteamsv2_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsV2Config"
           }
         },
         "name": {
@@ -7863,6 +8037,12 @@
             "$ref": "#/definitions/MSTeamsConfig"
           }
         },
+        "msteamsv2_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsV2Config"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -7943,6 +8123,26 @@
           "type": "string"
         },
         "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "ReceiverStatus": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "description": "Whether the receiver is used in a route or not.",
+          "type": "boolean"
+        },
+        "integrations": {
+          "description": "Integrations configured for this receiver.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IntegrationStatus"
+          }
+        },
+        "name": {
+          "description": "Name of the receiver.",
           "type": "string"
         }
       }
@@ -9851,7 +10051,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/Receiver"
+          "$ref": "#/definitions/ReceiverStatus"
         }
       }
     }
