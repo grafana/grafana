@@ -912,6 +912,10 @@ export interface FeatureToggles {
   */
   unifiedStorageGrpcConnectionPool?: boolean;
   /**
+  * Use KV-backed SQL storage backend instead of direct SQL queries
+  */
+  unifiedStorageKVBackend?: boolean;
+  /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
   */

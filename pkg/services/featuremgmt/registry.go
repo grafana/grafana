@@ -1581,6 +1581,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "unifiedStorageKVBackend",
+			Description:       "Use KV-backed SQL storage backend instead of direct SQL queries",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "alertingRulePermanentlyDelete",
 			Description:       "Enables UI functionality to permanently delete alert rules",
 			FrontendOnly:      true,

@@ -101,21 +101,46 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
 
-		backend, err := NewBackend(BackendOptions{
-			DBProvider:           eDB,
-			Tracer:               opts.Tracer,
-			Reg:                  opts.Reg,
-			IsHA:                 isHA,
-			withPruner:           withPruner,
-			storageMetrics:       opts.StorageMetrics,
-			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
-		})
-		if err != nil {
-			return nil, err
+		// Check if KV backend is enabled via feature flag
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageKVBackend) {
+			// Create SQL KV instance
+			sqlKV, err := resource.NewSQLKV(eDB)
+			if err != nil {
+				return nil, fmt.Errorf("create SQL KV: %w", err)
+			}
+
+			// Use existing KV storage backend (already implements StorageBackend interface)
+			kvBackend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+				KvStore:    sqlKV,
+				WithPruner: withPruner,
+				Tracer:     opts.Tracer,
+				Reg:        opts.Reg,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("create KV backend: %w", err)
+			}
+			serverOptions.Backend = kvBackend
+			// Note: kvStorageBackend doesn't implement Diagnostics/Lifecycle yet
+			// For now, we'll leave these nil and they will be handled by the server
+		} else {
+			// Use existing SQL backend
+			backend, err := NewBackend(BackendOptions{
+				DBProvider:           eDB,
+				Tracer:               opts.Tracer,
+				Reg:                  opts.Reg,
+				IsHA:                 isHA,
+				withPruner:           withPruner,
+				storageMetrics:       opts.StorageMetrics,
+				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+			})
+			if err != nil {
+				return nil, err
+			}
+			serverOptions.Backend = backend
+			serverOptions.Diagnostics = backend
+			serverOptions.Lifecycle = backend
 		}
-		serverOptions.Backend = backend
-		serverOptions.Diagnostics = backend
-		serverOptions.Lifecycle = backend
 	}
 
 	serverOptions.Search = opts.SearchOptions

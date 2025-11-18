@@ -4210,6 +4210,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageKVBackend",
+        "resourceVersion": "1763461706359",
+        "creationTimestamp": "2025-11-18T10:28:26Z"
+      },
+      "spec": {
+        "description": "Use KV-backed SQL storage backend instead of direct SQL queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageSearch",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-09-30T19:46:14Z"

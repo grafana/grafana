@@ -830,6 +830,10 @@ const (
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
 
+	// FlagUnifiedStorageKVBackend
+	// Use KV-backed SQL storage backend instead of direct SQL queries
+	FlagUnifiedStorageKVBackend = "unifiedStorageKVBackend"
+
 	// FlagAlertingRulePermanentlyDelete
 	// Enables UI functionality to permanently delete alert rules
 	FlagAlertingRulePermanentlyDelete = "alertingRulePermanentlyDelete"
