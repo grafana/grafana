@@ -4142,6 +4142,19 @@
     },
     {
       "metadata": {
+        "name": "ttlPluginInstanceManager",
+        "resourceVersion": "1763462850634",
+        "creationTimestamp": "2025-11-18T10:47:30Z"
+      },
+      "spec": {
+        "description": "Enable TTL plugin instance manager",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedHistory",
         "resourceVersion": "1762958248290",
         "creationTimestamp": "2024-12-13T10:41:18Z",

@@ -2072,6 +2072,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
 		},
+		{
+			Name:         "ttlPluginInstanceManager",
+			Description:  "Enable TTL plugin instance manager",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
 	}
 )
 
