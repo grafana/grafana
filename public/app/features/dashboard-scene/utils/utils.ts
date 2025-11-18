@@ -265,6 +265,7 @@ export function getDefaultVizPanel(): VizPanel {
     pluginId: defaultPluginId,
     seriesLimit: config.panelSeriesLimit,
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    hoverHeaderOffset: 0,
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     menu: new VizPanelMenu({

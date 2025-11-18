@@ -37,7 +37,11 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
   }
 
   return (
-    <div className={cx(styles.container, 'show-on-hover')} style={{ top: offset }} data-testid={selectors.container}>
+    <div
+      className={cx(styles.container, 'show-on-hover')}
+      style={{ top: offset === 0 ? -1 : offset }}
+      data-testid={selectors.container}
+    >
       {dragClass && (
         <div
           className={cx(styles.square, styles.draggable, dragClass)}
