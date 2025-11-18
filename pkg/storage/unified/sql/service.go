@@ -332,7 +332,6 @@ func (s *service) starting(ctx context.Context) error {
 			s.stoppedCh <- nil
 		}
 	}()
-
 	return nil
 }
 

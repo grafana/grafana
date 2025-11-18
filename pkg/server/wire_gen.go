@@ -58,7 +58,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	provisioning2 "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
@@ -869,7 +868,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userService, apiserverService)
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userService, apiserverService)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
 	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
@@ -1512,7 +1510,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userService, apiserverService)
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userService, apiserverService)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
 	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
