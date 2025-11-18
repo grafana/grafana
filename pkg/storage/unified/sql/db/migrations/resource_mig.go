@@ -3,7 +3,9 @@ package migrations
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 func initResourceTables(mg *migrator.Migrator) string {
@@ -185,5 +187,200 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "UQE_resource_last_import_time_last_import_time",
 	}))
 
+	// TODO: Do we want the value to be MEDIUMTEXT ?
+	// TODO: What's the best name for the key_path column?
+
+	// Add key_path column to resource_history for KV interface
+	mg.AddMigration("Add key_path column to resource_history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
+		Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: true,
+	}))
+
+	// Backfill key_path column in resource_history
+	mg.AddMigration("Backfill key_path column in resource_history", &resourceHistoryKeyBackfillMigrator{})
+
+	// Make key_path column NOT NULL after backfill
+	mg.AddMigration("Make key_path column NOT NULL in resource_history", &makeKeyColumnNotNullMigrator{})
+
+	// Add index on key_path column
+	mg.AddMigration("Add index on key_path column in resource_history", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Name: "IDX_resource_history_key_path",
+		Cols: []string{"key_path"},
+		Type: migrator.IndexType,
+	}))
+
+	// Create resource_events table for KV interface
+	resource_events_table := migrator.Table{
+		Name: "resource_events",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true},
+			{Name: "value", Type: migrator.DB_MediumText, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+resource_events_table.Name, migrator.NewAddTableMigration(resource_events_table))
+
 	return marker
+}
+
+// resourceHistoryKeyBackfillMigrator backfills the key_path column in resource_history table
+// It processes rows in batches to reduce lock duration and avoid timeouts on large tables
+type resourceHistoryKeyBackfillMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *resourceHistoryKeyBackfillMigrator) SQL(dialect migrator.Dialect) string {
+	return "Backfill key_path column in resource_history using pattern: {Group}/{Resource}/{Namespace}/{Name}/{ResourceVersion}~{Action}~{Folder}"
+}
+
+func (m *resourceHistoryKeyBackfillMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	dialect := mg.Dialect.DriverName()
+	logger := log.New("resource-history-key-backfill")
+
+	// TODO: Verify the RV to Snowflake ID conversion is correct.
+
+	// Snowflake ID epoch in milliseconds (2010-11-04T01:42:54.657Z)
+	const epochMs = 1288834974657
+	const batchSize = 1000 // Process 1000 rows at a time
+
+	// Count total rows to backfill
+	totalCount, err := sess.Table("resource_history").Where("key_path IS NULL").Count()
+	if err != nil {
+		return fmt.Errorf("failed to count rows: %w", err)
+	}
+
+	if totalCount == 0 {
+		logger.Info("No rows to backfill")
+		return nil
+	}
+
+	logger.Info("Starting key_path backfill", "total_rows", totalCount)
+
+	// Build the SQL query based on the database dialect
+	var updateSQL string
+
+	switch dialect {
+	case "mysql":
+		updateSQL = `
+			UPDATE resource_history 
+			SET key_path = CONCAT(
+				` + "`group`" + `, '/', 
+				` + "`resource`" + `, '/', 
+				` + "`namespace`" + `, '/', 
+				` + "`name`" + `, '/', 
+				CAST((((` + "`resource_version`" + ` DIV 1000) - ?) * 4194304) + (` + "`resource_version`" + ` MOD 1000) AS CHAR), '~', 
+				CASE ` + "`action`" + `
+					WHEN 1 THEN 'created' 
+					WHEN 2 THEN 'updated' 
+					WHEN 3 THEN 'deleted' 
+					ELSE 'unknown'
+				END, '~', 
+				COALESCE(` + "`folder`" + `, '')
+			)
+			WHERE key_path IS NULL
+			LIMIT ?
+		`
+	case "postgres":
+		updateSQL = `
+			UPDATE resource_history 
+			SET key_path = CONCAT(
+				"group", '/', 
+				"resource", '/', 
+				"namespace", '/', 
+				"name", '/', 
+				CAST((((resource_version / 1000) - $1) * 4194304) + (resource_version % 1000) AS BIGINT), '~', 
+				CASE "action" 
+					WHEN 1 THEN 'created' 
+					WHEN 2 THEN 'updated' 
+					WHEN 3 THEN 'deleted' 
+					ELSE 'unknown'
+				END, '~', 
+				COALESCE("folder", '')
+			)
+			WHERE guid IN (
+				SELECT guid FROM resource_history 
+				WHERE key_path IS NULL 
+				LIMIT $2
+			)
+		`
+	case "sqlite3":
+		updateSQL = `
+			UPDATE resource_history 
+			SET key_path = 
+				"group" || '/' || 
+				resource || '/' || 
+				namespace || '/' || 
+				name || '/' || 
+				CAST((((resource_version / 1000) - ?) * 4194304) + (resource_version % 1000) AS TEXT) || '~' || 
+				CASE action 
+					WHEN 1 THEN 'created' 
+					WHEN 2 THEN 'updated' 
+					WHEN 3 THEN 'deleted' 
+					ELSE 'unknown'
+				END || '~' || 
+				COALESCE(folder, '')
+			WHERE guid IN (
+				SELECT guid FROM resource_history 
+				WHERE key_path IS NULL 
+				LIMIT ?
+			)
+		`
+	default:
+		return fmt.Errorf("unsupported database dialect: %s", dialect)
+	}
+
+	// Process in batches
+	processed := int64(0)
+	for {
+		result, err := sess.Exec(updateSQL, epochMs, batchSize)
+		if err != nil {
+			return fmt.Errorf("failed to update batch: %w", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to get rows affected: %w", err)
+		}
+
+		processed += rowsAffected
+		logger.Info("Backfill progress", "processed", processed, "total", totalCount,
+			"percent", fmt.Sprintf("%.1f%%", float64(processed)/float64(totalCount)*100))
+
+		// If we updated fewer rows than batch size, we're done
+		if rowsAffected < int64(batchSize) {
+			break
+		}
+	}
+
+	logger.Info("Backfill completed", "total_processed", processed)
+	return nil
+}
+
+// makeKeyColumnNotNullMigrator makes the key_path column NOT NULL after backfill
+type makeKeyColumnNotNullMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *makeKeyColumnNotNullMigrator) SQL(dialect migrator.Dialect) string {
+	return "Make key_path column NOT NULL in resource_history"
+}
+
+func (m *makeKeyColumnNotNullMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	dialect := mg.Dialect.DriverName()
+
+	var alterSQL string
+
+	switch dialect {
+	case "mysql":
+		alterSQL = "ALTER TABLE resource_history MODIFY key_path VARCHAR(2048) NOT NULL"
+	case "postgres":
+		alterSQL = "ALTER TABLE resource_history ALTER COLUMN key_path SET NOT NULL"
+	case "sqlite3":
+		// SQLite doesn't support ALTER COLUMN directly, so we skip this for SQLite
+		// The column will remain nullable in SQLite, which is acceptable
+		return nil
+	default:
+		return fmt.Errorf("unsupported database dialect: %s", dialect)
+	}
+
+	_, err := sess.Exec(alterSQL)
+	return err
 }
