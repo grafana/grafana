@@ -74,6 +74,7 @@ type kvStorageBackend struct {
 
 var _ StorageBackend = &kvStorageBackend{}
 var _ LifecycleHooks = &kvStorageBackend{}
+var _ resourcepb.DiagnosticsServer = &kvStorageBackend{}
 
 type KVBackendOptions struct {
 	KvStore                      KV
@@ -149,6 +150,25 @@ func (k *kvStorageBackend) Stop(ctx context.Context) error {
 	// This will stop both runCleanupOldEvents and the pruner (via debouncer)
 	k.cancel()
 	return nil
+}
+
+// IsHealthy implements DiagnosticsServer
+func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
+	// Check if the underlying KV store supports Ping (e.g., sqlKV)
+	type pinger interface {
+		Ping(context.Context) error
+	}
+	if p, ok := k.kv.(pinger); ok {
+		if err := p.Ping(ctx); err != nil {
+			return nil, fmt.Errorf("KV store health check failed: %w", err)
+		}
+	}
+	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
+}
+
+// Read implements DiagnosticsServer
+func (k *kvStorageBackend) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	return nil, ErrNotImplementedYet
 }
 
 // runCleanupOldEvents starts a background goroutine that periodically cleans up old events

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
@@ -122,8 +123,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			}
 			serverOptions.Backend = kvBackend
 			serverOptions.Lifecycle = kvBackend.(resource.LifecycleHooks)
-			// Note: kvStorageBackend doesn't implement Diagnostics yet
-			// The server will use noopService for diagnostics
+			serverOptions.Diagnostics = kvBackend.(resourcepb.DiagnosticsServer)
 		} else {
 			// Use existing SQL backend
 			backend, err := NewBackend(BackendOptions{

@@ -24,8 +24,9 @@ const (
 
 // sqlKV implements the KV interface using SQL storage
 type sqlKV struct {
-	db      db.DB
-	dialect sqltemplate.Dialect
+	dbProvider db.DBProvider // Keep reference to prevent GC
+	db         db.DB
+	dialect    sqltemplate.Dialect
 }
 
 // NewSQLKV creates a new SQL-based KV store
@@ -55,8 +56,9 @@ func NewSQLKV(dbProvider db.DBProvider) (KV, error) {
 	}
 
 	return &sqlKV{
-		db:      dbConn,
-		dialect: dialect,
+		dbProvider: dbProvider, // Keep reference to prevent GC from closing the database
+		db:         dbConn,
+		dialect:    dialect,
 	}, nil
 }
 
@@ -773,4 +775,26 @@ func (k *sqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 // UnixTimestamp returns the current time in seconds since Epoch
 func (k *sqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
 	return time.Now().Unix(), nil
+}
+
+// Ping checks if the database connection is alive
+func (k *sqlKV) Ping(ctx context.Context) error {
+	if k.db == nil {
+		return fmt.Errorf("database connection is nil")
+	}
+	return k.db.PingContext(ctx)
+}
+
+// checkDB verifies the database connection is still valid before operations
+func (k *sqlKV) checkDB() error {
+	if k.db == nil {
+		return fmt.Errorf("database connection is nil")
+	}
+	// Quick ping to verify connection is alive
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := k.db.PingContext(ctx); err != nil {
+		return fmt.Errorf("database connection is not healthy: %w", err)
+	}
+	return nil
 }
