@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -22,11 +22,10 @@ function isCategoryStyle(cat: string): cat is CategoryStyle {
 export function NavLandingPageCard({ description, text, url, category, onClick }: Props) {
   const styles = useStyles2(getStyles);
 
-  const categoryClass = category && isCategoryStyle(category) ? styles[category] : '';
-  const cardClassName = [styles.card, categoryClass].filter(Boolean).join(' ');
+  const categoryClass = category && isCategoryStyle(category) ? styles[category] : undefined;
 
   return (
-    <Card noMargin className={cardClassName} href={url} onClick={onClick}>
+    <Card noMargin className={cx(styles.card, categoryClass)} href={url} onClick={onClick}>
       <Card.Heading>{text}</Card.Heading>
       <Card.Description className={styles.description}>{description}</Card.Description>
     </Card>
