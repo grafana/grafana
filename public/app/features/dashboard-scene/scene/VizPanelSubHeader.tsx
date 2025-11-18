@@ -45,14 +45,10 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     this.setState({ adhocFiltersVar: adhocFiltersVariable, groupByVar: groupByVariable });
   };
 
-  public getData() {
+  public getQueryRunner(): SceneQueryRunner | null {
     const panel = this.parent;
     const dataObject = panel ? sceneGraph.getData(panel) : undefined;
-    return dataObject?.useState();
-  }
-
-  public getQueryRunner(dataState?: SceneDataState): SceneQueryRunner | null {
-    const queryRunner = dataState?.$data;
+    const queryRunner = dataObject?.useState().$data;
 
     if (!queryRunner || !(queryRunner instanceof SceneQueryRunner)) {
       return null;
@@ -64,7 +60,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 
 export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
   const { adhocFiltersVar, groupByVar } = model.useState();
-  const queryRunner = model.getQueryRunner(model.getData());
+  const queryRunner = model.getQueryRunner();
 
   const { applicabilityEnabled: filtersApplicabilityEnabled, datasource: filtersDatasource } =
     adhocFiltersVar?.useState() ?? { applicabilityEnabled: false, datasource: null };
