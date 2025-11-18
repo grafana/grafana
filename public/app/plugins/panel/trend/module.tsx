@@ -1,4 +1,4 @@
-import { Field, FieldType, PanelPlugin } from '@grafana/data';
+import { Field, FieldType, PanelPlugin, VisualizationSuggestionScore } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphDrawStyle } from '@grafana/schema';
 import { commonOptionsBuilder, LegendDisplayMode } from '@grafana/ui';
@@ -8,6 +8,7 @@ import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { TrendPanel } from './TrendPanel';
 import { FieldConfig, Options } from './panelcfg.gen';
+import { prepSeries } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig, false))
@@ -30,17 +31,24 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setSuggestionsSupplier((ds) => {
-    if (ds.fieldCountByType(FieldType.number) < 2 || ds.rowCountTotal < 2 || ds.rowCountTotal < 2) {
+    if (
+      !ds._data ||
+      ds.fieldCountByType(FieldType.number) < 2 ||
+      ds.rowCountTotal < 2 ||
+      ds.rowCountTotal < 2 ||
+      ds.frameCount > 1
+    ) {
+      return;
+    }
+
+    const info = prepSeries(ds._data);
+    if (info.warning || !info.frames) {
       return;
     }
 
     return [
       {
-        name: t('trend.suggestions.default', 'Trend'),
-        description: t(
-          'trend.suggestions.default-description',
-          'A panel for visualizing trends over dimensions other than time.'
-        ),
+        score: VisualizationSuggestionScore.Good,
         options: {
           legend: {
             calcs: [],
@@ -48,6 +56,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
             placement: 'right',
             showLegend: false,
           },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
         },
         cardOptions: {
           previewModifier: (s) => {

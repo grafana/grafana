@@ -14304,11 +14304,7 @@
     "category-x-axis": "X axis",
     "description-x-field": "An increasing numeric value",
     "name-x-field": "X field",
-    "placeholder-x-field": "First numeric value",
-    "suggestions": {
-      "default": "Trend",
-      "default-description": "A panel for visualizing trends over dimensions other than time."
-    }
+    "placeholder-x-field": "First numeric value"
   },
   "upgrade-box": {
     "discovery-text": "You’ve discovered a Pro feature!",
