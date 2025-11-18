@@ -718,8 +718,6 @@ export {
   type VisualizationSuggestionsSupplierFn,
   type PanelPluginVisualizationSuggestion,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestionsListAppender,
 } from './types/suggestions';
 export {
   type MatcherConfig,

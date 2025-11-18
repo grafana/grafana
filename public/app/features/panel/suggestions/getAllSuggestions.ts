@@ -1,10 +1,11 @@
 import {
+  getPanelDataSummary,
   PanelData,
+  PanelDataSummary,
+  PanelPlugin,
   PanelPluginVisualizationSuggestion,
-  VisualizationSuggestionsBuilder,
-  PanelModel,
-  VisualizationSuggestionScore,
   PreferredVisualisationType,
+  VisualizationSuggestionScore,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
@@ -27,6 +28,18 @@ export const panelsToCheckFirst = [
   'heatmap',
 ];
 
+let _pluginCache: PanelPlugin[] | null = null;
+async function getPanelsWithSuggestions(): Promise<PanelPlugin[]> {
+  if (!_pluginCache) {
+    _pluginCache = [];
+    const pluginList = panelsToCheckFirst; // TODO: swap this out in the flag
+    for (const pluginId of pluginList) {
+      _pluginCache.push(await importPanelPlugin(pluginId));
+    }
+  }
+  return _pluginCache;
+}
+
 /**
  * some of the PreferredVisualisationTypes do not match the panel plugin ids, so we have to map them. d'oh.
  */
@@ -34,24 +47,44 @@ const OVERRIDE_PREFERRED_VISUALISATION_TYPE_TO_PLUGIN: Partial<Record<PreferredV
   trace: 'traces',
 };
 
-export async function getAllSuggestions(
-  data?: PanelData,
-  panel?: PanelModel
-): Promise<PanelPluginVisualizationSuggestion[]> {
-  const builder = new VisualizationSuggestionsBuilder(data, panel);
+/**
+ * given a list of suggestions, sort them in place based on score and preferred visualisation type
+ */
+async function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[], dataSummary: PanelDataSummary): void {
+  suggestions.sort((a, b) => {
+    if (dataSummary.preferredVisualisationType) {
+      const mappedPlugin =
+        OVERRIDE_PREFERRED_VISUALISATION_TYPE_TO_PLUGIN[dataSummary.preferredVisualisationType] ??
+        dataSummary.preferredVisualisationType;
 
-  for (const pluginId of panelsToCheckFirst) {
-    const plugin = await importPanelPlugin(pluginId);
-    const supplier = plugin.getSuggestionsSupplier();
+      if (a.pluginId === mappedPlugin) {
+        return -1;
+      }
+      if (b.pluginId === mappedPlugin) {
+        return 1;
+      }
+    }
+    return (b.score ?? VisualizationSuggestionScore.OK) - (a.score ?? VisualizationSuggestionScore.OK);
+  });
+}
 
-    if (supplier) {
-      supplier.getSuggestionsForData(builder);
+/**
+ * given PanelData, return a sorted list of Suggestions from all plugins which support it.
+ * @param {PanelData} data queried and transformed data for the panel
+ * @returns {PanelPluginVisualizationSuggestion[]} sorted list of suggestions
+ */
+export async function getAllSuggestions(data?: PanelData): Promise<PanelPluginVisualizationSuggestion[]> {
+  const dataSummary = getPanelDataSummary(data?.series);
+  const list: PanelPluginVisualizationSuggestion[] = [];
+
+  for (const plugin of await getPanelsWithSuggestions()) {
+    const suggestions = plugin.getSuggestions(dataSummary);
+    if (suggestions) {
+      list.push(...suggestions);
     }
   }
 
-  const list = builder.getList();
-
-  if (builder.dataSummary.fieldCount === 0) {
+  if (dataSummary.fieldCount === 0) {
     for (const plugin of Object.values(config.panels)) {
       if (!plugin.skipDataQuery || plugin.hideFromList) {
         continue;
@@ -68,19 +101,7 @@ export async function getAllSuggestions(
     }
   }
 
-  return list.sort((a, b) => {
-    if (builder.dataSummary.preferredVisualisationType) {
-      const mappedPlugin =
-        OVERRIDE_PREFERRED_VISUALISATION_TYPE_TO_PLUGIN[builder.dataSummary.preferredVisualisationType] ??
-        builder.dataSummary.preferredVisualisationType;
+  sortSuggestions(list, dataSummary);
 
-      if (a.pluginId === mappedPlugin) {
-        return -1;
-      }
-      if (b.pluginId === mappedPlugin) {
-        return 1;
-      }
-    }
-    return (b.score ?? VisualizationSuggestionScore.OK) - (a.score ?? VisualizationSuggestionScore.OK);
-  });
+  return list;
 }

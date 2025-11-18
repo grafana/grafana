@@ -1,12 +1,8 @@
-import { defaultsDeep } from 'lodash';
-
 import { DataTransformerConfig } from '@grafana/schema';
 
-import { PanelDataSummary, getPanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
+import { PanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
 
-import { PanelModel } from './dashboard';
 import { FieldConfigSource } from './fieldOverrides';
-import { PanelData } from './panel';
 
 /**
  * @alpha
@@ -66,35 +62,6 @@ export enum VisualizationSuggestionScore {
 }
 
 /**
- * @internal
- * TODO this will move into the grafana app code once suppliers are migrated.
- */
-export class VisualizationSuggestionsBuilder {
-  /** Summary stats for current data */
-  dataSummary: PanelDataSummary;
-  private list: PanelPluginVisualizationSuggestion[] = [];
-
-  constructor(
-    /** Current data */
-    public data?: PanelData,
-    /** Current panel & options */
-    public panel?: PanelModel
-  ) {
-    this.dataSummary = getPanelDataSummary(data?.series);
-  }
-
-  getListAppender<TOptions extends unknown, TFieldConfig extends {} = {}>(
-    defaults: PanelPluginVisualizationSuggestion<TOptions, TFieldConfig>
-  ) {
-    return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
-  }
-
-  getList() {
-    return this.list;
-  }
-}
-
-/**
  * @alpha
  * TODO: this name is temporary; it will become just "VisualizationSuggestionsSupplier" when the other interface is deleted.
  *
@@ -115,24 +82,5 @@ export type VisualizationSuggestionsSupplier = {
   /**
    * Adds suitable suggestions for the current data
    */
-  getSuggestionsForData: (builder: VisualizationSuggestionsBuilder) => void;
+  getSuggestionsForData: (builder: unknown) => void;
 };
-
-/**
- * @internal
- * TODO this will move into the grafana app code once suppliers are migrated.
- */
-export class VisualizationSuggestionsListAppender<TOptions extends unknown, TFieldConfig extends {} = {}> {
-  constructor(
-    private list: VisualizationSuggestion[],
-    private defaults: Partial<PanelPluginVisualizationSuggestion<TOptions, TFieldConfig>> = {}
-  ) {}
-
-  append(suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) {
-    this.list.push(defaultsDeep(suggestion, this.defaults));
-  }
-
-  appendAll(suggestions: Array<VisualizationSuggestion<TOptions, TFieldConfig>>) {
-    this.list.push(...suggestions.map((o) => defaultsDeep(o, this.defaults)));
-  }
-}

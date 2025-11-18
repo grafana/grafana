@@ -1,4 +1,4 @@
-import { set } from 'lodash';
+import { defaultsDeep, set } from 'lodash';
 import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
@@ -14,11 +14,17 @@ import {
   PanelPluginDataSupport,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
-import { VisualizationSuggestionsSupplierFn, VisualizationSuggestionsSupplier } from '../types/suggestions';
+import {
+  VisualizationSuggestionsSupplierFn,
+  VisualizationSuggestionsSupplier,
+  VisualizationSuggestion,
+  PanelPluginVisualizationSuggestion,
+} from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
 import { createFieldConfigRegistry } from './registryFactories';
+import { PanelDataSummary } from './suggestions/getPanelDataSummary';
 
 /** @beta */
 export type StandardOptionConfig = {
@@ -109,7 +115,7 @@ export class PanelPlugin<
   };
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
-  private suggestionsSupplier?: VisualizationSuggestionsSupplier;
+  private suggestionsSupplier?: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -374,37 +380,38 @@ export class PanelPlugin<
   setSuggestionsSupplier(
     supplier: VisualizationSuggestionsSupplier | VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>
   ): this {
-    this.suggestionsSupplier =
-      typeof supplier === 'function'
-        ? {
-            getSuggestionsForData: (builder) => {
-              const appender = builder.getListAppender<TOptions, TFieldConfigOptions>({
-                pluginId: this.meta.id,
-                name: this.meta.name,
-                options: {},
-                fieldConfig: {
-                  defaults: {},
-                  overrides: [],
-                },
-              });
-
-              const result = supplier(builder.dataSummary);
-
-              if (Array.isArray(result)) {
-                appender.appendAll(result);
-              }
-            },
-          }
-        : supplier;
+    if (typeof supplier !== 'function') {
+      deprecationWarning(
+        'PanelPlugin',
+        'plugin.setSuggestionsSupplier(VisualizationSuggestionsSupplier)',
+        'plugin.setSuggestionsSupplier(VisualizationSuggestionsSupplierFn)'
+      );
+      return this;
+    }
+    this.suggestionsSupplier = supplier;
     return this;
   }
 
   /**
-   * Returns the suggestions supplier
    * @alpha
+   * get suggestions based on the PanelDataSummary
    */
-  getSuggestionsSupplier(): VisualizationSuggestionsSupplier | undefined {
-    return this.suggestionsSupplier;
+  getSuggestions(
+    panelDataSummary: PanelDataSummary
+  ): Array<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>> | void {
+    const withDefaults = (
+      suggestion: VisualizationSuggestion<TOptions, TFieldConfigOptions>
+    ): PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions> =>
+      defaultsDeep(suggestion, {
+        pluginId: this.meta.id,
+        name: this.meta.name,
+        options: {},
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      } satisfies PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>);
+    return this.suggestionsSupplier?.(panelDataSummary)?.map(withDefaults);
   }
 
   /**
