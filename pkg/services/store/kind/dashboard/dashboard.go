@@ -154,13 +154,6 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 			}
 			dash.ID = iter.ReadInt64()
 
-		case "uid":
-			if !checkAndSkipUnexpectedElement(iter, jsonPath+".uid", lc, jsoniter.StringValue) {
-				continue
-			}
-			//dash.UID = iter.ReadString()
-			iter.Skip()
-
 		case "title":
 			if !checkAndSkipUnexpectedElement(iter, jsonPath+".title", lc, jsoniter.StringValue) {
 				continue
