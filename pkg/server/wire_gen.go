@@ -7,6 +7,7 @@ package server
 
 import (
 	"context"
+
 	"github.com/google/wire"
 	httpclient2 "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
@@ -47,8 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/registry/apis"
-	"github.com/grafana/grafana/pkg/registry/apis/collections"
+	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
@@ -76,7 +76,7 @@ import (
 	service5 "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
-	"github.com/grafana/grafana/pkg/registry/apps"
+	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	advisor2 "github.com/grafana/grafana/pkg/registry/apps/advisor"
 	notifications2 "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
@@ -141,7 +141,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/services/grpcserver/context"
+	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
@@ -247,7 +247,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
-	"github.com/grafana/grafana/pkg/services/temp_user"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/updatemanager"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -265,12 +265,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
+	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
+	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
+	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -286,9 +286,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
-)
 
-import (
 	_ "github.com/grafana/grafana/pkg/extensions"
 )
 
@@ -869,8 +867,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userService, apiserverService)
-	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userService, apiserverService)
+	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, starService, userService, apiserverService)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
 	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
 	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
@@ -1512,8 +1509,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userService, apiserverService)
-	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userService, apiserverService)
+	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, starService, userService, apiserverService)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
 	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
 	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
