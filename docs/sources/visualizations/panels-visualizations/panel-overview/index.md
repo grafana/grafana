@@ -193,7 +193,7 @@ Click and drag on the panel to zoom in on a particular time range.
 
 The following screen recordings show this interaction in the time series and x visualizations:
 
-{{< video-embed src="panel-time-zoom-in-mouse.mp4" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-ts-time-zoom-in-mouse.mp4" >}}
 
 ### Zoom out
 
@@ -207,7 +207,7 @@ For example, if the original time range is from 9:00 to 9:59, the time range cha
 
 The following screen recordings demonstrate the preceding example in the time series and x visualizations:
 
-{{< video-embed src="panel-time-zoom-out-mouse2.mp4" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-ts-time-zoom-out-mouse.mp4" >}}
 
 ## Add a panel
 
