@@ -8,13 +8,6 @@ import { Options } from './panelcfg.gen';
 
 const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(s, {
-    options: {
-      reduceOptions: {
-        values: true,
-        calcs: [],
-        fields: '/.*/',
-      },
-    },
     fieldConfig: {
       defaults: {
         unit: 'short',
@@ -48,10 +41,22 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
     suggestions.push(
       {
         name: t('stat.suggestions.stat-discrete-values', 'Stat - discrete values'),
+        options: {
+          reduceOptions: {
+            values: true,
+            calcs: [],
+            fields: '/.*/',
+          },
+        },
       },
       {
         name: t('stat.suggestions.stat-discrete-values-color-background', 'Stat - discrete values - color background'),
         options: {
+          reduceOptions: {
+            values: true,
+            calcs: [],
+            fields: '/.*/',
+          },
           colorMode: BigValueColorMode.Background,
         },
       }
@@ -63,6 +68,11 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
     suggestions.push({
       name: t('stat.suggestions.stat-single-string', 'Stat - single string'),
       options: {
+        reduceOptions: {
+          values: true,
+          calcs: [],
+          fields: '/.*/',
+        },
         colorMode: BigValueColorMode.None,
       },
     });

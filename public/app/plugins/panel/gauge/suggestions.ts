@@ -2,17 +2,12 @@ import { defaultsDeep } from 'lodash';
 
 import { ThresholdsMode, FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplierFn } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { defaultReduceOptions } from 'app/features/panel/suggestions/utils';
 
 import { Options } from './panelcfg.gen';
 
 const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(suggestion, {
-    options: {
-      reduceOptions: {
-        values: false,
-        calcs: ['lastNotNull'],
-      },
-    },
     fieldConfig: {
       defaults: {
         thresholds: {
@@ -64,15 +59,5 @@ export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Option
     dataSummary.frameCount === 1 &&
     dataSummary.rowCountTotal <= GAUGE_LIMIT;
 
-  return suggestions.map((s) => {
-    if (shouldDeaggregate) {
-      s.options = s.options ?? {};
-      s.options.reduceOptions = {
-        values: true,
-        calcs: [],
-      };
-    }
-
-    return withDefaults(s);
-  });
+  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldDeaggregate));
 };

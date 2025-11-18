@@ -27,6 +27,8 @@ for (const pluginId of panelsToCheckFirst) {
   } as PanelPluginMeta;
 }
 
+const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart', 'radialbar'];
+
 config.panels['text'] = {
   id: 'text',
   name: 'Text',
@@ -139,11 +141,15 @@ scenario('Single frame with time and number field', (ctx) => {
     expect(ctx.suggestions.find((x) => x.name === 'Bar chart')?.pluginId).toBe('timeseries');
   });
 
-  it('Stat panels have reduce values disabled', () => {
-    for (const suggestion of ctx.suggestions) {
-      if (suggestion.options?.reduceOptions?.values) {
-        throw new Error(`Suggestion ${suggestion.name} reduce.values set to true when it should be false`);
-      }
+  it('Scalar panels have reduce values disabled', () => {
+    for (const suggestion of ctx.suggestions.filter((s) => SCALAR_PLUGINS.includes(s.pluginId))) {
+      expect(suggestion).toEqual(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            reduceOptions: expect.objectContaining({ values: false, calcs: ['lastNotNull'] }),
+          }),
+        })
+      );
     }
   });
 });
@@ -191,11 +197,15 @@ scenario('Single frame with time 2 number fields', (ctx) => {
     ]);
   });
 
-  it('Stat panels have reduceOptions.values disabled', () => {
-    for (const suggestion of ctx.suggestions) {
-      if (suggestion.options?.reduceOptions?.values) {
-        throw new Error(`Suggestion ${suggestion.name} reduce.values set to true when it should be false`);
-      }
+  it('Scalar panels should be aggregated', () => {
+    for (const suggestion of ctx.suggestions.filter((s) => SCALAR_PLUGINS.includes(s.pluginId))) {
+      expect(suggestion).toEqual(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            reduceOptions: expect.objectContaining({ values: false, calcs: ['lastNotNull'] }),
+          }),
+        })
+      );
     }
   });
 });
@@ -289,11 +299,13 @@ scenario('Single frame with string and number field', (ctx) => {
     ]);
   });
 
-  it('Stat/Gauge/BarGauge/PieChart panels to have reduceOptions.values enabled', () => {
-    for (const suggestion of ctx.suggestions) {
-      if (suggestion.options?.reduceOptions && !suggestion.options?.reduceOptions?.values) {
-        throw new Error(`Suggestion ${suggestion.name} reduce.values set to false when it should be true`);
-      }
+  it('Scalar panels should be aggregated', () => {
+    for (const suggestion of ctx.suggestions.filter((s) => SCALAR_PLUGINS.includes(s.pluginId))) {
+      expect(suggestion).toEqual(
+        expect.objectContaining({
+          options: expect.objectContaining({ reduceOptions: expect.objectContaining({ values: true, calcs: [] }) }),
+        })
+      );
     }
   });
 });
@@ -370,7 +382,7 @@ scenario('Single frame with only string field', (ctx) => {
   });
 
   it('Stat panels have reduceOptions.fields set to show all fields', () => {
-    for (const suggestion of ctx.suggestions) {
+    for (const suggestion of ctx.suggestions.filter((s) => s.pluginId === 'stat')) {
       if (suggestion.options?.reduceOptions) {
         expect(suggestion.options.reduceOptions.fields).toBe('/.*/');
       }

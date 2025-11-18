@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode } from '@grafana/ui';
+import { defaultReduceOptions } from 'app/features/panel/suggestions/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -17,10 +18,6 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
     options: {
       displayMode: BarGaugeDisplayMode.Basic,
       orientation: VizOrientation.Horizontal,
-      reduceOptions: {
-        values: false,
-        calcs: ['lastNotNull'],
-      },
     },
     fieldConfig: {
       defaults: {
@@ -59,15 +56,5 @@ export const barGaugeSugggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
     dataSummary.frameCount === 1 &&
     dataSummary.rowCountTotal <= BAR_LIMIT;
 
-  return suggestions.map((s) => {
-    if (shouldDeaggregate) {
-      s.options = s.options ?? {};
-      s.options.reduceOptions = {
-        values: true,
-        calcs: [],
-      };
-    }
-
-    return withDefaults(s);
-  });
+  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldDeaggregate));
 };

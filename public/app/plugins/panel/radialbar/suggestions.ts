@@ -8,6 +8,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphFieldConfig } from '@grafana/ui';
+import { defaultReduceOptions } from 'app/features/panel/suggestions/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -37,6 +38,8 @@ const withDefaults = (
     // }]
   } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
 
+const MAX_GAUGES = 10;
+
 export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, GraphFieldConfig> = (
   dataSummary
 ) => {
@@ -45,7 +48,7 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
   }
 
   // for many fields / series this is probably not a good fit
-  if (dataSummary.fieldCountByType(FieldType.number) >= 10) {
+  if (dataSummary.fieldCountByType(FieldType.number) > MAX_GAUGES) {
     return;
   }
 
@@ -62,28 +65,23 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
   ];
 
   const shouldDeaggregate =
-    dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10;
+    dataSummary.hasFieldType(FieldType.string) &&
+    dataSummary.frameCount === 1 &&
+    dataSummary.rowCountTotal <= MAX_GAUGES;
 
   return suggestions.map((s) => {
-    s.options = s.options ?? {};
-    s.fieldConfig = s.fieldConfig ?? {
-      defaults: {},
-      overrides: [],
-    };
+    const suggestion = defaultReduceOptions(withDefaults(s), shouldDeaggregate);
 
     if (shouldDeaggregate) {
-      s.options.reduceOptions = {
-        values: true,
-        calcs: [],
+      suggestion.fieldConfig = suggestion.fieldConfig ?? {
+        defaults: {},
+        overrides: [],
       };
-      s.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
-    } else {
-      s.options.reduceOptions = {
-        values: false,
-        calcs: ['lastNotNull'],
+      suggestion.fieldConfig.defaults.color = suggestion.fieldConfig.defaults.color ?? {
+        mode: FieldColorModeId.PaletteClassic,
       };
     }
 
-    return withDefaults(s);
+    return suggestion;
   });
 };

@@ -3,16 +3,13 @@ import { defaultsDeep } from 'lodash';
 import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplierFn } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode } from '@grafana/schema';
+import { defaultReduceOptions } from 'app/features/panel/suggestions/utils';
 
 import { PieChartLabels, Options, PieChartType } from './panelcfg.gen';
 
 const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(suggestion, {
     options: {
-      reduceOptions: {
-        values: false,
-        calcs: ['lastNotNull'],
-      },
       displayLabels: [PieChartLabels.Percent],
       legend: {
         calcs: [],
@@ -61,15 +58,5 @@ export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opt
     return;
   }
 
-  return suggestions.map((s) => {
-    if (shouldDeaggregate) {
-      s.options = s.options ?? {};
-      s.options.reduceOptions = {
-        values: true,
-        calcs: [],
-      };
-    }
-
-    return withDefaults(s);
-  });
+  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldDeaggregate));
 };
