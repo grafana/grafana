@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -85,13 +86,27 @@ func (k *sqlKV) getTableName(section string) (string, error) {
 // parsedKey represents the components of a key_path for the data section
 // Format: {Group}/{Resource}/{Namespace}/{Name}/{ResourceVersion}~{Action}~{Folder}
 type parsedKey struct {
-	Group           string
-	Resource        string
-	Namespace       string
-	Name            string
-	ResourceVersion int64
-	Action          int // 1: create, 2: update, 3: delete
-	Folder          string
+	Group                    string
+	Resource                 string
+	Namespace                string
+	Name                     string
+	ResourceVersion          int64 // Microsecond timestamp
+	ResourceVersionSnowflake int64 // Original snowflake ID from key
+	Action                   int   // 1: create, 2: update, 3: delete
+	Folder                   string
+}
+
+// snowflakeToMicroseconds converts a snowflake ID to a unix microsecond timestamp
+// Uses the snowflake library's Time() method which handles the Grafana epoch internally
+func snowflakeToMicroseconds(snowflakeID int64) int64 {
+	// Extract unix milliseconds from snowflake (handles Grafana epoch internally)
+	unixMilliseconds := snowflake.ID(snowflakeID).Time()
+
+	// Extract sequence number (low 12 bits) for sub-millisecond precision
+	sequence := snowflakeID & 0xFFF // 0xFFF = 4095 = 2^12 - 1
+
+	// Convert to unix microseconds: (unix_ms * 1000) + sequence
+	return (unixMilliseconds * 1000) + sequence
 }
 
 // parseDataKey parses a data section key_path
@@ -109,10 +124,13 @@ func parseDataKey(keyPath string) (*parsedKey, error) {
 	}
 
 	// Parse resource version (stored as snowflake ID in key)
-	rv, err := strconv.ParseInt(mainParts[4], 10, 64)
+	snowflakeID, err := strconv.ParseInt(mainParts[4], 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid resource_version: %w", err)
 	}
+
+	// Convert snowflake ID to microsecond timestamp for database storage
+	microseconds := snowflakeToMicroseconds(snowflakeID)
 
 	// Convert action string to int
 	var action int
@@ -128,13 +146,14 @@ func parseDataKey(keyPath string) (*parsedKey, error) {
 	}
 
 	return &parsedKey{
-		Group:           mainParts[0],
-		Resource:        mainParts[1],
-		Namespace:       mainParts[2],
-		Name:            mainParts[3],
-		ResourceVersion: rv,
-		Action:          action,
-		Folder:          parts[2], // May be empty string
+		Group:                    mainParts[0],
+		Resource:                 mainParts[1],
+		Namespace:                mainParts[2],
+		Name:                     mainParts[3],
+		ResourceVersion:          microseconds, // Microsecond timestamp for DB
+		ResourceVersionSnowflake: snowflakeID,  // Original snowflake ID
+		Action:                   action,
+		Folder:                   parts[2], // May be empty string
 	}, nil
 }
 
@@ -656,16 +675,32 @@ func (w *sqlWriteCloser) upsertResourceVersion(ctx context.Context, tx db.Tx, pa
 	var query string
 	switch w.kv.dialect.DialectName() {
 	case "postgres":
+		// Only update if new resource_version is greater than existing
 		query = fmt.Sprintf(`
 			INSERT INTO %s (%s, %s, %s) VALUES (%s, %s, %s)
-			ON CONFLICT (%s, %s) DO UPDATE SET %s = EXCLUDED.%s`,
+			ON CONFLICT (%s, %s) DO UPDATE SET %s = EXCLUDED.%s
+			WHERE EXCLUDED.%s > %s.%s`,
 			tableIdent, groupIdent, resourceIdent, rvIdent, ph(1), ph(2), ph(3),
 			groupIdent, resourceIdent, rvIdent, rvIdent,
+			rvIdent, tableIdent, rvIdent,
 		)
-	case "mysql", "sqlite":
+	case "sqlite":
+		// SQLite supports WHERE clause in ON CONFLICT DO UPDATE
 		query = fmt.Sprintf(`
-			REPLACE INTO %s (%s, %s, %s) VALUES (%s, %s, %s)`,
+			INSERT INTO %s (%s, %s, %s) VALUES (%s, %s, %s)
+			ON CONFLICT (%s, %s) DO UPDATE SET %s = EXCLUDED.%s
+			WHERE EXCLUDED.%s > %s.%s`,
 			tableIdent, groupIdent, resourceIdent, rvIdent, ph(1), ph(2), ph(3),
+			groupIdent, resourceIdent, rvIdent, rvIdent,
+			rvIdent, tableIdent, rvIdent,
+		)
+	case "mysql":
+		// MySQL uses ON DUPLICATE KEY UPDATE with conditional
+		query = fmt.Sprintf(`
+			INSERT INTO %s (%s, %s, %s) VALUES (%s, %s, %s)
+			ON DUPLICATE KEY UPDATE %s = IF(VALUES(%s) > %s, VALUES(%s), %s)`,
+			tableIdent, groupIdent, resourceIdent, rvIdent, ph(1), ph(2), ph(3),
+			rvIdent, rvIdent, rvIdent, rvIdent, rvIdent,
 		)
 	default:
 		return fmt.Errorf("unsupported dialect: %s", w.kv.dialect.DialectName())

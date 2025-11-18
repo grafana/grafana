@@ -1,11 +1,11 @@
 UPDATE {{ .Ident "resource_history" }}
 SET 
     {{ .Ident "resource_version" }} = (
-        CASE
-        {{ range $guid, $rv := .GUIDToRV }}
-        WHEN {{ $.Ident "guid" }} = {{ $.Arg $guid }} THEN CAST({{ $.Arg $rv }} AS {{ if eq $.DialectName "postgres" }}BIGINT{{ else }}SIGNED{{ end }})
-        {{ end }}
-        END
+    CASE
+    {{ range $guid, $rv := .GUIDToRV }}
+    WHEN {{ $.Ident "guid" }} = {{ $.Arg $guid }} THEN CAST({{ $.Arg $rv }} AS {{ if eq $.DialectName "postgres" }}BIGINT{{ else }}SIGNED{{ end }})
+    {{ end }}
+    END
     ),
     {{ .Ident "key_path" }} = {{ if eq .DialectName "sqlite" -}}
         {{ .Ident "group" }} || CHAR(47) || {{ .Ident "resource" }} || CHAR(47) || {{ .Ident "namespace" }} || CHAR(47) || {{ .Ident "name" }} || CHAR(47) ||
