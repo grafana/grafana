@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -79,7 +80,9 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 			delegateHandler,
 			c.LoopbackClientConfig,
 			builders,
-			reg)
+			reg,
+			c.MergedResourceConfig,
+		)
 		if err != nil {
 			panic(fmt.Sprintf("could not build the request handler for specified API builders: %s", err.Error()))
 		}

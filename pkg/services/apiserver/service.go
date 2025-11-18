@@ -317,6 +317,8 @@ func (s *service) start(ctx context.Context) error {
 	)
 
 	apiResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
+	// add the builder group versions to the api resource config
+	apiResourceConfig.EnableVersions(groupVersions...)
 
 	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
 		return err
