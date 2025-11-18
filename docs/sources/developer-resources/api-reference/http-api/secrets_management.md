@@ -16,23 +16,29 @@ labels:
     - enterprise
     - cloud
 title: Secrets Management HTTP API
+refs:
+	rbac-permissions:
+		- pattern: /docs/grafana/
+		  destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+		- pattern: /docs/grafana-cloud/
+		  destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
 ---
 
 # Secrets Management API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+> If you are running Grafana Enterprise, you need to have specific permissions for some endpoints . Refer to [Role-based access control permissions](ref:rbac-permissions) for more information.
 
 > To view more about the new API structure, refer to [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
 {{< admonition type="caution" >}}
-The API is currently in beta and may be subjected to changes.
+The API is currently in beta and might be subject to changes.
 {{< /admonition >}}
 
 The Grafana Secrets Management API allows you to manage secrets that are used by other services and applications within your Grafana instance.
 
 ### Decrypters
 
-The decrypters field is an allowlist that lets the secure value know which services/apps can decrypt the secret value.
+The decrypters field is an allowlist that lets the secure value know which services and apps can decrypt the secret value.
 
 Currently available decrypters:
 - `synthetic-monitoring` (for Synthetic Monitoring checks)
@@ -51,13 +57,13 @@ Creates a new secure value.
 **Request body**
 
 - `metadata.name`: The Grafana unique identifier. If you do not want to provide this, set `metadata.generateName` instead to the prefix you would like for the randomly generated uid (cannot be an empty string).
-- `spec.description`: short description that explains the purpose of this secure value. Required. Up to 25 characters long.
+- `spec.description`: Short description that explains the purpose of this secure value. Required. Up to 25 characters long.
 - `spec.value`: The secret value to store. Required. Up to 24576 bytes long.
-- `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters]({{< ref "#decrypters" >}}) for a list of supported values.
+- `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters](#decrypters) for a list of supported values.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#secrets-management-apis" >}}) for an explanation.
+See note in the [introduction](#secrets-management-apis) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action                       | Scope                                     |
@@ -138,7 +144,7 @@ List all secure values in a namespace.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#secrets-management-apis" >}}) for an explanation.
+See note in the [introduction](#secrets-management-apis) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action                       | Scope                                     |
@@ -206,7 +212,7 @@ Get the details of a specific secure value. It will not return the secret value.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#secrets-management-apis" >}}) for an explanation.
+See note in the [introduction](#secrets-management-apis) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action                       | Scope                                     |
@@ -274,7 +280,7 @@ Replace an existing secure value with a new specification.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#secrets-management-apis" >}}) for an explanation.
+See note in the [introduction](#secrets-management-apis) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action                       | Scope                                     |
@@ -338,16 +344,16 @@ Status Codes:
 
 `DELETE /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
 
-Permanently delete a secure value. It will also delete the underlying stored secret value.
+Permanently delete a secure value. This also deletes the underlying stored secret value.
 
 **URL parameters**
 
-- `namespace`: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- `name`: the name of the secure value.
+- `namespace`: To read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- `name`: The name of the secure value.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#secrets-management-apis" >}}) for an explanation.
+See note in the [introduction](#secrets-management-apis) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action                       | Scope                                     |
