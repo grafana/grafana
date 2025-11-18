@@ -194,9 +194,9 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 			return &DashboardDocumentBuilder{
-				Namespace:        namespace,
-				Blob:             blob,
-				Stats:            nil,
+				Namespace: namespace,
+				Blob:      blob,
+				Stats:     nil,
 				DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{
 					// empty values (does not resolve anything)
 				}),
@@ -261,7 +261,10 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		value = rsp.Value
 	}
 
-	summary, err := dashboard.ReadDashboard(bytes.NewReader(value), s.DatasourceLookup)
+	summary, err := dashboard.ReadDashboardWithLogContext(bytes.NewReader(value), s.DatasourceLookup, map[string]any{
+		"document": fmt.Sprintf("%s/%s/%s/%s", key.GetNamespace(), key.GetGroup(), key.GetResource(), key.GetName()),
+		"rv":       rv,
+	})
 	if err != nil {
 		return nil, err
 	}

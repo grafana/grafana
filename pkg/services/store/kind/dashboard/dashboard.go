@@ -1,11 +1,15 @@
 package dashboard
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type templateVariable struct {
@@ -110,61 +114,70 @@ func newDatasourceVariableLookup(dsLookup DatasourceLookup) *datasourceVariableL
 
 // ReadDashboard will take a byte stream and return dashboard info
 func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardSummaryInfo, error) {
+	return ReadDashboardWithLogContext(stream, lookup, nil)
+}
+
+func ReadDashboardWithLogContext(stream io.Reader, lookup DatasourceLookup, logContext map[string]any) (*DashboardSummaryInfo, error) {
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
-	return readDashboardIter(iter, lookup)
+	return readDashboardIter("$", iter, lookup, logContext)
 }
 
 // nolint:gocyclo
-func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*DashboardSummaryInfo, error) {
+func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup DatasourceLookup, lc map[string]any) (*DashboardSummaryInfo, error) {
 	dash := &DashboardSummaryInfo{}
+
+	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.ObjectValue) {
+		return dash, errors.New("expected JSON object at " + jsonPath)
+	}
 
 	datasourceVariablesLookup := newDatasourceVariableLookup(lookup)
 
-	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+	for field := iter.ReadObject(); field != ""; field = iter.ReadObject() {
 		// Skip null values so we don't need special int handling
 		if iter.WhatIsNext() == jsoniter.NilValue {
 			iter.Skip()
 			continue
 		}
 
-		switch l1Field {
+		switch field {
 		// k8s metadata wrappers (skip)
 		case "metadata", "kind", "apiVersion":
 			iter.Skip()
 
 		// recursively read the spec as dashboard json
 		case "spec":
-			return readDashboardIter(iter, lookup)
+			return readDashboardIter(jsonPath+".spec", iter, lookup, lc)
 
 		case "id":
-			if iter.WhatIsNext() == jsoniter.NumberValue {
-				dash.ID = iter.ReadInt64()
-			} else {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".id", lc, jsoniter.NumberValue) {
+				continue
 			}
+			dash.ID = iter.ReadInt64()
 
 		case "uid":
-			if iter.WhatIsNext() == jsoniter.StringValue {
-				iter.ReadString()
-			} else {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".uid", lc, jsoniter.StringValue) {
+				continue
 			}
+			//dash.UID = iter.ReadString()
+			iter.Skip()
 
 		case "title":
-			if iter.WhatIsNext() == jsoniter.StringValue {
-				dash.Title = iter.ReadString()
-			} else {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".title", lc, jsoniter.StringValue) {
+				continue
 			}
+			dash.Title = iter.ReadString()
 
 		case "description":
-			if iter.WhatIsNext() == jsoniter.StringValue {
-				dash.Description = iter.ReadString()
-			} else {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".description", lc, jsoniter.StringValue) {
+				continue
 			}
+			dash.Description = iter.ReadString()
 
 		case "schemaVersion":
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".schemaVersion", lc, jsoniter.NumberValue, jsoniter.StringValue) {
+				continue
+			}
+
 			switch iter.WhatIsNext() {
 			case jsoniter.NumberValue:
 				dash.SchemaVersion = iter.ReadInt64()
@@ -178,13 +191,16 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 			}
 
 		case "timezone":
-			if iter.WhatIsNext() == jsoniter.StringValue {
-				dash.TimeZone = iter.ReadString()
-			} else {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".timezone", lc, jsoniter.StringValue) {
+				continue
 			}
+			dash.TimeZone = iter.ReadString()
 
 		case "editable":
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".editable", lc, jsoniter.StringValue, jsoniter.BoolValue) {
+				continue
+			}
+
 			switch iter.WhatIsNext() {
 			case jsoniter.BoolValue:
 				dash.ReadOnly = !iter.ReadBool()
@@ -195,77 +211,90 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 			}
 
 		case "refresh":
-			if iter.WhatIsNext() == jsoniter.StringValue {
-				dash.Refresh = iter.ReadString()
-			} else {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".refresh", lc, jsoniter.StringValue) {
+				continue
 			}
+			dash.Refresh = iter.ReadString()
 
 		case "tags":
+			tagsPath := jsonPath + ".tags"
+
 			// Only support string array tags. Ignore everything else.
-			if iter.WhatIsNext() == jsoniter.ArrayValue {
-				for iter.ReadArray() {
-					if iter.WhatIsNext() == jsoniter.StringValue {
-						dash.Tags = append(dash.Tags, iter.ReadString())
-					}
+			if !checkAndSkipUnexpectedElement(iter, tagsPath, lc, jsoniter.ArrayValue) {
+				continue
+			}
+
+			for ix := 0; iter.ReadArray(); ix++ {
+				if !checkAndSkipUnexpectedElement(iter, fmt.Sprintf("%s[%d]", tagsPath, ix), lc, jsoniter.StringValue) {
+					continue
 				}
-			} else {
-				iter.Skip()
+
+				dash.Tags = append(dash.Tags, iter.ReadString())
 			}
 
 		case "links":
-			if iter.WhatIsNext() == jsoniter.ArrayValue {
-				for iter.ReadArray() {
-					iter.Skip()
-					dash.LinkCount++
-				}
-			} else {
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".links", lc, jsoniter.ArrayValue) {
+				continue
+			}
+
+			for iter.ReadArray() {
 				iter.Skip()
+				dash.LinkCount++
 			}
 
 		case "time":
-			if iter.WhatIsNext() == jsoniter.ObjectValue {
-				obj, ok := iter.Read().(map[string]any)
-				if ok {
-					if timeFrom, ok := obj["from"].(string); ok {
-						dash.TimeFrom = timeFrom
-					}
-					if timeTo, ok := obj["to"].(string); ok {
-						dash.TimeTo = timeTo
-					}
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".time", lc, jsoniter.ObjectValue) {
+				continue
+			}
+
+			obj, ok := iter.Read().(map[string]any)
+			if ok {
+				if timeFrom, ok := obj["from"].(string); ok {
+					dash.TimeFrom = timeFrom
 				}
-			} else {
-				iter.Skip()
+				if timeTo, ok := obj["to"].(string); ok {
+					dash.TimeTo = timeTo
+				}
 			}
 
 		case "panels":
-			if iter.WhatIsNext() == jsoniter.ArrayValue {
-				for iter.ReadArray() {
-					p, ok := readpanelInfo(iter, lookup)
-					if ok {
-						dash.Panels = append(dash.Panels, p)
-					}
+			panelsPath := jsonPath + ".panels"
+			if !checkAndSkipUnexpectedElement(iter, panelsPath, lc, jsoniter.ArrayValue) {
+				continue
+			}
+
+			for ix := 0; iter.ReadArray(); ix++ {
+				p, ok := readpanelInfo(iter, lookup, fmt.Sprintf("%s[%d]", panelsPath, ix), lc)
+				if ok {
+					dash.Panels = append(dash.Panels, p)
 				}
-			} else {
-				iter.Skip()
 			}
 
 		case "templating":
+			templatingPath := jsonPath + ".templating"
+			if !checkAndSkipUnexpectedElement(iter, templatingPath, lc, jsoniter.ObjectValue) {
+				continue
+			}
+
 			for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
 				if sub == "list" {
-					for iter.ReadArray() {
+					templatingListPath := templatingPath + ".list"
+					if !checkAndSkipUnexpectedElement(iter, templatingListPath, lc, jsoniter.ArrayValue) {
+						continue
+					}
+
+					for ix := 0; iter.ReadArray(); ix++ {
 						tv := templateVariable{}
 
-						if iter.WhatIsNext() != jsoniter.ObjectValue {
-							iter.Skip()
+						templatingListElementPath := fmt.Sprintf("%s[%d]", templatingListPath, ix)
+						if !checkAndSkipUnexpectedElement(iter, templatingListElementPath, lc, jsoniter.ObjectValue) {
 							continue
 						}
 
 						for k := iter.ReadObject(); k != ""; k = iter.ReadObject() {
 							switch k {
 							case "name":
-								if iter.WhatIsNext() != jsoniter.StringValue {
-									iter.Skip()
+								if !checkAndSkipUnexpectedElement(iter, templatingListElementPath+".name", lc, jsoniter.StringValue) {
 									continue
 								}
 
@@ -273,16 +302,14 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 								dash.TemplateVars = append(dash.TemplateVars, name)
 								tv.name = name
 							case "type":
-								if iter.WhatIsNext() != jsoniter.StringValue {
-									iter.Skip()
+								if !checkAndSkipUnexpectedElement(iter, templatingListElementPath+".type", lc, jsoniter.StringValue) {
 									continue
 								}
 								tv.variableType = iter.ReadString()
 							case "query":
 								tv.query = iter.Read()
 							case "current":
-								if iter.WhatIsNext() != jsoniter.ObjectValue {
-									iter.Skip()
+								if !checkAndSkipUnexpectedElement(iter, templatingListElementPath+".current", lc, jsoniter.ObjectValue) {
 									continue
 								}
 
@@ -329,6 +356,64 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 	dash.Datasource = targets.GetDatasourceInfo()
 
 	return dash, iter.Error
+}
+
+var logger = log.New("services.store.kind.dashboard")
+
+// checkAndSkipUnexpectedElement verifies if the next JSON element matches any allowed value types for the specified JSON path.
+// If the type matches, it returns true, otherwise it skips the element, logs an error, and returns false.
+func checkAndSkipUnexpectedElement(iter *jsoniter.Iterator, jsonPath string, logContext map[string]any, allowedValues ...jsoniter.ValueType) bool {
+	next := iter.WhatIsNext()
+	for _, a := range allowedValues {
+		if next == a {
+			return true
+		}
+	}
+
+	// Skip unexpected element.
+	iter.Skip()
+
+	// Prepare log message.
+	params := []any{
+		"jsonPath", jsonPath,
+		"got", valueTypesToString(next),
+		"expected", valueTypesToString(allowedValues...),
+	}
+
+	// Map iteration is random, so a log message may look different each time if there are multiple entries in the map. That's fine.
+	for k, v := range logContext {
+		params = append(params, k, v)
+	}
+
+	logger.Error("Unexpected element in Dashboard JSON", params...)
+	return false
+}
+
+func valueTypesToString(allowedValues ...jsoniter.ValueType) string {
+	expected := strings.Builder{}
+	for ix, a := range allowedValues {
+		if ix > 0 {
+			expected.WriteString(", ")
+		}
+
+		switch a {
+		case jsoniter.NilValue:
+			expected.WriteString("null")
+		case jsoniter.StringValue:
+			expected.WriteString("string")
+		case jsoniter.NumberValue:
+			expected.WriteString("number")
+		case jsoniter.BoolValue:
+			expected.WriteString("bool")
+		case jsoniter.ArrayValue:
+			expected.WriteString("array")
+		case jsoniter.ObjectValue:
+			expected.WriteString("object")
+		default:
+			expected.WriteString(fmt.Sprintf("unknown: %d", a))
+		}
+	}
+	return expected.String()
 }
 
 func panelRequiresDatasource(panel PanelSummaryInfo) bool {
@@ -420,20 +505,19 @@ func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVa
 }
 
 // will always return strings for now
-func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) (PanelSummaryInfo, bool) {
+func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath string, lc map[string]any) (PanelSummaryInfo, bool) {
 	panel := PanelSummaryInfo{}
 
-	if iter.WhatIsNext() != jsoniter.ObjectValue {
-		iter.Skip()
+	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.ObjectValue) {
 		return panel, false
 	}
 
 	targets := newTargetInfo(lookup)
 
-	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+	for field := iter.ReadObject(); field != ""; field = iter.ReadObject() {
 		if iter.WhatIsNext() == jsoniter.NilValue {
-			if l1Field == "datasource" {
-				targets.addDatasource(iter)
+			if field == "datasource" {
+				targets.addDatasource(iter, jsonPath+".datasource", lc)
 				continue
 			}
 
@@ -442,45 +526,39 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) (PanelSumma
 			continue
 		}
 
-		switch l1Field {
+		switch field {
 		case "id":
-			if iter.WhatIsNext() != jsoniter.NumberValue {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".id", lc, jsoniter.NumberValue) {
 				continue
 			}
 			panel.ID = iter.ReadInt64()
 
 		case "type":
-			if iter.WhatIsNext() != jsoniter.StringValue {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".type", lc, jsoniter.StringValue) {
 				continue
 			}
 			panel.Type = iter.ReadString()
 
 		case "title":
-			if iter.WhatIsNext() != jsoniter.StringValue {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".title", lc, jsoniter.StringValue) {
 				continue
 			}
 			panel.Title = iter.ReadString()
 
 		case "description":
-			if iter.WhatIsNext() != jsoniter.StringValue {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".description", lc, jsoniter.StringValue) {
 				continue
 			}
 			panel.Description = iter.ReadString()
 
 		case "pluginVersion":
-			if iter.WhatIsNext() != jsoniter.StringValue {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".pluginVersion", lc, jsoniter.StringValue) {
 				continue
 			}
 			panel.PluginVersion = iter.ReadString() // since 7x (the saved version for the plugin model)
 
 		case "libraryPanel":
-			if iter.WhatIsNext() != jsoniter.ObjectValue {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".libraryPanel", lc, jsoniter.ObjectValue) {
 				continue
 			}
 
@@ -493,36 +571,42 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) (PanelSumma
 			}
 
 		case "datasource":
-			targets.addDatasource(iter)
+			targets.addDatasource(iter, jsonPath+".datasource", lc)
 
 		case "targets":
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".targets", lc, jsoniter.ArrayValue, jsoniter.ObjectValue) {
+				continue
+			}
+
 			switch iter.WhatIsNext() {
 			case jsoniter.ArrayValue:
-				for iter.ReadArray() {
-					targets.addTarget(iter)
+				for ix := 0; iter.ReadArray(); ix++ {
+					targets.addTarget(iter, fmt.Sprintf("%s.targets[%d]", jsonPath, ix), lc)
 				}
 			case jsoniter.ObjectValue:
-				for f := iter.ReadObject(); f != ""; f = iter.ReadObject() {
-					targets.addTarget(iter)
+				for fn := iter.ReadObject(); fn != ""; fn = iter.ReadObject() {
+					targets.addTarget(iter, jsonPath+".targets."+fn, lc)
 				}
 			default:
 				iter.Skip()
 			}
 
 		case "transformations":
-			if iter.WhatIsNext() != jsoniter.ArrayValue {
-				iter.Skip()
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".transformations", lc, jsoniter.ArrayValue) {
 				continue
 			}
 
-			for iter.ReadArray() {
-				if iter.WhatIsNext() != jsoniter.ObjectValue {
-					iter.Skip()
+			for ix := 0; iter.ReadArray(); ix++ {
+				if !checkAndSkipUnexpectedElement(iter, fmt.Sprintf("%s.transformations[%d]", jsonPath, ix), lc, jsoniter.ObjectValue) {
 					continue
 				}
 
 				for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
-					if sub == "id" && iter.WhatIsNext() == jsoniter.StringValue {
+					if sub == "id" {
+						if !checkAndSkipUnexpectedElement(iter, fmt.Sprintf("%s.transformations[%d].id", jsonPath, ix), lc, jsoniter.StringValue) {
+							continue
+						}
+
 						panel.Transformer = append(panel.Transformer, iter.ReadString())
 					} else {
 						iter.Skip()
@@ -532,8 +616,12 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) (PanelSumma
 
 		// Rows have nested panels
 		case "panels":
-			for iter.ReadArray() {
-				p, ok := readpanelInfo(iter, lookup)
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".panels", lc, jsoniter.ArrayValue) {
+				continue
+			}
+
+			for ix := 0; iter.ReadArray(); ix++ {
+				p, ok := readpanelInfo(iter, lookup, fmt.Sprintf("%s.panels[%d]", jsonPath, ix), lc)
 				if ok {
 					panel.Collapsed = append(panel.Collapsed, p)
 				}
