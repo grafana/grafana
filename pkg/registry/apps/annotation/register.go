@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
@@ -21,12 +22,11 @@ import (
 	"github.com/grafana/grafana/apps/annotation/pkg/apis"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -46,6 +46,7 @@ func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	service annotations.Repository,
+	cleaner annotations.Cleaner,
 ) (*AnnotationAppInstaller, error) {
 	installer := &AnnotationAppInstaller{
 		cfg: cfg,
@@ -53,7 +54,7 @@ func RegisterAppInstaller(
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
 	appConfig := app.Config{
-		KubeConfig:   restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		KubeConfig:   restclient.Config{},
 		ManifestData: *apis.LocalManifest().ManifestData,
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.NewGoTypeAssociator())
@@ -63,8 +64,11 @@ func RegisterAppInstaller(
 	installer.AppInstaller = i
 
 	if service != nil {
+		mapper := grafrequest.GetNamespaceMapper(cfg)
+		store := NewSQLAdapter(service, cleaner, mapper, cfg)
 		installer.legacy = &legacyStorage{
-			storage: &RepositoryStorage{repo: service, namespacer: request.GetNamespaceMapper(cfg)},
+			store:  store,
+			mapper: mapper,
 		}
 	}
 
@@ -78,9 +82,21 @@ func (a *AnnotationAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 		Version:  kind.Version(),
 		Resource: kind.Plural(),
 	}
+	
+	tagsGVR := schema.GroupVersionResource{
+		Group:    kind.Group(),
+		Version:  kind.Version(),
+		Resource: "tags",
+	}
+	
+	if requested.String() == tagsGVR.String() && a.legacy != nil {
+		return &tagsREST{store: a.legacy.store}
+	}
+	
 	if requested.String() != gvr.String() {
 		return nil
 	}
+	
 	a.legacy.tableConverter = utils.NewTableConverter(
 		gvr.GroupResource(),
 		utils.TableColumns{
@@ -113,8 +129,8 @@ var (
 )
 
 type legacyStorage struct {
-	storage        Storage
-	namespacer     request.NamespaceMapper
+	store          Store
+	mapper         grafrequest.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
 
@@ -141,6 +157,8 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	namespace := request.NamespaceValue(ctx)
+
 	opts := ListOptions{}
 	if options.FieldSelector != nil {
 		for _, r := range options.FieldSelector.Requirements() {
@@ -208,12 +226,18 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if options.Limit > 0 {
 		opts.Limit = options.Limit
 	}
-	items, err := s.storage.List(ctx, opts)
-	return &annotationV0.AnnotationList{Items: items}, err
+
+	result, err := s.store.List(ctx, namespace, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return &annotationV0.AnnotationList{Items: result.Items}, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return nil, errors.New("fetching single annotations not supported by legacy storage")
+	namespace := request.NamespaceValue(ctx)
+	return s.store.Get(ctx, namespace, name)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -225,8 +249,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected annotation")
 	}
-	created, err := s.storage.Create(ctx, *resource)
-	return created, err
+	return s.store.Create(ctx, resource)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -238,219 +261,14 @@ func (s *legacyStorage) Update(ctx context.Context,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
 	return nil, false, errors.New("not implemented")
-	// before, err := s.Get(ctx, name, &metav1.GetOptions{})
-	// if err != nil {
-	// 	return nil, false, err
-	// }
-	// obj, err := objInfo.UpdatedObject(ctx, before)
-	// if err != nil {
-	// 	return nil, false, err
-	// }
-	//
-	// resource, ok := obj.(*correlationsV0.Correlation)
-	// if !ok {
-	// 	return nil, false, fmt.Errorf("expected correlation")
-	// }
-	//
-	// cmd, err := correlations.ToUpdateCorrelationCommand(resource)
-	// if err != nil {
-	// 	return nil, false, err
-	// }
-	//
-	// out, err := s.service.UpdateCorrelation(ctx, *cmd)
-	// if err != nil {
-	// 	return nil, false, err
-	// }
-	// obj, err = s.Get(ctx, out.UID, &metav1.GetOptions{})
-	// return obj, false, err
 }
 
-// GracefulDeleter
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, errors.New("not implemented")
-	// orgID, err := request.OrgIDForList(ctx)
-	// if err != nil {
-	// 	return nil, false, err
-	// }
-	// err = s.service.DeleteCorrelation(ctx, correlations.DeleteCorrelationCommand{
-	// 	OrgId: orgID,
-	// 	UID:   name,
-	// })
-	// return nil, (err == nil), err
+	namespace := request.NamespaceValue(ctx)
+	err := s.store.Delete(ctx, namespace, name)
+	return nil, false, err
 }
 
-// CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for annotation not implemented")
-}
-
-func toK8sResource(orgID int64, item *annotations.ItemDTO, namespacer request.NamespaceMapper) (*annotationV0.Annotation, error) {
-	annotation := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("a-%d", item.ID), // FIXME
-			Namespace: namespacer(orgID),
-		},
-		Spec: annotationV0.AnnotationSpec{
-			Text: item.Text,
-			Time: item.Time,
-			Tags: item.Tags,
-		},
-	}
-
-	if item.DashboardUID != nil && *item.DashboardUID != "" {
-		annotation.Spec.DashboardUID = item.DashboardUID
-	}
-	if item.PanelID != 0 {
-		annotation.Spec.PanelID = &item.PanelID
-	}
-	if item.TimeEnd != 0 {
-		annotation.Spec.TimeEnd = &item.TimeEnd
-	}
-	return annotation, nil
-}
-
-type ListOptions struct {
-	DashboardUID string
-	PanelID      int64
-	From         int64
-	To           int64
-	Limit        int64
-	// TODO: continuation token
-}
-type Storage interface {
-	List(context.Context, ListOptions) ([]annotationV0.Annotation, error)
-	Create(context.Context, annotationV0.Annotation) (annotationV0.Annotation, error)
-	Update(context.Context, annotationV0.Annotation) (annotationV0.Annotation, error)
-	Delete(context.Context, string) error
-	Cleanup(context.Context) error
-}
-
-type InMemoryStorage struct {
-	items map[string]annotationV0.Annotation
-}
-
-func NewInMemoryStorage() *InMemoryStorage {
-	return &InMemoryStorage{
-		items: make(map[string]annotationV0.Annotation),
-	}
-}
-
-func (s *InMemoryStorage) List(ctx context.Context, options ListOptions) ([]annotationV0.Annotation, error) {
-	var result []annotationV0.Annotation
-	for _, item := range s.items {
-		if options.DashboardUID != "" && (item.Spec.DashboardUID == nil || *item.Spec.DashboardUID != options.DashboardUID) {
-			continue
-		}
-		if options.PanelID != 0 && (item.Spec.PanelID == nil || *item.Spec.PanelID != options.PanelID) {
-			continue
-		}
-		// TODO: check bounds
-		if options.From != 0 && item.Spec.Time < options.From {
-			continue
-		}
-		if options.To != 0 && item.Spec.TimeEnd != nil && *item.Spec.TimeEnd < options.To {
-			continue
-		}
-		result = append(result, item)
-	}
-	return result, nil
-}
-
-func (s *InMemoryStorage) Create(ctx context.Context, annotation annotationV0.Annotation) error {
-	s.items[annotation.Name] = annotation
-	return nil
-}
-
-func (s *InMemoryStorage) Update(ctx context.Context, annotation annotationV0.Annotation) error {
-	// TODO: verify versions, only allow text modifications
-	s.items[annotation.Name] = annotation
-	return nil
-}
-
-func (s *InMemoryStorage) Delete(ctx context.Context, name string) error {
-	delete(s.items, name)
-	return nil
-}
-
-func (s *InMemoryStorage) Cleanup(ctx context.Context) error {
-	return nil
-}
-
-type RepositoryStorage struct {
-	repo       annotations.Repository
-	namespacer request.NamespaceMapper
-}
-
-func NewRepositoryStorage(repo annotations.Repository) *RepositoryStorage {
-	return &RepositoryStorage{
-		repo: repo,
-	}
-}
-
-func (s *RepositoryStorage) List(ctx context.Context, options ListOptions) ([]annotationV0.Annotation, error) {
-	orgID, err := request.OrgIDForList(ctx)
-	if err != nil {
-		return nil, err
-	}
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-	query := &annotations.ItemQuery{
-		SignedInUser: user,
-		OrgID:        orgID,
-		DashboardUID: options.DashboardUID,
-		PanelID:      options.PanelID,
-		From:         options.From,
-		To:           options.To,
-		Limit:        options.Limit,
-		AlertID:      -1, // exclude alert annotations
-	}
-	items, err := s.repo.Find(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	var result []annotationV0.Annotation
-	for _, item := range items {
-		c, err := toK8sResource(orgID, item, s.namespacer)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, *c)
-	}
-	// TODO: pagination
-	return result, nil
-}
-
-func (s *RepositoryStorage) Create(ctx context.Context, annotation annotationV0.Annotation) error {
-	item := &annotations.Item{
-		Text:  annotation.Spec.Text,
-		Epoch: annotation.Spec.Time,
-		Tags:  annotation.Spec.Tags,
-	}
-	if annotation.Spec.DashboardUID != nil {
-		item.DashboardUID = *annotation.Spec.DashboardUID
-	}
-	if annotation.Spec.PanelID != nil {
-		item.PanelID = *annotation.Spec.PanelID
-	}
-	if annotation.Spec.TimeEnd != nil {
-		item.EpochEnd = *annotation.Spec.TimeEnd
-	}
-	if err := s.repo.Save(ctx, item); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *RepositoryStorage) Update(ctx context.Context, annotation annotationV0.Annotation) error {
-	return errors.New("not implemented")
-}
-
-func (s *RepositoryStorage) Delete(ctx context.Context, name string) error {
-	return errors.New("not implemented")
-}
-
-func (s *RepositoryStorage) Cleanup(ctx context.Context) error {
-	return nil
+	return nil, fmt.Errorf("DeleteCollection for annotation is not available")
 }
