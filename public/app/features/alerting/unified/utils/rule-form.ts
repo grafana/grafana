@@ -658,7 +658,7 @@ function getDefaultThresholdExpression({
           type: 'and',
         },
         query: {
-          params: [inputRefId],
+          params: [],
         },
         reducer: {
           params: [],
