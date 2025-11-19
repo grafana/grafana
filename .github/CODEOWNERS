@@ -48,7 +48,7 @@
 /docs/sources/whatsnew/                                                           @jtvdez
 
 
-/docs/sources/developer-resources/plugins/                                        @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developers/plugins/                                                 @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/visualizations/dashboards/                                          @imatwawana
 /docs/sources/visualizations/panels-visualizations/                               @imatwawana
 
