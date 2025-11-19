@@ -489,7 +489,7 @@ describe('getDefaultExpressions', () => {
         type: 'and',
       },
       query: {
-        params: ['B'],
+        params: [],
       },
       reducer: {
         params: [],
