@@ -7766,6 +7766,14 @@
     "name-show-threshold-labels": "しきい値ラベルを表示",
     "name-show-threshold-markers": "しきい値マーカーを表示",
     "placeholder-neutral": "自動",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8966,6 +8974,13 @@
       "copy": "クリップボードにコピー",
       "csv-counts": "",
       "csv-placeholder": "ここにCSVを入力...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "値をフィルタリング",
       "filter-popup-apply": "OK",
       "filter-popup-aria-label-match-case": "大文字/小文字を区別",
@@ -12351,8 +12366,10 @@
       "cancel": "キャンセル",
       "error-title": "",
       "input": {
-        "placeholder": "スコープを選択...",
-        "removeAll": "すべてのスコープを削除"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "すべてのスコープを削除",
+        "tooltip": ""
       },
       "title": "スコープを選択"
     },
