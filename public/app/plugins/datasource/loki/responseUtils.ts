@@ -151,11 +151,12 @@ export function isRetriableError(errorResponse: DataQueryResponse) {
   throw new Error(message);
 }
 
-/**
- * Currently Loki always returns a 500 for every error response type in the response body, and this is what Grafana uses to populate the DataQueryError,
- * so this won't currently work, but hopefully this is something we can fix in the backend
- * @param errorResponse
- */
 export function is4xxError(errorResponse: DataQueryResponse) {
+  /**
+   * Before https://github.com/grafana/grafana/pull/114201 the Loki data source always returns a 500 for every error response type in the response body, and this is what Grafana uses to populate the DataQueryError
+   * Since the frontend and backend are being deployed separately now we might want to continue to check error messages for a bit until we are sure that the correct status code is always set in the data query response.
+   *
+   * @param errorResponse
+   */
   return errorResponse.errors?.some((err) => err.status && Array.from(err.status?.toString())[0] === '4');
 }
