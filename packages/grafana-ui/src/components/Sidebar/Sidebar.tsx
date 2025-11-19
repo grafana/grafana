@@ -17,11 +17,11 @@ export interface Props {
 
 export function SidebarComp({ children, contextValue }: Props) {
   const styles = useStyles2(getStyles);
-  const { isDocked, position, tabsMode } = contextValue;
+  const { isDocked, position, tabsMode, hasOpenPane } = contextValue;
 
   const className = cx({
     [styles.container]: true,
-    [styles.containerDocked]: isDocked,
+    [styles.undockedPaneOpen]: hasOpenPane && !isDocked,
     [styles.containerLeft]: position === 'left',
     [styles.containerTabsMode]: tabsMode,
   });
@@ -83,7 +83,11 @@ export function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
 
   const className = cx(styles.openPane, context.position === 'right' ? styles.openPaneRight : styles.openPaneLeft);
 
-  return <div className={className}>{children}</div>;
+  return (
+    <div className={className} style={{ width: context.paneWidth }}>
+      {children}
+    </div>
+  );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
@@ -110,8 +114,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       left: theme.spacing(2),
       borderRadius: theme.shape.radius.default,
     }),
-    containerDocked: css({
-      boxShadow: 'none',
+    undockedPaneOpen: css({
+      boxShadow: theme.shadows.z3,
     }),
     toolbar: css({
       display: 'flex',

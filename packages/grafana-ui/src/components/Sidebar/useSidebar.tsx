@@ -1,4 +1,5 @@
-import React from 'react';
+import { clamp } from 'lodash';
+import React, { useCallback } from 'react';
 
 export type SidebarPosition = 'left' | 'right';
 
@@ -9,7 +10,9 @@ export interface SidebarContextValue {
   hasOpenPane?: boolean;
   tabsMode?: boolean;
   outerWrapperProps?: React.HTMLAttributes<HTMLDivElement>;
+  paneWidth?: number;
   onDockChange: () => void;
+  onResize: (diff: number) => void;
 }
 
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
@@ -30,17 +33,35 @@ export function useSiderbar({
   compact = true,
 }: UseSideBarOptions): SidebarContextValue {
   const [isDocked, setIsDocked] = React.useState(false);
+  const [paneWidth, setPaneWidth] = React.useState(280);
 
-  const onDockChange = () => setIsDocked(!isDocked);
+  const onDockChange = useCallback(() => setIsDocked((prev) => !prev), []);
 
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
   const toolbarWidth = (compact ? 40 : 65) + 16 * 2; // button width + padding
 
   const outerWrapperProps = {
     style: {
-      [prop]: isDocked && isPaneOpen ? '350px' : `${toolbarWidth}px`,
+      [prop]: isDocked && isPaneOpen ? paneWidth + toolbarWidth : toolbarWidth,
     },
   };
 
-  return { isDocked, onDockChange, outerWrapperProps, position, compact, hasOpenPane: isPaneOpen, tabsMode };
+  const onResize = useCallback((diff: number) => {
+    console.log('resizing sidebar by', diff);
+    setPaneWidth((prevWidth) => {
+      return clamp(prevWidth + diff, 100, 500);
+    });
+  }, []);
+
+  return {
+    isDocked,
+    onDockChange,
+    onResize,
+    outerWrapperProps,
+    position,
+    compact,
+    hasOpenPane: isPaneOpen,
+    tabsMode,
+    paneWidth,
+  };
 }
