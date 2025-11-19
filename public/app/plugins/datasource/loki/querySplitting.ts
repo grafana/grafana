@@ -93,29 +93,19 @@ export function adjustTargetsFromResponseState(targets: LokiQuery[], response: D
 
 const addLimitsToSplitRequests = (splitQueryIndex: number, shardQueryIndex: number, requests: LokiGroupedRequest[]) => {
   // requests has already been mutated
-  if (splitQueryIndex === 0 && shardQueryIndex === 0) {
-    return requests.map((r) => ({
-      ...r,
-      request: {
-        ...r.request,
-        targets: r.request.targets.map((t) => {
+  return requests.map((r) => ({
+    ...r,
+    request: {
+      ...r.request,
+      targets: r.request.targets.map((t) => {
+        if (splitQueryIndex === 0 && shardQueryIndex === 0) {
           // Don't pull from request if it has already been added by `addLimitsToShardGroups`
-          if (t.limitsContext === undefined) {
-            return addQueryLimitsContext(t, r.request);
-          }
-          return t;
-        }),
-      },
-    }));
-  } else {
-    return requests.map((r) => ({
-      ...r,
-      request: {
-        ...r.request,
-        targets: r.request.targets.map((t) => ({ ...t, limitsContext: undefined })),
-      },
-    }));
-  }
+          return t.limitsContext === undefined ? addQueryLimitsContext(t, r.request) : t;
+        }
+        return { ...t, limitsContext: undefined };
+      }),
+    },
+  }));
 };
 
 export function runSplitGroupedQueries(

@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { LokiDatasource } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
@@ -12,6 +13,8 @@ jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('uuid'),
 }));
 
+const originalLokiQueryLimitsContextState = config.featureToggles.lokiQueryLimitsContext;
+
 const originalLog = console.log;
 const originalWarn = console.warn;
 const originalErr = console.error;
@@ -20,10 +23,14 @@ beforeEach(() => {
   jest.spyOn(console, 'warn').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
+beforeAll(() => {
+  config.featureToggles.lokiQueryLimitsContext = true;
+});
 afterAll(() => {
   console.log = originalLog;
   console.warn = originalWarn;
   console.error = originalErr;
+  config.featureToggles.lokiQueryLimitsContext = originalLokiQueryLimitsContextState;
 });
 
 describe('runShardSplitQuery()', () => {
