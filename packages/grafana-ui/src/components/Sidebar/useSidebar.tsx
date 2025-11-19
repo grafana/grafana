@@ -1,7 +1,5 @@
-import { clamp, has } from 'lodash';
+import { clamp } from 'lodash';
 import React, { useCallback } from 'react';
-
-import { ReduceTransformerMode } from '@grafana/data/src/transformations/transformers/reduce';
 
 export type SidebarPosition = 'left' | 'right';
 
@@ -25,23 +23,18 @@ export interface UseSideBarOptions {
   hasOpenPane?: boolean;
   position?: SidebarPosition;
   tabsMode?: boolean;
-  /**
-   * Sets the default starting state for button text visibility
-   * This can later be controlled by user with draging the sidebar resizer
-   **/
-  withButtonText?: boolean;
+  compactDefault?: boolean;
 }
 
 export function useSiderbar({
   hasOpenPane,
   position = 'right',
   tabsMode,
-  withButtonText,
+  compactDefault = true,
 }: UseSideBarOptions): SidebarContextValue {
   const [isDocked, setIsDocked] = React.useState(false);
   const [paneWidth, setPaneWidth] = React.useState(280);
-  // internal state for button text visibility
-  const [compact, setCompact] = React.useState(!withButtonText);
+  const [compact, setCompact] = React.useState(compactDefault);
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
 
