@@ -396,10 +396,9 @@ export interface FeatureToggles {
   */
   logsInfiniteScrolling?: boolean;
   /**
-  * Enable filtering menu displayed when text of a log line is selected
-  * @default true
+  * Disables passing host environment variable to plugin processes
   */
-  logRowsPopoverMenu?: boolean;
+  pluginsSkipHostEnvVars?: boolean;
   /**
   * Enables shared crosshair in table panel
   */
