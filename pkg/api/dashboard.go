@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -826,102 +825,6 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 	}
 
 	return response.JSON(http.StatusOK, dashVersionMeta)
-}
-
-// swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
-//
-// Perform diff on two dashboards.
-//
-// Produces:
-// - application/json
-// - text/html
-//
-// Responses:
-// 200: calculateDashboardDiffResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) response.Response {
-	ctx, span := tracer.Start(c.Req.Context(), "api.CalculateDashboardDiff")
-	defer span.End()
-	c.Req = c.Req.WithContext(ctx)
-
-	apiOptions := dtos.CalculateDiffOptions{}
-	if err := web.Bind(c.Req, &apiOptions); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	evaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(apiOptions.Base.DashboardId, 10)))
-	if canWrite, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canWrite {
-		return dashboardGuardianResponse(err)
-	}
-
-	if apiOptions.Base.DashboardId != apiOptions.New.DashboardId {
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(apiOptions.New.DashboardId, 10)))
-		if canWrite, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canWrite {
-			return dashboardGuardianResponse(err)
-		}
-	}
-
-	options := dashdiffs.Options{
-		OrgId:    c.GetOrgID(),
-		DiffType: dashdiffs.ParseDiffType(apiOptions.DiffType),
-		Base: dashdiffs.DiffTarget{
-			DashboardId:      apiOptions.Base.DashboardId,
-			Version:          apiOptions.Base.Version,
-			UnsavedDashboard: apiOptions.Base.UnsavedDashboard,
-		},
-		New: dashdiffs.DiffTarget{
-			DashboardId:      apiOptions.New.DashboardId,
-			Version:          apiOptions.New.Version,
-			UnsavedDashboard: apiOptions.New.UnsavedDashboard,
-		},
-	}
-
-	baseVersionQuery := dashver.GetDashboardVersionQuery{
-		DashboardID: options.Base.DashboardId,
-		Version:     options.Base.Version,
-		OrgID:       options.OrgId,
-	}
-
-	baseVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &baseVersionQuery)
-	if err != nil {
-		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
-	}
-
-	newVersionQuery := dashver.GetDashboardVersionQuery{
-		DashboardID: options.New.DashboardId,
-		Version:     options.New.Version,
-		OrgID:       options.OrgId,
-	}
-
-	newVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &newVersionQuery)
-	if err != nil {
-		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
-	}
-
-	baseData := baseVersionRes.Data
-	newData := newVersionRes.Data
-
-	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options, baseData, newData)
-	if err != nil {
-		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
-	}
-
-	if options.DiffType == dashdiffs.DiffDelta {
-		return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "application/json")
-	}
-
-	return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "text/html")
 }
 
 // swagger:route POST /dashboards/uid/{uid}/restore dashboards versions restoreDashboardVersionByUID
