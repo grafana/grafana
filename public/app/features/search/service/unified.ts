@@ -319,8 +319,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     if (query.permission) {
-      const perm = query.permission.charAt(0).toUpperCase() + query.permission.slice(1);
-      uri += `&permission=${perm}`;
+      uri += `&permission=${query.permission}`;
     }
 
     if (query.deleted) {

@@ -325,12 +325,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	searchRequest.Fields = fields
 
-	switch queryParams.Get("permission") {
-	case "Edit":
+	switch strings.ToLower(queryParams.Get("permission")) {
+	case "edit":
 		searchRequest.Permission = int64(dashboardaccess.PERMISSION_EDIT)
-	case "View":
+	case "view":
 		searchRequest.Permission = int64(dashboardaccess.PERMISSION_VIEW)
-	case "Admin":
+	case "admin":
 		searchRequest.Permission = int64(dashboardaccess.PERMISSION_ADMIN)
 	}
 
