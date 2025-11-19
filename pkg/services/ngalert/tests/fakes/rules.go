@@ -234,12 +234,13 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 		}
 	}
 
-	if q.Limit < 0 {
+	if q.Limit < 0 && q.RuleLimit < 0 {
 		return ruleList, "", nil
 	}
 
 	outputRules := make([]*models.AlertRule, 0, len(ruleList))
 	var groupsFetched int64
+	var rulesFetched int64
 	initialCursor := cursor
 	for _, r := range ruleList {
 		// skip rules before the initial cursor
@@ -258,11 +259,16 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 				nextToken = models.EncodeGroupCursor(cursor)
 				break
 			}
+			if q.RuleLimit > 0 && rulesFetched >= q.RuleLimit {
+				nextToken = models.EncodeGroupCursor(cursor)
+				break
+			}
 			cursor = key
 			groupsFetched++
 		}
 
 		outputRules = append(outputRules, r)
+		rulesFetched++
 	}
 
 	return outputRules, nextToken, nil

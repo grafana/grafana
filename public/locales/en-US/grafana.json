@@ -2623,12 +2623,14 @@
         "placeholder-search-input": "Search by name or enter filter query..."
       },
       "grafana-folder": "Grafana folder",
+      "group-autocomplete-unavailable": "Due to large number of groups, autocomplete is not available",
       "health": "Health",
       "label": {
         "hide": "Hide",
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
+      "namespace-autocomplete-unavailable": "Due to large number of folders, autocomplete is not available",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
@@ -7792,6 +7794,14 @@
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "Gauge",
+      "circular": "Circular gauge",
+      "style": {
+        "circular": "Glowing",
+        "simple": "Simple"
+      }
+    },
     "threshold": "Threshold {{value}}"
   },
   "gen-ai": {
