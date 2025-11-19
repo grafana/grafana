@@ -2,7 +2,7 @@ import { KBarProvider } from 'kbar';
 import { render, screen } from 'test/test-utils';
 
 import { useAssistant } from '@grafana/assistant';
-import { setPluginLinksHook, config } from '@grafana/runtime';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
 
 import { getObservablePluginLinks } from '../plugins/extensions/getPluginExtensions';
