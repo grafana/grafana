@@ -710,6 +710,14 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 			dsType = &in.GroupByVariableKind.Group
 		}
 
+		var datasource *dashv2alpha1.DashboardDataSourceRef
+		if dsType != nil || dsUID != nil {
+			datasource = &dashv2alpha1.DashboardDataSourceRef{
+				Type: dsType,
+				Uid:  dsUID,
+			}
+		}
+
 		out.GroupByVariableKind = &dashv2alpha1.DashboardGroupByVariableKind{
 			Kind: in.GroupByVariableKind.Kind,
 			Spec: dashv2alpha1.DashboardGroupByVariableSpec{
@@ -722,10 +730,7 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 				Hide:         dashv2alpha1.DashboardVariableHide(in.GroupByVariableKind.Spec.Hide),
 				SkipUrlSync:  in.GroupByVariableKind.Spec.SkipUrlSync,
 				Description:  in.GroupByVariableKind.Spec.Description,
-				Datasource: &dashv2alpha1.DashboardDataSourceRef{
-					Type: dsType,
-					Uid:  dsUID,
-				},
+				Datasource:   datasource,
 			},
 		}
 	}
@@ -741,6 +746,14 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 			dsType = &in.AdhocVariableKind.Group
 		}
 
+		var datasource *dashv2alpha1.DashboardDataSourceRef
+		if dsType != nil || dsUID != nil {
+			datasource = &dashv2alpha1.DashboardDataSourceRef{
+				Type: dsType,
+				Uid:  dsUID,
+			}
+		}
+
 		out.AdhocVariableKind = &dashv2alpha1.DashboardAdhocVariableKind{
 			Kind: in.AdhocVariableKind.Kind,
 			Spec: dashv2alpha1.DashboardAdhocVariableSpec{
@@ -753,10 +766,7 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 				SkipUrlSync:      in.AdhocVariableKind.Spec.SkipUrlSync,
 				Description:      in.AdhocVariableKind.Spec.Description,
 				AllowCustomValue: in.AdhocVariableKind.Spec.AllowCustomValue,
-				Datasource: &dashv2alpha1.DashboardDataSourceRef{
-					Type: dsType,
-					Uid:  dsUID,
-				},
+				Datasource:       datasource,
 			},
 		}
 	}

@@ -15,9 +15,10 @@ import (
 
 // TestV2alpha1ConversionErrorHandling tests that v2alpha1 conversion functions properly handle errors
 func TestV2alpha1ConversionErrorHandling(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	t.Run("Convert_V2alpha1_to_V1beta1 sets status on conversion", func(t *testing.T) {
 		// Create a dashboard for conversion
@@ -86,9 +87,10 @@ func TestV2alpha1ConversionErrorHandling(t *testing.T) {
 
 // TestV2beta1ConversionErrorHandling tests that v2beta1 conversion functions properly handle errors
 func TestV2beta1ConversionErrorHandling(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	t.Run("Convert_V2beta1_to_V1beta1 sets status on first step failure", func(t *testing.T) {
 		// Create a dashboard that might cause conversion to fail on first step (v2beta1 -> v2alpha1)

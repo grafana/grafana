@@ -23,13 +23,14 @@ import (
 // TestV2alpha1ToV1beta1RoundTrip tests round-trip conversion: v2alpha1 → v1beta1 → v2alpha1
 // This ensures no data loss during conversion between v2alpha1 and v1beta1
 func TestV2alpha1ToV1beta1RoundTrip(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
 	// Read all v2alpha1 input files
@@ -93,13 +94,14 @@ func TestV2alpha1ToV1beta1RoundTrip(t *testing.T) {
 // TestV2alpha1ToV1beta1WriteOutputFiles writes output files from v2alpha1 input files
 // This test reads v2alpha1 input files, converts them to v1beta1, and writes the output files
 func TestV2alpha1ToV1beta1WriteOutputFiles(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
 	// Read all v2alpha1 input files
@@ -158,13 +160,14 @@ func TestV2alpha1ToV1beta1WriteOutputFiles(t *testing.T) {
 // converts them to v2beta1, and writes the output to testdata/output.
 // These outputs are used by the frontend test to verify consistency.
 func TestV2alpha1ToV2beta1WriteOutputFiles(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
 	// Read all v2alpha1 input files
@@ -224,13 +227,14 @@ func TestV2alpha1ToV2beta1WriteOutputFiles(t *testing.T) {
 // TestV2alpha1ToV1beta1FromInputFiles tests conversion from v2alpha1 input files to v1beta1
 // and compares with expected v1beta1 output files
 func TestV2alpha1ToV1beta1FromInputFiles(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
 	// Read all v2alpha1 input files
@@ -344,13 +348,14 @@ func TestV2alpha1ToV1beta1FromInputFiles(t *testing.T) {
 
 // TestV2alpha1ToV1beta1LayoutErrors tests that AutoGridLayout and TabsLayout return appropriate errors
 func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
 	t.Run("AutoGridLayout converts to basic 3x3 grid", func(t *testing.T) {
@@ -539,13 +544,14 @@ func getIntValue(v interface{}) int64 {
 
 // TestV2alpha1ToV1beta1BasicFields tests conversion of basic dashboard fields
 func TestV2alpha1ToV1beta1BasicFields(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
 	editable := true
