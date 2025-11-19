@@ -866,7 +866,7 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 	}, nil
 }
 
-func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *resource.SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
 	if req.NextPageToken != "" {
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
@@ -881,6 +881,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		}, nil
 	}
 
+	start := time.Now()
 	q := bleve.NewBooleanQuery()
 	q.AddMust(&query.TermQuery{
 		Term:     req.Kind,
@@ -890,6 +891,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		Term:     req.Id,
 		FieldVal: resource.SEARCH_FIELD_MANAGER_ID,
 	})
+	stats.AddResultsConversionTime(time.Since(start))
 
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: q,
@@ -915,6 +917,10 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 	if err != nil {
 		return nil, err
 	}
+
+	stats.AddTotalHits(int(found.Total))
+	stats.AddSearchTime(found.Took)
+	stats.AddReturnedDocuments(len(found.Hits))
 
 	asString := func(v any) string {
 		if v == nil {
@@ -947,6 +953,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		return 0
 	}
 
+	start = time.Now()
 	rsp := &resourcepb.ListManagedObjectsResponse{}
 	for _, hit := range found.Hits {
 		item := &resourcepb.ListManagedObjectsResponse_Item{
@@ -963,10 +970,11 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		}
 		rsp.Items = append(rsp.Items, item)
 	}
+	stats.AddResultsConversionTime(time.Since(start))
 	return rsp, nil
 }
 
-func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
+func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: bleve.NewMatchAllQuery(),
 		Size:  0,
@@ -977,6 +985,11 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resourcepb.Cou
 	if err != nil {
 		return nil, err
 	}
+
+	stats.AddSearchTime(found.Took)
+	stats.AddTotalHits(int(found.Total))
+	stats.AddReturnedDocuments(len(found.Hits))
+
 	vals := make([]*resourcepb.CountManagedObjectsResponse_ResourceCount, 0)
 	f, ok := found.Facets["count"]
 	if ok && f.Terms != nil {
@@ -1003,6 +1016,7 @@ func (b *bleveIndex) Search(
 	access authlib.AccessClient,
 	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
+	stats *resource.SearchStats,
 ) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"Search")
 	defer span.End()
@@ -1026,6 +1040,7 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
+	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
 	searchrequest, e := b.toBleveSearchRequest(ctx, req, access)
 	if e != nil {
@@ -1050,6 +1065,7 @@ func (b *bleveIndex) Search(
 			}
 		}
 	}
+	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	res, err := index.SearchInContext(ctx, searchrequest)
 	if err != nil {
@@ -1059,7 +1075,11 @@ func (b *bleveIndex) Search(
 	response.TotalHits = int64(res.Total)
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
+	stats.AddSearchTime(res.Took)
+	stats.AddTotalHits(int(res.Total))
+	stats.AddReturnedDocuments(len(res.Hits))
 
+	resultsConversionStart := time.Now()
 	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, req.Explain)
 	if err != nil {
 		return nil, err
@@ -1073,10 +1093,11 @@ func (b *bleveIndex) Search(
 		}
 		response.Facet[k] = f
 	}
+	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
 	return response, nil
 }
 
-func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error) {
+func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resource.SearchStats) (int64, error) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"DocCount")
 	defer span.End()
 
@@ -1096,6 +1117,10 @@ func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error)
 	rsp, err := b.index.SearchInContext(ctx, req)
 	if rsp == nil {
 		return 0, err
+	}
+	if stats != nil {
+		stats.AddTotalHits(int(rsp.Total))
+		stats.AddSearchTime(rsp.Took)
 	}
 	return int64(rsp.Total), err
 }

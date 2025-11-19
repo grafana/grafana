@@ -43,7 +43,7 @@ func indexDocumentsWithTitles(t *testing.T, index resource.ResourceIndex, key re
 }
 
 func checkSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest, orderedExpectedNames []string) {
-	res, err := index.Search(context.Background(), nil, query, nil)
+	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(orderedExpectedNames)), res.TotalHits)
 	for ix, name := range orderedExpectedNames {

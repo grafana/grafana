@@ -170,7 +170,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			},
 			Fields: []string{"title", "folder", "tags"},
 			Limit:  10,
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, int64(1), resp.TotalHits) // Only doc2 should have tag3 now
@@ -187,7 +187,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			Query:  "Document",
 			Fields: []string{"title", "folder", "tags"},
 			Limit:  10,
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, int64(2), resp.TotalHits) // Both doc1 and doc2 should have doc now
@@ -229,7 +229,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			Query:  "Document",
 			Fields: []string{"title", "folder", "tags"},
 			Limit:  10,
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, int64(3), resp.TotalHits) // Both doc1, doc2, and doc3 should have doc now
@@ -319,7 +319,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			Query:  "",
 			Fields: []string{"title"},
 			Limit:  10,
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, int64(1), resp.TotalHits) // Only dash1 should have lib-panel-1

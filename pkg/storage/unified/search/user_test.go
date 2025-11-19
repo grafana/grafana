@@ -7,6 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/selection"
+
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -14,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/selection"
 )
 
 func TestUserDocumentBuilder(t *testing.T) {
@@ -175,7 +176,7 @@ func indexUserDocuments(t *testing.T, index resource.ResourceIndex, key resource
 
 func checkUserSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest, orderedExpectedNames []string) {
 	t.Helper()
-	res, err := index.Search(context.Background(), nil, query, nil)
+	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(orderedExpectedNames)), res.TotalHits)
 	names := make([]string, len(res.Results.Rows))
