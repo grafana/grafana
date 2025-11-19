@@ -14,11 +14,29 @@ function getPlaceholderConditionalRendering(): ConditionalRenderingGroup {
   return placeholderConditionalRendering;
 }
 
-export function useIsConditionallyHidden(scene: SceneObject): [boolean, string | undefined, ReactNode | null, boolean] {
-  const conditionalRenderingToRender =
-    'conditionalRendering' in scene.state && scene.state.conditionalRendering instanceof ConditionalRenderingGroup
-      ? scene.state.conditionalRendering
-      : getPlaceholderConditionalRendering();
+export function useIsConditionallyHidden(
+  scene: SceneObject,
+  itemIdx?: number
+): [boolean, string | undefined, ReactNode | null, boolean] {
+  let conditionalRenderingToRender = getPlaceholderConditionalRendering();
+
+  if (itemIdx !== undefined) {
+    if (
+      'repeatedConditionalRendering' in scene.state &&
+      Array.isArray(scene.state.repeatedConditionalRendering) &&
+      scene.state.repeatedConditionalRendering[itemIdx] &&
+      scene.state.repeatedConditionalRendering[itemIdx] instanceof ConditionalRenderingGroup
+    ) {
+      conditionalRenderingToRender = scene.state.repeatedConditionalRendering[itemIdx];
+    }
+  } else {
+    if (
+      'conditionalRendering' in scene.state &&
+      scene.state.conditionalRendering instanceof ConditionalRenderingGroup
+    ) {
+      conditionalRenderingToRender = scene.state.conditionalRendering;
+    }
+  }
 
   const { result, renderHidden } = useSceneObjectState(conditionalRenderingToRender, {
     shouldActivateOrKeepAlive: true,

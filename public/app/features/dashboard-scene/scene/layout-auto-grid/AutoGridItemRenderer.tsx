@@ -17,8 +17,6 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const { body, repeatedPanels = [], key } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
   const { isEditing, preload } = useDashboardState(model);
-  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
-    useIsConditionallyHidden(model);
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
@@ -29,18 +27,23 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       memo(
         ({
           item,
+          itemIdx,
           addDndContainer,
           isDragged,
           isDragging,
           isRepeat = false,
         }: {
           item: VizPanel;
+          itemIdx?: number;
           addDndContainer: boolean;
           isDragged: boolean;
           isDragging: boolean;
           isRepeat?: boolean;
-        }) =>
-          isConditionallyHidden && !isEditing && !renderHidden ? null : (
+        }) => {
+          const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
+            useIsConditionallyHidden(model, itemIdx);
+
+          return isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
               {...(addDndContainer
                 ? { ref: model.containerRef, ['data-auto-grid-item-drop-target']: isDragging ? key : undefined }
@@ -78,19 +81,10 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                 )
               }
             </div>
-          )
+          );
+        }
       ),
-    [
-      conditionalRenderingClass,
-      conditionalRenderingOverlay,
-      isLazy,
-      key,
-      model.containerRef,
-      styles,
-      isConditionallyHidden,
-      isEditing,
-      renderHidden,
-    ]
+    [model, isLazy, key, styles, isEditing]
   );
 
   if (soloPanelContext) {
@@ -103,9 +97,10 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   return (
     <>
       <Wrapper item={body} addDndContainer={true} key={body.state.key!} isDragged={isDragged} isDragging={isDragging} />
-      {repeatedPanels.map((item) => (
+      {repeatedPanels.map((item, idx) => (
         <Wrapper
           item={item}
+          itemIdx={idx}
           addDndContainer={false}
           key={item.state.key!}
           isDragged={isDragged}

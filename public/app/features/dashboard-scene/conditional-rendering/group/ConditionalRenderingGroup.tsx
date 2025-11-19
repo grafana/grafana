@@ -2,7 +2,14 @@ import { lowerCase } from 'lodash';
 import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  sceneGraph,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+} from '@grafana/scenes';
 import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Stack } from '@grafana/ui';
 
@@ -26,6 +33,7 @@ export interface ConditionalRenderingGroupState extends SceneObjectState {
   condition: GroupConditionCondition;
   renderHidden: boolean;
   result: boolean;
+  target?: SceneObjectRef<SceneObject>;
 }
 
 export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRenderingGroupState> {
