@@ -220,14 +220,16 @@
     {
       "metadata": {
         "name": "alertingCentralAlertHistory",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-05-29T15:01:38Z"
+        "resourceVersion": "1763541314825",
+        "creationTimestamp": "2024-05-29T15:01:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-19 08:35:14.825756 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new central alert history.",
         "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "frontend": true
+        "codeowner": "@grafana/alerting-squad"
       }
     },
     {
@@ -509,14 +511,16 @@
     {
       "metadata": {
         "name": "alertingRuleRecoverDeleted",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-27T14:39:26Z"
+        "resourceVersion": "1763541314825",
+        "creationTimestamp": "2025-03-27T14:39:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-19 08:35:14.825756 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the UI functionality to recover and view deleted alert rules",
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -567,14 +571,16 @@
     {
       "metadata": {
         "name": "alertingTriage",
-        "resourceVersion": "1756386724059",
-        "creationTimestamp": "2025-09-01T09:33:33Z"
+        "resourceVersion": "1763541314825",
+        "creationTimestamp": "2025-09-01T09:33:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-19 08:35:14.825756 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the alerting triage feature",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }

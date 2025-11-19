@@ -894,7 +894,7 @@ var (
 			Description:  "Enables the new central alert history.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
-			FrontendOnly: true,
+			FrontendOnly: false, // changes navtree from backend
 		},
 		{
 			Name:        "pluginProxyPreserveTrailingSlash",
@@ -1492,7 +1492,7 @@ var (
 		{
 			Name:         "alertingRuleRecoverDeleted",
 			Description:  "Enables the UI functionality to recover and view deleted alert rules",
-			FrontendOnly: true,
+			FrontendOnly: false, // changes navtree from the backend
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -1802,7 +1802,7 @@ var (
 			Name:         "alertingTriage",
 			Description:  "Enables the alerting triage feature",
 			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
+			FrontendOnly: false, // changes navtree in backend
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
