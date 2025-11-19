@@ -88,7 +88,6 @@ pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 timeComparison,experimental,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,GA,@grafana/observability-logs,false,false,true
-pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false

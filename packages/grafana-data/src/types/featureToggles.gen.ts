@@ -396,10 +396,6 @@ export interface FeatureToggles {
   */
   logsInfiniteScrolling?: boolean;
   /**
-  * Disables passing host environment variable to plugin processes
-  */
-  pluginsSkipHostEnvVars?: boolean;
-  /**
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
