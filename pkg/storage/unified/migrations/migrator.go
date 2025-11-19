@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,18 +20,16 @@ type StorageMigrator interface {
 }
 
 type unifiedStorageMigrator struct {
-	migrator        legacy.LegacyMigrator
-	bulkStoreClient resource.ResourceClient
-	resources       []schema.GroupResource
-	log             log.Logger
+	migrator  legacy.LegacyMigrator
+	resources []schema.GroupResource
+	log       log.Logger
 }
 
-func newUnifiedStorageMigrator(migrator legacy.LegacyMigrator, bulkStoreClient resource.ResourceClient, resources []schema.GroupResource, logPrefix string) StorageMigrator {
+func newUnifiedStorageMigrator(migrator legacy.LegacyMigrator, resources []schema.GroupResource, logPrefix string) StorageMigrator {
 	return &unifiedStorageMigrator{
-		migrator:        migrator,
-		bulkStoreClient: bulkStoreClient,
-		resources:       resources,
-		log:             log.New(logPrefix),
+		migrator:  migrator,
+		resources: resources,
+		log:       log.New(logPrefix),
 	}
 }
 
@@ -41,12 +38,9 @@ func (m *unifiedStorageMigrator) executeMigration(ctx context.Context, sess *xor
 	m.log.Info("Starting unified storage migration", "namespace", namespace, "resources", m.resources)
 
 	opts := legacy.MigrateOptions{
-		Namespace:    namespace,
-		Store:        m.bulkStoreClient,
-		LargeObjects: nil, // Not using large object support to avoid import cycles
-		Resources:    m.resources,
-		WithHistory:  true, // Migrate with full history
-		OnlyCount:    false,
+		Namespace:   namespace,
+		Resources:   m.resources,
+		WithHistory: true, // Migrate with full history
 		Progress: func(count int, msg string) {
 			m.log.Info("Migration progress", "count", count, "message", msg)
 		},

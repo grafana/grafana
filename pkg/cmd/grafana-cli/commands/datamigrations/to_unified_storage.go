@@ -52,7 +52,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			{Group: folders.GROUP, Resource: folders.RESOURCE},
 			{Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE},
 		},
-		LargeObjects: nil, // TODO... from config
 		Progress: func(count int, msg string) {
 			const minInterval = time.Second
 			shouldPrint := count < 1 || time.Since(last) > minInterval
@@ -74,7 +73,12 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 
-	migrator := legacy.NewDashboardAccess(
+	grpcClient, err := newUnifiedClient(cfg, sqlStore, featureToggles)
+	if err != nil {
+		return err
+	}
+
+	dashboardAccess := legacy.NewDashboardAccess(
 		legacysql.NewDatabaseProvider(sqlStore),
 		authlib.OrgNamespaceFormatter,
 		nil, // no dashboards.Store
@@ -86,14 +90,9 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		featureToggles,
 	)
 
-	client, err := newUnifiedClient(cfg, sqlStore, featureToggles)
-	if err != nil {
-		return err
-	}
-
 	if c.Bool("non-interactive") {
-		opts.Store = client
-		opts.BlobStore = client
+		migrator := legacy.ProvideLegacyMigrator(dashboardAccess, grpcClient)
+
 		opts.WithHistory = true // always include history in non-interactive mode
 		rsp, err := migrator.Migrate(ctx, opts)
 		if exitErr := handleMigrationError(err, rsp); exitErr != nil {
@@ -113,6 +112,8 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 	if yes {
+		migrator := legacy.ProvideLegacyMigrator(dashboardAccess, nil) // no need for grpc client for counting
+
 		opts.OnlyCount = true
 		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
@@ -141,9 +142,13 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		if err != nil {
 			return err
 		}
+		parquetClient, err := newParquetClient(file)
+		if err != nil {
+			return err
+		}
+		migrator := legacy.ProvideLegacyMigratorParquet(dashboardAccess, parquetClient)
 		start = time.Now()
 		last = time.Now()
-		opts.Store, err = newParquetClient(file)
 		if err != nil {
 			return err
 		}
@@ -172,7 +177,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			req.Kinds = append(req.Kinds, fmt.Sprintf("%s/%s", r.Group, r.Resource))
 		}
 
-		stats, err := client.GetStats(ctx, req)
+		stats, err := grpcClient.GetStats(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -188,10 +193,9 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			return err
 		}
 		if yes {
+			migrator := legacy.ProvideLegacyMigrator(dashboardAccess, grpcClient)
 			start = time.Now()
 			last = time.Now()
-			opts.Store = client
-			opts.BlobStore = client
 			rsp, err := migrator.Migrate(ctx, opts)
 			if err != nil {
 				return err

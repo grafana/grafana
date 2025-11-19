@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -27,8 +28,8 @@ type UnifiedStorageMigrationProvider interface {
 type UnifiedStorageMigrationProviderImpl struct {
 	legacyMigrator legacy.LegacyMigrator
 	cfg            *setting.Cfg
-	client         resource.ResourceClient
 	sqlStore       db.DB
+	kv             kvstore.KVStore
 }
 
 var _ UnifiedStorageMigrationProvider = (*UnifiedStorageMigrationProviderImpl)(nil)
@@ -38,14 +39,14 @@ var _ UnifiedStorageMigrationProvider = (*UnifiedStorageMigrationProviderImpl)(n
 func ProvideUnifiedStorageMigrationProvider(
 	legacyMigrator legacy.LegacyMigrator,
 	cfg *setting.Cfg,
-	client resource.ResourceClient,
 	sqlStore db.DB,
+	kv kvstore.KVStore,
 ) *UnifiedStorageMigrationProviderImpl {
 	return &UnifiedStorageMigrationProviderImpl{
 		legacyMigrator: legacyMigrator,
 		cfg:            cfg,
-		client:         client,
 		sqlStore:       sqlStore,
+		kv:             kv,
 	}
 }
 
@@ -53,7 +54,7 @@ func ProvideUnifiedStorageMigrationProvider(
 // This blocks until migrations complete. If migrations fail, an error is returned
 // which will prevent Grafana from starting.
 func (p *UnifiedStorageMigrationProviderImpl) Run(ctx context.Context) error {
-	// skip migrations in test environments to prevent integration test timeouts.
+	// TODO: temporary skip migrations in test environments to prevent integration test timeouts.
 	if os.Getenv("GRAFANA_TEST_DB") != "" {
 		return nil
 	}
@@ -105,8 +106,7 @@ func registerDashboardAndFolderMigration(
 	bulkStoreClient resource.ResourceClient,
 ) {
 	migration := &dashboardAndFolderMigration{
-		legacyMigrator:  legacyMigrator,
-		bulkStoreClient: bulkStoreClient,
+		legacyMigrator: legacyMigrator,
 	}
 	mg.AddMigration(FoldersAndDashboardsMigrationID, migration)
 }

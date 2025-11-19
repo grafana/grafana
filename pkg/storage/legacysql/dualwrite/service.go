@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	// unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 )
 
 func ProvideStaticServiceForTests(cfg *setting.Cfg) Service {
@@ -25,43 +26,71 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	kv kvstore.KVStore,
 	cfg *setting.Cfg,
+	// _ unifiedmigrations.UnifiedStorageMigrationProvider,
 ) (Service, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 
-	if cfg != nil {
-		if !enabled {
-			return &staticService{cfg}, nil
-		}
+	foldersMode := cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
+	dashboardsMode := cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
 
-		if cfg != nil {
-			foldersMode := cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
-			dashboardsMode := cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
-
-			// If both are fully on unified (Mode5), the dynamic service is not needed.
-			if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
-				return &staticService{cfg}, nil
-			}
-
-			if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
-				return nil, fmt.Errorf("dashboards and folders must use the same mode when reading from unified storage")
-			}
-		}
+	// If both are fully on unified (Mode5), the dynamic service is not needed.
+	if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
+		return &staticService{cfg}, nil
 	}
 
-	return &service{
-		db: &keyvalueDB{
-			db:     kv,
-			logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
-		},
-		enabled: enabled,
-	}, nil
+	if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
+		return nil, fmt.Errorf("dashboards and folders must use the same mode when reading from unified storage")
+	}
+
+	if enabled {
+		return &service{
+			db: &keyvalueDB{
+				db:     kv,
+				logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
+			},
+			enabled: enabled,
+		}, nil
+	}
+
+	return &staticService{cfg}, nil
 }
 
 type service struct {
 	db      *keyvalueDB
 	enabled bool
+}
+
+func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
+	status, err := m.Status(context.Background(), gr)
+	if err != nil {
+		return nil, err
+	}
+
+	if m.enabled && status.Runtime {
+		// Dynamic storage behavior
+		return &runtimeDualWriter{
+			service:   m,
+			legacy:    legacy,
+			unified:   unified,
+			dualwrite: &dualWriter{legacy: legacy, unified: unified}, // not used for read
+			gr:        gr,
+		}, nil
+	}
+
+	if status.ReadUnified {
+		if status.WriteLegacy {
+			// Write both, read unified
+			return &dualWriter{legacy: legacy, unified: unified, readUnified: true}, nil
+		}
+		return unified, nil
+	}
+	if status.WriteUnified {
+		// Write both, read legacy
+		return &dualWriter{legacy: legacy, unified: unified}, nil
+	}
+	return legacy, nil
 }
 
 // Hardcoded list of resources that should be controlled by the database (eventually everything?)

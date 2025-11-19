@@ -109,7 +109,7 @@ type APIBuilder struct {
 	jobHistoryConfig *JobHistoryConfig
 	jobHistoryLoki   *jobs.LokiJobHistory
 	resourceLister   resources.ResourceLister
-	legacyMigrator   legacy.LegacyMigrator
+	dashboardAccess  legacy.MigratorDashboardAccess
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
 	repoFactory      repository.Factory
@@ -135,7 +135,7 @@ func NewAPIBuilder(
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
-	legacyMigrator legacy.LegacyMigrator,
+	dashboardAccess legacy.MigratorDashboardAccess,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	access authlib.AccessChecker,
@@ -158,6 +158,7 @@ func NewAPIBuilder(
 		clients = resources.NewClientFactory(configProvider)
 	}
 	parsers := resources.NewParserFactory(clients)
+	legacyMigrator := legacy.ProvideLegacyMigrator(dashboardAccess, unified)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
@@ -170,7 +171,7 @@ func NewAPIBuilder(
 		parsers:                             parsers,
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		resourceLister:                      resourceLister,
-		legacyMigrator:                      legacyMigrator,
+		dashboardAccess:                     dashboardAccess,
 		storageStatus:                       storageStatus,
 		unified:                             unified,
 		access:                              access,
@@ -234,7 +235,7 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	access authlib.AccessClient,
-	legacyMigrator legacy.LegacyMigrator,
+	dashboardAccess legacy.MigratorDashboardAccess,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	tracer tracing.Tracer,
@@ -258,7 +259,7 @@ func RegisterAPIService(
 		features,
 		client,
 		configProvider,
-		legacyMigrator, storageStatus,
+		dashboardAccess, storageStatus,
 		usageStats,
 		access,
 		tracer,
@@ -722,7 +723,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			legacyResources := migrate.NewLegacyResourcesMigrator(
 				b.repositoryResources,
 				b.parsers,
-				b.legacyMigrator,
+				b.dashboardAccess,
 				signerFactory,
 				b.clients,
 				export.ExportAll,
@@ -1241,8 +1242,9 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 		return nil
 	}
 
-	// Count how many things exist
-	rsp, err := b.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+	// Count how many things exist - create a migrator on-demand for this
+	legacyMigrator := legacy.ProvideLegacyMigrator(b.dashboardAccess, b.unified)
+	rsp, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: "default", // FIXME! this works for single org, but need to check multi-org
 		Resources: []schema.GroupResource{{
 			Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,

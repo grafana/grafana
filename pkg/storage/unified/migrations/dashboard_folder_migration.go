@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -20,8 +19,7 @@ const (
 
 type dashboardAndFolderMigration struct {
 	migrator.MigrationBase
-	legacyMigrator  legacy.LegacyMigrator
-	bulkStoreClient resource.ResourceClient
+	legacyMigrator legacy.LegacyMigrator
 }
 
 var _ migrator.CodeMigration = (*dashboardAndFolderMigration)(nil)
@@ -46,7 +44,7 @@ func (sp *dashboardAndFolderMigration) Exec(sess *xorm.Session, mg *migrator.Mig
 		},
 	}
 
-	storageMigrator := newUnifiedStorageMigrator(sp.legacyMigrator, sp.bulkStoreClient, resources, "unified-storage-migration.folders-dashboards")
+	storageMigrator := newUnifiedStorageMigrator(sp.legacyMigrator, resources, "unified-storage-migration.folders-dashboards")
 
 	orgs, err := sp.getAllOrgs(sess)
 	if err != nil {
