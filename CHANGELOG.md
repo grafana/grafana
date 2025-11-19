@@ -1,3 +1,12 @@
+<!-- 12.0.6+security-01 START -->
+
+# 12.0.6+security-01 (2025-11-19)
+
+### Bug fixes
+
+- **Security:** fix for CVE-2025-41115 in SCIM (System for Cross-domain Identity Management) (Enterprise)
+
+<!-- 12.0.6+security-01 END -->
 <!-- 12.0.5 START -->
 
 # 12.0.5 (2025-09-23)
