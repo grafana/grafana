@@ -8,6 +8,12 @@ menuTitle: Ansible
 title: Grafana Ansible collection
 weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/ansible/
+aliases:
+  - ../../infrastructure-as-code/ansible/ansible-grafana-agent-linux
+  - ../../infrastructure-as-code/ansible/ansible-multiple-agents
+labels:
+  products:
+    - cloud
 ---
 
 # Grafana Ansible collection
@@ -18,13 +24,10 @@ For resources currently not available in the Grafana Ansible collection, you can
 
 Refer to [Create and manage a Grafana Cloud stack using Ansible](ansible-cloud-stack/) to learn how to create a Grafana Cloud stack and add a data source and dashboard using [Ansible](https://www.ansible.com/).        
 
-## Grafana agent (deprecated)
+## Grafana Agent (deprecated)
 
 {{< docs/shared lookup="agent-deprecation.md" source="alloy" version="next" >}}
 
-The Ansible collection also houses the [Grafana Agent role](https://github.com/grafana/grafana-ansible-collection/tree/main/roles/grafana_agent).
+The Ansible collection also houses [Grafana Agent role](https://github.com/grafana/grafana-ansible-collection/tree/main/roles/grafana_agent), which is now deprecated.
 
-See the following guides:
-
-- [Install Grafana Agent on a Linux host using Ansible](ansible-grafana-agent-linux/): Describes how to install the Grafana Agent on a Linux node using Ansible and use it to push logs to Grafana Cloud.           
-- [Monitor multiple Linux hosts with Grafana Agent Role](ansible-multiple-agents/): Describes how to use the Grafana Ansible collection to manage agents across multiple Linux hosts.             
+          
