@@ -150,7 +150,46 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 			require.True(t, found, "Editor should find folder with permission=Edit")
 		}
 
-		// 4. Admin searching with permission=Admin should find it (Admin has full access)
+		// 4. Editor searching with permission=View should find it (Edit permission includes View)
+		{
+			res := callSearch(helper.Org1.Editor, "permission=View")
+			found := false
+			for _, h := range res.Hits {
+				if h.Name == folderUID { // Verify it's our folder
+					found = true
+					break
+				}
+			}
+			require.True(t, found, "Editor should find folder with permission=View (Edit includes View)")
+		}
+
+		// 5. Admin searching with permission=View should find it (Admin has full access)
+		{
+			res := callSearch(helper.Org1.Admin, "permission=View")
+			found := false
+			for _, h := range res.Hits {
+				if h.Name == folderUID { // Verify it's our folder
+					found = true
+					break
+				}
+			}
+			require.True(t, found, "Admin should find folder with permission=View")
+		}
+
+		// 6. Admin searching with permission=Edit should find it (Admin has full access)
+		{
+			res := callSearch(helper.Org1.Admin, "permission=Edit")
+			found := false
+			for _, h := range res.Hits {
+				if h.Name == folderUID { // Verify it's our folder
+					found = true
+					break
+				}
+			}
+			require.True(t, found, "Admin should find folder with permission=Edit")
+		}
+
+		// 7. Admin searching with permission=Admin should find it (Admin has full access)
 		{
 			res := callSearch(helper.Org1.Admin, "permission=Admin")
 			found := false
