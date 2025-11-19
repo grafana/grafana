@@ -245,6 +245,7 @@ const injectedRtkApi = api
             facet: queryArg.facet,
             tags: queryArg.tags,
             libraryPanel: queryArg.libraryPanel,
+            permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
             explain: queryArg.explain,
@@ -611,6 +612,8 @@ export type GetSearchApiArg = {
   tags?: string[];
   /** find dashboards that reference a given libraryPanel */
   libraryPanel?: string;
+  /** permission needed for the resource (View, Edit, Admin) */
+  permission?: 'View' | 'Edit' | 'Admin';
   /** sortable field */
   sort?: string;
   /** number of results to return */
