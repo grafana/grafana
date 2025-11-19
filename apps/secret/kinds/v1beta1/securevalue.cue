@@ -47,6 +47,6 @@ SecureValueStatus: {
 	// +optional
 	externalID: string
 
-  // The name of the keeper used to create the secure value. Cannot be set.
-  keeper: string
+	// The name of the keeper used to create the secure value. Cannot be set.
+	keeper: string
 }
