@@ -2090,6 +2090,14 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaOperatorExperienceSquad,
 		},
+		{
+			Name:            "alertingSyncDispatchTimer",
+			Description:     "Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			HideFromDocs:    true,
+		},
 	}
 )
 
