@@ -477,6 +477,10 @@ export interface FeatureToggles {
   */
   oauthRequireSubClaim?: boolean;
   /**
+  * Require that refresh tokens are present in oauth tokens.
+  */
+  refreshTokenRequired?: boolean;
+  /**
   * Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
