@@ -250,6 +250,7 @@ func TestApiReturnValues(t *testing.T) {
 		require.True(t, called)
 		require.Equal(t, "gzip", encodedBytes.Encoding)
 		require.Equal(t, []byte("{\"message\":\"foo\"}"), encodedBytes.Body)
+		require.Equal(t, 400, encodedBytes.Status)
 	})
 
 	t.Run("Loki should return the error as is", func(t *testing.T) {
@@ -287,7 +288,7 @@ func TestErrorSources(t *testing.T) {
 
 	t.Run("should set correct error source for downstream errors", func(t *testing.T) {
 		called := false
-		api := makeMockedAPI(400, "application/json", errorResponse, func(req *http.Request) {
+		api := makeMockedAPI(http.StatusBadRequest, "application/json", errorResponse, func(req *http.Request) {
 			called = true
 		})
 
@@ -296,11 +297,12 @@ func TestErrorSources(t *testing.T) {
 		require.True(t, called)
 		require.NotNil(t, res.Error)
 		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
+		require.Equal(t, backend.Status(http.StatusBadRequest), res.Status)
 	})
 
 	t.Run("should set correct error source for plugin errors", func(t *testing.T) {
 		called := false
-		api := makeMockedAPI(406, "application/json", errorResponse, func(req *http.Request) {
+		api := makeMockedAPI(http.StatusNotAcceptable, "application/json", errorResponse, func(req *http.Request) {
 			called = true
 		})
 
@@ -309,11 +311,12 @@ func TestErrorSources(t *testing.T) {
 		require.True(t, called)
 		require.NotNil(t, res.Error)
 		require.Equal(t, backend.ErrorSourcePlugin, res.ErrorSource)
+		require.Equal(t, backend.Status(http.StatusNotAcceptable), res.Status)
 	})
 
 	t.Run("should set correct error source for server errors", func(t *testing.T) {
 		called := false
-		api := makeMockedAPI(500, "application/json", errorResponse, func(req *http.Request) {
+		api := makeMockedAPI(http.StatusInternalServerError, "application/json", errorResponse, func(req *http.Request) {
 			called = true
 		})
 
@@ -322,11 +325,12 @@ func TestErrorSources(t *testing.T) {
 		require.True(t, called)
 		require.NotNil(t, res.Error)
 		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
+		require.Equal(t, backend.Status(http.StatusInternalServerError), res.Status)
 	})
 
 	t.Run("should handle downstream HTTP errors", func(t *testing.T) {
 		called := false
-		api := makeMockedAPI(400, "application/json", errorResponse, func(req *http.Request) {
+		api := makeMockedAPI(http.StatusBadRequest, "application/json", errorResponse, func(req *http.Request) {
 			called = true
 		})
 
@@ -336,30 +340,33 @@ func TestErrorSources(t *testing.T) {
 		require.NotNil(t, res.Error)
 		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
 		require.Contains(t, res.Error.Error(), "test error")
+		require.Equal(t, backend.Status(http.StatusBadRequest), res.Status)
 	})
 
 	t.Run("should handle client errors in RawQuery", func(t *testing.T) {
 		called := false
-		api := makeMockedAPI(400, "application/json", errorResponse, func(req *http.Request) {
+		api := makeMockedAPI(http.StatusBadRequest, "application/json", errorResponse, func(req *http.Request) {
 			called = true
 		})
 
 		res, err := api.RawQuery(context.Background(), "/loki/api/v1/labels")
 		require.NoError(t, err)
 		require.True(t, called)
-		require.Equal(t, 400, res.Status)
+		require.Equal(t, http.StatusBadRequest, res.Status)
 		require.Contains(t, string(res.Body), "test error")
 	})
 
 	t.Run("should handle server errors in RawQuery", func(t *testing.T) {
 		called := false
-		api := makeMockedAPI(500, "application/json", errorResponse, func(req *http.Request) {
+		api := makeMockedAPI(http.StatusInternalServerError, "application/json", errorResponse, func(req *http.Request) {
 			called = true
 		})
 
-		_, err := api.RawQuery(context.Background(), "/loki/api/v1/labels")
+		res, err := api.RawQuery(context.Background(), "/loki/api/v1/labels")
 		require.Error(t, err)
 		require.True(t, called)
 		require.Contains(t, err.Error(), "test error")
+		// Status code of 0 gets mapped to InternalServerError (500)
+		require.Equal(t, 0, res.Status)
 	})
 }

@@ -199,6 +199,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		res := backend.DataResponse{
 			Error:       err,
 			ErrorSource: backend.ErrorSourceFromHTTPStatus(resp.StatusCode),
+			Status:      backend.Status(resp.StatusCode),
 		}
 		lp = append(lp, "status", "error", "error", err, "statusSource", res.ErrorSource)
 		api.log.Debug("Error received from Loki", lp...)
@@ -305,7 +306,9 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 		}
 		body, err = json.Marshal(lokiResponseErr)
 		if err != nil {
-			return RawLokiResponse{}, err
+			return RawLokiResponse{
+				Status: resp.StatusCode,
+			}, err
 		}
 	}
 
