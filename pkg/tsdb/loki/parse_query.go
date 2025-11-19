@@ -157,8 +157,6 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
 		var limitsConfig LimitsContext
-		var limitsConfigTo time.Time
-		var limitsConfigFrom time.Time
 		model, err := parseQueryModel(query.JSON)
 		if err != nil {
 			return nil, err
@@ -190,8 +188,8 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 		rawQueryLimitExpr := parseLimitsContextExpr(model.LimitsContext)
 
 		if rawQueryLimitExpr != "" {
-			limitsConfigTo = parseLimitsContextTo(model.LimitsContext)
-			limitsConfigFrom = parseLimitsContextFrom(model.LimitsContext)
+			limitsConfigTo := parseLimitsContextTo(model.LimitsContext)
+			limitsConfigFrom := parseLimitsContextFrom(model.LimitsContext)
 
 			// Only supply limits context config if we have expression, and from and to
 			if !limitsConfigFrom.Equal(time.Time{}) && !limitsConfigTo.Equal(time.Time{}) {
