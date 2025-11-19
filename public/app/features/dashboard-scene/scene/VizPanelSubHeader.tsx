@@ -9,8 +9,9 @@ import {
   GroupByVariable,
   SceneQueryRunner,
   VizPanel,
-  sceneUtils,
 } from '@grafana/scenes';
+
+import { verifyDrilldownApplicability } from '../utils/drilldownUtils';
 
 import { PanelNonApplicableDrilldownsSubHeader } from './PanelNonApplicableDrilldownsSubHeader';
 
@@ -63,8 +64,8 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
 
   const supportsApplicability = useMemo(
     () =>
-      sceneUtils.verifyDrilldownApplicability(model, datasource, filtersDatasource, filtersApplicabilityEnabled) ||
-      sceneUtils.verifyDrilldownApplicability(model, datasource, groupByDatasource, groupByApplicabilityEnabled),
+      verifyDrilldownApplicability(model, datasource, filtersDatasource, filtersApplicabilityEnabled) ||
+      verifyDrilldownApplicability(model, datasource, groupByDatasource, groupByApplicabilityEnabled),
     [datasource, filtersApplicabilityEnabled, filtersDatasource, groupByApplicabilityEnabled, groupByDatasource, model]
   );
 

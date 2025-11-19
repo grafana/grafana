@@ -4,8 +4,10 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AdHocFiltersVariable, GroupByVariable, SceneQueryRunner, sceneUtils } from '@grafana/scenes';
+import { AdHocFiltersVariable, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
+
+import { getDrilldownApplicability } from '../utils/drilldownUtils';
 
 const GAP_SIZE = 8;
 const FONT_SIZE = 12;
@@ -53,7 +55,7 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
 
       const labels: string[] = [];
 
-      const applicability = await sceneUtils.getDrilldownApplicability(queryRunner, filtersVar, groupByVar);
+      const applicability = await getDrilldownApplicability(queryRunner, filtersVar, groupByVar);
       if (filterValues.length) {
         const nonApplicableFilters = filterValues.filter((filter) => {
           const result = applicability?.find((entry) => entry.key === filter.key && entry.origin === filter.origin);
