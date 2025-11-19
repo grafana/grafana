@@ -5,7 +5,6 @@ import { Alert, Button, Field, Modal, Text, Space, Box } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { MoveActionAvailableTargetWarning } from 'app/features/provisioning/components/Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
-import { FolderDTO } from 'app/types/folders';
 
 import { DashboardTreeSelection } from '../../types';
 
