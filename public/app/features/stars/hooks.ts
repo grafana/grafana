@@ -8,7 +8,7 @@ import {
 } from '@grafana/api-clients/rtkq/legacy/user';
 import { locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/preferences/v1alpha1';
+import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';

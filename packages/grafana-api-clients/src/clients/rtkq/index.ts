@@ -2,6 +2,7 @@
  * Don't manually add to this file! Use the `generate:api-client` command to add new API clients.
  */
 import { generatedAPI as advisorAPIv0alpha1 } from './advisor/v0alpha1';
+import { generatedAPI as collectionsAPIv1alpha1 } from './collections/v1alpha1';
 import { generatedAPI as correlationsAPIv0alpha1 } from './correlations/v0alpha1';
 import { generatedAPI as dashboardAPIv0alpha1 } from './dashboard/v0alpha1';
 import { generatedAPI as folderAPIv1beta1 } from './folder/v1beta1';
@@ -23,8 +24,9 @@ export const allMiddleware = [
   iamAPIv0alpha1.middleware,
   migrateToCloudAPI.middleware,
   playlistAPIv0alpha1.middleware,
+  collectionsAPIv1alpha1.middleware, // stars
   preferencesAPIv1alpha1.middleware,
-  preferencesUserAPI.middleware,
+  preferencesUserAPI.middleware, // legacy preferences
   provisioningAPIv0alpha1.middleware,
   shortURLAPIv1beta1.middleware,
   correlationsAPIv0alpha1.middleware,
@@ -40,6 +42,7 @@ export const allReducers = {
   [iamAPIv0alpha1.reducerPath]: iamAPIv0alpha1.reducer,
   [migrateToCloudAPI.reducerPath]: migrateToCloudAPI.reducer,
   [playlistAPIv0alpha1.reducerPath]: playlistAPIv0alpha1.reducer,
+  [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer,
   [preferencesAPIv1alpha1.reducerPath]: preferencesAPIv1alpha1.reducer,
   [preferencesUserAPI.reducerPath]: preferencesUserAPI.reducer,
   [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,

@@ -89,6 +89,7 @@
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/plugins/ @grafana/plugins-platform-backend
+/apps/collections/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/shorturl/ @grafana/sharing-squad
 /apps/secret/ @grafana/grafana-operator-experience-squad

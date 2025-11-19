@@ -11,7 +11,7 @@ const server = setupServer(...allHandlers);
  */
 export function setupMockServer(
   /**
-   * Additional handlers to add to server initialisation. Handlers will be `.use`d in a `beforeEach` hook
+   * Additional handlers to add to server initialization. Handlers will be `.use`d in a `beforeEach` hook
    */
   additionalHandlers?: HttpHandler[]
 ) {
