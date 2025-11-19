@@ -733,26 +733,20 @@ func getRepeatOptionsFromLibraryPanel(ctx context.Context, libraryPanelUID strin
 	libraryElements := leIndexProvider.GetLibraryElementInfo(ctx)
 
 	// Find the library panel by UID
-	var libraryPanelModel []byte
+	var libraryPanelModel map[string]any
 	for _, elem := range libraryElements {
 		if elem.UID == libraryPanelUID {
-			libraryPanelModel = elem.Model
+			libraryPanelModel = elem.Model.Object
 			break
 		}
 	}
 
-	if len(libraryPanelModel) == 0 {
-		return nil
-	}
-
-	// Parse the library panel model JSON
-	var panelModel map[string]any
-	if err := json.Unmarshal(libraryPanelModel, &panelModel); err != nil {
+	if libraryPanelModel == nil {
 		return nil
 	}
 
 	// Extract repeat options from the library panel model
-	return getRepeatOptionsFromPanel(panelModel)
+	return getRepeatOptionsFromPanel(libraryPanelModel)
 }
 
 func buildRowKind(rowPanelMap map[string]interface{}, elements []dashv2alpha1.DashboardGridLayoutItemKind) *dashv2alpha1.DashboardRowsLayoutRowKind {

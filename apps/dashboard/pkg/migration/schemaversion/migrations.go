@@ -3,6 +3,8 @@ package schemaversion
 import (
 	"context"
 	"strconv"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const (
@@ -34,7 +36,7 @@ type LibraryElementInfo struct {
 	Type        string
 	Description string
 	FolderUID   string
-	Model       []byte // JSON model of the library element, used to extract repeat options during migration
+	Model       common.Unstructured // JSON model of the library element, used to extract repeat options during migration
 }
 
 type LibraryElementIndexProvider interface {

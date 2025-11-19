@@ -2,9 +2,9 @@ package testutil
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // EmptyLibraryElementProvider provides an empty library element list for tests
@@ -244,10 +244,10 @@ func NewTestLibraryElementProvider() *TestLibraryElementProvider {
 		"options": map[string]any{},
 	}
 
-	// Marshal models to JSON
-	modelWithRepeatH, _ := json.Marshal(libPanelWithRepeatH)
-	modelWithRepeatV, _ := json.Marshal(libPanelWithRepeatV)
-	modelWithoutRepeat, _ := json.Marshal(libPanelWithoutRepeat)
+	// Convert models to Unstructured
+	modelWithRepeatH := v0alpha1.Unstructured{Object: libPanelWithRepeatH}
+	modelWithRepeatV := v0alpha1.Unstructured{Object: libPanelWithRepeatV}
+	modelWithoutRepeat := v0alpha1.Unstructured{Object: libPanelWithoutRepeat}
 
 	return &TestLibraryElementProvider{
 		elements: []schemaversion.LibraryElementInfo{
