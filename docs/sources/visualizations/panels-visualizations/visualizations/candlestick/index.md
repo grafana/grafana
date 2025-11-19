@@ -65,7 +65,7 @@ Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VE
 
 {{< youtube id="IOFKBgbf3aM" >}}
 
-{{< docs/play title="Candlestick" url="<https://play.grafana.org/d/candlestick/candlestick>" >}}
+{{< docs/play title="Candlestick" url="https://play.grafana.org/d/candlestick/candlestick" >}}
 
 ## Supported data formats
 
