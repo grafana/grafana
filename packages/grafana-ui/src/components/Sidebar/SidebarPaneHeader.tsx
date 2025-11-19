@@ -4,7 +4,6 @@ import { ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';

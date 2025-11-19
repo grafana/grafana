@@ -96,29 +96,20 @@ export const Example: StoryFn<StoryProps> = (args) => {
             </Sidebar.OpenPane>
           )}
           <Sidebar.Toolbar>
-            <Sidebar.Button icon="share-alt" title="Share" toolbarPosition={args.position} compact={args.compact} />
-            <Sidebar.Button
-              icon="info-circle"
-              title="Insights"
-              toolbarPosition={args.position}
-              compact={args.compact}
-            />
+            <Sidebar.Button icon="plus" title="Create" />
+            <Sidebar.Button icon="info-circle" title="Insights" />
             <Sidebar.Divider />
             <Sidebar.Button
               icon="cog"
               title="Settings"
               active={openPane === 'settings'}
               onClick={() => togglePane('settings')}
-              toolbarPosition={args.position}
-              compact={args.compact}
             />
             <Sidebar.Button
               icon="list-ui-alt"
               title="Outline"
               active={openPane === 'outline'}
               onClick={() => togglePane('outline')}
-              toolbarPosition={args.position}
-              compact={args.compact}
             />
           </Sidebar.Toolbar>
         </Sidebar>

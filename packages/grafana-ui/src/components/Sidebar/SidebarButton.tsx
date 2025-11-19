@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useContext } from 'react';
 
 import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 
@@ -8,7 +9,7 @@ import { getActiveButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-import { SidebarPosition } from './Sidebar';
+import { SidebarContext } from './useSidebar';
 
 export interface Props {
   icon: IconName;
@@ -16,31 +17,27 @@ export interface Props {
   onClick?: () => void;
   title: string;
   tooltip?: string;
-  toolbarPosition?: SidebarPosition;
   compact?: boolean;
 }
 
-export function SidebarButton({
-  icon,
-  active,
-  onClick,
-  title,
-  tooltip,
-  toolbarPosition = 'right',
-  compact = true,
-}: Props) {
+export function SidebarButton({ icon, active, onClick, title, tooltip, compact = true }: Props) {
   const styles = useStyles2(getStyles);
+  const context = useContext(SidebarContext);
+
+  if (!context) {
+    throw new Error('Sidebar.Button must be used within a Sidebar component');
+  }
 
   const buttonClass = cx(
     styles.button,
     compact && styles.compact,
     active && styles.active,
-    toolbarPosition === 'left' && styles.leftButton
+    context.position === 'left' && styles.leftButton
   );
 
   return (
     <div className={styles.buttonWrapper}>
-      <Tooltip content={tooltip ?? title} placement={toolbarPosition === 'left' ? 'right' : 'left'}>
+      <Tooltip content={tooltip ?? title} placement={context.position === 'left' ? 'right' : 'left'}>
         <button className={buttonClass} aria-label={title} aria-expanded={active} type="button" onClick={onClick}>
           {renderIcon(icon, compact)}
         </button>
@@ -56,7 +53,7 @@ function renderIcon(icon: IconName | React.ReactNode, compact: boolean) {
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={compact ? `md` : `lg`} />;
+    return <Icon name={icon} size={compact ? `lg` : `lg`} />;
   }
 
   return icon;
@@ -71,7 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       height: theme.spacing(theme.components.height.md),
       padding: theme.spacing(0, 1),
-      borderRadius: theme.shape.radius.sm,
+      // borderRadius: theme.shape.radius.sm,
       lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
@@ -121,8 +118,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     compact: css({
-      height: theme.spacing(theme.components.height.sm),
-      padding: theme.spacing(0, 0.5),
+      height: theme.spacing(theme.components.height.md),
+      padding: theme.spacing(0, 1),
     }),
     active: css({
       color: theme.colors.text.primary,
@@ -131,7 +128,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         display: 'block',
         content: '" "',
         position: 'absolute',
-        right: -1,
+        right: 0,
         top: 0,
         height: '100%',
         width: '2px',
@@ -156,7 +153,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     leftButton: css({
       '&::before': {
         right: 'unset',
-        left: -1,
+        left: 0,
         top: 0,
         height: '100%',
       },
