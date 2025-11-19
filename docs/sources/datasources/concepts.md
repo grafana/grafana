@@ -78,13 +78,15 @@ How data sources, plugins, and integrations work together:
 
 Examples: 
 
-- Install a Prometheus data source plugin. Configure the Prometheus data source to connect to your Prometheus instance. Use the `Geomap` panel plugin to add a custom visualization showing your Kubernetes pods across world regions.
+- Install the Databricks data source plugin. Configure the Databricks data source and run SQL queries against your Databricks workspace. Use the `Histogram` panel to visualize distributions in your query results, such as latency buckets, job durations, or model output scores.
 
-- Install the Azure Cloud Native Monitoring app plugin, which bundles the app and data source plugin types. It includes data source plugins for Azure Monitor and Log Analytics, panel plugins for visualizing Azure metrics, and a custom configuration page for managing authentication and subscriptions.
+- Install the Redis Application app plugin. This app provides a unified experience for monitoring Redis by working with your existing Redis data source. It adds custom pages for configuration and exploration, along with prebuilt dashboards, commands, and visualizations that help you analyze performance, memory usage, and key activity.
+
+<!-- - Install the Azure Cloud Native Monitoring app plugin, which bundles the app and data source plugin types. It includes data source plugins for Azure Monitor and Log Analytics, panel plugins for visualizing Azure metrics, and a custom configuration page for managing authentication and subscriptions. -->
 
 - If you’re using Grafana Cloud, add the ClickHouse integration. This integration provides pre-built dashboards and alerts to monitor ClickHouse cluster metrics and logs, enabling users to visualize and analyze their ClickHouse performance and health in real-time. 
 
-## Common confusion points
+## Frequently asked questions
 
 **What's the difference between a data source and a data source plugin?**
 
