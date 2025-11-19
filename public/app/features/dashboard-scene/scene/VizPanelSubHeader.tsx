@@ -9,7 +9,6 @@ import {
   GroupByVariable,
   SceneQueryRunner,
   VizPanel,
-  SceneDataState,
   sceneUtils,
 } from '@grafana/scenes';
 
@@ -17,8 +16,6 @@ import { PanelNonApplicableDrilldownsSubHeader } from './PanelNonApplicableDrill
 
 export interface VizPanelSubHeaderState extends SceneObjectState {
   hideNonApplicableDrilldowns?: boolean;
-  adhocFiltersVar?: AdHocFiltersVariable;
-  groupByVar?: GroupByVariable;
 }
 
 export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
@@ -37,12 +34,6 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     if (!this.parent || !(this.parent instanceof VizPanel)) {
       throw new Error('VizPanelSubHeader can be used only with VizPanel');
     }
-
-    const variables = sceneGraph.getVariables(this).state.variables;
-    const adhocFiltersVariable = variables.find((variable) => variable instanceof AdHocFiltersVariable);
-    const groupByVariable = variables.find((variable) => variable instanceof GroupByVariable);
-
-    this.setState({ adhocFiltersVar: adhocFiltersVariable, groupByVar: groupByVariable });
   };
 
   public getQueryRunner(): SceneQueryRunner | null {
@@ -59,7 +50,9 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 }
 
 export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
-  const { adhocFiltersVar, groupByVar } = model.useState();
+  const variables = sceneGraph.getVariables(model).useState();
+  const adhocFiltersVar = variables.variables.find((variable) => variable instanceof AdHocFiltersVariable);
+  const groupByVar = variables.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
 
   const { applicabilityEnabled: filtersApplicabilityEnabled, datasource: filtersDatasource } =

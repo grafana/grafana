@@ -89,7 +89,7 @@ function buildScene(options?: BuildSceneOptions) {
     label: 'adhoc',
     filters: [{ key: 'filter-1', operator: '=', value: 'value-1' }],
     datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
-    applicabilityEnabled: true,
+    applicabilityEnabled: options?.applicabilityEnabled ?? true,
   });
 
   const groupByVariable = new GroupByVariable({
@@ -98,7 +98,7 @@ function buildScene(options?: BuildSceneOptions) {
     value: ['groupBy'],
     text: ['groupBy'],
     options: [],
-    applicabilityEnabled: true,
+    applicabilityEnabled: options?.applicabilityEnabled ?? true,
     datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
   });
 
