@@ -1,3 +1,15 @@
+<!-- 11.6.8 START -->
+
+# 11.6.8 (2025-11-19)
+
+### Bug fixes
+
+- **Alerting:** Fix unmarshalling of GettableStatus to include time intervals [#112731](https://github.com/grafana/grafana/pull/112731), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **AnalyticsSummaries:** Fix dashboard rollup not resetting "last X days" metrics to zero (Enterprise)
+- **AnalyticsSummaries:** Fix dashboard rollup totals resetting incorrectly (Enterprise)
+- **Seeder:** Add check in `filterRemovedPermissions` for already existing new permissions before seeding (Enterprise)
+
+<!-- 11.6.8 END -->
 <!-- 12.2.1+security-01 START -->
 
 # 12.2.1+security-01 (2025-11-19)
