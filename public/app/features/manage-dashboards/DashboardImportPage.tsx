@@ -123,6 +123,14 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
     const dashboard = JSON.parse(formData.dashboardJson);
 
+    if ((dashboard.spec?.elements || dashboard.elements) && !config.featureToggles.dashboardNewLayouts) {
+      appEvents.emit(AppEvents.alertError, [
+        'Import failed',
+        'Cannot import v2 dashboards when dashboardNewLayouts feature toggle is disabled',
+      ]);
+      return;
+    }
+
     // check if it's a v2 resource format
     if (dashboard.spec?.elements) {
       dispatch(importDashboardV2Json(dashboard.spec));
