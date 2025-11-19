@@ -59,7 +59,7 @@ type LokiDataQuery struct {
 	Instant *bool `json:"instant,omitempty"`
 	// Used to set step value for range queries.
 	Step *string `json:"step,omitempty"`
-	// The full query plan for split/shard queries. Encoded and sent to Loki via `X-Loki-Query-Limits-Context` header. Requires feature flag @todo
+	// The full query plan for split/shard queries. Encoded and sent to Loki via `X-Loki-Query-Limits-Context` header. Requires "lokiQueryLimitsContext" feature flag
 	LimitsContext *DataqueryLokiDataQueryLimitsContext `json:"limitsContext,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
