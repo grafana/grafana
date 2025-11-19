@@ -159,72 +159,32 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   public filterNode = async (scopeNodeId: string, query: string) => {
-    const path = getPathOfNode(scopeNodeId, this.state.nodes);
-    const nodeToFilter = treeNodeAtPath(this.state.tree!, path);
-
-    if (!nodeToFilter) {
-      throw new Error(`Trying to filter node at path or id ${scopeNodeId} not found`);
-    }
-
-    if (nodeToFilter.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToFilter.scopeNodeId])) {
-      throw new Error(`Trying to filter node at id ${scopeNodeId} that is not expandable`);
-    }
-
-    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-      treeNode.expanded = true;
-      treeNode.query = query;
-    });
-    this.updateState({ tree: newTree });
-
-    await this.loadNodeChildren(path, nodeToFilter, query);
-  };
-
-  private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
-    this.interactionProfiler?.startInteraction('scopeNodeDiscovery');
-
-    const path = getPathOfNode(scopeNodeId, this.state.nodes);
-
-    const nodeToExpand = treeNodeAtPath(this.state.tree!, path);
+    this.interactionProfiler?.startInteraction('scopeNodeFilter');
 
     try {
-      if (!nodeToExpand) {
-        throw new Error(`Node ${scopeNodeId} not found in tree`);
+      const path = getPathOfNode(scopeNodeId, this.state.nodes);
+      const nodeToFilter = treeNodeAtPath(this.state.tree!, path);
+
+      if (!nodeToFilter) {
+        throw new Error(`Trying to filter node at path or id ${scopeNodeId} not found`);
       }
 
-      if (nodeToExpand.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
-        throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
+      if (nodeToFilter.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToFilter.scopeNodeId])) {
+        throw new Error(`Trying to filter node at id ${scopeNodeId} that is not expandable`);
       }
 
-      if (!nodeToExpand.expanded || nodeToExpand.query !== query) {
-        const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-          treeNode.expanded = true;
-          treeNode.query = query || '';
-        });
-        this.updateState({ tree: newTree });
+      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+        treeNode.expanded = true;
+        treeNode.query = query;
+      });
+      this.updateState({ tree: newTree });
 
-        await this.loadNodeChildren(path, nodeToExpand, query);
-      }
+      await this.loadNodeChildren(path, nodeToFilter, query);
     } catch (error) {
       throw error;
     } finally {
       this.interactionProfiler?.stopInteraction();
     }
-  };
-
-  private collapseNode = async (scopeNodeId: string) => {
-    const path = getPathOfNode(scopeNodeId, this.state.nodes);
-
-    const nodeToCollapse = treeNodeAtPath(this.state.tree!, path);
-
-    if (!nodeToCollapse) {
-      throw new Error(`Trying to collapse node at path or id ${scopeNodeId} not found`);
-    }
-
-    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-      treeNode.expanded = false;
-      treeNode.query = '';
-    });
-    this.updateState({ tree: newTree });
   };
 
   private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string) => {
@@ -330,15 +290,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     let newSelectedScopes = this.state.selectedScopes.filter(filter);
     this.updateState({ selectedScopes: newSelectedScopes });
-  };
-
-  // TODO: Replace all usage of this function with expandNode and filterNode.
-  // @deprecated
-  public updateNode = async (scopeNodeId: string, expanded: boolean, query: string) => {
-    if (expanded) {
-      return this.expandOrFilterNode(scopeNodeId, query);
-    }
-    return this.collapseNode(scopeNodeId);
   };
 
   changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string, redirectOnApply?: boolean) => {
@@ -494,7 +445,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    */
   public open = async () => {
     if (!this.state.tree?.children || Object.keys(this.state.tree?.children).length === 0) {
-      await this.expandOrFilterNode('');
+      await this.filterNode('', '');
     }
 
     // First close all nodes
