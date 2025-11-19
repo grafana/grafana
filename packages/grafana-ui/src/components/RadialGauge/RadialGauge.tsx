@@ -248,9 +248,6 @@ export function RadialGauge(props: RadialGaugeProps) {
       }
 
       if (displayValue.sparkline) {
-        if (props.timeRange && displayValue.sparkline.x?.type === FieldType.time) {
-          displayValue.sparkline.timeRange = props.timeRange;
-        }
         sparklineElement = (
           <RadialSparkline
             sparkline={displayValue.sparkline}

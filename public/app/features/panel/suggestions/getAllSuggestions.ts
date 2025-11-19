@@ -9,20 +9,20 @@ import { config } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 export const panelsToCheckFirst = [
-  // 'timeseries',
-  // 'barchart',
+  'timeseries',
+  'barchart',
   'gauge',
-  // 'stat',
-  // 'piechart',
-  // 'bargauge',
-  // 'table',
-  // 'state-timeline',
-  // 'status-history',
-  // 'logs',
-  // 'candlestick',
-  // 'flamegraph',
-  // 'traces',
-  // 'nodeGraph',
+  'stat',
+  'piechart',
+  'bargauge',
+  'table',
+  'state-timeline',
+  'status-history',
+  'logs',
+  'candlestick',
+  'flamegraph',
+  'traces',
+  'nodeGraph',
 ];
 
 export async function getAllSuggestions(
