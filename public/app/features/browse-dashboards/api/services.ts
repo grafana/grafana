@@ -18,7 +18,6 @@ export async function listFolders(
 ): Promise<DashboardViewItem[]> {
   const results = getGrafanaSearcher();
 
-  // TODO: what to do here for unified search?
   let folders: DashboardQueryResult[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
     const foldersResults = await results.search({
