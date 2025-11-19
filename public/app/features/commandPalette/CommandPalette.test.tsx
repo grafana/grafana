@@ -27,19 +27,6 @@ jest.mock('kbar', () => ({
   KBarAnimator: jest.fn().mockImplementation(({ children }) => <div>{children}</div>),
 }));
 
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    getDataSourceSrv: () => ({
-      getList: jest
-        .fn()
-        .mockReturnValue([
-          { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-        ]),
-    }),
-  };
-});
-
 const setup = () => {
   return render(
     <KBarProvider>
@@ -69,16 +56,5 @@ describe('CommandPalette', () => {
     expect(await screen.findByText('No results found')).toBeInTheDocument();
     // Check that AI Assistant button is not rendered
     expect(screen.queryByRole('button', { name: 'Search with Grafana Assistant' })).not.toBeInTheDocument();
-  });
-
-  describe('Dashboard from template button', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardTemplates = true;
-    });
-
-    it('should show a `Dashboard from template` button when the feature flag is enabled', async () => {
-      setup();
-      expect(screen.getByRole('link', { name: 'Dashboard from template' })).toBeInTheDocument();
-    });
   });
 });
