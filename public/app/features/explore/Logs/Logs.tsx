@@ -119,11 +119,8 @@ interface Props extends Themeable2 {
   ) => Promise<DataQuery | null>;
   getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
   getFieldLinks: GetFieldLinksFn;
-  addResultsToCache: () => void;
-  clearCache: () => void;
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
-  scrollElement?: HTMLDivElement;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;

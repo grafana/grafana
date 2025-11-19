@@ -130,9 +130,7 @@ describe('Logs', () => {
           to: toUtc('2019-01-01 16:00:00'),
           raw: { from: 'now-1h', to: 'now' },
         }}
-        addResultsToCache={() => {}}
         onChangeTime={() => {}}
-        clearCache={() => {}}
         getFieldLinks={() => {
           return [];
         }}
@@ -215,9 +213,7 @@ describe('Logs', () => {
             to: toUtc('2019-01-01 16:00:00'),
             raw: { from: 'now-1h', to: 'now' },
           }}
-          addResultsToCache={() => {}}
           onChangeTime={() => {}}
-          clearCache={() => {}}
           getFieldLinks={() => {
             return [];
           }}
@@ -265,9 +261,7 @@ describe('Logs', () => {
             to: toUtc('2019-01-01 16:00:00'),
             raw: { from: 'now-1h', to: 'now' },
           }}
-          addResultsToCache={() => {}}
           onChangeTime={() => {}}
-          clearCache={() => {}}
           getFieldLinks={() => {
             return [];
           }}
@@ -318,9 +312,7 @@ describe('Logs', () => {
             to: toUtc('2019-01-01 16:00:00'),
             raw: { from: 'now-1h', to: 'now' },
           }}
-          addResultsToCache={() => {}}
           onChangeTime={() => {}}
-          clearCache={() => {}}
           getFieldLinks={() => {
             return [];
           }}
@@ -379,14 +371,6 @@ describe('Logs', () => {
       rerender(<Provider store={store}>{getComponent({ loading: false, exploreId: 'right', panelState })}</Provider>);
 
       expect(fakeChangePanelState).toHaveBeenCalledWith('right', 'logs', { logs: {} });
-    });
-
-    it('should not scroll the scrollElement into view if rows does not contain id', () => {
-      const panelState = { logs: { id: 'not-included' } };
-      const scrollElementMock = { scroll: jest.fn() };
-      setup({ loading: false, scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState });
-
-      expect(scrollElementMock.scroll).not.toHaveBeenCalled();
     });
 
     it('should call reportInteraction on permalinkClick', async () => {
