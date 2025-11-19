@@ -114,10 +114,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      width: theme.spacing(5),
       padding: theme.spacing(1, 0),
       flexGrow: 0,
-      gap: theme.spacing(1.5),
+      gap: theme.spacing(1),
+      overflow: 'hidden',
+      maxWidth: theme.spacing(9),
     }),
     divider: css({
       height: '1px',

@@ -95,10 +95,20 @@ export const Example: StoryFn<StoryProps> = (args) => {
               <Sidebar.PaneHeader title="Outline" onClose={() => togglePane('')} />
             </Sidebar.OpenPane>
           )}
+          {openPane === 'add' && (
+            <Sidebar.OpenPane>
+              <Sidebar.PaneHeader title="Add element" onClose={() => togglePane('')} />
+            </Sidebar.OpenPane>
+          )}
           <Sidebar.Toolbar>
-            <Sidebar.Button icon="plus" title="Create" />
-            <Sidebar.Button icon="info-circle" title="Insights" />
-            <Sidebar.Divider />
+            <Sidebar.Button
+              icon="plus"
+              title="Add"
+              tooltip="Add element"
+              active={openPane === 'add'}
+              onClick={() => togglePane('add')}
+            />
+
             <Sidebar.Button
               icon="cog"
               title="Settings"
@@ -111,6 +121,8 @@ export const Example: StoryFn<StoryProps> = (args) => {
               active={openPane === 'outline'}
               onClick={() => togglePane('outline')}
             />
+            <Sidebar.Divider />
+            <Sidebar.Button icon="info-circle" title="Insights" />
           </Sidebar.Toolbar>
         </Sidebar>
       </div>

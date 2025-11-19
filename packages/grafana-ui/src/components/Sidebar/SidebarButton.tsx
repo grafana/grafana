@@ -17,10 +17,9 @@ export interface Props {
   onClick?: () => void;
   title: string;
   tooltip?: string;
-  compact?: boolean;
 }
 
-export function SidebarButton({ icon, active, onClick, title, tooltip, compact = true }: Props) {
+export function SidebarButton({ icon, active, onClick, title, tooltip }: Props) {
   const styles = useStyles2(getStyles);
   const context = useContext(SidebarContext);
 
@@ -30,7 +29,7 @@ export function SidebarButton({ icon, active, onClick, title, tooltip, compact =
 
   const buttonClass = cx(
     styles.button,
-    compact && styles.compact,
+    context.compact && styles.compact,
     active && styles.active,
     context.position === 'left' && styles.leftButton
   );
@@ -39,15 +38,15 @@ export function SidebarButton({ icon, active, onClick, title, tooltip, compact =
     <div className={styles.buttonWrapper}>
       <Tooltip content={tooltip ?? title} placement={context.position === 'left' ? 'right' : 'left'}>
         <button className={buttonClass} aria-label={title} aria-expanded={active} type="button" onClick={onClick}>
-          {renderIcon(icon, compact)}
+          {renderIcon(icon, context.compact)}
         </button>
       </Tooltip>
-      {!compact && <span className={cx(styles.title, active && styles.titleActive)}>{title}</span>}
+      {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
     </div>
   );
 }
 
-function renderIcon(icon: IconName | React.ReactNode, compact: boolean) {
+function renderIcon(icon: IconName | React.ReactNode, compact?: boolean) {
   if (!icon) {
     return null;
   }
@@ -71,11 +70,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       // borderRadius: theme.shape.radius.sm,
       lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,
-      whiteSpace: 'nowrap',
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: `none`,
-      width: '100%',
       justifyContent: 'center',
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
@@ -120,6 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     compact: css({
       height: theme.spacing(theme.components.height.md),
       padding: theme.spacing(0, 1),
+      width: theme.spacing(5),
     }),
     active: css({
       color: theme.colors.text.primary,
@@ -139,13 +137,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     buttonWrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
       width: '100%',
-      gap: theme.spacing(0),
+      whiteSpace: 'nowrap',
     }),
     title: css({
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      padding: theme.spacing(0, 0.5),
+      textAlign: 'center',
     }),
     titleActive: css({
       color: theme.colors.text.primary,
