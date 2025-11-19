@@ -7766,6 +7766,14 @@
     "name-show-threshold-labels": "显示阈值标签",
     "name-show-threshold-markers": "显示阈值标记",
     "placeholder-neutral": "自动",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8966,6 +8974,13 @@
       "copy": "复制到剪贴板",
       "csv-counts": "",
       "csv-placeholder": "在此处输入 CSV...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "筛选值",
       "filter-popup-apply": "好",
       "filter-popup-aria-label-match-case": "区分大小写",
@@ -12351,8 +12366,10 @@
       "cancel": "取消",
       "error-title": "",
       "input": {
-        "placeholder": "选择范围…",
-        "removeAll": "移除所有范围"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "移除所有范围",
+        "tooltip": ""
       },
       "title": "选择范围"
     },

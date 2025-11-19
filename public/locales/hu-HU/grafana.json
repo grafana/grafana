@@ -7792,6 +7792,14 @@
     "name-show-threshold-labels": "Küszöbértékcímkék megjelenítése",
     "name-show-threshold-markers": "Küszöbértékjelölők megjelenítése",
     "placeholder-neutral": "automatikus",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9002,6 +9010,13 @@
       "copy": "Másolás a vágólapra",
       "csv-counts": "",
       "csv-placeholder": "Itt adja meg a CSV-t...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Értékek szűrése",
       "filter-popup-apply": "OK",
       "filter-popup-aria-label-match-case": "Nagybetűérzékeny",
@@ -12406,8 +12421,10 @@
       "cancel": "Mégse",
       "error-title": "",
       "input": {
-        "placeholder": "Hatókörök kijelölése...",
-        "removeAll": "Összes hatókör eltávolítása"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Összes hatókör eltávolítása",
+        "tooltip": ""
       },
       "title": "Hatókörök kijelölése"
     },

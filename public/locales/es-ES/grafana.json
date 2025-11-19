@@ -7792,6 +7792,14 @@
     "name-show-threshold-labels": "Mostrar etiquetas de umbral",
     "name-show-threshold-markers": "Mostrar marcadores de umbral",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9002,6 +9010,13 @@
       "copy": "Copiar al portapapeles",
       "csv-counts": "",
       "csv-placeholder": "Introducir CSV aquí...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrar valores",
       "filter-popup-apply": "Aceptar",
       "filter-popup-aria-label-match-case": "Hacer coincidir mayúsculas y minúsculas",
@@ -12406,8 +12421,10 @@
       "cancel": "Cancelar",
       "error-title": "",
       "input": {
-        "placeholder": "Seleccionar ámbitos...",
-        "removeAll": "Eliminar todos los ámbitos"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Eliminar todos los ámbitos",
+        "tooltip": ""
       },
       "title": "Seleccionar ámbitos"
     },

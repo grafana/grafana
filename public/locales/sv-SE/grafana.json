@@ -7792,6 +7792,14 @@
     "name-show-threshold-labels": "Visa tröskelvärdesetiketter",
     "name-show-threshold-markers": "Visa tröskelmarkörer",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9002,6 +9010,13 @@
       "copy": "Kopiera till klippbordet",
       "csv-counts": "",
       "csv-placeholder": "Ange CSV här…",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrera värden",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Matcha gemener/versaler",
@@ -12406,8 +12421,10 @@
       "cancel": "Avbryt",
       "error-title": "",
       "input": {
-        "placeholder": "Välj omfattningar …",
-        "removeAll": "Ta bort alla omfattningar"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Ta bort alla omfattningar",
+        "tooltip": ""
       },
       "title": "Välj omfattningar"
     },

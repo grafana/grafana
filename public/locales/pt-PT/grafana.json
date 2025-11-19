@@ -7792,6 +7792,14 @@
     "name-show-threshold-labels": "Mostrar as etiquetas de limite",
     "name-show-threshold-markers": "Mostrar os marcadores de limite",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9002,6 +9010,13 @@
       "copy": "Copiar para a área de transferência",
       "csv-counts": "",
       "csv-placeholder": "Introduza o CSV aqui...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrar valores",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Diferenciar maiúsculas de minúsculas",
@@ -12406,8 +12421,10 @@
       "cancel": "Cancelar",
       "error-title": "",
       "input": {
-        "placeholder": "Selecionar âmbitos...",
-        "removeAll": "Remover todos os âmbitos"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Remover todos os âmbitos",
+        "tooltip": ""
       },
       "title": "Selecionar âmbitos"
     },
