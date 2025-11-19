@@ -103,10 +103,6 @@ const (
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
 	FlagLokiLogsDataplane = "lokiLogsDataplane"
 
-	// FlagDataplaneFrontendFallback
-	// Support dataplane contract field name change for transformations and field name matchers where the name is different
-	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
-
 	// FlagDisableSSEDataplane
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"

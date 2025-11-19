@@ -122,11 +122,6 @@ export interface FeatureToggles {
   */
   lokiLogsDataplane?: boolean;
   /**
-  * Support dataplane contract field name change for transformations and field name matchers where the name is different
-  * @default true
-  */
-  dataplaneFrontendFallback?: boolean;
-  /**
   * Disables dataplane specific processing in server side expressions.
   */
   disableSSEDataplane?: boolean;
