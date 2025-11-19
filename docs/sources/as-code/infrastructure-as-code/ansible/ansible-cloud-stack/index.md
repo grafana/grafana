@@ -169,32 +169,32 @@ Create a file named `dashboard.yml`:
 
   vars:
     dashboards_path: <PATH_TO_DASHBOARD_FILES> # Example "./dashboards"
-    stack_name: "<STACK_NAME>"
+    stack_name: '<STACK_NAME>'
     grafana_api_key: <GRAFANA_API_KEY>
 
   tasks:
     - name: Find dashboard files
       find:
-        paths: "{{ dashboards_path }}"
+        paths: '{{ dashboards_path }}'
         file_type: file
         recurse: Yes
-        patterns: "*.json"
+        patterns: '*.json'
       register: files_matched
       no_log: True
 
     - name: Create list of dashboard file names
       set_fact:
-        dashboard_file_names: "{{ dashboard_file_names | default ([]) + [item.path] }}"
-      loop: "{{ files_matched.files }}"
+        dashboard_file_names: '{{ dashboard_file_names | default ([]) + [item.path] }}'
+      loop: '{{ files_matched.files }}'
       no_log: True
 
     - name: Create/Update a dashboard
       grafana.grafana.dashboard:
         dashboard: "{{ lookup('ansible.builtin.file','{{ item }}' ) }}"
-        stack_slug: "{{ stack_name }}"
-        grafana_api_key: "{{ grafana_api_key }}"
+        stack_slug: '{{ stack_name }}'
+        grafana_api_key: '{{ grafana_api_key }}'
         state: present
-      loop: "{{ dashboard_file_names }}"
+      loop: '{{ dashboard_file_names }}'
 ```
 
 Replace the placeholders with your values:
