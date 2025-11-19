@@ -2517,7 +2517,8 @@
       "metadata": {
         "name": "logRowsPopoverMenu",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-11-16T09:48:10Z"
+        "creationTimestamp": "2023-11-16T09:48:10Z",
+        "deletionTimestamp": "2025-11-07T10:57:27Z"
       },
       "spec": {
         "description": "Enable filtering menu displayed when text of a log line is selected",
