@@ -204,7 +204,13 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 			}
 
 		case "refresh":
-			if !checkAndSkipUnexpectedElement(iter, jsonPath+".refresh", lc, jsoniter.StringValue) {
+			// "refresh" used to be boolean. We will silently skip it in such case.
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".refresh", lc, jsoniter.StringValue, jsoniter.BoolValue) {
+				continue
+			}
+
+			if iter.WhatIsNext() == jsoniter.BoolValue {
+				iter.Skip()
 				continue
 			}
 			dash.Refresh = iter.ReadString()
