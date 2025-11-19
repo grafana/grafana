@@ -390,6 +390,7 @@ describe('sceneVariablesSetToVariables', () => {
       ],
       "query": "test,test1,test2",
       "type": "custom",
+      "valuesFormat": "csv",
     }
     `);
   });
@@ -1180,6 +1181,7 @@ describe('sceneVariablesSetToVariables', () => {
         ],
         "query": "test,test1,test2",
         "skipUrlSync": false,
+        "valuesFormat": "csv",
       },
     }
     `);

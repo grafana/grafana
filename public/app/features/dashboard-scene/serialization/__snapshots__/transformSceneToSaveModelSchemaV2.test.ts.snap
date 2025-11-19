@@ -208,6 +208,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         ],
         "query": "option1, option2",
         "skipUrlSync": false,
+        "valuesFormat": "csv",
       },
     },
     {
