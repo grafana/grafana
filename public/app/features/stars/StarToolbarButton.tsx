@@ -55,7 +55,7 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
       : { tooltip: tooltips.star, label: isLoading ? undefined : tooltips.starWithTitle };
   })();
 
-  const icon = <Icon {...iconProps} size="lg" />;
+  const icon = <Icon {...iconProps} size="lg" key={iconProps.name} />;
   return (
     <ToolbarButton
       disabled={isLoading}
