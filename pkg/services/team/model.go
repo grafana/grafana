@@ -38,6 +38,7 @@ type Team struct {
 // COMMANDS
 
 type CreateTeamCommand struct {
+	// required:true
 	Name          string `json:"name" binding:"Required"`
 	Email         string `json:"email"`
 	ExternalUID   string `json:"-"`
@@ -94,14 +95,21 @@ type SearchTeamsQuery struct {
 }
 
 type TeamDTO struct {
-	ID            int64           `json:"id" xorm:"id"`
-	UID           string          `json:"uid" xorm:"uid"`
-	OrgID         int64           `json:"orgId" xorm:"org_id"`
-	Name          string          `json:"name"`
-	Email         string          `json:"email"`
-	ExternalUID   string          `json:"externalUID" xorm:"external_uid"`
-	IsProvisioned bool            `json:"isProvisioned"`
-	AvatarURL     string          `json:"avatarUrl"`
+	// @deprecated Use UID instead
+	// required: true
+	ID int64 `json:"id" xorm:"id"`
+	// required: true
+	UID string `json:"uid" xorm:"uid"`
+	// required: true
+	OrgID int64 `json:"orgId" xorm:"org_id"`
+	// required: true
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	ExternalUID string `json:"externalUID" xorm:"external_uid"`
+	// required: true
+	IsProvisioned bool   `json:"isProvisioned"`
+	AvatarURL     string `json:"avatarUrl"`
+	// required: true
 	MemberCount   int64           `json:"memberCount"`
 	Permission    PermissionType  `json:"permission"`
 	AccessControl map[string]bool `json:"accessControl"`
@@ -146,6 +154,7 @@ type TeamMember struct {
 // COMMANDS
 
 type AddTeamMemberCommand struct {
+	// required:true
 	UserID     int64          `json:"userId" binding:"Required"`
 	Permission PermissionType `json:"-"`
 }

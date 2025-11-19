@@ -305,6 +305,36 @@ func (_m *FakeDashboardStore) GetOrphanedProvisionedDashboards(ctx context.Conte
 	return r0, r1
 }
 
+// GetDuplicateProvisionedDashboards provides a mock function with given fields: ctx
+func (_m *FakeDashboardStore) GetDuplicateProvisionedDashboards(ctx context.Context) ([]*DashboardProvisioningSearchResults, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDuplicateProvisionedDashboards")
+	}
+
+	var r0 []*DashboardProvisioningSearchResults
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*DashboardProvisioningSearchResults, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []*DashboardProvisioningSearchResults); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*DashboardProvisioningSearchResults)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetProvisionedDashboardData provides a mock function with given fields: ctx, name
 func (_m *FakeDashboardStore) GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error) {
 	ret := _m.Called(ctx, name)

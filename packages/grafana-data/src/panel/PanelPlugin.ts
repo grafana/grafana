@@ -7,7 +7,6 @@ import { PanelModel } from '../types/dashboard';
 import { FieldConfigProperty, FieldConfigSource } from '../types/fieldOverrides';
 import {
   PanelPluginMeta,
-  VisualizationSuggestionsSupplier,
   PanelProps,
   PanelEditorProps,
   PanelMigrationHandler,
@@ -15,6 +14,7 @@ import {
   PanelPluginDataSupport,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
+import { VisualizationSuggestionsSupplierFn, VisualizationSuggestionsSupplier } from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
@@ -121,11 +121,6 @@ export class PanelPlugin<
     annotations: false,
     alertStates: false,
   };
-
-  /**
-   * Legacy angular ctrl. If this exists it will be used instead of the panel
-   */
-  angularPanelCtrl?: any;
 
   constructor(panel: ComponentType<PanelProps<TOptions>> | null) {
     super();
@@ -368,11 +363,34 @@ export class PanelPlugin<
   }
 
   /**
-   * Sets function that can return visualization examples and suggestions.
-   * @alpha
+   * @deprecated use VisualizationSuggestionsSupplierFn
    */
-  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier) {
-    this.suggestionsSupplier = supplier;
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier): this;
+  /**
+   * @alpha
+   * sets function that can return visualization examples and suggestions.
+   */
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>): this;
+  setSuggestionsSupplier(
+    supplier: VisualizationSuggestionsSupplier | VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>
+  ): this {
+    this.suggestionsSupplier =
+      typeof supplier === 'function'
+        ? {
+            getSuggestionsForData: (builder) => {
+              const appender = builder.getListAppender<TOptions, TFieldConfigOptions>({
+                pluginId: this.meta.id,
+                name: this.meta.name,
+              });
+
+              const result = supplier(builder.dataSummary);
+
+              if (Array.isArray(result)) {
+                appender.appendAll(result);
+              }
+            },
+          }
+        : supplier;
     return this;
   }
 
@@ -382,6 +400,14 @@ export class PanelPlugin<
    */
   getSuggestionsSupplier(): VisualizationSuggestionsSupplier | undefined {
     return this.suggestionsSupplier;
+  }
+
+  /**
+   * @alpha
+   * returns whether the plugin has configured suggestions
+   */
+  hasSuggestions(): boolean {
+    return this.suggestionsSupplier !== undefined;
   }
 
   hasPluginId(pluginId: string) {

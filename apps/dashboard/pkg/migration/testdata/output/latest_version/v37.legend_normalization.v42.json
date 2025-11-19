@@ -117,6 +117,7 @@
           "type": "timeseries"
         },
         {
+          "autoMigrateFrom": "graph",
           "id": 12,
           "options": {
             "legend": {
@@ -125,7 +126,7 @@
             }
           },
           "title": "Nested Panel with Hidden DisplayMode",
-          "type": "graph"
+          "type": "timeseries"
         },
         {
           "id": 13,

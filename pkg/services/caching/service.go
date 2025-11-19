@@ -84,7 +84,7 @@ func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *back
 var _ CachingService = &OSSCachingService{}
 
 // GetKey creates a prefixed cache key and uses the internal `encoder` to encode the query into a string
-func GetKey(prefix string, query interface{}) (string, error) {
+func GetKey(namespace, prefix string, query interface{}) (string, error) {
 	keybuf := bytes.NewBuffer(nil)
 
 	encoder := &JSONEncoder{}
@@ -96,6 +96,12 @@ func GetKey(prefix string, query interface{}) (string, error) {
 	key, err := SHA256KeyFunc(keybuf)
 	if err != nil {
 		return "", err
+	}
+
+	// The namespace is empty only when this function is used by the legacy caching module.
+	// This case can be removed when the legacy caching module is not being used anymore.
+	if namespace != "" {
+		return strings.Join([]string{namespace, prefix, key}, ":"), nil
 	}
 
 	return strings.Join([]string{prefix, key}, ":"), nil
