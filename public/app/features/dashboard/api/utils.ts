@@ -1,6 +1,7 @@
 import { config, locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec, Status } from '@grafana/schema/schema/dashboard/v2';
+import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { Resource } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 

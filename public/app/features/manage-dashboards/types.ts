@@ -1,4 +1,4 @@
-import { Dashboard } from '@grafana/schema/veneer/dashboard';
+import { Dashboard } from '@grafana/schema/src/veneer/dashboard.types';
 
 import { ExternalDashboard } from '../dashboard/components/DashExportModal/DashboardExporter';
 
