@@ -82,34 +82,6 @@ func parseQueryType(jsonPointerValue *string) (QueryType, error) {
 	}
 }
 
-func parseLimitsContextExpr(jsonPointerValue *dataquery.LimitsContext) string {
-	if jsonPointerValue == nil {
-		return ""
-	} else {
-		jsonValue := *jsonPointerValue
-		return jsonValue.Expr
-	}
-}
-
-// There has to be a less stupid way of doing this
-func parseLimitsContextFrom(jsonPointerValue *dataquery.LimitsContext) time.Time {
-	if jsonPointerValue == nil {
-		return time.Time{}
-	} else {
-		jsonValue := *jsonPointerValue
-		return time.UnixMilli(jsonValue.From)
-	}
-}
-
-func parseLimitsContextTo(jsonPointerValue *dataquery.LimitsContext) time.Time {
-	if jsonPointerValue == nil {
-		return time.Time{}
-	} else {
-		jsonValue := *jsonPointerValue
-		return time.UnixMilli(jsonValue.To)
-	}
-}
-
 func parseDirection(jsonPointerValue *string) (Direction, error) {
 	if jsonPointerValue == nil {
 		// there are older queries stored in alerting that did not have queryDirection,
@@ -156,7 +128,6 @@ func parseSupportingQueryType(jsonPointerValue *string) SupportingQueryType {
 func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
-		var limitsConfig LimitsContext
 		model, err := parseQueryModel(query.JSON)
 		if err != nil {
 			return nil, err
@@ -185,20 +156,7 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 
 		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
 
-		rawQueryLimitExpr := parseLimitsContextExpr(model.LimitsContext)
-
-		if rawQueryLimitExpr != "" {
-			limitsConfigTo := parseLimitsContextTo(model.LimitsContext)
-			limitsConfigFrom := parseLimitsContextFrom(model.LimitsContext)
-
-			// Only supply limits context config if we have expression, and from and to
-			if !limitsConfigFrom.Equal(time.Time{}) && !limitsConfigTo.Equal(time.Time{}) {
-				// If a limits expression was provided, interpolate it and parse the time range
-				limitsConfig.Expr = interpolateVariables(rawQueryLimitExpr, interval, timeRange, queryType, step)
-				limitsConfig.From = limitsConfigFrom
-				limitsConfig.To = limitsConfigTo
-			}
-		}
+		limitsConfig := generateLimitsConfig(model, interval, timeRange, queryType, step)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {
@@ -241,4 +199,21 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 	}
 
 	return qs, nil
+}
+
+func generateLimitsConfig(model *QueryJSONModel, interval time.Duration, timeRange time.Duration, queryType QueryType, step time.Duration) LimitsContext {
+	var limitsConfig LimitsContext
+	if model.LimitsContext != nil && model.LimitsContext.Expr != "" {
+		limitsConfigTo := time.UnixMilli(model.LimitsContext.To)
+		limitsConfigFrom := time.UnixMilli(model.LimitsContext.From)
+
+		// Only supply limits context config if we have expression, and from and to
+		if !limitsConfigFrom.Equal(time.Time{}) && !limitsConfigTo.Equal(time.Time{}) {
+			// If a limits expression was provided, interpolate it and parse the time range
+			limitsConfig.Expr = interpolateVariables(model.LimitsContext.Expr, interval, timeRange, queryType, step)
+			limitsConfig.From = limitsConfigFrom
+			limitsConfig.To = limitsConfigTo
+		}
+	}
+	return limitsConfig
 }
