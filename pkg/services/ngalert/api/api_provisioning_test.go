@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"path"
 	"strings"
 	"testing"
@@ -2020,8 +2019,7 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 		}
 		p = path.Join(p, fmt.Sprintf("%s.%s", tc.name, tc.exportType))
 
-		// To update these files:
-		os.WriteFile(path.Join(p), actualBody, 0644)
+		// To update these files: os.WriteFile(path.Join(p), actualBody, 0644)
 
 		exportRaw, err := receiverExportResponses.ReadFile(p)
 		require.NoError(t, err)
