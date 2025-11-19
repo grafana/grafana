@@ -59,8 +59,8 @@
     "clean": "rimraf ./dist ./compiled ./unstable ./testing ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts",
-    "prepack": "node ../../scripts/prepare-npm-package.js",
-    "postpack": "rimraf ./unstable ./testing",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json",
     "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "devDependencies": {

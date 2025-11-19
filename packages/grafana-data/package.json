@@ -50,8 +50,8 @@
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "node ../../scripts/prepare-npm-package.js",
-    "postpack": "rimraf ./unstable"
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
     "@braintree/sanitize-url": "7.0.1",

@@ -1,5 +1,4 @@
 import { createRequire } from 'node:module';
-import copy from 'rollup-plugin-copy';
 
 import { entryPoint, plugins, esmOutput, cjsOutput } from '../rollup.config.parts';
 

@@ -39,7 +39,7 @@
   },
   "files": [
     "dist",
-    "./src/eslint",
+    "src/eslint/**/*",
     "./README.md",
     "./CHANGELOG.md",
     "LICENSE_APACHE2"
@@ -49,7 +49,8 @@
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "node ../../scripts/prepare-npm-package.js"
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
     "@formatjs/intl-durationformat": "^0.7.0",
