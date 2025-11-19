@@ -4,7 +4,7 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
-import webpack, { type Configuration } from 'webpack';
+import webpack, { type Configuration, type Compiler } from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
 
@@ -29,6 +29,36 @@ function skipFiles(f: string): boolean {
     return false;
   }
   return true;
+}
+
+class BuildModeWebpackPlugin {
+  apply(compiler: Compiler) {
+    compiler.hooks.compilation.tap('BuildModeWebpackPlugin', (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'BuildModeWebpackPlugin',
+          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
+        },
+        async () => {
+          const assets = compilation.getAssets();
+          for (const asset of assets) {
+            if (asset.name.endsWith('plugin.json')) {
+              const pluginJsonString = asset.source.source().toString();
+              const pluginJsonWithBuildMode = JSON.stringify(
+                {
+                  ...JSON.parse(pluginJsonString),
+                  buildMode: compilation.options.mode,
+                },
+                null,
+                4
+              );
+              compilation.updateAsset(asset.name, new webpack.sources.RawSource(pluginJsonWithBuildMode));
+            }
+          }
+        }
+      );
+    });
+  }
 }
 
 export type Env = {
@@ -253,6 +283,8 @@ const config = async (env: Env): Promise<Configuration> => {
           ],
         },
       ]),
+      // Add buildMode to plugin.json
+      new BuildModeWebpackPlugin(),
       ...(env.development
         ? [
             new ForkTsCheckerWebpackPlugin({
