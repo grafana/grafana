@@ -1,5 +1,5 @@
 import { saveAs } from 'file-saver';
-import { PureComponent } from 'react';
+import { memo, useState, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
@@ -15,64 +15,43 @@ import { getTrackingSource } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
-interface State {
-  shareExternally: boolean;
-}
+export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
+  const [shareExternally, setShareExternally] = useState(false);
+  const exporter = useMemo(() => new DashboardExporter(), []);
 
-export class ShareExport extends PureComponent<Props, State> {
-  private exporter: DashboardExporter;
+  const onShareExternallyChange = () => setShareExternally((prev) => !prev);
 
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      shareExternally: false,
-    };
-
-    this.exporter = new DashboardExporter();
-  }
-
-  onShareExternallyChange = () => {
-    this.setState({
-      shareExternally: !this.state.shareExternally,
-    });
-  };
-
-  onSaveAsFile = () => {
-    const { dashboard } = this.props;
-    const { shareExternally } = this.state;
-
+  const onSaveAsFile = () => {
     DashboardInteractions.exportSaveJsonClicked({
       externally: shareExternally,
-      shareResource: getTrackingSource(this.props.panel),
+      shareResource: getTrackingSource(panel),
     });
 
     if (shareExternally) {
       makeExportableV1(dashboard).then((dashboardJson) => {
-        this.openSaveAsDialog(dashboardJson);
+        openSaveAsDialog(dashboardJson);
       });
     } else {
-      this.openSaveAsDialog(dashboard.getSaveModelClone());
+      openSaveAsDialog(dashboard.getSaveModelClone());
     }
   };
 
-  onViewJson = () => {
-    const { dashboard } = this.props;
-    const { shareExternally } = this.state;
+  const onViewJson = () => {
     DashboardInteractions.exportViewJsonClicked({
       externally: shareExternally,
-      shareResource: getTrackingSource(this.props.panel),
+      shareResource: getTrackingSource(panel),
     });
 
     if (shareExternally) {
-      this.exporter.makeExportable(dashboard).then((dashboardJson) => {
-        this.openJsonModal(dashboardJson);
+      exporter.makeExportable(dashboard).then((dashboardJson) => {
+        openJsonModal(dashboardJson);
       });
     } else {
-      this.openJsonModal(dashboard.getSaveModelClone());
+      openJsonModal(dashboard.getSaveModelClone());
     }
   };
 
-  openSaveAsDialog = (dash: any) => {
+  const openSaveAsDialog = (dash: any) => {
     const dashboardJsonPretty = JSON.stringify(dash, null, 2);
     const blob = new Blob([dashboardJsonPretty], {
       type: 'application/json;charset=utf-8',
@@ -81,7 +60,7 @@ export class ShareExport extends PureComponent<Props, State> {
     saveAs(blob, `${dash.title}-${time}.json`);
   };
 
-  openJsonModal = (clone: object) => {
+  const openJsonModal = (clone: object) => {
     appEvents.publish(
       new ShowModalReactEvent({
         props: {
@@ -91,35 +70,32 @@ export class ShareExport extends PureComponent<Props, State> {
       })
     );
 
-    this.props.onDismiss?.();
+    onDismiss?.();
   };
 
-  render() {
-    const { onDismiss } = this.props;
-    const { shareExternally } = this.state;
+  const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
 
-    const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
+  return (
+    <>
+      <p>
+        <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
+      </p>
+      <Field label={exportExternallyTranslation}>
+        <Switch id="share-externally-toggle" value={shareExternally} onChange={onShareExternallyChange} />
+      </Field>
+      <Modal.ButtonRow>
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
+          <Trans i18nKey="share-modal.export.cancel-button">Cancel</Trans>
+        </Button>
+        <Button variant="secondary" onClick={onViewJson}>
+          <Trans i18nKey="share-modal.export.view-button">View JSON</Trans>
+        </Button>
+        <Button variant="primary" onClick={onSaveAsFile}>
+          <Trans i18nKey="share-modal.export.save-button">Save to file</Trans>
+        </Button>
+      </Modal.ButtonRow>
+    </>
+  );
+});
 
-    return (
-      <>
-        <p>
-          <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
-        </p>
-        <Field label={exportExternallyTranslation}>
-          <Switch id="share-externally-toggle" value={shareExternally} onChange={this.onShareExternallyChange} />
-        </Field>
-        <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onDismiss} fill="outline">
-            <Trans i18nKey="share-modal.export.cancel-button">Cancel</Trans>
-          </Button>
-          <Button variant="secondary" onClick={this.onViewJson}>
-            <Trans i18nKey="share-modal.export.view-button">View JSON</Trans>
-          </Button>
-          <Button variant="primary" onClick={this.onSaveAsFile}>
-            <Trans i18nKey="share-modal.export.save-button">Save to file</Trans>
-          </Button>
-        </Modal.ButtonRow>
-      </>
-    );
-  }
-}
+ShareExport.displayName = 'ShareExport';

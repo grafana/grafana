@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { Component } from 'react';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2, renderMarkdown, LinkModelSupplier, ScopedVars, IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, getTemplateSrv } from '@grafana/runtime';
-import { Tooltip, PopoverContent, Icon, Themeable2, withTheme2, useStyles2 } from '@grafana/ui';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { Tooltip, PopoverContent, Icon, useStyles2 } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { InspectTab } from 'app/features/inspector/types';
 
@@ -15,7 +14,7 @@ enum InfoMode {
   Links = 'Links',
 }
 
-export interface Props extends Themeable2 {
+export interface Props {
   panel: PanelModel;
   title?: string;
   description?: string;
@@ -24,11 +23,10 @@ export interface Props extends Themeable2 {
   error?: string;
 }
 
-export class PanelHeaderCorner extends Component<Props> {
-  timeSrv: TimeSrv = getTimeSrv();
+export function PanelHeaderCorner({ panel, links, error }: Props) {
+  const styles = useStyles2(getContentStyles);
 
-  getInfoMode = () => {
-    const { panel, error } = this.props;
+  const getInfoMode = useCallback(() => {
     if (error) {
       return InfoMode.Error;
     }
@@ -40,23 +38,21 @@ export class PanelHeaderCorner extends Component<Props> {
     }
 
     return undefined;
-  };
+  }, [panel, error]);
 
-  getInfoContent = (): JSX.Element => {
-    const { panel, theme } = this.props;
+  const getInfoContent = useCallback((): JSX.Element => {
     const markdown = panel.description || '';
     const interpolatedMarkdown = getTemplateSrv().replace(markdown, panel.scopedVars);
     const markedInterpolatedMarkdown = renderMarkdown(interpolatedMarkdown);
-    const links = this.props.links && this.props.links.getLinks(panel.replaceVariables);
-    const styles = getContentStyles(theme);
+    const linksList = links && links.getLinks(panel.replaceVariables);
 
     return (
       <div className={styles.content}>
         <div dangerouslySetInnerHTML={{ __html: markedInterpolatedMarkdown }} />
 
-        {links && links.length > 0 && (
+        {linksList && linksList.length > 0 && (
           <ul className={styles.cornerLinks}>
-            {links.map((link, idx) => {
+            {linksList.map((link, idx) => {
               return (
                 <li key={idx}>
                   <a href={link.href} target={link.target}>
@@ -69,39 +65,36 @@ export class PanelHeaderCorner extends Component<Props> {
         )}
       </div>
     );
-  };
+  }, [panel, links, styles]);
 
   /**
    * Open the Panel Inspector when we click on an error
    */
-  onClickError = () => {
+  const onClickError = useCallback(() => {
     locationService.partial({
-      inspect: this.props.panel.id,
+      inspect: panel.id,
       inspectTab: InspectTab.Error,
     });
-  };
+  }, [panel.id]);
 
-  render() {
-    const { error } = this.props;
-    const infoMode: InfoMode | undefined = this.getInfoMode();
+  const infoMode: InfoMode | undefined = getInfoMode();
 
-    if (!infoMode) {
-      return null;
-    }
-
-    if (infoMode === InfoMode.Error && error) {
-      return <PanelInfoCorner infoMode={infoMode} content={error} onClick={this.onClickError} />;
-    }
-
-    if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {
-      return <PanelInfoCorner infoMode={infoMode} content={this.getInfoContent} />;
-    }
-
+  if (!infoMode) {
     return null;
   }
+
+  if (infoMode === InfoMode.Error && error) {
+    return <PanelInfoCorner infoMode={infoMode} content={error} onClick={onClickError} />;
+  }
+
+  if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {
+    return <PanelInfoCorner infoMode={infoMode} content={getInfoContent} />;
+  }
+
+  return null;
 }
 
-export default withTheme2(PanelHeaderCorner);
+export default PanelHeaderCorner;
 
 interface PanelInfoCornerProps {
   infoMode: InfoMode;
