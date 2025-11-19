@@ -8,10 +8,10 @@ import {
   DataQueryResponse,
   DataTopic,
   dateTime,
-  rangeUtil,
-  TimeRange,
   LoadingState,
+  rangeUtil,
   store,
+  TimeRange,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -219,6 +219,10 @@ export function runSplitGroupedQueries(
         mergedResponse = combineResponses(mergedResponse, partialResponse);
         if (!options.skipPartialUpdates) {
           mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
+        }
+
+        if (mergedResponse.state === LoadingState.Error) {
+          done();
         }
       },
       complete: () => {

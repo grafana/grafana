@@ -137,10 +137,8 @@ export function isRetriableError(errorResponse: DataQueryResponse) {
     ? (errorResponse.errors[0].message ?? '').toLowerCase()
     : (errorResponse.error?.message ?? '');
 
-  // @todo make this more generic by not retrying on any 4xx
-
-  // max_query_bytes_read exceeded
-  if (message.includes('the query would read too many bytes')) {
+  // max_query_bytes_read exceeded, currently 500 when should be 4xx
+  if (message.includes('the query would read too many bytes') || is4xxError(errorResponse)) {
     throw new Error(message);
   }
   if (message.includes('timeout')) {
@@ -151,4 +149,13 @@ export function isRetriableError(errorResponse: DataQueryResponse) {
     return false;
   }
   throw new Error(message);
+}
+
+/**
+ * Currently Loki always returns a 500 for every error response type in the response body, and this is what Grafana uses to populate the DataQueryError,
+ * so this won't currently work, but hopefully this is something we can fix in the backend
+ * @param errorResponse
+ */
+export function is4xxError(errorResponse: DataQueryResponse) {
+  return errorResponse.errors?.some((err) => err.status && Array.from(err.status?.toString())[0] === '4');
 }
