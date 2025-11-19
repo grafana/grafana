@@ -18,12 +18,15 @@ interface Props {
 }
 
 export function PanelGroupByAction({ groupByVariable, queries }: Props) {
+  const { options: groupByOptions } = groupByVariable.useState();
+
   const styles = useStyles2(getStyles);
 
   const [options, setOptions] = useState<OptionWithChecked[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [reloadOptions, setReloadOptions] = useState(false);
 
   const handleItemClick = useCallback((item: OptionWithChecked) => {
     setOptions((prevOptions) =>
@@ -56,35 +59,54 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchOptions = async () => {
-      if (!groupByVariable) {
+  const fetchOptions = useCallback(async () => {
+    if (!groupByVariable || !reloadOptions) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (groupByOptions.length === 0) {
+        await lastValueFrom(groupByVariable.validateAndUpdate());
         return;
       }
 
-      setIsLoading(true);
-      try {
-        const applicableOptions = await getGroupByOptions(groupByVariable, queries);
-        const currentValue = groupByVariable.state.value || [];
-        const currentValues = Array.isArray(currentValue) ? currentValue : [currentValue];
+      const values = groupByOptions.map((option) => option.value);
+      const applicability = await groupByVariable.getGroupByApplicabilityForQueries(values, queries);
 
-        const optionsWithChecked: OptionWithChecked[] = applicableOptions.map((opt) => ({
-          ...opt,
-          checked: currentValues.includes(opt.value),
-        }));
+      const applicableOptions = applicability
+        ? applicability.filter((item) => item.applicable).map((item) => ({ label: item.key, value: item.key }))
+        : groupByOptions;
 
-        setOptions(optionsWithChecked);
-      } catch (error) {
-        setOptions([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      const currentValues = Array.isArray(groupByVariable.state.value)
+        ? groupByVariable.state.value
+        : groupByVariable.state.value
+          ? [groupByVariable.state.value]
+          : [];
 
+      const optionsWithChecked: OptionWithChecked[] = applicableOptions.map((opt) => ({
+        ...opt,
+        checked: currentValues.includes(opt.value),
+      }));
+
+      setOptions(optionsWithChecked);
+    } catch (error) {
+      setOptions([]);
+    } finally {
+      setIsLoading(false);
+      setReloadOptions(false);
+    }
+  }, [groupByOptions, groupByVariable, queries, reloadOptions]);
+
+  useEffect(() => {
+    setReloadOptions(true);
+  }, [groupByOptions, queries]);
+
+  useEffect(() => {
     if (isOpen) {
       fetchOptions();
     }
-  }, [isOpen, groupByVariable, queries]);
+  }, [fetchOptions, isOpen]);
 
   const filteredOptions = useMemo(() => {
     if (!searchValue) {
@@ -171,27 +193,6 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
       </Button>
     </Dropdown>
   );
-}
-
-async function getGroupByOptions(groupByVariable: GroupByVariable, queries: SceneDataQuery[]) {
-  if (!groupByVariable.state.options || groupByVariable.state.options.length === 0) {
-    await lastValueFrom(groupByVariable.validateAndUpdate());
-  }
-
-  const options = groupByVariable.state.options;
-
-  if (!options || options.length === 0) {
-    return [];
-  }
-
-  const values = options.map((option) => option.value);
-  const applicability = await groupByVariable.getGroupByApplicabilityForQueries(values, queries);
-
-  if (!applicability) {
-    return options;
-  }
-
-  return applicability.filter((item) => item.applicable).map((item) => ({ label: item.key, value: item.key }));
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -9,10 +9,10 @@ import {
   SceneQueryRunner,
   VizPanel,
   SceneDataState,
+  sceneUtils,
 } from '@grafana/scenes';
 
 import { PanelGroupByAction } from './PanelGroupByAction';
-import { DataSourceRef } from '@grafana/data';
 
 export interface VizPanelHeaderActionsState extends SceneObjectState {
   hideGroupByAction?: boolean;
@@ -68,51 +68,34 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
 }
 
 export function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHeaderActions>) {
-  const panel = model.parent!;
   const data = model.getData();
   const queryRunner = model.getQueryRunner(data);
-  const datasourceUid = queryRunner?.state.datasource?.uid;
 
   const queries = data?.data?.request?.targets ?? [];
 
   const { variables } = sceneGraph.getVariables(model).useState();
   const groupByVariable = useMemo(() => variables.find((variable) => variable instanceof GroupByVariable), [variables]);
 
-  const groupByState = groupByVariable?.useState();
+  const { datasource, applicabilityEnabled } = groupByVariable?.useState() ?? {
+    datasource: null,
+    applicabilityEnabled: false,
+  };
+  const { datasource: queryRunnerDs } = queryRunner?.useState() ?? { datasource: undefined };
 
-  const groupByActionRender = useMemo(
-    () => checkGroupByActionRender(queryRunner, groupByVariable, datasourceUid, groupByState),
-    [queryRunner, groupByVariable, groupByState, datasourceUid]
+  const shouldRenderGroupByAction = useMemo(
+    () =>
+      !model.state.hideGroupByAction &&
+      sceneUtils.verifyDrilldownApplicability(model, queryRunnerDs, datasource, applicabilityEnabled),
+    [applicabilityEnabled, datasource, model, queryRunnerDs]
   );
 
   useEffect(() => {
-    const teardown = model.updatePanelShowAlwaysMenu(groupByActionRender);
+    const teardown = model.updatePanelShowAlwaysMenu(shouldRenderGroupByAction);
 
     return teardown;
-  }, [groupByActionRender, model, panel]);
+  }, [shouldRenderGroupByAction, model]);
 
   return (
-    <>
-      {!model.state.hideGroupByAction && groupByActionRender && (
-        <PanelGroupByAction groupByVariable={groupByVariable!} queries={queries} />
-      )}
-    </>
-  );
-}
-
-function checkGroupByActionRender(
-  queryRunner: SceneQueryRunner | null,
-  groupByVariable: GroupByVariable | undefined,
-  panelDsUid: string | undefined,
-  groupByState?: { applicabilityEnabled?: boolean; datasource?: DataSourceRef | null }
-): boolean {
-  if (!groupByVariable || !queryRunner) {
-    return false;
-  }
-
-  const dsUid = sceneGraph.interpolate(queryRunner, panelDsUid);
-  return Boolean(
-    dsUid === sceneGraph.interpolate(groupByVariable, groupByState?.datasource?.uid) &&
-      groupByState?.applicabilityEnabled
+    <>{shouldRenderGroupByAction && <PanelGroupByAction groupByVariable={groupByVariable!} queries={queries} />}</>
   );
 }
