@@ -2598,8 +2598,7 @@
         "firing": "Firing",
         "normal": "Normal",
         "pending": "Pending",
-        "recovering": "Recovering",
-        "unknown": "Unknown"
+        "recovering": "Recovering"
       },
       "type": {
         "alert": "Alert rule",
