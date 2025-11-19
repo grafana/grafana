@@ -7792,6 +7792,14 @@
     "name-show-threshold-labels": "Schwellenwert-Labels anzeigen",
     "name-show-threshold-markers": "Schwellenwert-Markierungen anzeigen",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9002,6 +9010,13 @@
       "copy": "In Zwischenablage kopieren",
       "csv-counts": "",
       "csv-placeholder": "CSV hier eingeben …",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filterwerte",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Groß-/Kleinschreibung beachten",
@@ -12406,8 +12421,10 @@
       "cancel": "Abbrechen",
       "error-title": "",
       "input": {
-        "placeholder": "Bereiche auswählen …",
-        "removeAll": "Alle Bereiche entfernen"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Alle Bereiche entfernen",
+        "tooltip": ""
       },
       "title": "Bereiche auswählen"
     },

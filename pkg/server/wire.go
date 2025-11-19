@@ -181,6 +181,7 @@ import (
 	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
 	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -465,6 +466,8 @@ var wireBasicSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
+	unifiedmigrations.ProvideUnifiedStorageMigrationProvider,
+	wire.Bind(new(unifiedmigrations.UnifiedStorageMigrationProvider), new(*unifiedmigrations.UnifiedStorageMigrationProviderImpl)),
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
