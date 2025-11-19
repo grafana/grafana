@@ -431,10 +431,6 @@ const (
 	// Enables column autocomplete for SQL Expressions
 	FlagSqlExpressionsColumnAutoComplete = "sqlExpressionsColumnAutoComplete"
 
-	// FlagNewPDFRendering
-	// New implementation for the dashboard-to-PDF rendering
-	FlagNewPDFRendering = "newPDFRendering"
-
 	// FlagKubernetesAggregator
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
