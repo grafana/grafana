@@ -96,6 +96,7 @@ func ProvideTeamPermissions(
 				return fmt.Errorf("invalid team permission type %s", permission)
 			}
 		},
+		RestConfigProvider: restConfigProvider,
 	}
 
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)

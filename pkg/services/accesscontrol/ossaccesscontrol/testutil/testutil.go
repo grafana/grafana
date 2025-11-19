@@ -93,6 +93,5 @@ func ProvideFolderPermissions(
 		teamSvc,
 		userSvc,
 		actionSets,
-		apiserver.WithoutRestConfig,
 	)
 }
