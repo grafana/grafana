@@ -1036,6 +1036,8 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 
 	// Record the number of objects indexed for the kind/resource
+	// We don't pass searchStats to DocCount here, as it's not really user-initiated search. Time spent
+	// here will be recorded in the index build time instead.
 	docCount, err := index.DocCount(ctx, "", nil)
 	if err != nil {
 		logger.Warn("error getting doc count", "error", err)
