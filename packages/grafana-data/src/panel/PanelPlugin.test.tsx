@@ -1,14 +1,18 @@
+import { createDataFrame } from '../dataframe/processDataFrame';
 import { identityOverrideProcessor } from '../field/overrides/processors';
 import {
   StandardEditorsRegistryItem,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
 } from '../field/standardFieldConfigEditorRegistry';
+import { FieldType } from '../types/dataFrame';
 import { FieldConfigProperty, FieldConfigPropertyItem } from '../types/fieldOverrides';
 import { PanelMigrationModel } from '../types/panel';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '../types/suggestions';
 import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 
 import { PanelPlugin } from './PanelPlugin';
+import { getPanelDataSummary } from './suggestions/getPanelDataSummary';
 
 describe('PanelPlugin', () => {
   describe('declarative options', () => {
@@ -485,6 +489,64 @@ describe('PanelPlugin', () => {
   });
 
   describe('suggestions', () => {
-    // TODO: add tests for suggestions methods, including test to ensure deprecated signature does not throw
+    it('should register a suggestions supplier', () => {
+      const panel = new PanelPlugin(() => <div>Panel</div>);
+      panel.meta = panel.meta || {};
+      panel.meta.id = 'test-panel';
+      panel.meta.name = 'Test Panel';
+
+      panel.setSuggestionsSupplier((ds) => {
+        if (!ds.hasFieldType(FieldType.number)) {
+          return;
+        }
+
+        return [
+          {
+            name: 'Number Panel',
+            score: VisualizationSuggestionScore.Good,
+          },
+        ];
+      });
+
+      expect(panel.hasSuggestions()).toBe(true);
+      const suggestions = panel.getSuggestions(
+        getPanelDataSummary([createDataFrame({ fields: [{ type: FieldType.number, name: 'Value' }] })])
+      );
+      expect(suggestions).toHaveLength(1);
+      expect(suggestions![0].pluginId).toBe(panel.meta.id);
+      expect(suggestions![0].name).toBe('Number Panel');
+
+      expect(
+        panel.getSuggestions(
+          getPanelDataSummary([createDataFrame({ fields: [{ type: FieldType.string, name: 'Value' }] })])
+        )
+      ).toBeUndefined();
+    });
+
+    it('should not throw for the old syntax, but also should not register suggestions', () => {
+      jest.spyOn(console, 'warn').mockImplementation();
+
+      class DeprecatedSuggestionsSupplier {
+        getSuggestionsForData(builder: VisualizationSuggestionsBuilder): void {
+          const appender = builder.getListAppender({
+            name: 'Deprecated Suggestion',
+            pluginId: 'deprecated-plugin',
+            options: {},
+          });
+
+          if (builder.dataSummary.hasNumberField) {
+            appender.append({});
+          }
+        }
+      }
+
+      const panel = new PanelPlugin(() => <div>Panel</div>);
+
+      expect(() => {
+        panel.setSuggestionsSupplier(new DeprecatedSuggestionsSupplier());
+      }).not.toThrow();
+      expect(console.warn).toHaveBeenCalled();
+      expect(panel.hasSuggestions()).toBe(false);
+    });
   });
 });

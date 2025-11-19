@@ -18,7 +18,7 @@ import {
   PanelPluginVisualizationSuggestion,
   VisualizationSuggestion,
   VisualizationSuggestionsSupplierDeprecated,
-  VisualizationSuggestionsSupplierFn,
+  VisualizationSuggestionsSupplier,
 } from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
@@ -115,7 +115,7 @@ export class PanelPlugin<
   };
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
-  private suggestionsSupplier?: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>;
+  private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -369,24 +369,24 @@ export class PanelPlugin<
   }
 
   /**
-   * @deprecated use VisualizationSuggestionsSupplierFn
+   * @deprecated use VisualizationSuggestionsSupplier
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierDeprecated): this;
   /**
    * @alpha
    * sets function that can return visualization examples and suggestions.
    */
-  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>): this;
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>): this;
   setSuggestionsSupplier(
     supplier:
-      | VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>
+      | VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>
       | VisualizationSuggestionsSupplierDeprecated
   ): this {
     if (typeof supplier !== 'function') {
       deprecationWarning(
         'PanelPlugin',
-        'plugin.setSuggestionsSupplier(VisualizationSuggestionsSupplier)',
-        'plugin.setSuggestionsSupplier(VisualizationSuggestionsSupplierFn)'
+        'plugin.setSuggestionsSupplier(new Supplier())',
+        'plugin.setSuggestionsSupplier(dataSummary => [...])'
       );
       return this;
     }

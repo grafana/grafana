@@ -71,13 +71,29 @@ export enum VisualizationSuggestionScore {
  * - returns an array of VisualizationSuggestions
  * - boolean return equates to "show a single suggestion card for this panel plugin with the default options" (true = show, false or void = hide)
  */
-export type VisualizationSuggestionsSupplierFn<TOptions extends unknown, TFieldConfig extends {} = {}> = (
+export type VisualizationSuggestionsSupplier<TOptions extends unknown, TFieldConfig extends {} = {}> = (
   panelDataSummary: PanelDataSummary
 ) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | void;
 
 /**
- * @deprecated use VisualizationSuggestionsSupplierFn
+ * DEPRECATED - the below exports need to remain in the code base to help make the transition for the Polystat plugin, which implements
+ * suggestions using the old API. These should be removed for Grafana 13.
+ */
+/**
+ * @deprecated use VisualizationSuggestionsSupplier
  */
 export interface VisualizationSuggestionsSupplierDeprecated {
-  getSuggestionsForData: (builder: unknown) => void;
+  getSuggestionsForData: (builder: VisualizationSuggestionsBuilder) => void;
+}
+
+/**
+ * @deprecated use VisualizationSuggestionsSupplier
+ */
+export interface VisualizationSuggestionsBuilder {
+  dataSummary: PanelDataSummary;
+  getListAppender: <Options extends unknown, FieldConfig extends {}>(
+    suggestion: PanelPluginVisualizationSuggestion<Options, FieldConfig>
+  ) => {
+    append: (suggestion: VisualizationSuggestion<Options, FieldConfig>) => void;
+  };
 }

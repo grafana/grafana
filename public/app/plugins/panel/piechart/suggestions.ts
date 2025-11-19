@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
 
-import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplierFn } from '@grafana/data';
+import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode } from '@grafana/schema';
 import { defaultReduceOptions } from 'app/features/panel/suggestions/utils';
@@ -24,7 +24,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
 const SLICE_MAX = 30;
 const SLICE_MIN = 2;
 
-export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
+export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (dataSummary) => {
   if (!dataSummary.hasFieldType(FieldType.number)) {
     return;
   }
