@@ -121,7 +121,6 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
             onChange={onChange}
             trackSearch={trackSearch}
             searchQuery={searchQuery}
-            panel={panelModel}
             data={data}
           />
         )}
