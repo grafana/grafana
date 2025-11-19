@@ -102,7 +102,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
           <Grid columns={gridColumns} gap={1}>
             {showSqlCard && (
               <SqlExpressionCard
-                name={t('dashboard-scene.empty-transformations-message.sql-name', 'SQL Expressions')}
+                name={t('dashboard-scene.empty-transformations-message.sql-name', 'Transform with SQL')}
                 description={t(
                   'dashboard-scene.empty-transformations-message.sql-transformation-description',
                   'Manipulate your data using MySQL-like syntax'
