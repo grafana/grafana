@@ -14,6 +14,7 @@ interface UseGeneratorHookOptions {
    */
   populateCache?: boolean;
   limitAlerts?: number;
+  ruleLimit?: number;
 }
 
 interface FetchGroupsOptions {
@@ -61,10 +62,11 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
   const { populateGroupsResponseCache } = usePopulateGrafanaPrometheusApiCache();
 
   const getGroupsAndProvideCache = useCallback(
-    async (fetchOptions: GrafanaFetchGroupsOptions) => {
+    async (fetchOptions: GrafanaFetchGroupsOptions, overrideRuleLimit?: number) => {
       const response = await getGrafanaGroups({
         ...fetchOptions,
         limitAlerts: hookOptions.limitAlerts,
+        ruleLimit: overrideRuleLimit ?? hookOptions.ruleLimit,
         ...fetchOptions.filter,
       }).unwrap();
 
@@ -74,13 +76,19 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
 
       return response;
     },
-    [getGrafanaGroups, hookOptions.limitAlerts, hookOptions.populateCache, populateGroupsResponseCache]
+    [
+      getGrafanaGroups,
+      hookOptions.limitAlerts,
+      hookOptions.ruleLimit,
+      hookOptions.populateCache,
+      populateGroupsResponseCache,
+    ]
   );
 
   return useCallback(
-    async function* (groupLimit: number, filter?: GrafanaPromApiFilter) {
+    async function* (groupLimit: number, filter?: GrafanaPromApiFilter, overrideRuleLimit?: number) {
       yield* genericGroupsGenerator(
-        (fetchOptions) => getGroupsAndProvideCache({ ...fetchOptions, filter }),
+        (fetchOptions) => getGroupsAndProvideCache({ ...fetchOptions, filter }, overrideRuleLimit),
         groupLimit
       );
     },

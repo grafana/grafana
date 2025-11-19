@@ -23,6 +23,7 @@ import {
   getExternalRulesSources,
   isSupportedExternalRulesSourceType,
 } from '../../utils/datasource';
+import { RULE_LIMIT_WITH_BACKEND_FILTERS } from '../paginationLimits';
 import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
 import { getDatasourceFilter, getGrafanaFilter } from './filters';
@@ -82,8 +83,14 @@ export function useFilteredRulesIteratorProvider() {
 
     const { backendFilter, frontendFilter } = getGrafanaFilter(filterState);
 
+    const needsClientSideFiltering = hasClientSideFilters(filterState);
+
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
-      grafanaGroupsGenerator(groupLimit, backendFilter)
+      grafanaGroupsGenerator(
+        groupLimit,
+        backendFilter,
+        needsClientSideFiltering ? undefined : RULE_LIMIT_WITH_BACKEND_FILTERS
+      )
     ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>
