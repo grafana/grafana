@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - docs/sources/developers/plugins/plugin.schema.json
+      - docs/sources/developer-resources/plugins/plugin.schema.json
   workflow_dispatch:
 
 # These permissions are needed to assume roles from Github's OIDC.
