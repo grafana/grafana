@@ -1,6 +1,11 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
+import {
+  Spec as DashboardV2Spec,
+  GridLayoutItemKind,
+  RowsLayoutRowKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -180,6 +185,71 @@ describe('Backend / Frontend result comparison', () => {
   // Filter to only process v1beta1 input files
   const v1beta1Inputs = jsonInputs.filter((inputFile) => inputFile.startsWith('v1beta1.'));
 
+  /**
+   * Normalizes backend output to match frontend behavior.
+   * The backend sets repeat properties on library panel grid items from the library panel definition,
+   * but the frontend only sets repeat when explicitly set on the panel instance.
+   * This function removes repeat properties from library panel items where they weren't set on the instance.
+   *
+   * The difference in behavior is due to how the frontend conversion is done.
+   * It is not feasible to fetch all library panels async in all cases where the transformation is done.
+   * Library panel repeats will be set by the library panel behavior in those cases.
+   */
+  function normalizeBackendOutputForFrontendComparison(
+    backendSpec: DashboardV2Spec,
+    inputPanels: Array<{ id?: number; libraryPanel?: { uid?: string }; repeat?: string }>
+  ): DashboardV2Spec {
+    const normalized = JSON.parse(JSON.stringify(backendSpec)) as DashboardV2Spec;
+
+    // Create a map of panel ID to whether it has explicit repeat
+    const panelHasExplicitRepeat = new Map<number, boolean>();
+    inputPanels.forEach((panel) => {
+      if (panel.id !== undefined) {
+        panelHasExplicitRepeat.set(panel.id, !!panel.repeat);
+      }
+    });
+
+    // Helper to recursively process grid items
+    function processGridItems(items: GridLayoutItemKind[]): void {
+      if (!Array.isArray(items)) {
+        return;
+      }
+
+      items.forEach((item) => {
+        if (item.spec?.element?.name) {
+          // Extract panel ID from element name (format: "panel-{id}")
+          const match = item.spec.element.name.match(/^panel-(\d+)$/);
+          if (match) {
+            const panelId = parseInt(match[1], 10);
+            const hasExplicitRepeat = panelHasExplicitRepeat.get(panelId);
+
+            // If this is a library panel item and repeat wasn't explicitly set on the instance,
+            // remove the repeat property (backend adds it from library panel definition)
+            if (hasExplicitRepeat === false && item.spec.repeat) {
+              delete item.spec.repeat;
+            }
+          }
+        }
+      });
+    }
+
+    // Process GridLayout items
+    if (normalized.layout?.kind === 'GridLayout' && normalized.layout.spec?.items) {
+      processGridItems(normalized.layout.spec.items);
+    }
+
+    // Process RowsLayout items
+    if (normalized.layout?.kind === 'RowsLayout' && normalized.layout.spec?.rows) {
+      normalized.layout.spec.rows.forEach((row: RowsLayoutRowKind) => {
+        if (row.spec?.layout?.kind === 'GridLayout' && row.spec.layout.spec?.items) {
+          processGridItems(row.spec.layout.spec.items);
+        }
+      });
+    }
+
+    return normalized;
+  }
+
   v1beta1Inputs.forEach((inputFile) => {
     it(`should convert ${inputFile} spec to match backend conversion`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
@@ -205,8 +275,13 @@ describe('Backend / Frontend result comparison', () => {
         expect(frontendOutput.spec).toBeDefined();
         expect(backendOutput.spec).toBeDefined();
 
+        // Normalize backend output to account for differences in library panel repeat handling
+        // Backend sets repeat from library panel definition, frontend only sets it when explicit on instance
+        const inputPanels = jsonInput.spec?.panels || [];
+        const normalizedBackendSpec = normalizeBackendOutputForFrontendComparison(backendOutput.spec, inputPanels);
+
         // Compare the spec structures
-        expect(backendOutput.spec).toEqual(frontendOutput.spec);
+        expect(normalizedBackendSpec).toEqual(frontendOutput.spec);
 
         // Verify the conversion doesn't throw errors and produces a valid structure
         expect(() => JSON.stringify(frontendOutput)).not.toThrow();

@@ -8,7 +8,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';
@@ -102,9 +102,15 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     // Skip migrating repeat options from library panel when using dynamic dashboards (dashboardNewLayouts),
     // as repeat options should only come from the dashboard panel instance (grid item),
     // not from the library panel definition.
-    const shouldSkipRepeatMigration = config.featureToggles.dashboardNewLayouts;
+    // Exception: Public dashboards and scripted dashboards still need this migration
+    // even when dashboardNewLayouts is enabled. This is because public and scripted dashboard migrations are still handled in the frontend.
+    const dashboard = getDashboardSceneFor(this);
+    const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
+    const isScriptedDashboard = dashboard.state.meta.fromScript === true;
+    const shouldSkipRepeatMigration =
+      config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard;
 
-    // Migrate repeat options to layout element (only for legacy dashboards)
+    // Migrate repeat options to layout element (only for legacy dashboards, or public/scripted dashboards)
     if (!shouldSkipRepeatMigration && libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
       layoutElement.setState({
         variableName: libPanelModel.repeat,
