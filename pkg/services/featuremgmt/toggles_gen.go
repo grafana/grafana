@@ -455,6 +455,10 @@ const (
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
 
+	// FlagRefreshTokenRequired
+	// Require that refresh tokens are present in oauth tokens.
+	FlagRefreshTokenRequired = "refreshTokenRequired"
+
 	// FlagNewDashboardWithFiltersAndGroupBy
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"

@@ -3542,6 +3542,20 @@
     },
     {
       "metadata": {
+        "name": "refreshTokenRequired",
+        "resourceVersion": "1763561990273",
+        "creationTimestamp": "2025-11-19T14:19:50Z"
+      },
+      "spec": {
+        "description": "Require that refresh tokens are present in oauth tokens.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "regressionTransformation",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-11-24T14:49:16Z",
