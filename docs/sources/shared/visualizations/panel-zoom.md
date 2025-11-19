@@ -1,7 +1,7 @@
 ---
 title: Panel mouse time zoom
 comments: |
-  This file is used in the following visualizations: time series.
+  This file is used in the following visualizations: candlestick, heatmap, state timeline, status history, time series.
 ---
 
 You can zoom the panel time range in and out, which in turn, changes the dashboard time range.
