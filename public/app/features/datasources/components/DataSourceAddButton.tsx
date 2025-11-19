@@ -16,7 +16,12 @@ export function DataSourceAddButton(): JSX.Element | null {
   }, []);
 
   return canCreateDataSource ? (
-    <LinkButton icon="plus" href={config.appSubUrl + ROUTES.DataSourcesNew} onClick={handleClick}>
+    <LinkButton
+      icon="plus"
+      href={config.appSubUrl + ROUTES.DataSourcesNew}
+      onClick={handleClick}
+      data-testid="data-source-add-button"
+    >
       <Trans i18nKey="data-sources.datasource-add-button.label">Add new data source</Trans>
     </LinkButton>
   ) : null;
