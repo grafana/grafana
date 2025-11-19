@@ -32,7 +32,7 @@ Create a directory structure in your repository to organize your Grafana and das
 
 The Grafana Operator allows you to authenticate with the Grafana instance using the Grafana Custom Resource (CR).
 
-1. **Create the Grafana API Token Secret:**
+### Create the Grafana API Token Secret
 
 Store the Grafana API Token in a secret. Create a file named `grafana-token.yml` in the `grafana` folder in your Git repository:
 
@@ -52,7 +52,7 @@ Replace the placeholders with your values:
 - `<GRAFANA_API_KEY>`: API key from your Grafana instance. To create an API key, refer to [Grafana API Key Documentation](/docs/grafana/latest/administration/api-keys/)
 - `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
-2. **Configure the Grafana Custom Resource:**
+### Configure the Grafana Custom Resource
 
 Set up the connection to your Grafana Cloud instance. Create a file named `grafana-cloud.yml` in the `grafana` folder in your Git repository:
 
@@ -282,14 +282,9 @@ To update an existing dashboard:
 3. ArgoCD detects the update and synchronizes the changes to your Custom Resource
 4. Grafana Operator then syncs changes to the Grafana instance
 
-## Validate your dashboard updates
+### Validate your dashboard updates
 
 Log in to your Grafana dashboard and confirm that the changes are applied. You should see the dashboard updates reflected in the Grafana UI.
-
-## Additional considerations
-
-- You can install the Grafana Operator's Helm Chart using ArgoCD to manage your setup with GitOps
-- You can follow a similar setup for Grafana Folders and other resources
 
 ## Next steps
 
@@ -300,3 +295,8 @@ To learn more about managing Grafana using Grafana Operator:
 - [Grafana Operator documentation](https://grafana.github.io/grafana-operator/docs/)
 - [Grafana dashboard provisioning](/docs/grafana/latest/administration/provisioning/#dashboards)
 - [ArgoCD best practices](https://argo-cd.readthedocs.io/en/stable/user-guide/best_practices/)
+
+### Additional considerations
+
+- You can install the Grafana Operator's Helm Chart using ArgoCD to manage your setup with GitOps
+- You can follow a similar setup for Grafana Folders and other resources

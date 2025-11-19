@@ -25,7 +25,7 @@ Before you begin, make sure you have the following:
 
 The Grafana Operator allows you to authenticate with your Grafana instance using the Grafana Custom Resource (CR).
 
-1. **Create the Grafana API Token Secret:**
+### Create the Grafana API Token Secret
 
 Store the Grafana API Token in a secret with the following content in a file named `grafana-token.yml`:
 
@@ -45,7 +45,7 @@ Replace the placeholders with your values:
 - `<GRAFANA_API_KEY>`: API key from your Grafana instance. To create an API key, refer to [Grafana API Key Documentation](/docs/grafana/latest/administration/api-keys/)
 - `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
-2. **Configure the Grafana Custom Resource:**
+### Configure the Grafana Custom Resource
 
 Set up connection to your Grafana Cloud instance. Create a file named `grafana-cloud.yml`:
 
@@ -78,7 +78,9 @@ This example uses the Prometheus data source. Note that the required arguments v
 
 {{< /admonition >}}
 
-1. Create a data source configuration and save the new YAML file `datasource.yml`:
+### Create a data source configuration 
+
+Create and save a new YAML file `datasource.yml` with your data source's configuration:
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
@@ -109,7 +111,7 @@ Replace the placeholders with your values:
 - `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud stack
 - `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
-2. Add a dashboard to a folder
+### Add a dashboard to a folder
 
 Use the following YAML definition to create a simple dashboard in the Grafana instance under a custom folder. If the folder defined under the `spec.folder` field doesn't exist, the operator creates it before placing the dashboard inside the folder.
 
@@ -139,7 +141,7 @@ Replace the placeholders with your values:
 - `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud stack
 - `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
-## Apply Kubernetes manifests
+## Apply the Kubernetes manifests
 
 In a terminal, run the following commands from the directory where all of the above Kubernetes YAML definitions are located.
 
