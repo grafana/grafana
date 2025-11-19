@@ -1449,3 +1449,66 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 		})
 	}
 }
+
+func TestSocialAzureAD_TokenSource_ManagedIdentity(t *testing.T) {
+	info := &social.OAuthInfo{
+		ClientId:                    "client-id",
+		ClientAuthentication:        social.ManagedIdentity,
+		ManagedIdentityClientID:     "mi-client-id",
+		FederatedCredentialAudience: "api://AzureADTokenExchange",
+		TokenUrl:                    "https://login.microsoftonline.com/token",
+	}
+
+	s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+
+	// Mock the managed identity token provider
+	s.managedIdentityTokenProvider = func(ctx context.Context, info *social.OAuthInfo) (string, error) {
+		return "mock-client-assertion", nil
+	}
+
+	// Mock the token endpoint
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Error(err)
+		}
+		// Verify that client_assertion is present in the request
+		if r.FormValue("client_assertion") != "mock-client-assertion" {
+			t.Errorf("expected client_assertion to be 'mock-client-assertion', got '%s'", r.FormValue("client_assertion"))
+		}
+		if r.FormValue("client_assertion_type") != "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" {
+			t.Errorf("expected client_assertion_type to be 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer', got '%s'", r.FormValue("client_assertion_type"))
+		}
+		if r.FormValue("grant_type") != "refresh_token" {
+			t.Errorf("expected grant_type to be 'refresh_token', got '%s'", r.FormValue("grant_type"))
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token":  "new-access-token",
+			"token_type":    "Bearer",
+			"refresh_token": "new-refresh-token",
+			"expires_in":    time.Now().Add(time.Hour).Unix(),
+		})
+	}))
+	defer server.Close()
+
+	// Update TokenURL to point to the mock server
+	s.Endpoint.TokenURL = server.URL
+
+	// Create a token source with an expired token
+	token := &oauth2.Token{
+		AccessToken:  "old-access-token",
+		RefreshToken: "old-refresh-token",
+		Expiry:       time.Now().Add(-time.Hour),
+	}
+
+	// Create a context with the mock client
+	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, server.Client())
+
+	// Get a new token (this should trigger a refresh)
+	ts := s.TokenSource(ctx, token)
+	newToken, err := ts.Token()
+	require.NoError(t, err)
+	require.Equal(t, "new-access-token", newToken.AccessToken)
+	require.Equal(t, "new-refresh-token", newToken.RefreshToken)
+}

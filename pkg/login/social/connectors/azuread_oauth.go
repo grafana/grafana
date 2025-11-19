@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -56,9 +57,10 @@ var _ ssosettings.Reloadable = (*SocialAzureAD)(nil)
 
 type SocialAzureAD struct {
 	*SocialBase
-	cache                remotecache.CacheStorage
-	allowedOrganizations []string
-	forceUseGraphAPI     bool
+	cache                        remotecache.CacheStorage
+	allowedOrganizations         []string
+	forceUseGraphAPI             bool
+	managedIdentityTokenProvider func(context.Context, *social.OAuthInfo) (string, error)
 }
 
 type azureClaims struct {
@@ -100,10 +102,11 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 	}
 
 	provider := &SocialAzureAD{
-		SocialBase:           s,
-		cache:                cache,
-		allowedOrganizations: allowedOrganizations,
-		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
+		SocialBase:                   s,
+		cache:                        cache,
+		allowedOrganizations:         allowedOrganizations,
+		forceUseGraphAPI:             MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
+		managedIdentityTokenProvider: getManagedIdentityToken,
 	}
 
 	if info.UseRefreshToken {
@@ -215,19 +218,118 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 	return s.Config.Exchange(ctx, code, authOptions...)
 }
 
+func (s *SocialAzureAD) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	if s.info.ClientAuthentication == social.ManagedIdentity {
+		return &AzureADTokenSource{
+			ctx:      ctx,
+			conf:     s.Config,
+			token:    t,
+			provider: s,
+		}
+	}
+
+	return s.Config.TokenSource(ctx, t)
+}
+
+type AzureADTokenSource struct {
+	ctx      context.Context
+	conf     *oauth2.Config
+	token    *oauth2.Token
+	provider *SocialAzureAD
+}
+
+func (s *AzureADTokenSource) Token() (*oauth2.Token, error) {
+	log := logging.FromContext(s.ctx)
+	log.Debug("Fetching Token from AzureAD Token Source")
+	if s.token.Valid() {
+		return s.token, nil
+	}
+
+	clientAssertion, err := s.provider.managedIdentityCallback(s.ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get client assertion: %w", err)
+	}
+
+	log.Debug("Using Client assertion")
+	v := url.Values{}
+	v.Set("grant_type", "refresh_token")
+	v.Set("refresh_token", s.token.RefreshToken)
+	v.Set("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+	v.Set("client_assertion", clientAssertion)
+
+	// We also need to pass client_id if it's not implied by client assertion (it usually is, but good to be safe or check spec).
+	// Azure AD with Client Assertion: https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-client-creds-grant-flow#second-case-access-token-request-with-a-certificate
+	// It says: client_id is required.
+	v.Set("client_id", s.conf.ClientID)
+
+	return s.fetchToken(v)
+}
+
+func (s *AzureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error) {
+	log := logging.FromContext(s.ctx)
+	req, err := http.NewRequestWithContext(s.ctx, "POST", s.conf.Endpoint.TokenURL, strings.NewReader(params.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Correct way to get HTTP client from context
+	httpClient, ok := s.ctx.Value(oauth2.HTTPClient).(*http.Client)
+	if !ok {
+		httpClient = http.DefaultClient
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	log.Debug("AzureADToken fetchToken upstream response size: %d, response status: %d", resp.ContentLength, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("oauth2: cannot fetch token: %v\nResponse: %s", resp.Status, body)
+	}
+
+	var rawResponse interface{}
+	if err := json.Unmarshal(body, &rawResponse); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal raw response body: %w", err)
+	}
+
+	var token *oauth2.Token
+	if err := json.Unmarshal(body, &token); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal token response body: %w", err)
+	}
+
+	log.Debug("AzureADToken fetchToken completed, expires at %s", token.Expiry.String())
+	return token.WithExtra(rawResponse), nil
+}
+
 // ManagedIdentityCallback retrieves a token using the managed identity credential of the Azure service.
 func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, error) {
+	return s.managedIdentityTokenProvider(ctx, s.info)
+}
+
+func getManagedIdentityToken(ctx context.Context, info *social.OAuthInfo) (string, error) {
 	// Validate required fields for Managed Identity authentication
-	if s.info.ManagedIdentityClientID == "" {
+	if info.ManagedIdentityClientID == "" {
 		return "", fmt.Errorf("ManagedIdentityClientID is required for Managed Identity authentication")
 	}
-	if s.info.FederatedCredentialAudience == "" {
+	if info.FederatedCredentialAudience == "" {
 		return "", fmt.Errorf("FederatedCredentialAudience is required for Managed Identity authentication")
 	}
 
 	// Prepare Managed Identity Credential
 	mic, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
-		ID: azidentity.ClientID(s.info.ManagedIdentityClientID),
+		ID: azidentity.ClientID(info.ManagedIdentityClientID),
 	})
 	if err != nil {
 		return "", fmt.Errorf("error constructing managed identity credential: %w", err)
@@ -235,7 +337,7 @@ func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, er
 
 	// Request token and return
 	tk, err := mic.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{fmt.Sprintf("%s/.default", s.info.FederatedCredentialAudience)},
+		Scopes: []string{fmt.Sprintf("%s/.default", info.FederatedCredentialAudience)},
 	})
 	if err != nil {
 		return "", fmt.Errorf("error getting managed identity token: %w", err)
