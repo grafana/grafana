@@ -2032,7 +2032,7 @@ var (
 		{
 			Name:         "dashboardTemplates",
 			Description:  "Enable template dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
 		},
