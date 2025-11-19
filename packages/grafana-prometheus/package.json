@@ -42,7 +42,8 @@
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "i18n-extract": "i18next-cli extract --sync-primary",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "node ../../scripts/prepare-npm-package.js"
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
