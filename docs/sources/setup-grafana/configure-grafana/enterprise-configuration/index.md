@@ -192,7 +192,7 @@ Name of the TrueType font file with italic style. Default is `DejaVuSansCondense
 
 ### font_min_text_size
 
-Minimum size in pixel that fonts can be rendered with. Default is `4`.
+The minimum pixel size that Grafana uses when rendering fonts. Default is `4`.
 
 ### max_retries_per_panel
 
