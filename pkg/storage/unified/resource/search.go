@@ -477,25 +477,24 @@ func (s *searchSupport) RebuildIndexes(ctx context.Context, req *resourcepb.Rebu
 		}, nil
 	}
 
-	completeCh := make(chan struct{})
-	rebuildCount := s.findIndexesToRebuild(importTimes, maps.Keys(filterKeys), time.Now(), completeCh)
-
-	if rebuildCount == 0 {
-		close(completeCh)
+	rebuildCount, completeChs := s.findIndexesToRebuild(importTimes, maps.Keys(filterKeys), time.Now(), true)
+	for _, ch := range completeChs {
+		select {
+		case <-ch:
+			continue
+		case <-ctx.Done(): // request was done before all indexes rebuilt
+			return &resourcepb.RebuildIndexesResponse{
+				RebuildCount: int64(rebuildCount),
+				Details:      fmt.Sprintf("returning before all index rebuilds completed for %d indexes", rebuildCount),
+			}, nil
+		}
 	}
 
-	select {
-	case <-completeCh: // waited for rebuild to complete
-		return &resourcepb.RebuildIndexesResponse{
-			RebuildCount: int64(rebuildCount),
-			Details:      fmt.Sprintf("completed %d index rebuilds", rebuildCount),
-		}, nil
-	case <-ctx.Done(): // request was done before indexes rebuilt
-		return &resourcepb.RebuildIndexesResponse{
-			RebuildCount: int64(rebuildCount),
-			Details:      fmt.Sprintf("returning before index rebuild completed for %d indexes", rebuildCount),
-		}, nil
-	}
+	// All rebuilds completed successfully
+	return &resourcepb.RebuildIndexesResponse{
+		RebuildCount: int64(rebuildCount),
+		Details:      fmt.Sprintf("completed %d index rebuilds", rebuildCount),
+	}, nil
 }
 
 func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
@@ -588,12 +587,12 @@ func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) 
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, nil, time.Now(), nil)
+			s.findIndexesToRebuild(importTimes, nil, time.Now(), false)
 		}
 	}
 }
 
-func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys iter.Seq[NamespacedResource], now time.Time, completeCh chan<- struct{}) int {
+func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys iter.Seq[NamespacedResource], now time.Time, withCompleteChs bool) (int, []chan struct{}) {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
@@ -604,6 +603,7 @@ func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResou
 		keys = slices.Values(s.search.GetOpenIndexes())
 	}
 
+	completeChs := make([]chan struct{}, 0)
 	rebuildCount := 0
 	for key := range keys {
 		idx := s.search.GetIndex(key)
@@ -631,6 +631,11 @@ func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResou
 		}
 
 		if shouldRebuildIndex(bi, s.minBuildVersion, minBuildTime, lastImportTime, nil) {
+			var completeCh chan struct{}
+			if withCompleteChs {
+				completeCh = make(chan struct{})
+				completeChs = append(completeChs, completeCh)
+			}
 			rebuildReq := NewRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, completeCh)
 			s.rebuildQueue.Add(rebuildReq)
 
@@ -640,7 +645,7 @@ func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResou
 			}
 		}
 	}
-	return rebuildCount
+	return rebuildCount, completeChs
 }
 
 func (s *searchSupport) getLastImportTimes(ctx context.Context, filterKeys map[NamespacedResource]struct{}) (map[NamespacedResource]time.Time, error) {
