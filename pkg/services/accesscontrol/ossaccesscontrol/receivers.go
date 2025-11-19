@@ -57,12 +57,13 @@ func ProvideReceiverPermissionsService(
 			string(models.PermissionEdit):  append([]string{}, ReceiversEditActions...),
 			string(models.PermissionAdmin): append([]string{}, ReceiversAdminActions...),
 		},
-		ReaderRoleName: "Alerting receiver permission reader",
-		WriterRoleName: "Alerting receiver permission writer",
-		RoleGroup:      models.AlertRolesGroup,
+		ReaderRoleName:     "Alerting receiver permission reader",
+		WriterRoleName:     "Alerting receiver permission writer",
+		RoleGroup:          models.AlertRolesGroup,
+		RestConfigProvider: restConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService, restConfigProvider)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
