@@ -54,6 +54,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "templateGroup",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
@@ -112,6 +113,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.Equal(t, v0alpha1.TemplateGroupSpec{
 			Title:   v0alpha1.DefaultTemplateTitle,
 			Content: defaultDefn.Template,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		}, actual.Spec)
 		defaultTemplateGroup = actual
 	})
@@ -226,6 +228,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				Spec: v0alpha1.TemplateGroupSpec{
 					Title:   fmt.Sprintf("template-group-1-%s", tc.user.Identity.GetLogin()),
 					Content: `{{ define "test" }} test {{ end }}`,
+					Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 				},
 			}
 			expected.SetProvenanceStatus("")
@@ -385,6 +388,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}, v1.CreateOptions{})
 	require.NoError(t, err)
@@ -428,6 +432,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
@@ -510,6 +515,7 @@ func TestIntegrationPatch(t *testing.T) {
 		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
@@ -568,6 +574,7 @@ func TestIntegrationListSelector(t *testing.T) {
 		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "test1",
 			Content: `{{ define "test1" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 	template1, err := adminClient.Create(ctx, template1, v1.CreateOptions{})
@@ -580,6 +587,7 @@ func TestIntegrationListSelector(t *testing.T) {
 		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "test2",
 			Content: `{{ define "test2" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 	template2, err = adminClient.Create(ctx, template2, v1.CreateOptions{})
