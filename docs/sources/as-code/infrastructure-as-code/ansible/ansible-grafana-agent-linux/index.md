@@ -5,6 +5,7 @@ keywords:
   - Grafana Cloud
   - Ansible
 title: Install Grafana Agent on a Linux host using Ansible
+menuTitle: Install the Grafana Agent using Ansible (deprecated)
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/ansible/ansible-grafana-agent-linux/
 ---

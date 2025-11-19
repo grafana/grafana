@@ -1,6 +1,7 @@
 ---
 menuTitle: Monitor multiple Linux hosts with the grafana_agent role
 title: Monitor multiple Linux hosts with grafana_agent role
+menuTitle: Monitor Linux hosts with Grafana Agent (deprecated)
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/ansible/ansible-multiple-agents/
 ---
