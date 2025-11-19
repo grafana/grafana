@@ -203,17 +203,12 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 
 func generateLimitsConfig(model *QueryJSONModel, interval time.Duration, timeRange time.Duration, queryType QueryType, step time.Duration) LimitsContext {
 	var limitsConfig LimitsContext
-	if model.LimitsContext != nil && model.LimitsContext.Expr != "" {
-		limitsConfigTo := time.UnixMilli(model.LimitsContext.To)
-		limitsConfigFrom := time.UnixMilli(model.LimitsContext.From)
-
-		// Only supply limits context config if we have expression, and from and to
-		if !limitsConfigFrom.Equal(time.Time{}) && !limitsConfigTo.Equal(time.Time{}) {
-			// If a limits expression was provided, interpolate it and parse the time range
-			limitsConfig.Expr = interpolateVariables(model.LimitsContext.Expr, interval, timeRange, queryType, step)
-			limitsConfig.From = limitsConfigFrom
-			limitsConfig.To = limitsConfigTo
-		}
+	// Only supply limits context config if we have expression, and from and to
+	if model.LimitsContext != nil && model.LimitsContext.Expr != "" && model.LimitsContext.From > 0 && model.LimitsContext.To > 0 {
+		// If a limits expression was provided, interpolate it and parse the time range
+		limitsConfig.Expr = interpolateVariables(model.LimitsContext.Expr, interval, timeRange, queryType, step)
+		limitsConfig.From = time.UnixMilli(model.LimitsContext.From)
+		limitsConfig.To = time.UnixMilli(model.LimitsContext.To)
 	}
 	return limitsConfig
 }
