@@ -10,7 +10,7 @@ weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/ansible/ansible-cloud-stack/
 ---
 
-# Create and manage a Grafana Cloud stack using Ansible
+# Create and manage your Grafana Cloud stack using Ansible
 
 This guide shows you how to create a Grafana Cloud stack and add a data source, dashboard, and folder using the Ansible Collection for Grafana. You'll manage your Grafana infrastructure declaratively through Ansible playbooks.
 
@@ -23,15 +23,11 @@ Before you begin, make sure you have the following available:
 
 ## Create a Cloud stack
 
-1. Create a Grafana Cloud Access Policy and get a token.
-   
-You'll need this for the Ansible playbook to be able to create a Grafana Cloud stack. Refer to [Create a Grafana Cloud Access Policy](/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/create-access-policies/).
+First, create a Grafana Cloud Access Policy and get a token. You'll need this for the Ansible playbook to be able to create a Grafana Cloud stack. Refer to [Create a Grafana Cloud Access Policy](/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/create-access-policies/).
 
-2. Create an Ansible playbook file.
+Next, create an Ansible playbook file. This Ansible playbook will create a Grafana Cloud stack by using the [Cloud stack module](https://docs.ansible.com/ansible/latest/collections/grafana/grafana/cloud_stack_module.html#ansible-collections-grafana-grafana-cloud-stack-module).
 
-This Ansible playbook will create a Grafana Cloud stack by using the [Cloud stack module](https://docs.ansible.com/ansible/latest/collections/grafana/grafana/cloud_stack_module.html#ansible-collections-grafana-grafana-cloud-stack-module).
-
-3. Create a file named `cloud-stack.yml` and add the following:
+To do so, create a file named `cloud-stack.yml` and add the following:
 
 ```yaml
 - name: Create Grafana Cloud stack
@@ -71,7 +67,9 @@ Create an API key in the Grafana stack. You'll need this key to configure Ansibl
 5. In **Role**, select **Admin** or **Editor** to associate the role with this API key.
 6. Click **Copy** to save it for later use.
 
-## Add a data source
+## Add resources using playbooks
+
+### Add a data source
 
 The following steps use the InfluxDB data source. The required arguments vary depending on the type of data source you select.
 
@@ -123,7 +121,7 @@ Replace the placeholders with your values:
 - `<STACK_NAME>`: Name of your stack
 - `<GRAFANA_API_KEY>`: API key created in the Grafana instance
 
-## Add a folder
+### Add a folder
 
 This playbook creates a folder in your Grafana instance using the [Folder module](https://docs.ansible.com/ansible/latest/collections/grafana/grafana/folder_module.html#ansible-collections-grafana-grafana-folder-module).
 
@@ -158,7 +156,7 @@ Replace the placeholders with your values:
 - `<STACK_NAME>`: Name of your stack
 - `<GRAFANA_API_KEY>`: API key created in the Grafana instance
 
-## Add a dashboard to the folder
+### Add a dashboard to the folder
 
 This playbook iterates through the dashboard JSON source code files in the folder referenced in `dashboards_path` and adds them to the Grafana instance using the [Dashboard module](https://docs.ansible.com/ansible/latest/collections/grafana/grafana/dashboard_module.html#ansible-collections-grafana-grafana-dashboard-module).
 
