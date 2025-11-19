@@ -140,7 +140,7 @@ export const generateColumns = (
       );
     },
     id: `column-name`,
-    field: (access.title as any) ?? access.name!,
+    field: access.title ?? access.name!,
     Header: () => <div>{t('search.results-table.name-header', 'Name')}</div>,
     width,
   });
@@ -271,7 +271,7 @@ export const generateColumns = (
         new ShowModalReactEvent({
           component: ExplainScorePopup,
           props: {
-            name: (access.title?.values[row] ?? access.name?.values[row]) as any,
+            name: access.title?.values[row] ?? access.name?.values[row] ?? '',
             explain: access.explain.values[row],
             frame: response.view.dataFrame,
             row: row,
