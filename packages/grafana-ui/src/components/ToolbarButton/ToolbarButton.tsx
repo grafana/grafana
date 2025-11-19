@@ -96,7 +96,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
   );
 
   const body = (
-    <button ref={ref} className={buttonStyles} aria-label={ariaLabel} aria-expanded={isOpen} type="button" {...rest}>
+    <button ref={ref} className={buttonStyles} aria-expanded={isOpen} type="button" {...rest} aria-label={ariaLabel}>
       {renderIcon(icon, iconSize)}
       {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
       {children && !iconOnly && <div className={contentStyles}>{children}</div>}
@@ -106,7 +106,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
     </button>
   );
 
-  return 'tooltip' in props ? (
+  return 'tooltip' in props && props.tooltip ? (
     <Tooltip ref={ref} content={props.tooltip} placement="bottom">
       {body}
     </Tooltip>
