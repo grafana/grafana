@@ -1,6 +1,6 @@
 import { createRef, CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
-import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel, SceneGridItemLike } from '@grafana/scenes';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutOrchestratorFor } from '../../utils/utils';
@@ -110,7 +110,12 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
   public getDragHooks() {
     return {
-      onDragStart: this._onDragStart,
+      onDragStart: (evt: ReactPointerEvent, panel: VizPanel) => {
+        const gridItem = panel.parent;
+        if (gridItem instanceof AutoGridItem) {
+          this._onDragStart(evt, gridItem);
+        }
+      },
     };
   }
 
@@ -127,7 +132,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   }
 
   // Start inside dragging
-  private _onDragStart(evt: ReactPointerEvent, panel: VizPanel) {
+  private _onDragStart(evt: ReactPointerEvent, gridItem: SceneGridItemLike) {
     if (!this._canDrag(evt)) {
       return;
     }
@@ -135,11 +140,11 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     evt.preventDefault();
     evt.stopPropagation();
 
-    if (!(panel.parent instanceof AutoGridItem)) {
+    if (!(gridItem instanceof AutoGridItem)) {
       throw new Error('Dragging wrong item');
     }
 
-    this._draggedGridItem = panel.parent;
+    this._draggedGridItem = gridItem;
 
     const { top, left, width, height } = this._draggedGridItem.getBoundingBox();
     this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
@@ -152,7 +157,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     document.body.addEventListener('pointerup', this._onDragEnd);
     document.body.classList.add('dashboard-draggable-transparent-selection');
 
-    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, panel);
+    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, this._draggedGridItem);
   }
 
   // Stop inside dragging

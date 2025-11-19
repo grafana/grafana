@@ -112,17 +112,23 @@ func createFieldOfType[T int | float64 | bool | string](docs []map[string]interf
 // createFields creates data fields from existing frames or from propKeys
 func createFields(frames data.Frames, propKeys []string) []*data.Field {
 	var fields []*data.Field
-	// Otherwise use the fields from frames
-	if frames != nil {
-		for _, frame := range frames {
-			fields = append(fields, frame.Fields...)
-		}
-		// If we have no frames, we create fields from propKeys
-	} else {
-		for _, propKey := range propKeys {
-			fields = append(fields, data.NewField(propKey, nil, []*string{}))
+	have := map[string]bool{}
+
+	// collect existing fields
+	for _, frame := range frames {
+		for _, f := range frame.Fields {
+			fields = append(fields, f)
+			have[f.Name] = true
 		}
 	}
+
+	// add missing prop fields
+	for _, pk := range propKeys {
+		if !have[pk] {
+			fields = append(fields, data.NewField(pk, nil, []*string{}))
+		}
+	}
+
 	return fields
 }
 

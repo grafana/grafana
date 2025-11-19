@@ -366,11 +366,27 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         group: group.name,
       };
     } else if (rulerRuleType.dataSource.recordingRule(rule)) {
+      const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
+
+      const defaultQuery = {
+        refId: 'A',
+        datasourceUid,
+        queryType: '',
+        relativeTimeRange: getDefaultRelativeTimeRange(),
+        expr: rule.expr,
+        model: {
+          refId: 'A',
+          hide: false,
+          expr: rule.expr,
+        },
+      };
+
       const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
 
       return {
         ...defaultFormValues,
         ...recordingRuleValues,
+        queries: [defaultQuery],
         type: RuleFormType.cloudRecording,
         dataSourceName: ruleSourceName,
         namespace,
