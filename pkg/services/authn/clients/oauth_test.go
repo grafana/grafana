@@ -43,8 +43,6 @@ func TestOAuth_Authenticate(t *testing.T) {
 		addPKCECookie   bool
 		pkceCookieValue string
 
-		token *oauth2.Token
-
 		features []any
 
 		isEmailAllowed bool

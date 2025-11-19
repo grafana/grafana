@@ -170,11 +170,11 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	if oauthCfg.UseRefreshToken && token.RefreshToken == "" {
 		c.log.FromContext(ctx).Warn("No refresh token available with use_refresh_token enabled", "authmodule", c.moduleName)
+
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if c.features.IsEnabledGlobally(featuremgmt.FlagRefreshTokenRequired) {
 			return nil, errOAuthMissingRefreshToken.Errorf("provider did not return a refresh token")
 		}
-
 	}
 
 	userInfo, err := connector.UserInfo(ctx, connector.Client(clientCtx, token), token)
