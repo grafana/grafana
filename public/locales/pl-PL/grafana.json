@@ -7844,6 +7844,14 @@
     "name-show-threshold-labels": "Pokaż etykiety progów",
     "name-show-threshold-markers": "Pokaż znaczniki progów",
     "placeholder-neutral": "automatycznie",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9074,6 +9082,13 @@
       "copy": "Kopiuj do schowka",
       "csv-counts": "",
       "csv-placeholder": "Wprowadź plik CSV tutaj…",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Wartości filtra",
       "filter-popup-apply": "OK",
       "filter-popup-aria-label-match-case": "Dopasuj wielkość liter",
@@ -12516,8 +12531,10 @@
       "cancel": "Anuluj",
       "error-title": "",
       "input": {
-        "placeholder": "Wybierz zakresy…",
-        "removeAll": "Usuń wszystkie zakresy"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Usuń wszystkie zakresy",
+        "tooltip": ""
       },
       "title": "Wybierz zakresy"
     },
