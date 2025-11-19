@@ -67,6 +67,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     height: '100%',
     paddingTop: '1px',
     width: '1rem',
+    textAlign: 'center',
   }),
 }));
 
@@ -81,6 +82,7 @@ export type TProps = {
   removeHoverIndentGuideId: (spanID: string) => void;
   theme: GrafanaTheme2;
   visibleSpanIds: string[];
+  removeLastIndentGuide?: boolean;
 };
 
 const UnthemedSpanTreeOffset = React.memo<TProps>((props) => {
@@ -94,6 +96,7 @@ const UnthemedSpanTreeOffset = React.memo<TProps>((props) => {
     hoverIndentGuideIds,
     addHoverIndentGuideId,
     removeHoverIndentGuideId,
+    removeLastIndentGuide = false,
   } = props;
 
   const ancestorIds = React.useMemo(() => {
@@ -102,8 +105,12 @@ const UnthemedSpanTreeOffset = React.memo<TProps>((props) => {
     // necessary padding for the collapse icon on root-level spans.
     ids.push('root');
     ids.reverse();
+
+    if (removeLastIndentGuide) {
+      ids.pop();
+    }
     return ids;
-  }, [span]);
+  }, [span, removeLastIndentGuide]);
 
   /**
    * If the mouse leaves to anywhere except another span with the same ancestor id, this span's ancestor id is
@@ -179,7 +186,7 @@ const UnthemedSpanTreeOffset = React.memo<TProps>((props) => {
         onMouseLeave={(event) => icon && handleMouseLeave(event, spanID)}
         data-testid="icon-wrapper"
       >
-        {icon}
+        {icon || (!removeLastIndentGuide && '-')}
       </span>
     </span>
   );
