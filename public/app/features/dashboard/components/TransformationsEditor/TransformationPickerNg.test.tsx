@@ -78,17 +78,17 @@ describe('SqlExpressionCard', () => {
   });
 
   it('renders SQL expression name and description', () => {
-    render(<SqlExpressionCard name="SQL Expressions" description="Manipulate data with SQL" onClick={onClick} />);
+    render(<SqlExpressionCard name="Transform with SQL" description="Manipulate data with SQL" onClick={onClick} />);
 
-    expect(screen.getByText('SQL Expressions')).toBeInTheDocument();
+    expect(screen.getByText('Transform with SQL')).toBeInTheDocument();
     expect(screen.getByText('Manipulate data with SQL')).toBeInTheDocument();
   });
 
   it('calls onClick when clicked', async () => {
     const user = userEvent.setup();
-    render(<SqlExpressionCard name="SQL Expressions" description="Test" onClick={onClick} />);
+    render(<SqlExpressionCard name="Transform with SQL" description="Test" onClick={onClick} />);
 
-    const card = screen.getByText('SQL Expressions').closest('button');
+    const card = screen.getByText('Transform with SQL').closest('button');
     await user.click(card!);
 
     expect(onClick).toHaveBeenCalledTimes(1);
