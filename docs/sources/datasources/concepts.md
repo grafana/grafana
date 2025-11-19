@@ -40,7 +40,7 @@ Plugins come in three types:
 
 - **Data source plugins** connect Grafana to **external data sources**. You use this type of plugin when you want to access and work with data from an external source or third party. Examples include Prometheus, MSSQL, and Databricks.
 
-- **Panel plugins** control how data appears in Grafana dashboards. Examples of panel plugins include pie chart, candlestick, and Plotly. 
+- **Panel plugins** control how data appears in Grafana dashboards. Examples of panel plugins include pie chart, candlestick, and traffic light. 
 
 - **App plugins** allow you to bundle data sources and panel plugins within a single package. They also enable you to create custom pages within Grafana, providing a dedicated space for documentation, sign-up forms, and integration with other services via HTTP. Examples include Grafana Metrics Drilldown, Azure Cloud Native Monitoring, and Redis Application.
 
