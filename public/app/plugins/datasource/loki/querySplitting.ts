@@ -92,7 +92,7 @@ export function adjustTargetsFromResponseState(targets: LokiQuery[], response: D
 }
 
 const addLimitsToSplitRequests = (splitQueryIndex: number, shardQueryIndex: number, requests: LokiGroupedRequest[]) => {
-  // @todo requests has already been mutated
+  // requests has already been mutated
   if (splitQueryIndex === 0 && shardQueryIndex === 0) {
     return requests.map((r) => ({
       ...r,
