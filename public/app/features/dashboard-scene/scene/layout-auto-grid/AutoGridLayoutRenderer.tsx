@@ -35,6 +35,10 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     <div
       className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
       ref={model.containerRef}
+      data-grid-manager-key={
+        // We're using the manager key here as the manager doesn't have a wrapper element for the layout
+        model.parent!.state.key
+      }
     >
       {children.map((item) => (
         <item.Component key={item.state.key} model={item} />

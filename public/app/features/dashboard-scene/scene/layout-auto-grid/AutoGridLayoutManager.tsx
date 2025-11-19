@@ -359,6 +359,10 @@ export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManager
 
     this.state.layout.setState({ children: [...this.state.layout.state.children, gridItem] });
   }
+
+  public startOrchestratorSync() {
+
+  }
 }
 
 function AutoGridLayoutManagerRenderer({ model }: SceneComponentProps<AutoGridLayoutManager>) {

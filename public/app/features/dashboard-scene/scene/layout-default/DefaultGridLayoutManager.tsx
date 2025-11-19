@@ -39,6 +39,7 @@ import {
   getGridItemKeyForPanelId,
   useDashboard,
   getDashboardSceneFor,
+  getLayoutOrchestratorFor,
 } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -121,6 +122,17 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
+    if (config.featureToggles.dashboardNewLayouts) {
+      this._subs.add(
+        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel }}) => {
+          const gridItem = panel.parent;
+          if (gridItem instanceof DashboardGridItem) {
+            getLayoutOrchestratorFor(this)?.startDraggingSync(evt, gridItem, this.state.grid);
+          }
+        })
+      )
+    }
+
     this._subs.add(
       this.state.grid.subscribeToState(({ children: newChildren }, { children: prevChildren }) => {
         if (newChildren.length === prevChildren.length) {
@@ -351,7 +363,7 @@ export class DefaultGridLayoutManager
     const panels: VizPanel[] = [];
 
     this.state.grid.forEachChild((child) => {
-      if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow)) {
+      if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow) && !(child instanceof SceneGridPlaceholderItem)) {
         throw new Error('Child is not a DashboardGridItem or SceneGridRow, invalid scene');
       }
 
@@ -644,7 +656,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   }
 
   return (
-    <div className={cx(styles.container, isEditing && styles.containerEditing)}>
+    <div className={cx(styles.container, isEditing && styles.containerEditing)} data-grid-manager-key={model.state.key!}>
       {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
       {showCanvasActions && (
         <div className={styles.actionsWrapper}>

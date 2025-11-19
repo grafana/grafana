@@ -392,6 +392,7 @@ export function PanelChrome({
           onPointerUp={onPointerUp}
           draggable={true}
           unselectable="on"
+          onDragStart={(evt) => evt.dataTransfer.setData('text/plain', '')}
         >
           {statusMessage && (
             <div className={dragClassCancel}>

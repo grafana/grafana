@@ -12,15 +12,16 @@ import {
 import { createPointerDistance } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
-import { DashboardDropTarget, isDashboardDropTarget } from './types/DashboardDropTarget';
+import { DashboardLayoutGrid, isDashboardLayoutGrid } from './types/DashboardLayoutGrid';
+import { isDashboardLayoutManager } from './types/DashboardLayoutManager';
 
 interface DashboardLayoutOrchestratorState extends SceneObjectState {
   draggingGridItem?: SceneObjectRef<SceneGridItemLike>;
 }
 
 export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayoutOrchestratorState> {
-  private _sourceDropTarget: DashboardDropTarget | null = null;
-  private _lastDropTarget: DashboardDropTarget | null = null;
+  private _sourceGrid: DashboardLayoutGrid | null = null;
+  private _lastGrid: DashboardLayoutGrid | null = null;
   private _pointerDistance = createPointerDistance();
   private _isSelectedObject = false;
 
@@ -40,18 +41,17 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     };
   }
 
-  public startDraggingSync(evt: ReactPointerEvent, gridItem: SceneGridItemLike): void {
+  public startDraggingSync(evt: ReactPointerEvent, gridItem: SceneGridItemLike, layoutGrid: DashboardLayoutGrid): void {
     this._pointerDistance.set(evt);
     this._isSelectedObject = false;
 
-    const dropTarget = sceneGraph.findObject(gridItem, isDashboardDropTarget);
+    (sceneGraph.findAllObjects(
+      this._getDashboard(),
+      (obj) => isDashboardLayoutManager(obj) && isDashboardLayoutGrid(obj)
+    ) as DashboardLayoutGrid[]).forEach((layout) => layout.startOrchestratorSync?.());
 
-    if (!dropTarget || !isDashboardDropTarget(dropTarget)) {
-      return;
-    }
-
-    this._sourceDropTarget = dropTarget;
-    this._lastDropTarget = dropTarget;
+    this._sourceGrid = layoutGrid;
+    this._lastGrid = layoutGrid;
 
     document.body.addEventListener('pointermove', this._onPointerMove);
     document.body.addEventListener('pointerup', this._stopDraggingSync);
@@ -62,14 +62,14 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _stopDraggingSync(_evt: PointerEvent) {
     const gridItem = this.state.draggingGridItem?.resolve();
 
-    if (this._sourceDropTarget !== this._lastDropTarget) {
+    if (this._sourceGrid !== this._lastGrid) {
       // Wrapped in setTimeout to ensure that any event handlers are called
       // Useful for allowing react-grid-layout to remove placeholders, etc.
       setTimeout(() => {
         if (gridItem) {
           // Always use grid item dragging
-          this._sourceDropTarget?.draggedGridItemOutside?.(gridItem);
-          this._lastDropTarget?.draggedGridItemInside?.(gridItem);
+          this._sourceGrid?.draggedItemOutside?.(gridItem);
+          this._lastGrid?.draggedItemInside?.(gridItem);
         } else {
           const warningMessage = 'No grid item to drag';
           console.warn(warningMessage);
@@ -94,17 +94,17 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       }
     }
 
-    const dropTarget = this._getDropTargetUnderMouse(evt) ?? this._sourceDropTarget;
+    const dropTarget = this._getLayoutGridUnderMouse(evt) ?? this._sourceGrid;
 
     if (!dropTarget) {
       return;
     }
 
-    if (dropTarget !== this._lastDropTarget) {
-      this._lastDropTarget?.setIsDropTarget?.(false);
-      this._lastDropTarget = dropTarget;
+    if (dropTarget !== this._lastGrid) {
+      this._lastGrid?.setIsDropTarget?.(false);
+      this._lastGrid = dropTarget;
 
-      if (dropTarget !== this._sourceDropTarget) {
+      if (dropTarget !== this._sourceGrid) {
         dropTarget.setIsDropTarget?.(true);
       }
     }
@@ -118,19 +118,18 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     return this.parent;
   }
 
-  private _getDropTargetUnderMouse(evt: MouseEvent): DashboardDropTarget | null {
+  private _getLayoutGridUnderMouse(evt: MouseEvent): DashboardLayoutGrid | null {
     const elementsUnderPoint = document.elementsFromPoint(evt.clientX, evt.clientY);
-    const cursorIsInSourceTarget = elementsUnderPoint.some(
-      (el) => el.getAttribute('data-dashboard-drop-target-key') === this._sourceDropTarget?.state.key
-    );
+    const cursorIsInSourceTarget = elementsUnderPoint.some((el) => el.getAttribute('data-grid-manager-key') ===
+      this._sourceGrid?.state.key);
 
     if (cursorIsInSourceTarget) {
       return null;
     }
 
     const key = elementsUnderPoint
-      ?.find((element) => element.getAttribute('data-dashboard-drop-target-key'))
-      ?.getAttribute('data-dashboard-drop-target-key');
+      ?.find((element) => element.getAttribute('data-grid-manager-key'))
+      ?.getAttribute('data-grid-manager-key');
 
     if (!key) {
       return null;
@@ -138,7 +137,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     const sceneObject = sceneGraph.findByKey(this._getDashboard(), key);
 
-    if (!sceneObject || !isDashboardDropTarget(sceneObject)) {
+    if (!sceneObject || !isDashboardLayoutManager(sceneObject) || !isDashboardLayoutGrid(sceneObject)) {
       return null;
     }
 

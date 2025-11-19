@@ -2,6 +2,7 @@ import { t } from '@grafana/i18n';
 import {
   sceneGraph,
   SceneGridItemLike,
+  SceneGridPlaceholderItem,
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
@@ -314,7 +315,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       let children: SceneGridItemLike[] | undefined;
 
       layout.state.grid.forEachChild((child) => {
-        if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow)) {
+        if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow) && !(child instanceof SceneGridPlaceholderItem)) {
           throw new Error('Child is not a DashboardGridItem or SceneGridRow, invalid scene');
         }
 

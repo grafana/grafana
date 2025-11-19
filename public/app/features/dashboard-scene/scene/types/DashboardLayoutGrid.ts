@@ -11,6 +11,11 @@ export interface DashboardLayoutGrid extends DashboardLayoutManager {
    * Add a grid item to the layout
    */
   addGridItem(gridItem: SceneGridItemLike): void;
+
+  startOrchestratorSync?(): void;
+  draggedItemOutside?(gridItem: SceneGridItemLike): void;
+  draggedItemInside?(gridItem: SceneGridItemLike): void;
+  setIsDropTarget?(flag: boolean): void;
 }
 
 export function isDashboardLayoutGrid(obj: DashboardLayoutManager): obj is DashboardLayoutGrid {

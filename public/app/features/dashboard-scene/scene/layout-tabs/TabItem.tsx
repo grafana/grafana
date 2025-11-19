@@ -47,7 +47,6 @@ export class TabItem
   });
 
   public readonly isEditableDashboardElement = true;
-  public readonly isDashboardDropTarget = true;
 
   public containerRef = React.createRef<HTMLDivElement>();
 
