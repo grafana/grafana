@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { OrgRole, renderMarkdown } from '@grafana/data';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { StoreState } from 'app/types/store';
 import { OrgUser } from 'app/types/user';
 
