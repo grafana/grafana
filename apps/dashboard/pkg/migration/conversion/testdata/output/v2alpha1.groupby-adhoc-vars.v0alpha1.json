@@ -17,11 +17,11 @@
           "name": "test-v2alpha1-groupby-adhoc-vars"
         },
         "spec": {
-          "annotations": null,
+          "annotations": [],
           "cursorSync": "",
-          "elements": null,
+          "elements": {},
           "layout": null,
-          "links": null,
+          "links": [],
           "preload": false,
           "tags": null,
           "timeSettings": {
@@ -101,7 +101,12 @@
             }
           ]
         },
-        "status": {}
+        "status": {
+          "conversion": {
+            "failed": false,
+            "storedVersion": "v2beta1"
+          }
+        }
       }
     }
   }
