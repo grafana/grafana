@@ -2598,8 +2598,7 @@
         "firing": "Firing",
         "normal": "Normal",
         "pending": "Pending",
-        "recovering": "Recovering",
-        "unknown": "Unknown"
+        "recovering": "Recovering"
       },
       "type": {
         "alert": "Alert rule",
@@ -2623,12 +2622,14 @@
         "placeholder-search-input": "Search by name or enter filter query..."
       },
       "grafana-folder": "Grafana folder",
+      "group-autocomplete-unavailable": "Due to large number of groups, autocomplete is not available",
       "health": "Health",
       "label": {
         "hide": "Hide",
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
+      "namespace-autocomplete-unavailable": "Due to large number of folders, autocomplete is not available",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
@@ -5932,7 +5933,7 @@
     "empty-transformations-message": {
       "add-transformation": "Add transformation",
       "show-more": "Show more",
-      "sql-name": "SQL Expressions",
+      "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
     "general-settings-edit-view": {
