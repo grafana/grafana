@@ -329,7 +329,7 @@ func calculateTemplateFingerprint(t string) string {
 
 func newNotificationTemplate(name, content string, provenance models.Provenance, kind definition.TemplateKind) definitions.NotificationTemplate {
 	tmpl := definitions.NotificationTemplate{
-		UID:        legacy_storage.NameToUid(name),
+		UID:        templateUID(kind, name),
 		Name:       name,
 		Template:   content,
 		Provenance: definitions.Provenance(provenance),
@@ -352,21 +352,21 @@ func (t *TemplateService) getTemplateByName(ctx context.Context, revision *legac
 }
 
 func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, uid string) (definitions.NotificationTemplate, bool, error) {
-	find := func(templates map[string]string, uid string) (string, string, bool) {
+	find := func(templates map[string]string, uid string, kind definition.TemplateKind) (string, string, bool) {
 		for n, tmpl := range templates {
-			if legacy_storage.NameToUid(n) == uid {
+			if templateUID(kind, n) == uid {
 				return n, tmpl, true
 			}
 		}
 		return "", "", false
 	}
 	var provenance models.Provenance
-	name, content, ok := find(revision.Config.TemplateFiles, uid)
+	name, content, ok := find(revision.Config.TemplateFiles, uid, definition.GrafanaTemplateKind)
 	if !ok {
 		if t.includeImported && len(revision.Config.ExtraConfigs) > 0 {
-			name, content, ok = find(revision.Config.ExtraConfigs[0].TemplateFiles, uid)
+			name, content, ok = find(revision.Config.ExtraConfigs[0].TemplateFiles, uid, definition.MimirTemplateKind)
 			if ok {
-				return newNotificationTemplate(name, content, definitions.Provenance(models.ProvenanceConvertedPrometheus), definitions.NotificationTemplateKindMimir), true, nil
+				return newNotificationTemplate(name, content, models.ProvenanceConvertedPrometheus, definition.MimirTemplateKind), true, nil
 			}
 		}
 		return definitions.NotificationTemplate{}, false, nil
@@ -377,4 +377,8 @@ func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy
 		return definitions.NotificationTemplate{}, false, err
 	}
 	return newNotificationTemplate(name, content, provenance, definition.GrafanaTemplateKind), true, nil
+}
+
+func templateUID(kind definition.TemplateKind, name string) string {
+	return legacy_storage.NameToUid(fmt.Sprintf("%s|%s", string(kind), name))
 }

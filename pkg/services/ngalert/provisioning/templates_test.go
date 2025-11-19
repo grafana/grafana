@@ -791,7 +791,7 @@ func TestUpdateTemplate(t *testing.T) {
 		},
 		{
 			name:        "by uid",
-			templateUid: legacy_storage.NameToUid(tmpl.UID),
+			templateUid: templateUID(tmpl.Kind, tmpl.Name),
 		},
 	}
 
@@ -871,8 +871,8 @@ func TestUpdateTemplate(t *testing.T) {
 
 		oldName := tmpl.Name
 		tmpl := tmpl
-		tmpl.UID = legacy_storage.NameToUid(tmpl.Name) // UID matches the current template
-		tmpl.Name = "new-template-name"                // but name is different
+		tmpl.UID = templateUID(tmpl.Kind, tmpl.Name) // UID matches the current template
+		tmpl.Name = "new-template-name"              // but name is different
 		result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
@@ -913,8 +913,8 @@ func TestUpdateTemplate(t *testing.T) {
 		}
 
 		tmpl := tmpl
-		tmpl.UID = legacy_storage.NameToUid(tmpl.Name) // UID matches the current template
-		tmpl.Name = "new-template-name"                // but name matches another existing template
+		tmpl.UID = templateUID(tmpl.Kind, tmpl.Name) // UID matches the current template
+		tmpl.Name = "new-template-name"              // but name matches another existing template
 		_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 		require.ErrorIs(t, err, ErrTemplateExists)
@@ -1111,7 +1111,7 @@ func TestDeleteTemplate(t *testing.T) {
 		},
 		{
 			name:              "by uid",
-			templateNameOrUid: legacy_storage.NameToUid(templateName),
+			templateNameOrUid: templateUID(definition.GrafanaTemplateKind, templateName),
 		},
 	}
 	for _, tt := range testCase {
@@ -1174,7 +1174,7 @@ func TestDeleteTemplate(t *testing.T) {
 	}
 
 	t.Run("should look by name before uid", func(t *testing.T) {
-		expectedToDelete := legacy_storage.NameToUid(templateName)
+		expectedToDelete := templateUID(definition.GrafanaTemplateKind, templateName)
 		sut, store, prov := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
