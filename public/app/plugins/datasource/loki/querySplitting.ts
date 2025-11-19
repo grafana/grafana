@@ -12,6 +12,7 @@ import {
   TimeRange,
   LoadingState,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
@@ -135,7 +136,10 @@ export function runSplitGroupedQueries(
   const shardQueryIndex = options.shardQueryIndex ?? 0;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestGroup: number) => {
-    requests = addLimitsToSplitRequests(splitQueryIndex, shardQueryIndex, requests);
+    if (config.featureToggles.lokiQueryLimitsContext) {
+      requests = addLimitsToSplitRequests(splitQueryIndex, shardQueryIndex, requests);
+    }
+
     splitQueryIndex++;
     let retrying = false;
 

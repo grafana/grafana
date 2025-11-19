@@ -1069,4 +1069,8 @@ const (
 	// FlagTtlPluginInstanceManager
 	// Enable TTL plugin instance manager
 	FlagTtlPluginInstanceManager = "ttlPluginInstanceManager"
+
+	// FlagLokiQueryLimitsContext
+	// Send X-Loki-Query-Limits-Context header to Loki on first split request
+	FlagLokiQueryLimitsContext = "lokiQueryLimitsContext"
 )

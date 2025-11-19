@@ -2637,6 +2637,19 @@
     },
     {
       "metadata": {
+        "name": "lokiQueryLimitsContext",
+        "resourceVersion": "1763558434858",
+        "creationTimestamp": "2025-11-19T13:20:34Z"
+      },
+      "spec": {
+        "description": "Send X-Loki-Query-Limits-Context header to Loki on first split request",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "lokiQuerySplitting",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-02-09T17:27:02Z"

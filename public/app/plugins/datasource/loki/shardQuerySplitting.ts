@@ -3,6 +3,7 @@ import { Observable, Subscriber, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DataQueryRequest, DataQueryResponse, LoadingState, QueryResultMetaStat } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { LokiDatasource } from './datasource';
 import { combineResponses, replaceResponses } from './mergeResponses';
@@ -83,7 +84,9 @@ function splitQueriesByStreamShard(
   let queryIndex = 0;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, group: number, groups: ShardedQueryGroup[]) => {
-    groups = addLimitsToShardGroups(queryIndex, groups, request);
+    if (config.featureToggles.lokiQueryLimitsContext) {
+      groups = addLimitsToShardGroups(queryIndex, groups, request);
+    }
     queryIndex++;
     let nextGroupSize = groups[group].groupSize;
     const { shards, groupSize, cycle } = groups[group];

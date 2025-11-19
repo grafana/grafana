@@ -2064,6 +2064,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:         "lokiQueryLimitsContext",
+			Description:  "Send X-Loki-Query-Limits-Context header to Loki on first split request",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
 	}
 )
 
