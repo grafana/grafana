@@ -4,28 +4,28 @@ import (
 	"fmt"
 	"time"
 
-	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 )
 
-func convertSnapshotDTOToK8sResource(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer request.NamespaceMapper) *snapshot.Snapshot {
+func convertSnapshotDTOToK8sResource(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer request.NamespaceMapper) *dashV0.Snapshot {
 	expires := v.Expires.UnixMilli()
 	if v.Expires.After(time.Date(2070, time.January, 0, 0, 0, 0, 0, time.UTC)) {
 		expires = 0 // ignore things expiring long into the future
 	}
-	snap := &snapshot.Snapshot{
-		TypeMeta: snapshot.SnapshotResourceInfo.TypeMeta(),
+	snap := &dashV0.Snapshot{
+		TypeMeta: dashV0.SnapshotResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Key,
 			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(v.Created),
 			Namespace:         namespacer(v.OrgID),
 		},
-		Spec: snapshot.SnapshotSpec{
+		Spec: dashV0.SnapshotSpec{
 			Title:       &v.Name,
 			External:    &v.External,
 			ExternalUrl: &v.ExternalURL,
@@ -39,20 +39,20 @@ func convertSnapshotDTOToK8sResource(v *dashboardsnapshots.DashboardSnapshotDTO,
 	return snap
 }
 
-func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, namespacer request.NamespaceMapper) *snapshot.Snapshot {
+func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, namespacer request.NamespaceMapper) *dashV0.Snapshot {
 	expires := v.Expires.UnixMilli()
 	if v.Expires.After(time.Date(2070, time.January, 0, 0, 0, 0, 0, time.UTC)) {
 		expires = 0 // ignore things expiring long into the future
 	}
 
-	snap := &snapshot.Snapshot{
+	snap := &dashV0.Snapshot{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Key,
 			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(v.Created),
 			Namespace:         namespacer(v.OrgID),
 		},
-		Spec: snapshot.SnapshotSpec{
+		Spec: dashV0.SnapshotSpec{
 			Title:       &v.Name,
 			External:    &v.External,
 			ExternalUrl: &v.ExternalURL,
