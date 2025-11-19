@@ -12,11 +12,13 @@ import { getActiveButtonStyles, getPropertiesForVariant } from '../Button/Button
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-interface BaseProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'> {
+interface BaseProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Icon name */
   icon?: IconName | React.ReactNode;
   /** Icon size */
   iconSize?: IconSize;
+  /** Tooltip */
+  tooltip?: string;
   /** For image icons */
   imgSrc?: string;
   /** Alt text for imgSrc */
@@ -59,6 +61,7 @@ export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'acti
 export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((props, ref) => {
   const styles = useStyles2(getStyles);
   const {
+    tooltip,
     icon,
     iconSize,
     className,
@@ -70,6 +73,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
     narrow,
     variant = 'default',
     iconOnly,
+    'aria-label': ariaLabel,
     isHighlighted,
     ...rest
   } = props;
@@ -90,13 +94,15 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
     [styles.contentWithRightIcon]: isOpen !== undefined,
   });
 
-  const ariaLabel = getButtonAriaLabel(
-    'aria-label' in props ? props['aria-label'] : undefined,
-    'tooltip' in props ? props.tooltip : undefined
-  );
-
   const body = (
-    <button ref={ref} className={buttonStyles} aria-expanded={isOpen} type="button" {...rest} aria-label={ariaLabel}>
+    <button
+      ref={ref}
+      className={buttonStyles}
+      aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
+      aria-expanded={isOpen}
+      type="button"
+      {...rest}
+    >
       {renderIcon(icon, iconSize)}
       {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
       {children && !iconOnly && <div className={contentStyles}>{children}</div>}
@@ -106,8 +112,8 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
     </button>
   );
 
-  return 'tooltip' in props && props.tooltip ? (
-    <Tooltip ref={ref} content={props.tooltip} placement="bottom">
+  return tooltip ? (
+    <Tooltip ref={ref} content={tooltip} placement="bottom">
       {body}
     </Tooltip>
   ) : (
