@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { ReactNode, useContext } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -56,7 +57,7 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
         <SidebarButton
           icon={'web-section-alt'}
           onClick={context.onDockChange}
-          title={context.isDocked ? 'Undock pane' : 'Dock pane'}
+          title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
         />
       )}
     </div>

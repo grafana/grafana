@@ -17,7 +17,7 @@ export function SidebarResizer() {
     throw new Error('Sidebar.Resizer must be used within a Sidebar component');
   }
 
-  const { onResize } = context;
+  const { onResize, position } = context;
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -40,9 +40,9 @@ export function SidebarResizer() {
       const diff = e.clientX - dragStart.current;
       dragStart.current = e.clientX;
 
-      onResize(-diff);
+      onResize(position === 'right' ? -diff : diff);
     },
-    [dragStart, onResize]
+    [dragStart, onResize, position]
   );
 
   const onPointerUp = useCallback(
@@ -55,7 +55,7 @@ export function SidebarResizer() {
   return (
     <div
       ref={resizerRef}
-      className={styles.resizer}
+      className={styles[context.position]}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -65,7 +65,7 @@ export function SidebarResizer() {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    resizer: css({
+    right: css({
       position: 'absolute',
       width: theme.spacing.gridSize,
       left: -theme.spacing.gridSize,
@@ -75,6 +75,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: 1,
       '&:hover': {
         borderRight: `1px solid ${theme.colors.primary.border}`,
+      },
+    }),
+    left: css({
+      position: 'absolute',
+      width: theme.spacing.gridSize,
+      right: -theme.spacing.gridSize,
+      top: theme.shape.radius.default,
+      bottom: theme.shape.radius.default,
+      cursor: 'col-resize',
+      zIndex: 1,
+      '&:hover': {
+        borderLeft: `1px solid ${theme.colors.primary.border}`,
       },
     }),
   };

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
@@ -20,7 +21,15 @@ export function SidebarPaneHeader({ children, onClose, title }: Props) {
   return (
     <div className={styles.wrapper}>
       <Stack direction="row" gap={1}>
-        {onClose && <IconButton variant="secondary" size="lg" name="times" onClick={onClose} tooltip="Close" />}
+        {onClose && (
+          <IconButton
+            variant="secondary"
+            size="lg"
+            name="times"
+            onClick={onClose}
+            tooltip={t('grafana-ui.sidebar.close', 'Close')}
+          />
+        )}
         <Text weight="medium" variant="h6">
           {title}
         </Text>

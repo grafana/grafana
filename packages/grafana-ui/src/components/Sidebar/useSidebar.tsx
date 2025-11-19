@@ -1,16 +1,18 @@
-import { clamp } from 'lodash';
+import { clamp, has } from 'lodash';
 import React, { useCallback } from 'react';
+
+import { ReduceTransformerMode } from '@grafana/data/src/transformations/transformers/reduce';
 
 export type SidebarPosition = 'left' | 'right';
 
 export interface SidebarContextValue {
   isDocked: boolean;
   position: SidebarPosition;
-  compact?: boolean;
+  compact: boolean;
   hasOpenPane?: boolean;
   tabsMode?: boolean;
-  outerWrapperProps?: React.HTMLAttributes<HTMLDivElement>;
-  paneWidth?: number;
+  outerWrapperProps: React.HTMLAttributes<HTMLDivElement>;
+  paneWidth: number;
   onDockChange: () => void;
   onResize: (diff: number) => void;
 }
@@ -23,35 +25,63 @@ export interface UseSideBarOptions {
   hasOpenPane?: boolean;
   position?: SidebarPosition;
   tabsMode?: boolean;
-  compact?: boolean;
+  /**
+   * Sets the default starting state for button text visibility
+   * This can later be controlled by user with draging the sidebar resizer
+   **/
+  withButtonText?: boolean;
 }
 
 export function useSiderbar({
-  hasOpenPane: isPaneOpen,
+  hasOpenPane,
   position = 'right',
   tabsMode,
-  compact = true,
+  withButtonText,
 }: UseSideBarOptions): SidebarContextValue {
   const [isDocked, setIsDocked] = React.useState(false);
   const [paneWidth, setPaneWidth] = React.useState(280);
+  // internal state for button text visibility
+  const [compact, setCompact] = React.useState(!withButtonText);
+  // Used to accumulate drag distance to know when to change compact mode
+  const [_, setCompactDrag] = React.useState(0);
 
   const onDockChange = useCallback(() => setIsDocked((prev) => !prev), []);
 
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
-  const toolbarWidth = (compact ? 40 : 65) + 16 * 2; // button width + padding
+  const toolbarWidth = (compact ? 40 : 68) + 16 * 2; // button width + padding
 
   const outerWrapperProps = {
     style: {
-      [prop]: isDocked && isPaneOpen ? paneWidth + toolbarWidth : toolbarWidth,
+      [prop]: isDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
     },
   };
 
-  const onResize = useCallback((diff: number) => {
-    console.log('resizing sidebar by', diff);
-    setPaneWidth((prevWidth) => {
-      return clamp(prevWidth + diff, 100, 500);
-    });
-  }, []);
+  const onResize = useCallback(
+    (diff: number) => {
+      setPaneWidth((prevWidth) => {
+        // If no pane is open we use the resize action to toggle compact mode (button text visibility)
+        if (!hasOpenPane) {
+          setCompactDrag((prevDrag) => {
+            const newDrag = prevDrag + diff;
+            if (newDrag < -20 && !compact) {
+              setCompact(true);
+              return 0;
+            } else if (newDrag > 20 && compact) {
+              setCompact(false);
+              return 0;
+            }
+
+            return newDrag;
+          });
+
+          return prevWidth;
+        }
+
+        return clamp(prevWidth + diff, 100, 500);
+      });
+    },
+    [hasOpenPane, compact]
+  );
 
   return {
     isDocked,
@@ -60,7 +90,7 @@ export function useSiderbar({
     outerWrapperProps,
     position,
     compact,
-    hasOpenPane: isPaneOpen,
+    hasOpenPane,
     tabsMode,
     paneWidth,
   };

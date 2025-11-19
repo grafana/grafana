@@ -10,7 +10,6 @@ import mdx from './Sidebar.mdx';
 
 interface StoryProps {
   position: SidebarPosition;
-  compact: boolean;
 }
 
 const meta: Meta<StoryProps> = {
@@ -23,11 +22,9 @@ const meta: Meta<StoryProps> = {
   },
   args: {
     position: 'right',
-    compact: true,
   },
   argTypes: {
     position: { control: { type: 'radio' }, options: ['right', 'left'] },
-    compact: { type: 'boolean', options: [true, false] },
   },
 };
 
@@ -65,7 +62,6 @@ export const Example: StoryFn<StoryProps> = (args) => {
   const contextValue = useSiderbar({
     hasOpenPane: !!openPane,
     position: args.position,
-    compact: args.compact,
   });
 
   return (
