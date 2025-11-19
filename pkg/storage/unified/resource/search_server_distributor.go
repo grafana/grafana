@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -136,9 +135,8 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	}
 
 	var wg sync.WaitGroup
-	var detailsMu sync.Mutex
-	var details strings.Builder
 	var totalRebuildCount atomic.Int64
+	detailsCh := make(chan string, len(rs.Instances))
 	errorCh := make(chan error, len(rs.Instances))
 
 	for _, inst := range rs.Instances {
@@ -172,17 +170,13 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			if rsp.Error != nil {
+				ds.log.Error("rebuild index failed for instance", "instance", inst.Id, "error", rsp.Error.Message)
 				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %s", inst.Id, rsp.Error.Message)
 				return
 			}
 
 			if rsp.Details != "" {
-				detailsMu.Lock()
-				if details.Len() > 0 {
-					details.WriteString(", ")
-				}
-				details.WriteString(fmt.Sprintf("{instance: %s, details: %s}", inst.Id, rsp.Details))
-				detailsMu.Unlock()
+				detailsCh <- fmt.Sprintf("{instance: %s, details: %s}", inst.Id, rsp.Details)
 			}
 
 			totalRebuildCount.Add(rsp.RebuildCount)
@@ -191,15 +185,24 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 
 	wg.Wait()
 	close(errorCh)
+	close(detailsCh)
 
 	var errs []error
 	for err := range errorCh {
 		errs = append(errs, err)
 	}
 
+	var details string
+	for d := range detailsCh {
+		if len(details) > 0 {
+			details += ", "
+		}
+		details += d
+	}
+
 	response := &resourcepb.RebuildIndexesResponse{
 		RebuildCount: totalRebuildCount.Load(),
-		Details:      details.String(),
+		Details:      details,
 	}
 	if len(errs) > 0 {
 		response.Error = AsErrorResult(errors.Join(errs...))

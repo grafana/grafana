@@ -4,9 +4,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"iter"
 	"log/slog"
-	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -461,23 +459,23 @@ func (s *searchSupport) RebuildIndexes(ctx context.Context, req *resourcepb.Rebu
 	ctx, span := tracer.Start(ctx, "resource.searchSupport.RebuildIndexes")
 	defer span.End()
 
-	filterKeys := make(map[NamespacedResource]struct{}, len(req.Keys))
+	filterKeys := make([]NamespacedResource, len(req.Keys))
 	for _, key := range req.Keys {
-		filterKeys[NamespacedResource{
+		filterKeys = append(filterKeys, NamespacedResource{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
-		}] = struct{}{}
+		})
 	}
 
-	importTimes, err := s.getLastImportTimes(ctx, filterKeys)
+	importTimes, err := s.getLastImportTimes(ctx)
 	if err != nil {
 		return &resourcepb.RebuildIndexesResponse{
 			Error: AsErrorResult(err),
 		}, nil
 	}
 
-	rebuildCount, completeChs := s.findIndexesToRebuild(importTimes, maps.Keys(filterKeys), time.Now(), true)
+	rebuildCount, completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), true)
 	for _, ch := range completeChs {
 		select {
 		case <-ch:
@@ -583,7 +581,7 @@ func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) 
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			importTimes, err := s.getLastImportTimes(ctx, nil)
+			importTimes, err := s.getLastImportTimes(ctx)
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
@@ -592,20 +590,24 @@ func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) 
 	}
 }
 
-func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys iter.Seq[NamespacedResource], now time.Time, withCompleteChs bool) (int, []chan struct{}) {
+func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, withCompleteChs bool) (int, []chan struct{}) {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
-	var keys iter.Seq[NamespacedResource]
+	var keys []NamespacedResource
 	if filterKeys != nil {
 		keys = filterKeys
 	} else {
-		keys = slices.Values(s.search.GetOpenIndexes())
+		keys = s.search.GetOpenIndexes()
 	}
 
-	completeChs := make([]chan struct{}, 0)
 	rebuildCount := 0
-	for key := range keys {
+	var completeChs []chan struct{}
+	if withCompleteChs {
+		completeChs = make([]chan struct{}, 0, len(keys))
+	}
+
+	for _, key := range keys {
 		idx := s.search.GetIndex(key)
 		if idx == nil {
 			// This can happen if index was closed in the meantime.
@@ -636,7 +638,7 @@ func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResou
 				completeCh = make(chan struct{})
 				completeChs = append(completeChs, completeCh)
 			}
-			rebuildReq := NewRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, completeCh)
+			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, completeCh)
 			s.rebuildQueue.Add(rebuildReq)
 
 			rebuildCount++
@@ -648,17 +650,12 @@ func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResou
 	return rebuildCount, completeChs
 }
 
-func (s *searchSupport) getLastImportTimes(ctx context.Context, filterKeys map[NamespacedResource]struct{}) (map[NamespacedResource]time.Time, error) {
+func (s *searchSupport) getLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
 	result := map[NamespacedResource]time.Time{}
 	for importTime, err := range s.storage.GetResourceLastImportTimes(ctx) {
 		if err != nil {
 			// We return times that we have collected so far, if any.
 			return result, err
-		}
-		if len(filterKeys) > 0 { // optional filter
-			if _, ok := filterKeys[importTime.NamespacedResource]; !ok {
-				continue
-			}
 		}
 		result[importTime.NamespacedResource] = importTime.LastImportTime
 	}
@@ -788,7 +785,7 @@ type rebuildRequest struct {
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }
 
-func NewRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, completeCh chan<- struct{}) rebuildRequest {
+func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, completeCh chan<- struct{}) rebuildRequest {
 	var completeChannels []chan<- struct{} // setup a list as requests can be combined
 	if completeCh != nil {
 		completeChannels = []chan<- struct{}{completeCh}
