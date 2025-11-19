@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,52 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
-
-func TestSubQueryConnect(t *testing.T) {
-	sqr := subQueryREST{
-		builder: &DataSourceAPIBuilder{
-			client: mockClient{
-				lastCalledWithHeaders: &map[string]string{},
-			},
-			datasources:     mockDatasources{},
-			contextProvider: mockContextProvider{},
-		},
-	}
-
-	mr := mockResponder{}
-	handler, err := sqr.Connect(context.Background(), "dsname", nil, mr)
-	require.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/some-path", nil)
-	req.Header.Set(models.FromAlertHeaderName, "true")
-	req.Header.Set(models.CacheSkipHeaderName, "true")
-	req.Header.Set("X-Rule-Name", "name-1")
-	req.Header.Set("X-Rule-Uid", "abc")
-	req.Header.Set("X-Rule-Folder", "folder-1")
-	req.Header.Set("X-Rule-Source", "grafana-ruler")
-	req.Header.Set("X-Rule-Type", "type-1")
-	req.Header.Set("X-Rule-Version", "version-1")
-	req.Header.Set("X-Grafana-Org-Id", "1")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("some-unexpected-header", "some-value")
-	handler.ServeHTTP(rr, req)
-
-	// test that headers are forwarded and cased appropriately
-	require.Equal(t, map[string]string{
-		models.FromAlertHeaderName: "true",
-		models.CacheSkipHeaderName: "true",
-		"X-Rule-Name":              "name-1",
-		"X-Rule-Uid":               "abc",
-		"X-Rule-Folder":            "folder-1",
-		"X-Rule-Source":            "grafana-ruler",
-		"X-Rule-Type":              "type-1",
-		"X-Rule-Version":           "version-1",
-		"X-Grafana-Org-Id":         "1",
-	}, *sqr.builder.client.(mockClient).lastCalledWithHeaders)
-}
 
 func TestSubQueryConnectWhenDatasourceNotFound(t *testing.T) {
 	sqr := subQueryREST{

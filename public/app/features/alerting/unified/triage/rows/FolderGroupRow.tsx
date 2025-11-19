@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isString } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -27,7 +28,7 @@ export const FolderGroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, childr
       title={
         <Stack direction="row" gap={0.5} alignItems="center">
           <MetaText icon="folder" />
-          <Text color="primary">{row.metadata.value}</Text>
+          {isString(row.metadata.value) && <Text color="primary">{row.metadata.value}</Text>}
         </Stack>
       }
       isOpenByDefault={true}

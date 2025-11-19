@@ -56,6 +56,9 @@ export interface Props extends Themeable2 {
   isOverflow: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-bargauge--docs
+ */
 export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     lcdCellWidth: 12,

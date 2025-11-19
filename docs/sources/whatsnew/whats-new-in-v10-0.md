@@ -270,7 +270,7 @@ With the new user interface (UI), you can now configure SAML without needing to 
 
 The SAML UI is available in Grafana Enterprise, Cloud Pro, and Advanced. It's user-friendly, with clear instructions and helpful prompts to guide you through the process.
 
-For more information on how to set up SAML using the Grafana UI, refer to [Configure SAML authentication using the Grafana user interface](../../setup-grafana/configure-security/configure-authentication/saml-ui/).
+For more information on how to set up SAML using the Grafana UI, refer to [Configure SAML authentication using the Grafana user interface](../../setup-grafana/configure-access/configure-authentication/saml-ui/).
 
 ### Case-insensitive usernames and email addresses
 

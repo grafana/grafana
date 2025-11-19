@@ -156,7 +156,6 @@ export function LogsSamplePanel(props: Props) {
         </div>
       }
       isOpen={enabled}
-      collapsible={true}
       onToggle={onToggleLogsSampleCollapse}
     >
       <OpenInSplitViewButton />

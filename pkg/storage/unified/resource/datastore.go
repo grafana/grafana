@@ -77,8 +77,10 @@ func (k DataKey) Validate() error {
 	}
 
 	// Validate naming conventions for all required fields
-	if err := validation.IsValidNamespace(k.Namespace); err != nil {
-		return NewValidationError("namespace", k.Namespace, err[0])
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
 	if err := validation.IsValidGroup(k.Group); err != nil {
 		return NewValidationError("group", k.Group, err[0])
@@ -117,7 +119,7 @@ func (k ListRequestKey) Validate() error {
 	if k.Namespace == "" && k.Name != "" {
 		return errors.New(ErrNameMustBeEmptyWhenNamespaceEmpty)
 	}
-	if k.Namespace != "" {
+	if k.Namespace != "" && k.Namespace != clusterScopeNamespace {
 		if err := validation.IsValidNamespace(k.Namespace); err != nil {
 			return NewValidationError("namespace", k.Namespace, err[0])
 		}
@@ -155,8 +157,10 @@ func (k GetRequestKey) Validate() error {
 	if k.Namespace == "" {
 		return errors.New(ErrNamespaceRequired)
 	}
-	if err := validation.IsValidNamespace(k.Namespace); err != nil {
-		return NewValidationError("namespace", k.Namespace, err[0])
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
 	if err := validation.IsValidGroup(k.Group); err != nil {
 		return NewValidationError("group", k.Group, err[0])
@@ -235,6 +239,49 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 		return ParseKey(key)
 	}
 	return DataKey{}, ErrNotFound
+}
+
+// GetLatestAndPredecessor returns the latest resource version and its immediate predecessor
+// in a single atomic operation. Returns (latest, predecessor, error).
+// If there's only one version, predecessor will be an empty DataKey (ResourceVersion == 0).
+func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequestKey) (DataKey, DataKey, error) {
+	if err := key.Validate(); err != nil {
+		return DataKey{}, DataKey{}, fmt.Errorf("invalid data key: %w", err)
+	}
+	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
+		return DataKey{}, DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	}
+	prefix := key.Prefix()
+	var latest, predecessor DataKey
+	count := 0
+	for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+		Limit:    2, // Get latest and predecessor
+		Sort:     SortOrderDesc,
+	}) {
+		if err != nil {
+			return DataKey{}, DataKey{}, err
+		}
+		parsedKey, err := ParseKey(k)
+		if err != nil {
+			return DataKey{}, DataKey{}, err
+		}
+		switch count {
+		case 0:
+			latest = parsedKey
+		case 1:
+			predecessor = parsedKey
+		}
+		count++
+	}
+	if count == 0 {
+		return DataKey{}, DataKey{}, ErrNotFound
+	}
+	if count == 1 {
+		return latest, DataKey{}, nil
+	}
+	return latest, predecessor, nil
 }
 
 // GetLatestResourceKey retrieves the data key for the latest version of a resource.
@@ -364,7 +411,7 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 
 // BatchGet retrieves multiple data objects in batches.
 // It returns an iterator that yields DataObj results for the given keys.
-// Keys are processed in batches (default 50) to balance between efficiency and memory usage.
+// Keys are processed in batches (default 50).
 // Non-existent entries will not appear in the result.
 func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[DataObj, error] {
 	return func(yield func(DataObj, error) bool) {

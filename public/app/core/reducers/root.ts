@@ -3,6 +3,7 @@ import { AnyAction, combineReducers } from 'redux';
 
 import { notificationsAPIv0alpha1, rulesAPIv0alpha1 } from '@grafana/alerting/unstable';
 import { allReducers as allApiClientReducers } from '@grafana/api-clients/rtkq';
+import { generatedAPI as legacyAPI } from '@grafana/api-clients/rtkq/legacy';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
@@ -14,7 +15,6 @@ import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/s
 import dashboardReducers from 'app/features/dashboard/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import exploreReducers from 'app/features/explore/state/main';
-import foldersReducers from 'app/features/folders/state/reducers';
 import invitesReducers from 'app/features/invites/state/reducers';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
@@ -34,7 +34,6 @@ const rootReducers = {
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
-  ...foldersReducers,
   ...dashboardReducers,
   ...exploreReducers,
   ...dataSourcesReducers,
@@ -51,6 +50,7 @@ const rootReducers = {
   ...templatingReducers,
   ...supportBundlesReducer,
   ...authConfigReducers,
+  [legacyAPI.reducerPath]: legacyAPI.reducer,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
   [notificationsAPIv0alpha1.reducerPath]: notificationsAPIv0alpha1.reducer,

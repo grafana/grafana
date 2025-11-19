@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -277,6 +279,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	cfg.SearchRingReplicationFactor = 1
 	cfg.Target = []string{modules.SearchServerDistributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
+	cfg.EnableSearch = true
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -319,6 +322,7 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	// otherwise the tests will be flaky,
 	// also, tests are going to timeout after 300 seconds anyway
 	cfg.ResourceServerJoinRingTimeout = 300 * time.Second
+	cfg.EnableSearch = true
 
 	return initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 }
@@ -330,8 +334,9 @@ func initModuleServerForTest(
 	apiOpts api.ServerOptions,
 ) testModuleServer {
 	tracer := tracing.InitializeTracerForTest()
-
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, nil, ProvideNoopModuleRegisterer(), nil)
+	hooksService := hooks.ProvideService()
+	license := &licensing.OSSLicensingService{}
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
@@ -355,7 +360,8 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	cfg.IndexPath = t.TempDir()
 	cfg.IndexFileThreshold = testIndexFileThreshold
-	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch)
+	cfg.EnableSearch = true
+	features := featuremgmt.WithFeatures()
 	docBuilders, err := InitializeDocumentBuilders(cfg)
 	require.NoError(t, err)
 	tracer := noop.NewTracerProvider().Tracer("test-tracer")

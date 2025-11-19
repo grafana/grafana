@@ -348,11 +348,11 @@ describe('SeriesData backwards compatibility', () => {
     expect(isDataFrame(timeseries)).toBeFalsy();
     expect(isDataFrame(series)).toBeTruthy();
 
-    const roundtrip = toLegacyResponseData(series) as any;
+    const roundtrip = toLegacyResponseData(series);
     expect(isDataFrame(roundtrip)).toBeFalsy();
-    expect(roundtrip.type).toBe('docs');
-    expect(roundtrip.target).toBe('docs');
-    expect(roundtrip.filterable).toBeTruthy();
+    expect('type' in roundtrip && roundtrip.type).toBe('docs');
+    expect('target' in roundtrip && roundtrip.target).toBe('docs');
+    expect('filterable' in roundtrip && roundtrip.filterable).toBeTruthy();
   });
 });
 

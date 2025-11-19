@@ -48,6 +48,9 @@ interface WithCustomTitleProps extends BaseProps {
 
 export type Props = WithStringTitleProps | WithCustomTitleProps;
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-modal--docs
+ */
 export function Modal(props: PropsWithChildren<Props>) {
   const {
     title,

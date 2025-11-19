@@ -13,11 +13,11 @@
       "label-resource-group": "Grupa zasobów",
       "label-resource-name": "Nazwa zasobu",
       "label-resource-number": "Zasób {{resourceNum}}",
-      "label-resource-uri": "Identyfikatory URI zasobów ",
+      "label-resource-uri": "",
       "label-subscription": "Subskrypcja",
       "placeholder-resource-name": "nazwa",
       "tooltip-region": "Kod regionu zasobu. Opcjonalny w przypadku jednego zasobu, ale wymagany przy wielu zasobach.",
-      "tooltip-resource-uri": "Edytuj ręcznie <2>identyfikator URI zasobu</2>. Obsługuje korzystanie z wielu zmiennych szablonu (np. /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Funkcja agregująca",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Podstawowe dzienniki",
-      "description-basic-logs": "Włączenie tej funkcji wiąże się z opłatami Azure Monitor za każde zapytanie w przypadku paneli pulpitu, które wysyłają zapytania do tabel skonfigurowanych dla <2>podstawowych dzienników</2>.",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "Włącz podstawowe dzienniki"
     },
     "config-editor": {

@@ -18,6 +18,8 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	placement?: "inControlsMenu";
 	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 	legacyOptions?: Record<string, any>;
 }
@@ -29,6 +31,7 @@ export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
 	iconColor: "",
 	name: "",
 	builtIn: false,
+	placement: AnnotationQueryPlacement,
 });
 
 export interface DataQueryKind {
@@ -61,6 +64,10 @@ export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 	exclude: false,
 	ids: [],
 });
+
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+export const AnnotationQueryPlacement = "inControlsMenu";
 
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
@@ -155,7 +162,7 @@ export interface PanelQuerySpec {
 
 export const defaultPanelQuerySpec = (): PanelQuerySpec => ({
 	query: defaultDataQueryKind(),
-	refId: "",
+	refId: "A",
 	hidden: false,
 });
 
@@ -219,6 +226,7 @@ export interface QueryOptionsSpec {
 	interval?: string;
 	cacheTimeout?: string;
 	hideTimeOverride?: boolean;
+	timeCompare?: string;
 }
 
 export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
@@ -258,6 +266,8 @@ export interface FieldConfigSource {
 	defaults: FieldConfig;
 	// Overrides are the options applied to specific fields overriding the defaults.
 	overrides: {
+		// Describes config override rules created when interacting with Grafana.
+		__systemRef?: string;
 		matcher: MatcherConfig;
 		properties: DynamicConfigValue[];
 	}[];
@@ -456,7 +466,8 @@ export type ThresholdsMode = "absolute" | "percentage";
 export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
 
 export interface Threshold {
-	value: number;
+	// Value null means -Infinity
+	value: number | null;
 	color: string;
 }
 
@@ -1274,7 +1285,7 @@ export interface IntervalVariableSpec {
 	auto: boolean;
 	auto_min: string;
 	auto_count: number;
-	refresh: VariableRefresh;
+	refresh: "onTimeRangeChanged";
 	label?: string;
 	hide: VariableHide;
 	skipUrlSync: boolean;
@@ -1289,7 +1300,7 @@ export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
 	auto: false,
 	auto_min: "",
 	auto_count: 0,
-	refresh: "never",
+	refresh: "onTimeRangeChanged",
 	hide: "dontHide",
 	skipUrlSync: false,
 });

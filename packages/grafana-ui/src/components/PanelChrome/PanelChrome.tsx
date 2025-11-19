@@ -116,6 +116,10 @@ interface HoverHeader {
 export type PanelPadding = 'none' | 'md';
 
 /**
+ * Component used for rendering content wrapped in the same style as grafana panels.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-panelchrome--docs
+ *
  * @internal
  */
 export function PanelChrome({
@@ -289,10 +293,13 @@ export function PanelChrome({
         </div>
       )}
 
-      <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-        <PanelDescription description={description} className={dragClassCancel} />
-        {titleItems}
-      </div>
+      {(titleItems || description) && (
+        <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
+          <PanelDescription description={description} className={dragClassCancel} />
+          {titleItems}
+        </div>
+      )}
+
       {loadingState === LoadingState.Streaming && (
         <Tooltip
           content={
@@ -319,11 +326,14 @@ export function PanelChrome({
           </Tooltip>
         </DelayRender>
       )}
-      <div className={styles.rightAligned}>
-        {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
-      </div>
+      {!hoverHeader && <div className={styles.flexGrow} />}
+      {actions && itemsRenderer(actions, (item) => item)}
     </>
   );
+
+  // Ignores streaming and loading (cancel query) states for simplicity
+  // If you need to cancel streaming / loading panels set a title
+  const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
 
   return (
     // tabIndex={0} is needed for keyboard accessibility in the plot area
@@ -354,15 +364,17 @@ export function PanelChrome({
 
       {hoverHeader && (
         <>
-          <HoverWidget
-            menu={menu}
-            title={typeof title === 'string' ? title : undefined}
-            offset={hoverHeaderOffset}
-            dragClass={dragClass}
-            onOpenMenu={onOpenMenu}
-          >
-            {headerContent}
-          </HoverWidget>
+          {hasHeaderContent && (
+            <HoverWidget
+              menu={menu}
+              title={typeof title === 'string' ? title : undefined}
+              dragClass={dragClass}
+              offset={hoverHeaderOffset}
+              onOpenMenu={onOpenMenu}
+            >
+              {headerContent}
+            </HoverWidget>
+          )}
 
           {statusMessage && (
             <div className={styles.errorContainerFloating}>
@@ -432,6 +444,10 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
 
 const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
   if (hasHeader) {
+    if (getFeatureToggle('newPanelPadding')) {
+      return theme.spacing.gridSize * 5;
+    }
+
     return theme.spacing.gridSize * theme.components.panel.headerHeight;
   }
 
@@ -473,7 +489,8 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor, padding } = theme.components.panel;
+  const { background, borderColor } = theme.components.panel;
+  const newPanelPadding = getFeatureToggle('newPanelPadding');
 
   return {
     container: css({
@@ -548,6 +565,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
+      // remove logic after newPanelPadding feature toggle is removed
+      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
+      gap: theme.spacing(1),
     }),
     pointer: css({
       cursor: 'pointer',
@@ -564,7 +584,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       label: 'panel-title',
       display: 'flex',
-      padding: theme.spacing(0, padding),
       minWidth: 0,
       '& > h2': {
         minWidth: 0,
@@ -596,20 +615,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0,
       zIndex: 1,
     }),
-    rightActions: css({
-      display: 'flex',
-      padding: theme.spacing(0, padding),
-      gap: theme.spacing(1),
-    }),
-    rightAligned: css({
-      label: 'right-aligned-container',
-      marginLeft: 'auto',
-      display: 'flex',
-      alignItems: 'center',
-    }),
     titleItems: css({
       display: 'flex',
       height: '100%',
+      alignItems: 'center',
     }),
     clearButtonStyles: css({
       alignItems: 'center',
@@ -619,6 +628,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       padding: 0,
       maxWidth: '100%',
+    }),
+    flexGrow: css({
+      flexGrow: 1,
     }),
   };
 };

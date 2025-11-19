@@ -97,6 +97,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	deleteTeamMember := func(q *DeleteTeamMemberCommand) sqltemplate.SQLTemplate {
+		v := newDeleteTeamMember(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	deleteTeam := func(q *DeleteTeamCommand) sqltemplate.SQLTemplate {
 		v := newDeleteTeam(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -291,6 +297,14 @@ func TestIdentityQueries(t *testing.T) {
 						UID:        "team-1",
 						OrgID:      1,
 						Pagination: common.Pagination{Limit: 1, Continue: 2},
+					}),
+				},
+			},
+			sqlDeleteTeamMemberQuery: {
+				{
+					Name: "delete_team_member_basic",
+					Data: deleteTeamMember(&DeleteTeamMemberCommand{
+						UID: "team-member-1",
 					}),
 				},
 			},

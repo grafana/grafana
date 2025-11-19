@@ -74,6 +74,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		logger.Debug("Deleted alert rule state", "count", rows)
 
 		var versions []alertRuleVersion
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
 			versions, err = st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
 			if err != nil {
@@ -617,6 +618,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 
 		// Process rules and implement per-group pagination
 		var groupsFetched int64
+		var rulesFetched int64
 		for rows.Next() {
 			rule := new(alertRule)
 			err = rows.Scan(rule)
@@ -643,6 +645,11 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 					nextToken = ngmodels.EncodeGroupCursor(cursor)
 					break
 				}
+				// Check if we've reached the rule limit
+				if query.RuleLimit > 0 && rulesFetched >= query.RuleLimit {
+					nextToken = ngmodels.EncodeGroupCursor(cursor)
+					break
+				}
 
 				// Reset for new group
 				cursor = key
@@ -655,6 +662,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			}
 
 			alertRules = append(alertRules, &converted)
+			rulesFetched++
 		}
 
 		result = alertRules
@@ -851,6 +859,28 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		q, err = st.filterByContentInNotificationSettings(query.TimeIntervalName, q)
 		if err != nil {
 			return nil, groupsSet, err
+		}
+	}
+
+	if query.SearchTitle != "" {
+		words := strings.Fields(query.SearchTitle)
+		if len(words) > 0 {
+			// Build sequential pattern: %word1%word2%word3%
+			pattern := strings.Join(words, "%")
+			sql, param := st.SQLStore.GetDialect().LikeOperator("title", true, pattern, true)
+			q = q.And(sql, param)
+		}
+	}
+
+	if query.SearchRuleGroup != "" {
+		normalizedInput := strings.ToLower(query.SearchRuleGroup)
+		words := strings.Fields(normalizedInput)
+
+		if len(words) > 0 {
+			pattern := "%" + strings.Join(words, "%") + "%"
+			// In MySQL rule_group field has case-sensitive collation by default,
+			// so we need to use LOWER to perform case-insensitive search.
+			q = q.And("LOWER(rule_group) LIKE ?", pattern)
 		}
 	}
 

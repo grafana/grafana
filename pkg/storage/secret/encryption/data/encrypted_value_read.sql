@@ -3,6 +3,7 @@ SELECT
   {{ .Ident "name" }},
   {{ .Ident "version" }},
   {{ .Ident "encrypted_data" }},
+  {{ .Ident "data_key_id" }},
   {{ .Ident "created" }},
   {{ .Ident "updated" }}
 FROM

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -127,10 +125,7 @@ func TestGetContactPoints(t *testing.T) {
 
 		contactPoints, err := s.getContactPoints(ctx, user)
 		require.Nil(t, contactPoints)
-
-		gfErr := errutil.Error{}
-		require.ErrorAs(t, err, &gfErr)
-		require.Equal(t, http.StatusForbidden, gfErr.Reason.Status().HTTPStatus())
+		require.Contains(t, err.Error(), "alert.notifications.receivers.secrets:read")
 	})
 }
 

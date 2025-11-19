@@ -70,7 +70,7 @@ export type ScopeNodeLinkType = 'scope';
 export interface ScopeNodeSpec {
   nodeType: ScopeNodeNodeType;
   title: string;
-
+  subTitle?: string;
   description?: string;
 
   // If true for a scope category/type, it means only single child can be selected at a time.

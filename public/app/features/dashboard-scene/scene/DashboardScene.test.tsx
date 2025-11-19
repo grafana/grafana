@@ -23,7 +23,7 @@ import {
 } from '@grafana/scenes';
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -43,10 +43,10 @@ import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../u
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { PanelTimeRange } from './PanelTimeRange';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
+import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');

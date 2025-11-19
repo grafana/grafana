@@ -434,6 +434,7 @@ module.exports = [
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
+      'public/app/plugins/datasource/opentsdb/**/*.{ts,tsx}',
       'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
       'public/app/plugins/datasource/tempo/**/*.{ts,tsx}',
       'public/app/plugins/datasource/zipkin/**/*.{ts,tsx}',
@@ -478,6 +479,25 @@ module.exports = [
               importNames: ['useStyles2', 'useTheme2'],
               message:
                 'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
+  // dataviz prefers to use `clsx` over `cx` to compose classes as a rule for performance reasons
+  {
+    files: ['public/app/plugins/panel/state-timeline/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@emotion/css'],
+              importNames: ['cx'],
+              message: 'Do not use "cx" from @emotion/css. Instead, use `clsx` and compose together only strings.',
             },
           ],
         }),
@@ -580,4 +600,17 @@ module.exports = [
       ],
     },
   },
+
+  // {
+  //   name: 'grafana/plugin-external-import-paths',
+  //   files: [
+  //     'public/app/plugins/panel/histogram/**/*.{ts,tsx}',
+  //   ],
+  //   plugins: {
+  //     '@grafana': grafanaPlugin,
+  //   },
+  //   rules: {
+  //     '@grafana/no-plugin-external-import-paths': 'error',
+  //   },
+  // },
 ];

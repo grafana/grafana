@@ -1,6 +1,6 @@
 import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { SceneRenderProfiler } from '@grafana/scenes';
+import { performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 import { ScopesApiClient } from '../ScopesApiClient';
@@ -54,7 +54,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
     private store = storeImpl,
-    private interactionProfiler: SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics.length
+    private interactionProfiler: performanceUtils.SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics
+      .length
       ? getDashboardSceneProfiler()
       : undefined
   ) {
@@ -340,15 +341,23 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return this.collapseNode(scopeNodeId);
   };
 
-  changeScopes = (scopeNames: string[], parentNodeId?: string) => {
-    return this.applyScopes(scopeNames.map((id) => ({ scopeId: id, parentNodeId })));
+  changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string, redirectOnApply?: boolean) => {
+    return this.applyScopes(
+      scopeNames.map((id, index) => ({
+        scopeId: id,
+        // Only the first scope gets the scopeNodeId
+        scopeNodeId: index === 0 ? scopeNodeId : undefined,
+        parentNodeId,
+      })),
+      redirectOnApply
+    );
   };
 
   /**
    * Apply the selected scopes. Apart from setting the scopes it also fetches the scope metadata and also loads the
    * related dashboards.
    */
-  private applyScopes = async (scopes: SelectedScope[]) => {
+  private applyScopes = async (scopes: SelectedScope[], redirectOnApply = true) => {
     // Skip if we are trying to apply the same scopes as are already applied.
     if (
       this.state.appliedScopes.length === scopes.length &&
@@ -364,7 +373,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // We call this even if we have 0 scope because in that case it also closes the dashboard drawer.
     this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId)).then(() => {
       const selectedScopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
-      this.redirectAfterApply(selectedScopeNode);
+      if (redirectOnApply) {
+        this.redirectAfterApply(selectedScopeNode);
+      }
     });
 
     if (scopes.length > 0) {
@@ -420,7 +431,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  public removeAllScopes = () => this.applyScopes([]);
+  public removeAllScopes = () => this.applyScopes([], false);
 
   private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode) => {
     if (scopes.length === 0) {

@@ -79,7 +79,7 @@ export function buildPluginSectionNav(currentUrl: string, pluginNavSection?: Nav
   }
 
   // Find and set active page
-  copiedPluginNavSection.children = (copiedPluginNavSection?.children ?? []).map(findAndSetActivePage);
+  copiedPluginNavSection.children = (copiedPluginNavSection?.children ?? []).map((item) => findAndSetActivePage(item));
 
   return { main: copiedPluginNavSection, node: activePage ?? copiedPluginNavSection };
 }

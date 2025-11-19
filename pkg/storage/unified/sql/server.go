@@ -62,7 +62,6 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	}
 
 	serverOptions := resource.ResourceServerOptions{
-		Tracer: opts.Tracer,
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
@@ -99,14 +98,12 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 
 		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
 			opts.Cfg.SectionWithEnvOverrides("resource_api"))
-		withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
 
 		backend, err := NewBackend(BackendOptions{
 			DBProvider:           eDB,
 			Tracer:               opts.Tracer,
 			Reg:                  opts.Reg,
 			IsHA:                 isHA,
-			withPruner:           withPruner,
 			storageMetrics:       opts.StorageMetrics,
 			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
 		})

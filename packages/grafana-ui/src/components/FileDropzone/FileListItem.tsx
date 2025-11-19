@@ -17,6 +17,11 @@ export interface FileListItemProps {
   removeFile?: (file: DropzoneFile) => void;
 }
 
+/**
+ * A FileListItem component used for the FileDropzone component to show uploaded files.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-filelistitem--docs
+ */
 export function FileListItem({ file: customFile, removeFile }: FileListItemProps) {
   const styles = useStyles2(getStyles);
   const { file, progress, error, abortUpload, retryUpload } = customFile;

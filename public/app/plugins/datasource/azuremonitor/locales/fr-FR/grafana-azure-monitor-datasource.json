@@ -13,11 +13,11 @@
       "label-resource-group": "Groupe de ressources",
       "label-resource-name": "Nom de la ressource",
       "label-resource-number": "Ressource {{resourceNum}}",
-      "label-resource-uri": "URI(s) de ressource ",
+      "label-resource-uri": "",
       "label-subscription": "Abonnement",
       "placeholder-resource-name": "nom",
       "tooltip-region": "La région de code de la ressource. Facultatif pour une ressource, mais obligatoire lors de la sélection de plusieurs ressources.",
-      "tooltip-resource-uri": "Modifiez manuellement l’<2>URI de la ressource</2>. Prend en charge l’utilisation de plusieurs variables de modèle (par exemple : /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Fonction d’agrégation",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Journaux de base",
-      "description-basic-logs": "L’activation de cette fonctionnalité entraîne des coûts Azure Monitor par requête sur les panneaux du tableau de bord qui interrogent les tables configurées pour les <2>journaux de base</2>.",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "Activer les journaux de base"
     },
     "config-editor": {

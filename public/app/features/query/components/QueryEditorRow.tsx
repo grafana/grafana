@@ -230,6 +230,17 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onRemoveQuery = () => {
     const { onRemoveQuery, query, onQueryRemoved } = this.props;
+
+    // Track expression query removal
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    if (isExpressionQuery && 'type' in query && query.type) {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'remove_expression',
+        expression_type: query.type,
+        context: 'panel_query_section',
+      });
+    }
+
     onRemoveQuery(query);
 
     if (onQueryRemoved) {
@@ -299,11 +310,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
-    if (datasource?.getQueryDisplayText) {
-      return datasource.getQueryDisplayText(this.props.query);
+
+    if (!datasource || typeof datasource.getQueryDisplayText !== 'function') {
+      return null;
     }
 
-    return null;
+    try {
+      return datasource.getQueryDisplayText(this.props.query);
+    } catch (error) {
+      // Some datasource plugins may throw errors in getQueryDisplayText
+      // Return null gracefully to prevent the query editor from crashing.
+      return null;
+    }
   }
 
   renderWarnings = (type: string): JSX.Element | null => {
@@ -393,7 +411,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       <>
         {!isEditingQueryLibrary && !isUnifiedAlerting && !isExpressionQuery && (
           <SavedQueryButtons
-            query={query}
+            query={{
+              ...query,
+              datasource: datasource ? { uid: datasource.uid, type: datasource.type } : query.datasource,
+            }}
             app={app}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}

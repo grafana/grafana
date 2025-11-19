@@ -6,7 +6,7 @@ export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflow
   if (data.readOnly) {
     return [];
   }
-  const workflows: RepositorySpec['workflows'] = ['write'];
+  const workflows: RepositorySpec['workflows'] = data.enablePushToConfiguredBranch ? ['write'] : [];
 
   if (!data.prWorkflow) {
     return workflows;
@@ -69,6 +69,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
+    enablePushToConfiguredBranch: spec.workflows.includes('write'),
   });
 };
 
