@@ -65,7 +65,7 @@ export function trackDashboardSceneCreatedOrSaved(
 
   // Extract datasourceTypes from URL params (supports both community and provisioned dashboards) or dashboard panels
   const datasourceTypes = getDatasourceTypes(dashboard);
-  
+
   const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
