@@ -40,9 +40,9 @@ Plugins come in three types:
 
 - **Data source plugins** connect Grafana to **external data sources**. You use this type of plugin when you want to access and work with data from an external source or third party. Examples include Prometheus, MSSQL, and Databricks.
 
-- **Panel plugins** control how data appears in Grafana dashboards. Examples of panel plugins include pie chart, candlestick, and traffic light. 
+- **Panel plugins** control how data appears in Grafana dashboards. Examples of panel plugins include pie chart, candlestick, and traffic light. Note that in some cases, panels don't rely on a data source at all. The **Text** panel can render static or templated content without querying data. Panels can also support user-driven actions. For example, the **Button** panel can trigger workflows or external calls.
 
-- **App plugins** allow you to bundle data sources and panel plugins within a single package. They also enable you to create custom pages within Grafana, providing a dedicated space for documentation, sign-up forms, and integration with other services via HTTP. Examples include Grafana Metrics Drilldown, Azure Cloud Native Monitoring, and Redis Application.
+- **App plugins** allow you to bundle data sources and panel plugins within a single package. They enable you to create custom pages within Grafana that can function like dashboards, providing dedicated spaces for documentation, sign-up forms, custom UI extensions, and integration with other services via HTTP. Cloud apps built as app plugins offer out-of-the-box observability solutions, such as Azure Cloud Native Monitoring and Redis Application, that provide comprehensive monitoring capabilities compared to standalone integrations
 
 ## Integrations
 
@@ -117,9 +117,15 @@ A panel plugin in Grafana is an extension that allows you to add new and custom 
 
 An app plugin in Grafana is a type of plugin that provides a comprehensive, integrated, and often out-of-the-box experience within Grafana. Unlike data source plugins, which connect to external data sources, or panel plugins, which provide new visualization types, app plugins can combine various functionalities to create a more complete experience. 
 
+**How do data sources and integrations differ in how they handle data?**
+
+Data sources query data where it already lives. They connect Grafana to an external system or database, such as Prometheus, MySQL, or Elasticsearch and fetch data on demand. You keep full control over your own data stores, schemas and retention policies. 
+
+In contrast, integrations focus on getting data into Grafana Cloud’s hosted backends. They ingest metrics, logs, and traces into systems like Mimir, Loki, or Tempo, using pre-configured agents and pipelines. Instead of querying an external database, Grafana queries its own managed storage where the integration has placed the data.
+
 ## Summary reference
 
-Use the following table to compare how data sources, plugins, and integrations differ in scope, purpose, and use. It highlights where each applies within Grafana, what problems it solves, and how they work together to build complete observability solutions.
+Use the following table to compare how data sources, plugins, and integrations differ in scope, purpose, and use. It highlights where each applies within Grafana, what problems it solves, and how they work together to build observability solutions.
 
 | Concept                | Where it applies                | Purpose                                                                      | What it includes                                                                                                                              | When to use it                                                                              | Example                                                                         |
 | ---------------------- | ------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -128,8 +134,8 @@ Use the following table to compare how data sources, plugins, and integrations d
 | **App plugin**         | Grafana (self-hosted and Cloud) | Bundles multiple plugin types and adds custom pages or UI.                   | Data source + panel plugins + custom routes and integrations.                                                                                 | You want to create a dedicated app-like experience in Grafana.                              | Azure Cloud Native Monitoring, Metrics Drilldown                                |
 | **Panel plugin**       | Grafana (self-hosted and Cloud) | Adds new visualization types to dashboards.                                  | Custom panels and visualization logic.                                                                                                        | You want to display data in new visual forms beyond Grafana’s built-ins.                    | Pie chart, Candlestick, Plotly, Geomap                                                  |
 | **Data source plugin** | Grafana (self-hosted and Cloud) | Enables Grafana to connect to a new type of external system.                 | Driver or connector code that defines how Grafana queries that system.                                                                        | You need to access data from an unsupported or proprietary backend.                         | Databricks, MongoDB, MSSQL                                                      |
-| **Integration**        | Grafana Cloud only              | Provides a pre-packaged observability solution for a specific technology.    | Telemetry configuration, dashboards, alert rules, recording rules.                                                                            | You want an out-of-the-box setup with minimal configuration.                                | Kubernetes, Redis, NGINX, AWS EC2                                               |
-| **Relationship**       | —                               | How they interact                                                            | Plugins extend Grafana’s capabilities → Data sources define where data comes from → Integrations combine both to deliver a complete solution. | Use all three together for full observability.                                              | Install a data source plugin → configure a data source → enable an integration. |
+| **Integration**        | Grafana Cloud only              | Provides a pre-packaged observability solution for a specific technology.    | Telemetry configuration, dashboards, alert rules, recording rules.                                                                            | You want an out-of-the-box setup with minimal configuration, where Grafana manages the data.                                | Kubernetes, Redis, NGINX, AWS EC2                                               |
+| **Relationship**       | —                               | How they interact                                                            | Plugins extend Grafana’s capabilities. Data sources define where data comes from.  Integrations combine both to deliver a complete solution. | Use all three together for full observability.                                              | Install a data source plugin → configure a data source → enable an integration. |
 
 For detailed documentation and how-to guides related to data sources, plugins, and integrations, refer to the following references:
 
