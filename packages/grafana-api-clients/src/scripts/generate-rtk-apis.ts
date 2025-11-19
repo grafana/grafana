@@ -104,6 +104,7 @@ const config: ConfigFile = {
     ...createAPIConfig('folder', 'v1beta1'),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v0alpha1'),
+    ...createAPIConfig('collections', 'v1alpha1'),
     ...createAPIConfig('preferences', 'v1alpha1'),
     ...createAPIConfig('provisioning', 'v0alpha1'),
     ...createAPIConfig('shorturl', 'v1beta1'),

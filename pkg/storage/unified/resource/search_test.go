@@ -88,7 +88,7 @@ type mockStorageBackend struct {
 	resourceStats []ResourceStats
 }
 
-func (m *mockStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
 	var result []ResourceStats
 	for _, stat := range m.resourceStats {
 		// Apply the minCount filter like the real implementation does

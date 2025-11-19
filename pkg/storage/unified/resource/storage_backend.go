@@ -1223,8 +1223,8 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 }
 
 // GetResourceStats returns resource stats within the storage backend.
-func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
-	return k.dataStore.GetResourceStats(ctx, namespace, minCount)
+func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
+	return k.dataStore.GetResourceStats(ctx, nsr.Namespace, minCount)
 }
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
