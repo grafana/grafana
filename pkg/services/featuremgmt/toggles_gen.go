@@ -299,10 +299,6 @@ const (
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
 
-	// FlagAddFieldFromCalculationStatFunctions
-	// Add cumulative and window functions to the add field from calculation transformation
-	FlagAddFieldFromCalculationStatFunctions = "addFieldFromCalculationStatFunctions"
-
 	// FlagAlertmanagerRemoteSecondary
 	// Enable Grafana to sync configuration and state with a remote Alertmanager.
 	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
@@ -814,10 +810,6 @@ const (
 	// Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
 	FlagAlertingImportYAMLUI = "alertingImportYAMLUI"
 
-	// FlagUnifiedStorageHistoryPruner
-	// Enables the unified storage history pruner
-	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
-
 	// FlagAzureMonitorLogsBuilderEditor
 	// Enables the logs builder mode for the Azure Monitor data source
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
@@ -1081,4 +1073,8 @@ const (
 	// FlagTransformationsEmptyPlaceholder
 	// Show transformation quick-start cards in empty transformations state
 	FlagTransformationsEmptyPlaceholder = "transformationsEmptyPlaceholder"
+
+	// FlagTtlPluginInstanceManager
+	// Enable TTL plugin instance manager
+	FlagTtlPluginInstanceManager = "ttlPluginInstanceManager"
 )

@@ -298,10 +298,13 @@ export function PanelChrome({
         </div>
       )}
 
-      <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-        <PanelDescription description={description} className={dragClassCancel} />
-        {titleItems}
-      </div>
+      {(titleItems || description) && (
+        <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
+          <PanelDescription description={description} className={dragClassCancel} />
+          {titleItems}
+        </div>
+      )}
+
       {loadingState === LoadingState.Streaming && (
         <Tooltip
           content={
@@ -328,11 +331,14 @@ export function PanelChrome({
           </Tooltip>
         </DelayRender>
       )}
-      <div className={styles.rightAligned}>
-        {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
-      </div>
+      {!hoverHeader && <div className={styles.flexGrow} />}
+      {actions && itemsRenderer(actions, (item) => item)}
     </>
   );
+
+  // Ignores streaming and loading (cancel query) states for simplicity
+  // If you need to cancel streaming / loading panels set a title
+  const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
 
   return (
     <MaybeWrap>
@@ -364,15 +370,17 @@ export function PanelChrome({
 
         {hoverHeader && (
           <>
-            <HoverWidget
-              menu={menu}
-              title={typeof title === 'string' ? title : undefined}
-              offset={hoverHeaderOffset}
-              dragClass={dragClass}
-              onOpenMenu={onOpenMenu}
-            >
-              {headerContent}
-            </HoverWidget>
+            {hasHeaderContent && (
+              <HoverWidget
+                menu={menu}
+                title={typeof title === 'string' ? title : undefined}
+                dragClass={dragClass}
+                offset={hoverHeaderOffset}
+                onOpenMenu={onOpenMenu}
+              >
+                {headerContent}
+              </HoverWidget>
+            )}
 
             {statusMessage && (
               <div className={styles.errorContainerFloating}>
@@ -617,16 +625,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0,
       zIndex: 1,
     }),
-    rightActions: css({
-      display: 'flex',
-      gap: theme.spacing(1),
-    }),
-    rightAligned: css({
-      label: 'right-aligned-container',
-      marginLeft: 'auto',
-      display: 'flex',
-      alignItems: 'center',
-    }),
     titleItems: css({
       display: 'flex',
       height: '100%',
@@ -640,6 +638,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       padding: 0,
       maxWidth: '100%',
+    }),
+    flexGrow: css({
+      flexGrow: 1,
     }),
   };
 };

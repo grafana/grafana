@@ -5930,7 +5930,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Lägg till omvandling"
+      "add-transformation": "Lägg till omvandling",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7789,6 +7792,14 @@
     "name-show-threshold-labels": "Visa tröskelvärdesetiketter",
     "name-show-threshold-markers": "Visa tröskelmarkörer",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8999,6 +9010,13 @@
       "copy": "Kopiera till klippbordet",
       "csv-counts": "",
       "csv-placeholder": "Ange CSV här…",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrera värden",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Matcha gemener/versaler",
@@ -9150,6 +9168,9 @@
     "category-legend": "Förklaringar",
     "category-tooltip": "Verktygstips",
     "category-y-axis": "Y-axel",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Opacitet",
       "label-scheme": "Förvaltning"
@@ -12381,6 +12402,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Minimera",
+      "exchange": "",
       "expand": "Expandera",
       "loading": "Laddar instrumentpaneler",
       "noResultsForFilter": "Inga resultat hittades för din fråga",
@@ -12399,8 +12421,10 @@
       "cancel": "Avbryt",
       "error-title": "",
       "input": {
-        "placeholder": "Välj omfattningar …",
-        "removeAll": "Ta bort alla omfattningar"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Ta bort alla omfattningar",
+        "tooltip": ""
       },
       "title": "Välj omfattningar"
     },

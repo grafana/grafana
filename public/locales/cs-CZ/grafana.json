@@ -5974,7 +5974,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Přidat transformaci"
+      "add-transformation": "Přidat transformaci",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7841,6 +7844,14 @@
     "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
     "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
     "placeholder-neutral": "auto.",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9071,6 +9082,13 @@
       "copy": "Kopírovat do schránky",
       "csv-counts": "",
       "csv-placeholder": "Zadej CSV tady…",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrovat hodnoty",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Rozlišovat malá a velká písmena",
@@ -9222,6 +9240,9 @@
     "category-legend": "Legenda",
     "category-tooltip": "Popisek",
     "category-y-axis": "Osa Y",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Neprůhlednost",
       "label-scheme": "Schéma"
@@ -12491,6 +12512,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Sbalit",
+      "exchange": "",
       "expand": "Rozbalit",
       "loading": "Načítání nástěnek",
       "noResultsForFilter": "Nebyly nalezeny žádné výsledky pro váš dotaz",
@@ -12509,8 +12531,10 @@
       "cancel": "Zrušit",
       "error-title": "",
       "input": {
-        "placeholder": "Vyberte rozsahy…",
-        "removeAll": "Odebrat všechny rozsahy"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Odebrat všechny rozsahy",
+        "tooltip": ""
       },
       "title": "Vyberte rozsahy"
     },

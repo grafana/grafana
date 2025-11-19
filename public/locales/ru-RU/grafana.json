@@ -5974,7 +5974,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Добавить преобразование"
+      "add-transformation": "Добавить преобразование",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7841,6 +7844,14 @@
     "name-show-threshold-labels": "Показывать метки пороговых значений",
     "name-show-threshold-markers": "Показывать маркеры пороговых значений",
     "placeholder-neutral": "авто",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9071,6 +9082,13 @@
       "copy": "Копировать в буфер обмена",
       "csv-counts": "",
       "csv-placeholder": "Ввести CSV...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Значения фильтра",
       "filter-popup-apply": "Ок",
       "filter-popup-aria-label-match-case": "С учетом регистра",
@@ -9222,6 +9240,9 @@
     "category-legend": "Условные обозначения",
     "category-tooltip": "Подсказка",
     "category-y-axis": "Ось Y",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Прозрачность",
       "label-scheme": "Схема"
@@ -12491,6 +12512,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Свернуть",
+      "exchange": "",
       "expand": "Развернуть",
       "loading": "Загрузка дашбордов",
       "noResultsForFilter": "По вашему запросу ничего не найдено",
@@ -12509,8 +12531,10 @@
       "cancel": "Отмена",
       "error-title": "",
       "input": {
-        "placeholder": "Выбрать области...",
-        "removeAll": "Удалить все области"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Удалить все области",
+        "tooltip": ""
       },
       "title": "Выбор областей"
     },
