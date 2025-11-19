@@ -396,10 +396,9 @@ export interface FeatureToggles {
   */
   logsInfiniteScrolling?: boolean;
   /**
-  * Enable filtering menu displayed when text of a log line is selected
-  * @default true
+  * Disables passing host environment variable to plugin processes
   */
-  logRowsPopoverMenu?: boolean;
+  pluginsSkipHostEnvVars?: boolean;
   /**
   * Enables shared crosshair in table panel
   */
@@ -471,11 +470,6 @@ export interface FeatureToggles {
   * Enables column autocomplete for SQL Expressions
   */
   sqlExpressionsColumnAutoComplete?: boolean;
-  /**
-  * New implementation for the dashboard-to-PDF rendering
-  * @default true
-  */
-  newPDFRendering?: boolean;
   /**
   * Enable grafana's embedded kube-aggregator
   */
@@ -1194,4 +1188,8 @@ export interface FeatureToggles {
   * Show transformation quick-start cards in empty transformations state
   */
   transformationsEmptyPlaceholder?: boolean;
+  /**
+  * Enable TTL plugin instance manager
+  */
+  ttlPluginInstanceManager?: boolean;
 }

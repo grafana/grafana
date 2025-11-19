@@ -664,12 +664,11 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "logRowsPopoverMenu",
-			Description:  "Enable filtering menu displayed when text of a log line is selected",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true",
-			Owner:        grafanaObservabilityLogsSquad,
+			Name:         "pluginsSkipHostEnvVars",
+			Description:  "Disables passing host environment variable to plugin processes",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:         "tableSharedCrosshair",
@@ -800,13 +799,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
-		},
-		{
-			Name:        "newPDFRendering",
-			Description: "New implementation for the dashboard-to-PDF rendering",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "true", // enabled by default,
 		},
 		{
 			Name:            "kubernetesAggregator",
@@ -2071,6 +2063,13 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
+		},
+		{
+			Name:         "ttlPluginInstanceManager",
+			Description:  "Enable TTL plugin instance manager",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )

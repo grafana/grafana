@@ -5,7 +5,7 @@ import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/preferences/v1alpha1';
+import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -316,6 +316,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.uid?.length) {
       // legacy support for filtering by dashboard uid
       uri += '&' + query.uid.map((name) => `name=${encodeURIComponent(name)}`).join('&');
+    }
+
+    if (query.permission) {
+      uri += `&permission=${query.permission}`;
     }
 
     if (query.deleted) {

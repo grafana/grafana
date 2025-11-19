@@ -363,9 +363,9 @@ const (
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
-	// FlagLogRowsPopoverMenu
-	// Enable filtering menu displayed when text of a log line is selected
-	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
+	// FlagPluginsSkipHostEnvVars
+	// Disables passing host environment variable to plugin processes
+	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
 
 	// FlagTableSharedCrosshair
 	// Enables shared crosshair in table panel
@@ -430,10 +430,6 @@ const (
 	// FlagSqlExpressionsColumnAutoComplete
 	// Enables column autocomplete for SQL Expressions
 	FlagSqlExpressionsColumnAutoComplete = "sqlExpressionsColumnAutoComplete"
-
-	// FlagNewPDFRendering
-	// New implementation for the dashboard-to-PDF rendering
-	FlagNewPDFRendering = "newPDFRendering"
 
 	// FlagKubernetesAggregator
 	// Enable grafana&#39;s embedded kube-aggregator
@@ -1073,4 +1069,8 @@ const (
 	// FlagTransformationsEmptyPlaceholder
 	// Show transformation quick-start cards in empty transformations state
 	FlagTransformationsEmptyPlaceholder = "transformationsEmptyPlaceholder"
+
+	// FlagTtlPluginInstanceManager
+	// Enable TTL plugin instance manager
+	FlagTtlPluginInstanceManager = "ttlPluginInstanceManager"
 )
