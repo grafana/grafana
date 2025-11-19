@@ -52,7 +52,6 @@ interface LogsContainerProps extends PropsFromRedux {
   onStopScanning: () => void;
   eventBus: EventBus;
   splitOpenFn: SplitOpen;
-  scrollElement?: HTMLDivElement;
   isFilterLabelActive: (key: string, value: string, refId?: string) => Promise<boolean>;
   onClickFilterString: (value: string, refId?: string) => void;
   onClickFilterOutString: (value: string, refId?: string) => void;
@@ -284,7 +283,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       isLive,
       exploreId,
       logsVolume,
-      scrollElement,
       onPinLineCallback,
     } = this.props;
 
