@@ -661,6 +661,23 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
 
+	// check quotas and log for now
+	if s.quotaService != nil {
+		nsr := NamespacedResource{
+			Namespace: req.Key.Namespace,
+			Group:     req.Key.Group,
+			Resource:  req.Key.Resource,
+		}
+		quota := s.quotaService.GetQuota(nsr)
+		stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+		if err != nil {
+			s.log.Error("failed to get resource stats for quota checking", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "error", err)
+		}
+		if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
+			s.log.Info("Quota exceeded on create", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "quota", quota.Limit, "count", stats[0].Count)
+		}
+	}
+
 	if r := verifyRequestKey(req.Key); r != nil {
 		return nil, fmt.Errorf("invalid request key: %s", r.Message)
 	}
