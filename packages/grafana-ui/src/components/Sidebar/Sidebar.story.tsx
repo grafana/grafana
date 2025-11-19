@@ -2,14 +2,19 @@ import { css } from '@emotion/css';
 import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
+import { Button } from '../Button/Button';
 import { Box } from '../Layout/Box/Box';
 
-import { Sidebar, useSiderbar } from './Sidebar';
+import { Sidebar, SidebarPosition, useSiderbar } from './Sidebar';
 import mdx from './Sidebar.mdx';
 
-const meta: Meta<typeof Sidebar> = {
+interface StoryProps {
+  position: SidebarPosition;
+  compact: boolean;
+}
+
+const meta: Meta<StoryProps> = {
   title: 'Overlays/Sidebar',
-  component: Sidebar,
   parameters: {
     docs: {
       page: mdx,
@@ -20,10 +25,13 @@ const meta: Meta<typeof Sidebar> = {
     position: 'right',
     compact: true,
   },
-  argTypes: {},
+  argTypes: {
+    position: { control: { type: 'radio' }, options: ['right', 'left'] },
+    compact: { type: 'boolean', options: [true, false] },
+  },
 };
 
-export const Example: StoryFn<typeof Sidebar> = (args) => {
+export const Example: StoryFn<StoryProps> = (args) => {
   const [openPane, setOpenPane] = useState('');
 
   const containerStyle = css({
@@ -54,15 +62,15 @@ export const Example: StoryFn<typeof Sidebar> = (args) => {
     }
   };
 
-  const { toolbarProps, containerProps, sidebarProps, dockButton, openPaneProps } = useSiderbar({
-    isPaneOpen: !!openPane,
+  const contextValue = useSiderbar({
+    hasOpenPane: !!openPane,
     position: args.position,
     compact: args.compact,
   });
 
   return (
     <Box paddingY={2} backgroundColor={'canvas'} maxWidth={100} borderStyle={'solid'} borderColor={'weak'}>
-      <div className={containerStyle} {...containerProps}>
+      <div className={containerStyle} {...contextValue.outerWrapperProps}>
         <div className={gridStyle}>
           {renderBox('A')}
           {renderBox('B')}
@@ -72,18 +80,22 @@ export const Example: StoryFn<typeof Sidebar> = (args) => {
           {renderBox('F')}
           {renderBox('G')}
         </div>
-        <div {...sidebarProps}>
+        <Sidebar contextValue={contextValue}>
           {openPane === 'settings' && (
-            <div {...openPaneProps}>
-              <Sidebar.PaneHeader title="Settings" onClose={() => togglePane('')} />
-            </div>
+            <Sidebar.OpenPane>
+              <Sidebar.PaneHeader title="Settings" onClose={() => togglePane('')}>
+                <Button variant="secondary" size="sm">
+                  Action
+                </Button>
+              </Sidebar.PaneHeader>
+            </Sidebar.OpenPane>
           )}
           {openPane === 'outline' && (
-            <div {...openPaneProps}>
+            <Sidebar.OpenPane>
               <Sidebar.PaneHeader title="Outline" onClose={() => togglePane('')} />
-            </div>
+            </Sidebar.OpenPane>
           )}
-          <div {...toolbarProps}>
+          <Sidebar.Toolbar>
             <Sidebar.Button icon="share-alt" title="Share" toolbarPosition={args.position} compact={args.compact} />
             <Sidebar.Button
               icon="info-circle"
@@ -108,9 +120,8 @@ export const Example: StoryFn<typeof Sidebar> = (args) => {
               toolbarPosition={args.position}
               compact={args.compact}
             />
-            {dockButton}
-          </div>
-        </div>
+          </Sidebar.Toolbar>
+        </Sidebar>
       </div>
     </Box>
   );
@@ -139,7 +150,7 @@ export const VerticalTabs: StoryFn = (args) => {
     padding: '16px',
   });
 
-  const { toolbarProps, sidebarProps, dockButton, openPaneProps } = useSiderbar({
+  const contextValue = useSiderbar({
     position: 'left',
     tabsMode: true,
   });
@@ -148,18 +159,18 @@ export const VerticalTabs: StoryFn = (args) => {
     <Box backgroundColor={'canvas'} maxWidth={100} borderStyle={'solid'} borderColor={'weak'}>
       <div className={containerStyle}>
         <div className={vizWrapper}>{renderBox('Visualization')}</div>
-        <div {...sidebarProps}>
+        <Sidebar contextValue={contextValue}>
           {openPane === 'queries' && (
-            <div {...openPaneProps}>
+            <Sidebar.OpenPane>
               <Sidebar.PaneHeader title="Queries" />
-            </div>
+            </Sidebar.OpenPane>
           )}
           {openPane === 'transformations' && (
-            <div {...openPaneProps}>
+            <Sidebar.OpenPane>
               <Sidebar.PaneHeader title="Transformations" />
-            </div>
+            </Sidebar.OpenPane>
           )}
-          <div {...toolbarProps}>
+          <Sidebar.Toolbar>
             <Sidebar.Button
               icon="database"
               title="Queries"
@@ -174,9 +185,8 @@ export const VerticalTabs: StoryFn = (args) => {
               onClick={() => togglePane('transformations')}
             />
             <Sidebar.Button icon="bell" title="Alerts" />
-            {dockButton}
-          </div>
-        </div>
+          </Sidebar.Toolbar>
+        </Sidebar>
       </div>
     </Box>
   );

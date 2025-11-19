@@ -1,54 +1,73 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useContext } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
 import { SidebarButton } from './SidebarButton';
-import { SidebarOpenPane } from './SidebarOpenPane';
 import { SidebarPaneHeader } from './SidebarPaneHeader';
 
 export interface Props {
   children?: ReactNode;
-  isDocked?: boolean;
-  position?: 'left' | 'right';
-  compact?: boolean;
+  contextValue: SidebarContextValue;
 }
 
 export type SidebarPosition = 'left' | 'right';
 
-export function SidebarComp({ children, isDocked, position = 'right', compact }: Props) {
+interface SidebarContextValue {
+  isDocked: boolean;
+  position: SidebarPosition;
+  compact?: boolean;
+  hasOpenPane?: boolean;
+  tabsMode?: boolean;
+  outerWrapperProps?: React.HTMLAttributes<HTMLDivElement>;
+  onDockChange: () => void;
+}
+
+const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
+  SidebarContextValue | undefined
+>(undefined);
+
+export function SidebarComp({ children, contextValue }: Props) {
   const styles = useStyles2(getStyles);
+  const { isDocked, position, tabsMode } = contextValue;
+
+  const className = cx({
+    [styles.container]: true,
+    [styles.containerDocked]: isDocked,
+    [styles.containerLeft]: position === 'left',
+    [styles.containerTabsMode]: tabsMode,
+  });
 
   return (
-    <div
-      className={cx(styles.container, isDocked && styles.containerDocked, position === 'left' && styles.containerLeft)}
-    >
-      {children}
+    <div className={className}>
+      <SidebarContext.Provider value={contextValue}>{children}</SidebarContext.Provider>
     </div>
   );
 }
 
 export interface SiderbarToolbarProps {
   children?: ReactNode;
-  isDocked?: boolean;
-  isPaneOpen?: boolean;
-  onDockChange?: () => void;
 }
 
-export function SiderbarToolbar({ children, isDocked, onDockChange, isPaneOpen }: SiderbarToolbarProps) {
+export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
   const styles = useStyles2(getStyles);
+  const context = useContext(SidebarContext);
+
+  if (!context) {
+    throw new Error('Sidebar.Toolbar must be used within a Sidebar component');
+  }
 
   return (
     <div className={styles.toolbar}>
       {children}
       <div className={styles.flexGrow} />
-      {isPaneOpen && (
+      {context.hasOpenPane && (
         <SidebarButton
           icon={'web-section-alt'}
-          onClick={onDockChange}
-          title={isDocked ? 'Undock sidebar' : 'Dock sidebar'}
+          onClick={context.onDockChange}
+          title={context.isDocked ? 'Undock pane' : 'Dock pane'}
         />
       )}
     </div>
@@ -61,69 +80,50 @@ export function SidebarDivider() {
   return <div className={styles.divider} />;
 }
 
-export const Sidebar = Object.assign(SidebarComp, {
-  Toolbar: SiderbarToolbar,
-  Button: SidebarButton,
-  OpenPane: SidebarOpenPane,
-  Divider: SidebarDivider,
-  PaneHeader: SidebarPaneHeader,
-});
-
 export interface UseSideBarOptions {
-  isPaneOpen?: boolean;
+  hasOpenPane?: boolean;
   position?: SidebarPosition;
   tabsMode?: boolean;
   compact?: boolean;
 }
 
-export function useSiderbar({ isPaneOpen, position = 'right', tabsMode, compact = true }: UseSideBarOptions) {
+export function useSiderbar({
+  hasOpenPane: isPaneOpen,
+  position = 'right',
+  tabsMode,
+  compact = true,
+}: UseSideBarOptions): SidebarContextValue {
   const [isDocked, setIsDocked] = React.useState(false);
-
-  const styles = useStyles2(getStyles);
 
   const onDockChange = () => setIsDocked(!isDocked);
 
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
   const toolbarWidth = 40 + 16 * 2; // button width + padding
 
-  const containerProps = {
+  const outerWrapperProps = {
     style: {
       [prop]: isDocked && isPaneOpen ? '350px' : compact ? toolbarWidth : '68px',
     },
   };
 
-  const sidebarProps = {
-    className: cx({
-      [styles.container]: true,
-      [styles.containerDocked]: isDocked,
-      [styles.containerLeft]: position === 'left',
-      [styles.containerTabsMode]: tabsMode,
-    }),
-  };
+  return { isDocked, onDockChange, outerWrapperProps, position, compact, hasOpenPane: isPaneOpen, tabsMode };
+}
 
-  const toolbarProps = {
-    className: styles.toolbar,
-  };
+export interface SidebarOpenPaneProps {
+  children?: ReactNode;
+}
 
-  const openPaneProps = {
-    className: cx(styles.openPane, position === 'right' ? styles.openPaneRight : styles.openPaneLeft),
-  };
+export function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
+  const styles = useStyles2(getStyles);
+  const context = useContext(SidebarContext);
 
-  const dockButton = (
-    <>
-      <div className={styles.flexGrow} />
-      {isPaneOpen && (
-        <SidebarButton
-          icon={'web-section-alt'}
-          onClick={onDockChange}
-          compact={compact}
-          title={isDocked ? 'Undock' : 'Dock'}
-        />
-      )}
-    </>
-  );
+  if (!context) {
+    throw new Error('Sidebar.OpenPane must be used within a Sidebar component');
+  }
 
-  return { isDocked, onDockChange, containerProps, sidebarProps, toolbarProps, dockButton, openPaneProps };
+  const className = cx(styles.openPane, context.position === 'right' ? styles.openPaneRight : styles.openPaneLeft);
+
+  return <div className={className}>{children}</div>;
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
@@ -183,3 +183,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+export const Sidebar = Object.assign(SidebarComp, {
+  Toolbar: SiderbarToolbar,
+  Button: SidebarButton,
+  OpenPane: SidebarOpenPane,
+  Divider: SidebarDivider,
+  PaneHeader: SidebarPaneHeader,
+});
