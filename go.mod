@@ -86,7 +86,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.15.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20251009192429-9427c24835ae // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20251119204204-77fa75125181 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -334,7 +334,7 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/at-wat/mqtt-go v0.19.4 // indirect
+	github.com/at-wat/mqtt-go v0.19.6 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.11 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.31.10 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.14 // indirect
