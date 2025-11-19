@@ -146,9 +146,9 @@ func (m *unifiedStorageMigrator) getLegacyTableInfo(group, resource string) (tab
 	// Map unified storage group/resource to legacy tables
 	switch {
 	case group == "dashboard.grafana.app" && resource == "dashboards":
-		return "dashboard", "org_id = ?"
+		return "dashboard", "org_id = ? and is_folder = false"
 	case group == "folder.grafana.app" && resource == "folders":
-		return "folder", "org_id = ?"
+		return "dashboard", "org_id = ? and is_folder = true"
 	case group == "playlist.grafana.app" && resource == "playlists":
 		return "playlist", "org_id = ?"
 	default:
