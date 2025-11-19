@@ -912,6 +912,39 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
 			require.Equal(t, expectedRule.Title, result.Data.RuleGroups[0].Rules[0].Name)
 		})
+
+		t.Run("should only return rules with given rule_uid list", func(t *testing.T) {
+			expectedRuleInGroup1 := rulesInGroup1[0]
+			expectedRuleInGroup3 := rulesInGroup3[1]
+
+			r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?rule_uid=%s&rule_uid=%s", expectedRuleInGroup1.UID, expectedRuleInGroup3.UID), nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.True(t, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-1"
+			}))
+			require.True(t, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-3"
+			}))
+			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
+			require.Len(t, result.Data.RuleGroups[1].Rules, 1)
+
+			if result.Data.RuleGroups[0].Name == "rule-group-1" {
+				require.Equal(t, expectedRuleInGroup1.UID, result.Data.RuleGroups[0].Rules[0].UID)
+				require.Equal(t, expectedRuleInGroup3.UID, result.Data.RuleGroups[1].Rules[0].UID)
+			} else {
+				require.Equal(t, expectedRuleInGroup1.UID, result.Data.RuleGroups[1].Rules[0].UID)
+				require.Equal(t, expectedRuleInGroup3.UID, result.Data.RuleGroups[0].Rules[0].UID)
+			}
+		})
 	})
 
 	t.Run("when requesting rules with pagination", func(t *testing.T) {
