@@ -20,6 +20,7 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
+import { Portal } from '../Portal/Portal';
 
 import { ToggletipContent } from './types';
 
@@ -118,44 +119,46 @@ export const Toggletip = memo(
           ...getReferenceProps(),
         })}
         {isOpen && (
-          <FloatingFocusManager context={context} modal={false} closeOnFocusOut={false}>
-            <div
-              data-testid="toggletip-content"
-              className={cx(style.container, {
-                [styles.fitContent]: fitContent,
-              })}
-              ref={refs.setFloating}
-              style={floatingStyles}
-              {...getFloatingProps()}
-            >
-              <FloatingArrow
-                strokeWidth={0.3}
-                stroke={grafanaTheme.colors.border.weak}
-                className={style.arrow}
-                ref={arrowRef}
-                context={context}
-              />
-              {Boolean(title) && <div className={style.header}>{title}</div>}
-              {closeButton && (
-                <div className={style.headerClose}>
-                  <IconButton
-                    aria-label={t('grafana-ui.toggletip.close', 'Close')}
-                    name="times"
-                    data-testid="toggletip-header-close"
-                    onClick={() => {
-                      setControlledVisible(false);
-                      onClose?.();
-                    }}
-                  />
+          <Portal>
+            <FloatingFocusManager context={context} modal={true}>
+              <div
+                data-testid="toggletip-content"
+                className={cx(style.container, {
+                  [styles.fitContent]: fitContent,
+                })}
+                ref={refs.setFloating}
+                style={floatingStyles}
+                {...getFloatingProps()}
+              >
+                <FloatingArrow
+                  strokeWidth={0.3}
+                  stroke={grafanaTheme.colors.border.weak}
+                  className={style.arrow}
+                  ref={arrowRef}
+                  context={context}
+                />
+                {Boolean(title) && <div className={style.header}>{title}</div>}
+                {closeButton && (
+                  <div className={style.headerClose}>
+                    <IconButton
+                      aria-label={t('grafana-ui.toggletip.close', 'Close')}
+                      name="times"
+                      data-testid="toggletip-header-close"
+                      onClick={() => {
+                        setControlledVisible(false);
+                        onClose?.();
+                      }}
+                    />
+                  </div>
+                )}
+                <div className={style.body}>
+                  {(typeof content === 'string' || isValidElement(content)) && content}
+                  {typeof content === 'function' && content({})}
                 </div>
-              )}
-              <div className={style.body}>
-                {(typeof content === 'string' || isValidElement(content)) && content}
-                {typeof content === 'function' && content({})}
+                {Boolean(footer) && <div className={style.footer}>{footer}</div>}
               </div>
-              {Boolean(footer) && <div className={style.footer}>{footer}</div>}
-            </div>
-          </FloatingFocusManager>
+            </FloatingFocusManager>
+          </Portal>
         )}
       </>
     );
