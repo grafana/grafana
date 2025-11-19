@@ -21,13 +21,14 @@ import (
 // TestV2beta1ToV2alpha1RoundTrip tests round-trip conversion: v2beta1 → v2alpha1 → v2beta1
 // This ensures no data loss during conversion between v2 versions
 func TestV2beta1ToV2alpha1RoundTrip(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
 	// Read all v2beta1 output files (these are converted from v1beta1 or v2alpha1)
@@ -103,13 +104,14 @@ func TestV2beta1ToV2alpha1RoundTrip(t *testing.T) {
 // This test takes files from output directory that are prefixed with "v2alpha1." and suffixed with ".v2beta1.json",
 // converts them from v2beta1 to v2alpha1, and compares the result with the corresponding input file.
 func TestV2beta1ToV2alpha1FromOutputFiles(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
 	// Read all v2beta1 output files that were converted from v2alpha1
@@ -188,13 +190,14 @@ func TestV2beta1ToV2alpha1FromOutputFiles(t *testing.T) {
 // The conversion uses the Group field directly as the query kind and datasource type.
 // No fallback mechanisms (provider lookup or UID inference) are used.
 func TestV2beta1ToV2alpha1(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
 	testCases := []struct {
