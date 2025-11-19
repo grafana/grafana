@@ -192,15 +192,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:           "dataplaneFrontendFallback",
-			Description:    "Support dataplane contract field name change for transformations and field name matchers where the name is different",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true",
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:        "disableSSEDataplane",
 			Description: "Disables dataplane specific processing in server side expressions.",
 			Stage:       FeatureStageExperimental,
