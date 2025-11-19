@@ -14,7 +14,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { AnnotationPanelFilter } from '@grafana/schema/raw/dashboard';
+import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   Button,
   Checkbox,
