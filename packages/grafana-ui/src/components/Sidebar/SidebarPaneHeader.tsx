@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
-import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 
 export interface Props {
@@ -20,23 +19,20 @@ export function SidebarPaneHeader({ children, onClose, title }: Props) {
 
   return (
     <div className={styles.wrapper}>
-      <Stack direction="row" gap={1}>
-        {onClose && (
-          <IconButton
-            variant="secondary"
-            size="lg"
-            name="times"
-            onClick={onClose}
-            tooltip={t('grafana-ui.sidebar.close', 'Close')}
-          />
-        )}
-        <Text weight="medium" variant="h6">
-          {title}
-        </Text>
-      </Stack>
-      <Stack direction="row" gap={1} justifyContent={'flex-end'} alignItems={'center'}>
-        {children}
-      </Stack>
+      {onClose && (
+        <IconButton
+          variant="secondary"
+          size="lg"
+          name="times"
+          onClick={onClose}
+          tooltip={t('grafana-ui.sidebar.close', 'Close')}
+        />
+      )}
+      <Text weight="medium" variant="h6" truncate>
+        {title}
+      </Text>
+      <div className={styles.flexGrow} />
+      {children}
     </div>
   );
 }
@@ -46,10 +42,13 @@ export const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css({
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
       padding: theme.spacing(1.5),
       height: theme.spacing(6),
+      gap: theme.spacing(1),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    flexGrow: css({
+      flexGrow: 1,
     }),
   };
 };

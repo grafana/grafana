@@ -104,7 +104,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       zIndex: theme.zIndex.navbarFixed,
       bottom: 0,
       top: 0,
-      right: theme.spacing(2),
+      right: 0,
     }),
     containerTabsMode: css({
       position: 'relative',
@@ -112,7 +112,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     containerLeft: css({
       right: 'unset',
       flexDirection: 'row-reverse',
-      left: theme.spacing(2),
+      left: 0,
       borderRadius: theme.shape.radius.default,
     }),
     undockedPaneOpen: css({

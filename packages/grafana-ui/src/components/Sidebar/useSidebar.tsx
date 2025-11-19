@@ -41,7 +41,7 @@ export function useSiderbar({
   const onDockChange = useCallback(() => setIsDocked((prev) => !prev), []);
 
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
-  const toolbarWidth = (compact ? 40 : 68) + 16 * 2; // button width + padding
+  const toolbarWidth = (compact ? 40 : 68) + 16; // button width + padding
 
   const outerWrapperProps = {
     style: {

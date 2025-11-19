@@ -32,14 +32,13 @@ export const Example: StoryFn<StoryProps> = (args) => {
   const [openPane, setOpenPane] = useState('');
 
   const containerStyle = css({
-    width: '100%',
     flexGrow: 1,
     height: '600px',
     display: 'flex',
     flexDirection: 'column',
     position: 'relative',
     overflow: 'hidden',
-    padding: '0 8px',
+    margin: '0 16px',
   });
 
   const gridStyle = css({
@@ -135,13 +134,13 @@ export const VerticalTabs: StoryFn = (args) => {
   };
 
   const containerStyle = css({
-    width: '100%',
     flexGrow: 1,
     height: '600px',
     display: 'flex',
     flexDirection: 'column',
     position: 'relative',
     overflow: 'hidden',
+    margin: '0 16px',
   });
 
   const vizWrapper = css({
@@ -151,7 +150,7 @@ export const VerticalTabs: StoryFn = (args) => {
   });
 
   const contextValue = useSiderbar({
-    position: 'left',
+    position: args.position,
     tabsMode: true,
   });
 
