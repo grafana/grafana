@@ -325,14 +325,13 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	searchRequest.Fields = fields
 
-	if p := queryParams.Get("permission"); p != "" {
-		if p == "Edit" {
-			searchRequest.Permission = int64(dashboardaccess.PERMISSION_EDIT)
-		} else if p == "View" {
-			searchRequest.Permission = int64(dashboardaccess.PERMISSION_VIEW)
-		} else if p == "Admin" {
-			searchRequest.Permission = int64(dashboardaccess.PERMISSION_ADMIN)
-		}
+	switch queryParams.Get("permission") {
+	case "Edit":
+		searchRequest.Permission = int64(dashboardaccess.PERMISSION_EDIT)
+	case "View":
+		searchRequest.Permission = int64(dashboardaccess.PERMISSION_VIEW)
+	case "Admin":
+		searchRequest.Permission = int64(dashboardaccess.PERMISSION_ADMIN)
 	}
 
 	// A search request can include multiple types, we need to acces the slice directly.
