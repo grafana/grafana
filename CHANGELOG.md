@@ -7,6 +7,7 @@
 - **Alerting:** Fix unmarshalling of GettableStatus to include time intervals [#112732](https://github.com/grafana/grafana/pull/112732), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **AnalyticsSummaries:** Fix dashboard rollup not resetting "last X days" metrics to zero (Enterprise)
 - **AnalyticsSummaries:** Fix dashboard rollup totals resetting incorrectly (Enterprise)
+- **Security:** fix for CVE-2025-41115 in SCIM (System for Cross-domain Identity Management) (Enterprise)
 
 <!-- 12.0.7 END -->
 <!-- 12.0.6 START -->
