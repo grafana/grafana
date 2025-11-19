@@ -123,6 +123,7 @@ export const Example: StoryFn<StoryProps> = (args) => {
             />
             <Sidebar.Divider />
             <Sidebar.Button icon="info-circle" title="Insights" />
+            <Sidebar.Button icon="code-branch" title="Integrations" />
           </Sidebar.Toolbar>
         </Sidebar>
       </div>

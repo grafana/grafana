@@ -7,6 +7,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 
 import { SidebarButton } from './SidebarButton';
 import { SidebarPaneHeader } from './SidebarPaneHeader';
+import { SidebarResizer } from './SidebarResizer';
 import { SidebarContext, SidebarContextValue } from './useSidebar';
 
 export interface Props {
@@ -26,9 +27,12 @@ export function SidebarComp({ children, contextValue }: Props) {
   });
 
   return (
-    <div className={className}>
-      <SidebarContext.Provider value={contextValue}>{children}</SidebarContext.Provider>
-    </div>
+    <SidebarContext.Provider value={contextValue}>
+      <div className={className}>
+        <SidebarResizer />
+        {children}
+      </div>
+    </SidebarContext.Provider>
   );
 }
 
@@ -96,7 +100,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       bottom: 0,
       top: 0,
       right: theme.spacing(2),
-      overflow: 'hidden',
     }),
     containerTabsMode: css({
       position: 'relative',
@@ -118,7 +121,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 0,
       gap: theme.spacing(1),
       overflow: 'hidden',
-      maxWidth: theme.spacing(9),
+      maxWidth: theme.spacing(8.5),
     }),
     divider: css({
       height: '1px',

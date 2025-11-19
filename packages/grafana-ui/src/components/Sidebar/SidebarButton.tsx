@@ -35,14 +35,12 @@ export function SidebarButton({ icon, active, onClick, title, tooltip }: Props) 
   );
 
   return (
-    <div className={styles.buttonWrapper}>
-      <Tooltip content={tooltip ?? title} placement={context.position === 'left' ? 'right' : 'left'}>
-        <button className={buttonClass} aria-label={title} aria-expanded={active} type="button" onClick={onClick}>
-          {renderIcon(icon, context.compact)}
-        </button>
-      </Tooltip>
-      {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
-    </div>
+    <Tooltip content={tooltip ?? title} placement={context.position === 'left' ? 'right' : 'left'}>
+      <button className={buttonClass} aria-label={title} aria-expanded={active} type="button" onClick={onClick}>
+        <div className={styles.iconWrapper}>{renderIcon(icon, context.compact)}</div>
+        {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
+      </button>
+    </Tooltip>
   );
 }
 
@@ -64,16 +62,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'toolbar-button',
       position: 'relative',
       display: 'flex',
-      alignItems: 'center',
-      height: theme.spacing(theme.components.height.md),
+      flexDirection: 'column',
+      minHeight: theme.spacing(theme.components.height.md),
       padding: theme.spacing(0, 1),
+      width: '100%',
+      overflow: 'hidden',
       // borderRadius: theme.shape.radius.sm,
       lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: `none`,
-      justifyContent: 'center',
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
@@ -140,12 +139,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       whiteSpace: 'nowrap',
     }),
+    iconWrapper: css({}),
     title: css({
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       textOverflow: 'ellipsis',
       overflow: 'hidden',
-      padding: theme.spacing(0, 0.5),
       textAlign: 'center',
     }),
     titleActive: css({
