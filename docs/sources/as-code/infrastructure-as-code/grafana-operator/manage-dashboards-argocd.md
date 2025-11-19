@@ -79,7 +79,7 @@ Replace the placeholders with your values:
 
 ## Add dashboards to your Git repository
 
-In your `grafana` directory, create a sub-folder called `dashboards`. 
+In your `grafana` directory, create a sub-folder called `dashboards`.
 
 This guide shows you how to creates three separate dashboards. For all dashboard configurations, replace the placeholders with your values:
 

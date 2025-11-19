@@ -78,7 +78,7 @@ This example uses the Prometheus data source. Note that the required arguments v
 
 {{< /admonition >}}
 
-### Create a data source configuration 
+### Create a data source configuration
 
 Create and save a new YAML file `datasource.yml` with your data source's configuration:
 
@@ -127,7 +127,7 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: <GRAFANA_CLOUD_STACK_NAME>
-  folder: "<FOLDER_NAME>"
+  folder: '<FOLDER_NAME>'
   json: >
     {
       "title": "as-code dashboard",
