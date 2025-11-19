@@ -52,12 +52,29 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
     groupByVariable.changeValueTo(selectedValues, selectedLabels, true);
   }, [groupByVariable, options]);
 
-  const handleVisibilityChange = useCallback((visible: boolean) => {
-    setIsOpen(visible);
-    if (!visible) {
-      setSearchValue('');
-    }
-  }, []);
+  const handleVisibilityChange = useCallback(
+    (visible: boolean) => {
+      setIsOpen(visible);
+      if (!visible) {
+        setSearchValue('');
+      } else {
+        // Reset checked state to match current variable value when opening
+        const currentValues = Array.isArray(groupByVariable.state.value)
+          ? groupByVariable.state.value
+          : groupByVariable.state.value
+            ? [groupByVariable.state.value]
+            : [];
+
+        setOptions((prevOptions) =>
+          prevOptions.map((opt) => ({
+            ...opt,
+            checked: currentValues.includes(opt.value),
+          }))
+        );
+      }
+    },
+    [groupByVariable]
+  );
 
   const fetchOptions = useCallback(async () => {
     if (!groupByVariable || !reloadOptions) {
