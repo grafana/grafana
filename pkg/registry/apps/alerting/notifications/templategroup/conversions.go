@@ -37,6 +37,7 @@ func convertToK8sResource(orgID int64, template definitions.NotificationTemplate
 		Spec: model.TemplateGroupSpec{
 			Title:   template.Name,
 			Content: template.Template,
+			Kind:    model.TemplateGroupTemplateKind(template.Kind),
 		},
 	}
 	result.SetProvenanceStatus(string(template.Provenance))
@@ -51,6 +52,6 @@ func convertToDomainModel(template *model.TemplateGroup) definitions.Notificatio
 		Template:        template.Spec.Content,
 		ResourceVersion: template.ResourceVersion,
 		Provenance:      definitions.Provenance(ngmodels.ProvenanceNone),
-		Kind:            definition.GrafanaTemplateKind,
+		Kind:            definition.TemplateKind(template.Spec.Kind),
 	}
 }
