@@ -1,3 +1,18 @@
+<!-- 12.2.2 START -->
+
+# 12.2.2 (2025-11-19)
+
+### Features and enhancements
+
+- **Access control:** Reduce memory usage when fetching user's permissions [#113414](https://github.com/grafana/grafana/pull/113414), [@hairyhenderson](https://github.com/hairyhenderson)
+- **Table:** Pill and JSON Cells should allow formatting [#113130](https://github.com/grafana/grafana/pull/113130), [@fastfrwrd](https://github.com/fastfrwrd)
+
+### Bug fixes
+
+- **AnalyticsSummaries:** Fix dashboard rollup not resetting "last X days" metrics to zero (Enterprise)
+- **AnalyticsSummaries:** Fix dashboard rollup totals resetting incorrectly (Enterprise)
+
+<!-- 12.2.2 END -->
 <!-- 12.2.1 START -->
 
 # 12.2.1 (2025-10-21)
