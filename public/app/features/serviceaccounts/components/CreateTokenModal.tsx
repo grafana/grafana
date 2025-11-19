@@ -16,11 +16,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-const EXPIRATION_OPTIONS = [
-  { label: 'No expiration', value: false },
-  { label: 'Set expiration date', value: true },
-];
-
 export type ServiceAccountToken = {
   name: string;
   secondsToLive?: number;
@@ -84,6 +79,19 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
 
   const modalTitle = !token ? 'Add service account token' : 'Service account token created';
 
+  const isTokenExpirationDayLimitConfigured = config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > 0;
+
+  const getExpirationOptions = () => {
+    const noExpirationDescription = t(
+      'serviceaccounts.create-token-modal.description-no-expiration-disabled',
+      'Cannot create a token with no expiration date when token expiration day limit is configured'
+    );
+    return [
+      { label: t('serviceaccounts.create-token-modal.label-no-expiration', 'No expiration'), value: false, description: isTokenExpirationDayLimitConfigured ? noExpirationDescription : undefined },
+      { label: t('serviceaccounts.create-token-modal.label-set-expiration-date', 'Set expiration date'), value: true },
+    ];
+  };
+
   return (
     <Modal isOpen={isOpen} title={modalTitle} onDismiss={onCloseInternal} className={styles.modal}>
       {!token ? (
@@ -109,7 +117,8 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
           </Field>
           <Field label={t('serviceaccounts.create-token-modal.label-expiration', 'Expiration')}>
             <RadioButtonGroup
-              options={EXPIRATION_OPTIONS}
+              options={getExpirationOptions()}
+              disabledOptions={isTokenExpirationDayLimitConfigured ? [false] : []}
               value={isWithExpirationDate}
               onChange={setIsWithExpirationDate}
               size="md"
