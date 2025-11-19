@@ -2064,6 +2064,18 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:              "rudderstackUpgrade",
+			Description:       "Enables the new version of rudderstack",
+			FrontendOnly:      true,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			Expression:        "false",
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      false,
+			HideFromAdminPage: false,
+		},
 	}
 )
 

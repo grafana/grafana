@@ -1069,4 +1069,8 @@ const (
 	// FlagTtlPluginInstanceManager
 	// Enable TTL plugin instance manager
 	FlagTtlPluginInstanceManager = "ttlPluginInstanceManager"
+
+	// FlagRudderstackUpgrade
+	// Enables the new version of rudderstack
+	FlagRudderstackUpgrade = "rudderstackUpgrade"
 )
