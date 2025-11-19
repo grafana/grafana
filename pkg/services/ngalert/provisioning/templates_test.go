@@ -28,6 +28,15 @@ func TestGetTemplates(t *testing.T) {
 				"template2": "test2",
 				"template3": "test3",
 			},
+			ExtraConfigs: []definitions.ExtraConfiguration{
+				{
+					Identifier: "1234",
+					TemplateFiles: map[string]string{
+						"template1": "imported-test1",
+						"template4": "imported-test4",
+					},
+				},
+			},
 		},
 	}
 
@@ -87,6 +96,60 @@ func TestGetTemplates(t *testing.T) {
 		prov.AssertExpectations(t)
 	})
 
+	t.Run("returns imported templates if enabled", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		sut = sut.WithIncludeImported()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			assert.Equal(t, orgID, org)
+			return revision, nil
+		}
+		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{
+			"template1": models.ProvenanceAPI,
+			"template2": models.ProvenanceFile,
+		}, nil)
+
+		result, err := sut.GetTemplates(context.Background(), orgID)
+		require.NoError(t, err)
+
+		expected := []definitions.NotificationTemplate{
+			newNotificationTemplate(
+				"template1",
+				"test1",
+				models.ProvenanceAPI,
+				definition.GrafanaTemplateKind,
+			),
+			newNotificationTemplate(
+				"template2",
+				"test2",
+				models.ProvenanceFile,
+				definition.GrafanaTemplateKind,
+			),
+			newNotificationTemplate(
+				"template3",
+				"test3",
+				models.ProvenanceNone,
+				definition.GrafanaTemplateKind,
+			),
+			newNotificationTemplate(
+				"template1",
+				"imported-test1",
+				models.ProvenanceConvertedPrometheus,
+				definition.MimirTemplateKind,
+			),
+			newNotificationTemplate(
+				"template4",
+				"imported-test4",
+				models.ProvenanceConvertedPrometheus,
+				definition.MimirTemplateKind,
+			),
+		}
+
+		require.EqualValues(t, expected, result)
+
+		prov.AssertCalled(t, "GetProvenances", mock.Anything, orgID, (&definitions.NotificationTemplate{}).ResourceType())
+		prov.AssertExpectations(t)
+	})
+
 	t.Run("propagates errors", func(t *testing.T) {
 		t.Run("when unable to read config", func(t *testing.T) {
 			sut, store, prov := createTemplateServiceSut()
@@ -125,15 +188,25 @@ func TestGetTemplate(t *testing.T) {
 	orgID := int64(1)
 	templateName := "template1"
 	templateContent := "test1"
+	importedTemplateName := "template2"
+	importedTemplateContent := "imported"
 	revision := &legacy_storage.ConfigRevision{
 		Config: &definitions.PostableUserConfig{
 			TemplateFiles: map[string]string{
 				templateName: templateContent,
 			},
+			ExtraConfigs: []definitions.ExtraConfiguration{
+				{
+					Identifier: "1234",
+					TemplateFiles: map[string]string{
+						importedTemplateName: importedTemplateContent,
+					},
+				},
+			},
 		},
 	}
 
-	t.Run("return a template from config file by name", func(t *testing.T) {
+	t.Run("return a template from config by name", func(t *testing.T) {
 		sut, store, prov := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			assert.Equal(t, orgID, org)
@@ -156,6 +229,62 @@ func TestGetTemplate(t *testing.T) {
 		prov.AssertCalled(t, "GetProvenance", mock.Anything, mock.MatchedBy(func(t *definitions.NotificationTemplate) bool {
 			return t.Name == expected.Name
 		}), orgID)
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("imported templates cannot be retrieved by name", func(t *testing.T) {
+		sut, store, _ := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			assert.Equal(t, orgID, org)
+			return revision, nil
+		}
+		_, err := sut.GetTemplate(context.Background(), orgID, importedTemplateName)
+		require.ErrorIs(t, err, ErrTemplateNotFound)
+	})
+
+	t.Run("return a template from config by UID", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			assert.Equal(t, orgID, org)
+			return revision, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
+
+		result, err := sut.GetTemplate(context.Background(), orgID, templateUID(definition.GrafanaTemplateKind, templateName))
+		require.NoError(t, err)
+
+		expected := newNotificationTemplate(
+			templateName,
+			templateContent,
+			models.ProvenanceNone,
+			definition.GrafanaTemplateKind,
+		)
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("return an imported template from config by UID", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			assert.Equal(t, orgID, org)
+			return revision, nil
+		}
+
+		uid := templateUID(definition.MimirTemplateKind, importedTemplateName)
+		t.Run("should be not found without flag enabled", func(t *testing.T) {
+			_, err := sut.GetTemplate(context.Background(), orgID, uid)
+			require.ErrorIs(t, err, ErrTemplateNotFound)
+		})
+
+		result, err := sut.WithIncludeImported().GetTemplate(context.Background(), orgID, uid)
+		require.NoError(t, err)
+
+		expected := newNotificationTemplate(
+			importedTemplateName,
+			importedTemplateContent,
+			models.ProvenanceConvertedPrometheus,
+			definition.MimirTemplateKind,
+		)
+		require.Equal(t, expected, result)
 		prov.AssertExpectations(t)
 	})
 
@@ -483,6 +612,21 @@ func TestUpsertTemplate(t *testing.T) {
 		}
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateNotFound)
+	})
+
+	t.Run("rejects new templates of mimir kind", func(t *testing.T) {
+		sut, store, _ := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(), nil
+		}
+		template := definitions.NotificationTemplate{
+			Name:       "template2",
+			Template:   "asdf-new",
+			Provenance: definitions.Provenance(models.ProvenanceNone),
+			Kind:       definition.MimirTemplateKind,
+		}
+		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
+		require.ErrorIs(t, err, ErrTemplateInvalid)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
