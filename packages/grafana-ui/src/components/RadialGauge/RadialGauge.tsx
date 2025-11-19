@@ -5,7 +5,6 @@ import { useId } from 'react';
 import {
   DisplayValueAlignmentFactors,
   FieldDisplay,
-  FieldType,
   getDisplayProcessor,
   GrafanaTheme2,
   TimeRange,
