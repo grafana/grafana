@@ -222,7 +222,7 @@ var (
 		{
 			Name:         "enableDatagridEditing",
 			Description:  "Enables the edit functionality in the datagrid panel",
-			FrontendOnly: true,
+			FrontendOnly: false, // The set of plugins returned in frontend settings changes based on this flag
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaDatavizSquad,
 		},

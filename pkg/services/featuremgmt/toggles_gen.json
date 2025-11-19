@@ -1427,14 +1427,16 @@
     {
       "metadata": {
         "name": "enableDatagridEditing",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-04-24T14:46:31Z"
+        "resourceVersion": "1763539789149",
+        "creationTimestamp": "2023-04-24T14:46:31Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-19 08:09:49.149669 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the edit functionality in the datagrid panel",
         "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "codeowner": "@grafana/dataviz-squad"
       }
     },
     {
