@@ -163,6 +163,10 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
+	// FlagKubernetesDashboards
+	// Use the kubernetes API in the frontend for dashboards
+	FlagKubernetesDashboards = "kubernetesDashboards"
+
 	// FlagKubernetesShortURLs
 	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
@@ -242,6 +246,10 @@ const (
 	// FlagAnnotationPermissionUpdate
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
+
+	// FlagDashboardNewLayouts
+	// Enables experimental new dashboard layouts
+	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting

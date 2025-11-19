@@ -399,7 +399,7 @@ var (
 			Description:  "Use the kubernetes API in the frontend for dashboards",
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDashboardsSquad,
-			FrontendOnly: true,
+			FrontendOnly: false,  // The backend changes permission behavior based on this flag
 			Expression:   "true", // enabled by default
 		},
 		{
@@ -585,7 +585,7 @@ var (
 			Name:         "dashboardNewLayouts",
 			Description:  "Enables experimental new dashboard layouts",
 			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
+			FrontendOnly: false, // The restore backend feature changes behavior based on this flag
 			Owner:        grafanaDashboardsSquad,
 		},
 		{

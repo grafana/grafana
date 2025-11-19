@@ -53,7 +53,7 @@ enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,f
 disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
-kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,true
+kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,false
 kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
@@ -80,7 +80,7 @@ annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 dashboardScene,GA,@grafana/dashboards-squad,false,false,true
-dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,true
+dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,false
 dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
