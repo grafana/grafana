@@ -140,6 +140,7 @@
 - **Plugins:** Set isProvisioned for local plugins without remote counterpart [#111268](https://github.com/grafana/grafana/pull/111268), [@oshirohugo](https://github.com/oshirohugo)
 - **Prometheus:** Fix incremental querying logic for public dashboards [#111642](https://github.com/grafana/grafana/pull/111642), [@jcolladokuri](https://github.com/jcolladokuri)
 - **Prometheus:** Fix parsing logic of prometheus expressions to honor the order of binary operations [#112220](https://github.com/grafana/grafana/pull/112220), [@jcolladokuri](https://github.com/jcolladokuri)
+- **Security:** fix for CVE-2025-41115 in SCIM (System for Cross-domain Identity Management) (Enterprise)
 - **SoloPanel:** Fixes issue with solo route and scopes variable [#112769](https://github.com/grafana/grafana/pull/112769), [@torkelo](https://github.com/torkelo)
 - **Stars:** Fix starred state not being updated [#111936](https://github.com/grafana/grafana/pull/111936), [@Clarity-89](https://github.com/Clarity-89)
 - **Stat:** Fix math for percent change value heights when sparkline is not rendered [#112599](https://github.com/grafana/grafana/pull/112599), [@fastfrwrd](https://github.com/fastfrwrd)
