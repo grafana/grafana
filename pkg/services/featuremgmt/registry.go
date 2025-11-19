@@ -818,6 +818,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "refreshTokenRequired",
+			Description:       "Require that refresh tokens are present in oauth tokens.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "newDashboardWithFiltersAndGroupBy",
 			Description:       "Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.",
 			Stage:             FeatureStageExperimental,
