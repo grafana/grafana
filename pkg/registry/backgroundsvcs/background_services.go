@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/updatemanager"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 )
 
 func ProvideBackgroundServiceRegistry(
@@ -73,6 +74,7 @@ func ProvideBackgroundServiceRegistry(
 	dashboardServiceImpl *service.DashboardServiceImpl,
 	secretsGarbageCollectionWorker *secretsgarbagecollectionworker.Worker,
 	fixedRolesLoader *accesscontrol.FixedRolesLoader,
+	unifiedStorageMigrationProvider unifiedmigrations.UnifiedStorageMigrationProvider,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -89,6 +91,7 @@ func ProvideBackgroundServiceRegistry(
 		notifications,
 		rendering,
 		tokenService,
+		unifiedStorageMigrationProvider,
 		provisioning,
 		grafanaUpdateChecker,
 		pluginsUpdateChecker,

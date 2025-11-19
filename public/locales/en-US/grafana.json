@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
+      "disabled-tooltip": "You don't have sufficient permissions to preview",
       "error": "Could not load routing preview for {{alertmanager}}",
       "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
       "preview-routing": "Preview routing",
+      "select-folder-tooltip": "Select a folder to preview routing",
       "text-loading-preview": "Loading preview...",
       "title": "Alert instance routing preview",
       "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
@@ -2596,8 +2598,7 @@
         "firing": "Firing",
         "normal": "Normal",
         "pending": "Pending",
-        "recovering": "Recovering",
-        "unknown": "Unknown"
+        "recovering": "Recovering"
       },
       "type": {
         "alert": "Alert rule",
@@ -2621,12 +2622,14 @@
         "placeholder-search-input": "Search by name or enter filter query..."
       },
       "grafana-folder": "Grafana folder",
+      "group-autocomplete-unavailable": "Due to large number of groups, autocomplete is not available",
       "health": "Health",
       "label": {
         "hide": "Hide",
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
+      "namespace-autocomplete-unavailable": "Due to large number of folders, autocomplete is not available",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
@@ -2945,6 +2948,7 @@
     "triage": {
       "alert-instances": "Alert instances",
       "error-loading-rule": "Error loading rule",
+      "firing-instances-count": "Firing alert instances",
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
@@ -2954,6 +2958,7 @@
       "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
+      "pending-instances-count": "Pending alert instances",
       "rule-details": {
         "subtitle": "Rule details and conditions",
         "title": "Rule Details"
@@ -2961,7 +2966,9 @@
       "rule-not-found": {
         "description": "The requested rule could not be found.",
         "title": "Rule not found"
-      }
+      },
+      "rules-with-firing-instances": "Alert rules with firing instances",
+      "rules-with-pending-instances": "Alert rules with pending instances"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -3534,6 +3541,7 @@
       "delete-modal-invalid-title": "Cannot delete folder",
       "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately. Deleted dashboards will be kept in the history for up to 12 months and can be restored by your organization administrator during that time. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
+      "delete-modal-text-one-folder": "This action will delete the folder \" <1>{{ folderName }}</1> \" and the following content:",
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
@@ -3542,6 +3550,7 @@
       "move-modal-alert": "Moving this item may change its permissions.",
       "move-modal-field-label": "Folder name",
       "move-modal-text": "This action will move the following content:",
+      "move-modal-text-one-folder": "This action will move the folder \" <1>{{ folderName }}</1> \" and the following content:",
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
@@ -3629,11 +3638,11 @@
       "title-folder": "This folder doesn't have any dashboards yet"
     },
     "folder-actions-button": {
-      "delete": "Delete",
+      "delete": "Delete this folder",
       "delete-folder-error": "Error deleting folder. Please try again later.",
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
-      "move": "Move"
+      "move": "Move this folder"
     },
     "folder-picker": {
       "accessible-label": "Select folder: {{ label }} currently selected",
@@ -4126,6 +4135,7 @@
     "action": {
       "change-theme": "Change theme",
       "dark-theme": "Dark",
+      "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
       "scopes": "Scopes"
     },
@@ -4378,8 +4388,6 @@
       "next-button": "Next",
       "save-button": "Save"
     },
-    "page-content": "To enable Correlations, add it in the Grafana config:",
-    "page-heading": "Correlations are disabled",
     "query-editor": {
       "control-rules": "The selected target data source must export a query editor.",
       "data-source-text": "Please select a target data source first.",
@@ -5714,6 +5722,10 @@
     "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
     "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
     "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceType}} data source",
+    "template-dashboard-modal": {
+      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "title": "Start a dashboard from a template"
+    },
     "view-all": "View all"
   },
   "dashboard-links": {
@@ -5921,7 +5933,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Add transformation"
+      "add-transformation": "Add transformation",
+      "show-more": "Show more",
+      "sql-name": "Transform with SQL",
+      "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -6750,9 +6765,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Add csv or spreadsheet"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics datasource",
@@ -7046,7 +7058,6 @@
         "new-panel": "New Panel"
       }
     },
-    "clear": "Clear",
     "confirm-navigation-modal": {
       "cancel": "Cancel",
       "new-tab": "Do you want to proceed in the current tab or open a new tab?",
@@ -7270,7 +7281,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
-    "next": "Next",
     "next-prev-result": {
       "aria-label-next": "Next result button",
       "aria-label-prev": "Prev result button",
@@ -7291,7 +7301,6 @@
     "pane": {
       "loading-placeholder": "Loading..."
     },
-    "prev": "Prev",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Go queryless"
     },
@@ -7440,8 +7449,7 @@
       "query-inspector-button": "Query inspector",
       "query-inspector-button-aria-label": "Query inspector"
     },
-    "show-critical-path-only": "Show critical path only",
-    "show-matches-only": "Show matches only",
+    "show-all-spans": "Show all spans",
     "span-bar": {
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },
@@ -7470,6 +7478,7 @@
       "label-resource-attributes": "Resource attributes",
       "label-span-attributes": "Span attributes",
       "label-stack-trace": "Stack trace",
+      "label-warnings": "Warnings",
       "overview-items": {
         "label": {
           "child-count": "Child Count:",
@@ -7478,8 +7487,7 @@
           "start-time": "Start Time:"
         }
       },
-      "share-span": "Share",
-      "warnings": "Warnings"
+      "share-span": "Share"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Select max span operator",
@@ -7561,10 +7569,18 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Open share trace options menu",
+      "critical-path": "Critical path",
+      "critical-path-tooltip": "Selects spans in the critical path—the longest sequence of dependent tasks determining the trace minimum duration.",
       "duration": "Duration",
+      "errors": "Errors",
+      "errors-tooltip": "Selects spans where status equals error.",
       "export-started": "Export started",
+      "filters": "Filters",
       "give-feedback": "Feedback",
+      "high-latency": "High latency",
+      "high-latency-tooltip": "Selects the 10% longest spans in the trace (p90).",
       "link-copied": "Link copied to clipboard",
+      "overview": "Overview",
       "path": "Path",
       "route": "Route",
       "services": "Services",
@@ -7578,11 +7594,6 @@
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-id": "Trace ID",
       "url": "URL"
-    },
-    "trace-page-search-bar": {
-      "aria-label-clear-filters": "Clear filters button",
-      "label-show-matches": "Show matches only switch",
-      "label-show-paths": "Show critical path only switch"
     },
     "trace-view": {
       "aria-label-copy": "Copy to clipboard",
@@ -7784,6 +7795,14 @@
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "Gauge",
+      "circular": "Circular gauge",
+      "style": {
+        "circular": "Glowing",
+        "simple": "Simple"
+      }
+    },
     "threshold": "Threshold {{value}}"
   },
   "gen-ai": {
@@ -8994,6 +9013,13 @@
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
+      "filter": {
+        "add-all": "Add all displayed values to the filter",
+        "remove-all": "Remove all displayed values from the filter",
+        "select-all": "Select all",
+        "selected": "{{ numSelected }} selected",
+        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)"
+      },
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Match case",
@@ -9145,6 +9171,9 @@
     "category-legend": "Legend",
     "category-tooltip": "Tooltip",
     "category-y-axis": "Y Axis",
+    "error": {
+      "no-y-fields": "No numeric fields found for heatmap"
+    },
     "mode-options": {
       "label-opacity": "Opacity",
       "label-scheme": "Scheme"
@@ -10528,6 +10557,7 @@
       "title": "New"
     },
     "new-dashboard": {
+      "empty-title": "Empty dashboard",
       "title": "New dashboard"
     },
     "new-folder": {
@@ -10693,7 +10723,8 @@
       "aria-label": "Profile"
     },
     "quick-add": {
-      "aria-label": "New"
+      "aria-label": "New",
+      "new-template-dashboard-button": "Dashboard from template"
     },
     "rss-button": "Latest from the blog"
   },
@@ -11494,6 +11525,9 @@
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
       "text-loading-resource-information": "Loading resource information...",
+      "unavailable-options": {
+        "title": "Unavailable options"
+      },
       "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {
@@ -11536,9 +11570,8 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
-      "repository-limit-reached-tooltip_one": "Repository limit reached {{count}}",
-      "repository-limit-reached-tooltip_other": "Repository limit reached {{count}}"
+      "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
+      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
@@ -11630,6 +11663,13 @@
       "placeholder-search": "Search",
       "unmanaged-resources_one": "{{count}} resource isn't managed by git sync.",
       "unmanaged-resources_other": "{{count}} resources aren't managed by git sync."
+    },
+    "free-tier-limit": {
+      "message": "Free-tier accounts are capped to 1 connection, and 20 resources per folder",
+      "message-connection": "Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,",
+      "message-resource": "Free-tier accounts are limited to 20 resources per folder. To add more resources,",
+      "note": "Note:",
+      "upgrade-link": "upgrade your account"
     },
     "get-default-values": {
       "title": {
@@ -11763,11 +11803,22 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "message": {
+      "show-less": "show less",
+      "show-more": "show more",
+      "truncated": "Message truncated"
+    },
     "mode-options": {
+      "disabled": {
+        "folder-connected": "Full instance synchronization is disabled because another folder is already synced with a repository.",
+        "legacy-storage": "Legacy storage mode only supports syncing the entire Grafana instance.",
+        "not-allowed": "Provisioning settings for this repository restrict syncing to specific targets. Update the repository configuration to enable this option.",
+        "not-supported": "This option is not supported yet."
+      },
       "folder": {
         "description": "After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.",
         "label": "Sync external storage to a new Grafana folder",
-        "subtitle": "Use this option to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 folders."
+        "subtitle": "Use this option to sync external resources into a new folder without affecting the rest of your instance."
       },
       "instance": {
         "description": "Resources will be synced with external storage and provisioned into this instance. Existing Grafana resources will be migrated and merged if needed. After setup, all new resources and changes will be saved to external storage and automatically provisioned back into the instance.",
@@ -12354,6 +12405,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Collapse",
+      "exchange": "Change root scope to {{scope}}",
       "expand": "Expand",
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
@@ -12372,8 +12424,10 @@
       "cancel": "Cancel",
       "error-title": "An unexpected error happened",
       "input": {
-        "placeholder": "Select scopes...",
-        "removeAll": "Remove all scopes"
+        "placeholder": "No scopes",
+        "remove-all": "Remove all",
+        "removeAll": "Remove all scopes",
+        "tooltip": "Select scope"
       },
       "title": "Select scopes"
     },
@@ -12407,10 +12461,12 @@
       }
     },
     "dashboard-actions": {
+      "empty-dashboard": "Empty dashboard",
       "import": "Import",
       "new": "New",
       "new-dashboard": "New dashboard",
-      "new-folder": "New folder"
+      "new-folder": "New folder",
+      "new-template-dashboard": "Dashboard from template"
     },
     "generate-columns": {
       "score": "Score"
@@ -13386,17 +13442,20 @@
     }
   },
   "traces": {
+    "adhocFilters": {
+      "customValue": "Type a value",
+      "duration1h": "1h",
+      "duration1m": "1m",
+      "duration1ms": "1ms",
+      "duration1s": "1s",
+      "durationLabel": "duration",
+      "textSearchDescription": "Search for text in the trace",
+      "textSearchLabel": "Text search"
+    },
     "category-span-filters": "Span filters",
-    "name-critical-path-only": "Show critical path only",
-    "name-find-in-trace": "Find in trace",
-    "name-max-duration": "Max duration",
-    "name-min-duration": "Min duration",
-    "name-service-name": "Service name",
-    "name-service-name-operator": "Service name operator",
+    "name-critical-path-only": "Select critical path",
+    "name-filters": "Filters",
     "name-show-matches-only": "Show matches only",
-    "name-span-name": "Span name",
-    "name-span-name-operator": "Span name operator",
-    "name-tags": "Tags",
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
     }

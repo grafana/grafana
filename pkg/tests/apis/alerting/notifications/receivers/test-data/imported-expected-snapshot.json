@@ -1,0 +1,818 @@
+{
+  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "items": [
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "1",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none"
+        },
+        "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWls",
+        "namespace": "default",
+        "resourceVersion": "a82b34036bdabbc4",
+        "uid": "zyXFk301pvwNz4HRPrTMKPMFO2934cPB7H1ZXmyM1TUX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "settings": {
+              "addresses": "\u003cexample@email.com\u003e"
+            },
+            "type": "email",
+            "uid": "",
+            "version": "v1"
+          }
+        ],
+        "title": "grafana-default-email"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWlsdGVzdC1jcmVhdGUtZ2V0LWNvbmZpZw",
+        "namespace": "default",
+        "resourceVersion": "b2823b50ffa1eff6",
+        "uid": "JzW6DIlcxj4sRN8A2ULcwTXAmm0Vs0Z68aEBqXSvxK0X"
+      },
+      "spec": {
+        "integrations": [],
+        "title": "grafana-default-emailtest-create-get-config"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "ZGlzY29yZA",
+        "namespace": "default",
+        "resourceVersion": "06e437697f62ac59",
+        "uid": "8cH8Ql2S6VhPEVUhwlQEKYWyPbRJS7YKj2lEXdrehH8X"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "webhook_url": true
+            },
+            "settings": {
+              "http_config": {
+                "enable_http2": true,
+                "follow_redirects": false,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "message": "{{ template \"discord.default.message\" . }}",
+              "send_resolved": true,
+              "title": "{{ template \"discord.default.title\" . }}"
+            },
+            "type": "discord",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "discord"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "ZW1haWw",
+        "namespace": "default",
+        "resourceVersion": "9b3ffed277cee189",
+        "uid": "bhlvlN758xmnwVrHVPX0c5XvFHepenUbOXP0fuE6eUMX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "auth_password": true
+            },
+            "settings": {
+              "auth_username": "alertmanager",
+              "from": "alertmanager@example.com",
+              "headers": {
+                "Subject": "test subject"
+              },
+              "hello": "localhost",
+              "html": "{{ template \"email.default.html\" . }}",
+              "require_tls": true,
+              "send_resolved": true,
+              "smarthost": "smtp.example.com:587",
+              "text": "test email",
+              "tls_config": {
+                "insecure_skip_verify": false
+              },
+              "to": "team@example.com"
+            },
+            "type": "email",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "email"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "amlyYQ",
+        "namespace": "default",
+        "resourceVersion": "deae9d34f8554205",
+        "uid": "7Pu4xcRXbvw4XEX279SoqyO8Ibo8cMl0vAJyYTsJ0NEX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "http_config.basic_auth.password": true
+            },
+            "settings": {
+              "api_url": "http://localhost/jira",
+              "custom_fields": {
+                "customfield_10000": "test customfield_10000"
+              },
+              "description": "{{ template \"jira.default.description\" . }}",
+              "http_config": {
+                "basic_auth": {
+                  "username": "alertmanager@example.com"
+                },
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "issue_type": "Bug",
+              "labels": [
+                "alertmanager",
+                "{{ .CommonLabels.severity }}"
+              ],
+              "priority": "{{ template \"jira.default.priority\" . }}",
+              "project": "PROJ",
+              "send_resolved": true,
+              "summary": "{{ template \"jira.default.summary\" . }}"
+            },
+            "type": "jira",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "jira"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "bXN0ZWFtcw",
+        "namespace": "default",
+        "resourceVersion": "95c8d082d65466a3",
+        "uid": "z7xTMDjrk1HAHXPEx78tQb63LXYA6ivXLOtz2Z09ucIX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "webhook_url": true
+            },
+            "settings": {
+              "http_config": {
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": "http://proxy.example.com:8080",
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "send_resolved": true,
+              "summary": "{{ template \"msteams.default.summary\" . }}",
+              "text": "{{ template \"msteams.default.text\" . }}",
+              "title": "{{ template \"msteams.default.title\" . }}"
+            },
+            "type": "teams",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "msteams"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "b3BzZ2VuaWU",
+        "namespace": "default",
+        "resourceVersion": "8ee2957ba150ba16",
+        "uid": "XmkZ214Dj030hvynYiwNLq8i6uRCjUYXMXjE5m19OKAX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "api_key": true
+            },
+            "settings": {
+              "actions": "test actions",
+              "api_url": "http://localhost/opsgenie/",
+              "description": "test description",
+              "details": {
+                "firing": "test firing"
+              },
+              "entity": "test entity",
+              "http_config": {
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "message": "test message",
+              "note": "Triggered by Alertmanager",
+              "priority": "P3",
+              "responders": [
+                {
+                  "name": "ops-team",
+                  "type": "team"
+                }
+              ],
+              "send_resolved": true,
+              "source": "Alertmanager",
+              "tags": "test-tags",
+              "update_alerts": true
+            },
+            "type": "opsgenie",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "opsgenie"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "1",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "cGFnZXJkdXR5",
+        "namespace": "default",
+        "resourceVersion": "fe673d5dcd67ccf0",
+        "uid": "QNitkUCkwzrIc7WVCCJGGDyvXLyo9csSUVqfyStyctQX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "routing_key": true,
+              "service_key": true
+            },
+            "settings": {
+              "class": "test class",
+              "client": "Alertmanager",
+              "client_url": "https://monitoring.example.com",
+              "component": "test component",
+              "description": "test description",
+              "details": {
+                "firing": "test firing",
+                "num_firing": "{{ .Alerts.Firing | len }}",
+                "num_resolved": "{{ .Alerts.Resolved | len }}",
+                "resolved": "{{ template \"pagerduty.default.instances\" .Alerts.Resolved }}"
+              },
+              "group": "test group",
+              "http_config": {
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "images": [
+                {
+                  "alt": "test alt",
+                  "href": "http://localhost",
+                  "src": "test src"
+                }
+              ],
+              "links": [
+                {
+                  "href": "http://localhost",
+                  "text": "test text"
+                }
+              ],
+              "send_resolved": true,
+              "severity": "test severity",
+              "source": "test source",
+              "url": "http://localhost/pagerduty"
+            },
+            "type": "pagerduty",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "pagerduty"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "cHVzaG92ZXI",
+        "namespace": "default",
+        "resourceVersion": "6ae076725ab463e0",
+        "uid": "t2TJSktI6vyGfdbLOKmxH4eBqgcIGsAuW8Qm9m0HRycX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "http_config.authorization.credentials": true,
+              "token": true,
+              "user_key": true
+            },
+            "settings": {
+              "expire": "1h0m0s",
+              "http_config": {
+                "authorization": {
+                  "type": "Bearer"
+                },
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "message": "{{ template \"pushover.default.message\" . }}",
+              "priority": "{{ if eq .Status \"firing\" }}2{{ else }}0{{ end }}",
+              "retry": "30s",
+              "send_resolved": true,
+              "title": "{{ template \"pushover.default.title\" . }}",
+              "url": "http://localhost/pushover"
+            },
+            "type": "pushover",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "pushover"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "c2xhY2s",
+        "namespace": "default",
+        "resourceVersion": "ec0e343029ff5d8b",
+        "uid": "xSB0hnoc9j1CnLCHR3VgeVGXdVXILM0p2dM64bbHN9oX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "api_url": true
+            },
+            "settings": {
+              "actions": [
+                {
+                  "confirm": {
+                    "dismiss_text": "test-dismiss-text",
+                    "ok_text": "test-ok-text",
+                    "text": "test-text",
+                    "title": "test-title"
+                  },
+                  "name": "test-name",
+                  "style": "test-style",
+                  "text": "test-text",
+                  "type": "test-type",
+                  "value": "test-value"
+                }
+              ],
+              "callback_id": "test callback id",
+              "channel": "#alerts",
+              "color": "danger",
+              "fallback": "test fallback",
+              "fields": [
+                {
+                  "short": true,
+                  "title": "test title",
+                  "value": "test value"
+                }
+              ],
+              "footer": "test footer",
+              "http_config": {
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "icon_emoji": ":warning:",
+              "icon_url": "https://example.com/icon.png",
+              "image_url": "https://example.com/image.png",
+              "link_names": true,
+              "mrkdwn_in": [
+                "fallback",
+                "pretext",
+                "text"
+              ],
+              "pretext": "test pretext",
+              "send_resolved": true,
+              "text": "test text",
+              "thumb_url": "https://example.com/thumb.png",
+              "title": "test title",
+              "title_link": "http://localhost",
+              "username": "Alerting Team"
+            },
+            "type": "slack",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "slack"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "c25z",
+        "namespace": "default",
+        "resourceVersion": "77d734ad4c196d36",
+        "uid": "vSP8NtFr23hnqZqLxRgzUKfr1wOemOvZm1S6MYkfRI4X"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "sigv4.SecretKey": true
+            },
+            "settings": {
+              "attributes": {
+                "key1": "value1"
+              },
+              "http_config": {
+                "enable_http2": false,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "message": "{{ template \"sns.default.message\" . }}",
+              "send_resolved": true,
+              "sigv4": {
+                "AccessKey": "secret-access-key",
+                "Profile": "default,",
+                "Region": "us-east-1",
+                "RoleARN": "arn:aws:iam::123456789012:role/role-name"
+              },
+              "subject": "{{ template \"sns.default.subject\" . }}",
+              "topic_arn": "arn:aws:sns:us-east-1:123456789012:alerts"
+            },
+            "type": "sns",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "sns"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "dGVsZWdyYW0",
+        "namespace": "default",
+        "resourceVersion": "d9850878a33e302e",
+        "uid": "XLWjtmYcjP5PiqBCwZXX3YKHV1G8niRtpCakIpcHqoYX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "token": true
+            },
+            "settings": {
+              "api_url": "http://localhost/telegram-default",
+              "chat": -1001234567890,
+              "http_config": {
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "message": "{{ template \"telegram.default.message\" . }}",
+              "parse_mode": "MarkdownV2",
+              "send_resolved": true
+            },
+            "type": "telegram",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "telegram"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "dmljdG9yb3Bz",
+        "namespace": "default",
+        "resourceVersion": "1e6886531440afc2",
+        "uid": "EWiwQ6TIW0GpEo46WusW7Nvg0HuD4QAbHf0JZ2OSOhEX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "api_key": true
+            },
+            "settings": {
+              "api_url": "http://localhost/victorops-default/",
+              "entity_display_name": "{{ template \"victorops.default.entity_display_name\" . }}",
+              "http_config": {
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false,
+                  "server_name": "victorops.com"
+                }
+              },
+              "message_type": "CRITICAL",
+              "monitoring_tool": "{{ template \"victorops.default.monitoring_tool\" . }}",
+              "routing_key": "team1",
+              "send_resolved": true,
+              "state_message": "{{ template \"victorops.default.state_message\" . }}"
+            },
+            "type": "victorops",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "victorops"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "d2ViZXg",
+        "namespace": "default",
+        "resourceVersion": "08fc955a08dfe9c0",
+        "uid": "wDNufI44UXHWq4ERRYenZ7XgXVV3Tjxaokz9IjMRZ54X"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "http_config.authorization.credentials": true
+            },
+            "settings": {
+              "api_url": "http://localhost/webes-default",
+              "http_config": {
+                "authorization": {
+                  "type": "Bearer"
+                },
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "message": "{{ template \"webex.default.message\" . }}",
+              "room_id": "Y2lzY29zcGFyazovL3VzL1JPT00v12345678",
+              "send_resolved": true
+            },
+            "type": "webex",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "webex"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "1",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "d2ViaG9vaw",
+        "namespace": "default",
+        "resourceVersion": "494392f899a7b410",
+        "uid": "aKzigXATPp6HOh20yTrlTcuF2Y9IrPHridGIcWrJygsX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "url": true
+            },
+            "settings": {
+              "http_config": {
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "max_alerts": 10,
+              "send_resolved": true,
+              "timeout": "0s",
+              "url_file": ""
+            },
+            "type": "webhook",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "webhook"
+      }
+    },
+    {
+      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "kind": "Receiver",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        },
+        "name": "d2VjaGF0",
+        "namespace": "default",
+        "resourceVersion": "135913515cbc156b",
+        "uid": "jkXCvNrNVw7XX5nmYFyrGiA4ckAvJ282u2scW8KZq7IX"
+      },
+      "spec": {
+        "integrations": [
+          {
+            "disableResolveMessage": false,
+            "secureFields": {
+              "api_secret": true
+            },
+            "settings": {
+              "agent_id": "1000002",
+              "api_url": "http://localhost/wechat/",
+              "corp_id": "12345",
+              "http_config": {
+                "enable_http2": true,
+                "follow_redirects": true,
+                "proxy_url": null,
+                "tls_config": {
+                  "insecure_skip_verify": false
+                }
+              },
+              "message": "test message",
+              "message_type": "text",
+              "send_resolved": true,
+              "to_party": "party1",
+              "to_tag": "tag1",
+              "to_user": "user1"
+            },
+            "type": "wechat",
+            "uid": "",
+            "version": "v0mimir1"
+          }
+        ],
+        "title": "wechat"
+      }
+    }
+  ],
+  "kind": "ReceiverList",
+  "metadata": {}
+}

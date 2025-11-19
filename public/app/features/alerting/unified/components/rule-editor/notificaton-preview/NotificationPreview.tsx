@@ -4,7 +4,7 @@ import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AlertQuery, Labels } from 'app/types/unified-alerting-dto';
 
@@ -36,7 +36,7 @@ export const NotificationPreview = ({
   alertUid,
 }: NotificationPreviewProps) => {
   const styles = useStyles2(getStyles);
-  const disabled = !condition || !folder;
+  const previewRoutingDisabled = !condition || !folder;
 
   const [trigger, { data = [], isLoading, isUninitialized: previewUninitialized }] = preview.useMutation();
 
@@ -51,7 +51,7 @@ export const NotificationPreview = ({
   }, []);
 
   const onPreview = () => {
-    if (!folder || !condition) {
+    if (previewRoutingDisabled) {
       return;
     }
 
@@ -67,12 +67,30 @@ export const NotificationPreview = ({
   };
 
   useEffectOnce(() => {
-    onPreview();
+    if (!previewRoutingDisabled) {
+      onPreview();
+    }
   });
 
   //  Get alert managers's data source information
   const alertManagerDataSources = useGetAlertManagerDataSourcesByPermissionAndConfig('notification');
   const singleAlertManagerConfigured = alertManagerDataSources.length === 1;
+
+  const getTooltipContent = () => {
+    if (!folder) {
+      return (
+        <Trans i18nKey="alerting.notification-preview.select-folder-tooltip">Select a folder to preview routing</Trans>
+      );
+    }
+    if (previewRoutingDisabled) {
+      return (
+        <Trans i18nKey="alerting.notification-preview.disabled-tooltip">
+          You don&apos;t have sufficient permissions to preview
+        </Trans>
+      );
+    }
+    return '';
+  };
 
   return (
     <Stack direction="column">
@@ -102,9 +120,11 @@ export const NotificationPreview = ({
             </Text>
           )}
         </Stack>
-        <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={disabled}>
-          <Trans i18nKey="alerting.notification-preview.preview-routing">Preview routing</Trans>
-        </Button>
+        <Tooltip content={getTooltipContent()}>
+          <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={previewRoutingDisabled}>
+            <Trans i18nKey="alerting.notification-preview.preview-routing">Preview routing</Trans>
+          </Button>
+        </Tooltip>
       </Stack>
       {potentialInstances.length > 0 && (
         <Suspense

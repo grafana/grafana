@@ -479,24 +479,52 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	ruleGroups := opts.Query["rule_group"]
 
 	receiverName := opts.Query.Get("receiver_name")
+	title := opts.Query.Get("search.rule_name")
+	searchRuleGroup := opts.Query.Get("search.rule_group")
 
+	var ruleType ngmodels.RuleTypeFilter
+	switch ngmodels.RuleType(opts.Query.Get("rule_type")) {
+	case ngmodels.RuleTypeAlerting:
+		ruleType = ngmodels.RuleTypeFilterAlerting
+	case ngmodels.RuleTypeRecording:
+		ruleType = ngmodels.RuleTypeFilterRecording
+	default:
+		ruleType = ngmodels.RuleTypeFilterAll
+	}
+
+	// Pagination limits
+	//
+	// group_limit: Maximum number of rule groups to return
+	//   - Returns exactly this many groups or fewer if not enough exist
+	//
+	// rule_limit: Maximum number of rules to return across all groups
+	//   - Returns complete groups until total rules meets or exceeds this limit
+	//   - May exceed the rule limit if needed to include the final complete group
+	//   - Example: rule_limit=15 with groups of [10, 10, 10] rules returns first 2 groups, 20 rules total
+	//
+	// When both limits are specified, whichever limit is reached first takes precedence.
 	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
+	maxRules := getInt64WithDefault(opts.Query, "rule_limit", -1)
 	nextToken := opts.Query.Get("group_next_token")
 
-	if maxGroups == 0 {
+	if maxGroups == 0 || maxRules == 0 {
 		return ruleResponse
 	}
 
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
-			OrgID:         opts.OrgID,
-			NamespaceUIDs: namespaceUIDs,
-			DashboardUID:  dashboardUID,
-			PanelID:       panelID,
-			RuleGroups:    ruleGroups,
-			ReceiverName:  receiverName,
+			OrgID:           opts.OrgID,
+			NamespaceUIDs:   namespaceUIDs,
+			DashboardUID:    dashboardUID,
+			PanelID:         panelID,
+			RuleGroups:      ruleGroups,
+			ReceiverName:    receiverName,
+			SearchTitle:     title,
+			SearchRuleGroup: searchRuleGroup,
 		},
+		RuleType:      ruleType,
 		Limit:         maxGroups,
+		RuleLimit:     maxRules,
 		ContinueToken: nextToken,
 	}
 	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
@@ -542,7 +570,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	ruleResponse.Data.NextToken = continueToken
 
 	// Only return Totals if there is no pagination
-	if maxGroups == -1 {
+	if maxGroups == -1 && maxRules == -1 {
 		ruleResponse.Data.Totals = rulesTotals
 	}
 
@@ -624,14 +652,18 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	ruleGroups := opts.Query["rule_group"]
 
 	receiverName := opts.Query.Get("receiver_name")
+	title := opts.Query.Get("search.rule_name")
+	searchRuleGroup := opts.Query.Get("search.rule_group")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:         opts.OrgID,
-		NamespaceUIDs: namespaceUIDs,
-		DashboardUID:  dashboardUID,
-		PanelID:       panelID,
-		RuleGroups:    ruleGroups,
-		ReceiverName:  receiverName,
+		OrgID:           opts.OrgID,
+		NamespaceUIDs:   namespaceUIDs,
+		DashboardUID:    dashboardUID,
+		PanelID:         panelID,
+		RuleGroups:      ruleGroups,
+		ReceiverName:    receiverName,
+		SearchTitle:     title,
+		SearchRuleGroup: searchRuleGroup,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
