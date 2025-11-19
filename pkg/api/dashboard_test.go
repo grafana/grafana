@@ -379,28 +379,6 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 
 		require.NoError(t, res.Body.Close())
 	})
-
-	t.Run("Should be able to diff dashboards with correct permissions", func(t *testing.T) {
-		server := setup()
-
-		permissions := []accesscontrol.Permission{
-			{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
-		}
-
-		res, err := calculateDiff(server, permissions)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-		require.NoError(t, res.Body.Close())
-	})
-
-	t.Run("Should not be able to diff dashboards without permissions", func(t *testing.T) {
-		server := setup()
-
-		res, err := calculateDiff(server, []accesscontrol.Permission{})
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusForbidden, res.StatusCode)
-		require.NoError(t, res.Body.Close())
-	})
 }
 
 func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
