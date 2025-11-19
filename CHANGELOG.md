@@ -1,3 +1,14 @@
+<!-- 12.0.7 START -->
+
+# 12.0.7 (2025-11-19)
+
+### Bug fixes
+
+- **Alerting:** Fix unmarshalling of GettableStatus to include time intervals [#112732](https://github.com/grafana/grafana/pull/112732), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **AnalyticsSummaries:** Fix dashboard rollup not resetting "last X days" metrics to zero (Enterprise)
+- **AnalyticsSummaries:** Fix dashboard rollup totals resetting incorrectly (Enterprise)
+
+<!-- 12.0.7 END -->
 <!-- 12.2.2 START -->
 
 # 12.2.2 (2025-11-19)
