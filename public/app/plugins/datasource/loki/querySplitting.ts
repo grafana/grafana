@@ -11,6 +11,7 @@ import {
   rangeUtil,
   TimeRange,
   LoadingState,
+  store,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -331,7 +332,9 @@ export function runSplitQuery(
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   request.queryGroupId = uuidv4();
-  const oneDayMs = 24 * 60 * 60 * 1000;
+  // Allow custom split durations for debugging, e.g. `localStorage.setItem('grafana.loki.querySplitInterval', 24 * 60 * 1000) // 1 hour`
+  const debugSplitDuration = parseInt(store.get('grafana.loki.querySplitInterval'), 10);
+  const oneDayMs = debugSplitDuration || 24 * 60 * 60 * 1000;
   const directionPartitionedLogQueries = groupBy(logQueries, (query) =>
     query.direction === LokiQueryDirection.Forward ? LokiQueryDirection.Forward : LokiQueryDirection.Backward
   );
