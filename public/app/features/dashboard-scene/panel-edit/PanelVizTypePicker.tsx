@@ -15,8 +15,6 @@ import { VisualizationSuggestions } from 'app/features/panel/components/VizTypeP
 import { VizTypePicker } from 'app/features/panel/components/VizTypePicker/VizTypePicker';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
-import { PanelModelCompatibilityWrapper } from '../utils/PanelModelCompatibilityWrapper';
-
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
 
 export interface Props {
@@ -51,7 +49,6 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
 
   const tabKey = LS_VISUALIZATION_SELECT_TAB_KEY;
   const defaultTab = VisualizationSelectPaneTab.Visualizations;
-  const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
 
   const supportedListModes = useMemo(
     () => new Set([VisualizationSelectPaneTab.Visualizations, VisualizationSelectPaneTab.Suggestions]),
