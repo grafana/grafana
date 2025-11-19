@@ -38,7 +38,7 @@ import (
 	"github.com/prometheus/common/promslog"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/sigv4"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery/targetgroup"

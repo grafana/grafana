@@ -10,7 +10,7 @@ import (
 	"reflect"
 
 	jsoniter "github.com/json-iterator/go"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"

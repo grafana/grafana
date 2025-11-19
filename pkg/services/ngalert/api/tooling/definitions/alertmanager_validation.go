@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/alerting/templates"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 func (t *NotificationTemplate) Validate() error {

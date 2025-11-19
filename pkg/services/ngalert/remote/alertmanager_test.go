@@ -27,12 +27,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
-	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"

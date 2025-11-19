@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"go.opentelemetry.io/otel/attribute"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
