@@ -48,7 +48,10 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   };
 }
 
-export async function getPluginInsights(id: string, version: string): Promise<CatalogPluginInsights> {
+export async function getPluginInsights(id: string, version: string | undefined): Promise<CatalogPluginInsights> {
+  if (!version) {
+    throw new Error('Version is required');
+  }
   try {
     const insights = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/versions/${version}/insights`);
     return insights;

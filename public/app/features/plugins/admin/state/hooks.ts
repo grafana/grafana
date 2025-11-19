@@ -60,7 +60,7 @@ export const useGetSingle = (id: string, version?: string): CatalogPlugin | unde
   return useSelector((state) => selectById(state, id));
 };
 
-export const useGetPluginInsights = (id: string, version?: string): CatalogPlugin | undefined => {
+export const useGetPluginInsights = (id: string, version: string | undefined): CatalogPlugin | undefined => {
   useFetchPluginInsights(id, version);
   return useSelector((state) => selectById(state, id));
 };
@@ -167,15 +167,15 @@ export const useFetchDetails = (id: string) => {
   }, [plugin]); // eslint-disable-line
 };
 
-export const useFetchPluginInsights = (id: string, version?: string) => {
+export const useFetchPluginInsights = (id: string, version: string | undefined) => {
   const dispatch = useDispatch();
   const plugin = useSelector((state) => selectById(state, id));
   const isNotFetching = !useSelector(selectIsRequestPending(fetchPluginInsights.typePrefix));
-  const shouldFetch = isNotFetching && plugin && !plugin.insights;
+  const shouldFetch = isNotFetching && plugin && !plugin.insights && version;
 
   useEffect(() => {
     shouldFetch && dispatch(fetchPluginInsights({ id, version }));
-  }, [plugin]); // eslint-disable-line
+  }, [plugin, version]); // eslint-disable-line
 };
 
 export const useFetchDetailsLazy = () => {
