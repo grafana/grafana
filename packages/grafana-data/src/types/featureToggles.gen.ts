@@ -122,11 +122,6 @@ export interface FeatureToggles {
   */
   lokiLogsDataplane?: boolean;
   /**
-  * Support dataplane contract field name change for transformations and field name matchers where the name is different
-  * @default true
-  */
-  dataplaneFrontendFallback?: boolean;
-  /**
   * Disables dataplane specific processing in server side expressions.
   */
   disableSSEDataplane?: boolean;
@@ -165,11 +160,6 @@ export interface FeatureToggles {
   * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
-  /**
-  * Enables the transformations redesign
-  * @default true
-  */
-  transformationsRedesign?: boolean;
   /**
   * Enable support for Machine Learning in server-side expressions
   */
@@ -1188,4 +1178,9 @@ export interface FeatureToggles {
   * Enable TTL plugin instance manager
   */
   ttlPluginInstanceManager?: boolean;
+  /**
+  * Enables the new version of rudderstack
+  * @default false
+  */
+  rudderstackUpgrade?: boolean;
 }

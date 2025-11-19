@@ -21,7 +21,6 @@ interface RudderstackAPIOptions {
 
 interface Rudderstack {
   identify: (identifier: string, traits: Properties, options?: RudderstackAPIOptions) => void;
-  // load type set to match Rudderstack v3, for global type compatibility with new version.
   load: (
     writeKey: string,
     dataPlaneURL: string,
@@ -62,37 +61,56 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
   supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction, EchoEventType.ExperimentView];
 
   constructor(public options: RudderstackBackendOptions) {
-    const url = options.sdkUrl || `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
+    const url = options.sdkUrl || `https://cdn.rudderlabs.com/v3/modern/rsa.min.js`;
     loadScript(url);
 
-    const tempRudderstack = ((window as any).rudderanalytics = []);
+    // this preloadRudderstack functionality is mirror the loading snippet reference in the Rudderstack
+    // docs here: https://www.rudderstack.com/docs/sources/event-streams/sdks/rudderstack-javascript-sdk/installation/#using-cdn
+    // We don't need a bunch of what's in the snippet, and we can rely on browser support being modern,
+    // so this is much more terse and only needs to handle the temp setup that pushes calls to the
+    // rudderstack API into the temp array.
+    const preloadRudderstack: unknown[] = [];
 
-    const methods = [
+    const methodNames = [
+      'setDefaultInstanceKey',
       'load',
+      'ready',
       'page',
       'track',
       'identify',
       'alias',
       'group',
-      'ready',
       'reset',
-      'getAnonymousId',
       'setAnonymousId',
+      'startSession',
+      'endSession',
+      'consent',
+      'addCustomIntegration',
     ];
 
-    for (let i = 0; i < methods.length; i++) {
-      const method = methods[i];
-      (tempRudderstack as Record<string, any>)[method] = (function (methodName) {
-        return function () {
-          // @ts-ignore
-          tempRudderstack.push([methodName].concat(Array.prototype.slice.call(arguments)));
-        };
-      })(method);
-    }
+    methodNames.forEach((methodName) => {
+      // using Object.assign gets around the types being "wrong".
+      Object.assign(preloadRudderstack, {
+        [methodName]: function () {
+          preloadRudderstack.push([methodName].concat(Array.prototype.slice.call(arguments)));
+        },
+      });
+    });
+
+    Object.assign(window, { rudderanalytics: preloadRudderstack });
 
     window.rudderanalytics?.load?.(options.writeKey, options.dataPlaneUrl, {
       configUrl: options.configUrl,
       destSDKBaseURL: options.integrationsUrl,
+      // these storage settings allow backwards compat across subdomains with the older rudderstack
+      // version. This would have to be changed to the new setting across all instances at once,
+      // and wouldn't be able to be rolled back.
+      storage: {
+        encryption: {
+          version: 'legacy',
+        },
+        migrate: false,
+      },
     });
 
     if (options.user) {
@@ -117,6 +135,8 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
         apiOptions
       );
     }
+
+    window.rudderanalytics?.page?.();
   }
 
   addEvent = (e: PageviewEchoEvent) => {

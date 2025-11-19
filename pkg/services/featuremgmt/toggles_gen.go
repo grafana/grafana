@@ -103,10 +103,6 @@ const (
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
 	FlagLokiLogsDataplane = "lokiLogsDataplane"
 
-	// FlagDataplaneFrontendFallback
-	// Support dataplane contract field name change for transformations and field name matchers where the name is different
-	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
-
 	// FlagDisableSSEDataplane
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
@@ -142,10 +138,6 @@ const (
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
-
-	// FlagTransformationsRedesign
-	// Enables the transformations redesign
-	FlagTransformationsRedesign = "transformationsRedesign"
 
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
@@ -1069,4 +1061,8 @@ const (
 	// FlagTtlPluginInstanceManager
 	// Enable TTL plugin instance manager
 	FlagTtlPluginInstanceManager = "ttlPluginInstanceManager"
+
+	// FlagRudderstackUpgrade
+	// Enables the new version of rudderstack
+	FlagRudderstackUpgrade = "rudderstackUpgrade"
 )
