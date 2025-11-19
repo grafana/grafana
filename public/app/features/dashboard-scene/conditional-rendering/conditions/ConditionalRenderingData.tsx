@@ -140,6 +140,10 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
     }
   }
 
+  public forceCheck() {
+    this._check();
+  }
+
   public renderCmp(): ReactElement {
     return <this.Component model={this} key={this.state.key} />;
   }

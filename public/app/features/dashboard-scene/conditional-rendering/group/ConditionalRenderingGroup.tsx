@@ -33,7 +33,6 @@ export interface ConditionalRenderingGroupState extends SceneObjectState {
   condition: GroupConditionCondition;
   renderHidden: boolean;
   result: boolean;
-  target?: SceneObjectRef<SceneObject>;
 }
 
 export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRenderingGroupState> {
@@ -41,6 +40,7 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
 
   private _shouldShow: boolean;
   private _shouldMatchAll: boolean;
+  private _target?: SceneObjectRef<SceneObject>;
 
   public constructor(state: ConditionalRenderingGroupState) {
     super(state);
@@ -58,6 +58,19 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
     });
 
     this.check();
+  }
+
+  public setTarget(target: SceneObject | undefined) {
+    this._target = target ? target.getRef() : undefined;
+    this.forceCheck();
+  }
+
+  public getTarget(): SceneObject | undefined {
+    return this._target?.resolve();
+  }
+
+  public forceCheck() {
+    this.state.conditions.forEach((condition) => condition.forceCheck());
   }
 
   public check() {

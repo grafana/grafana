@@ -134,15 +134,15 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     let repeatedConditionalRendering: ConditionalRenderingGroup[] | undefined;
 
     if (this.state.conditionalRendering) {
-      this.state.conditionalRendering.setState({ target: undefined });
-
       repeatedConditionalRendering = repeatedPanels.reduce<ConditionalRenderingGroup[]>((acc, panel) => {
-        acc.push(this.state.conditionalRendering!.clone({ target: panel.getRef() }));
+        const conditionalRendering = this.state.conditionalRendering!.clone();
+        conditionalRendering.setTarget(panel);
+        acc.push(conditionalRendering);
 
         return acc;
       }, []);
 
-      this.state.conditionalRendering.setState({ target: panelToRepeat.getRef() });
+      this.state.conditionalRendering.setTarget(panelToRepeat);
     }
 
     this.setState({ repeatedPanels, repeatedConditionalRendering });
