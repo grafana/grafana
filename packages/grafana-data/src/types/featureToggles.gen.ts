@@ -1173,12 +1173,11 @@ export interface FeatureToggles {
   */
   onlyStoreActionSets?: boolean;
   /**
-<<<<<<< HEAD
   * Show insights for plugins in the plugin details page
   * @default false
   */
   pluginInsights?: boolean;
-=======
+  /**
   * Enables a new panel time settings drawer
   */
   panelTimeSettings?: boolean;
@@ -1204,5 +1203,4 @@ export interface FeatureToggles {
   * Enable TTL plugin instance manager
   */
   ttlPluginInstanceManager?: boolean;
->>>>>>> main
 }

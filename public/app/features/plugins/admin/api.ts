@@ -48,10 +48,9 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   };
 }
 
-export async function getPluginInsights(id: string, version?: string): Promise<CatalogPluginInsights> {
+export async function getPluginInsights(id: string, version: string): Promise<CatalogPluginInsights> {
   try {
-    const params = version ? { version } : {};
-    const insights = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/insights`, params);
+    const insights = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/versions/${version}/insights`);
     return insights;
   } catch (error) {
     if (isFetchError(error)) {

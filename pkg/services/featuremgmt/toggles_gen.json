@@ -3156,8 +3156,8 @@
         "expression": "false"
       }
     },
-      {
-        "metadata": {
+    {
+      "metadata": {
         "name": "pluginInstallAPISync",
         "resourceVersion": "1760543624249",
         "creationTimestamp": "2025-10-15T15:53:44Z"
