@@ -602,7 +602,6 @@ function RuleStateField() {
               { label: t('alerting.rules.state.normal', 'Normal'), value: PromAlertingRuleState.Inactive },
               { label: t('alerting.rules.state.pending', 'Pending'), value: PromAlertingRuleState.Pending },
               { label: t('alerting.rules.state.recovering', 'Recovering'), value: PromAlertingRuleState.Recovering },
-              { label: t('alerting.rules.state.unknown', 'Unknown'), value: PromAlertingRuleState.Unknown },
             ]}
             value={field.value}
             onChange={field.onChange}
@@ -762,7 +761,10 @@ function SearchQueryHelp() {
           title={t('alerting.search-query-help.title-labels', 'Labels')}
           expr='label:team=A label:"cluster=new york"'
         />
-        <HelpRow title={t('alerting.search-query-help.title-state', 'State')} expr="state:firing|normal|pending" />
+        <HelpRow
+          title={t('alerting.search-query-help.title-state', 'State')}
+          expr="state:firing|normal|pending|recovering"
+        />
         <HelpRow title={t('alerting.search-query-help.title-type', 'Type')} expr="type:alerting|recording" />
         <HelpRow title={t('alerting.search-query-help.title-health', 'Health')} expr="health:ok|nodata|error" />
         <HelpRow
