@@ -68,6 +68,17 @@ func (m *staticService) ReadFromUnified(ctx context.Context, gr schema.GroupReso
 	}
 }
 
+// WriteUnified implements Service.
+func (m *staticService) WriteUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
+	config := m.cfg.UnifiedStorage[gr.String()]
+	switch config.DualWriterMode {
+	case rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5:
+		return true, nil
+	default:
+		return false, nil
+	}
+}
+
 // ShouldManage implements Service.
 func (m *staticService) ShouldManage(gr schema.GroupResource) bool {
 	return false

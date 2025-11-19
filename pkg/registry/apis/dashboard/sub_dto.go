@@ -30,7 +30,7 @@ type dtoBuilder = func(dashboard runtime.Object, access *dashboard.DashboardAcce
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
 	getter                 rest.Getter
-	legacy                 legacy.DashboardAccess
+	legacy                 legacy.DashboardAccessor
 	unified                resource.ResourceClient
 	largeObjects           apistore.LargeObjectSupport
 	accessControl          accesscontrol.AccessControl
@@ -42,7 +42,7 @@ type DTOConnector struct {
 func NewDTOConnector(
 	getter rest.Getter,
 	largeObjects apistore.LargeObjectSupport,
-	legacyAccess legacy.DashboardAccess,
+	legacyAccess legacy.DashboardAccessor,
 	resourceClient resource.ResourceClient,
 	accessControl accesscontrol.AccessControl,
 	scheme *runtime.Scheme,

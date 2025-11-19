@@ -35,6 +35,11 @@ func (m *mockService) ReadFromUnified(ctx context.Context, gr schema.GroupResour
 	return m.status.ReadUnified, nil
 }
 
+// WriteUnified implements Service.
+func (m *mockService) WriteUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
+	return m.status.WriteUnified, nil
+}
+
 // ShouldManage implements Service.
 func (m *mockService) ShouldManage(gr schema.GroupResource) bool {
 	return true

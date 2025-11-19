@@ -60,6 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -109,7 +110,7 @@ type APIBuilder struct {
 	jobHistoryConfig *JobHistoryConfig
 	jobHistoryLoki   *jobs.LokiJobHistory
 	resourceLister   resources.ResourceLister
-	dashboardAccess  legacy.MigratorDashboardAccess
+	dashboardAccess  legacy.MigrationDashboardAccessor
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
 	repoFactory      repository.Factory
@@ -135,7 +136,7 @@ func NewAPIBuilder(
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
-	dashboardAccess legacy.MigratorDashboardAccess,
+	dashboardAccess legacy.MigrationDashboardAccessor,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	access authlib.AccessChecker,
@@ -158,7 +159,7 @@ func NewAPIBuilder(
 		clients = resources.NewClientFactory(configProvider)
 	}
 	parsers := resources.NewParserFactory(clients)
-	legacyMigrator := legacy.ProvideLegacyMigrator(dashboardAccess, unified)
+	legacyMigrator := migrations.ProvideUnifiedMigrator(dashboardAccess, unified)
 	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
@@ -235,7 +236,7 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	access authlib.AccessClient,
-	dashboardAccess legacy.MigratorDashboardAccess,
+	dashboardAccess legacy.MigrationDashboardAccessor,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	tracer tracing.Tracer,
@@ -1243,7 +1244,7 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 	}
 
 	// Count how many things exist - create a migrator on-demand for this
-	legacyMigrator := legacy.ProvideLegacyMigrator(b.dashboardAccess, b.unified)
+	legacyMigrator := migrations.ProvideUnifiedMigrator(b.dashboardAccess, b.unified)
 	rsp, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace: "default", // FIXME! this works for single org, but need to check multi-org
 		Resources: []schema.GroupResource{{

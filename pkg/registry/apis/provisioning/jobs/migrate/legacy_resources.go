@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -29,7 +30,7 @@ type LegacyResourcesMigrator interface {
 type legacyResourcesMigrator struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	parsers             resources.ParserFactory
-	dashboardAccess     legacy.MigratorDashboardAccess
+	dashboardAccess     legacy.MigrationDashboardAccessor
 	signerFactory       signature.SignerFactory
 	clients             resources.ClientFactory
 	exportFn            export.ExportFn
@@ -38,7 +39,7 @@ type legacyResourcesMigrator struct {
 func NewLegacyResourcesMigrator(
 	repositoryResources resources.RepositoryResourcesFactory,
 	parsers resources.ParserFactory,
-	dashboardAccess legacy.MigratorDashboardAccess,
+	dashboardAccess legacy.MigrationDashboardAccessor,
 	signerFactory signature.SignerFactory,
 	clients resources.ClientFactory,
 	exportFn export.ExportFn,
@@ -114,7 +115,7 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 
 type legacyResourceResourceMigrator struct {
 	repo            repository.ReaderWriter
-	dashboardAccess legacy.MigratorDashboardAccess
+	dashboardAccess legacy.MigrationDashboardAccessor
 	parser          resources.Parser
 	progress        jobs.JobProgressRecorder
 	namespace       string
@@ -127,7 +128,7 @@ type legacyResourceResourceMigrator struct {
 
 func newLegacyResourceMigrator(
 	repo repository.ReaderWriter,
-	dashboardAccess legacy.MigratorDashboardAccess,
+	dashboardAccess legacy.MigrationDashboardAccessor,
 	parser resources.Parser,
 	resources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
@@ -228,7 +229,7 @@ func (r *legacyResourceResourceMigrator) Migrate(ctx context.Context) error {
 
 	// Create a parquet migrator with this instance as the BulkResourceWriter
 	parquetClient := parquet.NewBulkResourceWriterClient(r)
-	legacyMigrator := legacy.ProvideLegacyMigratorParquet(
+	migrator := unifiedmigrations.ProvideUnifiedMigratorParquet(
 		r.dashboardAccess,
 		parquetClient,
 	)
@@ -239,7 +240,7 @@ func (r *legacyResourceResourceMigrator) Migrate(ctx context.Context) error {
 		Resources:   []schema.GroupResource{r.kind},
 		OnlyCount:   true, // first get the count
 	}
-	stats, err := legacyMigrator.Migrate(ctx, opts)
+	stats, err := migrator.Migrate(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("unable to count legacy items %w", err)
 	}
@@ -255,7 +256,7 @@ func (r *legacyResourceResourceMigrator) Migrate(ctx context.Context) error {
 	}
 
 	opts.OnlyCount = false // this time actually write
-	_, err = legacyMigrator.Migrate(ctx, opts)
+	_, err = migrator.Migrate(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("migrate legacy %s: %w", r.kind.Resource, err)
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	// unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
 
 func ProvideStaticServiceForTests(cfg *setting.Cfg) Service {
@@ -26,8 +26,11 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	kv kvstore.KVStore,
 	cfg *setting.Cfg,
-	// _ unifiedmigrations.UnifiedStorageMigrationProvider,
+	migrator unifiedmigrations.UnifiedStorageMigrationService,
 ) (Service, error) {
+	// Ensure migrations have run before starting dualwrite
+	migrator.Run(context.Background())
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
@@ -110,6 +113,11 @@ func (m *service) ShouldManage(gr schema.GroupResource) bool {
 func (m *service) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
 	v, ok, err := m.db.get(ctx, gr)
 	return ok && v.ReadUnified, err
+}
+
+func (m *service) WriteUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
+	v, ok, err := m.db.get(ctx, gr)
+	return ok && v.WriteUnified, err
 }
 
 // Status implements Service.

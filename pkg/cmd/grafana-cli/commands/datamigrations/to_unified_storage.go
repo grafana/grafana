@@ -24,10 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -68,7 +69,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	}
 	featureToggles := featuremgmt.ProvideToggles(featureManager)
 
-	provisioning, err := newStubProvisioning(cfg.ProvisioningPath)
+	provisioning, err := provisioning.ProvideStubProvisioningService(cfg)
 	if err != nil {
 		return err
 	}
@@ -78,20 +79,15 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 
-	dashboardAccess := legacy.NewDashboardAccess(
+	dashboardAccess := legacy.ProvideMigratorDashboardAccessor(
 		legacysql.NewDatabaseProvider(sqlStore),
-		authlib.OrgNamespaceFormatter,
-		nil, // no dashboards.Store
 		provisioning,
-		nil, // no librarypanels.Service
-		sort.ProvideService(),
-		nil, // we don't delete during migration, and this is only need to delete permission.
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		featureToggles,
 	)
 
 	if c.Bool("non-interactive") {
-		migrator := legacy.ProvideLegacyMigrator(dashboardAccess, grpcClient)
+		migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
 
 		opts.WithHistory = true // always include history in non-interactive mode
 		rsp, err := migrator.Migrate(ctx, opts)
@@ -112,7 +108,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 	if yes {
-		migrator := legacy.ProvideLegacyMigrator(dashboardAccess, nil) // no need for grpc client for counting
+		migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, nil) // no need for grpc client for counting
 
 		opts.OnlyCount = true
 		rsp, err := migrator.Migrate(ctx, opts)
@@ -146,12 +142,9 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		if err != nil {
 			return err
 		}
-		migrator := legacy.ProvideLegacyMigratorParquet(dashboardAccess, parquetClient)
+		migrator := migrations.ProvideUnifiedMigratorParquet(dashboardAccess, parquetClient)
 		start = time.Now()
 		last = time.Now()
-		if err != nil {
-			return err
-		}
 		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
 			return err
@@ -193,7 +186,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			return err
 		}
 		if yes {
-			migrator := legacy.ProvideLegacyMigrator(dashboardAccess, grpcClient)
+			migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
 			start = time.Now()
 			last = time.Now()
 			rsp, err := migrator.Migrate(ctx, opts)

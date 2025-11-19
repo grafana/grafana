@@ -359,6 +359,63 @@ func (_c *MockService_Update_Call) RunAndReturn(run func(context.Context, Storag
 	return _c
 }
 
+// WriteUnified provides a mock function with given fields: ctx, gr
+func (_m *MockService) WriteUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
+	ret := _m.Called(ctx, gr)
+
+	if len(ret) == 0 {
+		panic("no return value specified for WriteUnified")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, schema.GroupResource) (bool, error)); ok {
+		return rf(ctx, gr)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, schema.GroupResource) bool); ok {
+		r0 = rf(ctx, gr)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, schema.GroupResource) error); ok {
+		r1 = rf(ctx, gr)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockService_WriteUnified_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WriteUnified'
+type MockService_WriteUnified_Call struct {
+	*mock.Call
+}
+
+// WriteUnified is a helper method to define mock.On call
+//   - ctx context.Context
+//   - gr schema.GroupResource
+func (_e *MockService_Expecter) WriteUnified(ctx interface{}, gr interface{}) *MockService_WriteUnified_Call {
+	return &MockService_WriteUnified_Call{Call: _e.mock.On("WriteUnified", ctx, gr)}
+}
+
+func (_c *MockService_WriteUnified_Call) Run(run func(ctx context.Context, gr schema.GroupResource)) *MockService_WriteUnified_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(schema.GroupResource))
+	})
+	return _c
+}
+
+func (_c *MockService_WriteUnified_Call) Return(_a0 bool, _a1 error) *MockService_WriteUnified_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockService_WriteUnified_Call) RunAndReturn(run func(context.Context, schema.GroupResource) (bool, error)) *MockService_WriteUnified_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockService creates a new instance of MockService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockService(t interface {

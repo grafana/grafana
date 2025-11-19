@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
@@ -49,6 +50,19 @@ var (
 	tracer = otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy")
 )
 
+type MigrateOptions struct {
+	Namespace   string
+	Resources   []schema.GroupResource
+	WithHistory bool // only applies to dashboards
+	OnlyCount   bool // just count the values
+	Progress    func(count int, msg string)
+}
+
+type BlobStoreInfo struct {
+	Count int64
+	Size  int64
+}
+
 type dashboardRow struct {
 	// The numeric version for this dashboard
 	RV int64
@@ -67,8 +81,9 @@ type dashboardRow struct {
 type dashboardSqlAccess struct {
 	sql          legacysql.LegacyDatabaseProvider
 	namespacer   request.NamespaceMapper
-	provisioning provisioning.ProvisioningService
+	provisioning provisioning.StubProvisioningService
 
+	// TODO: consider enabling this by default for on-prem migrations
 	invalidDashboardParseFallbackEnabled bool
 
 	// Use for writing (not reading)
@@ -77,7 +92,7 @@ type dashboardSqlAccess struct {
 	dashboardPermissionSvc accesscontrol.DashboardPermissionsService
 
 	accessControl   accesscontrol.AccessControl
-	libraryPanelSvc librarypanels.Service
+	libraryPanelSvc librarypanels.Service // only used for save dashboard
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -85,59 +100,27 @@ type dashboardSqlAccess struct {
 	log         log.Logger
 }
 
-// ProvideMigratorDashboardAccess creates a DashboardAccess specifically for migration purposes.
+// ProvideMigratorDashboardAccessor creates a DashboardAccess specifically for migration purposes.
 // This provider is used by Wire DI and only includes the minimal dependencies needed for migrations.
-func ProvideMigratorDashboardAccess(
+func ProvideMigratorDashboardAccessor(
 	sql legacysql.LegacyDatabaseProvider,
-	provisioning provisioning.ProvisioningService,
-	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
+	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
 	features featuremgmt.FeatureToggles,
-) MigratorDashboardAccess {
-	// Create a minimal sorter for migrations
-	sorter := sort.ProvideService()
-
-	return NewDashboardAccess(
-		sql,
-		claims.OrgNamespaceFormatter,
-		nil, // no dashboards.Store
-		provisioning,
-		nil, // no librarypanels.Service
-		sorter,
-		nil, // we don't delete during migration, and this is only need to delete permission.
-		accessControl,
-		features,
-	)
+) MigrationDashboardAccessor {
+	return &dashboardSqlAccess{
+		sql:                                  sql,
+		namespacer:                           claims.OrgNamespaceFormatter,
+		dashStore:                            nil, // not needed for migration
+		provisioning:                         provisioning,
+		dashboardPermissionSvc:               nil, // not needed for migration
+		libraryPanelSvc:                      nil, // not needed for migration
+		accessControl:                        accessControl,
+		invalidDashboardParseFallbackEnabled: features.IsEnabled(context.Background(), featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled),
+	}
 }
 
-// ProvideDashboardAccess creates a DashboardAccess specifically for migration purposes.
-// This provider is used by Wire DI and only includes the minimal dependencies needed for migrations.
-func ProvideDashboardAccess(
-	sql legacysql.LegacyDatabaseProvider,
-	dashStore dashboards.Store,
-	provisioning provisioning.ProvisioningService,
-	libraryPanelSvc librarypanels.Service,
-	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
-	accessControl accesscontrol.AccessControl,
-	features featuremgmt.FeatureToggles,
-) DashboardAccess {
-	// Create a minimal sorter for migrations
-	sorter := sort.ProvideService()
-
-	return NewDashboardAccess(
-		sql,
-		claims.OrgNamespaceFormatter,
-		dashStore,
-		provisioning,
-		libraryPanelSvc,
-		sorter,
-		dashboardPermissionSvc,
-		accessControl,
-		features,
-	)
-}
-
-func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
+func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
@@ -146,7 +129,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	features featuremgmt.FeatureToggles,
-) DashboardAccess {
+) *dashboardSqlAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
 		sql:                                  sql,
