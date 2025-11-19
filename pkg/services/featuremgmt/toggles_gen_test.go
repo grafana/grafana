@@ -58,7 +58,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 					RequiresRestart: flag.RequiresRestart,
 					HideFromDocs:    flag.HideFromDocs,
 					Expression:      flag.Expression,
-					// EnabledVersion: ???,
 				}
 
 				// Replace them all
