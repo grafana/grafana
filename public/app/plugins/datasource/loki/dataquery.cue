@@ -42,7 +42,7 @@ composableKinds: DataQuery: {
 				instant?: bool
 				// Used to set step value for range queries.
 				step?: string
-				// The full query plan for split/shard queries. Encoded and sent to Loki via `X-Loki-Query-Limits-Context` header. Requires feature flag @todo
+				// The full query plan for split/shard queries. Encoded and sent to Loki via `X-Loki-Query-Limits-Context` header. Requires "lokiQueryLimitsContext" feature flag
 				limitsContext?: {
 					expr: string
 					from: int64
