@@ -9,6 +9,7 @@
     "openapi",
     "typescript"
   ],
+  "type": "module",
   "sideEffects": false,
   "repository": {
     "type": "git",
@@ -35,24 +36,24 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "",
-    "bundle": "cp ./src/apis/* ./dist/apis && cp ./src/api/* ./dist/api",
+    "build": "yarn clean && yarn create:folders && yarn copy:dist",
     "clean": "rm -rf ./dist && rm -f package.tgz",
-    "copy-api": "cp ../../public/openapi3.json ./src/api",
-    "copy-apis": "cp ../../data/openapi/* ./src/apis",
-    "copyfiles": "yarn copy-api && yarn copy-apis && yarn format",
-    "createfolders": "mkdir dist && mkdir dist/api && mkdir dist/apis",
-    "format": "prettier --list-different \"**/*.json\" --write",
-    "generate-openapi": "make -C ../../ all-openapi3-gen",
+    "copy:api": "cp ../../public/openapi3.json ./src/api",
+    "copy:dist": "cp ./src/apis/* ./dist/apis && cp ./src/api/* ./dist/api",
+    "create:folders": "mkdir -p dist/api dist/apis",
+    "format": "prettier \"**/*.json\" --write --log-level=warn",
+    "generate:openapi": "make -C ../../ all-openapi3-gen",
     "typecheck": "",
-    "prepack": "yarn clean && yarn createfolders && yarn bundle",
-    "postpack": ""
+    "prepack": "yarn build",
+    "postpack": "",
+    "process-specs": "node src/scripts/process-specs.ts && yarn copy:api && yarn format"
   },
   "engines": {
-    "node": ">= 22"
+    "node": ">= 24 <25"
   },
   "packageManager": "yarn@4.11.0",
   "devDependencies": {
+    "openapi-types": "^12.1.3",
     "prettier": "3.6.2"
   }
 }

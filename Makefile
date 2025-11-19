@@ -130,8 +130,7 @@ openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 alread
 .PHONY: all-openapi3-gen
 all-openapi3-gen: openapi3-gen
 	$(GO) test ./pkg/tests/apis || true
-	yarn workspace @grafana/api-clients process-specs
-	yarn workspace @grafana/openapi copyfiles
+	yarn workspace @grafana/openapi process-specs
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise

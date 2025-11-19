@@ -172,11 +172,11 @@ jobs:
     - name: Generate OpenAPI specs
       run: |
         extract_error_message='ERROR! OpenAPI generation failed!'
-        yarn generate-openapi || (echo "${extract_error_message}" && false)
+        yarn generate:openapi || (echo "${extract_error_message}" && false)
     - name: Verify generated specs
       run: |
         git add -N .
-        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'yarn generate-openapi', commit the changes and push again."
+        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'yarn generate:openapi', commit the changes and push again."
         file_diff="$(git diff --name-only ':!conf')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"

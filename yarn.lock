@@ -3416,6 +3416,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/openapi@workspace:packages/grafana-openapi"
   dependencies:
+    openapi-types: "npm:^12.1.3"
     prettier: "npm:3.6.2"
   languageName: unknown
   linkType: soft

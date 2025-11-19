@@ -3809,6 +3809,43 @@
         }
       ]
     },
+    "/teams/{name}/groups": {
+      "get": {
+        "tags": ["Team"],
+        "description": "connect GET requests to groups of Team",
+        "operationId": "getTeamGroups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetGroups"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "GetGroups"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the GetGroups",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/teams/{name}/members": {
       "get": {
         "tags": ["Team"],
@@ -4789,6 +4826,38 @@
           }
         }
       },
+      "GetGroups": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "GetGroups",
+            "version": "v0alpha1"
+          }
+        ]
+      },
       "ServiceAccount": {
         "type": "object",
         "required": ["metadata", "spec"],
@@ -5231,6 +5300,20 @@
             "default": ""
           },
           "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping": {
+        "type": "object",
+        "required": ["name", "externalGroup"],
+        "properties": {
+          "externalGroup": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
             "type": "string",
             "default": ""
           }
@@ -5853,6 +5936,38 @@
             "description": "Name is the unique identifier for a team.",
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetGroups": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetGroupsBody": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
           }
         }
       },
@@ -7031,6 +7146,20 @@
           },
           "state": {
             "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping": {
+        "type": "object",
+        "required": ["name", "externalGroup"],
+        "properties": {
+          "externalGroup": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
             "type": "string",
             "default": ""
           }
