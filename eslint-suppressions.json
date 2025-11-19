@@ -833,11 +833,6 @@
       "count": 13
     }
   },
-  "packages/grafana-ui/src/components/Sparkline/Sparkline.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
