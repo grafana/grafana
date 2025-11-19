@@ -18,6 +18,17 @@ const (
 	QueryEditorModeBuilder QueryEditorMode = "builder"
 )
 
+type LimitsContext struct {
+	Expr string `json:"expr"`
+	From int64  `json:"from"`
+	To   int64  `json:"to"`
+}
+
+// NewLimitsContext creates a new LimitsContext object.
+func NewLimitsContext() *LimitsContext {
+	return &LimitsContext{}
+}
+
 type LokiQueryType string
 
 const (
@@ -60,7 +71,7 @@ type LokiDataQuery struct {
 	// Used to set step value for range queries.
 	Step *string `json:"step,omitempty"`
 	// The full query plan for split/shard queries. Encoded and sent to Loki via `X-Loki-Query-Limits-Context` header. Requires "lokiQueryLimitsContext" feature flag
-	LimitsContext *DataqueryLokiDataQueryLimitsContext `json:"limitsContext,omitempty"`
+	LimitsContext *LimitsContext `json:"limitsContext,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
@@ -80,15 +91,4 @@ type LokiDataQuery struct {
 // NewLokiDataQuery creates a new LokiDataQuery object.
 func NewLokiDataQuery() *LokiDataQuery {
 	return &LokiDataQuery{}
-}
-
-type DataqueryLokiDataQueryLimitsContext struct {
-	Expr string `json:"expr"`
-	From int64  `json:"from"`
-	To   int64  `json:"to"`
-}
-
-// NewDataqueryLokiDataQueryLimitsContext creates a new DataqueryLokiDataQueryLimitsContext object.
-func NewDataqueryLokiDataQueryLimitsContext() *DataqueryLokiDataQueryLimitsContext {
-	return &DataqueryLokiDataQueryLimitsContext{}
 }

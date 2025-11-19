@@ -82,7 +82,7 @@ func parseQueryType(jsonPointerValue *string) (QueryType, error) {
 	}
 }
 
-func parseLimitsContextExpr(jsonPointerValue *dataquery.DataqueryLokiDataQueryLimitsContext) string {
+func parseLimitsContextExpr(jsonPointerValue *dataquery.LimitsContext) string {
 	if jsonPointerValue == nil {
 		return ""
 	} else {
@@ -92,7 +92,7 @@ func parseLimitsContextExpr(jsonPointerValue *dataquery.DataqueryLokiDataQueryLi
 }
 
 // There has to be a less stupid way of doing this
-func parseLimitsContextFrom(jsonPointerValue *dataquery.DataqueryLokiDataQueryLimitsContext) time.Time {
+func parseLimitsContextFrom(jsonPointerValue *dataquery.LimitsContext) time.Time {
 	if jsonPointerValue == nil {
 		return time.Time{}
 	} else {
@@ -101,7 +101,7 @@ func parseLimitsContextFrom(jsonPointerValue *dataquery.DataqueryLokiDataQueryLi
 	}
 }
 
-func parseLimitsContextTo(jsonPointerValue *dataquery.DataqueryLokiDataQueryLimitsContext) time.Time {
+func parseLimitsContextTo(jsonPointerValue *dataquery.LimitsContext) time.Time {
 	if jsonPointerValue == nil {
 		return time.Time{}
 	} else {
