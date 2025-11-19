@@ -604,6 +604,8 @@ type Cfg struct {
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
+	QuotasOverridesFilePath                    string
+	QuotasReloadInterval                       time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings

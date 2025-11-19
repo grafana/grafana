@@ -1,7 +1,10 @@
 package resource
 
 import (
+	"fmt"
 	"io"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,6 +14,8 @@ import (
 	"golang.org/x/net/context"
 	"gopkg.in/yaml.v3"
 )
+
+const DEFAULT_RESOURCE_LIMIT = 1000
 
 type ValidatesQuotas interface {
 	ValidateQuota(namespace string, resource string) bool
@@ -49,17 +54,26 @@ This service loads quota overrides from a YAML file with the following yaml stru
 "stacks-123":
 
 	  quotas:
-		dashboards:
+		grafana.dashboard.app/dashboards:
 		  limit: 1500
-		folders:
+		grafana.folder.app/folders:
 		  limit: 1500
 */
-func NewQuotaService(ctx context.Context, reg prometheus.Registerer, opts ReloadOptions) (*QuotaService, error) {
+func NewQuotaService(ctx context.Context, logger log.Logger, reg prometheus.Registerer, opts ReloadOptions) (*QuotaService, error) {
+	// shouldn't be empty since we use file path existence to determine if we should enable the service
 	if opts.FilePath == "" {
-		opts.FilePath = "overrides.yaml"
+		return nil, fmt.Errorf("quota overrides file path is required")
 	}
 	if opts.ReloadPeriod == 0 {
-		opts.ReloadPeriod = time.Second * 5
+		opts.ReloadPeriod = time.Second * 30
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(opts.FilePath); err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("quota overrides file does not exist: %s", opts.FilePath)
+		}
+		return nil, fmt.Errorf("failed to stat quota overrides file: %w", err)
 	}
 
 	config := runtimeconfig.Config{
@@ -75,15 +89,14 @@ func NewQuotaService(ctx context.Context, reg prometheus.Registerer, opts Reload
 		},
 	}
 
-	// TODO pass in prom reg
-	manager, err := runtimeconfig.New(config, "custom-quotas", reg, log.New())
+	manager, err := runtimeconfig.New(config, "custom-quotas", reg, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	return &QuotaService{
 		manager: manager,
-		logger:  log.New(),
+		logger:  logger,
 	}, nil
 }
 
@@ -139,24 +152,15 @@ func (q *QuotaService) SetConfig(overrides *QuotaOverrides) {
 	q.overridesMutex.Unlock()
 }
 
-// TODO: This will always return true until we start tracking resource counts
-// but we can at least log the custom quota limits per namespace/resource for now
-func (q *QuotaService) ValidateQuota(namespace string, resource string) bool {
+func (q *QuotaService) GetQuota(nsr NamespacedResource) ResourceQuota {
 	overrides := q.GetConfig()
-	if overrides == nil {
-		return true
+	tenantId := strings.TrimPrefix(nsr.Namespace, "stacks-")
+	groupResource := nsr.Group + "/" + nsr.Resource
+	if tenantQuotas, ok := overrides.Tenants[tenantId]; ok {
+		if resourceQuota, ok := tenantQuotas.Quotas[groupResource]; ok {
+			return resourceQuota
+		}
 	}
 
-	tenantQuotas, ok := overrides.Tenants[namespace]
-	if !ok {
-		return true
-	}
-
-	resQuota, ok := tenantQuotas.Quotas[resource]
-	if !ok {
-		return true
-	}
-
-	q.logger.Info("Validating quota", "namespace", namespace, "resource", resource, "limit", resQuota.Limit)
-	return true
+	return ResourceQuota{Limit: DEFAULT_RESOURCE_LIMIT}
 }

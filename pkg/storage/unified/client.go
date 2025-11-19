@@ -178,9 +178,16 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		quotaSvc, err := resource.NewQuotaService(ctx, reg, resource.ReloadOptions{})
-		if err != nil {
-			return nil, err
+		// only enable if an overrides file path is provided
+		var quotaSvc *resource.QuotaService
+		if cfg.QuotasOverridesFilePath != "" {
+			quotaSvc, err = resource.NewQuotaService(ctx, cfg.Logger, reg, resource.ReloadOptions{
+				FilePath:     cfg.QuotasOverridesFilePath,
+				ReloadPeriod: cfg.QuotasReloadInterval,
+			})
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		serverOptions := sql.ServerOptions{
