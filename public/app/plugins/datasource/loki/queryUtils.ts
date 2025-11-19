@@ -432,11 +432,8 @@ export const getSelectorForShardValues = (query: string) => {
  * Adds query plan to shard/split queries
  * Must be called after interpolation step!
  *
- * @todo Since shard/splitting mutates the lokiQuery only the first request has the correct query plan,
- * we probably want to omit the plan on subsequent queries
  * @param lokiQuery
  * @param request
- * @param options
  */
 export const addQueryLimitsContext = (lokiQuery: LokiQuery, request: DataQueryRequest<LokiQuery>) => {
   return {
