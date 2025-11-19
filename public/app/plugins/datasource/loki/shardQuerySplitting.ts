@@ -64,11 +64,12 @@ const addLimitsToShardGroups = (
   groups: ShardedQueryGroup[],
   request: DataQueryRequest<LokiQuery>
 ) => {
-  if (queryIndex === 0) {
-    return groups.map((g) => ({ ...g, targets: g.targets.map((t) => addQueryLimitsContext(t, request)) }));
-  } else {
-    return groups.map((g) => ({ ...g, targets: g.targets.map((t) => ({ ...t, limitsContext: undefined })) }));
-  }
+  return groups.map((g) => ({
+    ...g,
+    targets: g.targets.map((t) => {
+      return queryIndex === 0 ? addQueryLimitsContext(t, request) : { ...t, limitsContext: undefined };
+    }),
+  }));
 };
 
 function splitQueriesByStreamShard(
