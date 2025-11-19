@@ -90,7 +90,7 @@ function buildScene(options?: BuildSceneOptions) {
     value: [],
     text: [],
     options: [],
-    applicabilityEnabled: true,
+    applicabilityEnabled: options?.applicabilityEnabled ?? true,
     datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
   });
 
