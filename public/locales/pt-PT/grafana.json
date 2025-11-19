@@ -5930,7 +5930,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Adicionar transformação"
+      "add-transformation": "Adicionar transformação",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7789,6 +7792,14 @@
     "name-show-threshold-labels": "Mostrar as etiquetas de limite",
     "name-show-threshold-markers": "Mostrar os marcadores de limite",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8999,6 +9010,13 @@
       "copy": "Copiar para a área de transferência",
       "csv-counts": "",
       "csv-placeholder": "Introduza o CSV aqui...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrar valores",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Diferenciar maiúsculas de minúsculas",
@@ -9150,6 +9168,9 @@
     "category-legend": "Legenda",
     "category-tooltip": "Descrição",
     "category-y-axis": "Eixo Y",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Opacidade",
       "label-scheme": "Esquema"
@@ -12381,6 +12402,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Recolher",
+      "exchange": "",
       "expand": "Expandir",
       "loading": "A carregar painéis de controlo",
       "noResultsForFilter": "Não foram encontrados resultados para a sua consulta",
@@ -12399,8 +12421,10 @@
       "cancel": "Cancelar",
       "error-title": "",
       "input": {
-        "placeholder": "Selecionar âmbitos...",
-        "removeAll": "Remover todos os âmbitos"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Remover todos os âmbitos",
+        "tooltip": ""
       },
       "title": "Selecionar âmbitos"
     },

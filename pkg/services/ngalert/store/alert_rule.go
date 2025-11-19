@@ -618,6 +618,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 
 		// Process rules and implement per-group pagination
 		var groupsFetched int64
+		var rulesFetched int64
 		for rows.Next() {
 			rule := new(alertRule)
 			err = rows.Scan(rule)
@@ -644,6 +645,11 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 					nextToken = ngmodels.EncodeGroupCursor(cursor)
 					break
 				}
+				// Check if we've reached the rule limit
+				if query.RuleLimit > 0 && rulesFetched >= query.RuleLimit {
+					nextToken = ngmodels.EncodeGroupCursor(cursor)
+					break
+				}
 
 				// Reset for new group
 				cursor = key
@@ -656,6 +662,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			}
 
 			alertRules = append(alertRules, &converted)
+			rulesFetched++
 		}
 
 		result = alertRules
@@ -862,6 +869,18 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 			pattern := strings.Join(words, "%")
 			sql, param := st.SQLStore.GetDialect().LikeOperator("title", true, pattern, true)
 			q = q.And(sql, param)
+		}
+	}
+
+	if query.SearchRuleGroup != "" {
+		normalizedInput := strings.ToLower(query.SearchRuleGroup)
+		words := strings.Fields(normalizedInput)
+
+		if len(words) > 0 {
+			pattern := "%" + strings.Join(words, "%") + "%"
+			// In MySQL rule_group field has case-sensitive collation by default,
+			// so we need to use LOWER to perform case-insensitive search.
+			q = q.And("LOWER(rule_group) LIKE ?", pattern)
 		}
 	}
 

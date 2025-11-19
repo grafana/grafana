@@ -5908,7 +5908,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Tambahkan transformasi"
+      "add-transformation": "Tambahkan transformasi",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7763,6 +7766,14 @@
     "name-show-threshold-labels": "Tampilkan label ambang batas",
     "name-show-threshold-markers": "Tampilkan penanda ambang batas",
     "placeholder-neutral": "otomatis",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8963,6 +8974,13 @@
       "copy": "Salin ke Papan Klip",
       "csv-counts": "",
       "csv-placeholder": "Masukkan CSV di sini...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filter nilai",
       "filter-popup-apply": "Oke",
       "filter-popup-aria-label-match-case": "Cocok huruf besar kecil",
@@ -9114,6 +9132,9 @@
     "category-legend": "Legenda",
     "category-tooltip": "Tooltip",
     "category-y-axis": "Sumbu Y",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Opasitas",
       "label-scheme": "Skema"
@@ -12326,6 +12347,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Ciutkan",
+      "exchange": "",
       "expand": "Perluas",
       "loading": "Memuat dasbor",
       "noResultsForFilter": "Hasil untuk kueri Anda tidak ditemukan",
@@ -12344,8 +12366,10 @@
       "cancel": "Batalkan",
       "error-title": "",
       "input": {
-        "placeholder": "Pilih cakupan...",
-        "removeAll": "Hapus semua cakupan"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Hapus semua cakupan",
+        "tooltip": ""
       },
       "title": "Pilih cakupan"
     },

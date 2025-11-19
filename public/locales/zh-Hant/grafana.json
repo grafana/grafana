@@ -5908,7 +5908,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "新增轉換"
+      "add-transformation": "新增轉換",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7763,6 +7766,14 @@
     "name-show-threshold-labels": "顯示閾值標籤",
     "name-show-threshold-markers": "顯示閾值標記",
     "placeholder-neutral": "自動",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8963,6 +8974,13 @@
       "copy": "複製到剪貼簿",
       "csv-counts": "",
       "csv-placeholder": "在此處輸入 CSV …",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "篩選值",
       "filter-popup-apply": "好的",
       "filter-popup-aria-label-match-case": "區分大小寫",
@@ -9114,6 +9132,9 @@
     "category-legend": "圖例",
     "category-tooltip": "工具提示",
     "category-y-axis": "Y 軸",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "不透明度",
       "label-scheme": "方案"
@@ -12326,6 +12347,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "收闔",
+      "exchange": "",
       "expand": "展開",
       "loading": "正在載入儀表板",
       "noResultsForFilter": "未找到您的查詢結果",
@@ -12344,8 +12366,10 @@
       "cancel": "取消",
       "error-title": "",
       "input": {
-        "placeholder": "選取範圍…",
-        "removeAll": "移除所有範圍"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "移除所有範圍",
+        "tooltip": ""
       },
       "title": "選取範圍"
     },
