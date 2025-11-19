@@ -15,9 +15,10 @@ import {
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
 import {
-  VisualizationSuggestionsSupplierFn,
-  VisualizationSuggestion,
   PanelPluginVisualizationSuggestion,
+  VisualizationSuggestion,
+  VisualizationSuggestionsSupplierDeprecated,
+  VisualizationSuggestionsSupplierFn,
 } from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
@@ -370,13 +371,17 @@ export class PanelPlugin<
   /**
    * @deprecated use VisualizationSuggestionsSupplierFn
    */
-  setSuggestionsSupplier(supplier: object): this;
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierDeprecated): this;
   /**
    * @alpha
    * sets function that can return visualization examples and suggestions.
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>): this;
-  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions> | object): this {
+  setSuggestionsSupplier(
+    supplier:
+      | VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>
+      | VisualizationSuggestionsSupplierDeprecated
+  ): this {
     if (typeof supplier !== 'function') {
       deprecationWarning(
         'PanelPlugin',

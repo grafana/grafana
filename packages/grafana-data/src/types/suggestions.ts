@@ -74,3 +74,10 @@ export enum VisualizationSuggestionScore {
 export type VisualizationSuggestionsSupplierFn<TOptions extends unknown, TFieldConfig extends {} = {}> = (
   panelDataSummary: PanelDataSummary
 ) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | void;
+
+/**
+ * @deprecated use VisualizationSuggestionsSupplierFn
+ */
+export interface VisualizationSuggestionsSupplierDeprecated {
+  getSuggestionsForData: (builder: unknown) => void;
+}
