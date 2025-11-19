@@ -355,6 +355,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 			"timeRange": {
 				"from": "1753944628000",
 				"to": "1753944629000"
+			}
 		}`, `{
 			"refId": "C",
 			"datasource": {
@@ -380,17 +381,20 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 			queries := parsedReq.getFlattenedQueries()
 			assert.Len(t, queries, 3)
 
+			assert.Equal(t, "A", queries[0].query.RefID)
 			assert.Equal(t, ts1, queries[0].query.TimeRange.From.UnixMilli())
 			assert.Equal(t, ts2, queries[0].query.TimeRange.To.UnixMilli())
 			assert.JSONEq(t, q0JSON, string(queries[0].query.JSON))
 
+			assert.Equal(t, "B", queries[1].query.RefID)
 			assert.Equal(t, ts3, queries[1].query.TimeRange.From.UnixMilli())
 			assert.Equal(t, ts4, queries[1].query.TimeRange.To.UnixMilli())
 			assert.JSONEq(t, q1JSON, string(queries[1].query.JSON))
 
+			assert.Equal(t, "C", queries[2].query.RefID)
 			assert.Equal(t, ts5, queries[2].query.TimeRange.From.UnixMilli())
 			assert.Equal(t, ts6, queries[2].query.TimeRange.To.UnixMilli())
-			assert.JSONEq(t, q2JSON, string(queries[1].query.JSON))
+			assert.JSONEq(t, q2JSON, string(queries[2].query.JSON))
 		}
 
 		// with flag enabled
@@ -426,7 +430,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 			`{"datasource":{"type":"postgres","uid":"gIEkMvIVz"},"refId":"B", "timeRange":{"from":"1753944628000", "to":"1753944629000"}}`,
 			int64(1753944638000),
 			int64(1753944639000),
-			`{"datasource":{"type":"postgres","uid":"gIEkMvIVz"},"refId":"B"}`,
+			`{"datasource":{"type":"postgres","uid":"gIEkMvIVz"},"refId":"C"}`,
 		)
 	})
 
