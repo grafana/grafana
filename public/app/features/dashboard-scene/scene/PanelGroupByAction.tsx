@@ -159,6 +159,7 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
                   onClick={() => handleItemClick(option)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
                       handleItemClick(option);
                     }
                   }}
@@ -166,7 +167,12 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
                   tabIndex={0}
                   aria-pressed={option.checked}
                 >
-                  <Checkbox value={option.checked} onChange={() => handleItemClick(option)} />
+                  <Checkbox
+                    value={option.checked}
+                    readOnly
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => e.stopPropagation()}
+                  />
                   <span className={styles.optionLabel}>{option.label}</span>
                 </div>
               );
