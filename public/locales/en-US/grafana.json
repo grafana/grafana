@@ -5930,7 +5930,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Add transformation"
+      "add-transformation": "Add transformation",
+      "show-more": "Show more",
+      "sql-name": "SQL Expressions",
+      "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7789,6 +7792,14 @@
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "Gauge",
+      "circular": "Circular gauge",
+      "style": {
+        "circular": "Glowing",
+        "simple": "Simple"
+      }
+    },
     "threshold": "Threshold {{value}}"
   },
   "gen-ai": {
@@ -8999,6 +9010,13 @@
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
+      "filter": {
+        "add-all": "Add all displayed values to the filter",
+        "remove-all": "Remove all displayed values from the filter",
+        "select-all": "Select all",
+        "selected": "{{ numSelected }} selected",
+        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)"
+      },
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Match case",
@@ -9150,6 +9168,9 @@
     "category-legend": "Legend",
     "category-tooltip": "Tooltip",
     "category-y-axis": "Y Axis",
+    "error": {
+      "no-y-fields": "No numeric fields found for heatmap"
+    },
     "mode-options": {
       "label-opacity": "Opacity",
       "label-scheme": "Scheme"
@@ -12389,6 +12410,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Collapse",
+      "exchange": "Change root scope to {{scope}}",
       "expand": "Expand",
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
@@ -12407,8 +12429,10 @@
       "cancel": "Cancel",
       "error-title": "An unexpected error happened",
       "input": {
-        "placeholder": "Select scopes...",
-        "removeAll": "Remove all scopes"
+        "placeholder": "No scopes",
+        "remove-all": "Remove all",
+        "removeAll": "Remove all scopes",
+        "tooltip": "Select scope"
       },
       "title": "Select scopes"
     },

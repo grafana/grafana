@@ -89,6 +89,7 @@
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/plugins/ @grafana/plugins-platform-backend
+/apps/collections/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/shorturl/ @grafana/sharing-squad
 /apps/secret/ @grafana/grafana-operator-experience-squad
@@ -1101,6 +1102,7 @@ eslint-suppressions.json @grafanabot
 # Grafana Sharing Squad
 /public/app/features/dashboard-scene/sharing/ @grafana/sharing-squad
 /public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
+/public/app/features/dashboard/dashgrid/DashboardLibrary/ @grafana/sharing-squad
 /public/app/features/manage-dashboards/components/SnapshotListTable.tsx @grafana/sharing-squad
 /pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /public/app/features/explore/QueryLibrary/ @grafana/sharing-squad

@@ -5930,7 +5930,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Dönüşüm ekle"
+      "add-transformation": "Dönüşüm ekle",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7789,6 +7792,14 @@
     "name-show-threshold-labels": "Eşik etiketlerini göster",
     "name-show-threshold-markers": "Eşik işaretçilerini göster",
     "placeholder-neutral": "otomatik",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8999,6 +9010,13 @@
       "copy": "Panoya kopyala",
       "csv-counts": "",
       "csv-placeholder": "Buraya CSV girin...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Değerleri filtrele",
       "filter-popup-apply": "Tamam",
       "filter-popup-aria-label-match-case": "",
@@ -9150,6 +9168,9 @@
     "category-legend": "Gösterge",
     "category-tooltip": "Araç ipucu",
     "category-y-axis": "Y Ekseni",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Opaklık",
       "label-scheme": "Düzen"
@@ -12381,6 +12402,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Daralt",
+      "exchange": "",
       "expand": "Genişlet",
       "loading": "Panolar yükleniyor",
       "noResultsForFilter": "Sorgunuz için sonuç bulunamadı",
@@ -12399,8 +12421,10 @@
       "cancel": "İptal",
       "error-title": "",
       "input": {
-        "placeholder": "Kapsam seçin...",
-        "removeAll": "Tüm kapsamları kaldır"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Tüm kapsamları kaldır",
+        "tooltip": ""
       },
       "title": "Kapsam seçin"
     },

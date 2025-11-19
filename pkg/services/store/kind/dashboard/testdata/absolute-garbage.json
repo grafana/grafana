@@ -1,0 +1,84 @@
+{
+  "metadata": 123,
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": "true",
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": "not a number",
+    "links": [
+      "http://12345",
+      {
+        "object": "goes, here"
+      },
+      null,
+      true
+    ],
+    "liveNow": false,
+    "panels": [
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "libraryPanel": {
+          "name": "green pie",
+          "uid": "a7975b7a-fb53-4ab7-951d-15810953b54f"
+        },
+        "title": "green pie"
+      },
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": "not a number",
+        "title": true
+      },
+      {
+        "id": 7,
+        "type": null
+      },
+      {
+        "id": 8,
+        "type": {
+          "a": 123
+        }
+      }
+    ],
+    "refresh": "",
+    "schemaVersion": null,
+    "tags": 1234,
+    "templating": {
+      "list": []
+    },
+    "time": false,
+    "timepicker": {},
+    "timezone": 3.141592653589793,
+    "title": "adfbg6f",
+    "uid": ["aaa", "bbb", "cc"],
+    "description": [null, true],
+    "version": [],
+    "weekStart": false
+  }
+}

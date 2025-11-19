@@ -5974,7 +5974,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Dodaj transformację"
+      "add-transformation": "Dodaj transformację",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7841,6 +7844,14 @@
     "name-show-threshold-labels": "Pokaż etykiety progów",
     "name-show-threshold-markers": "Pokaż znaczniki progów",
     "placeholder-neutral": "automatycznie",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9071,6 +9082,13 @@
       "copy": "Kopiuj do schowka",
       "csv-counts": "",
       "csv-placeholder": "Wprowadź plik CSV tutaj…",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Wartości filtra",
       "filter-popup-apply": "OK",
       "filter-popup-aria-label-match-case": "Dopasuj wielkość liter",
@@ -9222,6 +9240,9 @@
     "category-legend": "Legenda",
     "category-tooltip": "Podpowiedź",
     "category-y-axis": "Oś Y",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Nieprzezroczystość",
       "label-scheme": "Schemat"
@@ -12491,6 +12512,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Zwiń",
+      "exchange": "",
       "expand": "Rozwiń",
       "loading": "Ładowanie pulpitów",
       "noResultsForFilter": "Nie znaleziono wyników dla tego zapytania",
@@ -12509,8 +12531,10 @@
       "cancel": "Anuluj",
       "error-title": "",
       "input": {
-        "placeholder": "Wybierz zakresy…",
-        "removeAll": "Usuń wszystkie zakresy"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Usuń wszystkie zakresy",
+        "tooltip": ""
       },
       "title": "Wybierz zakresy"
     },

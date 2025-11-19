@@ -215,10 +215,6 @@ const (
 	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
 	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
 
-	// FlagFormatString
-	// Enable format string transformer
-	FlagFormatString = "formatString"
-
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
@@ -303,10 +299,6 @@ const (
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
 
-	// FlagAddFieldFromCalculationStatFunctions
-	// Add cumulative and window functions to the add field from calculation transformation
-	FlagAddFieldFromCalculationStatFunctions = "addFieldFromCalculationStatFunctions"
-
 	// FlagAlertmanagerRemoteSecondary
 	// Enable Grafana to sync configuration and state with a remote Alertmanager.
 	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
@@ -383,10 +375,6 @@ const (
 	// Enables shared crosshair in table panel
 	FlagTableSharedCrosshair = "tableSharedCrosshair"
 
-	// FlagRegressionTransformation
-	// Enables regression analysis transformation
-	FlagRegressionTransformation = "regressionTransformation"
-
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
 	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"
@@ -446,10 +434,6 @@ const (
 	// FlagSqlExpressionsColumnAutoComplete
 	// Enables column autocomplete for SQL Expressions
 	FlagSqlExpressionsColumnAutoComplete = "sqlExpressionsColumnAutoComplete"
-
-	// FlagGroupToNestedTableTransformation
-	// Enables the group to nested table transformation
-	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"
 
 	// FlagNewPDFRendering
 	// New implementation for the dashboard-to-PDF rendering
@@ -530,10 +514,6 @@ const (
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
-
-	// FlagPinNavItems
-	// Enables pinning of nav items
-	FlagPinNavItems = "pinNavItems"
 
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
@@ -834,10 +814,6 @@ const (
 	// Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
 	FlagAlertingImportYAMLUI = "alertingImportYAMLUI"
 
-	// FlagUnifiedStorageHistoryPruner
-	// Enables the unified storage history pruner
-	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
-
 	// FlagAzureMonitorLogsBuilderEditor
 	// Enables the logs builder mode for the Azure Monitor data source
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
@@ -1097,4 +1073,12 @@ const (
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
+
+	// FlagTransformationsEmptyPlaceholder
+	// Show transformation quick-start cards in empty transformations state
+	FlagTransformationsEmptyPlaceholder = "transformationsEmptyPlaceholder"
+
+	// FlagTtlPluginInstanceManager
+	// Enable TTL plugin instance manager
+	FlagTtlPluginInstanceManager = "ttlPluginInstanceManager"
 )

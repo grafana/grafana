@@ -5930,7 +5930,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Transformation hinzufügen"
+      "add-transformation": "Transformation hinzufügen",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7789,6 +7792,14 @@
     "name-show-threshold-labels": "Schwellenwert-Labels anzeigen",
     "name-show-threshold-markers": "Schwellenwert-Markierungen anzeigen",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8999,6 +9010,13 @@
       "copy": "In Zwischenablage kopieren",
       "csv-counts": "",
       "csv-placeholder": "CSV hier eingeben …",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filterwerte",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Groß-/Kleinschreibung beachten",
@@ -9150,6 +9168,9 @@
     "category-legend": "Legende",
     "category-tooltip": "Tooltip",
     "category-y-axis": "Y-Achse",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Deckkraft",
       "label-scheme": "Schema"
@@ -12381,6 +12402,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Einklappen",
+      "exchange": "",
       "expand": "Ausklappen",
       "loading": "Dashboards werden geladen",
       "noResultsForFilter": "Keine Ergebnisse für deine Abfrage gefunden",
@@ -12399,8 +12421,10 @@
       "cancel": "Abbrechen",
       "error-title": "",
       "input": {
-        "placeholder": "Bereiche auswählen …",
-        "removeAll": "Alle Bereiche entfernen"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Alle Bereiche entfernen",
+        "tooltip": ""
       },
       "title": "Bereiche auswählen"
     },
