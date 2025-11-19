@@ -1258,7 +1258,8 @@
       "metadata": {
         "name": "dataplaneFrontendFallback",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-04-07T21:13:19Z"
+        "creationTimestamp": "2023-04-07T21:13:19Z",
+        "deletionTimestamp": "2025-11-06T17:39:31Z"
       },
       "spec": {
         "description": "Support dataplane contract field name change for transformations and field name matchers where the name is different",
@@ -3677,6 +3678,20 @@
     },
     {
       "metadata": {
+        "name": "rudderstackUpgrade",
+        "resourceVersion": "1763481217872",
+        "creationTimestamp": "2025-11-18T15:53:37Z"
+      },
+      "spec": {
+        "description": "Enables the new version of rudderstack",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "savedQueries",
         "resourceVersion": "1756920131554",
         "creationTimestamp": "2025-08-25T21:22:09Z",
@@ -4087,6 +4102,7 @@
         "name": "timeRangePan",
         "resourceVersion": "1762290731154",
         "creationTimestamp": "2025-10-24T19:49:53Z",
+        "deletionTimestamp": "2025-11-06T17:39:31Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-04 21:12:11.154822 +0000 UTC"
         }
@@ -4144,7 +4160,8 @@
       "metadata": {
         "name": "transformationsRedesign",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-07-12T16:35:49Z"
+        "creationTimestamp": "2023-07-12T16:35:49Z",
+        "deletionTimestamp": "2025-11-06T20:37:15Z"
       },
       "spec": {
         "description": "Enables the transformations redesign",

@@ -23,7 +23,6 @@ kubernetesStars,experimental,@grafana/grafana-app-platform-squad,false,true,fals
 influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,false
 influxdbRunQueriesInParallel,privatePreview,@grafana/partner-datasources,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
-dataplaneFrontendFallback,GA,@grafana/observability-metrics,false,false,true
 disableSSEDataplane,experimental,@grafana/grafana-datasources-core-services,false,false,false
 unifiedRequestLog,GA,@grafana/grafana-backend-group,false,false,false
 renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,false
@@ -33,7 +32,6 @@ enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
-transformationsRedesign,GA,@grafana/observability-metrics,false,false,true
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false
 datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
@@ -266,3 +264,4 @@ awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false
 transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 ttlPluginInstanceManager,experimental,@grafana/plugins-platform-backend,false,false,true
 lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
+rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
