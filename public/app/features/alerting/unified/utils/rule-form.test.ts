@@ -1,5 +1,5 @@
 import { PromQuery } from '@grafana/prometheus';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   AlertDataQuery,
@@ -425,7 +425,7 @@ describe('getDefaultExpressions', () => {
   it('should create a reduce expression as the first query', () => {
     const result = getDefaultExpressions('B', 'C');
     const reduceQuery = result[0];
-    const model = reduceQuery.model as ExpressionQuery;
+    const model = reduceQuery.model;
 
     expect(reduceQuery.refId).toBe('B');
     expect(reduceQuery.datasourceUid).toBe(ExpressionDatasourceUID);
@@ -438,9 +438,10 @@ describe('getDefaultExpressions', () => {
   it('should create reduce expression with proper conditions structure', () => {
     const result = getDefaultExpressions('B', 'C');
     const reduceQuery = result[0];
-    const model = reduceQuery.model as ExpressionQuery;
+    const model = reduceQuery.model;
 
     expect(model.conditions).toHaveLength(1);
+    expect(model.expression).toBe('A');
     expect(model.conditions?.[0]).toEqual({
       type: 'query',
       evaluator: {
@@ -451,7 +452,7 @@ describe('getDefaultExpressions', () => {
         type: 'and',
       },
       query: {
-        params: ['A'],
+        params: [],
       },
       reducer: {
         params: [],
@@ -463,7 +464,7 @@ describe('getDefaultExpressions', () => {
   it('should create a threshold expression as the second query', () => {
     const result = getDefaultExpressions('B', 'C');
     const thresholdQuery = result[1];
-    const model = thresholdQuery.model as ExpressionQuery;
+    const model = thresholdQuery.model;
 
     expect(thresholdQuery.refId).toBe('C');
     expect(thresholdQuery.datasourceUid).toBe(ExpressionDatasourceUID);
@@ -475,7 +476,7 @@ describe('getDefaultExpressions', () => {
   it('should create threshold expression with proper conditions structure', () => {
     const result = getDefaultExpressions('B', 'C');
     const thresholdQuery = result[1];
-    const model = thresholdQuery.model as ExpressionQuery;
+    const model = thresholdQuery.model;
 
     expect(model.conditions).toHaveLength(1);
     expect(model.conditions?.[0]).toEqual({
@@ -500,19 +501,19 @@ describe('getDefaultExpressions', () => {
   it('should reference the reduce expression in the threshold expression', () => {
     const result = getDefaultExpressions('B', 'C');
     const thresholdQuery = result[1];
-    const model = thresholdQuery.model as ExpressionQuery;
+    const model = thresholdQuery.model;
 
     expect(model.expression).toBe('B');
   });
 
   it('should properly use different refIds throughout the structure', () => {
     const result = getDefaultExpressions('X', 'Y');
-    const reduceModel = result[0].model as ExpressionQuery;
-    const thresholdModel = result[1].model as ExpressionQuery;
+    const reduceModel = result[0].model;
+    const thresholdModel = result[1].model;
 
     expect(result[0].refId).toBe('X');
     expect(reduceModel.refId).toBe('X');
-    expect(reduceModel.conditions?.[0].query.params[0]).toBe('A');
+    expect(reduceModel.conditions?.[0].query.params).toEqual([]);
 
     expect(result[1].refId).toBe('Y');
     expect(thresholdModel.refId).toBe('Y');

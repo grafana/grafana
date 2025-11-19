@@ -537,17 +537,17 @@ export const getDefaultRecordingRulesQueries = (
   ];
 };
 
-export const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
+export const getDefaultExpressions = (...refIds: [string, string]) => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
 
   const reduceQuery = getDefaultReduceExpression({ inputRefId: 'A', reduceRefId: refOne });
   const thresholdQuery = getDefaultThresholdExpression({ inputRefId: refOne, thresholdRefId: refTwo });
 
-  return [reduceQuery, thresholdQuery];
+  return [reduceQuery, thresholdQuery] as const;
 };
 
-const getDefaultExpressionsForRecording = (refOne: string): AlertQuery[] => {
+const getDefaultExpressionsForRecording = (refOne: string): Array<AlertQuery<ExpressionQuery>> => {
   const reduceExpression: ExpressionQuery = {
     refId: refOne,
     type: ExpressionQueryType.reduce,
@@ -566,7 +566,7 @@ const getDefaultExpressionsForRecording = (refOne: string): AlertQuery[] => {
           type: 'and',
         },
         query: {
-          params: [refOne],
+          params: [],
         },
         reducer: {
           params: [],
@@ -594,7 +594,7 @@ function getDefaultReduceExpression({
 }: {
   inputRefId: string;
   reduceRefId: string;
-}): AlertQuery {
+}): AlertQuery<ExpressionQuery> {
   const reduceExpression: ExpressionQuery = {
     refId: reduceRefId,
     type: ExpressionQueryType.reduce,
@@ -613,7 +613,7 @@ function getDefaultReduceExpression({
           type: 'and',
         },
         query: {
-          params: [inputRefId],
+          params: [],
         },
         reducer: {
           params: [],
@@ -639,7 +639,7 @@ function getDefaultThresholdExpression({
 }: {
   inputRefId: string;
   thresholdRefId: string;
-}): AlertQuery {
+}): AlertQuery<ExpressionQuery> {
   const thresholdExpression: ExpressionQuery = {
     refId: thresholdRefId,
     type: ExpressionQueryType.threshold,
