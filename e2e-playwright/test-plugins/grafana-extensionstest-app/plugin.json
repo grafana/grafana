@@ -55,6 +55,11 @@
         "targets": ["grafana/dashboard/panel/menu"],
         "title": "Open from time series or pie charts (onClick)",
         "description": "This link will only be visible on time series and pie charts"
+      },
+      {
+        "targets": ["grafana/dynamic/nav-landing-page/nav-id-cfg/cards/v1"],
+        "title": "Extensions Test App",
+        "description": "This card tests the admin page card extension point"
       }
     ],
     "extensionPoints": [

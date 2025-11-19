@@ -223,8 +223,13 @@ export enum PluginExtensionPoints {
 // Don't use directly in a plugin!
 // Extension point IDs that contain dynamic segments and are not valid as static values — they require runtime substitution of certain parts.
 // (They cannot be used as is. E.g. "grafana/nav-landing-page/.*/v1" becomes "grafana/nav-landing-page/observability/v1" during runtime.)
+//
+// IMPORTANT: NavLandingPage and NavLandingPageCards are mutually exclusive.
+// If a plugin extends NavLandingPage, it will replace the entire page content and any NavLandingPageCards extensions will be ignored.
+// Only use NavLandingPageCards if you want to add additional cards to the default landing page layout.
 export enum PluginExtensionPointPatterns {
   NavLandingPage = 'grafana/dynamic/nav-landing-page/nav-id-.*/v1',
+  NavLandingPageCards = 'grafana/dynamic/nav-landing-page/nav-id-.*/cards/v1',
 }
 
 // Extension Points available in plugins
