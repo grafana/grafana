@@ -140,13 +140,13 @@ export const VerticalTabs: StoryFn = (args) => {
     flexDirection: 'column',
     position: 'relative',
     overflow: 'hidden',
-    margin: '0 16px',
+    margin: '16px',
+    gap: '16px',
   });
 
   const vizWrapper = css({
     height: '30%',
     display: 'flex',
-    padding: '16px',
   });
 
   const contextValue = useSiderbar({
