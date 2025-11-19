@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -21,38 +21,57 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
   const theme = useTheme2();
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
-  const { filters, originFilters } = filtersVar?.useState() ?? { filters: [], originFilters: [] };
-  const { value } = groupByVar?.useState() ?? { value: [] };
+  // Subscribe to state changes (this triggers re-renders when state changes)
+  const filtersState = filtersVar?.useState();
+  const groupByState = groupByVar?.useState();
 
   const [nonApplicable, setNonApplicable] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(0);
 
-  const fetchApplicability = useCallback(async () => {
-    const filterValues = [...(filters ?? []), ...(originFilters ?? [])];
+  // Create stable string representations to detect actual changes
+  const filterKey = useMemo(() => {
+    const filters = filtersState?.filters ?? [];
+    const originFilters = filtersState?.originFilters ?? [];
+    const filterValues = [...filters, ...originFilters];
+    return JSON.stringify(filterValues.map((f) => `${f.key}${f.operator}${f.value}${f.origin ?? ''}`));
+  }, [filtersState?.filters, filtersState?.originFilters]);
+
+  const groupByKey = useMemo(() => {
+    const value = groupByState?.value ?? [];
     const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
-
-    const labels: string[] = [];
-
-    const applicability = await sceneUtils.getDrilldownApplicability(queryRunner!, filtersVar, groupByVar);
-    if (filterValues.length) {
-      const nonApplicableFilters = filterValues.filter((filter) => {
-        const result = applicability?.find((entry) => entry.key === filter.key && entry.origin === filter.origin);
-        return !result?.applicable;
-      });
-      labels.push(...nonApplicableFilters.map((filter) => `${filter.key} ${filter.operator} ${filter.value}`));
-    }
-
-    if (groupByValues.length) {
-      const nonApplicableKeys = applicability?.filter((entry) => !entry.applicable).map((entry) => entry.key) ?? [];
-      labels.push(...nonApplicableKeys);
-    }
-
-    setNonApplicable(labels);
-  }, [filters, filtersVar, groupByVar, originFilters, queryRunner, value]);
+    return JSON.stringify(groupByValues);
+  }, [groupByState?.value]);
 
   useEffect(() => {
+    const fetchApplicability = async () => {
+      const filters = filtersState?.filters ?? [];
+      const originFilters = filtersState?.originFilters ?? [];
+      const value = groupByState?.value ?? [];
+
+      const filterValues = [...filters, ...originFilters];
+      const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
+
+      const labels: string[] = [];
+
+      const applicability = await sceneUtils.getDrilldownApplicability(queryRunner, filtersVar, groupByVar);
+      if (filterValues.length) {
+        const nonApplicableFilters = filterValues.filter((filter) => {
+          const result = applicability?.find((entry) => entry.key === filter.key && entry.origin === filter.origin);
+          return !result?.applicable;
+        });
+        labels.push(...nonApplicableFilters.map((filter) => `${filter.key} ${filter.operator} ${filter.value}`));
+      }
+
+      if (groupByValues.length) {
+        const nonApplicableKeys = applicability?.filter((entry) => !entry.applicable).map((entry) => entry.key) ?? [];
+        labels.push(...nonApplicableKeys);
+      }
+
+      setNonApplicable(labels);
+    };
+
     fetchApplicability();
-  }, [fetchApplicability]);
+  }, [filterKey, groupByKey, filtersVar, groupByVar, queryRunner, filtersState, groupByState]);
 
   useLayoutEffect(() => {
     if (!nonApplicable.length) {
