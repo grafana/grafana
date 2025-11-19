@@ -248,7 +248,10 @@ func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.
 	}
 
 	rsp := &resourcepb.ListManagedObjectsResponse{}
-	resourceStats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	nsr := NamespacedResource{
+		Namespace: req.Namespace,
+	}
+	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -335,7 +338,10 @@ func (s *searchSupport) CountManagedObjects(ctx context.Context, req *resourcepb
 	defer s.logStats(ctx, stats, span, "namespace", req.Namespace)
 
 	rsp := &resourcepb.CountManagedObjectsResponse{}
-	resourceStats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	nsr := NamespacedResource{
+		Namespace: req.Namespace,
+	}
+	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -467,7 +473,10 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 		return rsp, nil
 	}
 
-	resourceStats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	nsr := NamespacedResource{
+		Namespace: req.Namespace,
+	}
+	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		return &resourcepb.ResourceStatsResponse{
 			Error: AsErrorResult(err),
@@ -516,7 +525,7 @@ func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
-	stats, err := s.storage.GetResourceStats(ctx, "", s.initMinSize)
+	stats, err := s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
 	if err != nil {
 		return 0, err
 	}
@@ -716,7 +725,12 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 
 	// Get the correct value of size + RV for building the index. This is important for our Bleve
 	// backend to decide whether to build index in-memory or as file-based.
-	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	nsr := NamespacedResource{
+		Namespace: req.Namespace,
+		Group:     req.Group,
+		Resource:  req.Resource,
+	}
+	stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		span.RecordError(fmt.Errorf("failed to get resource stats: %w", err))
 		l.Error("failed to get resource stats", "error", err)
@@ -810,7 +824,10 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, stats *SearchStats
 
 			// Get correct value of size + RV for building the index. This is important for our Bleve
 			// backend to decide whether to build index in-memory or as file-based.
-			stats, err := s.storage.GetResourceStats(ctx, key.Namespace, 0)
+			nsr := NamespacedResource{
+				Namespace: key.Namespace,
+			}
+			stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get resource stats: %w", err)
 			}

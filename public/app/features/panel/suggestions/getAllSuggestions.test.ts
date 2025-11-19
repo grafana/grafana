@@ -6,7 +6,7 @@ import {
   PanelData,
   PanelPluginMeta,
   toDataFrame,
-  VisualizationSuggestion,
+  PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
 import { GraphFieldConfig, ReduceDataOptions } from '@grafana/schema';
 import { config } from 'app/core/config';
@@ -33,7 +33,7 @@ config.panels['text'] = {
 
 class ScenarioContext {
   data: DataFrame[] = [];
-  suggestions: Array<VisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }, GraphFieldConfig>> = [];
+  suggestions: Array<PanelPluginVisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }, GraphFieldConfig>> = [];
 
   setData(scenarioData: DataFrame[]) {
     this.data = scenarioData;
@@ -99,22 +99,22 @@ scenario('Single frame with time and number field', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([
-      SuggestionName.LineChart,
-      SuggestionName.LineChartSmooth,
-      SuggestionName.AreaChart,
-      SuggestionName.LineChartGradientColorScheme,
-      SuggestionName.BarChart,
-      SuggestionName.BarChartGradientColorScheme,
-      SuggestionName.Gauge,
-      SuggestionName.GaugeNoThresholds,
-      SuggestionName.Stat,
-      SuggestionName.StatColoredBackground,
-      SuggestionName.BarGaugeBasic,
-      SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
-      SuggestionName.StateTimeline,
-      SuggestionName.StatusHistory,
+    expect(ctx.suggestions).toEqual([
+      expect.objectContaining({ name: SuggestionName.LineChart }),
+      expect.objectContaining({ name: SuggestionName.LineChartSmooth }),
+      expect.objectContaining({ name: SuggestionName.AreaChart }),
+      expect.objectContaining({ name: SuggestionName.LineChartGradientColorScheme }),
+      expect.objectContaining({ name: SuggestionName.BarChart }),
+      expect.objectContaining({ name: SuggestionName.BarChartGradientColorScheme }),
+      expect.objectContaining({ name: SuggestionName.Gauge }),
+      expect.objectContaining({ name: SuggestionName.GaugeNoThresholds }),
+      expect.objectContaining({ name: SuggestionName.Stat }),
+      expect.objectContaining({ name: SuggestionName.StatColoredBackground }),
+      expect.objectContaining({ name: SuggestionName.BarGaugeBasic }),
+      expect.objectContaining({ name: SuggestionName.BarGaugeLCD }),
+      expect.objectContaining({ name: SuggestionName.Table }),
+      expect.objectContaining({ pluginId: 'state-timeline' }),
+      expect.objectContaining({ name: SuggestionName.StatusHistory }),
     ]);
   });
 
@@ -143,24 +143,24 @@ scenario('Single frame with time 2 number fields', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([
-      SuggestionName.LineChart,
-      SuggestionName.LineChartSmooth,
-      SuggestionName.AreaChartStacked,
-      SuggestionName.AreaChartStackedPercent,
-      SuggestionName.BarChartStacked,
-      SuggestionName.BarChartStackedPercent,
-      SuggestionName.Gauge,
-      SuggestionName.GaugeNoThresholds,
-      SuggestionName.Stat,
-      SuggestionName.StatColoredBackground,
-      SuggestionName.PieChart,
-      SuggestionName.PieChartDonut,
-      SuggestionName.BarGaugeBasic,
-      SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
-      SuggestionName.StateTimeline,
-      SuggestionName.StatusHistory,
+    expect(ctx.suggestions).toEqual([
+      expect.objectContaining({ name: SuggestionName.LineChart }),
+      expect.objectContaining({ name: SuggestionName.LineChartSmooth }),
+      expect.objectContaining({ name: SuggestionName.AreaChartStacked }),
+      expect.objectContaining({ name: SuggestionName.AreaChartStackedPercent }),
+      expect.objectContaining({ name: SuggestionName.BarChartStacked }),
+      expect.objectContaining({ name: SuggestionName.BarChartStackedPercent }),
+      expect.objectContaining({ name: SuggestionName.Gauge }),
+      expect.objectContaining({ name: SuggestionName.GaugeNoThresholds }),
+      expect.objectContaining({ name: SuggestionName.Stat }),
+      expect.objectContaining({ name: SuggestionName.StatColoredBackground }),
+      expect.objectContaining({ name: SuggestionName.PieChart }),
+      expect.objectContaining({ name: SuggestionName.PieChartDonut }),
+      expect.objectContaining({ name: SuggestionName.BarGaugeBasic }),
+      expect.objectContaining({ name: SuggestionName.BarGaugeLCD }),
+      expect.objectContaining({ name: SuggestionName.Table }),
+      expect.objectContaining({ pluginId: 'state-timeline' }),
+      expect.objectContaining({ name: SuggestionName.StatusHistory }),
     ]);
   });
 

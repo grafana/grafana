@@ -23,7 +23,7 @@ func ProvideStorageBackend() *StorageBackendImpl {
 }
 
 // GetResourceStats implements resource.StorageBackend.
-func (c *StorageBackendImpl) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
+func (c *StorageBackendImpl) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
 	return []resource.ResourceStats{}, errNoopStorage
 }
 
