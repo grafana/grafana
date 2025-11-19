@@ -8,6 +8,7 @@
         "name": "addFieldFromCalculationStatFunctions",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-11-03T14:39:58Z",
+        "deletionTimestamp": "2025-11-12T14:07:50Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
@@ -4110,6 +4111,22 @@
     },
     {
       "metadata": {
+        "name": "transformationsEmptyPlaceholder",
+        "resourceVersion": "1763373021129",
+        "creationTimestamp": "2025-11-11T13:14:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-17 09:50:21.129721 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Show transformation quick-start cards in empty transformations state",
+        "stage": "preview",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "transformationsRedesign",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-07-12T16:35:49Z"
@@ -4121,6 +4138,19 @@
         "frontend": true,
         "allowSelfServe": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "ttlPluginInstanceManager",
+        "resourceVersion": "1763462850634",
+        "creationTimestamp": "2025-11-18T10:47:30Z"
+      },
+      "spec": {
+        "description": "Enable TTL plugin instance manager",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
       }
     },
     {
@@ -4197,7 +4227,8 @@
       "metadata": {
         "name": "unifiedStorageHistoryPruner",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-17T10:36:38Z"
+        "creationTimestamp": "2025-03-17T10:36:38Z",
+        "deletionTimestamp": "2025-11-17T12:35:33Z"
       },
       "spec": {
         "description": "Enables the unified storage history pruner",

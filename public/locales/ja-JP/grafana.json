@@ -5908,7 +5908,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "変換を追加"
+      "add-transformation": "変換を追加",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7763,6 +7766,14 @@
     "name-show-threshold-labels": "しきい値ラベルを表示",
     "name-show-threshold-markers": "しきい値マーカーを表示",
     "placeholder-neutral": "自動",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8963,6 +8974,13 @@
       "copy": "クリップボードにコピー",
       "csv-counts": "",
       "csv-placeholder": "ここにCSVを入力...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "値をフィルタリング",
       "filter-popup-apply": "OK",
       "filter-popup-aria-label-match-case": "大文字/小文字を区別",
@@ -9114,6 +9132,9 @@
     "category-legend": "凡例",
     "category-tooltip": "ツールチップ",
     "category-y-axis": "Y軸",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "不透明度",
       "label-scheme": "配色"
@@ -12326,6 +12347,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "折りたたみ表示",
+      "exchange": "",
       "expand": "展開",
       "loading": "ダッシュボードを読み込んでいます",
       "noResultsForFilter": "クエリに一致する結果が見つかりませんでした。",
@@ -12344,8 +12366,10 @@
       "cancel": "キャンセル",
       "error-title": "",
       "input": {
-        "placeholder": "スコープを選択...",
-        "removeAll": "すべてのスコープを削除"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "すべてのスコープを削除",
+        "tooltip": ""
       },
       "title": "スコープを選択"
     },

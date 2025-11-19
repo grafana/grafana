@@ -5930,7 +5930,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Transzformáció hozzáadása"
+      "add-transformation": "Transzformáció hozzáadása",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7789,6 +7792,14 @@
     "name-show-threshold-labels": "Küszöbértékcímkék megjelenítése",
     "name-show-threshold-markers": "Küszöbértékjelölők megjelenítése",
     "placeholder-neutral": "automatikus",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8999,6 +9010,13 @@
       "copy": "Másolás a vágólapra",
       "csv-counts": "",
       "csv-placeholder": "Itt adja meg a CSV-t...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Értékek szűrése",
       "filter-popup-apply": "OK",
       "filter-popup-aria-label-match-case": "Nagybetűérzékeny",
@@ -9150,6 +9168,9 @@
     "category-legend": "Jelmagyarázat",
     "category-tooltip": "Elemleírás",
     "category-y-axis": "Y tengely",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Átlátszóság",
       "label-scheme": "Séma"
@@ -12381,6 +12402,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Összecsukás",
+      "exchange": "",
       "expand": "Kibontás",
       "loading": "Irányítópultok betöltése",
       "noResultsForFilter": "Nincs találat a lekérdezésre",
@@ -12399,8 +12421,10 @@
       "cancel": "Mégse",
       "error-title": "",
       "input": {
-        "placeholder": "Hatókörök kijelölése...",
-        "removeAll": "Összes hatókör eltávolítása"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Összes hatókör eltávolítása",
+        "tooltip": ""
       },
       "title": "Hatókörök kijelölése"
     },

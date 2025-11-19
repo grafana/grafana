@@ -2601,7 +2601,7 @@ __metadata:
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/schema": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
-    "@reduxjs/toolkit": "npm:2.9.0"
+    "@reduxjs/toolkit": "npm:2.10.1"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -2938,7 +2938,7 @@ __metadata:
     "@types/uuid": "npm:10.0.0"
     buffer: "npm:6.0.3"
     events: "npm:3.3.0"
-    glob: "npm:11.0.3"
+    glob: "npm:11.1.0"
     i18next: "npm:^25.0.0"
     jest: "npm:29.7.0"
     lodash: "npm:4.17.21"
@@ -3421,7 +3421,7 @@ __metadata:
     eslint: "npm:9.32.0"
     eslint-webpack-plugin: "npm:5.0.2"
     fork-ts-checker-webpack-plugin: "npm:9.1.0"
-    glob: "npm:11.0.3"
+    glob: "npm:11.1.0"
     identity-obj-proxy: "npm:^3.0.0"
     imports-loader: "npm:^5.0.0"
     jest-canvas-mock: "npm:2.5.2"
@@ -3499,7 +3499,7 @@ __metadata:
     "@lezer/highlight": "npm:1.2.3"
     "@lezer/lr": "npm:1.4.3"
     "@prometheus-io/lezer-promql": "npm:0.307.3"
-    "@reduxjs/toolkit": "npm:2.9.0"
+    "@reduxjs/toolkit": "npm:2.10.1"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-json": "npm:6.1.0"
@@ -3597,10 +3597,10 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes-react@npm:^6.46.0":
-  version: 6.46.0
-  resolution: "@grafana/scenes-react@npm:6.46.0"
+  version: 6.46.1
+  resolution: "@grafana/scenes-react@npm:6.46.1"
   dependencies:
-    "@grafana/scenes": "npm:6.46.0"
+    "@grafana/scenes": "npm:6.46.1"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3612,7 +3612,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/be082f31c14e636efe6c60f98771a03b94606c6210a1f90d64a1c4ee8429ccb5aaa9e401092f4f6d728befeec13051d9811ec894bdee9b3c39865a5ebc2bba41
+  checksum: 10/47007ae998dd52c774f1b53cc1cbd62cbff6c077886ba36381f371454918bd7fbe9ea9373e021a38ba0144e507c8c51a435a2be1aa8250a36c37d7bbfa72fb9d
   languageName: node
   linkType: hard
 
@@ -3642,9 +3642,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.46.0, @grafana/scenes@npm:^6.46.0":
-  version: 6.46.0
-  resolution: "@grafana/scenes@npm:6.46.0"
+"@grafana/scenes@npm:6.46.1, @grafana/scenes@npm:^6.46.0":
+  version: 6.46.1
+  resolution: "@grafana/scenes@npm:6.46.1"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3664,7 +3664,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/c4b2b3113da0ea9b5745b4d560e73ad8877934138cb2862ed0fecf0954a36dc7aee2b15e12b802e0884ff8f56756935acc545019753f99a2900ba19a620a4e96
+  checksum: 10/e72a90833a94307c6a4633d9f637e407f681d2be9fa27938158b0bdbb9520e31a3ff804eaab3f5e146673af5a21822b6a8279b4b8fd2ead79b94e2593e366144
   languageName: node
   linkType: hard
 
@@ -7107,29 +7107,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:2.9.0":
-  version: 2.9.0
-  resolution: "@reduxjs/toolkit@npm:2.9.0"
-  dependencies:
-    "@standard-schema/spec": "npm:^1.0.0"
-    "@standard-schema/utils": "npm:^0.3.0"
-    immer: "npm:^10.0.3"
-    redux: "npm:^5.0.1"
-    redux-thunk: "npm:^3.1.0"
-    reselect: "npm:^5.1.0"
-  peerDependencies:
-    react: ^16.9.0 || ^17.0.0 || ^18 || ^19
-    react-redux: ^7.2.1 || ^8.1.3 || ^9.0.0
-  peerDependenciesMeta:
-    react:
-      optional: true
-    react-redux:
-      optional: true
-  checksum: 10/d2f1b59c96638d9a36c3709f31f24ec1ce25604f2010eebb89506e6782142dfa3a97bd64f6b4650d9230d1a8a7f09a2dfed5ee2eb7a4454cbeb08fcb8cc6cf36
-  languageName: node
-  linkType: hard
-
-"@reduxjs/toolkit@npm:^2.9.0":
+"@reduxjs/toolkit@npm:2.10.1, @reduxjs/toolkit@npm:^2.9.0":
   version: 2.10.1
   resolution: "@reduxjs/toolkit@npm:2.10.1"
   dependencies:
@@ -18626,7 +18604,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:*, glob@npm:11.0.3, glob@npm:^11.0.0":
+"glob@npm:*":
+  version: 12.0.0
+  resolution: "glob@npm:12.0.0"
+  dependencies:
+    foreground-child: "npm:^3.3.1"
+    jackspeak: "npm:^4.1.1"
+    minimatch: "npm:^10.1.1"
+    minipass: "npm:^7.1.2"
+    package-json-from-dist: "npm:^1.0.0"
+    path-scurry: "npm:^2.0.0"
+  bin:
+    glob: dist/esm/bin.mjs
+  checksum: 10/6e21b3f1f1fa635836d45e54bbe50704884cc3e310e0cc011cfb5429db65a030e12936d99b07e66236370efe45dc8c8b26fa5334dbf555d6f8709e0315c77c30
+  languageName: node
+  linkType: hard
+
+"glob@npm:10.4.1":
+  version: 10.4.1
+  resolution: "glob@npm:10.4.1"
+  dependencies:
+    foreground-child: "npm:^3.1.0"
+    jackspeak: "npm:^3.1.2"
+    minimatch: "npm:^9.0.4"
+    minipass: "npm:^7.1.2"
+    path-scurry: "npm:^1.11.1"
+  bin:
+    glob: dist/esm/bin.mjs
+  checksum: 10/d7bb49d2b413f77bdd59fea4ca86dcc12450deee221af0ca93e09534b81b9ef68fe341345751d8ff0c5b54bad422307e0e44266ff8ad7fbbd0c200e8ec258b16
+  languageName: node
+  linkType: hard
+
+"glob@npm:11.0.3":
   version: 11.0.3
   resolution: "glob@npm:11.0.3"
   dependencies:
@@ -18642,18 +18651,35 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:10.4.1, glob@npm:^10.2.2, glob@npm:^10.3.10":
-  version: 10.4.1
-  resolution: "glob@npm:10.4.1"
+"glob@npm:11.1.0, glob@npm:^11.0.0":
+  version: 11.1.0
+  resolution: "glob@npm:11.1.0"
+  dependencies:
+    foreground-child: "npm:^3.3.1"
+    jackspeak: "npm:^4.1.1"
+    minimatch: "npm:^10.1.1"
+    minipass: "npm:^7.1.2"
+    package-json-from-dist: "npm:^1.0.0"
+    path-scurry: "npm:^2.0.0"
+  bin:
+    glob: dist/esm/bin.mjs
+  checksum: 10/da4501819633daff8822c007bb3f93d5c4d2cbc7b15a8e886660f4497dd251a1fb4f53a85fba1e760b31704eff7164aeb2c7a82db10f9f2c362d12c02fe52cf3
+  languageName: node
+  linkType: hard
+
+"glob@npm:^10.2.2, glob@npm:^10.3.10":
+  version: 10.5.0
+  resolution: "glob@npm:10.5.0"
   dependencies:
     foreground-child: "npm:^3.1.0"
     jackspeak: "npm:^3.1.2"
     minimatch: "npm:^9.0.4"
     minipass: "npm:^7.1.2"
+    package-json-from-dist: "npm:^1.0.0"
     path-scurry: "npm:^1.11.1"
   bin:
     glob: dist/esm/bin.mjs
-  checksum: 10/d7bb49d2b413f77bdd59fea4ca86dcc12450deee221af0ca93e09534b81b9ef68fe341345751d8ff0c5b54bad422307e0e44266ff8ad7fbbd0c200e8ec258b16
+  checksum: 10/ab3bccfefcc0afaedbd1f480cd0c4a2c0e322eb3f0aa7ceaa31b3f00b825069f17cf0f1fc8b6f256795074b903f37c0ade37ddda6a176aa57f1c2bbfe7240653
   languageName: node
   linkType: hard
 
@@ -18936,7 +18962,7 @@ __metadata:
     "@react-types/menu": "npm:3.10.3"
     "@react-types/overlays": "npm:3.9.0"
     "@react-types/shared": "npm:3.31.0"
-    "@reduxjs/toolkit": "npm:2.9.0"
+    "@reduxjs/toolkit": "npm:2.10.1"
     "@rsdoctor/webpack-plugin": "npm:^1.0.0"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
@@ -19066,7 +19092,7 @@ __metadata:
     fishery: "npm:^2.2.2"
     fork-ts-checker-webpack-plugin: "npm:9.1.0"
     github-codeowners: "npm:^0.2.1"
-    glob: "npm:11.0.3"
+    glob: "npm:11.1.0"
     history: "npm:4.10.1"
     html-loader: "npm:5.1.0"
     html-webpack-plugin: "npm:5.6.3"
@@ -20143,7 +20169,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immer@npm:10.2.0, immer@npm:^10.0.3, immer@npm:^10.2.0":
+"immer@npm:10.2.0, immer@npm:^10.2.0":
   version: 10.2.0
   resolution: "immer@npm:10.2.0"
   checksum: 10/d73e218c8f8ffbb39f9290dfafa478b94af73403dcf26b5672eef35233bb30f09ffe231f8a78a6c9cb442968510edd89e851776ec90a5ddfa82cee6db6b35137
@@ -23761,12 +23787,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimatch@npm:^10.0.3":
-  version: 10.0.3
-  resolution: "minimatch@npm:10.0.3"
+"minimatch@npm:^10.0.3, minimatch@npm:^10.1.1":
+  version: 10.1.1
+  resolution: "minimatch@npm:10.1.1"
   dependencies:
     "@isaacs/brace-expansion": "npm:^5.0.0"
-  checksum: 10/d5b8b2538b367f2cfd4aeef27539fddeee58d1efb692102b848e4a968a09780a302c530eb5aacfa8c57f7299155fb4b4e85219ad82664dcef5c66f657111d9b8
+  checksum: 10/110f38921ea527022e90f7a5f43721838ac740d0a0c26881c03b57c261354fb9a0430e40b2c56dfcea2ef3c773768f27210d1106f1f2be19cde3eea93f26f45e
   languageName: node
   linkType: hard
 

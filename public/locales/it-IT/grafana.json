@@ -5930,7 +5930,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Aggiungi trasformazione"
+      "add-transformation": "Aggiungi trasformazione",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7789,6 +7792,14 @@
     "name-show-threshold-labels": "Mostra etichette di soglia",
     "name-show-threshold-markers": "Mostra indicatori di soglia",
     "placeholder-neutral": "automatico",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8999,6 +9010,13 @@
       "copy": "Copia negli appunti",
       "csv-counts": "",
       "csv-placeholder": "Inserisci qui il CSV...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Valori filtro",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Corrispondenza",
@@ -9150,6 +9168,9 @@
     "category-legend": "Legenda",
     "category-tooltip": "Suggerimento",
     "category-y-axis": "Asse Y",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Opacità",
       "label-scheme": "Schema"
@@ -12381,6 +12402,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Riduci",
+      "exchange": "",
       "expand": "Espandi",
       "loading": "Caricamento dashboard",
       "noResultsForFilter": "Nessun risultato trovato per la ricerca",
@@ -12399,8 +12421,10 @@
       "cancel": "Annulla",
       "error-title": "",
       "input": {
-        "placeholder": "Seleziona gli ambiti...",
-        "removeAll": "Rimuovi tutti gli ambiti"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Rimuovi tutti gli ambiti",
+        "tooltip": ""
       },
       "title": "Seleziona gli ambiti"
     },
