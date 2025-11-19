@@ -83,7 +83,7 @@ type orgInfo struct {
 
 func (sp *dashboardAndFolderMigration) getAllOrgs(sess *xorm.Session) ([]orgInfo, error) {
 	var orgs []orgInfo
-	err := sess.Table("org").Where("id > 0").Cols("id", "name").Find(&orgs)
+	err := sess.Table("org").Cols("id", "name").Find(&orgs)
 	if err != nil {
 		return nil, err
 	}
