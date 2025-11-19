@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
@@ -128,6 +129,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "find dashboards that reference a given libraryPanel",
 										Required:    false,
 										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "permission",
+										In:          "query",
+										Description: "permission needed for the resource (View, Edit, Admin)",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("View", "Edit", "Admin"),
 									},
 								},
 								{
@@ -314,6 +324,16 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	searchRequest.Fields = fields
+
+	if p := queryParams.Get("permission"); p != "" {
+		if p == "Edit" {
+			searchRequest.Permission = int64(dashboardaccess.PERMISSION_EDIT)
+		} else if p == "View" {
+			searchRequest.Permission = int64(dashboardaccess.PERMISSION_VIEW)
+		} else if p == "Admin" {
+			searchRequest.Permission = int64(dashboardaccess.PERMISSION_ADMIN)
+		}
+	}
 
 	// A search request can include multiple types, we need to acces the slice directly.
 	types := queryParams["type"]
