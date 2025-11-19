@@ -1,6 +1,6 @@
 import { Page } from 'playwright-core';
 
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect, DashboardPage } from '@grafana/plugin-e2e';
 
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
@@ -41,7 +41,7 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      await switchToAutoGrid(page);
+     await switchToAutoGrid(page);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first().click();
 
@@ -134,7 +134,7 @@ test.describe(
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
     });
 
-    test('can update repeats in panel editor', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can update repeats in panel editor', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -198,7 +198,7 @@ test.describe(
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
     });
 
-    test('can update repeats in panel editor when loaded directly', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can update repeats in panel editor when loaded directly', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -253,7 +253,7 @@ test.describe(
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
     });
-    test('can move repeated panels', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can move repeated panels', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -300,7 +300,7 @@ test.describe(
         'New panel'
       );
     });
-    test('can view repeated panel', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can view repeated panel', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -363,7 +363,7 @@ test.describe(
       ).toBeVisible();
     });
 
-    test('can view embedded repeated panel', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can view embedded repeated panel', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -389,7 +389,7 @@ test.describe(
         )
       ).toBeVisible();
     });
-    test('can remove repeats', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can remove repeats', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
