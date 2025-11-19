@@ -140,6 +140,7 @@
 - **Plugins:** Set isProvisioned for local plugins without remote counterpart [#111268](https://github.com/grafana/grafana/pull/111268), [@oshirohugo](https://github.com/oshirohugo)
 - **Prometheus:** Fix incremental querying logic for public dashboards [#111642](https://github.com/grafana/grafana/pull/111642), [@jcolladokuri](https://github.com/jcolladokuri)
 - **Prometheus:** Fix parsing logic of prometheus expressions to honor the order of binary operations [#112220](https://github.com/grafana/grafana/pull/112220), [@jcolladokuri](https://github.com/jcolladokuri)
+- **Security:** fix for CVE-2025-41115 in SCIM (System for Cross-domain Identity Management) (Enterprise)
 - **SoloPanel:** Fixes issue with solo route and scopes variable [#112769](https://github.com/grafana/grafana/pull/112769), [@torkelo](https://github.com/torkelo)
 - **Stars:** Fix starred state not being updated [#111936](https://github.com/grafana/grafana/pull/111936), [@Clarity-89](https://github.com/Clarity-89)
 - **Stat:** Fix math for percent change value heights when sparkline is not rendered [#112599](https://github.com/grafana/grafana/pull/112599), [@fastfrwrd](https://github.com/fastfrwrd)
@@ -174,6 +175,7 @@
 - **Alerting:** Fix unmarshalling of GettableStatus to include time intervals [#112733](https://github.com/grafana/grafana/pull/112733), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **AnalyticsSummaries:** Fix dashboard rollup not resetting "last X days" metrics to zero (Enterprise)
 - **AnalyticsSummaries:** Fix dashboard rollup totals resetting incorrectly (Enterprise)
+- **Security:** fix for CVE-2025-41115 in SCIM (System for Cross-domain Identity Management) (Enterprise)
 
 <!-- 12.1.4 END -->
 <!-- 12.0.7 START -->
@@ -185,6 +187,7 @@
 - **Alerting:** Fix unmarshalling of GettableStatus to include time intervals [#112732](https://github.com/grafana/grafana/pull/112732), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **AnalyticsSummaries:** Fix dashboard rollup not resetting "last X days" metrics to zero (Enterprise)
 - **AnalyticsSummaries:** Fix dashboard rollup totals resetting incorrectly (Enterprise)
+- **Security:** fix for CVE-2025-41115 in SCIM (System for Cross-domain Identity Management) (Enterprise)
 
 <!-- 12.0.7 END -->
 <!-- 12.2.2 START -->
@@ -200,6 +203,7 @@
 
 - **AnalyticsSummaries:** Fix dashboard rollup not resetting "last X days" metrics to zero (Enterprise)
 - **AnalyticsSummaries:** Fix dashboard rollup totals resetting incorrectly (Enterprise)
+- **Security:** fix for CVE-2025-41115 in SCIM (System for Cross-domain Identity Management) (Enterprise)
 
 <!-- 12.2.2 END -->
 <!-- 11.6.8 START -->
@@ -218,15 +222,28 @@
 
 # 12.2.1+security-01 (2025-11-19)
 
+### Bug fixes
+
+- **Security:** fix for CVE-2025-41115 in SCIM (System for Cross-domain Identity Management) (Enterprise)
+
 <!-- 12.2.1+security-01 END -->
 <!-- 12.1.3+security-01 START -->
 
 # 12.1.3+security-01 (2025-11-19)
 
+### Bug fixes
+
+- **Security:** fix for CVE-2025-41115 in SCIM (System for Cross-domain Identity Management) (Enterprise)
+
 <!-- 12.1.3+security-01 END -->
+
 <!-- 12.0.6+security-01 START -->
 
 # 12.0.6+security-01 (2025-11-19)
+
+### Bug fixes
+
+- **Security:** fix for CVE-2025-41115 in SCIM (System for Cross-domain Identity Management) (Enterprise)
 
 <!-- 12.0.6+security-01 END -->
 <!-- 12.2.1 START -->
