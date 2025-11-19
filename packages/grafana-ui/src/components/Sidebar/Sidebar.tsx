@@ -30,7 +30,7 @@ export function SidebarComp({ children, contextValue }: Props) {
   return (
     <SidebarContext.Provider value={contextValue}>
       <div className={className}>
-        <SidebarResizer />
+        {!tabsMode && <SidebarResizer />}
         {children}
       </div>
     </SidebarContext.Provider>
