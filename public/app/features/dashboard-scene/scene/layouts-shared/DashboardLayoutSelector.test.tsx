@@ -32,9 +32,9 @@ describe('DashboardLayoutSelector', () => {
     render(<DashboardLayoutSelector layoutManager={layoutManager} />);
 
     await user.click(screen.getByLabelText('layout-selection-option-Tabs'));
-    
+
     const confirmButton = screen.getByRole('button', { name: 'Change layout' });
-    
+
     expect(confirmButton).toBeInTheDocument();
 
     await user.click(confirmButton);
