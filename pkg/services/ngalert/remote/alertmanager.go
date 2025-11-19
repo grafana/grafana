@@ -625,9 +625,9 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}
 
 	apiReceivers := alertingNotify.PostableAPIReceiversToAPIReceivers(decryptedReceivers)
-	var alert *alertingNotify.TestReceiversConfigAlertParams
+	var alert *alertingModels.TestReceiversConfigAlertParams
 	if c.Alert != nil {
-		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
+		alert = &alertingModels.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
 	}
 
 	return am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
