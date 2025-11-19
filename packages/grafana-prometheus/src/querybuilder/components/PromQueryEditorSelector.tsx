@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
 import { isEqual } from 'lodash';
-import { memo, SyntheticEvent, useCallback, useEffect, useState} from 'react';
+import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -125,10 +125,10 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
             size="sm"
             onClick={handleOpenQueryPatternsModal}
           >
-          <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
-            Kick start your query
-          </Trans>
-        </Button>
+            <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
+              Kick start your query
+            </Trans>
+          </Button>
         )}
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.explain}>
           <QueryHeaderSwitch
