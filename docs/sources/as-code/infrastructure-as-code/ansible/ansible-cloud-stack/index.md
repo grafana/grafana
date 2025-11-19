@@ -60,7 +60,7 @@ Replace the placeholders with your values:
 - `<STACK_NAME>`: Name of your stack
 - `<ORG_NAME>`: Name of the organization in Grafana Cloud
 
-## Create an API key in the Grafana stack
+## Create an API key in your Grafana stack
 
 Create an API key in the Grafana stack. You'll need this key to configure Ansible to create data sources, folders, and dashboards.
 
@@ -249,7 +249,7 @@ After you've run the Ansible playbooks, you can verify the following:
 
   ![Folder](/media/docs/grafana-cloud/screenshot-folder_tf.png)
 
-- A new dashboard is visble in the Grafana stack. In the following image, a dashboard named `InfluxDB Cloud Demos` was created inside the "Demos" folder.
+- A new dashboard is visible in the Grafana stack. In the following image, a dashboard named `InfluxDB Cloud Demos` was created inside the "Demos" folder.
 
   ![InfluxDB dashboard](/static/img/docs/grafana-cloud/terraform/influxdb_dashboard_tf.png)
 
