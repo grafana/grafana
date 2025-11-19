@@ -15,10 +15,19 @@ function getExternalRuleDataSources() {
   return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url);
 }
 
+const THRESHOLD_LIMIT = 500;
+
+function createInfoOption(message: string): ComboboxOption<string> {
+  return {
+    label: message,
+    value: '__GRAFANA_INFO_OPTION__',
+    infoOption: true,
+  };
+}
+
 export function useNamespaceAndGroupOptions(): {
   namespaceOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
-  allGroupNames: string[];
-  isLoadingNamespaces: boolean;
+  groupOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
   namespacePlaceholder: string;
   groupPlaceholder: string;
 } {
@@ -50,17 +59,11 @@ export function useNamespaceAndGroupOptions(): {
 
   const namespaceOptions = useCallback(
     async (inputValue: string) => {
-      // Grafana namespaces
-      const grafanaResponse = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: 1000 }).unwrap();
-      const grafanaFolders: Array<ComboboxOption<string>> = Array.from(
+      // Grafana namespaces - fetch with limit to check threshold
+      const grafanaResponse = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: THRESHOLD_LIMIT + 1 }).unwrap();
+      const grafanaFolderNames = Array.from(
         new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default'))
-      )
-        .map((name) => ({
-          label: name,
-          value: name,
-          description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
-        }))
-        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+      );
 
       // External namespaces
       const namespaceNameSet = new Set<string>();
@@ -68,7 +71,7 @@ export function useNamespaceAndGroupOptions(): {
         fetchExternalGroups({
           ruleSource: { uid: ds.uid },
           excludeAlerts: true,
-          groupLimit: 500,
+          groupLimit: THRESHOLD_LIMIT + 1,
           notificationOptions: { showErrorAlert: false },
         }).unwrap()
       );
@@ -78,6 +81,29 @@ export function useNamespaceAndGroupOptions(): {
           res.value.data.groups.forEach((group: { file?: string }) => namespaceNameSet.add(group.file || 'default'));
         }
       }
+
+      const totalNamespaces = grafanaFolderNames.length + namespaceNameSet.size;
+
+      // If we have more than THRESHOLD_LIMIT unique namespaces, show info message
+      if (totalNamespaces > THRESHOLD_LIMIT) {
+        return [
+          createInfoOption(
+            t(
+              'alerting.rules-filter.namespace-autocomplete-unavailable',
+              'Due to large number of folders, autocomplete is not available'
+            )
+          ),
+        ];
+      }
+
+      const grafanaFolders: Array<ComboboxOption<string>> = grafanaFolderNames
+        .map((name) => ({
+          label: name,
+          value: name,
+          description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
+        }))
+        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+
       const externalNamespaces = Array.from(namespaceNameSet)
         .map(formatNamespaceOption)
         .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
@@ -89,12 +115,37 @@ export function useNamespaceAndGroupOptions(): {
     [fetchGrafanaGroups, fetchExternalGroups, formatNamespaceOption]
   );
 
-  const allGroupNames: string[] = [];
-  const isLoadingNamespaces = false;
+  const groupOptions = useCallback(
+    async (inputValue: string) => {
+      const grafanaResponse = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: THRESHOLD_LIMIT + 1 }).unwrap();
+      const groupNames = Array.from(new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.name)));
+
+      // If we have more than THRESHOLD_LIMIT unique groups, show info message
+      if (groupNames.length > THRESHOLD_LIMIT) {
+        return [
+          createInfoOption(
+            t(
+              'alerting.rules-filter.group-autocomplete-unavailable',
+              'Due to large number of groups, autocomplete is not available'
+            )
+          ),
+        ];
+      }
+
+      const options: Array<ComboboxOption<string>> = groupNames
+        .map((name) => ({ label: name, value: name }))
+        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+
+      const filtered = filterBySearch(options, inputValue);
+      return filtered;
+    },
+    [fetchGrafanaGroups]
+  );
+
   const namespacePlaceholder = t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
   const groupPlaceholder = t('grafana.select-group', 'Select group');
 
-  return { namespaceOptions, allGroupNames, isLoadingNamespaces, namespacePlaceholder, groupPlaceholder };
+  return { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder };
 }
 
 export function useLabelOptions(): {
