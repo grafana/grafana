@@ -26,7 +26,7 @@ export function ScopesDashboardsTreeFolderItem({
 
   // get scopesselector service
   const scopesSelectorService = useScopesServices()?.scopesSelectorService ?? undefined;
-
+  const scopesDashboardsService = useScopesServices()?.scopesDashboardsService ?? undefined;
   return (
     <div className={styles.container} role="treeitem" aria-selected={folder.expanded}>
       <div className={styles.row}>
@@ -57,7 +57,8 @@ export function ScopesDashboardsTreeFolderItem({
               e.preventDefault();
               e.stopPropagation();
               if (folder.subScopeName && scopesSelectorService) {
-                scopesSelectorService.changeScopes([folder.subScopeName]);
+                scopesDashboardsService?.setNavigationScope(undefined, [folder.subScopeName]);
+                //scopesSelectorService.changeScopes([folder.subScopeName]);
               }
             }}
           />

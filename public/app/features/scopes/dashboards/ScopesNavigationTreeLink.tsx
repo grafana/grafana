@@ -33,14 +33,14 @@ export function ScopesNavigationTreeLink({ subScope, to, title, id }: ScopesNavi
       const currentScope = services?.scopesSelectorService?.state.appliedScopes[0]?.scopeId;
       const currentNavigationScope = services?.scopesDashboardsService?.state.navigationScope;
 
-      if (!currentNavigationScope && currentScope) {
-        services?.scopesDashboardsService?.setNavigationScope(currentScope);
-      }
-
       // Parse the URL to extract path and existing query params
       const url = new URL(to, window.location.origin);
       const pathname = url.pathname;
       const searchParams = new URLSearchParams(url.search);
+      if (!currentNavigationScope && currentScope) {
+        searchParams.set('navigation_scope', currentScope);
+        services?.scopesDashboardsService?.setNavigationScope(currentScope);
+      }
 
       // Update query params with the new subScope
       searchParams.set('scopes', subScope);
