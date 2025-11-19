@@ -477,6 +477,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	}
 
 	ruleGroups := opts.Query["rule_group"]
+	ruleUIDs := opts.Query["rule_uid"]
 
 	receiverName := opts.Query.Get("receiver_name")
 	title := opts.Query.Get("search.rule_name")
@@ -515,6 +516,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
 			OrgID:           opts.OrgID,
 			NamespaceUIDs:   namespaceUIDs,
+			RuleUIDs:        ruleUIDs,
 			DashboardUID:    dashboardUID,
 			PanelID:         panelID,
 			RuleGroups:      ruleGroups,
@@ -650,6 +652,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	}
 
 	ruleGroups := opts.Query["rule_group"]
+	ruleUIDs := opts.Query["rule_uid"]
 
 	receiverName := opts.Query.Get("receiver_name")
 	title := opts.Query.Get("search.rule_name")
@@ -658,6 +661,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:           opts.OrgID,
 		NamespaceUIDs:   namespaceUIDs,
+		RuleUIDs:        ruleUIDs,
 		DashboardUID:    dashboardUID,
 		PanelID:         panelID,
 		RuleGroups:      ruleGroups,
