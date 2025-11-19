@@ -249,9 +249,7 @@ func TestIntegrationFolderDeletionBlockedByAlertRules(t *testing.T) {
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				folders.RESOURCEGROUP: {DualWriterMode: grafanarest.Mode5},
 			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagUnifiedStorageSearch,
-			},
+			UnifiedStorageEnableSearch: true,
 		})
 
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1265,9 +1263,7 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 						DualWriterMode: modeDw,
 					},
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
-				},
+				UnifiedStorageEnableSearch: true,
 			})
 
 			// Run all test cases within the same server instance
@@ -1380,9 +1376,9 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 					},
 				},
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
 					featuremgmt.FlagKubernetesLibraryPanels,
 				},
+				UnifiedStorageEnableSearch: true,
 			})
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1460,9 +1456,9 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 					},
 				},
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
 					featuremgmt.FlagKubernetesLibraryPanels,
 				},
+				UnifiedStorageEnableSearch: true,
 			})
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1558,9 +1554,7 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 						DualWriterMode: modeDw,
 					},
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
-				},
+				UnifiedStorageEnableSearch: true,
 			})
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1635,9 +1629,7 @@ func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
 						DualWriterMode: modeDw,
 					},
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
-				},
+				UnifiedStorageEnableSearch: true,
 			})
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1826,13 +1818,13 @@ func TestIntegrationMoveNestedFolderToRootK8S(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:    true,
 		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{featuremgmt.FlagUnifiedStorageSearch},
 		APIServerStorageType: "unified",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			folders.RESOURCEGROUP: {
 				DualWriterMode: grafanarest.Mode5,
 			},
 		},
+		UnifiedStorageEnableSearch: true,
 	})
 
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1910,9 +1902,7 @@ func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
 						DualWriterMode: modeDw,
 					},
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
-				},
+				UnifiedStorageEnableSearch: true,
 			})
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
 				User: helper.Org1.Admin,
