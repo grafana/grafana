@@ -663,3 +663,37 @@ func TestIntegrationListSelector(t *testing.T) {
 		require.NotEqualf(t, templates.DefaultTemplateName, list.Items[1].Name, "Expected non-default template but got %s", list.Items[1].Name)
 	})
 }
+
+func TestIntegrationKinds(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	client := common.NewTemplateGroupClient(t, helper.Org1.Admin)
+
+	newTemplate := &v0alpha1.TemplateGroup{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.TemplateGroupSpec{
+			Title:   "templateGroup",
+			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindMimir,
+		},
+	}
+
+	t.Run("should not let create Mimir template", func(t *testing.T) {
+		_, err := client.Create(ctx, newTemplate, v1.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+	})
+
+	t.Run("should not let change kind", func(t *testing.T) {
+		newTemplate.Spec.Kind = v0alpha1.TemplateGroupTemplateKindGrafana
+		created, err := client.Create(ctx, newTemplate, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		created.Spec.Kind = v0alpha1.TemplateGroupTemplateKindMimir
+		_, err = client.Update(ctx, created, v1.UpdateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+	})
+}
