@@ -79,7 +79,8 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
 
   const modalTitle = !token ? 'Add service account token' : 'Service account token created';
 
-  const isTokenExpirationDayLimitConfigured = config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > 0;
+  const isTokenExpirationDayLimitConfigured =
+    config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > 0;
 
   const getExpirationOptions = () => {
     const noExpirationDescription = t(
@@ -87,7 +88,11 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
       'Cannot create a token with no expiration date when token expiration day limit is configured'
     );
     return [
-      { label: t('serviceaccounts.create-token-modal.label-no-expiration', 'No expiration'), value: false, description: isTokenExpirationDayLimitConfigured ? noExpirationDescription : undefined },
+      {
+        label: t('serviceaccounts.create-token-modal.label-no-expiration', 'No expiration'),
+        value: false,
+        description: isTokenExpirationDayLimitConfigured ? noExpirationDescription : undefined,
+      },
       { label: t('serviceaccounts.create-token-modal.label-set-expiration-date', 'Set expiration date'), value: true },
     ];
   };
