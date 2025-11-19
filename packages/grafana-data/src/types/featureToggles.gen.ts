@@ -1255,4 +1255,8 @@ export interface FeatureToggles {
   * Enables support for variables whose values can have multiple properties
   */
   multiPropsVariables?: boolean;
+  /**
+  * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+  */
+  alertingSyncDispatchTimer?: boolean;
 }
