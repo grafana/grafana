@@ -99,6 +99,7 @@ export function getYRange(field: Field, alignedFrame: DataFrame): Range.MinMax {
   return [min, max];
 }
 
+// TODO: #112977 enable highlight index
 // const HIGHLIGHT_IDX_POINT_SIZE = 6;
 
 const defaultConfig: GraphFieldConfig = {
@@ -192,6 +193,7 @@ export const prepareConfig = (
 
     const colorMode = getFieldColorModeForField(field);
     const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
+    // TODO: #112977 enable highlight index and adjust padding accordingly
     // const hasHighlightIndex = typeof sparkline.highlightIndex === 'number';
     // if (hasHighlightIndex) {
     //   builder.setPadding([rangePad, rangePad, rangePad, rangePad]);
@@ -212,6 +214,7 @@ export const prepareConfig = (
       lineWidth: customConfig.lineWidth,
       lineInterpolation: customConfig.lineInterpolation,
       showPoints: pointsMode,
+      // TODO: #112977 enable highlight index
       // pointSize: hasHighlightIndex ? HIGHLIGHT_IDX_POINT_SIZE : customConfig.pointSize,
       // pointsFilter: hasHighlightIndex ? [sparkline.highlightIndex!] : undefined,
       fillOpacity: customConfig.fillOpacity,
