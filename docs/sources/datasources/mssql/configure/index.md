@@ -220,7 +220,7 @@ The Azure SQL Server that you are connecting to should support Azure Entra authe
 
 This is the recommended authentication mechanism when working with SQL Server instances that are hosted in Azure. It allows users to be authenticated to and query the database using their own credentials rather than long-lived credentials.
 
-If your Grafana instance is configured with Azure Entra ID (formerly Active Directory) authentication for login, this authentication method can be used to forward the currently logged in user’s credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation](ref:configure-grafana-azure-auth).
+This authentication method requires your Grafana instance to be configured with Azure Entra ID (formerly Active Directory) authentication for login. With Azure Entra ID login, this method can be used to forward the currently logged in user’s credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation](ref:configure-grafana-azure-auth).
 
 {{< admonition type="note" >}}
 Additional configuration is required to ensure that the App Registration used to login a user via Azure provides an access token with the permissions required by the data source.
