@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -17,6 +17,16 @@ export function ValueSelector() {
   const [valueSearchTerm, setValueSearchTerm] = useState('');
   const { labelValues, selectedLabelValues, isLoadingLabelValues, onLabelValueClick, onLabelKeyClick } =
     useMetricsBrowser();
+  const [filteredLabelValues, setFilteredLabelValues] = useState<Record<string, string[]>>({ ...labelValues });
+
+  useEffect(() => {
+    const filtered: Record<string, string[]> = {};
+    for (const labelKey in labelValues) {
+      const values = labelValues[labelKey];
+      filtered[labelKey] = values.filter((value) => value.includes(valueSearchTerm));
+    }
+    setFilteredLabelValues(filtered);
+  }, [labelValues, valueSearchTerm]);
 
   return (
     <div className={styles.section}>
@@ -47,7 +57,7 @@ export function ValueSelector() {
         </div>
       ) : (
         <div className={styles.valueListArea}>
-          {Object.entries(labelValues).map(([lk, lv]) => {
+          {Object.entries(filteredLabelValues).map(([lk, lv]) => {
             if (!lk || !lv) {
               console.error('label values are empty:', { lk, lv });
               return null;

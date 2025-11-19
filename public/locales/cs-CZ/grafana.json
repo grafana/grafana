@@ -7844,6 +7844,14 @@
     "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
     "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
     "placeholder-neutral": "auto.",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9074,6 +9082,13 @@
       "copy": "Kopírovat do schránky",
       "csv-counts": "",
       "csv-placeholder": "Zadej CSV tady…",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrovat hodnoty",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Rozlišovat malá a velká písmena",
@@ -12516,8 +12531,10 @@
       "cancel": "Zrušit",
       "error-title": "",
       "input": {
-        "placeholder": "Vyberte rozsahy…",
-        "removeAll": "Odebrat všechny rozsahy"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Odebrat všechny rozsahy",
+        "tooltip": ""
       },
       "title": "Vyberte rozsahy"
     },
