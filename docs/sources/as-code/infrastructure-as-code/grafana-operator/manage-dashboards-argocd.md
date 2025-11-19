@@ -6,6 +6,7 @@ keywords:
   - Grafana Operator
   - ArgoCD
 title: Manage dashboards with GitOps using ArgoCD
+menuTitle: Manage dashboards with ArgoCD
 weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/grafana-operator/manage-dashboards-argocd/
 ---
