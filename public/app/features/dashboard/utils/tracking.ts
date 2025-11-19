@@ -113,7 +113,7 @@ export const getV2SchemaVariablesWithDatasource = (variableList: VariableKind[])
     /* eslint-disable @typescript-eslint/consistent-type-assertions  */
     switch (v.kind) {
       case 'AdhocVariable':
-        datasource = (v as AdhocVariableKind).datasource?.name ?? '';
+        datasource = (v as AdhocVariableKind).group ?? '';
         break;
       case 'DatasourceVariable':
         datasource = (v as DatasourceVariableKind).spec.pluginId ?? '';

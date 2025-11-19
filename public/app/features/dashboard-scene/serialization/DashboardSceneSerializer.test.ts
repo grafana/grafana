@@ -361,7 +361,7 @@ describe('DashboardSceneSerializer', () => {
           variable_type_textbox_count: 1,
           settings_nowdelay: undefined,
           settings_livenow: true,
-          variablesWithDS: [
+          varsWithDataSource: [
             { type: 'query', datasource: 'influxdb' },
             { type: 'query', datasource: 'elasticsearch' },
           ],
@@ -703,7 +703,7 @@ describe('DashboardSceneSerializer', () => {
           variable_type_datasource_count: 1,
           variable_type_custom_count: 1,
           variable_type_query_count: 1,
-          variablesWithDS: [
+          varsWithDataSource: [
             { type: 'query', datasource: 'cloudwatch' },
             { type: 'adhoc', datasource: 'opensearch' },
             { type: 'datasource', datasource: 'bigquery' },

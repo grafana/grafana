@@ -1134,10 +1134,11 @@
     },
     {
       "kind": "AdhocVariable",
-      "datasource": {
-        "name": "opensearch"
-      },
-      "spec": {}
+      "datasource": { "name": "esmce00tbim8" },
+      "group": "opensearch",
+      "spec": {
+        "allowCustomValue": true
+      }
     },
     {
       "kind": "CustomVariable",
