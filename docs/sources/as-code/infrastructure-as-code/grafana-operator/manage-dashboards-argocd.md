@@ -26,7 +26,7 @@ Before you begin, make sure you have the following:
 
 ## Set up your Git repository
 
-Create a directory structure in your repository to organize your grafana and dashboard configurations. For this tutorial, create a folder named `grafana`.
+Create a directory structure in your repository to organize your Grafana and dashboard configurations. For this tutorial, create a folder named `grafana`.
 
 ## Set up the Grafana Operator
 
@@ -50,7 +50,7 @@ type: Opaque
 Replace the placeholders with your values:
 
 - `<GRAFANA_API_KEY>`: API key from your Grafana instance. To create an API key, refer to [Grafana API Key Documentation](/docs/grafana/latest/administration/api-keys/)
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the grafana-operator is deployed in your Kubernetes cluster
+- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 2. **Configure the Grafana Custom Resource:**
 
@@ -75,7 +75,7 @@ spec:
 Replace the placeholders with your values:
 
 - `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud Stack
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the grafana-operator is deployed in your Kubernetes cluster
+- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ## Add dashboards to your Git repository
 
@@ -84,7 +84,7 @@ In your `grafana` directory, create a sub-folder called `dashboards`.
 This guide shows you how to creates three separate dashboards. For all dashboard configurations, replace the placeholders with your values:
 
 - `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud Stack
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the grafana-operator is deployed in your Kubernetes cluster
+- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ### Create a simple dashboard
 

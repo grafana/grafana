@@ -43,7 +43,7 @@ type: Opaque
 Replace the placeholders with your values:
 
 - `<GRAFANA_API_KEY>`: API key from your Grafana instance. To create an API key, refer to [Grafana API Key Documentation](/docs/grafana/latest/administration/api-keys/)
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the grafana-operator is deployed in your Kubernetes cluster
+- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 2. **Configure the Grafana Custom Resource:**
 
@@ -68,7 +68,7 @@ spec:
 Replace the placeholders with your values:
 
 - `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud stack
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the grafana-operator is deployed in your Kubernetes cluster
+- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ## Add a data source
 
@@ -107,7 +107,7 @@ Replace the placeholders with your values:
 - `<DATA_SOURCE_NAME>`: Name of the data source to be added in Grafana
 - `<DATA_SOURCE_URL>`: URL of your data source
 - `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud stack
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the grafana-operator is deployed in your Kubernetes cluster
+- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 2. Add a dashboard to a folder
 
@@ -137,7 +137,7 @@ Replace the placeholders with your values:
 
 - `<FOLDER_NAME>`: Name of the folder in which you want the dashboard to be created
 - `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud stack
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the grafana-operator is deployed in your Kubernetes cluster
+- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ## Apply Kubernetes manifests
 
@@ -151,13 +151,13 @@ kubectl apply -f grafana-token.yml grafana-cloud.yml datasource.yml dashboard.ym
 
 ## Validate your configuration
 
-After you apply the configurations, verify the following:
+After you apply the configurations, verify that:
 
-- A new data source is visible in Grafana. In the following image, a datasource named `InfluxDB` was created.
+- A new data source is visible in Grafana. In the following image, a data source named `InfluxDB` was created.
 
   ![InfluxDB datasource](/static/img/docs/grafana-cloud/terraform/influxdb_datasource_tf.png)
 
-- A new dashboard and folder in Grafana. In the following image, a dashboard named `InfluxDB Cloud Demos` was created inside the `Demos` folder.
+- A new dashboard and folder have been created in Grafana. In the following image, a dashboard named `InfluxDB Cloud Demos` was created inside the `Demos` folder.
 
   ![InfluxDB dashboard](/static/img/docs/grafana-cloud/grizzly/grizzly-folder-dashboard-datasource.png)
 
