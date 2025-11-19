@@ -2,6 +2,8 @@
 
 This guide helps you to add your feature behind a _feature flag_, code that lets you enable or disable a feature without redeploying Grafana.
 
+Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https://openfeature.dev/)
+
 ## Steps to adding a feature toggle
 
 1. Define the feature toggle in [registry.go](../pkg/services/featuremgmt/registry.go). To see what each feature stage means, look at the [related comments](../pkg/services/featuremgmt/features.go). If you are a community member, use the [CODEOWNERS](../.github/CODEOWNERS) file to determine which team owns the package you are updating.
@@ -13,7 +15,68 @@ Once your feature toggle is defined, you can then wrap your feature around a che
 
 Examples:
 
-- [Backend](https://github.com/grafana/grafana/blob/feb2b5878b3e3ec551d64872c35edec2a0187812/pkg/services/authn/clients/session.go#L57): Use the `IsEnabled` function and pass in your feature toggle.
+### Backend
+
+Use the OpenFeature client for all new backend feature flags.
+
+#### Key points:
+
+- OpenFeature SDK relies on the global state.
+- OpenFeature Provider configuration happens in the `commands` module before initialization of other modules.
+- It is safe to create an instance of the OpenFeature client directly in a function.
+- Flag evaluation is context-aware -- you can pass metadata such as org name, grafana version, or environment to the evaluation context.
+- Always perform flag evaluation at runtime, not during service startup, to ensure correct and up-to-date flag values.
+- Do not cache or store flag values globally -- evaluate flags when needed, especially in request or handler logic.
+
+#### In Grafana code:
+
+```go
+import "github.com/open-feature/go-sdk/openfeature"
+
+client := openfeature.NewDefaultClient()
+
+if client.Boolean(ctx, MyTestFlag, false, openfeature.TransactionContext(ctx)) {
+    ...
+}
+```
+
+#### In Tests:
+
+```go
+import (
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/testing"
+)
+
+var (
+    // Since openfeature relies on global state,
+    // TestProvider should be a global instance shared between tests
+    // Under the hood it uses a custom _goroutine local_ storage to manage state on a per-test basis
+    provider = testing.NewTestProvider()
+)
+
+func TestMain(m *testing.M) {
+    fmt.Println("Setting up test environment...")
+
+    if err := openfeature.SetProvider(provider); err != nil {
+        ...
+    }
+
+    exitCode := m.Run()
+    os.Exit(exitCode)
+}
+
+func TestFoo(t *testing.T) {
+    t.Parallel()
+
+    testFlags := map[string]memprovider.InMemoryFlag{
+        ...
+    }
+
+    provider.UsingFlags(t, testFlags)
+    ...
+}
+```
 
 ### Frontend
 
