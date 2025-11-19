@@ -40,13 +40,12 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 		}
 
 		timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("zanzana"))
-		defer timer.ObserveDuration()
-
 		zanzanaCtx := context.WithoutCancel(ctx)
 		res, err := c.zanzanaClient.Check(zanzanaCtx, id, req, folder)
 		if err != nil {
 			c.logger.Error("Failed to run zanzana check", "error", err)
 		}
+		timer.ObserveDuration()
 
 		acRes := <-acResChan
 		acErr := <-acErrChan

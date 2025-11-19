@@ -1071,32 +1071,27 @@
       "type": "state-timeline"
     },
     {
-      "id": 15,
-      "type": "state-timeline",
-      "title": "no data",
-      "gridPos": {
-        "x": 18,
-        "y": 18,
-        "h": 9,
-        "w": 6
+      "datasource": {
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "lineWidth": 0,
-            "fillOpacity": 70,
-            "spanNulls": false,
-            "insertNulls": false,
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "axisPlacement": "auto"
-          },
           "color": {
             "mode": "palette-classic"
           },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1105,38 +1100,43 @@
                 "color": "green"
               }
             ]
-          },
-          "fieldMinMax": false
+          }
         },
         "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 18,
+        "y": 18
+      },
+      "id": 15,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "scenarioId": "random_walk",
           "refId": "A",
+          "scenarioId": "random_walk",
           "seriesCount": 0
         }
       ],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
-      "options": {
-        "mergeValues": true,
-        "showValue": "auto",
-        "alignValue": "center",
-        "rowHeight": 0.9,
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none",
-          "hideZeros": false
-        }
-      }
+      "title": "no data",
+      "type": "state-timeline"
     }
   ],
   "preload": false,

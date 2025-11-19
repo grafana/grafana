@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 
+import { GrafanaTheme2 } from '@grafana/data/';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -22,7 +23,7 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
   const { url: lastCommitUrl, hasUrl } = getRepoCommitUrl(repo.spec, status?.sync.lastRef);
 
   return (
-    <Card noMargin>
+    <Card noMargin className={styles.card}>
       <Card.Heading>
         <Trans i18nKey="provisioning.repository-overview.pull-status">Pull status</Trans>
       </Card.Heading>
@@ -44,7 +45,10 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
             <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
           </div>
 
-          <div className={cx(styles.historicalData, { [styles.historicalDataOverlay]: isWorking })}>
+          <div
+            className={cx(styles.historicalData, { [styles.historicalDataOverlay]: isWorking })}
+            aria-busy={isWorking}
+          >
             {/* Last Ref */}
             <Text color="secondary">
               <Trans i18nKey="provisioning.repository-overview.last-ref">Last Ref:</Trans>
@@ -85,15 +89,23 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
           </div>
         </Grid>
       </Card.Description>
-      <Card.Actions>
+      <Card.Actions className={styles.actions}>
         <SyncRepository repository={repo} />
       </Card.Actions>
     </Card>
   );
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
+    card: css({
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    actions: css({
+      marginTop: 'auto',
+    }),
     spanTwo: css({
       gridColumn: 'span 2',
     }),
@@ -101,6 +113,7 @@ const getStyles = () => {
       gridColumn: '1 / -1',
       display: 'grid',
       gridTemplateColumns: 'subgrid',
+      gap: theme.spacing(1),
     }),
     historicalDataOverlay: css({
       opacity: 0.6,

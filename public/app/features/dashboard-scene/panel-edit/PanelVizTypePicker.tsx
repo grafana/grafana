@@ -138,10 +138,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(2, 1),
     height: '100%',
     gap: theme.spacing(2),
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRight: 'none',
-    borderBottom: 'none',
-    borderTopLeftRadius: theme.shape.radius.default,
   }),
   searchRow: css({
     display: 'flex',
