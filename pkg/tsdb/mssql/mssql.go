@@ -44,6 +44,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
+
 	return dsHandler.QueryData(azusercontext.WithUserFromQueryReq(ctx, req), req)
 }
 

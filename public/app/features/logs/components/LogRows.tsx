@@ -12,7 +12,6 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -169,7 +168,7 @@ export const LogRows = memo(
     );
 
     const popoverMenuSupported = useCallback(() => {
-      if (!config.featureToggles.logRowsPopoverMenu || isPopoverMenuDisabled()) {
+      if (isPopoverMenuDisabled()) {
         return false;
       }
       return Boolean(onClickFilterOutString || onClickFilterString);

@@ -1258,7 +1258,8 @@
       "metadata": {
         "name": "dataplaneFrontendFallback",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-04-07T21:13:19Z"
+        "creationTimestamp": "2023-04-07T21:13:19Z",
+        "deletionTimestamp": "2025-11-06T17:39:31Z"
       },
       "spec": {
         "description": "Support dataplane contract field name change for transformations and field name matchers where the name is different",
@@ -1730,7 +1731,8 @@
       "metadata": {
         "name": "feedbackButton",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-12-02T17:08:15Z"
+        "creationTimestamp": "2024-12-02T17:08:15Z",
+        "deletionTimestamp": "2025-11-20T09:53:52Z"
       },
       "spec": {
         "description": "Enables a button to send feedback from the Grafana UI",
@@ -2517,7 +2519,8 @@
       "metadata": {
         "name": "logRowsPopoverMenu",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-11-16T09:48:10Z"
+        "creationTimestamp": "2023-11-16T09:48:10Z",
+        "deletionTimestamp": "2025-11-07T10:57:27Z"
       },
       "spec": {
         "description": "Enable filtering menu displayed when text of a log line is selected",
@@ -2867,7 +2870,8 @@
       "metadata": {
         "name": "newPDFRendering",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-02-08T12:09:34Z"
+        "creationTimestamp": "2024-02-08T12:09:34Z",
+        "deletionTimestamp": "2025-11-14T14:39:41Z"
       },
       "spec": {
         "description": "New implementation for the dashboard-to-PDF rendering",
@@ -3542,6 +3546,20 @@
     },
     {
       "metadata": {
+        "name": "refreshTokenRequired",
+        "resourceVersion": "1763561990273",
+        "creationTimestamp": "2025-11-19T14:19:50Z"
+      },
+      "spec": {
+        "description": "Require that refresh tokens are present in oauth tokens.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "regressionTransformation",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-11-24T14:49:16Z",
@@ -3658,6 +3676,20 @@
         "description": "Enables the new role picker drawer design",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "rudderstackUpgrade",
+        "resourceVersion": "1763481217872",
+        "creationTimestamp": "2025-11-18T15:53:37Z"
+      },
+      "spec": {
+        "description": "Enables the new version of rudderstack",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -4072,6 +4104,7 @@
         "name": "timeRangePan",
         "resourceVersion": "1762290731154",
         "creationTimestamp": "2025-10-24T19:49:53Z",
+        "deletionTimestamp": "2025-11-06T17:39:31Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-04 21:12:11.154822 +0000 UTC"
         }
@@ -4129,7 +4162,8 @@
       "metadata": {
         "name": "transformationsRedesign",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-07-12T16:35:49Z"
+        "creationTimestamp": "2023-07-12T16:35:49Z",
+        "deletionTimestamp": "2025-11-06T20:37:15Z"
       },
       "spec": {
         "description": "Enables the transformations redesign",

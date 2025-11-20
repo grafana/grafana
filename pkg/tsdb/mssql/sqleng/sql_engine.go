@@ -232,7 +232,7 @@ func (e *DataSourceHandler) getDB(ctx context.Context) (*sql.DB, error) {
 	if !ok {
 		return nil, fmt.Errorf("failed to get user from context for Azure Current User authentication")
 	}
-	cacheKey := fmt.Sprintf("mssql-%d-%x-%s-%s", e.dsInfo.OrgID, sha256.Sum256([]byte(userCtx.User.Email)), userCtx.IdToken, e.dsInfo.UID)
+	cacheKey := fmt.Sprintf("mssql-%d-%x-%x-%s", e.dsInfo.OrgID, sha256.Sum256([]byte(userCtx.User.Email)), sha256.Sum256([]byte(userCtx.IdToken)), e.dsInfo.UID)
 
 	conn, ok := e.dbConnections.Load(cacheKey)
 	if ok {

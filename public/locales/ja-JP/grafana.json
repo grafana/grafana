@@ -2586,8 +2586,7 @@
         "firing": "発生中",
         "normal": "通常",
         "pending": "保留中",
-        "recovering": "復旧中",
-        "unknown": "不明"
+        "recovering": "復旧中"
       },
       "type": {
         "alert": "アラートルール",
@@ -2611,12 +2610,14 @@
         "placeholder-search-input": "名前で検索するか、フィルタークエリを入力してください…"
       },
       "grafana-folder": "Grafanaフォルダ",
+      "group-autocomplete-unavailable": "",
       "health": "健康",
       "label": {
         "hide": "非表示",
         "show": "表示"
       },
       "manage-alerts": "これらのデータソースでは、「アラートUI経由で管理」を選択すると、Grafana UIとアラートルールが設定されたデータソースの両方でこれらのアラートルールを管理できます。",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "すべてのデータソース",
       "placeholder-contact-point": "コンタクトポイントを選択してください",
       "placeholder-data-sources": "データソースを選択してください",
@@ -3528,6 +3529,7 @@
       "delete-modal-invalid-title": "フォルダを削除できません",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "この操作により、次のコンテンツが削除されます：",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "削除",
       "delete-provisioned-folder": "プロビジョニングされたフォルダを削除",
       "deleting": "削除中…",
@@ -3536,6 +3538,7 @@
       "move-modal-alert": "このアイテムを移動すると、そのアクセス許可が変更される可能性があります。",
       "move-modal-field-label": "フォルダ名",
       "move-modal-text": "この操作により、次のコンテンツが移動されます。",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "移動",
       "move-provisioned-folder": "",
       "moving": "移動中…",
@@ -3618,11 +3621,11 @@
       "title-folder": "このフォルダにはまだダッシュボードがありません"
     },
     "folder-actions-button": {
-      "delete": "削除",
+      "delete": "",
       "delete-folder-error": "フォルダの削除中にエラーが発生しました。後でもう一度お試しください。",
       "folder-actions": "フォルダの操作",
       "manage-permissions": "権限を管理する",
-      "move": "移動"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "フォルダを選択：{{ label }}が現在選択されています",
@@ -7766,6 +7769,14 @@
     "name-show-threshold-labels": "しきい値ラベルを表示",
     "name-show-threshold-markers": "しきい値マーカーを表示",
     "placeholder-neutral": "自動",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8966,6 +8977,13 @@
       "copy": "クリップボードにコピー",
       "csv-counts": "",
       "csv-placeholder": "ここにCSVを入力...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "値をフィルタリング",
       "filter-popup-apply": "OK",
       "filter-popup-aria-label-match-case": "大文字/小文字を区別",
@@ -12351,8 +12369,10 @@
       "cancel": "キャンセル",
       "error-title": "",
       "input": {
-        "placeholder": "スコープを選択...",
-        "removeAll": "すべてのスコープを削除"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "すべてのスコープを削除",
+        "tooltip": ""
       },
       "title": "スコープを選択"
     },
