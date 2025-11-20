@@ -70,6 +70,7 @@ describe('ScopesService', () => {
         forScopeNames: [],
         loading: false,
         searchQuery: '',
+        navigationScope: undefined,
       },
       stateObservable: new BehaviorSubject({
         drawerOpened: false,
@@ -80,11 +81,13 @@ describe('ScopesService', () => {
         forScopeNames: [],
         loading: false,
         searchQuery: '',
+        navigationScope: undefined,
       }),
       subscribeToState: jest.fn((callback) => {
         dashboardsStateSubscription = callback;
         return { unsubscribe: jest.fn() };
       }),
+      setNavigationScope: jest.fn(),
     } as unknown as jest.Mocked<ScopesDashboardsService>;
 
     locationService = {
@@ -170,6 +173,40 @@ describe('ScopesService', () => {
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
       expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1', 'scope2'], undefined, 'node1', false);
+    });
+
+    it('should read navigation_scope from URL on init', () => {
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1&navigation_scope=navScope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1');
+    });
+
+    it('should read navigation_scope along with other scope parameters', () => {
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1&scope_node=node1&navigation_scope=navScope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1');
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
+    });
+
+    it('should not call setNavigationScope when navigation_scope is not in URL', () => {
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      expect(dashboardsService.setNavigationScope).not.toHaveBeenCalled();
     });
   });
 
@@ -293,6 +330,90 @@ describe('ScopesService', () => {
       );
 
       expect(locationService.partial).not.toHaveBeenCalled();
+    });
+
+    it('should write navigation_scope to URL when navigationScope changes', () => {
+      if (!dashboardsStateSubscription) {
+        throw new Error('dashboardsStateSubscription not set');
+      }
+
+      dashboardsStateSubscription(
+        {
+          navigationScope: 'navScope1',
+          drawerOpened: true,
+        },
+        {
+          navigationScope: undefined,
+          drawerOpened: false,
+        }
+      );
+
+      expect(locationService.partial).toHaveBeenCalledWith({
+        navigation_scope: 'navScope1',
+      });
+    });
+
+    it('should update navigation_scope in URL when navigationScope changes', () => {
+      if (!dashboardsStateSubscription) {
+        throw new Error('dashboardsStateSubscription not set');
+      }
+
+      dashboardsStateSubscription(
+        {
+          navigationScope: 'navScope2',
+          drawerOpened: true,
+        },
+        {
+          navigationScope: 'navScope1',
+          drawerOpened: true,
+        }
+      );
+
+      expect(locationService.partial).toHaveBeenCalledWith({
+        navigation_scope: 'navScope2',
+      });
+    });
+
+    it('should not update URL when navigationScope has not changed', () => {
+      if (!dashboardsStateSubscription) {
+        throw new Error('dashboardsStateSubscription not set');
+      }
+
+      jest.clearAllMocks();
+
+      dashboardsStateSubscription(
+        {
+          navigationScope: 'navScope1',
+          drawerOpened: true,
+        },
+        {
+          navigationScope: 'navScope1',
+          drawerOpened: false,
+        }
+      );
+
+      expect(locationService.partial).not.toHaveBeenCalled();
+    });
+
+    it('should clear navigation_scope from URL when navigationScope is cleared', () => {
+      if (!dashboardsStateSubscription) {
+        throw new Error('dashboardsStateSubscription not set');
+      }
+
+      dashboardsStateSubscription(
+        {
+          navigationScope: undefined,
+          drawerOpened: false,
+        },
+        {
+          navigationScope: 'navScope1',
+          drawerOpened: true,
+        }
+      );
+
+      expect(locationService.partial).toHaveBeenCalledWith({
+        navigation_scope: undefined,
+      });
     });
   });
 

@@ -142,13 +142,9 @@ export class ScopesService implements ScopesContextValue {
     this.subscriptions.push(
       this.dashboardsService.subscribeToState((state, prevState) => {
         if (state.navigationScope !== prevState.navigationScope) {
-          console.log('navigation scope changed', state.navigationScope);
           this.locationService.partial({
             navigation_scope: state.navigationScope,
           });
-
-          const location = this.locationService.getLocation();
-          console.log('location', location);
         }
       })
     );

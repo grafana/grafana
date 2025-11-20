@@ -697,4 +697,122 @@ describe('ScopesDashboardsService', () => {
       expect(filteredItems.some((item) => item.metadata.name === 'loki-item-1')).toBe(true);
     });
   });
+
+  describe('setNavigationScope', () => {
+    beforeEach(() => {
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+      // Ensure API client is always mocked to return an array
+      mockApiClient.fetchDashboards.mockResolvedValue([]);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+    });
+
+    it('should set navigation scope and fetch dashboards', async () => {
+      mockApiClient.fetchDashboards.mockResolvedValue([]);
+
+      service.setNavigationScope('navScope1');
+
+      expect(service.state.navigationScope).toBe('navScope1');
+      expect(service.state.drawerOpened).toBe(true);
+      expect(mockApiClient.fetchDashboards).toHaveBeenCalledWith(['navScope1']);
+    });
+
+    it('should clear navigation scope and use fallback scope names', async () => {
+      // Mock to return non-empty results so drawer stays open
+      const mockDashboards = [
+        {
+          spec: { scope: 'fallbackScope1', dashboard: 'dashboard1' },
+          status: { dashboardTitle: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      mockApiClient.fetchDashboards.mockResolvedValue(mockDashboards);
+
+      service.setNavigationScope(undefined, ['fallbackScope1', 'fallbackScope2']);
+      // Wait for async operations to complete
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(service.state.drawerOpened).toBe(true);
+      expect(mockApiClient.fetchDashboards).toHaveBeenCalledWith(['fallbackScope1', 'fallbackScope2']);
+    });
+
+    it('should close drawer when navigation scope is cleared without fallback', async () => {
+      // When setNavigationScope is called with undefined and no fallback,
+      // it calls fetchDashboards([]), which returns early without calling the API
+      service.setNavigationScope(undefined);
+
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(service.state.drawerOpened).toBe(false);
+      // fetchDashboards([]) returns early, so API client is not called
+      expect(mockApiClient.fetchDashboards).not.toHaveBeenCalled();
+    });
+
+    it('should not update state if navigation scope has not changed', () => {
+      service.setNavigationScope('navScope1');
+      jest.clearAllMocks();
+
+      service.setNavigationScope('navScope1');
+
+      expect(mockApiClient.fetchDashboards).not.toHaveBeenCalled();
+    });
+
+    it('should update navigation scope when changing from one scope to another', async () => {
+      mockApiClient.fetchDashboards.mockResolvedValue([]);
+
+      service.setNavigationScope('navScope1');
+      jest.clearAllMocks();
+
+      service.setNavigationScope('navScope2');
+
+      expect(service.state.navigationScope).toBe('navScope2');
+      expect(mockApiClient.fetchDashboards).toHaveBeenCalledWith(['navScope2']);
+    });
+
+    it('should update navigation scope when clearing an existing scope', async () => {
+      mockApiClient.fetchDashboards.mockResolvedValue([]);
+
+      service.setNavigationScope('navScope1');
+      jest.clearAllMocks();
+
+      service.setNavigationScope(undefined, ['fallbackScope']);
+
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(mockApiClient.fetchDashboards).toHaveBeenCalledWith(['fallbackScope']);
+    });
+
+    it('should open drawer when navigation scope is set', async () => {
+      // Mock to return non-empty results so drawer stays open
+      mockApiClient.fetchDashboards.mockResolvedValue([
+        {
+          spec: { scope: 'navScope1', dashboard: 'dashboard1' },
+          status: { dashboardTitle: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+
+      service.setNavigationScope('navScope1');
+      // Wait for fetchDashboards to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(service.state.drawerOpened).toBe(true);
+    });
+
+    it('should open drawer when fallback scopes are provided', async () => {
+      // Mock to return non-empty results so drawer stays open
+      const mockDashboards = [
+        {
+          spec: { scope: 'fallbackScope', dashboard: 'dashboard1' },
+          status: { dashboardTitle: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      mockApiClient.fetchDashboards.mockResolvedValue(mockDashboards);
+
+      service.setNavigationScope(undefined, ['fallbackScope']);
+      // Wait for async operations to complete
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(service.state.drawerOpened).toBe(true);
+    });
+  });
 });
