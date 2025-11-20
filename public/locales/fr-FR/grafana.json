@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager :",
+      "disabled-tooltip": "",
       "error": "Impossible de charger l'aperçu de l'acheminement pour {{alertmanager}}",
       "initialized": "En fonction des étiquettes ajoutées, les instances d'alerte sont acheminées vers les politiques de notification suivantes. Développez chaque politique de notification ci-dessous pour afficher plus de détails.",
       "preview-routing": "Aperçu de l'acheminement",
+      "select-folder-tooltip": "",
       "text-loading-preview": "Chargement de l’aperçu...",
       "title": "Aperçu de l'acheminement des instances d'alerte",
       "uninitialized": "Une fois que vous avez sélectionné votre dossier et que votre requête et vos étiquettes sont configurées, cliquez sur « Aperçu de l'acheminement » pour voir les résultats ici."
@@ -2596,8 +2598,7 @@
         "firing": "Déclenché",
         "normal": "Normal",
         "pending": "En attente",
-        "recovering": "Récupération en cours",
-        "unknown": "Inconnu"
+        "recovering": "Récupération en cours"
       },
       "type": {
         "alert": "Règle d’alerte",
@@ -2621,12 +2622,14 @@
         "placeholder-search-input": "Rechercher par nom ou saisir une requête de filtre..."
       },
       "grafana-folder": "Dossier Grafana",
+      "group-autocomplete-unavailable": "",
       "health": "Santé",
       "label": {
         "hide": "Masquer",
         "show": "Afficher"
       },
       "manage-alerts": "Dans ces sources de données, vous pouvez sélectionner Gérer les alertes via l’interface utilisateur d’alerte pour pouvoir gérer ces règles d’alerte dans l’interface utilisateur Grafana, ainsi que dans la source de données où elles ont été configurées.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Toutes les sources de données",
       "placeholder-contact-point": "Sélectionner un point de contact",
       "placeholder-data-sources": "Sélectionner des sources de données",
@@ -2945,6 +2948,7 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
+      "firing-instances-count": "",
       "instance-details-drawer": {
         "instance-details": ""
       },
@@ -2954,6 +2958,7 @@
       "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
+      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -2961,7 +2966,9 @@
       "rule-not-found": {
         "description": "",
         "title": ""
-      }
+      },
+      "rules-with-firing-instances": "",
+      "rules-with-pending-instances": ""
     },
     "type-selector-button": {
       "add-expression": "Ajouter une expression"
@@ -3534,6 +3541,7 @@
       "delete-modal-invalid-title": "Impossible de supprimer le dossier",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Cette action supprimera le contenu suivant :",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Supprimer",
       "delete-provisioned-folder": "Supprimer le dossier provisionné",
       "deleting": "Suppression…",
@@ -3542,6 +3550,7 @@
       "move-modal-alert": "Le déplacement de cet élément peut modifier ses permissions.",
       "move-modal-field-label": "Nom du dossier",
       "move-modal-text": "Cette action déplacera le contenu suivant :",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Déplacer",
       "move-provisioned-folder": "",
       "moving": "Déplacement...",
@@ -3629,11 +3638,11 @@
       "title-folder": "Ce dossier ne contient pas encore de tableaux de bord"
     },
     "folder-actions-button": {
-      "delete": "Supprimer",
+      "delete": "",
       "delete-folder-error": "Erreur lors de la suppression du dossier. Veuillez réessayer plus tard.",
       "folder-actions": "Actions sur le dossier",
       "manage-permissions": "Gérer les autorisations",
-      "move": "Déplacer"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Sélectionnez un dossier : {{ label }} est sélectionné actuellement",
@@ -4126,6 +4135,7 @@
     "action": {
       "change-theme": "Modifier le thème",
       "dark-theme": "Sombre",
+      "dashboard-from-template": "",
       "light-theme": "Clair",
       "scopes": "Portées"
     },
@@ -4378,8 +4388,6 @@
       "next-button": "Suivant",
       "save-button": "Enregistrer"
     },
-    "page-content": "Pour activer les corrélations, ajoutez-les dans la configuration Grafana :",
-    "page-heading": "Les corrélations sont désactivées",
     "query-editor": {
       "control-rules": "La source de données cible sélectionnée doit exporter un éditeur de requête.",
       "data-source-text": "Vous devez d'abord sélectionner une source de données cible.",
@@ -5714,6 +5722,10 @@
     "suggested-dashboards-subtitle": "",
     "suggested-dashboards-title": "",
     "suggested-dashboards-title-with-datasource": "",
+    "template-dashboard-modal": {
+      "description": "",
+      "title": ""
+    },
     "view-all": ""
   },
   "dashboard-links": {
@@ -5921,7 +5933,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Ajouter une transformation"
+      "add-transformation": "Ajouter une transformation",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7043,7 +7058,6 @@
         "new-panel": "Nouveau panneau"
       }
     },
-    "clear": "Effacer",
     "confirm-navigation-modal": {
       "cancel": "Annuler",
       "new-tab": "Voulez-vous continuer dans l’onglet actuel ou ouvrir un nouvel onglet ?",
@@ -7267,7 +7281,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Aucune information de volume disponible pour les requêtes actuelles et la plage temporelle."
     },
-    "next": "Suivant",
     "next-prev-result": {
       "aria-label-next": "Bouton Résultat suivant",
       "aria-label-prev": "Bouton Résultat précédent",
@@ -7288,7 +7301,6 @@
     "pane": {
       "loading-placeholder": "Chargement en cours…"
     },
-    "prev": "Précédent",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Passer en mode sans requête"
     },
@@ -7437,8 +7449,7 @@
       "query-inspector-button": "Inspecteur de requête",
       "query-inspector-button-aria-label": "Inspecteur de requête"
     },
-    "show-critical-path-only": "Afficher uniquement le chemin critique",
-    "show-matches-only": "Afficher uniquement les correspondances",
+    "show-all-spans": "",
     "span-bar": {
       "tooltip-critical-path": "Un segment sur le <1>chemin critique</1> de la trace/demande/flux de travail global."
     },
@@ -7467,6 +7478,7 @@
       "label-resource-attributes": "Attributs de ressource",
       "label-span-attributes": "Attributs de durée",
       "label-stack-trace": "Trace de stack",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Nombre d’enfants :",
@@ -7475,8 +7487,7 @@
           "start-time": "Heure de début :"
         }
       },
-      "share-span": "Partager",
-      "warnings": "Avertissements"
+      "share-span": "Partager"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Sélectionner l’opérateur de la durée maximale",
@@ -7558,10 +7569,18 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Ouvrir le menu des options de partage de traces",
+      "critical-path": "",
+      "critical-path-tooltip": "",
       "duration": "Durée",
+      "errors": "",
+      "errors-tooltip": "",
       "export-started": "Exportation lancée",
+      "filters": "",
       "give-feedback": "Commentaires",
+      "high-latency": "",
+      "high-latency-tooltip": "",
       "link-copied": "Lien copié dans le presse-papiers",
+      "overview": "",
       "path": "Trajet",
       "route": "Itinéraire",
       "services": "Services",
@@ -7575,11 +7594,6 @@
       "tooltip-url": "{{route}} ou {{url}} ou {{target}} ou {{path}}",
       "trace-id": "Identifiant de trace",
       "url": "URL"
-    },
-    "trace-page-search-bar": {
-      "aria-label-clear-filters": "Bouton Supprimer les filtres",
-      "label-show-matches": "Bouton Afficher uniquement les correspondances",
-      "label-show-paths": "Bouton Afficher uniquement le chemin critique"
     },
     "trace-view": {
       "aria-label-copy": "Copier dans le presse-papiers",
@@ -7781,6 +7795,14 @@
     "name-show-threshold-labels": "Afficher les étiquettes de seuil",
     "name-show-threshold-markers": "Afficher les marqueurs de seuil",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8991,6 +9013,13 @@
       "copy": "Copier dans le presse-papier",
       "csv-counts": "",
       "csv-placeholder": "Saisir le CSV ici…",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrer les valeurs",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Respecter la casse",
@@ -9142,6 +9171,9 @@
     "category-legend": "Légende",
     "category-tooltip": "Infobulle",
     "category-y-axis": "Axe Y",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Opacité",
       "label-scheme": "Schéma"
@@ -10525,6 +10557,7 @@
       "title": "Nouveau"
     },
     "new-dashboard": {
+      "empty-title": "",
       "title": "Nouveau tableau de bord"
     },
     "new-folder": {
@@ -10690,7 +10723,8 @@
       "aria-label": "Profil"
     },
     "quick-add": {
-      "aria-label": "Nouveau"
+      "aria-label": "Nouveau",
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Dernières nouvelles sur le blog"
   },
@@ -11485,6 +11519,9 @@
       "label-display-name": "Pseudo",
       "placeholder-my-repository-connection": "Ma connexion au référentiel",
       "text-loading-resource-information": "Chargement des informations sur les ressources...",
+      "unavailable-options": {
+        "title": ""
+      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} tableau de bord",
       "dashboards-count_other": "{{count}} tableau de bord",
@@ -11533,9 +11570,8 @@
     },
     "connect-repository-button": {
       "configure": "Configurer",
-      "instance-fully-managed-tooltip": "",
-      "repository-limit-reached-tooltip_one": "",
-      "repository-limit-reached-tooltip_other": ""
+      "free-tier-limit-tooltip": "",
+      "instance-fully-managed-tooltip": ""
     },
     "delete-repository-button": {
       "button-delete": "Supprimer",
@@ -11627,6 +11663,13 @@
       "all-resources-managed_other": "",
       "unmanaged-resources_one": "",
       "unmanaged-resources_other": ""
+    },
+    "free-tier-limit": {
+      "message": "",
+      "message-connection": "",
+      "message-resource": "",
+      "note": "",
+      "upgrade-link": ""
     },
     "get-default-values": {
       "title": {
@@ -11766,10 +11809,16 @@
       "truncated": ""
     },
     "mode-options": {
+      "disabled": {
+        "folder-connected": "",
+        "legacy-storage": "",
+        "not-allowed": "",
+        "not-supported": ""
+      },
       "folder": {
         "description": "Après la configuration, un nouveau dossier Grafana sera créé et synchronisé avec un stockage externe. Si des ressources sont présentes dans le stockage externe, elles seront mises en service dans ce nouveau dossier. Toutes les nouvelles ressources créées dans ce dossier seront stockées et versionnées dans un stockage externe.",
         "label": "Synchroniser le stockage externe avec un nouveau dossier Grafana",
-        "subtitle": "Utilisez cette option pour synchroniser des ressources externes dans un nouveau dossier sans affecter le reste de votre instance. Vous pouvez répéter ce processus pour un maximum de 10 dossiers."
+        "subtitle": ""
       },
       "instance": {
         "description": "Les ressources seront synchronisées avec un stockage externe et mises en service dans cette instance. Les ressources Grafana existantes seront migrées et fusionnées si nécessaire. Après la configuration, toutes les nouvelles ressources et modifications seront enregistrées dans le stockage externe et automatiquement mises en service dans l’instance.",
@@ -12356,6 +12405,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Réduire",
+      "exchange": "",
       "expand": "Développer",
       "loading": "Chargement des tableaux de bord",
       "noResultsForFilter": "Aucun résultat n'a été trouvé pour votre requête",
@@ -12374,8 +12424,10 @@
       "cancel": "Annuler",
       "error-title": "",
       "input": {
-        "placeholder": "Sélectionner les portées...",
-        "removeAll": "Supprimer toutes les portées"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Supprimer toutes les portées",
+        "tooltip": ""
       },
       "title": "Sélectionner les portées"
     },
@@ -12409,10 +12461,12 @@
       }
     },
     "dashboard-actions": {
+      "empty-dashboard": "",
       "import": "Importer",
       "new": "Nouveau",
       "new-dashboard": "Nouveau tableau de bord",
-      "new-folder": "Nouveau dossier"
+      "new-folder": "Nouveau dossier",
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Note"
@@ -13388,17 +13442,20 @@
     }
   },
   "traces": {
+    "adhocFilters": {
+      "customValue": "",
+      "duration1h": "",
+      "duration1m": "",
+      "duration1ms": "",
+      "duration1s": "",
+      "durationLabel": "",
+      "textSearchDescription": "",
+      "textSearchLabel": ""
+    },
     "category-span-filters": "Filtres de durée",
-    "name-critical-path-only": "Afficher uniquement le chemin critique",
-    "name-find-in-trace": "Rechercher dans la trace",
-    "name-max-duration": "Durée maximale",
-    "name-min-duration": "Durée minimale",
-    "name-service-name": "Nom du service",
-    "name-service-name-operator": "Opérateur du nom du service",
+    "name-critical-path-only": "",
+    "name-filters": "",
     "name-show-matches-only": "Afficher uniquement les correspondances",
-    "name-span-name": "Nom de la durée",
-    "name-span-name-operator": "Opérateur du nom de la durée",
-    "name-tags": "Balises",
     "traces-panel": {
       "no-data-found-in-response": "Aucune donnée trouvée dans la réponse"
     }

@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { DashboardDataDTO } from 'app/types/dashboard';
@@ -165,6 +166,46 @@ describe('PanelDataTransformationsTab', () => {
     const reduce = screen.queryByTestId(selectors.components.TransformTab.newTransform('Reduce'));
     expect(reduce).toBeNull();
   });
+
+  it('renders SQL transformation card in empty state when feature toggles are enabled', async () => {
+    const originalTransformationsToggle = config.featureToggles.transformationsEmptyPlaceholder;
+    const originalSqlToggle = config.featureToggles.sqlExpressions;
+
+    config.featureToggles.transformationsEmptyPlaceholder = true;
+    config.featureToggles.sqlExpressions = true;
+
+    try {
+      const modelMock = createModelMock(mockData);
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      // Should show SQL transformation card in empty state
+      expect(screen.getByText('Transform with SQL')).toBeInTheDocument();
+      expect(screen.getByTestId('go-to-queries-button')).toBeInTheDocument();
+    } finally {
+      config.featureToggles.transformationsEmptyPlaceholder = originalTransformationsToggle;
+      config.featureToggles.sqlExpressions = originalSqlToggle;
+    }
+  });
+
+  it('does not render SQL transformation card when sqlExpressions toggle is disabled', async () => {
+    const originalTransformationsToggle = config.featureToggles.transformationsEmptyPlaceholder;
+    const originalSqlToggle = config.featureToggles.sqlExpressions;
+
+    config.featureToggles.transformationsEmptyPlaceholder = true;
+    config.featureToggles.sqlExpressions = false;
+
+    try {
+      const modelMock = createModelMock(mockData);
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      // Should not show SQL transformation card
+      expect(screen.queryByText('SQL Expressions')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('go-to-queries-button')).not.toBeInTheDocument();
+    } finally {
+      config.featureToggles.transformationsEmptyPlaceholder = originalTransformationsToggle;
+      config.featureToggles.sqlExpressions = originalSqlToggle;
+    }
+  });
 });
 
 function setupTabScene(panelId: string) {
@@ -178,5 +219,5 @@ function setupTabScene(panelId: string) {
   // @ts-expect-error
   getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
 
-  return { transformsTab };
+  return { transformsTab, panel };
 }

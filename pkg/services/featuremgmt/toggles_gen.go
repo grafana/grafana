@@ -103,10 +103,6 @@ const (
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
 	FlagLokiLogsDataplane = "lokiLogsDataplane"
 
-	// FlagDataplaneFrontendFallback
-	// Support dataplane contract field name change for transformations and field name matchers where the name is different
-	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
-
 	// FlagDisableSSEDataplane
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
@@ -142,10 +138,6 @@ const (
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
-
-	// FlagTransformationsRedesign
-	// Enables the transformations redesign
-	FlagTransformationsRedesign = "transformationsRedesign"
 
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
@@ -214,10 +206,6 @@ const (
 	// FlagDisableClassicHTTPHistogram
 	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
 	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
-
-	// FlagFormatString
-	// Enable format string transformer
-	FlagFormatString = "formatString"
 
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
@@ -303,10 +291,6 @@ const (
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
 
-	// FlagAddFieldFromCalculationStatFunctions
-	// Add cumulative and window functions to the add field from calculation transformation
-	FlagAddFieldFromCalculationStatFunctions = "addFieldFromCalculationStatFunctions"
-
 	// FlagAlertmanagerRemoteSecondary
 	// Enable Grafana to sync configuration and state with a remote Alertmanager.
 	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
@@ -314,6 +298,10 @@ const (
 	// FlagAlertingProvenanceLockWrites
 	// Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
 	FlagAlertingProvenanceLockWrites = "alertingProvenanceLockWrites"
+
+	// FlagAlertingUIUseBackendFilters
+	// Enables the UI to use certain backend-side filters
+	FlagAlertingUIUseBackendFilters = "alertingUIUseBackendFilters"
 
 	// FlagAlertmanagerRemotePrimary
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
@@ -367,21 +355,9 @@ const (
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
-	// FlagLogRowsPopoverMenu
-	// Enable filtering menu displayed when text of a log line is selected
-	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
-
-	// FlagPluginsSkipHostEnvVars
-	// Disables passing host environment variable to plugin processes
-	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
-
 	// FlagTableSharedCrosshair
 	// Enables shared crosshair in table panel
 	FlagTableSharedCrosshair = "tableSharedCrosshair"
-
-	// FlagRegressionTransformation
-	// Enables regression analysis transformation
-	FlagRegressionTransformation = "regressionTransformation"
 
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
@@ -443,14 +419,6 @@ const (
 	// Enables column autocomplete for SQL Expressions
 	FlagSqlExpressionsColumnAutoComplete = "sqlExpressionsColumnAutoComplete"
 
-	// FlagGroupToNestedTableTransformation
-	// Enables the group to nested table transformation
-	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"
-
-	// FlagNewPDFRendering
-	// New implementation for the dashboard-to-PDF rendering
-	FlagNewPDFRendering = "newPDFRendering"
-
 	// FlagKubernetesAggregator
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -470,6 +438,10 @@ const (
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
+
+	// FlagRefreshTokenRequired
+	// Require that refresh tokens are present in oauth tokens.
+	FlagRefreshTokenRequired = "refreshTokenRequired"
 
 	// FlagNewDashboardWithFiltersAndGroupBy
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
@@ -526,10 +498,6 @@ const (
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
-
-	// FlagPinNavItems
-	// Enables pinning of nav items
-	FlagPinNavItems = "pinNavItems"
 
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
@@ -719,10 +687,6 @@ const (
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 
-	// FlagFeedbackButton
-	// Enables a button to send feedback from the Grafana UI
-	FlagFeedbackButton = "feedbackButton"
-
 	// FlagUnifiedStorageSearchUI
 	// Enable unified storage search UI
 	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
@@ -822,10 +786,6 @@ const (
 	// Enables running Infinity queries in parallel
 	FlagInfinityRunQueriesInParallel = "infinityRunQueriesInParallel"
 
-	// FlagInviteUserExperimental
-	// Renders invite user button along the app
-	FlagInviteUserExperimental = "inviteUserExperimental"
-
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
@@ -833,10 +793,6 @@ const (
 	// FlagAlertingImportYAMLUI
 	// Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
 	FlagAlertingImportYAMLUI = "alertingImportYAMLUI"
-
-	// FlagUnifiedStorageHistoryPruner
-	// Enables the unified storage history pruner
-	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 
 	// FlagAzureMonitorLogsBuilderEditor
 	// Enables the logs builder mode for the Azure Monitor data source
@@ -1086,10 +1042,6 @@ const (
 	// Enable template dashboards
 	FlagDashboardTemplates = "dashboardTemplates"
 
-	// FlagGrafanaAdvisorAppInstaller
-	// Enables Advisor app installer
-	FlagGrafanaAdvisorAppInstaller = "grafanaAdvisorAppInstaller"
-
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"
@@ -1097,4 +1049,16 @@ const (
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
+
+	// FlagTransformationsEmptyPlaceholder
+	// Show transformation quick-start cards in empty transformations state
+	FlagTransformationsEmptyPlaceholder = "transformationsEmptyPlaceholder"
+
+	// FlagTtlPluginInstanceManager
+	// Enable TTL plugin instance manager
+	FlagTtlPluginInstanceManager = "ttlPluginInstanceManager"
+
+	// FlagRudderstackUpgrade
+	// Enables the new version of rudderstack
+	FlagRudderstackUpgrade = "rudderstackUpgrade"
 )

@@ -19,25 +19,23 @@ import (
 )
 
 // getDefaultDatasourceType gets the default datasource type using the datasource provider
-func getDefaultDatasourceType(ctx context.Context, provider schemaversion.DataSourceInfoProvider) string {
+func getDefaultDatasourceType(ctx context.Context, provider schemaversion.DataSourceIndexProvider) string {
 	const defaultType = "grafana"
 
 	if provider == nil {
 		return defaultType
 	}
 
-	datasources := provider.GetDataSourceInfo(ctx)
-	for _, ds := range datasources {
-		if ds.Default {
-			return ds.Type
-		}
+	datasources := provider.Index(ctx)
+	if defaultDS := datasources.GetDefault(); defaultDS != nil {
+		return defaultDS.Type
 	}
 
 	return defaultType
 }
 
 // getDatasourceTypeByUID gets the datasource type by UID using the datasource provider
-func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemaversion.DataSourceInfoProvider) string {
+func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemaversion.DataSourceIndexProvider) string {
 	if uid == "" {
 		return getDefaultDatasourceType(ctx, provider)
 	}
@@ -46,11 +44,9 @@ func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemavers
 		return "grafana"
 	}
 
-	datasources := provider.GetDataSourceInfo(ctx)
-	for _, ds := range datasources {
-		if ds.UID == uid {
-			return ds.Type
-		}
+	dsIndex := provider.Index(ctx)
+	if ds := dsIndex.LookupByUID(uid); ds != nil {
+		return ds.Type
 	}
 
 	return getDefaultDatasourceType(ctx, provider)
@@ -62,9 +58,9 @@ func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemavers
 // A background service identity is used because the user who is reading the specific dashboard
 // may not have access to all the datasources in the dashboard, but the conversion still needs to take place
 // in order to be able to convert between k8s versions.
-func prepareV1beta1ConversionContext(in *dashv1.Dashboard, dsInfoProvider schemaversion.DataSourceInfoProvider) (context.Context, *types.NamespaceInfo, error) {
-	if dsInfoProvider == nil {
-		return nil, nil, fmt.Errorf("datasource provider not initialized")
+func prepareV1beta1ConversionContext(in *dashv1.Dashboard, dsIndexProvider schemaversion.DataSourceIndexProvider) (context.Context, *types.NamespaceInfo, error) {
+	if dsIndexProvider == nil {
+		return nil, nil, fmt.Errorf("datasource index provider not initialized")
 	}
 
 	namespace := in.GetNamespace()
@@ -84,24 +80,24 @@ func prepareV1beta1ConversionContext(in *dashv1.Dashboard, dsInfoProvider schema
 	return ctx, &nsInfo, nil
 }
 
-func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsInfoProvider schemaversion.DataSourceInfoProvider) error {
+func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
 
 	// Prepare context with namespace and service identity
-	// The datasource provider is passed as a parameter (captured in closure when conversions are registered)
-	ctx, _, err := prepareV1beta1ConversionContext(in, dsInfoProvider)
+	// The datasource provider is already wrapped with caching at registration time
+	ctx, _, err := prepareV1beta1ConversionContext(in, dsIndexProvider)
 	if err != nil {
 		// If context preparation fails, return error to be handled by wrapper
 		// The wrapper will set status and handle gracefully
 		return fmt.Errorf("failed to prepare conversion context: %w", err)
 	}
 
-	return convertDashboardSpec_V1beta1_to_V2alpha1(&in.Spec, &out.Spec, scope, ctx, dsInfoProvider)
+	return convertDashboardSpec_V1beta1_to_V2alpha1(&in.Spec, &out.Spec, scope, ctx, dsIndexProvider)
 }
 
-func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope, ctx context.Context, dsInfoProvider schemaversion.DataSourceInfoProvider) error {
+func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope, ctx context.Context, dsIndexProvider schemaversion.DataSourceIndexProvider) error {
 	// Parse the unstructured spec into a dashboard JSON structure
 	dashboardJSON, ok := in.Object["dashboard"]
 	if !ok {
@@ -165,7 +161,7 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	out.Links = transformLinks(dashboard)
 
 	// Transform panels to elements and layout
-	elements, layout, err := transformPanelsToElementsAndLayout(ctx, dashboard, dsInfoProvider)
+	elements, layout, err := transformPanelsToElementsAndLayout(ctx, dashboard, dsIndexProvider)
 	if err != nil {
 		return fmt.Errorf("failed to transform panels: %w", err)
 	}
@@ -173,7 +169,7 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	out.Layout = layout
 
 	// Transform variables
-	variables, err := transformVariables(ctx, dashboard, dsInfoProvider)
+	variables, err := transformVariables(ctx, dashboard, dsIndexProvider)
 	if err != nil {
 		return fmt.Errorf("failed to transform variables: %w", err)
 	}
@@ -391,7 +387,7 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 // Panel transformation constants
 const GRID_ROW_HEIGHT = 1
 
-func transformPanelsToElementsAndLayout(ctx context.Context, dashboard map[string]interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func transformPanelsToElementsAndLayout(ctx context.Context, dashboard map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
 	panels, ok := dashboard["panels"].([]interface{})
 	if !ok {
 		// Return empty elements and default grid layout
@@ -419,13 +415,13 @@ func transformPanelsToElementsAndLayout(ctx context.Context, dashboard map[strin
 	}
 
 	if hasRowPanels {
-		return convertToRowsLayout(ctx, panels, dsInfoProvider)
+		return convertToRowsLayout(ctx, panels, dsIndexProvider)
 	}
 
-	return convertToGridLayout(ctx, panels, dsInfoProvider)
+	return convertToGridLayout(ctx, panels, dsIndexProvider)
 }
 
-func convertToGridLayout(ctx context.Context, panels []interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func convertToGridLayout(ctx context.Context, panels []interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
 	elements := make(map[string]dashv2alpha1.DashboardElement)
 	items := make([]dashv2alpha1.DashboardGridLayoutItemKind, 0, len(panels))
 
@@ -435,7 +431,7 @@ func convertToGridLayout(ctx context.Context, panels []interface{}, dsInfoProvid
 			continue
 		}
 
-		element, elementName, err := buildElement(ctx, panelMap, dsInfoProvider)
+		element, elementName, err := buildElement(ctx, panelMap, dsIndexProvider)
 		if err != nil {
 			continue // Skip invalid panels
 		}
@@ -456,7 +452,7 @@ func convertToGridLayout(ctx context.Context, panels []interface{}, dsInfoProvid
 	return elements, layout, nil
 }
 
-func convertToRowsLayout(ctx context.Context, panels []interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func convertToRowsLayout(ctx context.Context, panels []interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
 	elements := make(map[string]dashv2alpha1.DashboardElement)
 	rows := make([]dashv2alpha1.DashboardRowsLayoutRowKind, 0)
 
@@ -492,7 +488,7 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsInfoProvid
 			if collapsedPanels, ok := panelMap["panels"].([]interface{}); ok {
 				for _, panel := range collapsedPanels {
 					if collapsedPanelMap, ok := panel.(map[string]interface{}); ok {
-						element, name, err := buildElement(ctx, collapsedPanelMap, dsInfoProvider)
+						element, name, err := buildElement(ctx, collapsedPanelMap, dsIndexProvider)
 						if err == nil {
 							elements[name] = element
 							rowElements = append(rowElements, buildGridItemKind(collapsedPanelMap, name, int64Ptr(yOffsetInRows(collapsedPanelMap, legacyRowY))))
@@ -504,7 +500,7 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsInfoProvid
 			currentRow = buildRowKind(panelMap, rowElements)
 		} else {
 			// Regular panel
-			element, elementName, err := buildElement(ctx, panelMap, dsInfoProvider)
+			element, elementName, err := buildElement(ctx, panelMap, dsIndexProvider)
 			if err != nil {
 				continue // Skip invalid panels
 			}
@@ -566,7 +562,7 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsInfoProvid
 	return elements, layout, nil
 }
 
-func buildElement(ctx context.Context, panelMap map[string]interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider) (dashv2alpha1.DashboardElement, string, error) {
+func buildElement(ctx context.Context, panelMap map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) (dashv2alpha1.DashboardElement, string, error) {
 	panelID := getIntField(panelMap, "id", 0)
 	elementName := fmt.Sprintf("panel-%d", panelID)
 
@@ -592,7 +588,7 @@ func buildElement(ctx context.Context, panelMap map[string]interface{}, dsInfoPr
 	}
 
 	// Regular panel
-	panelKind, err := buildPanelKind(ctx, panelMap, dsInfoProvider)
+	panelKind, err := buildPanelKind(ctx, panelMap, dsIndexProvider)
 	if err != nil {
 		return dashv2alpha1.DashboardElement{}, "", err
 	}
@@ -604,11 +600,11 @@ func buildElement(ctx context.Context, panelMap map[string]interface{}, dsInfoPr
 	return element, elementName, nil
 }
 
-func buildPanelKind(ctx context.Context, panelMap map[string]interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider) (*dashv2alpha1.DashboardPanelKind, error) {
+func buildPanelKind(ctx context.Context, panelMap map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) (*dashv2alpha1.DashboardPanelKind, error) {
 	panelID := float64(getIntField(panelMap, "id", 0))
 
 	// Transform queries
-	queries := transformPanelQueries(ctx, panelMap, dsInfoProvider)
+	queries := transformPanelQueries(ctx, panelMap, dsIndexProvider)
 
 	// Transform transformations
 	transformations := transformPanelTransformations(panelMap)
@@ -864,7 +860,7 @@ func transformVariableSortToEnum(sort interface{}) dashv2alpha1.DashboardVariabl
 	}
 }
 
-func transformVariables(ctx context.Context, dashboard map[string]interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider) ([]dashv2alpha1.DashboardVariableKind, error) {
+func transformVariables(ctx context.Context, dashboard map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) ([]dashv2alpha1.DashboardVariableKind, error) {
 	templating, ok := dashboard["templating"].(map[string]interface{})
 	if !ok {
 		return []dashv2alpha1.DashboardVariableKind{}, nil
@@ -889,11 +885,11 @@ func transformVariables(ctx context.Context, dashboard map[string]interface{}, d
 
 		switch varType {
 		case "query":
-			if queryVar, err := buildQueryVariable(ctx, varMap, commonProps, dsInfoProvider); err == nil {
+			if queryVar, err := buildQueryVariable(ctx, varMap, commonProps, dsIndexProvider); err == nil {
 				variables = append(variables, queryVar)
 			}
 		case "datasource":
-			if dsVar, err := buildDatasourceVariable(ctx, varMap, commonProps, dsInfoProvider); err == nil {
+			if dsVar, err := buildDatasourceVariable(ctx, varMap, commonProps, dsIndexProvider); err == nil {
 				variables = append(variables, dsVar)
 			}
 		case "custom":
@@ -901,7 +897,7 @@ func transformVariables(ctx context.Context, dashboard map[string]interface{}, d
 				variables = append(variables, customVar)
 			}
 		case "adhoc":
-			if adhocVar, err := buildAdhocVariable(ctx, varMap, commonProps, dsInfoProvider); err == nil {
+			if adhocVar, err := buildAdhocVariable(ctx, varMap, commonProps, dsIndexProvider); err == nil {
 				variables = append(variables, adhocVar)
 			}
 		case "constant":
@@ -917,7 +913,7 @@ func transformVariables(ctx context.Context, dashboard map[string]interface{}, d
 				variables = append(variables, textVar)
 			}
 		case "groupby":
-			if groupByVar, err := buildGroupByVariable(ctx, varMap, commonProps, dsInfoProvider); err == nil {
+			if groupByVar, err := buildGroupByVariable(ctx, varMap, commonProps, dsIndexProvider); err == nil {
 				variables = append(variables, groupByVar)
 			}
 		default:
@@ -1062,8 +1058,11 @@ func buildDataQueryKind(query interface{}, datasourceType string) dashv2alpha1.D
 		querySpec = make(map[string]interface{})
 	}
 
+	// Use datasourceType as the kind (datasource type, e.g., "prometheus", "elasticsearch")
+	kind := datasourceType
+
 	return dashv2alpha1.DashboardDataQueryKind{
-		Kind: "DataQuery",
+		Kind: kind,
 		Spec: querySpec,
 	}
 }
@@ -1086,14 +1085,17 @@ func buildDataQueryKindForVariable(query interface{}, datasourceType string) das
 		querySpec = make(map[string]interface{})
 	}
 
+	// Use datasourceType as the kind (datasource type, e.g., "prometheus", "elasticsearch")
+	kind := datasourceType
+
 	return dashv2alpha1.DashboardDataQueryKind{
-		Kind: "DataQuery",
+		Kind: kind,
 		Spec: querySpec,
 	}
 }
 
 // Query Variable
-func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties, dsInfoProvider schemaversion.DataSourceInfoProvider) (dashv2alpha1.DashboardVariableKind, error) {
+func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties, dsIndexProvider schemaversion.DataSourceIndexProvider) (dashv2alpha1.DashboardVariableKind, error) {
 	datasource := varMap["datasource"]
 	var datasourceType, datasourceUID string
 
@@ -1104,13 +1106,13 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 		// If we have a UID, use it to get the correct type from the datasource service
 		// BUT: Don't try to resolve types for template variables
 		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
-			datasourceType = getDatasourceTypeByUID(ctx, datasourceUID, dsInfoProvider)
+			datasourceType = getDatasourceTypeByUID(ctx, datasourceUID, dsIndexProvider)
 		} else if datasourceUID == "" && datasourceType == "" {
 			// If no UID and no type, use default
-			datasourceType = getDefaultDatasourceType(ctx, dsInfoProvider)
+			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
 	} else {
-		datasourceType = getDefaultDatasourceType(ctx, dsInfoProvider)
+		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
 
 	queryVar := &dashv2alpha1.DashboardQueryVariableKind{
@@ -1161,8 +1163,8 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 }
 
 // Datasource Variable
-func buildDatasourceVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties, dsInfoProvider schemaversion.DataSourceInfoProvider) (dashv2alpha1.DashboardVariableKind, error) {
-	pluginId := getDefaultDatasourceType(ctx, dsInfoProvider)
+func buildDatasourceVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties, dsIndexProvider schemaversion.DataSourceIndexProvider) (dashv2alpha1.DashboardVariableKind, error) {
+	pluginId := getDefaultDatasourceType(ctx, dsIndexProvider)
 	if query := varMap["query"]; query != nil {
 		if queryStr, ok := query.(string); ok {
 			pluginId = queryStr
@@ -1370,7 +1372,7 @@ func buildTextVariable(varMap map[string]interface{}, commonProps CommonVariable
 }
 
 // Adhoc Variable
-func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties, dsInfoProvider schemaversion.DataSourceInfoProvider) (dashv2alpha1.DashboardVariableKind, error) {
+func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties, dsIndexProvider schemaversion.DataSourceIndexProvider) (dashv2alpha1.DashboardVariableKind, error) {
 	datasource := varMap["datasource"]
 	var datasourceType, datasourceUID string
 
@@ -1381,13 +1383,13 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		// If we have a UID, use it to get the correct type from the datasource service
 		// BUT: Don't try to resolve types for template variables
 		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
-			datasourceType = getDatasourceTypeByUID(ctx, datasourceUID, dsInfoProvider)
+			datasourceType = getDatasourceTypeByUID(ctx, datasourceUID, dsIndexProvider)
 		} else if datasourceUID == "" && datasourceType == "" {
 			// If no UID and no type, use default
-			datasourceType = getDefaultDatasourceType(ctx, dsInfoProvider)
+			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
 	} else {
-		datasourceType = getDefaultDatasourceType(ctx, dsInfoProvider)
+		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
 
 	adhocVar := &dashv2alpha1.DashboardAdhocVariableKind{
@@ -1532,7 +1534,7 @@ func transformMetricFindValues(values []interface{}) []dashv2alpha1.DashboardMet
 }
 
 // GroupBy Variable
-func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties, dsInfoProvider schemaversion.DataSourceInfoProvider) (dashv2alpha1.DashboardVariableKind, error) {
+func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties, dsIndexProvider schemaversion.DataSourceIndexProvider) (dashv2alpha1.DashboardVariableKind, error) {
 	datasource := varMap["datasource"]
 	var datasourceType, datasourceUID string
 
@@ -1543,13 +1545,13 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 		// If we have a UID, use it to get the correct type from the datasource service
 		// BUT: Don't try to resolve types for template variables
 		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
-			datasourceType = getDatasourceTypeByUID(ctx, datasourceUID, dsInfoProvider)
+			datasourceType = getDatasourceTypeByUID(ctx, datasourceUID, dsIndexProvider)
 		} else if datasourceUID == "" && datasourceType == "" {
 			// If no UID and no type, use default
-			datasourceType = getDefaultDatasourceType(ctx, dsInfoProvider)
+			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
 	} else {
-		datasourceType = getDefaultDatasourceType(ctx, dsInfoProvider)
+		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
 
 	groupByVar := &dashv2alpha1.DashboardGroupByVariableKind{
@@ -1633,9 +1635,11 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 
 	// Build the query from target
 	var query *dashv2alpha1.DashboardDataQueryKind
+	// Use datasourceType as the kind (datasource type, e.g., "prometheus", "grafana")
+	kind := datasourceType
 	if target, ok := annotationMap["target"].(map[string]interface{}); ok && target != nil {
 		queryKind := dashv2alpha1.DashboardDataQueryKind{
-			Kind: "DataQuery",
+			Kind: kind,
 			Spec: target,
 		}
 		// Group field is not available in v2alpha1 DashboardDataQueryKind
@@ -1643,7 +1647,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	} else {
 		// Always provide a query to match frontend behavior
 		queryKind := dashv2alpha1.DashboardDataQueryKind{
-			Kind: "DataQuery",
+			Kind: kind,
 			Spec: map[string]interface{}{},
 		}
 		// Group field is not available in v2alpha1 DashboardDataQueryKind
@@ -1740,7 +1744,7 @@ func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.Dashb
 
 // Panel helper functions
 
-func transformPanelQueries(ctx context.Context, panelMap map[string]interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider) []dashv2alpha1.DashboardPanelQueryKind {
+func transformPanelQueries(ctx context.Context, panelMap map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) []dashv2alpha1.DashboardPanelQueryKind {
 	targets, ok := panelMap["targets"].([]interface{})
 	if !ok {
 		return []dashv2alpha1.DashboardPanelQueryKind{}
@@ -1755,10 +1759,10 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 		// If we have a UID, use it to get the correct type from the datasource service
 		// BUT: Don't try to resolve types for template variables
 		if dsUID != "" && dsType == "" && !isTemplateVariable(dsUID) {
-			dsType = getDatasourceTypeByUID(ctx, dsUID, dsInfoProvider)
+			dsType = getDatasourceTypeByUID(ctx, dsUID, dsIndexProvider)
 		} else if dsUID == "" && dsType == "" {
 			// If no UID and no type, use default
-			dsType = getDefaultDatasourceType(ctx, dsInfoProvider)
+			dsType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
 
 		panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
@@ -1771,7 +1775,7 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 
 	for _, target := range targets {
 		if targetMap, ok := target.(map[string]interface{}); ok {
-			query := transformSingleQuery(ctx, targetMap, panelDatasource, dsInfoProvider)
+			query := transformSingleQuery(ctx, targetMap, panelDatasource, dsIndexProvider)
 			queries = append(queries, query)
 		}
 	}
@@ -1779,7 +1783,7 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 	return queries
 }
 
-func transformSingleQuery(ctx context.Context, targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef, dsInfoProvider schemaversion.DataSourceInfoProvider) dashv2alpha1.DashboardPanelQueryKind {
+func transformSingleQuery(ctx context.Context, targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef, dsIndexProvider schemaversion.DataSourceIndexProvider) dashv2alpha1.DashboardPanelQueryKind {
 	refId := schemaversion.GetStringValue(targetMap, "refId", "A")
 	hidden := getBoolField(targetMap, "hide", false)
 
@@ -1793,7 +1797,7 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 		// If we have a UID, use it to get the correct type from the datasource service
 		// BUT: Don't try to resolve types for template variables
 		if queryDatasourceUID != "" && queryDatasourceType == "" && !isTemplateVariable(queryDatasourceUID) {
-			queryDatasourceType = getDatasourceTypeByUID(ctx, queryDatasourceUID, dsInfoProvider)
+			queryDatasourceType = getDatasourceTypeByUID(ctx, queryDatasourceUID, dsIndexProvider)
 		}
 	} else if panelDatasource != nil {
 		// Only use panel datasource if it's not a mixed datasource
