@@ -380,7 +380,7 @@ describe('setupKeyboardShortcuts', () => {
         expect(newCenter).toBe(originalCenter);
       });
 
-      it('should handle zero timespan edge case', () => {
+      it('should do nothing when timespan is zero', () => {
         mockTimeRange.state.value.from.valueOf = () => new Date('2024-01-01 12:00:00').getTime();
         mockTimeRange.state.value.to.valueOf = () => new Date('2024-01-01 12:00:00').getTime(); // Same time
 
@@ -391,13 +391,8 @@ describe('setupKeyboardShortcuts', () => {
 
         handler();
 
-        const call = mockTimeRange.onTimeRangeChange.mock.calls[0][0];
-        const newSpan = call.to.valueOf() - call.from.valueOf();
-
-        // Should default to 30 seconds when timespan is 0, then scale by 0.5
-        // But the scale is applied to 30000, so result is still 30000 * 0.5 = 15000
-        // However, the implementation applies scale to create newTimespan, so it's 30000
-        expect(newSpan).toBe(30000); // 30 seconds default
+        // Should not call onTimeRangeChange when timespan is 0
+        expect(mockTimeRange.onTimeRangeChange).not.toHaveBeenCalled();
       });
     });
   });

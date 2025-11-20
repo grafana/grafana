@@ -286,8 +286,13 @@ function handleZoom(scene: DashboardScene, scale: number) {
   const timeRange = sceneGraph.getTimeRange(scene);
   const currentRange = timeRange.state.value;
   const timespan = currentRange.to.valueOf() - currentRange.from.valueOf();
+
+  if (timespan === 0) {
+    return;
+  }
+
   const center = currentRange.to.valueOf() - timespan / 2;
-  const newTimespan = timespan === 0 ? 30000 : timespan * scale;
+  const newTimespan = timespan * scale;
 
   const to = center + newTimespan / 2;
   const from = center - newTimespan / 2;
