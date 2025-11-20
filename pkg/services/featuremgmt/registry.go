@@ -1299,13 +1299,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:         "feedbackButton",
-			Description:  "Enables a button to send feedback from the Grafana UI",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOperatorExperienceSquad,
-			HideFromDocs: true,
-		},
-		{
 			Name:              "unifiedStorageSearchUI",
 			Description:       "Enable unified storage search UI",
 			Stage:             FeatureStageExperimental,

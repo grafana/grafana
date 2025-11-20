@@ -687,10 +687,6 @@ const (
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 
-	// FlagFeedbackButton
-	// Enables a button to send feedback from the Grafana UI
-	FlagFeedbackButton = "feedbackButton"
-
 	// FlagUnifiedStorageSearchUI
 	// Enable unified storage search UI
 	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
