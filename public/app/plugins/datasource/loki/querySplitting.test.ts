@@ -97,15 +97,52 @@ describe('runSplitQuery()', () => {
     });
   });
 
-  test('Retries retriable failed requests', async () => {
+  test('Retries retriable failed requests (timeout)', async () => {
     jest
       .mocked(datasource.runQuery)
       .mockReturnValueOnce(
         of({ state: LoadingState.Error, errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }], data: [] })
       );
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-      // 3 days, 3 chunks, 1 retry, 4 requests.
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+      expect(response[0].state).toBe(LoadingState.Done);
+      // 3 days, 3 chunks, 1 retry = 4 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  test('Does not retry max bytes errors (error on initial)', async () => {
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(
+        of({
+          state: LoadingState.Error,
+          errors: [{ refId: 'A', message: LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX }],
+          data: [],
+        })
+      );
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+      expect(response[0].state).toBe(LoadingState.Error);
+      // Stop immediately
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test('Does not retry max bytes errors (error on subsequent)', async () => {
+    const { logFrameA } = getMockFrames();
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(of({ data: [logFrameA], refId: 'A' }))
+      .mockReturnValueOnce(
+        of({
+          state: LoadingState.Error,
+          errors: [{ refId: 'A', message: LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX }],
+          data: [],
+        })
+      );
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+      expect(response[0].state).toBe(LoadingState.Error);
+      // Stop immediately after error
+      expect(datasource.runQuery).toHaveBeenCalledTimes(2);
     });
   });
 
