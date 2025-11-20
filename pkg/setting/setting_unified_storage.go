@@ -60,7 +60,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	section := cfg.Raw.Section("unified_storage")
 	// TODO: Re-enable once migrations are ready and disabled on cloud
 	//cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
-	cfg.DisableDataMigrations = true
+	cfg.DisableDataMigrations = false
 	if !cfg.DisableDataMigrations && cfg.getUnifiedStorageType() == "unified" {
 		cfg.enforceMigrationToUnifiedConfigs()
 	} else {

@@ -11,6 +11,7 @@ import (
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -24,6 +25,7 @@ type UnifiedStorageMigrationServiceImpl struct {
 	cfg      *setting.Cfg
 	sqlStore db.DB
 	kv       kvstore.KVStore
+	client   resource.ResourceClient
 }
 
 var _ contract.UnifiedStorageMigrationService = (*UnifiedStorageMigrationServiceImpl)(nil)
@@ -35,12 +37,14 @@ func ProvideUnifiedStorageMigrationService(
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	kv kvstore.KVStore,
+	client resource.ResourceClient,
 ) contract.UnifiedStorageMigrationService {
 	return &UnifiedStorageMigrationServiceImpl{
 		migrator: migrator,
 		cfg:      cfg,
 		sqlStore: sqlStore,
 		kv:       kv,
+		client:   client,
 	}
 }
 
@@ -61,8 +65,8 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 	// TODO: Re-enable once migrations are ready
 	// TODO: add guarantee that this only runs once
-	// return RegisterMigrations(p.migrator, p.cfg, p.sqlStore)
-	return nil
+	return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client)
+	// return nil
 }
 
 // RegisterMigrations initializes and registers all unified storage migrations.
@@ -73,6 +77,7 @@ func RegisterMigrations(
 	migrator UnifiedMigrator,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
+	client resource.ResourceClient,
 ) error {
 	ctx, span := tracer.Start(context.Background(), "storage.unified.RegisterMigrations")
 	defer span.End()
@@ -85,7 +90,7 @@ func RegisterMigrations(
 
 	// Register resource migrations
 	// To add a new resource type, simply add another migration here with the appropriate resources
-	registerResourceMigrations(mg, migrator)
+	registerResourceMigrations(mg, migrator, client)
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
@@ -101,7 +106,7 @@ func RegisterMigrations(
 
 // registerResourceMigrations registers all unified storage resource migrations.
 // Add new resource types here by creating additional ResourceMigration instances.
-func registerResourceMigrations(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator) {
+func registerResourceMigrations(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
 	dashboardsAndFolders := NewResourceMigration(
 		migrator,
 		[]schema.GroupResource{
@@ -109,10 +114,11 @@ func registerResourceMigrations(mg *sqlstoremigrator.Migrator, migrator UnifiedM
 			{Group: "dashboard.grafana.app", Resource: "dashboards"},
 		},
 		"folders-dashboards",
-		NewLegacyTableCountValidator(map[string]LegacyTableInfo{
+		NewCountValidator(map[string]LegacyTableInfo{
 			"folder.grafana.app/folders":       {Table: "dashboard", WhereClause: "org_id = ? and is_folder = true"},
 			"dashboard.grafana.app/dashboards": {Table: "dashboard", WhereClause: "org_id = ? and is_folder = false"},
 		}),
+		client, // Pass the resource client for validation
 	)
 	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
 }
