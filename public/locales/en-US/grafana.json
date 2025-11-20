@@ -8995,6 +8995,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Use right y-axis"
     },
+    "sidebar": {
+      "close": "Close",
+      "dock": "Dock",
+      "undock": "Undock"
+    },
     "slider": {
       "drag-handle-aria-label": "Use arrow keys to change the value"
     },
