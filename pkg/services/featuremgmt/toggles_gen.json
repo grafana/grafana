@@ -2875,6 +2875,19 @@
     },
     {
       "metadata": {
+        "name": "newTimeRangeZoomShortcuts",
+        "resourceVersion": "1763646782694",
+        "creationTimestamp": "2025-11-20T13:53:02Z"
+      },
+      "spec": {
+        "description": "Enables new keyboard shortcuts for time range zoom operations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "newVizSuggestions",
         "resourceVersion": "1762456851857",
         "creationTimestamp": "2025-11-12T19:26:29Z"
