@@ -1,13 +1,12 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FlexItem } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { ToolbarActionProps } from '../scene/new-toolbar/types';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { DashboardOutline } from './DashboardOutline';
@@ -74,15 +73,25 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
         </Sidebar.OpenPane>
       )}
       <Sidebar.Toolbar>
-        <Sidebar.Button icon="download-alt" title="Export" />
         {isEditing && (
           <>
-            <Sidebar.Divider />
-            <Sidebar.Button icon="corner-up-left" title={'Undo'} />
-            <Sidebar.Button icon="corner-up-right" title={'Redo'} />
+            {config.featureToggles.dashboardUndoRedo && (
+              <>
+                <UndoButton dashboard={dashboard} />
+                <RedoButton dashboard={dashboard} />
+              </>
+            )}
+            <Sidebar.Button
+              icon="cog"
+              onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
+              title={t('dashboard.sidebar.dashboard-options', 'Options')}
+              tooltip={t('dashboard.sidebar.dashboard-options-tooltip', 'Dashboard options')}
+              active={selectedObject === dashboard ? true : false}
+            />
           </>
         )}
         <Sidebar.Divider />
+        <Sidebar.Button icon="download-alt" title={t('dashboard.sidebar.export', 'Export')} />
         <Sidebar.Button
           icon="list-ui-alt"
           onClick={() => editPane.openPane('outline')}
@@ -90,17 +99,43 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           tooltip={t('dashboard.sidebar.outline-tooltip', 'Content outline')}
           active={openPane === 'outline'}
         ></Sidebar.Button>
-        {isEditing && (
-          <Sidebar.Button
-            icon="cog"
-            onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
-            title={t('dashboard.sidebar.dashboard-options', 'Options')}
-            tooltip={t('dashboard.sidebar.dashboard-options-tooltip', 'Dashboard options')}
-            active={selectedObject === dashboard ? true : false}
-          />
-        )}
-        <FlexItem grow={1} />
       </Sidebar.Toolbar>
     </>
+  );
+}
+
+function UndoButton({ dashboard }: ToolbarActionProps) {
+  const editPane = dashboard.state.editPane;
+  const { undoStack } = editPane.useState();
+  const undoAction = undoStack[undoStack.length - 1];
+  const undoWord = t('dashboard.sidebar.undo', 'Undo');
+  const tooltip = `${undoWord}${undoAction?.description ? ` ${undoAction.description}` : ''}`;
+
+  return (
+    <Sidebar.Button
+      icon="corner-up-left"
+      disabled={undoStack.length === 0}
+      onClick={() => editPane.undoAction()}
+      title={undoWord}
+      tooltip={tooltip}
+    />
+  );
+}
+
+function RedoButton({ dashboard }: ToolbarActionProps) {
+  const editPane = dashboard.state.editPane;
+  const { redoStack } = editPane.useState();
+  const redoAction = redoStack[redoStack.length - 1];
+  const redoWord = t('dashboard.sidebar.redo', 'Redo');
+  const tooltip = `${redoWord}${redoAction?.description ? ` ${redoAction.description}` : ''}`;
+
+  return (
+    <Sidebar.Button
+      icon="corner-up-right"
+      disabled={redoStack.length === 0}
+      title={redoWord}
+      tooltip={tooltip}
+      onClick={() => editPane.redoAction()}
+    />
   );
 }

@@ -17,9 +17,10 @@ export interface Props {
   onClick?: () => void;
   title: string;
   tooltip?: string;
+  disabled?: boolean;
 }
 
-export function SidebarButton({ icon, active, onClick, title, tooltip }: Props) {
+export function SidebarButton({ icon, active, onClick, title, tooltip, disabled }: Props) {
   const styles = useStyles2(getStyles);
   const context = useContext(SidebarContext);
 
@@ -36,7 +37,14 @@ export function SidebarButton({ icon, active, onClick, title, tooltip }: Props) 
 
   return (
     <Tooltip content={tooltip ?? title} placement={context.position === 'left' ? 'right' : 'left'}>
-      <button className={buttonClass} aria-label={title} aria-expanded={active} type="button" onClick={onClick}>
+      <button
+        className={buttonClass}
+        aria-label={title}
+        aria-expanded={active}
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+      >
         <div className={styles.iconWrapper}>{renderIcon(icon, context.compact)}</div>
         {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
       </button>

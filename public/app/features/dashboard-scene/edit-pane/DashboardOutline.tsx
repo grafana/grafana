@@ -26,7 +26,7 @@ export function DashboardOutline({ editPane, isEditing }: Props) {
   return (
     <>
       <Sidebar.PaneHeader
-        title={t('dashboard-scene.dashboard-edit-pane-renderer.outline', 'Content outline')}
+        title={t('dashboard.outline.pane-header', 'Content outline')}
         onClose={() => editPane.closePane()}
       />
       <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
