@@ -22,8 +22,6 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.section).click();
-
       // Should be able to click Variables item in outline to see add variable button
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
       await expect(

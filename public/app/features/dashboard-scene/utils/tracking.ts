@@ -46,7 +46,7 @@ export const trackDeleteDashboardElement = (element: EditableDashboardElementInf
 
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   DashboardInteractions.editButtonClicked({
-    outlineExpanded: !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', true),
+    outlineExpanded: !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', false),
     dashboardUid,
   });
 };
