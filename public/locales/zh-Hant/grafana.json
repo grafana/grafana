@@ -8553,7 +8553,9 @@
       "saving": "正在儲存<1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "線性臨界值",
+      "linear-threshold": {
+        "label": "線性臨界值"
+      },
       "log-base": "日誌基礎"
     },
     "builder": {

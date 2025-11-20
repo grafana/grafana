@@ -8661,7 +8661,9 @@
       "saving": "Zapisywanie <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Próg liniowy",
+      "linear-threshold": {
+        "label": "Próg liniowy"
+      },
       "log-base": "Baza logów"
     },
     "builder": {

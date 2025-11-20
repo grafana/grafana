@@ -8589,7 +8589,9 @@
       "saving": "Salvataggio in corso di <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Soglia lineare",
+      "linear-threshold": {
+        "label": "Soglia lineare"
+      },
       "log-base": "Base logaritmica"
     },
     "builder": {

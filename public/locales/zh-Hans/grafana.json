@@ -8553,7 +8553,9 @@
       "saving": "正在保存<1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "线性阈值",
+      "linear-threshold": {
+        "label": "线性阈值"
+      },
       "log-base": "记录基础"
     },
     "builder": {

@@ -8553,7 +8553,9 @@
       "saving": "Menyimpan <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Ambang linear",
+      "linear-threshold": {
+        "label": "Ambang linear"
+      },
       "log-base": "Basis log"
     },
     "builder": {

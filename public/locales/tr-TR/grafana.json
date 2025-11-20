@@ -8589,7 +8589,9 @@
       "saving": "<1></1> kaydediliyor"
     },
     "axis-builder": {
-      "linear-threshold": "Doğrusal eşik",
+      "linear-threshold": {
+        "label": "Doğrusal eşik"
+      },
       "log-base": "Günlük tabanı"
     },
     "builder": {

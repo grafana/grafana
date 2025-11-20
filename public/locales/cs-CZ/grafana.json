@@ -8661,7 +8661,9 @@
       "saving": "Ukládání <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineární práh",
+      "linear-threshold": {
+        "label": "Lineární práh"
+      },
       "log-base": "Základ protokolu"
     },
     "builder": {
