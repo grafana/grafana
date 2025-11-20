@@ -139,6 +139,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
                 sceneObject={child}
                 editPane={editPane}
                 depth={depth + 1}
+                isEditing={isEditing}
                 index={i}
               />
             ))

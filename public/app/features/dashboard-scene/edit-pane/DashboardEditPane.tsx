@@ -91,14 +91,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
   }
 
-  public openPane(openPane: string) {
-    if (openPane === this.state.openPane) {
-      openPane = '';
-    }
-
-    this.setState({ openPane });
-  }
-
   private performPanelEditAction(action: DashboardEditActionEvent) {
     // Some layout items are not yet active when leaving panel edit, let's wait for them to activate
     if (!action.payload.source.isActive) {
@@ -222,6 +214,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public selectObject(obj: SceneObject, id: string, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+    if (this.state.openPane !== '') {
+      this.setState({ openPane: '' });
+    }
+
     if (!force) {
       if (multi) {
         if (this.state.selection?.hasValue(id)) {
@@ -274,6 +270,18 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
 
     this.updateSelection(undefined, []);
+  }
+
+  public openPane(openPane: string) {
+    if (openPane === this.state.openPane) {
+      openPane = '';
+    }
+
+    if (openPane !== '' && this.state.selection) {
+      this.clearSelection();
+    }
+
+    this.setState({ openPane });
   }
 
   public closePane() {

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FlexItem } from '@grafana/plugin-ui';
 import { useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
@@ -85,41 +86,21 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
         <Sidebar.Button
           icon="list-ui-alt"
           onClick={() => editPane.openPane('outline')}
-          title="Outline"
-          tooltip="Content outline"
+          title={t('dashboard.sidebar.outline', 'Outline')}
+          tooltip={t('dashboard.sidebar.outline-tooltip', 'Content outline')}
           active={openPane === 'outline'}
         ></Sidebar.Button>
         {isEditing && (
           <Sidebar.Button
             icon="cog"
             onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
-            title="Options"
+            title={t('dashboard.sidebar.dashboard-options', 'Options')}
+            tooltip={t('dashboard.sidebar.dashboard-options-tooltip', 'Dashboard options')}
             active={selectedObject === dashboard ? true : false}
-          ></Sidebar.Button>
+          />
         )}
         <FlexItem grow={1} />
       </Sidebar.Toolbar>
     </>
   );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    splitter: css({
-      '&::after': {
-        background: 'transparent',
-        transform: 'unset',
-        width: '100%',
-        height: '1px',
-        top: '100%',
-        left: '0',
-      },
-    }),
-    outlineContainer: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
-      overflow: 'hidden',
-    }),
-  };
 }
