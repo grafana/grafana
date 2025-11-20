@@ -42,7 +42,7 @@ require (
 	github.com/google/go-github/v64 v64.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37 // indirect
+	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4 // indirect
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // indirect
 	github.com/grafana/grafana-app-sdk v0.48.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
