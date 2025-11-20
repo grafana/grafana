@@ -60,14 +60,15 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 
 func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	type TestCase struct {
-		desc           string
-		id             int64
-		body           string
-		permissions    []accesscontrol.Permission
-		tokenTTL       int64
-		expectedErr    error
-		expectedAPIKey *apikey.APIKey
-		expectedCode   int
+		desc                    string
+		id                      int64
+		body                    string
+		permissions             []accesscontrol.Permission
+		tokenTTL                int64
+		tokenExpirationDayLimit int
+		expectedErr             error
+		expectedAPIKey          *apikey.APIKey
+		expectedCode            int
 	}
 
 	tests := []TestCase{
@@ -105,12 +106,58 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
 			expectedCode: http.StatusBadRequest,
 		},
+		{
+			desc:         "should not be able to create token for service account if max ttl is configured and exceeds the limit",
+			id:           1,
+			body:         `{"name": "test", "secondsToLive": 11000}`,
+			tokenTTL:     10000,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			desc:           "should be able to create token for service account if max ttl is configured and within the limit",
+			id:             1,
+			body:           `{"name": "test", "secondsToLive": 5000}`,
+			tokenTTL:       10000,
+			permissions:    []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedAPIKey: &apikey.APIKey{},
+			expectedCode:   http.StatusOK,
+		},
+		{
+			desc:                    "should not be able to create token for service account if token expiration day limit is configured but not set in body",
+			id:                      1,
+			body:                    `{"name": "test"}`,
+			tokenTTL:                -1,
+			tokenExpirationDayLimit: 30,
+			permissions:             []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedCode:            http.StatusBadRequest,
+		},
+		{
+			desc:                    "should not be able to create token for service account if token expiration day limit is configured and exceeds the limit",
+			id:                      1,
+			body:                    `{"name": "test", "secondsToLive": 340000}`, // 340000 seconds is > 3 days
+			tokenTTL:                -1,
+			tokenExpirationDayLimit: 3,
+			permissions:             []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedCode:            http.StatusBadRequest,
+		},
+		{
+			desc:                    "should be able to create token for service account if token expiration day limit is configured and within the limit",
+			id:                      1,
+			body:                    `{"name": "test", "secondsToLive": 250000}`, // 250000 seconds is almost 3 days
+			tokenTTL:                -1,
+			tokenExpirationDayLimit: 3,
+			permissions:             []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedAPIKey:          &apikey.APIKey{},
+			expectedCode:            http.StatusOK,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
 				a.cfg.ApiKeyMaxSecondsToLive = tt.tokenTTL
+				a.cfg.SATokenExpirationDayLimit = tt.tokenExpirationDayLimit
 				a.service = &satests.FakeServiceAccountService{
 					ExpectedErr:    tt.expectedErr,
 					ExpectedAPIKey: tt.expectedAPIKey,

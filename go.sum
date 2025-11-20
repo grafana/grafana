@@ -1661,8 +1661,8 @@ github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLm
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000/go.mod h1:/ZklAgE1i4f3Z8uriXwESmCr1VLF8lBGaJspuaGuf78=
 github.com/grafana/loki/v3 v3.2.1 h1:VB7u+KHfvL5aHAxgoVBvz5wVhsdGuqKC7uuOFOOe7jw=
 github.com/grafana/loki/v3 v3.2.1/go.mod h1:WvdLl6wOS+yahaeQY+xhD2m2XzkHDfKr5FZaX7D/X2Y=
-github.com/grafana/nanogit v0.0.0-20251106115617-c622d3e0fc4b h1:rFjoqJFb2KxJ29K9ltuWRSsdA46SbN0GCxoQc36h5kg=
-github.com/grafana/nanogit v0.0.0-20251106115617-c622d3e0fc4b/go.mod h1:ToqLjIdvV3AZQa3K6e5m9hy/nsGaUByc2dWQlctB9iA=
+github.com/grafana/nanogit v0.3.0 h1:XNEef+4Vi+465ZITJs/g/xgnDRJbWhhJ7iQrAnWZ0oQ=
+github.com/grafana/nanogit v0.3.0/go.mod h1:6s6CCTpyMOHPpcUZaLGI+rgBEKdmxVbhqSGgCK13j7Y=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604 h1:aXfUhVN/Ewfpbko2CCtL65cIiGgwStOo4lWH2b6gw2U=
@@ -2295,8 +2295,8 @@ github.com/prometheus/common v0.45.0/go.mod h1:YJmSTw9BoKxJplESWWxlbyttQR4uaEcGy
 github.com/prometheus/common v0.48.0/go.mod h1:0/KsvlIEfPQCQ5I2iNSAWKPZziNCvRs5EC6ILDTlAPc=
 github.com/prometheus/common v0.55.0/go.mod h1:2SECS4xJG1kd8XF9IcM1gMX6510RAEL65zxzNImwdc8=
 github.com/prometheus/common v0.60.1/go.mod h1:h0LYf1R1deLSKtD4Vdg8gy4RuOvENW2J/h19V5NADQw=
-github.com/prometheus/common v0.67.2 h1:PcBAckGFTIHt2+L3I33uNRTlKTplNzFctXcWhPyAEN8=
-github.com/prometheus/common v0.67.2/go.mod h1:63W3KZb1JOKgcjlIr64WW/LvFGAqKPj0atm+knVGEko=
+github.com/prometheus/common v0.67.3 h1:shd26MlnwTw5jksTDhC7rTQIteBxy+ZZDr3t7F2xN2Q=
+github.com/prometheus/common v0.67.3/go.mod h1:gP0fq6YjjNCLssJCQp0yk4M8W6ikLURwkdd/YKtTbyI=
 github.com/prometheus/common/assets v0.2.0/go.mod h1:D17UVUE12bHbim7HzwUvtqm6gwBEaDQ0F+hIGbFbccI=
 github.com/prometheus/common/sigv4 v0.1.0 h1:qoVebwtwwEhS85Czm2dSROY5fTo2PAPEVdDeppTwGX4=
 github.com/prometheus/common/sigv4 v0.1.0/go.mod h1:2Jkxxk9yYvCkE5G1sQT7GuEXm57JrvHu9k5YwTjsNtI=

@@ -752,10 +752,6 @@ export interface FeatureToggles {
   */
   alertingNotificationsStepMode?: boolean;
   /**
-  * Enables a button to send feedback from the Grafana UI
-  */
-  feedbackButton?: boolean;
-  /**
   * Enable unified storage search UI
   */
   unifiedStorageSearchUI?: boolean;
