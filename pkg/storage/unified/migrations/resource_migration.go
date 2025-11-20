@@ -81,7 +81,7 @@ func NewResourceMigration(
 var _ migrator.CodeMigration = (*ResourceMigration)(nil)
 
 // SQL implements migrator.Migration interface. Returns a description string.
-func (m *ResourceMigration) SQL(dialect migrator.Dialect) string {
+func (m *ResourceMigration) SQL(_ migrator.Dialect) string {
 	return fmt.Sprintf("unified storage data migration: %s", m.migrationID)
 }
 
@@ -103,7 +103,7 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 	m.log.Info("Starting migration for all organizations", "org_count", len(orgs), "resources", m.resources)
 
 	for _, org := range orgs {
-		if err := m.migrateOrg(ctx, sess, mg, org); err != nil {
+		if err := m.migrateOrg(ctx, sess, org); err != nil {
 			return err
 		}
 	}
@@ -113,7 +113,7 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 }
 
 // migrateOrg handles migration for a single organization
-func (m *ResourceMigration) migrateOrg(ctx context.Context, sess *xorm.Session, _ *migrator.Migrator, org orgInfo) error {
+func (m *ResourceMigration) migrateOrg(ctx context.Context, sess *xorm.Session, org orgInfo) error {
 	namespace := types.OrgNamespaceFormatter(org.ID)
 	m.log.Info("Migrating organization", "org_id", org.ID, "org_name", org.Name, "namespace", namespace)
 

@@ -25,9 +25,9 @@ type UnifiedMigrator interface {
 
 // unifiedMigration handles the migration of legacy resources to unified storage
 type unifiedMigration struct {
-	dashboardAccess legacy.MigrationDashboardAccessor
-	streamProvider  streamProvider
-	log             log.Logger
+	legacy.MigrationDashboardAccessor
+	streamProvider streamProvider
+	log            log.Logger
 }
 
 // streamProvider abstracts the different ways to create a bulk process stream
@@ -138,9 +138,9 @@ func newUnifiedMigrator(
 	log log.Logger,
 ) UnifiedMigrator {
 	return &unifiedMigration{
-		dashboardAccess: dashboardAccess,
-		streamProvider:  streamProvider,
-		log:             log,
+		MigrationDashboardAccessor: dashboardAccess,
+		streamProvider:             streamProvider,
+		log:                        log,
 	}
 }
 
@@ -161,7 +161,7 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	}
 
 	if opts.OnlyCount {
-		return m.dashboardAccess.CountResources(ctx, opts)
+		return m.CountResources(ctx, opts)
 	}
 
 	stream, err := m.streamProvider.createStream(ctx, opts)
@@ -173,11 +173,11 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	for _, res := range opts.Resources {
 		switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
 		case "folder.grafana.app/folders":
-			migratorFuncs = append(migratorFuncs, m.migrateFolders)
+			migratorFuncs = append(migratorFuncs, m.MigrateFolders)
 		case "dashboard.grafana.app/librarypanels":
-			migratorFuncs = append(migratorFuncs, m.migratePanels)
+			migratorFuncs = append(migratorFuncs, m.MigrateLibraryPanels)
 		case "dashboard.grafana.app/dashboards":
-			migratorFuncs = append(migratorFuncs, m.migrateDashboards)
+			migratorFuncs = append(migratorFuncs, m.MigrateDashboards)
 		default:
 			return nil, fmt.Errorf("unsupported resource: %s", res)
 		}
@@ -199,19 +199,4 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	}
 	m.log.Info("finished migrating legacy resources", "blobStore", blobStore)
 	return stream.CloseAndRecv()
-}
-
-func (m *unifiedMigration) migrateDashboards(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*legacy.BlobStoreInfo, error) {
-	// Delegate to the appropriate dashboard migration strategy
-	return m.dashboardAccess.MigrateDashboards(ctx, orgId, opts, stream)
-}
-
-func (m *unifiedMigration) migrateFolders(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*legacy.BlobStoreInfo, error) {
-	// Delegate to dashboard access for folder migration
-	return m.dashboardAccess.MigrateFolders(ctx, orgId, opts, stream)
-}
-
-func (m *unifiedMigration) migratePanels(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*legacy.BlobStoreInfo, error) {
-	// Delegate to dashboard access for panel migration
-	return m.dashboardAccess.MigrateLibraryPanels(ctx, orgId, opts, stream)
 }
