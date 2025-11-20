@@ -90,6 +90,9 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	if safepath.IsDir(opts.Path) {
+		if err := r.authorizeDeleteFolder(ctx, opts.Path); err != nil {
+			return nil, err
+		}
 		return r.deleteFolder(ctx, opts)
 	}
 
@@ -527,18 +530,63 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(), fmt.Errorf("could not determine identity type to check access"))
 	}
 	// only apply role based access if identity is not of type access policy
-	if idType == authlib.TypeAccessPolicy || id.GetOrgRole().Includes(identity.RoleEditor) {
+	if idType != authlib.TypeAnonymous {
 		return nil
 	}
 
 	return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-		fmt.Errorf("must be admin or editor to access files from provisioning"))
+		fmt.Errorf("must be logged in to access files from provisioning"))
 }
 
-func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) error {
+func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string) error {
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized(err.Error())
+	}
+
+	// Determine the parent folder where this folder will be created
+	parentFolderUID := ParentFolder(path, r.repo.Config())
+
+	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
+		Group:     FolderResource.Group,
+		Resource:  FolderResource.Resource,
+		Namespace: id.GetNamespace(),
+		Name:      "",
+		Verb:      utils.VerbCreate,
+	}, parentFolderUID)
+
+	if err != nil || !rsp.Allowed {
+		return apierrors.NewForbidden(FolderResource.GroupResource(), "",
+			fmt.Errorf("no permission to create folder in parent folder %s", parentFolderUID))
+	}
+
+	return apierrors.NewForbidden(FolderResource.GroupResource(), "",
+		fmt.Errorf("must have permission to access folders with provisioning"))
+}
+
+func (r *DualReadWriter) authorizeDeleteFolder(ctx context.Context, path string) error {
+	id, err := identity.GetRequester(ctx)
+	if err != nil {
+		return apierrors.NewUnauthorized(err.Error())
+	}
+
+	// Parse the folder being deleted to get its UID
+	folderToDelete := ParseFolder(path, r.repo.Config().GetName())
+
+	// Determine the parent folder for hierarchical permission checking
+	parentFolderUID := ParentFolder(path, r.repo.Config())
+
+	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
+		Group:     FolderResource.Group,
+		Resource:  FolderResource.Resource,
+		Namespace: id.GetNamespace(),
+		Name:      folderToDelete.ID,
+		Verb:      utils.VerbDelete,
+	}, parentFolderUID)
+
+	if err != nil || !rsp.Allowed {
+		return apierrors.NewForbidden(FolderResource.GroupResource(), folderToDelete.ID,
+			fmt.Errorf("no permission to delete folder %s", folderToDelete.ID))
 	}
 
 	// Simple role based access for now
@@ -546,7 +594,7 @@ func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) er
 		return nil
 	}
 
-	return apierrors.NewForbidden(FolderResource.GroupResource(), "",
+	return apierrors.NewForbidden(FolderResource.GroupResource(), folderToDelete.ID,
 		fmt.Errorf("must be admin or editor to access folders with provisioning"))
 }
 
