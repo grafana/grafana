@@ -8589,7 +8589,9 @@
       "saving": "A guardar <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Limite linear",
+      "linear-threshold": {
+        "label": "Limite linear"
+      },
       "log-base": "Base de registo"
     },
     "builder": {

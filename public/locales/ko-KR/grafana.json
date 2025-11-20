@@ -8553,7 +8553,9 @@
       "saving": "<1></1> 저장 중"
     },
     "axis-builder": {
-      "linear-threshold": "선형 임계값",
+      "linear-threshold": {
+        "label": "선형 임계값"
+      },
       "log-base": "로그 베이스"
     },
     "builder": {

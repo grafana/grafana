@@ -8593,7 +8593,13 @@
       "saving": "Saving <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Linear threshold",
+      "linear-threshold": {
+        "label": "Linear threshold",
+        "warning": {
+          "nan": "Linear threshold must be a number",
+          "zero": "Linear threshold cannot be zero"
+        }
+      },
       "log-base": "Log base"
     },
     "builder": {
