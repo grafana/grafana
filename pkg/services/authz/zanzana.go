@@ -110,7 +110,7 @@ func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.Featu
 		ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
 	}
 
-	return NewRemoteZanzanaClient(fmt.Sprintf("stacks-%s", cfg.StackID), zanzanaConfig)
+	return NewRemoteZanzanaClient(cfg.ZanzanaClient.TokenNamespace, zanzanaConfig)
 }
 
 type ZanzanaClientConfig struct {

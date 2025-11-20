@@ -173,6 +173,9 @@ lineage: schemas: [{
 			// Set to 1 for the standard annotation query all dashboards have by default.
 			builtIn?: number | *0
 
+			// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+			placement?: #AnnotationQueryPlacement
+
 			// unless datasources have migrated to the target+mapping,
 			// they just spread their query into the base object :(
 			...
@@ -297,6 +300,10 @@ lineage: schemas: [{
 		// Dashboard Link placement. Defines where the link should be displayed. 
 		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu 
 		#DashboardLinkPlacement: "inControlsMenu" @cuetsy(kind="type")
+
+		// Annotation Query placement. Defines where the annotation query should be displayed.
+		// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+		#AnnotationQueryPlacement: "inControlsMenu" @cuetsy(kind="type")
 
 		// Dashboard action type
 		#ActionType: "fetch" | "infinity" @cuetsy(kind="type")

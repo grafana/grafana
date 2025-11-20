@@ -413,4 +413,36 @@ describe('SaveProvisionedDashboardForm', () => {
     // Branch field is not shown
     expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
   });
+
+  it('enables save button when only the comment changes', async () => {
+    const { user } = setup({
+      dashboard: {
+        useState: () => ({
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            k8s: { name: 'test-dashboard' },
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: false,
+        }),
+        setState: jest.fn(),
+        closeModal: jest.fn(),
+        getSaveAsModel: jest.fn().mockReturnValue({}),
+        setManager: jest.fn(),
+      } as unknown as DashboardScene,
+    });
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    const saveButton = screen.getByRole('button', { name: /save/i });
+
+    expect(saveButton).toBeDisabled();
+
+    await user.type(commentInput, 'Comment-only change');
+
+    await waitFor(() => {
+      expect(saveButton).toBeEnabled();
+    });
+  });
 });
