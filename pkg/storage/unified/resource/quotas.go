@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -11,8 +12,7 @@ import (
 	"github.com/grafana/dskit/runtimeconfig"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/context"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 const DEFAULT_RESOURCE_LIMIT = 1000
