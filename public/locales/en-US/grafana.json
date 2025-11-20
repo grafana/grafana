@@ -12543,11 +12543,14 @@
       "copy-clipboard": "Copy to clipboard",
       "copy-to-clipboard-and-close": "Copy to clipboard and close",
       "description-name-to-easily-identify-the-token": "Name to easily identify the token",
+      "description-no-expiration-disabled": "Cannot create a token with no expiration date when token expiration day limit is configured",
       "description-token": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.",
       "generate-token": "Generate token",
       "label-display-name": "Display name",
       "label-expiration": "Expiration",
       "label-expiration-date": "Expiration date",
+      "label-no-expiration": "No expiration",
+      "label-set-expiration-date": "Set expiration date",
       "label-token": "Token"
     },
     "get-actions-cell": {
