@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 import { DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
@@ -31,7 +31,7 @@ export function useDashboardQuery(dashboardUid?: string) {
       getDashboardAPI()
         .getDashboardDTO(dashboardUid)
         .then((dashboardDTO) => {
-          if ('dashboard' in dashboardDTO && !isDashboardV2Spec(dashboardDTO.dashboard)) {
+          if ('dashboard' in dashboardDTO) {
             setDashboard(ensureV1PanelsHaveIds(dashboardDTO));
           } else if (isDashboardV2Resource(dashboardDTO)) {
             setDashboard(dashboardDTO);
