@@ -8,6 +8,7 @@ import { sceneUtils } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, Dropdown, Icon, Menu, Stack, Text, usePanelContext, useStyles2 } from '@grafana/ui';
 
 import { NEW_PANEL_TITLE } from '../../dashboard/utils/dashboard';
+import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -26,6 +27,7 @@ function UnconfiguredPanelComp(props: PanelProps) {
 
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });
+    DashboardInteractions.panelActionClicked('configure', props.id, 'panel');
   };
 
   const dashboard = window.__grafanaSceneContext;

@@ -2598,8 +2598,7 @@
         "firing": "Aktív",
         "normal": "Normál",
         "pending": "Függőben",
-        "recovering": "Helyreállítás",
-        "unknown": "Ismeretlen"
+        "recovering": "Helyreállítás"
       },
       "type": {
         "alert": "Riasztási szabály",
@@ -2623,12 +2622,14 @@
         "placeholder-search-input": "Keresés név alapján, vagy szűrőlekérdezés megadása..."
       },
       "grafana-folder": "Grafana mappa",
+      "group-autocomplete-unavailable": "",
       "health": "Állapot",
       "label": {
         "hide": "Elrejtés",
         "show": "Megjelenítés"
       },
       "manage-alerts": "Ezekben az adatforrásokban kiválaszthatja a Riasztások kezelése az Alerting felületén keresztül lehetőséget, hogy kezelhesse ezeket a riasztási szabályokat a Grafana kezelőfelületén, valamint abban az adatforrásban, ahol konfigurálták őket.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Összes adatforrás",
       "placeholder-contact-point": "Kapcsolattartási pont kiválasztása",
       "placeholder-data-sources": "Adatforrások kiválasztása",
@@ -3540,6 +3541,7 @@
       "delete-modal-invalid-title": "Nem lehet törölni a mappát",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Ez a művelet törli a következő tartalmat:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Törlés",
       "delete-provisioned-folder": "Kiépített mappa törlése",
       "deleting": "Törlés...",
@@ -3548,6 +3550,7 @@
       "move-modal-alert": "Az elem áthelyezésével megváltozhatnak az engedélyei.",
       "move-modal-field-label": "Mappa neve",
       "move-modal-text": "Ez a művelet áthelyezi a következő tartalmat:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Áthelyezés",
       "move-provisioned-folder": "",
       "moving": "Áthelyezés...",
@@ -3635,11 +3638,11 @@
       "title-folder": "Ehhez a mappához még nem tartoznak irányítópultok"
     },
     "folder-actions-button": {
-      "delete": "Törlés",
+      "delete": "",
       "delete-folder-error": "Hiba történt a mappa törlése során. Próbálja meg később.",
       "folder-actions": "Mappaműveletek",
       "manage-permissions": "Engedélyek kezelése",
-      "move": "Áthelyezés"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Mappa kijelölése: {{ label }} jelenleg kijelölve",
@@ -8586,7 +8589,9 @@
       "saving": "Mentés: <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineáris küszöbérték",
+      "linear-threshold": {
+        "label": "Lineáris küszöbérték"
+      },
       "log-base": "Naplóbázis"
     },
     "builder": {

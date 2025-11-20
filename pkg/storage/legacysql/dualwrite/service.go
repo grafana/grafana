@@ -12,7 +12,27 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
+
+// fakeMigrator is a no-op implementation of UnifiedStorageMigrationService
+type fakeMigrator struct{}
+
+func (f *fakeMigrator) Run(ctx context.Context) error {
+	return nil
+}
+
+var _ unifiedmigrations.UnifiedStorageMigrationService = (*fakeMigrator)(nil)
+
+func NewFakeMigrator() unifiedmigrations.UnifiedStorageMigrationService {
+	return &fakeMigrator{}
+}
+
+func NewFakeConfig() *setting.Cfg {
+	return &setting.Cfg{
+		UnifiedStorage: make(map[string]setting.UnifiedStorageConfig),
+	}
+}
 
 func ProvideStaticServiceForTests(cfg *setting.Cfg) Service {
 	if cfg == nil {
@@ -25,7 +45,14 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	kv kvstore.KVStore,
 	cfg *setting.Cfg,
+	migrator unifiedmigrations.UnifiedStorageMigrationService,
 ) (Service, error) {
+	// Ensure migrations have run before starting dualwrite
+	err := migrator.Run(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("unable to start dualwrite service due to migration error: %w", err)
+	}
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
@@ -62,6 +89,37 @@ func ProvideService(
 type service struct {
 	db      *keyvalueDB
 	enabled bool
+}
+
+func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
+	status, err := m.Status(context.Background(), gr)
+	if err != nil {
+		return nil, err
+	}
+
+	if m.enabled && status.Runtime {
+		// Dynamic storage behavior
+		return &runtimeDualWriter{
+			service:   m,
+			legacy:    legacy,
+			unified:   unified,
+			dualwrite: &dualWriter{legacy: legacy, unified: unified}, // not used for read
+			gr:        gr,
+		}, nil
+	}
+
+	if status.ReadUnified {
+		if status.WriteLegacy {
+			// Write both, read unified
+			return &dualWriter{legacy: legacy, unified: unified, readUnified: true}, nil
+		}
+		return unified, nil
+	}
+	if status.WriteUnified {
+		// Write both, read legacy
+		return &dualWriter{legacy: legacy, unified: unified}, nil
+	}
+	return legacy, nil
 }
 
 // Hardcoded list of resources that should be controlled by the database (eventually everything?)
