@@ -147,18 +147,19 @@ Create a file named `folder.yml`:
   connection: local
   hosts: localhost
 
-  vars:
-    folders: [{ title: '<FOLDER_NAME>', uid: '<UID>' }]
-
-    stack_name: '<STACK_NAME>'
-    grafana_api_key: <GRAFANA_API_KEY>
+vars:
+    grafana_url: 'https://<STACK_NAME>.grafana.net'
+    grafana_api_key: '<GRAFANA_API_KEY>'
+    folders:
+      - title: '<FOLDER_NAME>'
+        uid: '<UID>'
 
   tasks:
     - name: Create/Update a Folder in Grafana
       grafana.grafana.folder:
         title: '{{ item.title }}'
         uid: '{{ item.uid }}'
-        stack_slug: '{{ stack_name }}'
+        grafana_url: '{{ grafana_url }}'
         grafana_api_key: '{{ grafana_api_key }}'
         state: present
       loop: '{{ folders }}'
