@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import {
   SceneComponentProps,
   SceneObjectState,
@@ -10,17 +8,28 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
+import { DataSourceRef } from '@grafana/schema';
 
 import { verifyDrilldownApplicability } from '../utils/drilldownUtils';
 
 import { PanelNonApplicableDrilldownsSubHeader } from './PanelNonApplicableDrilldownsSubHeader';
 
+interface ApplicabilitySupportHelperState {
+  datasource: DataSourceRef | null;
+  applicabilityEnabled?: boolean;
+}
+
 export interface VizPanelSubHeaderState extends SceneObjectState {
   hideNonApplicableDrilldowns?: boolean;
+  supportsApplicability?: boolean;
 }
 
 export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   static Component = VizPanelSubHeaderRenderer;
+
+  private _adHocVar?: AdHocFiltersVariable;
+  private _groupByVar?: GroupByVariable;
+  private _queryRunnerDatasource?: DataSourceRef;
 
   constructor(state: Partial<VizPanelSubHeaderState>) {
     super({
@@ -35,15 +44,94 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     if (!this.parent || !(this.parent instanceof VizPanel)) {
       throw new Error('VizPanelSubHeader can be used only with VizPanel');
     }
+
+    if (!this.state.hideNonApplicableDrilldowns) {
+      this.subscribeToDrilldownVariableChanges();
+    }
   };
 
-  public getQueryRunner(): SceneQueryRunner | null {
+  private subscribeToDrilldownVariableChanges() {
+    const vars = sceneGraph.getVariables(this);
+    const queryRunner = this.getQueryRunner();
+
+    this._adHocVar = vars.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
+    this._groupByVar = vars.state.variables.find((variable) => variable instanceof GroupByVariable);
+    this._queryRunnerDatasource = queryRunner.state.datasource;
+
+    this.setDrilldownApplicabilitySupportHelper();
+
+    // keep track of queryRunner datasource updates andupdate rendering
+    this._subs.add(
+      queryRunner.subscribeToState((n, p) => {
+        if (n.datasource !== p.datasource) {
+          this._queryRunnerDatasource = n.datasource;
+
+          this.setDrilldownApplicabilitySupportHelper();
+        }
+      })
+    );
+
+    // check when var set updates and search for drilldown vars
+    this._subs.add(
+      vars.subscribeToState((n) => {
+        this._adHocVar = n.variables.find((variable) => variable instanceof AdHocFiltersVariable);
+        this._groupByVar = n.variables.find((variable) => variable instanceof GroupByVariable);
+      })
+    );
+
+    // adhoc sub so if that changes, we potentially update rendering
+    this._subs.add(
+      this._adHocVar?.subscribeToState((n, p) => {
+        if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
+          this.setDrilldownApplicabilitySupportHelper({
+            datasource: n.datasource,
+            applicabilityEnabled: n.applicabilityEnabled,
+          });
+        }
+      })
+    );
+
+    // same for groupBy
+    this._subs.add(
+      this._groupByVar?.subscribeToState((n, p) => {
+        if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
+          this.setDrilldownApplicabilitySupportHelper(undefined, {
+            datasource: n.datasource,
+            applicabilityEnabled: n.applicabilityEnabled,
+          });
+        }
+      })
+    );
+  }
+
+  private setDrilldownApplicabilitySupportHelper(
+    adHocData?: ApplicabilitySupportHelperState,
+    groupByData?: ApplicabilitySupportHelperState
+  ) {
+    this.setState({
+      supportsApplicability:
+        verifyDrilldownApplicability(
+          this,
+          this._queryRunnerDatasource,
+          adHocData?.datasource ?? this._adHocVar?.state.datasource ?? null,
+          adHocData?.applicabilityEnabled ?? this._adHocVar?.state.applicabilityEnabled ?? false
+        ) ||
+        verifyDrilldownApplicability(
+          this,
+          this._queryRunnerDatasource,
+          groupByData?.datasource ?? this._groupByVar?.state.datasource ?? null,
+          groupByData?.applicabilityEnabled ?? this._groupByVar?.state.applicabilityEnabled ?? false
+        ),
+    });
+  }
+
+  public getQueryRunner() {
     const panel = this.parent;
     const dataObject = panel ? sceneGraph.getData(panel) : undefined;
-    const queryRunner = dataObject?.useState().$data;
+    const queryRunner = dataObject?.state.$data;
 
     if (!queryRunner || !(queryRunner instanceof SceneQueryRunner)) {
-      return null;
+      throw new Error('SceneQueryRunner must be on VizPanel');
     }
 
     return queryRunner;
@@ -51,25 +139,13 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 }
 
 export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
-  const variables = sceneGraph.getVariables(model).useState();
-  const adhocFiltersVar = variables.variables.find((variable) => variable instanceof AdHocFiltersVariable);
-  const groupByVar = variables.variables.find((variable) => variable instanceof GroupByVariable);
+  const { supportsApplicability, hideNonApplicableDrilldowns } = model.useState();
+  const variables = sceneGraph.getVariables(model);
+  const adhocFiltersVar = variables.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
+  const groupByVar = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
 
-  const { applicabilityEnabled: filtersApplicabilityEnabled, datasource: filtersDatasource } =
-    adhocFiltersVar?.useState() ?? { applicabilityEnabled: false, datasource: null };
-  const { applicabilityEnabled: groupByApplicabilityEnabled, datasource: groupByDatasource } =
-    groupByVar?.useState() ?? { applicabilityEnabled: false, datasource: null };
-  const { datasource } = queryRunner?.useState() ?? { datasource: undefined };
-
-  const supportsApplicability = useMemo(
-    () =>
-      verifyDrilldownApplicability(model, datasource, filtersDatasource, filtersApplicabilityEnabled) ||
-      verifyDrilldownApplicability(model, datasource, groupByDatasource, groupByApplicabilityEnabled),
-    [datasource, filtersApplicabilityEnabled, filtersDatasource, groupByApplicabilityEnabled, groupByDatasource, model]
-  );
-
-  if (!queryRunner || model.state.hideNonApplicableDrilldowns || !supportsApplicability) {
+  if (hideNonApplicableDrilldowns || !supportsApplicability) {
     return null;
   }
 

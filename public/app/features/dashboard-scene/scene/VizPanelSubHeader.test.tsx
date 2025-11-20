@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { of } from 'rxjs';
 
+import { DataQueryRequest, DataSourceApi, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -13,14 +13,29 @@ import {
   VizPanelState,
 } from '@grafana/scenes';
 
+import { activateFullSceneTree } from '../utils/test-utils';
+
 import { DashboardScene } from './DashboardScene';
 import { VizPanelSubHeader } from './VizPanelSubHeader';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
+const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
+  return of({
+    state: LoadingState.Loading,
+    series: [],
+    timeRange: request.range,
+  });
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
+    return runRequestMock(ds, request);
+  },
   getDataSourceSrv: () => ({
-    get: jest.fn().mockResolvedValue({}),
+    get: jest.fn().mockResolvedValue({
+      getRef: () => ({ uid: 'ds-1', type: 'test' }),
+    }),
     getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds-1', type: 'test' }),
   }),
   getPluginImportUtils: () => ({
@@ -33,50 +48,85 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-const subHeaderTestId = selectors.components.Panels.Panel.PanelNonApplicableDrilldownsSubHeader;
-
 describe('VizPanelSubHeader', () => {
-  it('renders when the group by variable applies to the panel', async () => {
-    const subHeader = buildScene();
+  it('renders when the drilldown variables apply to the panel', async () => {
+    const { subHeader } = await buildScene();
 
-    render(<subHeader.Component model={subHeader} />);
-
-    await waitFor(() => expect(screen.queryByTestId(subHeaderTestId)).toBeInTheDocument());
+    expect(subHeader.state.supportsApplicability).toBe(true);
   });
 
-  it('renders when the adhoc variable applies to the panel', async () => {
-    const subHeader = buildScene();
+  it('renders only one drilldown var is set', async () => {
+    const { subHeader } = await buildScene({ noGroupBy: true });
 
-    render(<subHeader.Component model={subHeader} />);
-
-    await waitFor(() => expect(screen.queryByTestId(subHeaderTestId)).toBeInTheDocument());
+    expect(subHeader.state.supportsApplicability).toBe(true);
   });
 
-  it('returns null when applicability is disabled', async () => {
-    const subHeader = buildScene({ applicabilityEnabled: false });
+  it('does not render when applicability is disabled', async () => {
+    const { subHeader } = await buildScene({ applicabilityEnabled: false });
 
-    render(<subHeader.Component model={subHeader} />);
-
-    await waitFor(() => expect(screen.queryByTestId(subHeaderTestId)).not.toBeInTheDocument());
+    expect(subHeader.state.supportsApplicability).toBe(false);
   });
 
-  it('returns null when the datasource uid does not match', async () => {
-    const subHeader = buildScene({
+  it('does not render when the datasource uid does not match', async () => {
+    const { subHeader } = await buildScene({
       variableDatasourceUid: 'other-ds',
     });
 
-    render(<subHeader.Component model={subHeader} />);
+    expect(subHeader.state.supportsApplicability).toBe(false);
+  });
 
-    await waitFor(() => expect(screen.queryByTestId(subHeaderTestId)).not.toBeInTheDocument());
+  it('no longer renders if variable ds changes to a different type', async () => {
+    const { subHeader, adhocFiltersVariable } = await buildScene({
+      noGroupBy: true,
+    });
+
+    expect(subHeader.state.supportsApplicability).toBe(true);
+
+    adhocFiltersVariable.setState({ datasource: { uid: 'ds-2' } });
+
+    expect(subHeader.state.supportsApplicability).toBe(false);
+  });
+
+  it('no longers renders if variable applicability becomes disabled', async () => {
+    const { subHeader, adhocFiltersVariable } = await buildScene({
+      noGroupBy: true,
+    });
+
+    expect(subHeader.state.supportsApplicability).toBe(true);
+
+    adhocFiltersVariable.setState({ applicabilityEnabled: false });
+
+    expect(subHeader.state.supportsApplicability).toBe(false);
+  });
+
+  it('continues to render if one adhoc is disabled, but groupby remains active', async () => {
+    const { subHeader, adhocFiltersVariable } = await buildScene();
+
+    expect(subHeader.state.supportsApplicability).toBe(true);
+
+    adhocFiltersVariable.setState({ applicabilityEnabled: false });
+
+    expect(subHeader.state.supportsApplicability).toBe(true);
+  });
+
+  it('stops rendering if queryRunner changes datasource to different one than vars', async () => {
+    const { subHeader, queryRunner } = await buildScene();
+
+    expect(subHeader.state.supportsApplicability).toBe(true);
+
+    queryRunner.setState({ datasource: { uid: 'ds-2' } });
+
+    expect(subHeader.state.supportsApplicability).toBe(false);
   });
 });
 
 interface BuildSceneOptions {
   applicabilityEnabled?: boolean;
   variableDatasourceUid?: string;
+  noGroupBy?: boolean;
 }
 
-function buildScene(options?: BuildSceneOptions) {
+async function buildScene(options?: BuildSceneOptions) {
   const subHeader = new VizPanelSubHeader({});
 
   const queryRunner = new SceneQueryRunner({
@@ -119,12 +169,16 @@ function buildScene(options?: BuildSceneOptions) {
 
   const panel = new VizPanel(panelState);
 
-  new DashboardScene({
+  const scene = new DashboardScene({
     $variables: new SceneVariableSet({
-      variables: [groupByVariable, adhocFiltersVariable],
+      variables: options?.noGroupBy ? [adhocFiltersVariable] : [groupByVariable, adhocFiltersVariable],
     }),
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
 
-  return subHeader;
+  activateFullSceneTree(scene);
+
+  await new Promise((r) => setTimeout(r, 1));
+
+  return { subHeader, groupByVariable, adhocFiltersVariable, queryRunner };
 }

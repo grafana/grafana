@@ -661,6 +661,7 @@ export interface DrilldownsApplicability {
   // needed to differentiate between filters with same key
   // but different origin
   origin?: string;
+  type?: 'filter' | 'groupby';
 }
 
 export interface DataSourceJsonData {
