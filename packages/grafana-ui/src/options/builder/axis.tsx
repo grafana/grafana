@@ -128,7 +128,15 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
   },
 ];
 
-const isValidLinearThreshold = (value: number) => !Number.isNaN(value) && value !== 0;
+const isValidLinearThreshold = (value: number): string | undefined => {
+  if (Number.isNaN(value)) {
+    return t('grafana-ui.axis-builder.linear-threshold.warning.nan', 'Linear threshold must be a number');
+  }
+  if (value === 0) {
+    return t('grafana-ui.axis-builder.linear-threshold.warning.zero', 'Linear threshold cannot be zero');
+  }
+  return;
+};
 
 /**
  * @internal
@@ -143,7 +151,7 @@ export const ScaleDistributionEditor = ({
   const [localLinearThreshold, setLocalLinearThreshold] = useState<string>(
     value?.linearThreshold != null ? String(value.linearThreshold) : ''
   );
-  const [linearThresholdWarning, setLinearThresholdWarning] = useState<boolean>(false);
+  const [linearThresholdWarning, setLinearThresholdWarning] = useState<string | undefined>();
 
   const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
     {
@@ -174,7 +182,7 @@ export const ScaleDistributionEditor = ({
         }}
       />
       {(type === ScaleDistribution.Log || type === ScaleDistribution.Symlog) && (
-        <Field label={t('grafana-ui.axis-builder.log-base', 'Log base')}>
+        <Field label={t('grafana-ui.axis-builder.log-base', 'Log base')} noMargin>
           <Select
             options={LOG_DISTRIBUTION_OPTIONS}
             value={log}
@@ -188,15 +196,23 @@ export const ScaleDistributionEditor = ({
         </Field>
       )}
       {type === ScaleDistribution.Symlog && (
-        <Field label={t('grafana-ui.axis-builder.linear-threshold', 'Linear threshold')} style={{ marginBottom: 0 }}>
+        // ADD error and invalid to field when needed
+        <Field
+          label={t('grafana-ui.axis-builder.linear-threshold.label', 'Linear threshold')}
+          invalid={!!linearThresholdWarning}
+          error={linearThresholdWarning}
+          style={{ marginBottom: 0 }}
+          noMargin
+        >
           <Input
             // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="1"
             value={localLinearThreshold}
-            invalid={linearThresholdWarning}
+            invalid={!!linearThresholdWarning}
+            type="number"
             onBlur={(ev) => {
               if (ev.currentTarget.value) {
-                setLinearThresholdWarning(!isValidLinearThreshold(Number(ev.currentTarget.value)));
+                setLinearThresholdWarning(isValidLinearThreshold(Number(ev.currentTarget.value)));
               }
             }}
             onChange={(v) => {
@@ -205,13 +221,13 @@ export const ScaleDistributionEditor = ({
                 const newValue = { ...value };
                 delete newValue.linearThreshold;
                 onChange(newValue);
-                setLinearThresholdWarning(false);
+                setLinearThresholdWarning(undefined);
                 return;
               }
 
               const asNumber = Number(v.currentTarget.value);
-              if (isValidLinearThreshold(asNumber)) {
-                setLinearThresholdWarning(false);
+              if (isValidLinearThreshold(asNumber) == null) {
+                setLinearThresholdWarning(undefined);
                 onChange({
                   ...value,
                   linearThreshold: asNumber,

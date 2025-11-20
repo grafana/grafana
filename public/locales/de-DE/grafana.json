@@ -8589,7 +8589,9 @@
       "saving": "<1></1> wird gespeichert"
     },
     "axis-builder": {
-      "linear-threshold": "Linearer Schwellenwert",
+      "linear-threshold": {
+        "label": "Linearer Schwellenwert"
+      },
       "log-base": "Logarithmische Basis"
     },
     "builder": {

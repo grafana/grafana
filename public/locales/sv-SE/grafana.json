@@ -8589,7 +8589,9 @@
       "saving": "Sparar <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineär tröskel",
+      "linear-threshold": {
+        "label": "Lineär tröskel"
+      },
       "log-base": "Loggbas"
     },
     "builder": {

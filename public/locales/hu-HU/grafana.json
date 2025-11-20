@@ -8589,7 +8589,9 @@
       "saving": "Mentés: <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineáris küszöbérték",
+      "linear-threshold": {
+        "label": "Lineáris küszöbérték"
+      },
       "log-base": "Naplóbázis"
     },
     "builder": {

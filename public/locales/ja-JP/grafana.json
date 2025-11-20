@@ -8553,7 +8553,9 @@
       "saving": "<1></1>を保存しています"
     },
     "axis-builder": {
-      "linear-threshold": "線形のしきい値",
+      "linear-threshold": {
+        "label": "線形のしきい値"
+      },
       "log-base": "ログベース"
     },
     "builder": {
