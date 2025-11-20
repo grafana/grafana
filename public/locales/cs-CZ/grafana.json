@@ -2622,8 +2622,7 @@
         "firing": "Spuštěno",
         "normal": "Normální",
         "pending": "Nevyřízeno",
-        "recovering": "Probíhá obnovení",
-        "unknown": "Neznámé"
+        "recovering": "Probíhá obnovení"
       },
       "type": {
         "alert": "Pravidlo výstrahy",
@@ -2647,12 +2646,14 @@
         "placeholder-search-input": "Hledejte podle názvu nebo zadejte dotaz na filtr…"
       },
       "grafana-folder": "Složka Grafana",
+      "group-autocomplete-unavailable": "",
       "health": "Kondice",
       "label": {
         "hide": "Skrýt",
         "show": "Zobrazit"
       },
       "manage-alerts": "V těchto zdrojích dat můžete prostřednictvím uživatelského rozhraní upozorňování vybrat možnost Správa upozorňování. Odtud můžete spravovat tato pravidla výstrah v uživatelském rozhraní Grafana i ve zdroji dat, kde byla nakonfigurována.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Všechny zdroje dat",
       "placeholder-contact-point": "Vyberte kontaktní bod",
       "placeholder-data-sources": "Vyberte zdroje dat",
@@ -3564,6 +3565,7 @@
       "delete-modal-invalid-title": "Složku nelze odstranit",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Tato akce odstraní následující obsah:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Odstranit",
       "delete-provisioned-folder": "Odstranit poskytnutou složku",
       "deleting": "Probíhá odstranění…",
@@ -3572,6 +3574,7 @@
       "move-modal-alert": "Přesunutí této položky může změnit oprávnění.",
       "move-modal-field-label": "Název složky",
       "move-modal-text": "Tato akce přesune následující obsah:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Přesunout",
       "move-provisioned-folder": "",
       "moving": "Probíhá přesouvání…",
@@ -3669,11 +3672,11 @@
       "title-folder": "Tento složka zatím nemá žádné nástěnky"
     },
     "folder-actions-button": {
-      "delete": "Odstranit",
+      "delete": "",
       "delete-folder-error": "Chyba při odstraňování složky. Zkuste to znovu později.",
       "folder-actions": "Akce složky",
       "manage-permissions": "Spravovat oprávnění",
-      "move": "Přesunout"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Vybrat složku: {{ label }} aktuálně vybraná",

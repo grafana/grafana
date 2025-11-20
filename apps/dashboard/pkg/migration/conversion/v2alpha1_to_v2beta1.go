@@ -132,20 +132,26 @@ func convertDataQuery_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDataQueryKin
 		out.Kind = "DataQuery"
 		out.Version = "v0"
 		out.Spec = in.Spec
-		// Don't set group field by default - only set if datasource is present
 	}
 
-	// Convert datasource reference and set group from datasource type
+	// Convert datasource reference and set group
+	// Priority: 1) datasource.Type, 2) in.Kind (if no datasource or datasource.Type is empty)
 	if datasource != nil {
 		out.Datasource = &dashv2beta1.DashboardV2beta1DataQueryKindDatasource{}
 		if datasource.Uid != nil {
 			out.Datasource.Name = datasource.Uid
 		}
-		// Set group to datasource type to match frontend behavior
-		// Only set group if datasource type is not empty (matches frontend logic)
+		// Set group to datasource type if available
 		if datasource.Type != nil && *datasource.Type != "" {
 			out.Group = *datasource.Type
 		}
+	}
+
+	// Fallback: if group is still empty and we have a query with a kind (datasource type), use the kind as group
+	// This preserves the datasource type information when datasource reference is missing
+	// Note: in.Kind is the datasource type (e.g., "prometheus", "elasticsearch"), not "DataQuery"
+	if out.Group == "" && in != nil && in.Kind != "" {
+		out.Group = in.Kind
 	}
 
 	return nil
@@ -761,9 +767,18 @@ func convertQueryVariableSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQuer
 func convertVariableOption_V2alpha1_to_V2beta1(in dashv2alpha1.DashboardVariableOption) dashv2beta1.DashboardVariableOption {
 	return dashv2beta1.DashboardVariableOption{
 		Selected: in.Selected,
-		Text:     dashv2beta1.DashboardStringOrArrayOfString(in.Text),
-		Value:    dashv2beta1.DashboardStringOrArrayOfString(in.Value),
+		Text:     convertStringOrArrayOfString_V2alpha1_to_V2beta1(in.Text),
+		Value:    convertStringOrArrayOfString_V2alpha1_to_V2beta1(in.Value),
 	}
+}
+
+// convertStringOrArrayOfString_V2alpha1_to_V2beta1 preserves empty strings to match unmarshaler behavior
+func convertStringOrArrayOfString_V2alpha1_to_V2beta1(in dashv2alpha1.DashboardStringOrArrayOfString) dashv2beta1.DashboardStringOrArrayOfString {
+	out := dashv2beta1.DashboardStringOrArrayOfString{
+		ArrayOfString: in.ArrayOfString,
+	}
+	out.String = in.String
+	return out
 }
 
 func convertVariableOptionPtr_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableOption) *dashv2beta1.DashboardVariableOption {
@@ -916,83 +931,37 @@ func convertConditionalRenderingGroupKind_V2alpha1_to_V2beta1(in *dashv2alpha1.D
 }
 
 func convertRowLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, scope conversion.Scope) error {
-	// Handle the different union type orderings by converting through the main layout function
-	// Create a temporary variable with the correct type ordering
-	var tempIn dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
-	var tempOut dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
-
-	// Copy the layout data with the correct ordering
 	if in.GridLayoutKind != nil {
-		tempIn.GridLayoutKind = in.GridLayoutKind
+		out.GridLayoutKind = &dashv2beta1.DashboardGridLayoutKind{
+			Kind: in.GridLayoutKind.Kind,
+		}
+		return convertGridLayoutSpec_V2alpha1_to_V2beta1(&in.GridLayoutKind.Spec, &out.GridLayoutKind.Spec, scope)
 	}
-	if in.RowsLayoutKind != nil {
-		tempIn.RowsLayoutKind = in.RowsLayoutKind
-	}
+
 	if in.AutoGridLayoutKind != nil {
-		tempIn.AutoGridLayoutKind = in.AutoGridLayoutKind
+		out.AutoGridLayoutKind = &dashv2beta1.DashboardAutoGridLayoutKind{
+			Kind: in.AutoGridLayoutKind.Kind,
+		}
+		return convertAutoGridLayoutSpec_V2alpha1_to_V2beta1(&in.AutoGridLayoutKind.Spec, &out.AutoGridLayoutKind.Spec, scope)
 	}
+
 	if in.TabsLayoutKind != nil {
-		tempIn.TabsLayoutKind = in.TabsLayoutKind
+		out.TabsLayoutKind = &dashv2beta1.DashboardTabsLayoutKind{
+			Kind: in.TabsLayoutKind.Kind,
+		}
+		return convertTabsLayoutSpec_V2alpha1_to_V2beta1(&in.TabsLayoutKind.Spec, &out.TabsLayoutKind.Spec, scope)
 	}
 
-	if err := convertLayout_V2alpha1_to_V2beta1(&tempIn, &tempOut, scope); err != nil {
-		return err
-	}
-
-	// Copy back to the output with the correct ordering
-	if tempOut.GridLayoutKind != nil {
-		out.GridLayoutKind = tempOut.GridLayoutKind
-	}
-	if tempOut.RowsLayoutKind != nil {
-		out.RowsLayoutKind = tempOut.RowsLayoutKind
-	}
-	if tempOut.AutoGridLayoutKind != nil {
-		out.AutoGridLayoutKind = tempOut.AutoGridLayoutKind
-	}
-	if tempOut.TabsLayoutKind != nil {
-		out.TabsLayoutKind = tempOut.TabsLayoutKind
+	if in.RowsLayoutKind != nil {
+		out.RowsLayoutKind = &dashv2beta1.DashboardRowsLayoutKind{
+			Kind: in.RowsLayoutKind.Kind,
+		}
+		return convertRowsLayoutSpec_V2alpha1_to_V2beta1(&in.RowsLayoutKind.Spec, &out.RowsLayoutKind.Spec, scope)
 	}
 
 	return nil
 }
 
 func convertTabLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
-	// Handle the different union type orderings by converting through the main layout function
-	// Create a temporary variable with the correct type ordering
-	var tempIn dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
-	var tempOut dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
-
-	// Copy the layout data with the correct ordering
-	if in.GridLayoutKind != nil {
-		tempIn.GridLayoutKind = in.GridLayoutKind
-	}
-	if in.RowsLayoutKind != nil {
-		tempIn.RowsLayoutKind = in.RowsLayoutKind
-	}
-	if in.AutoGridLayoutKind != nil {
-		tempIn.AutoGridLayoutKind = in.AutoGridLayoutKind
-	}
-	if in.TabsLayoutKind != nil {
-		tempIn.TabsLayoutKind = in.TabsLayoutKind
-	}
-
-	if err := convertLayout_V2alpha1_to_V2beta1(&tempIn, &tempOut, scope); err != nil {
-		return err
-	}
-
-	// Copy back to the output with the correct ordering
-	if tempOut.GridLayoutKind != nil {
-		out.GridLayoutKind = tempOut.GridLayoutKind
-	}
-	if tempOut.RowsLayoutKind != nil {
-		out.RowsLayoutKind = tempOut.RowsLayoutKind
-	}
-	if tempOut.AutoGridLayoutKind != nil {
-		out.AutoGridLayoutKind = tempOut.AutoGridLayoutKind
-	}
-	if tempOut.TabsLayoutKind != nil {
-		out.TabsLayoutKind = tempOut.TabsLayoutKind
-	}
-
-	return nil
+	return convertLayout_V2alpha1_to_V2beta1(in, out, scope)
 }
