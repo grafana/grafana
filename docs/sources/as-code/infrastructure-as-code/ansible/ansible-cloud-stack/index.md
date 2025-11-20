@@ -62,7 +62,7 @@ To do so, create a file named `cloud-stack.yml` and add the following:
 
     - name: Display stack URL
       debug:
-        msg: "Stack created at: {{ stack_result.url }}"
+        msg: 'Stack created at: {{ stack_result.url }}'
 ```
 
 Replace the placeholders with your values:
