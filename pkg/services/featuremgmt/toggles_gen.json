@@ -1731,7 +1731,8 @@
       "metadata": {
         "name": "feedbackButton",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-12-02T17:08:15Z"
+        "creationTimestamp": "2024-12-02T17:08:15Z",
+        "deletionTimestamp": "2025-11-20T09:53:52Z"
       },
       "spec": {
         "description": "Enables a button to send feedback from the Grafana UI",
