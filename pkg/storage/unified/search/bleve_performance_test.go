@@ -57,7 +57,7 @@ func runBenchmark(b *testing.B, testIndex resource.ResourceIndex) {
 		var memStatsBefore, memStatsAfter runtime.MemStats
 		runtime.ReadMemStats(&memStatsBefore)
 
-		_, err := testIndex.Search(context.Background(), nil, searchRequest, nil)
+		_, err := testIndex.Search(context.Background(), nil, searchRequest, nil, nil)
 
 		elapsed := time.Since(start) // Calculate elapsed time
 		runtime.ReadMemStats(&memStatsAfter)

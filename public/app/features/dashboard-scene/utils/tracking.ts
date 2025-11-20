@@ -1,6 +1,6 @@
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { extractDatasourceTypesFromUrl } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers';
+import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -14,6 +14,8 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
     theme: undefined,
     duration,
     isScene: true,
+    hasEditPermissions: dashboard.canEditDashboard(),
+    hasSavePermissions: Boolean(dashboard.state.meta.canSave),
     ...(dashboard.getTrackingInformation() ?? {}),
     ...(dynamicDashboardsTrackingInformation
       ? {
@@ -61,25 +63,32 @@ export function trackDashboardSceneCreatedOrSaved(
   const libraryItemId = urlParams.get('libraryItemId') || urlParams.get('gnetId') || undefined;
   const creationOrigin = urlParams.get('creationOrigin') || undefined;
 
-  // Extract datasourceTypes from URL params (supports both community and provisioned dashboards)
-  const datasourceTypes = extractDatasourceTypesFromUrl();
+  // Extract datasourceTypes from URL params (supports both community and provisioned dashboards) or dashboard panels
+  const datasourceTypes = getDatasourceTypes(dashboard);
+
+  const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
-  const dashboardLibraryProperties = config.featureToggles.dashboardLibrary
-    ? {
-        datasourceTypes,
-        sourceEntryPoint,
-        libraryItemId,
-        creationOrigin,
-      }
-    : {};
+  const dashboardLibraryProperties =
+    config.featureToggles.dashboardLibrary ||
+    config.featureToggles.dashboardTemplates ||
+    config.featureToggles.suggestedDashboards
+      ? {
+          datasourceTypes,
+          sourceEntryPoint,
+          libraryItemId,
+          creationOrigin,
+        }
+      : {};
 
   DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,
     ...(dynamicDashboardsTrackingInformation
       ? {
-          uid: dashboard.state.uid,
+          uid: dashboard.state.uid || '',
           numPanels: dynamicDashboardsTrackingInformation.panelCount,
+          numTabs: dynamicDashboardsTrackingInformation.tabCount,
+          numRows: dynamicDashboardsTrackingInformation.rowCount,
           conditionalRenderRules: dynamicDashboardsTrackingInformation.conditionalRenderRulesCount,
           autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
           customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
@@ -87,6 +96,9 @@ export function trackDashboardSceneCreatedOrSaved(
           ...dashboardLibraryProperties,
         }
       : {
+          uid: dashboard.state.uid || '',
+          numPanels: sceneDashboardTrackingInfo?.panels_count || 0,
+          numRows: sceneDashboardTrackingInfo?.rowCount || 0,
           ...dashboardLibraryProperties,
         }),
   });

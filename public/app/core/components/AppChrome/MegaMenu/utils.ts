@@ -7,7 +7,7 @@ import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
-import appEvents from '../../../app_events';
+import { appEvents } from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 import { HelpModal } from '../../help/HelpModal';
 
@@ -61,8 +61,7 @@ export const enrichWithInteractionTracking = (
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
-      itemIsBookmarked: Boolean(config.featureToggles.pinNavItems && newItem?.parentItem?.id === 'bookmarks'),
-      bookmarkToggleOn: Boolean(config.featureToggles.pinNavItems),
+      itemIsBookmarked: newItem?.parentItem?.id === 'bookmarks',
       isNew,
     });
     onClick?.();

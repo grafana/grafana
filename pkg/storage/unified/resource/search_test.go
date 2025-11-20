@@ -41,22 +41,22 @@ func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
 	return args.Error(0)
 }
 
-func (m *MockResourceIndex) Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex) (*resourcepb.ResourceSearchResponse, error) {
+func (m *MockResourceIndex) Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex, stats *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	args := m.Called(ctx, access, req, federate)
 	return args.Get(0).(*resourcepb.ResourceSearchResponse), args.Error(1)
 }
 
-func (m *MockResourceIndex) CountManagedObjects(ctx context.Context) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
+func (m *MockResourceIndex) CountManagedObjects(ctx context.Context, stats *SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]*resourcepb.CountManagedObjectsResponse_ResourceCount), args.Error(1)
 }
 
-func (m *MockResourceIndex) DocCount(ctx context.Context, folder string) (int64, error) {
+func (m *MockResourceIndex) DocCount(ctx context.Context, folder string, stats *SearchStats) (int64, error) {
 	args := m.Called(ctx, folder)
 	return args.Get(0).(int64), args.Error(1)
 }
 
-func (m *MockResourceIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+func (m *MockResourceIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
 	args := m.Called(ctx, req)
 	return args.Get(0).(*resourcepb.ListManagedObjectsResponse), args.Error(1)
 }
@@ -88,7 +88,7 @@ type mockStorageBackend struct {
 	resourceStats []ResourceStats
 }
 
-func (m *mockStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
 	var result []ResourceStats
 	for _, stat := range m.resourceStats {
 		// Apply the minCount filter like the real implementation does
@@ -223,7 +223,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
-			_, _ = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
+			_, _ = support.getOrCreateIndex(context.Background(), nil, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
 		}()
 	}
 
@@ -270,17 +270,17 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
-	idx, err := support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "initial call")
+	idx, err := support.getOrCreateIndex(context.Background(), nil, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "initial call")
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 	checkMockIndexUpdateCalls(t, idx, 1)
 
-	idx, err = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "second call")
+	idx, err = support.getOrCreateIndex(context.Background(), nil, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "second call")
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 	checkMockIndexUpdateCalls(t, idx, 2)
 
-	idx, err = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "bad"}, "call to bad index")
+	idx, err = support.getOrCreateIndex(context.Background(), nil, NamespacedResource{Namespace: "ns", Group: "group", Resource: "bad"}, "call to bad index")
 	require.ErrorIs(t, err, failedErr)
 	require.Nil(t, idx)
 }
@@ -324,7 +324,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
 
-	_, err = support.getOrCreateIndex(ctx, key, "test")
+	_, err = support.getOrCreateIndex(ctx, nil, key, "test")
 	// Make sure we get context deadline error
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
@@ -340,7 +340,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	}, 1*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
 
 	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
-	_, err = support.getOrCreateIndex(ctx, key, "test")
+	_, err = support.getOrCreateIndex(ctx, nil, key, "test")
 	require.NoError(t, err)
 }
 

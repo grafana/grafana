@@ -7,7 +7,7 @@ import { ConfirmModal, ConfirmModalProps, ModalsContext } from '@grafana/ui';
 import { ModalsContextState } from '@grafana/ui/internal';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
-import appEvents from '../app_events';
+import { appEvents } from '../app_events';
 
 export interface Props {
   children: React.ReactNode;

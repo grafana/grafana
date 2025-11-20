@@ -480,6 +480,9 @@ type Cfg struct {
 	// LiveMessageSizeLimit is the maximum size in bytes of Websocket messages
 	// from clients. Defaults to 64KB.
 	LiveMessageSizeLimit int
+	// LiveClientQueueMaxSize is the maximum size in bytes of the client queue
+	// for Live connections. Defaults to 4MB.
+	LiveClientQueueMaxSize int
 
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
@@ -604,6 +607,7 @@ type Cfg struct {
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
+	EnableSearch                               bool
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -2065,6 +2069,11 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	if cfg.LiveMessageSizeLimit < -1 {
 		return fmt.Errorf("unexpected value %d for [live] message_size_limit", cfg.LiveMaxConnections)
 	}
+	cfg.LiveClientQueueMaxSize = section.Key("client_queue_max_size").MustInt(4194304)
+	if cfg.LiveClientQueueMaxSize <= 0 {
+		return fmt.Errorf("unexpected value %d for [live] client_queue_max_size", cfg.LiveMaxConnections)
+	}
+
 	cfg.LiveHAEngine = section.Key("ha_engine").MustString("")
 	switch cfg.LiveHAEngine {
 	case "", "redis":

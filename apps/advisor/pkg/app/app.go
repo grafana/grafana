@@ -2,7 +2,9 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -16,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -47,6 +50,16 @@ func New(cfg app.Config) (app.App, error) {
 	checkMap := map[string]checks.Check{}
 	for _, c := range checkRegistry.Checks() {
 		checkMap[c.ID()] = c
+	}
+
+	ctr, err := checktyperegisterer.New(cfg, log)
+	if err != nil {
+		return nil, err
+	}
+
+	csch, err := checkscheduler.New(cfg, log)
+	if err != nil {
+		return nil, err
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -110,6 +123,37 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: advisorv0alpha1.CheckTypeKind(),
 			},
 		},
+		VersionedCustomRoutes: map[string]simple.AppVersionRouteHandlers{
+			"v0alpha1": {
+				{
+					Namespaced: true,
+					Path:       "register",
+					Method:     "POST",
+				}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
+					logger := log.WithContext(ctx)
+					namespace := req.ResourceIdentifier.Namespace
+
+					// Register check types for the namespace
+					err := ctr.RegisterCheckTypesInNamespace(ctx, logger, namespace)
+					if err != nil {
+						logger.Error("Failed to register check types", "namespace", namespace, "error", err)
+						w.WriteHeader(http.StatusInternalServerError)
+						_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+						return err
+					}
+
+					// Return typed response matching the manifest
+					return json.NewEncoder(w).Encode(advisorv0alpha1.CreateRegister{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: fmt.Sprintf("%s/%s", advisorv0alpha1.APIGroup, advisorv0alpha1.APIVersion),
+						},
+						CreateRegisterBody: advisorv0alpha1.CreateRegisterBody{
+							Message: "Check types registered successfully",
+						},
+					})
+				},
+			},
+		},
 	}
 
 	a, err := simple.NewApp(simpleConfig)
@@ -123,17 +167,9 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	// Save check types as resources
-	ctr, err := checktyperegisterer.New(cfg, log)
-	if err != nil {
-		return nil, err
-	}
 	a.AddRunnable(ctr)
 
 	// Start scheduler
-	csch, err := checkscheduler.New(cfg, log)
-	if err != nil {
-		return nil, err
-	}
 	a.AddRunnable(csch)
 
 	return a, nil

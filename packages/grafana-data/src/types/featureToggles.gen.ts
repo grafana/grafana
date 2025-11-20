@@ -122,11 +122,6 @@ export interface FeatureToggles {
   */
   lokiLogsDataplane?: boolean;
   /**
-  * Support dataplane contract field name change for transformations and field name matchers where the name is different
-  * @default true
-  */
-  dataplaneFrontendFallback?: boolean;
-  /**
   * Disables dataplane specific processing in server side expressions.
   */
   disableSSEDataplane?: boolean;
@@ -165,11 +160,6 @@ export interface FeatureToggles {
   * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
-  /**
-  * Enables the transformations redesign
-  * @default true
-  */
-  transformationsRedesign?: boolean;
   /**
   * Enable support for Machine Learning in server-side expressions
   */
@@ -241,11 +231,6 @@ export interface FeatureToggles {
   * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
   */
   disableClassicHTTPHistogram?: boolean;
-  /**
-  * Enable format string transformer
-  * @default true
-  */
-  formatString?: boolean;
   /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
@@ -332,11 +317,6 @@ export interface FeatureToggles {
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
   /**
-  * Add cumulative and window functions to the add field from calculation transformation
-  * @default true
-  */
-  addFieldFromCalculationStatFunctions?: boolean;
-  /**
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   */
   alertmanagerRemoteSecondary?: boolean;
@@ -406,18 +386,9 @@ export interface FeatureToggles {
   */
   logsInfiniteScrolling?: boolean;
   /**
-  * Enable filtering menu displayed when text of a log line is selected
-  * @default true
-  */
-  logRowsPopoverMenu?: boolean;
-  /**
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
-  /**
-  * Enables regression analysis transformation
-  */
-  regressionTransformation?: boolean;
   /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
@@ -486,16 +457,6 @@ export interface FeatureToggles {
   */
   sqlExpressionsColumnAutoComplete?: boolean;
   /**
-  * Enables the group to nested table transformation
-  * @default true
-  */
-  groupToNestedTableTransformation?: boolean;
-  /**
-  * New implementation for the dashboard-to-PDF rendering
-  * @default true
-  */
-  newPDFRendering?: boolean;
-  /**
   * Enable grafana's embedded kube-aggregator
   */
   kubernetesAggregator?: boolean;
@@ -515,6 +476,10 @@ export interface FeatureToggles {
   * Require that sub claims is present in oauth tokens.
   */
   oauthRequireSubClaim?: boolean;
+  /**
+  * Require that refresh tokens are present in oauth tokens.
+  */
+  refreshTokenRequired?: boolean;
   /**
   * Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
   */
@@ -574,11 +539,6 @@ export interface FeatureToggles {
   * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
-  /**
-  * Enables pinning of nav items
-  * @default true
-  */
-  pinNavItems?: boolean;
   /**
   * Enables the gRPC server for authorization
   */
@@ -788,10 +748,6 @@ export interface FeatureToggles {
   */
   alertingNotificationsStepMode?: boolean;
   /**
-  * Enables a button to send feedback from the Grafana UI
-  */
-  feedbackButton?: boolean;
-  /**
   * Enable unified storage search UI
   */
   unifiedStorageSearchUI?: boolean;
@@ -903,10 +859,6 @@ export interface FeatureToggles {
   */
   infinityRunQueriesInParallel?: boolean;
   /**
-  * Renders invite user button along the app
-  */
-  inviteUserExperimental?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
   * @default true
   */
@@ -916,11 +868,6 @@ export interface FeatureToggles {
   * @default true
   */
   alertingImportYAMLUI?: boolean;
-  /**
-  * Enables the unified storage history pruner
-  * @default true
-  */
-  unifiedStorageHistoryPruner?: boolean;
   /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
@@ -1214,10 +1161,6 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
-  * Enables Advisor app installer
-  */
-  grafanaAdvisorAppInstaller?: boolean;
-  /**
   * Enables app platform API for annotations
   * @default false
   */
@@ -1227,4 +1170,17 @@ export interface FeatureToggles {
   * @default false
   */
   awsDatasourcesHttpProxy?: boolean;
+  /**
+  * Show transformation quick-start cards in empty transformations state
+  */
+  transformationsEmptyPlaceholder?: boolean;
+  /**
+  * Enable TTL plugin instance manager
+  */
+  ttlPluginInstanceManager?: boolean;
+  /**
+  * Enables the new version of rudderstack
+  * @default false
+  */
+  rudderstackUpgrade?: boolean;
 }
