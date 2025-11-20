@@ -61,9 +61,6 @@ type Service interface {
 	// Check if the dual writes is reading from unified storage (mode3++)
 	ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error)
 
-	// Check if the dual writes is writing to unified storage (mode1++)
-	WriteUnified(ctx context.Context, gr schema.GroupResource) (bool, error)
-
 	// Get status details for a Group/Resource
 	Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error)
 

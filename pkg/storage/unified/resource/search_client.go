@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -38,7 +39,7 @@ var (
 type DualWriter interface {
 	IsEnabled(schema.GroupResource) bool
 	ReadFromUnified(context.Context, schema.GroupResource) (bool, error)
-	WriteUnified(ctx context.Context, gr schema.GroupResource) (bool, error)
+	Status(ctx context.Context, gr schema.GroupResource) (dualwrite.StorageStatus, error)
 }
 
 func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient resourcepb.ResourceIndexClient,
@@ -109,7 +110,7 @@ func shouldMakeBackgroundCall(ctx context.Context, features featuremgmt.FeatureT
 		return false, err
 	}
 
-	writeUnified, err := dual.WriteUnified(ctx, gr)
+	status, err := dual.Status(ctx, gr)
 	if err != nil {
 		return false, err
 	}
@@ -118,7 +119,7 @@ func shouldMakeBackgroundCall(ctx context.Context, features featuremgmt.FeatureT
 	res := features != nil &&
 		features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) &&
 		!unifiedIsMainStorage &&
-		writeUnified
+		status.WriteUnified
 
 	return res, nil
 }

@@ -54,29 +54,33 @@ func ProvideService(
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 
-	foldersMode := cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
-	dashboardsMode := cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
+	if cfg != nil {
+		if !enabled {
+			return &staticService{cfg}, nil
+		}
 
-	// If both are fully on unified (Mode5), the dynamic service is not needed.
-	if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
-		return &staticService{cfg}, nil
+		if cfg != nil {
+			foldersMode := cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
+			dashboardsMode := cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
+
+			// If both are fully on unified (Mode5), the dynamic service is not needed.
+			if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
+				return &staticService{cfg}, nil
+			}
+
+			if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
+				return nil, fmt.Errorf("dashboards and folders must use the same mode when reading from unified storage")
+			}
+		}
 	}
 
-	if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
-		return nil, fmt.Errorf("dashboards and folders must use the same mode when reading from unified storage")
-	}
-
-	if enabled {
-		return &service{
-			db: &keyvalueDB{
-				db:     kv,
-				logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
-			},
-			enabled: enabled,
-		}, nil
-	}
-
-	return &staticService{cfg}, nil
+	return &service{
+		db: &keyvalueDB{
+			db:     kv,
+			logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
+		},
+		enabled: enabled,
+	}, nil
 }
 
 type service struct {
@@ -132,11 +136,6 @@ func (m *service) ShouldManage(gr schema.GroupResource) bool {
 func (m *service) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
 	v, ok, err := m.db.get(ctx, gr)
 	return ok && v.ReadUnified, err
-}
-
-func (m *service) WriteUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
-	v, ok, err := m.db.get(ctx, gr)
-	return ok && v.WriteUnified, err
 }
 
 // Status implements Service.
