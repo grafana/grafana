@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
@@ -57,7 +57,6 @@ func ProvideUnifiedStorageClient(opts *Options,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 ) (resource.ResourceClient, error) {
-	// See: apiserver.applyAPIServerConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:             options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
@@ -111,19 +110,22 @@ func newClient(opts options.StorageOptions,
 		if opts.DataPath == "" {
 			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
 		}
-		bucket, err := fileblob.OpenBucket(filepath.Join(opts.DataPath, "resource"), &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
+
+		// Create BadgerDB instance
+		db, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
+			WithLogger(nil))
+		if err != nil {
+			return nil, err
+		}
+
+		kv := resource.NewBadgerKV(db)
+		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+			KvStore: kv,
 		})
 		if err != nil {
 			return nil, err
 		}
-		backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
-			Bucket: bucket,
-		})
-		if err != nil {
-			return nil, err
-		}
+
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend: backend,
 			Blob: resource.BlobConfig{
@@ -162,12 +164,8 @@ func newClient(opts options.StorageOptions,
 			indexConn = conn
 		}
 
-		// Create a client instance
-		client, err := resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
-		if err != nil {
-			return nil, err
-		}
-		return client, nil
+		// Create a resource client
+		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
 		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics, nil)
@@ -225,6 +223,7 @@ func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.Fe
 	// Create either a connection pool or a single connection.
 	// The connection pool __can__ be useful when connection to
 	// server side load balancers like kube-proxy.
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
 		conn, err := newPooledConn(&poolOpts{
 			initialCapacity: 3,

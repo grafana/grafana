@@ -24,7 +24,7 @@ import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plug
 import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
-import { PanelTimeRange, PanelTimeRangeState } from '../../scene/PanelTimeRange';
+import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../../utils/utils';
 import { buildPanelEditScene } from '../PanelEditor';

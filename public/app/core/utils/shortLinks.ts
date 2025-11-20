@@ -4,14 +4,14 @@ import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
+import { shortURLAPIv1beta1 } from 'app/api/clients/shorturl/v1beta1';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dispatch } from 'app/store/store';
 
-import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/shorturl_object_gen';
-import { generatedAPI } from '../../api/clients/shorturl/v1alpha1/endpoints.gen';
+import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
 import { extractErrorMessage } from '../../api/utils';
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 
@@ -33,22 +33,23 @@ function getRelativeURLPath(url: string) {
   return path.startsWith('/') ? path.substring(1, path.length) : path;
 }
 
-// Memoized legacy API call - preserves original behavior
-const createShortLinkLegacy = memoizeOne(async (path: string): Promise<string> => {
+const createShortLinkLegacy = async (path: string): Promise<string> => {
   const shortLink = await getBackendSrv().post(`/api/short-urls`, {
     path: getRelativeURLPath(path),
   });
   return shortLink.url;
-});
+};
 
-export const createShortLink = async function (path: string) {
+// Memoized API call, to not re-execute the same request multiple times
+// this function creates a shortURL using the legacy or the new k8s api depending on the feature toggle
+export const createShortLink = memoizeOne(async (path: string): Promise<string> => {
   try {
     if (config.featureToggles.useKubernetesShortURLsAPI) {
       // Use RTK API - it handles caching/failures/retries automatically
       const result = await dispatch(
-        generatedAPI.endpoints.createShortUrl.initiate({
+        shortURLAPIv1beta1.endpoints.createShortUrl.initiate({
           shortUrl: {
-            apiVersion: 'shorturl.grafana.app/v1alpha1',
+            apiVersion: 'shorturl.grafana.app/v1beta1',
             kind: 'ShortURL',
             metadata: {},
             spec: {
@@ -69,7 +70,6 @@ export const createShortLink = async function (path: string) {
 
       throw new Error('Failed to create short URL');
     } else {
-      // Old API - use memoized function (preserves original behavior)
       return await createShortLinkLegacy(path);
     }
   } catch (err) {
@@ -77,7 +77,7 @@ export const createShortLink = async function (path: string) {
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
     throw err; // Re-throw so callers know it failed
   }
-};
+});
 
 /**
  * Creates a ClipboardItem for the shortened link. This is used due to clipboard issues in Safari after making async calls.

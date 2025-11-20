@@ -11,7 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -23,7 +22,7 @@ import (
 )
 
 type DashboardStorage struct {
-	Access           legacy.DashboardAccess
+	Access           legacy.DashboardAccessor
 	DashboardService dashboards.DashboardService
 }
 

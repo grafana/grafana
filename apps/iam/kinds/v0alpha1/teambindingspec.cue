@@ -11,6 +11,8 @@ TeamBindingSpec: {
 
 	// permission of the identity in the team
 	permission: TeamPermission
+
+	external: bool
 }
 
 TeamRef:{

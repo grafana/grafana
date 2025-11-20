@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
 import { FeatureState, GrafanaTheme2 } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Box, FeatureBadge, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { RepositoryTypeCards } from '../Shared/RepositoryTypeCards';
+import { isFreeTierLicense } from '../utils/isFreeTierLicense';
+import { isOnPrem } from '../utils/isOnPrem';
 
 interface FeaturesListProps {
   hasRequiredFeatures: boolean;
@@ -15,7 +15,6 @@ interface FeaturesListProps {
 
 export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesListProps) => {
   const styles = useStyles2(getStyles);
-  const isOnPrem = [GrafanaEdition.OpenSource, GrafanaEdition.Enterprise].includes(config.buildInfo.edition);
 
   return (
     <Stack direction="column" gap={3}>
@@ -23,7 +22,7 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
         <Trans i18nKey="provisioning.features-list.manage-your-dashboards-with-remote-provisioning">
           Get started with Git Sync
         </Trans>{' '}
-        {!isOnPrem && <FeatureBadge featureState={FeatureState.privatePreview} />}
+        {!isOnPrem() && <FeatureBadge featureState={FeatureState.privatePreview} />}
       </Text>
       <ul className={styles.featuresList}>
         <li>
@@ -36,15 +35,20 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
             Store dashboards in version-controlled storage for better organization and history tracking
           </Trans>
         </li>
+        {isFreeTierLicense() && (
+          <li>
+            <Trans i18nKey="provisioning.free-tier-limit.message">
+              Free-tier accounts are capped to 1 connection, and 20 resources per folder
+            </Trans>
+          </li>
+        )}
       </ul>
       <Text>
         <Trans i18nKey="provisioning.features-list.learn-more-documentation">
           Want to learn more? See our{' '}
           <TextLink
             external
-            href={
-              'https://grafana.com/docs/grafana-cloud/developer-resources/observability-as-code/provision-resources'
-            }
+            href={'https://grafana.com/docs/grafana-cloud/as-code/observability-as-code/provision-resources/'}
           >
             documentation
           </TextLink>

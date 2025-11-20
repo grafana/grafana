@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
@@ -119,6 +121,24 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "tag query filter",
 										Required:    false,
 										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "libraryPanel",
+										In:          "query",
+										Description: "find dashboards that reference a given libraryPanel",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "permission",
+										In:          "query",
+										Description: "permission needed for the resource (View, Edit, Admin)",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("View", "Edit", "Admin"),
 									},
 								},
 								{
@@ -253,7 +273,8 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 
 const rootFolder = "general"
 
-// nolint:gocyclo
+var errEmptyResults = fmt.Errorf("empty results")
+
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -270,6 +291,51 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func() ([]string, error) {
+		return s.getDashboardsUIDsSharedWithUser(ctx, user)
+	})
+	if err != nil {
+		if errors.Is(err, errEmptyResults) {
+			s.write(w, dashboardv0alpha1.SearchResults{
+				Hits: []dashboardv0alpha1.DashboardHit{},
+			})
+		} else {
+			errhttp.Write(ctx, err, w)
+		}
+		return
+	}
+
+	result, err := s.client.Search(ctx, searchRequest)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	if result != nil {
+		s.log.Debug("search result hits and cost", "total_hits", result.TotalHits, "query_cost", result.QueryCost)
+	}
+
+	parsedResults, err := dashboardsearch.ParseResults(result, searchRequest.Offset)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	if len(searchRequest.SortBy) == 0 {
+		// default sort by resource descending ( folders then dashboards ) then title
+		sort.Slice(parsedResults.Hits, func(i, j int) bool {
+			// Just sorting by resource for now. The rest should be sorted by search score already
+			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource
+		})
+	}
+
+	s.write(w, parsedResults)
+}
+
+// convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
+// Supplied function is used to get dashboards shared with user.
+// nolint:gocyclo
+func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func() ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
 	offset := 0
@@ -279,8 +345,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	if queryParams.Has("offset") {
 		offset, _ = strconv.Atoi(queryParams.Get("offset"))
+		if offset > 0 {
+			page = (offset / limit) + 1
+		}
 	} else if queryParams.Has("page") {
 		page, _ = strconv.Atoi(queryParams.Get("page"))
+		offset = (page - 1) * limit
 	}
 
 	searchRequest := &resourcepb.ResourceSearchRequest{
@@ -302,11 +372,21 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	searchRequest.Fields = fields
 
+	switch strings.ToLower(queryParams.Get("permission")) {
+	case "edit":
+		searchRequest.Permission = int64(dashboardaccess.PERMISSION_EDIT)
+	case "view":
+		searchRequest.Permission = int64(dashboardaccess.PERMISSION_VIEW)
+	case "admin":
+		searchRequest.Permission = int64(dashboardaccess.PERMISSION_ADMIN)
+	}
+
 	// A search request can include multiple types, we need to acces the slice directly.
 	types := queryParams["type"]
 	hasDash := len(types) == 0 || slices.Contains(types, "dashboard")
 	hasFolder := len(types) == 0 || slices.Contains(types, "folder")
 	// If both types are present, we need to search both dashboards and folders, by default is nothing is set we also search both.
+	var err error
 	if (hasDash && hasFolder) || (!hasDash && !hasFolder) {
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 		if err == nil {
@@ -320,8 +400,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 	}
 	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
+		return nil, err
 	}
 
 	// Add sorting
@@ -352,11 +431,20 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	// The tags filter
 	if tags, ok := queryParams["tag"]; ok {
-		searchRequest.Options.Fields = []*resourcepb.Requirement{{
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "tags",
 			Operator: "=",
 			Values:   tags,
-		}}
+		})
+	}
+
+	// The libraryPanel filter
+	if libraryPanel, ok := queryParams["libraryPanel"]; ok {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+			Operator: "=",
+			Values:   libraryPanel,
+		})
 	}
 
 	// The names filter
@@ -365,17 +453,13 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// Add the folder constraint. Note this does not do recursive search
 	folder := queryParams.Get("folder")
 	if folder == foldermodel.SharedWithMeFolderUID {
-		dashboardUIDs, err := s.getDashboardsUIDsSharedWithUser(ctx, user)
+		dashboardUIDs, err := getDashboardsUIDsSharedWithUser()
 		if err != nil {
-			errhttp.Write(ctx, err, w)
-			return
+			return nil, err
 		}
 
 		if len(dashboardUIDs) == 0 {
-			s.write(w, dashboardv0alpha1.SearchResults{
-				Hits: []dashboardv0alpha1.DashboardHit{},
-			})
-			return
+			return nil, errEmptyResults
 		}
 		// hijacks the "name" query param to only search for shared dashboard UIDs
 		names = append(names, dashboardUIDs...)
@@ -383,50 +467,21 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		if folder == rootFolder {
 			folder = "" // root folder is empty in the search index
 		}
-		searchRequest.Options.Fields = []*resourcepb.Requirement{{
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",
 			Operator: "=",
 			Values:   []string{folder},
-		}}
-	}
-
-	if len(names) > 0 {
-		if searchRequest.Options.Fields == nil {
-			searchRequest.Options.Fields = []*resourcepb.Requirement{}
-		}
-		namesFilter := []*resourcepb.Requirement{{
-			Key:      "name",
-			Operator: "in",
-			Values:   names,
-		}}
-		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
-	}
-
-	result, err := s.client.Search(ctx, searchRequest)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-
-	if result != nil {
-		s.log.Debug("search result hits and cost", "total_hits", result.TotalHits, "query_cost", result.QueryCost)
-	}
-
-	parsedResults, err := dashboardsearch.ParseResults(result, searchRequest.Offset)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-
-	if len(searchRequest.SortBy) == 0 {
-		// default sort by resource descending ( folders then dashboards ) then title
-		sort.Slice(parsedResults.Hits, func(i, j int) bool {
-			// Just sorting by resource for now. The rest should be sorted by search score already
-			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource
 		})
 	}
 
-	s.write(w, parsedResults)
+	if len(names) > 0 {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      "name",
+			Operator: "in",
+			Values:   names,
+		})
+	}
+	return searchRequest, nil
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {

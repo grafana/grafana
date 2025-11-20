@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/i18n",
-  "version": "12.3.0-pre",
+  "version": "12.4.0-pre",
   "description": "Grafana Internationalization Library",
   "keywords": [
     "grafana",
@@ -28,6 +28,7 @@
       "require": "./src/internal/index.ts"
     },
     "./eslint-plugin": {
+      "types": "./src/eslint/index.d.ts",
       "import": "./src/eslint/index.cjs",
       "require": "./src/eslint/index.cjs"
     }

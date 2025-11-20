@@ -97,17 +97,19 @@ async function initFaroBackend() {
 
   registerEchoBackend(
     new GrafanaJavascriptAgentBackend({
-      ...config.grafanaJavascriptAgent,
-      app: {
-        version: config.buildInfo.version,
-        environment: config.buildInfo.env,
-      },
       buildInfo: config.buildInfo,
-      user: {
-        id: String(contextSrv.user?.id),
-        email: contextSrv.user?.email,
-      },
+      userIdentifier: contextSrv.user.analytics.identifier,
       ignoreUrls: rudderstackUrls,
+
+      apiKey: config.grafanaJavascriptAgent.apiKey,
+      customEndpoint: config.grafanaJavascriptAgent.customEndpoint,
+      consoleInstrumentalizationEnabled: config.grafanaJavascriptAgent.consoleInstrumentalizationEnabled,
+      performanceInstrumentalizationEnabled: config.grafanaJavascriptAgent.performanceInstrumentalizationEnabled,
+      cspInstrumentalizationEnabled: config.grafanaJavascriptAgent.cspInstrumentalizationEnabled,
+      tracingInstrumentalizationEnabled: config.grafanaJavascriptAgent.tracingInstrumentalizationEnabled,
+      webVitalsAttribution: config.grafanaJavascriptAgent.webVitalsAttribution,
+      internalLoggerLevel: config.grafanaJavascriptAgent.internalLoggerLevel,
+      botFilterEnabled: config.grafanaJavascriptAgent.botFilterEnabled,
     })
   );
 }
@@ -144,7 +146,11 @@ async function initRudderstackBackend() {
     return;
   }
 
-  const { RudderstackBackend } = await import('./backends/analytics/RudderstackBackend');
+  const modulePromise = config.featureToggles.rudderstackUpgrade
+    ? import('./backends/analytics/RudderstackV3Backend')
+    : import('./backends/analytics/RudderstackBackend');
+
+  const { RudderstackBackend } = await modulePromise;
   registerEchoBackend(
     new RudderstackBackend({
       writeKey: config.rudderstackWriteKey,
@@ -168,6 +174,7 @@ async function initAzureAppInsightsBackend() {
     new ApplicationInsightsBackend({
       connectionString: config.applicationInsightsConnectionString,
       endpointUrl: config.applicationInsightsEndpointUrl,
+      autoRouteTracking: config.applicationInsightsAutoRouteTracking,
     })
   );
 }

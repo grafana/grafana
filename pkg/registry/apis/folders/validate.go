@@ -120,8 +120,16 @@ func validateOnUpdate(ctx context.Context,
 		return err
 	}
 
+	// Check that the folder being moved is not an ancestor of the target parent.
+	// This prevents circular references (e.g., moving A under B when B is already under A).
+	for _, ancestor := range info.Items {
+		if ancestor.Name == obj.Name {
+			return fmt.Errorf("cannot move folder under its own descendant, this would create a circular reference")
+		}
+	}
+
 	// if by moving a folder we exceed the max depth, return an error
-	if len(info.Items)+1 >= maxDepth {
+	if len(info.Items) > maxDepth+1 {
 		return folder.ErrMaximumDepthReached.Errorf("maximum folder depth reached")
 	}
 	return nil
@@ -144,9 +152,11 @@ func validateOnDelete(ctx context.Context,
 		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
 	}
 
+	allowedResourceTypes := []string{"alertrules", "dashboards", "library_elements", "folders"}
+
 	for _, v := range resp.Stats {
-		if v.Count > 0 {
-			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d resources", v.Count)
+		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
+			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", v.Count, v.Resource)
 		}
 	}
 	return nil

@@ -81,6 +81,7 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 			ReportBuildMetrics,
 			ReportTargetMetrics,
 			ReportFSMetrics,
+			ReportAssetMetrics,
 			ReportCloudProvisioningMetrics(provisionedPluginsManager),
 			initialization.PluginRegistrationStep(pr),
 		},

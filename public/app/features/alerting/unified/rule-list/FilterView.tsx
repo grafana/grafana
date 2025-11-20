@@ -16,13 +16,14 @@ import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
+import { hasClientSideFilters } from './hooks/grafanaFilter';
 import {
   GrafanaRuleWithOrigin,
   PromRuleWithOrigin,
   RuleWithOrigin,
   useFilteredRulesIteratorProvider,
 } from './hooks/useFilteredRulesIterator';
-import { FRONTEND_LIST_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
+import { FRONTEND_LIST_PAGE_SIZE, getSearchApiGroupPageSize } from './paginationLimits';
 
 interface FilterViewProps {
   filterState: RulesFilter;
@@ -77,7 +78,10 @@ function FilterViewResults({ filterState }: FilterViewProps) {
        * ⚠️ Make sure we are returning / using a "iterator" and not an "iterable" since the iterable is only a blueprint
        * and the iterator will allow us to exhaust the iterable in a stateful way
        */
-      const { iterable, abortController } = getFilteredRulesIterator(filterState, getApiGroupPageSize(true));
+      const { iterable, abortController } = getFilteredRulesIterator(
+        filterState,
+        getSearchApiGroupPageSize(hasClientSideFilters(filterState))
+      );
       const rulesBatchIterator = iterable
         .pipe(
           bufferCountOrTime(FRONTEND_LIST_PAGE_SIZE, 1000),
@@ -162,7 +166,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
                 />
               );
             case 'datasource':
-              return <DataSourceRuleLoader key={key} rule={rule} groupIdentifier={groupIdentifier} />;
+              return <DataSourceRuleLoader key={key} ruleWithOrigin={ruleWithOrigin} />;
             default:
               return (
                 <UnknownRuleListItem
@@ -212,7 +216,9 @@ function getGrafanaRuleKey(ruleWithOrigin: GrafanaRuleWithOrigin) {
 function getDataSourceRuleKey(ruleWithOrigin: PromRuleWithOrigin) {
   const {
     rule,
+    rulePositionHash,
     groupIdentifier: { rulesSource, namespace, groupName },
   } = ruleWithOrigin;
-  return `${rulesSource.name}-${namespace.name}-${groupName}-${rule.name}-${rule.type}-${hashRule(rule)}`;
+
+  return `${rulesSource.name}-${namespace.name}-${groupName}-${rule.name}-${rule.type}-${hashRule(rule)}-${rulePositionHash}`;
 }

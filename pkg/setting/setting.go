@@ -215,6 +215,7 @@ type Cfg struct {
 	ForwardHostEnvVars               []string
 	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
+	PreinstallAutoUpdate             bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -389,14 +390,15 @@ type Cfg struct {
 	LocalFileSystemAvailable bool
 
 	// Analytics
-	CheckForGrafanaUpdates              bool
-	CheckForPluginUpdates               bool
-	ReportingDistributor                string
-	ReportingEnabled                    bool
-	ApplicationInsightsConnectionString string
-	ApplicationInsightsEndpointUrl      string
-	FeedbackLinksEnabled                bool
-	ReportingStaticContext              map[string]string
+	CheckForGrafanaUpdates               bool
+	CheckForPluginUpdates                bool
+	ReportingDistributor                 string
+	ReportingEnabled                     bool
+	ApplicationInsightsConnectionString  string
+	ApplicationInsightsEndpointUrl       string
+	ApplicationInsightsAutoRouteTracking bool
+	FeedbackLinksEnabled                 bool
+	ReportingStaticContext               map[string]string
 
 	// Frontend analytics
 	GoogleAnalyticsID                   string
@@ -478,6 +480,9 @@ type Cfg struct {
 	// LiveMessageSizeLimit is the maximum size in bytes of Websocket messages
 	// from clients. Defaults to 64KB.
 	LiveMessageSizeLimit int
+	// LiveClientQueueMaxSize is the maximum size in bytes of the client queue
+	// for Live connections. Defaults to 4MB.
+	LiveClientQueueMaxSize int
 
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
@@ -573,7 +578,9 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                             map[string]UnifiedStorageConfig
+	UnifiedStorage map[string]UnifiedStorageConfig
+	// DisableDataMigrations will disable resources data migration to unified storage at startup
+	DisableDataMigrations                      bool
 	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
@@ -601,6 +608,8 @@ type Cfg struct {
 	SprinklesApiServerPageLimit                int
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
+	ResourceServerJoinRingTimeout              time.Duration
+	EnableSearch                               bool
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -1271,6 +1280,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
+	cfg.ApplicationInsightsAutoRouteTracking = analytics.Key("application_insights_connection_string").MustBool(true)
 	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
 
 	// parse reporting static context string of key=value, key=value pairs into an object
@@ -2061,6 +2071,11 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	if cfg.LiveMessageSizeLimit < -1 {
 		return fmt.Errorf("unexpected value %d for [live] message_size_limit", cfg.LiveMaxConnections)
 	}
+	cfg.LiveClientQueueMaxSize = section.Key("client_queue_max_size").MustInt(4194304)
+	if cfg.LiveClientQueueMaxSize <= 0 {
+		return fmt.Errorf("unexpected value %d for [live] client_queue_max_size", cfg.LiveMaxConnections)
+	}
+
 	cfg.LiveHAEngine = section.Key("ha_engine").MustString("")
 	switch cfg.LiveHAEngine {
 	case "", "redis":

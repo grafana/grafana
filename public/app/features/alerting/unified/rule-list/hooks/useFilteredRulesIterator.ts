@@ -22,8 +22,10 @@ import {
   getExternalRulesSources,
   isSupportedExternalRulesSourceType,
 } from '../../utils/datasource';
+import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
-import { groupFilter, ruleFilter } from './filters';
+import { getDatasourceFilter } from './datasourceFilter';
+import { getGrafanaFilter } from './grafanaFilter';
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
 export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
@@ -43,6 +45,22 @@ export interface PromRuleWithOrigin {
   rule: PromRuleDTO;
   groupIdentifier: DataSourceRuleGroupIdentifier;
   origin: 'datasource';
+  /**
+   * Position hash encoding both the rule's index and the total number of rules in the group.
+   * Format: "<index>:<totalRules>" (e.g., "0:3", "1:5")
+   *
+   * This is used as a tiebreaker when multiple identical rules exist in a group and need to be
+   * matched against their counterparts in another rule source (e.g., matching Prometheus rules
+   * to Ruler API rules). The hash ensures that identical rules are matched by their position
+   * only when both groups have the same structure (same number of rules).
+   *
+   * @example
+   * // Two identical alerts in different positions
+   * Rule at position 0 in a 3-rule group: rulePositionHash = "0:3"
+   * Rule at position 1 in a 3-rule group: rulePositionHash = "1:3"
+   * // These won't match rules in a 2-rule group (e.g., "0:2") even if identical
+   */
+  rulePositionHash: RulePositionHash;
 }
 
 interface GetIteratorResult {
@@ -60,22 +78,19 @@ export function useFilteredRulesIteratorProvider() {
     /* this is the abort controller that allows us to stop an AsyncIterable */
     const abortController = new AbortController();
 
-    const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
+    const { backendFilter, frontendFilter } = getGrafanaFilter(filterState);
+
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
-      grafanaGroupsGenerator(groupLimit, {
-        contactPoint: filterState.contactPoint ?? undefined,
-        health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
-        state: filterState.ruleState ? [filterState.ruleState] : [],
-      })
+      grafanaGroupsGenerator(groupLimit, backendFilter)
     ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>
         groups
-          .filter((group) => groupFilter(group, normalizedFilterState))
+          .filter((group) => frontendFilter.groupMatches(group))
           .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-          .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+          .filter(({ rule }) => frontendFilter.ruleMatches(rule))
           .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
       catchError(() => empty())
@@ -90,6 +105,8 @@ export function useFilteredRulesIteratorProvider() {
       return { iterable: grafanaRulesGenerator, abortController };
     }
 
+    const { groupMatches, ruleMatches } = getDatasourceFilter(filterState);
+
     const dataSourceGenerators: Array<AsyncIterableX<RuleWithOrigin>> = externalRulesSourcesToFetchFrom.map(
       (dataSourceIdentifier) => {
         const promGroupsGenerator: AsyncIterableX<RuleWithOrigin> = from(
@@ -98,10 +115,10 @@ export function useFilteredRulesIteratorProvider() {
           withAbort(abortController.signal),
           concatMap((groups) =>
             groups
-              .filter((group) => groupFilter(group, normalizedFilterState))
-              .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-              .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
-              .map(({ group, rule }) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule))
+              .filter((group) => groupMatches(group))
+              .flatMap((group) => group.rules.map((rule, index) => ({ group, rule, index })))
+              .filter(({ rule }) => ruleMatches(rule))
+              .map(({ group, rule, index }) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule, index))
           ),
           catchError(() => empty())
         );
@@ -166,7 +183,8 @@ function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceId
 function mapRuleToRuleWithOrigin(
   rulesSource: DataSourceRulesSourceIdentifier,
   group: PromRuleGroupDTO,
-  rule: PromRuleDTO
+  rule: PromRuleDTO,
+  ruleIndex: number
 ): PromRuleWithOrigin {
   return {
     rule,
@@ -177,6 +195,7 @@ function mapRuleToRuleWithOrigin(
       groupOrigin: 'datasource',
     },
     origin: 'datasource',
+    rulePositionHash: createRulePositionHash(ruleIndex, group.rules.length),
   };
 }
 
@@ -193,18 +212,5 @@ function mapGrafanaRuleToRuleWithOrigin(
     },
     namespaceName: group.file,
     origin: 'grafana',
-  };
-}
-
-/**
- * Lowercase free form words, rule name, group name and namespace
- */
-function normalizeFilterState(filterState: RulesFilter): RulesFilter {
-  return {
-    ...filterState,
-    freeFormWords: filterState.freeFormWords.map((word) => word.toLowerCase()),
-    ruleName: filterState.ruleName?.toLowerCase(),
-    groupName: filterState.groupName?.toLowerCase(),
-    namespace: filterState.namespace?.toLowerCase(),
   };
 }

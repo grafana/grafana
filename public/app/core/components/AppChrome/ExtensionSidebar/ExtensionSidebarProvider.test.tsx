@@ -1,9 +1,9 @@
 import { render, screen, act } from '@testing-library/react';
 
-import { store, EventBusSrv, EventBus } from '@grafana/data';
+import { store, EventBusSrv, EventBus, ExtensionInfo } from '@grafana/data';
 import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent } from 'app/types/events';
+import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import {
   ExtensionSidebarContextProvider,
@@ -17,11 +17,17 @@ const mockComponent = {
   title: 'Test Component',
   description: 'Test Description',
   targets: [],
-};
+} as ExtensionInfo;
+
+const mockDifferentComponent = {
+  title: 'Different Component',
+  description: 'Different Description',
+  targets: [],
+} as ExtensionInfo;
 
 const mockPluginMeta = {
   pluginId: 'grafana-investigations-app',
-  addedComponents: [mockComponent],
+  addedComponents: [mockComponent, mockDifferentComponent],
   addedLinks: [],
 };
 
@@ -54,6 +60,7 @@ jest.mock('@grafana/runtime', () => ({
         title: mockComponent.title,
       },
     ],
+    isLoading: false,
   })),
 }));
 
@@ -334,8 +341,133 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
   });
 
-  it('should unsubscribe from both OpenExtensionSidebarEvent and CloseExtensionSidebarEvent on unmount', () => {
-    const unsubscribeMocks = [jest.fn(), jest.fn()];
+  it('should subscribe to ToggleExtensionSidebarEvent', () => {
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(subscribeSpy).toHaveBeenCalledWith(ToggleExtensionSidebarEvent, expect.any(Function));
+  });
+
+  it('should toggle sidebar when receiving ToggleExtensionSidebarEvent', () => {
+    const TestComponentWithProps = () => {
+      const context = useExtensionSidebarContext();
+      return (
+        <div>
+          <div data-testid="is-open">{context.isOpen.toString()}</div>
+          <div data-testid="docked-component-id">{context.dockedComponentId || 'undefined'}</div>
+          <div data-testid="props">{context.props ? JSON.stringify(context.props) : 'undefined'}</div>
+        </div>
+      );
+    };
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponentWithProps />
+      </ExtensionSidebarContextProvider>
+    );
+
+    // Sidebar is closed
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+
+    // Toggle the sidebar to open it
+    act(() => {
+      // Call the toggle event handler
+      const toggleEventSubscriberCall = subscribeSpy.mock.calls.find((call) => call[0] === ToggleExtensionSidebarEvent);
+      expect(toggleEventSubscriberCall).toBeDefined();
+      const [, subscriberFn] = toggleEventSubscriberCall!;
+
+      subscriberFn(
+        new ToggleExtensionSidebarEvent({
+          pluginId: 'grafana-investigations-app',
+          componentTitle: 'Test Component',
+          props: { testProp: 'test value' },
+        })
+      );
+    });
+
+    // Sidebar is open
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('props')).toHaveTextContent('{"testProp":"test value"}');
+    const expectedComponentId = JSON.stringify({
+      pluginId: 'grafana-investigations-app',
+      componentTitle: 'Test Component',
+    });
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent(expectedComponentId);
+
+    // Toggle the sidebar to close it
+    act(() => {
+      // Call the toggle event handler
+      const toggleEventSubscriberCall = subscribeSpy.mock.calls
+        .slice()
+        .reverse()
+        .find((call) => call[0] === ToggleExtensionSidebarEvent);
+      expect(toggleEventSubscriberCall).toBeDefined();
+      const [, subscriberFn] = toggleEventSubscriberCall!;
+
+      subscriberFn(
+        new ToggleExtensionSidebarEvent({
+          pluginId: mockPluginMeta.pluginId,
+          componentTitle: mockComponent.title,
+        })
+      );
+    });
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
+  });
+
+  it('should toggle to different component when receiving ToggleExtensionSidebarEvent for different component', () => {
+    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
+    (store.get as jest.Mock).mockReturnValue(componentId);
+
+    const TestComponentWithProps = () => {
+      const context = useExtensionSidebarContext();
+      return (
+        <div>
+          <div data-testid="is-open">{context.isOpen.toString()}</div>
+          <div data-testid="docked-component-id">{context.dockedComponentId || 'undefined'}</div>
+          <button onClick={() => context.setDockedComponentId(componentId)}>Open Sidebar</button>
+        </div>
+      );
+    };
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponentWithProps />
+      </ExtensionSidebarContextProvider>
+    );
+
+    act(() => {
+      // Find the ToggleExtensionSidebarEvent subscriber
+      const toggleEventSubscriberCall = subscribeSpy.mock.calls
+        .slice()
+        .reverse()
+        .find((call) => call[0] === ToggleExtensionSidebarEvent);
+      expect(toggleEventSubscriberCall).toBeDefined();
+      const [, subscriberFn] = toggleEventSubscriberCall!;
+
+      // Call the toggle event handler with a different component
+      subscriberFn(
+        new ToggleExtensionSidebarEvent({
+          pluginId: mockPluginMeta.pluginId,
+          componentTitle: 'Different Component',
+        })
+      );
+    });
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+    const expectedComponentId = JSON.stringify({
+      pluginId: mockPluginMeta.pluginId,
+      componentTitle: 'Different Component',
+    });
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent(expectedComponentId);
+  });
+
+  it('should unsubscribe from all event subscriptions on unmount', () => {
+    const unsubscribeMocks = [jest.fn(), jest.fn(), jest.fn()];
     let callIndex = 0;
 
     subscribeSpy.mockImplementation(() => ({
@@ -350,9 +482,10 @@ describe('ExtensionSidebarProvider', () => {
 
     unmount();
 
-    // Both event subscriptions should be unsubscribed
+    // All event subscriptions should be unsubscribed
     expect(unsubscribeMocks[0]).toHaveBeenCalled();
     expect(unsubscribeMocks[1]).toHaveBeenCalled();
+    expect(unsubscribeMocks[2]).toHaveBeenCalled();
   });
 
   it('should subscribe to location service observable', () => {

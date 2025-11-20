@@ -52,7 +52,7 @@ func (u *Unstructured) SetUnstructuredContent(content map[string]any) {
 
 // MarshalJSON ensures that the unstructured object produces proper
 // JSON when passed to Go's standard JSON library.
-func (u *Unstructured) MarshalJSON() ([]byte, error) {
+func (u Unstructured) MarshalJSON() ([]byte, error) {
 	return json.Marshal(u.Object)
 }
 

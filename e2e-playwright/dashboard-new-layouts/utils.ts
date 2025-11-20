@@ -48,7 +48,6 @@ export const flows = {
   },
   async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.section).click();
     await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
@@ -185,7 +184,7 @@ export async function goToEmbeddedPanel(page: Page) {
   const baseUrl = currentUrl.match(baseUrlRegex)?.[0];
   soloPanelUrl = soloPanelUrl!.replace(baseUrlRegex, baseUrl!);
 
-  page.goto(soloPanelUrl!);
+  await page.goto(soloPanelUrl!);
 }
 
 export async function moveTab(

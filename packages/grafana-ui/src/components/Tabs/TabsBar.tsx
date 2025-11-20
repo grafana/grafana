@@ -13,6 +13,11 @@ export interface Props {
   hideBorder?: boolean;
 }
 
+/**
+ * A composition component for rendering a TabBar with Tabs for navigation.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-tabs--docs
+ */
 export const TabsBar = forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder = false }, ref) => {
   const styles = useStyles2(getStyles);
 

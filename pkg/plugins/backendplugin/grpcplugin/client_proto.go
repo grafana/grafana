@@ -57,6 +57,7 @@ type ProtoClientOpts struct {
 type ContainerModeOpts struct {
 	Enabled bool
 	Image   string
+	Tag     string
 }
 
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
@@ -70,6 +71,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 			containerMode: containerModeOpts{
 				enabled: opts.ContainerMode.Enabled,
 				image:   opts.ContainerMode.Image,
+				tag:     opts.ContainerMode.Tag,
 			},
 			skipHostEnvVars: opts.SkipHostEnvVars,
 		},

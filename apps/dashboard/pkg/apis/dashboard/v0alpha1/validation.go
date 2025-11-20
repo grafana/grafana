@@ -7,13 +7,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/cuevalidator"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/errors"
-	cuejson "cuelang.org/go/encoding/json"
 )
 
 func ValidateDashboardSpec(obj *Dashboard, forceValidation bool) (field.ErrorList, field.ErrorList) {
@@ -33,7 +33,7 @@ func ValidateDashboardSpec(obj *Dashboard, forceValidation bool) (field.ErrorLis
 		}, schemaVersionError
 	}
 
-	if err := cuejson.Validate(data, getCueSchema()); err != nil {
+	if err := getValidator().Validate(data); err != nil {
 		errs := field.ErrorList{}
 
 		for _, e := range errors.Errors(err) {
@@ -71,20 +71,21 @@ func formatErrorPath(path []string) string {
 }
 
 var (
-	compiledSchema cue.Value
-	getSchemaOnce  sync.Once
+	validator     *cuevalidator.Validator
+	getSchemaOnce sync.Once
 )
 
 //go:embed dashboard_kind.cue
 var schemaSource string
 
-func getCueSchema() cue.Value {
+func getValidator() *cuevalidator.Validator {
 	getSchemaOnce.Do(func() {
 		cueCtx := cuecontext.New()
-		compiledSchema = cueCtx.CompileString(schemaSource).LookupPath(
+		compiledSchema := cueCtx.CompileString(schemaSource).LookupPath(
 			cue.ParsePath("lineage.schemas[0].schema.spec"),
 		)
+		validator = cuevalidator.NewValidator(compiledSchema)
 	})
 
-	return compiledSchema
+	return validator
 }

@@ -18,6 +18,7 @@ export enum SuggestionName {
   Stat = 'Stat',
   StatColoredBackground = 'Stat colored background',
   Gauge = 'Gauge',
+  GaugeCircular = 'Circular gauge',
   GaugeNoThresholds = 'Gauge no thresholds',
   BarGaugeBasic = 'Bar gauge basic',
   BarGaugeLCD = 'Bar gauge LCD',

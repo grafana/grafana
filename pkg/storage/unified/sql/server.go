@@ -30,6 +30,7 @@ type QOSEnqueueDequeuer interface {
 
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
+	Backend        resource.StorageBackend
 	DB             infraDB.DB
 	Cfg            *setting.Cfg
 	Tracer         trace.Tracer
@@ -61,7 +62,6 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	}
 
 	serverOptions := resource.ResourceServerOptions{
-		Tracer: opts.Tracer,
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
@@ -87,29 +87,34 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
 	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
 
-	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
-	if err != nil {
-		return nil, err
+	if opts.Backend != nil {
+		serverOptions.Backend = opts.Backend
+		// TODO: we should probably have a proper interface for diagnostics/lifecycle
+	} else {
+		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
+		if err != nil {
+			return nil, err
+		}
+
+		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
+		backend, err := NewBackend(BackendOptions{
+			DBProvider:           eDB,
+			Tracer:               opts.Tracer,
+			Reg:                  opts.Reg,
+			IsHA:                 isHA,
+			storageMetrics:       opts.StorageMetrics,
+			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+		})
+		if err != nil {
+			return nil, err
+		}
+		serverOptions.Backend = backend
+		serverOptions.Diagnostics = backend
+		serverOptions.Lifecycle = backend
 	}
 
-	isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-		opts.Cfg.SectionWithEnvOverrides("resource_api"))
-	withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
-
-	store, err := NewBackend(BackendOptions{
-		DBProvider:     eDB,
-		Tracer:         opts.Tracer,
-		Reg:            opts.Reg,
-		IsHA:           isHA,
-		withPruner:     withPruner,
-		storageMetrics: opts.StorageMetrics,
-	})
-	if err != nil {
-		return nil, err
-	}
-	serverOptions.Backend = store
-	serverOptions.Diagnostics = store
-	serverOptions.Lifecycle = store
 	serverOptions.Search = opts.SearchOptions
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue

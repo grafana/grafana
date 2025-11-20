@@ -19,6 +19,8 @@ const (
 	dataSection = "unified/data"
 	// cache
 	groupResourcesCacheKey = "group-resources"
+	// batch operations
+	dataBatchSize = 50 // default batch size for BatchGet operations
 )
 
 // dataStore is a data store that uses a KV store to store data.
@@ -75,8 +77,10 @@ func (k DataKey) Validate() error {
 	}
 
 	// Validate naming conventions for all required fields
-	if err := validation.IsValidNamespace(k.Namespace); err != nil {
-		return NewValidationError("namespace", k.Namespace, err[0])
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
 	if err := validation.IsValidGroup(k.Group); err != nil {
 		return NewValidationError("group", k.Group, err[0])
@@ -115,7 +119,7 @@ func (k ListRequestKey) Validate() error {
 	if k.Namespace == "" && k.Name != "" {
 		return errors.New(ErrNameMustBeEmptyWhenNamespaceEmpty)
 	}
-	if k.Namespace != "" {
+	if k.Namespace != "" && k.Namespace != clusterScopeNamespace {
 		if err := validation.IsValidNamespace(k.Namespace); err != nil {
 			return NewValidationError("namespace", k.Namespace, err[0])
 		}
@@ -153,8 +157,10 @@ func (k GetRequestKey) Validate() error {
 	if k.Namespace == "" {
 		return errors.New(ErrNamespaceRequired)
 	}
-	if err := validation.IsValidNamespace(k.Namespace); err != nil {
-		return NewValidationError("namespace", k.Namespace, err[0])
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
 	if err := validation.IsValidGroup(k.Group); err != nil {
 		return NewValidationError("group", k.Group, err[0])
@@ -233,6 +239,49 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 		return ParseKey(key)
 	}
 	return DataKey{}, ErrNotFound
+}
+
+// GetLatestAndPredecessor returns the latest resource version and its immediate predecessor
+// in a single atomic operation. Returns (latest, predecessor, error).
+// If there's only one version, predecessor will be an empty DataKey (ResourceVersion == 0).
+func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequestKey) (DataKey, DataKey, error) {
+	if err := key.Validate(); err != nil {
+		return DataKey{}, DataKey{}, fmt.Errorf("invalid data key: %w", err)
+	}
+	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
+		return DataKey{}, DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	}
+	prefix := key.Prefix()
+	var latest, predecessor DataKey
+	count := 0
+	for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+		Limit:    2, // Get latest and predecessor
+		Sort:     SortOrderDesc,
+	}) {
+		if err != nil {
+			return DataKey{}, DataKey{}, err
+		}
+		parsedKey, err := ParseKey(k)
+		if err != nil {
+			return DataKey{}, DataKey{}, err
+		}
+		switch count {
+		case 0:
+			latest = parsedKey
+		case 1:
+			predecessor = parsedKey
+		}
+		count++
+	}
+	if count == 0 {
+		return DataKey{}, DataKey{}, ErrNotFound
+	}
+	if count == 1 {
+		return latest, DataKey{}, nil
+	}
+	return latest, predecessor, nil
 }
 
 // GetLatestResourceKey retrieves the data key for the latest version of a resource.
@@ -358,6 +407,63 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 	}
 
 	return d.kv.Get(ctx, dataSection, key.String())
+}
+
+// BatchGet retrieves multiple data objects in batches.
+// It returns an iterator that yields DataObj results for the given keys.
+// Keys are processed in batches (default 50).
+// Non-existent entries will not appear in the result.
+func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		// Validate all keys first
+		for _, key := range keys {
+			if err := key.Validate(); err != nil {
+				yield(DataObj{}, fmt.Errorf("invalid data key %s: %w", key.String(), err))
+				return
+			}
+		}
+
+		// Process keys in batches
+		for i := 0; i < len(keys); i += dataBatchSize {
+			end := i + dataBatchSize
+			if end > len(keys) {
+				end = len(keys)
+			}
+			batch := keys[i:end]
+
+			// Convert DataKeys to string keys and create a mapping
+			stringKeys := make([]string, len(batch))
+			keyMap := make(map[string]DataKey) // map string key back to DataKey
+			for j, key := range batch {
+				strKey := key.String()
+				stringKeys[j] = strKey
+				keyMap[strKey] = key
+			}
+
+			// Call kv.BatchGet for this batch
+			for kv, err := range d.kv.BatchGet(ctx, dataSection, stringKeys) {
+				if err != nil {
+					yield(DataObj{}, err)
+					return
+				}
+
+				// Look up the original DataKey
+				dataKey, ok := keyMap[kv.Key]
+				if !ok {
+					yield(DataObj{}, fmt.Errorf("unexpected key in batch response: %s", kv.Key))
+					return
+				}
+
+				// Yield the DataObj
+				if !yield(DataObj{
+					Key:   dataKey,
+					Value: kv.Value,
+				}, nil) {
+					return
+				}
+			}
+		}
+	}
 }
 
 func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) error {

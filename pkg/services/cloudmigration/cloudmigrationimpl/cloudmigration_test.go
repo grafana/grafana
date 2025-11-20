@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -435,16 +436,17 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		require.Eventually(
 			t,
 			func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == i+1 },
-			2*time.Second,
+			5*time.Second,
 			100*time.Millisecond,
-			"GMS client mock GetSnapshotStatus count: %d", gmsClientMock.GetSnapshotStatusCallCount(),
+			"GMS client mock GetSnapshotStatus count: %d on status: %s (want: %d)",
+			gmsClientMock.GetSnapshotStatusCallCount(), string(status), i+1,
 		)
 	}
 
 	assert.Never(
 		t,
 		func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 2 },
-		2*time.Second,
+		5*time.Second,
 		100*time.Millisecond,
 		"GMS client mock GetSnapshotStatus called more than expected: %d times", gmsClientMock.GetSnapshotStatusCallCount(),
 	)
@@ -789,7 +791,15 @@ func TestGetPlugins(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	user := &user.SignedInUser{OrgID: 1}
+	user := &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {
+				pluginaccesscontrol.ActionInstall: {pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
+				pluginaccesscontrol.ActionWrite:   {pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
+			},
+		},
+	}
 
 	s.pluginStore = pluginstore.NewFakePluginStore([]pluginstore.Plugin{
 		{
@@ -1000,7 +1010,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 		mockFolder,
 		&pluginstore.FakePluginStore{},
 		&pluginsettings.FakePluginSettings{},
-		actest.FakeAccessControl{ExpectedEvaluate: true},
+		accessControl,
 		fakeAccessControlService,
 		kvstore.ProvideService(sqlStore),
 		&libraryelementsfake.LibraryElementService{},

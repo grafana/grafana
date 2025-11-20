@@ -12,6 +12,7 @@ export function dataLayersToAnnotations(layers: SceneDataLayerProvider[]) {
       ...layer.state.query,
       enable: Boolean(layer.state.isEnabled),
       hide: Boolean(layer.state.isHidden),
+      placement: layer.state.placement,
     };
 
     annotations.push(result);

@@ -56,6 +56,9 @@ export interface Props extends Themeable2 {
   isOverflow: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-bargauge--docs
+ */
 export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     lcdCellWidth: 12,
@@ -147,7 +150,6 @@ export class BarGauge extends PureComponent<Props> {
       lcdCellWidth,
       text,
       valueDisplayMode,
-      theme,
       isOverflow,
     } = this.props;
     const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
@@ -195,7 +197,7 @@ export class BarGauge extends PureComponent<Props> {
       const currentValue = minValue + (valueRange / cellCount) * i;
       const cellColor = getCellColor(currentValue, value, display);
       const cellStyles: CSSProperties = {
-        borderRadius: theme.shape.radius.default,
+        borderRadius: '2px',
       };
 
       if (cellColor.isLit) {
@@ -525,7 +527,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   };
 
   const barStyles: CSSProperties = {
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     position: 'relative',
   };
 
@@ -533,7 +535,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     background: theme.colors.background.secondary,
     flexGrow: 1,
     display: 'flex',
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     position: 'relative',
   };
 

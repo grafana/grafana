@@ -3,6 +3,7 @@ package adapter
 import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -31,6 +32,9 @@ const (
 	// Core is the module name for the core module.
 	// This module is an alias for a set of service dependencies that must be running before most other services can start.
 	Core = "core"
+
+	// FixedRolesLoader is the module name for the fixed roles loader service.
+	FixedRolesLoader = accesscontrol.FixedRolesLoaderServiceName
 )
 
 // dependencyMap returns the module dependency relationships for the background service system.
@@ -43,8 +47,9 @@ func dependencyMap() map[string][]string {
 		GrafanaAPIServer:   {Tracing},
 		PluginStore:        {GrafanaAPIServer},
 		PluginInstaller:    {PluginStore},
-		Provisioning:       {PluginStore, PluginInstaller},
-		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, Provisioning},
+		FixedRolesLoader:   {PluginInstaller},
+		Provisioning:       {PluginStore, PluginInstaller, FixedRolesLoader},
+		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning},
 		BackgroundServices: {Core},
 	}
 }

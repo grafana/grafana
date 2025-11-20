@@ -1,9 +1,0 @@
-'{{apiPathPrefix}}/{{groupName}}/{{version}}/endpoints.gen.ts': {
-  apiFile: '{{apiPathPrefix}}/{{groupName}}/{{version}}/baseAPI.ts',
-  schemaFile: '../data/openapi/{{group}}-{{version}}.json',
-  {{#if endpoints}}
-  filterEndpoints: [{{{formatEndpoints endpoints}}}],
-  {{/if}}
-  tag: true,
-},
-// PLOP_INJECT_API_CLIENT - Used by the API client generator
