@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/plugins
 go 1.25.2
 
 require (
-	github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37
+	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4
 	github.com/grafana/grafana-app-sdk v0.46.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250428110029-a8ea72012bde
 	k8s.io/apimachinery v0.34.1
