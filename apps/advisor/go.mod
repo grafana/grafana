@@ -5,7 +5,7 @@ go 1.25.2
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/google/go-github/v70 v70.0.0
-	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43
+	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.40.2
 	github.com/grafana/grafana-app-sdk/logging v0.40.2

@@ -34,7 +34,7 @@ require (
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // indirect
-	github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37 // indirect
+	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4 // indirect
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
