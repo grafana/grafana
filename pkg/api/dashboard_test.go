@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -333,17 +332,6 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 
 	getVersions := func(server *webtest.Server, permissions []accesscontrol.Permission) (*http.Response, error) {
 		return server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/uid/1/versions"), userWithPermissions(1, permissions)))
-	}
-
-	calculateDiff := func(server *webtest.Server, permissions []accesscontrol.Permission) (*http.Response, error) {
-		cmd := &dtos.CalculateDiffOptions{
-			Base:     dtos.CalculateDiffTarget{DashboardId: 1, Version: 1},
-			New:      dtos.CalculateDiffTarget{DashboardId: 1, Version: 2},
-			DiffType: "json",
-		}
-		jsonBytes, err := json.Marshal(cmd)
-		require.NoError(t, err)
-		return server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/dashboards/calculate-diff", bytes.NewReader(jsonBytes)), userWithPermissions(1, permissions)))
 	}
 
 	t.Run("Should not be able to list dashboard versions without correct permission", func(t *testing.T) {
