@@ -56,13 +56,13 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 
     this._adHocVar = vars.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
     this._groupByVar = vars.state.variables.find((variable) => variable instanceof GroupByVariable);
-    this._queryRunnerDatasource = queryRunner.state.datasource;
+    this._queryRunnerDatasource = queryRunner?.state.datasource;
 
     this.setDrilldownApplicabilitySupportHelper();
 
     // keep track of queryRunner datasource updates andupdate rendering
     this._subs.add(
-      queryRunner.subscribeToState((n, p) => {
+      queryRunner?.subscribeToState((n, p) => {
         if (n.datasource !== p.datasource) {
           this._queryRunnerDatasource = n.datasource;
 
