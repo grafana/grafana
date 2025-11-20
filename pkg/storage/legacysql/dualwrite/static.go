@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// NewDualWriter -- temporary shim
-func NewDualWriter(
+// NewStaticStorage -- temporary shim
+func NewStaticStorage(
 	gr schema.GroupResource,
 	mode rest.DualWriterMode,
 	legacy rest.Storage,

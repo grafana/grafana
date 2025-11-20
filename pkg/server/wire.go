@@ -128,6 +128,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	promTypeMigration "github.com/grafana/grafana/pkg/services/promtypemigration"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
@@ -238,7 +239,9 @@ var wireBasicSet = wire.NewSet(
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	validator.ProvideService,
-	legacy.ProvideLegacyMigrator,
+	provisioning.ProvideStubProvisioningService,
+	legacy.ProvideMigratorDashboardAccessor,
+	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
@@ -466,8 +469,7 @@ var wireBasicSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
-	unifiedmigrations.ProvideUnifiedStorageMigrationProvider,
-	wire.Bind(new(unifiedmigrations.UnifiedStorageMigrationProvider), new(*unifiedmigrations.UnifiedStorageMigrationProviderImpl)),
+	unifiedmigrations.ProvideUnifiedStorageMigrationService,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,

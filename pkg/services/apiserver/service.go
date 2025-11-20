@@ -97,7 +97,7 @@ type service struct {
 
 	authorizer        *authorizer.GrafanaAuthorizer
 	serverLockService builder.ServerLockService
-	storageStatus     dualwrite.Service
+	dualWriter        dualwrite.Service
 	kvStore           kvstore.KVStore
 
 	pluginClient       plugins.Client
@@ -127,7 +127,7 @@ func ProvideService(
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
-	storageStatus dualwrite.Service,
+	dualWriter dualwrite.Service,
 	unified resource.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
 	restConfigProvider RestConfigProvider,
@@ -158,7 +158,7 @@ func ProvideService(
 		contextProvider:                   contextProvider,
 		pluginStore:                       pluginStore,
 		serverLockService:                 serverLockService,
-		storageStatus:                     storageStatus,
+		dualWriter:                        dualWriter,
 		unified:                           unified,
 		secrets:                           secrets,
 		restConfigProvider:                restConfigProvider,
@@ -385,12 +385,17 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API group+version for existing builders
-	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
+	err = builder.InstallAPIs(s.scheme,
+		s.codecs,
+		server,
+		serverConfig.RESTOptionsGetter,
+		builders,
+		o.StorageOptions,
 		s.metrics,
 		request.GetNamespaceMapper(s.cfg),
 		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
-		s.storageStatus,
+		s.dualWriter,
 		optsregister,
 		s.features,
 		s.dualWriterMetrics,
@@ -409,7 +414,7 @@ func (s *service) start(ctx context.Context) error {
 		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
 		request.GetNamespaceMapper(s.cfg),
-		s.storageStatus,
+		s.dualWriter,
 		s.dualWriterMetrics,
 		s.builderMetrics,
 		serverConfig.MergedResourceConfig,
