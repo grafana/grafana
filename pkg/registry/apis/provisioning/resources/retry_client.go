@@ -107,7 +107,7 @@ func (r *retryResourceInterface) retryWithBackoff(ctx context.Context, fn func()
 
 	err := wait.ExponentialBackoff(r.backoff, func() (bool, error) {
 		attempt++
-		
+
 		// Check if context is cancelled
 		if ctx.Err() != nil {
 			logger.Debug("Retry cancelled due to context cancellation", "attempt", attempt)
