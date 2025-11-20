@@ -141,7 +141,6 @@ export const VerticalTabs: StoryFn = (args) => {
     flexDirection: 'column',
     position: 'relative',
     overflow: 'hidden',
-    margin: '16px',
     gap: '16px',
   });
 
@@ -153,10 +152,11 @@ export const VerticalTabs: StoryFn = (args) => {
   const contextValue = useSidebar({
     position: args.position,
     tabsMode: true,
+    edgeMargin: 0,
   });
 
   return (
-    <Box backgroundColor={'canvas'} maxWidth={100} borderStyle={'solid'} borderColor={'weak'}>
+    <Box padding={2} backgroundColor={'canvas'} maxWidth={100} borderStyle={'solid'} borderColor={'weak'}>
       <div className={containerStyle}>
         <div className={vizWrapper}>{renderBox('Visualization')}</div>
         <Sidebar contextValue={contextValue}>
