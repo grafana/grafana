@@ -386,21 +386,19 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	hasDash := len(types) == 0 || slices.Contains(types, "dashboard")
 	hasFolder := len(types) == 0 || slices.Contains(types, "folder")
 	// If both types are present, we need to search both dashboards and folders, by default is nothing is set we also search both.
-	var key *resourcepb.ResourceKey
 	var err error
 	if (hasDash && hasFolder) || (!hasDash && !hasFolder) {
-		key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 		if err == nil {
 			if federate, _ := asResourceKey(user.GetNamespace(), folders.RESOURCE); federate != nil {
 				searchRequest.Federated = []*resourcepb.ResourceKey{federate}
 			}
 		}
 	} else if hasFolder {
-		key, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
 	} else if hasDash {
-		key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 	}
-	searchRequest.Options.Key = key
 	if err != nil {
 		return nil, err
 	}
