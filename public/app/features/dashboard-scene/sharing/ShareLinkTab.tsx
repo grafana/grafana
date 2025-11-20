@@ -184,15 +184,15 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
         </Trans>
       </p>
       <FieldSet>
-        <Field label={lockTimeRangeLabel} description={isRelativeTime ? lockTimeRangeDescription : ''}>
+        <Field noMargin label={lockTimeRangeLabel} description={isRelativeTime ? lockTimeRangeDescription : ''}>
           <Switch id="share-current-time-range" value={useLockedTime} onChange={model.onToggleLockedTime} />
         </Field>
         <ThemePicker selectedTheme={selectedTheme} onChange={model.onThemeChange} />
-        <Field label={shortenURLTranslation}>
+        <Field noMargin label={shortenURLTranslation}>
           <Switch id="share-shorten-url" value={useShortUrl} onChange={model.onUrlShorten} />
         </Field>
 
-        <Field label={linkURLTranslation}>
+        <Field noMargin label={linkURLTranslation}>
           <Input
             id="link-url-input"
             value={shareUrl}
@@ -209,12 +209,12 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
       {panel && config.rendererAvailable && (
         <>
           {isDashboardSaved && (
-            <div className="gf-form">
-              <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
+            <div>
+              <TextLink href={imageUrl} external aria-label={selectors.linkToRenderedImage}>
                 <Icon name="camera" />
                 &nbsp;
                 <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>
-              </a>
+              </TextLink>
             </div>
           )}
 
