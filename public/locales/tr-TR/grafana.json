@@ -2598,8 +2598,7 @@
         "firing": "",
         "normal": "",
         "pending": "",
-        "recovering": "",
-        "unknown": ""
+        "recovering": ""
       },
       "type": {
         "alert": "",
@@ -2623,12 +2622,14 @@
         "placeholder-search-input": ""
       },
       "grafana-folder": "",
+      "group-autocomplete-unavailable": "",
       "health": "Sağlık",
       "label": {
         "hide": "Gizle",
         "show": "Göster"
       },
       "manage-alerts": "Bu veri kaynaklarında hem Grafana arayüzünde hem de yapılandırıldıkları veri kaynağında bu uyarı kurallarını yönetebilmek için \"Uyarı Yönetimi\" arayüzü üzerinden yönetimi seçebilirsiniz.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Tüm veri kaynakları",
       "placeholder-contact-point": "",
       "placeholder-data-sources": "",
@@ -3540,6 +3541,7 @@
       "delete-modal-invalid-title": "Klasör silinemiyor",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Bu işlem aşağıdaki içerikleri silecektir:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Sil",
       "delete-provisioned-folder": "Sağlanan klasörü sil",
       "deleting": "Siliniyor...",
@@ -3548,6 +3550,7 @@
       "move-modal-alert": "Bu ögenin taşınması izinlerini değiştirebilir.",
       "move-modal-field-label": "Klasör adı",
       "move-modal-text": "Bu işlem aşağıdaki içerikleri taşıyacaktır:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Taşı",
       "move-provisioned-folder": "",
       "moving": "Taşınıyor...",
@@ -3635,11 +3638,11 @@
       "title-folder": "Bu klasörde henüz bir pano yok"
     },
     "folder-actions-button": {
-      "delete": "Sil",
+      "delete": "",
       "delete-folder-error": "",
       "folder-actions": "Klasör işlemleri",
       "manage-permissions": "İzinleri yönet",
-      "move": "Taşı"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Klasör seçin: {{ label }} şu anda seçili",
@@ -8586,7 +8589,9 @@
       "saving": "<1></1> kaydediliyor"
     },
     "axis-builder": {
-      "linear-threshold": "Doğrusal eşik",
+      "linear-threshold": {
+        "label": "Doğrusal eşik"
+      },
       "log-base": "Günlük tabanı"
     },
     "builder": {

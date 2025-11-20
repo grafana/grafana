@@ -210,6 +210,7 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		Version:                     rule.Version,
 		Created:                     rule.Updated, // assuming the Updated time as the creation time
 		CreatedBy:                   rule.UpdatedBy,
+		Message:                     "", // Message is set by caller when creating versions
 		Title:                       rule.Title,
 		Condition:                   rule.Condition,
 		Data:                        rule.Data,
@@ -260,4 +261,16 @@ func alertRuleVersionToAlertRule(version alertRuleVersion) alertRule {
 		Metadata:                    version.Metadata,
 		MissingSeriesEvalsToResolve: version.MissingSeriesEvalsToResolve,
 	}
+}
+
+func alertRuleVersionToModelsAlertRuleVersion(version alertRuleVersion, l log.Logger) (models.AlertRuleVersion, error) {
+	result, err := alertRuleToModelsAlertRule(alertRuleVersionToAlertRule(version), l)
+	if err != nil {
+		return models.AlertRuleVersion{}, err
+	}
+
+	return models.AlertRuleVersion{
+		AlertRule: result,
+		Message:   version.Message,
+	}, nil
 }

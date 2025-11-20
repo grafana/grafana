@@ -385,12 +385,22 @@ func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUI
 	}
 	sort.Slice(rules, func(i, j int) bool { return rules[i].ID > rules[j].ID })
 	result := make(apimodels.GettableRuleVersions, 0, len(rules))
-	userUIDmapping := srv.getUserUIDmapping(ctx, rules)
+	userUIDmapping := srv.getUserUIDmapping(ctx, alertRuleVersionsToAlertRules(rules))
 	for _, rule := range rules {
 		// do not provide provenance status because we do not have historical changes for it
-		result = append(result, toGettableExtendedRuleNode(*rule, map[string]ngmodels.Provenance{}, userUIDmapping))
+		ruleNode := toGettableExtendedRuleNode(rule.AlertRule, map[string]ngmodels.Provenance{}, userUIDmapping)
+		ruleNode.GrafanaManagedAlert.Message = rule.Message
+		result = append(result, ruleNode)
 	}
 	return response.JSON(http.StatusOK, result)
+}
+
+func alertRuleVersionsToAlertRules(vs []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRule {
+	result := make([]*ngmodels.AlertRule, len(vs))
+	for i := range vs {
+		result[i] = &vs[i].AlertRule
+	}
+	return result
 }
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {

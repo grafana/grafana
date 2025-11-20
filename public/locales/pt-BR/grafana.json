@@ -2598,8 +2598,7 @@
         "firing": "Ativo",
         "normal": "Normal",
         "pending": "Pendente",
-        "recovering": "Em recuperação",
-        "unknown": "Desconhecido"
+        "recovering": "Em recuperação"
       },
       "type": {
         "alert": "Regra de alerta",
@@ -2623,12 +2622,14 @@
         "placeholder-search-input": "Pesquise por nome ou insira uma consulta de filtro…"
       },
       "grafana-folder": "Pasta do Grafana",
+      "group-autocomplete-unavailable": "",
       "health": "Integridade",
       "label": {
         "hide": "Ocultar",
         "show": "Exibir"
       },
       "manage-alerts": "Nessas fontes de dados, você pode selecionar Gerenciar alertas via Interface de Envio de Alertas para gerenciar essas regras de alerta na interface da Grafana, bem como na fonte de dados onde foram configuradas.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Todas as fontes de dados",
       "placeholder-contact-point": "Selecionar ponto de contato",
       "placeholder-data-sources": "Selecionar fontes de dados",
@@ -3540,6 +3541,7 @@
       "delete-modal-invalid-title": "Não é possível excluir pasta",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Esta ação apagará o seguinte conteúdo:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Excluir",
       "delete-provisioned-folder": "Excluir pasta provisionada",
       "deleting": "Excluindo...",
@@ -3548,6 +3550,7 @@
       "move-modal-alert": "Mover este item pode alterar suas permissões.",
       "move-modal-field-label": "Nome da pasta",
       "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Mover",
       "move-provisioned-folder": "",
       "moving": "Movendo...",
@@ -3635,11 +3638,11 @@
       "title-folder": "Esta pasta ainda não contém nenhum painel de controle"
     },
     "folder-actions-button": {
-      "delete": "Excluir",
+      "delete": "",
       "delete-folder-error": "Erro ao excluir a pasta. Tente novamente mais tarde.",
       "folder-actions": "Ações da pasta",
       "manage-permissions": "Gerenciar permissões",
-      "move": "Mover"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Selecionar pasta: {{ label }} atualmente selecionada",
@@ -8586,7 +8589,9 @@
       "saving": "Salvando <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Limite linear",
+      "linear-threshold": {
+        "label": "Limite linear"
+      },
       "log-base": "Base de log"
     },
     "builder": {
