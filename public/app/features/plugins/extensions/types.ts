@@ -12,11 +12,13 @@ export type GetExtensionsOptions = {
   addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]> | undefined;
 };
 
-export type GetExtensions = (options: GetExtensionsOptions) => { extensions: PluginExtension[] };
+export type GetExtensions = (options: GetExtensionsOptions) => Promise<{ extensions: PluginExtension[] }>;
+
+export type GetExtensionsSync = (options: GetExtensionsOptions) => { extensions: PluginExtension[] };
 
 export type GetPluginExtensions<T = PluginExtension> = (options: {
   extensionPointId: string;
   // Make sure this object is properly memoized and not mutated.
   context?: object | Record<string | symbol, unknown>;
   limitPerPlugin?: number;
-}) => { extensions: T[] };
+}) => Promise<{ extensions: T[] }>;
