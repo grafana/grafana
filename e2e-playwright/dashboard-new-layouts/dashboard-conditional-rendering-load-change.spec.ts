@@ -93,7 +93,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
 
   test.afterAll(async ({ request }) => {
     if (uid) {
-      await request.delete(`/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/${uid}`);
+      await request.delete(`/apis/dashboard.grafana.app/v1beta1/namespaces/stacks-12345/dashboards/${uid}`);
     }
   });
 
