@@ -10,6 +10,7 @@ import (
 
 type store interface {
 	Get(ctx context.Context, user identity.Requester, uid string) (*shorturls.ShortUrl, error)
+	GetBySignature(ctx context.Context, orgID int64, signature string) (*shorturls.ShortUrl, error)
 	Update(ctx context.Context, shortURL *shorturls.ShortUrl) error
 	Insert(ctx context.Context, shortURL *shorturls.ShortUrl) error
 	Delete(ctx context.Context, cmd *shorturls.DeleteShortUrlCommand) error
@@ -29,6 +30,26 @@ func (s sqlStore) Get(ctx context.Context, user identity.Requester, uid string) 
 		}
 		if !exists {
 			return shorturls.ErrShortURLNotFound.Errorf("short URL not found")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &shortURL, nil
+}
+
+func (s sqlStore) GetBySignature(ctx context.Context, orgID int64, signature string) (*shorturls.ShortUrl, error) {
+	var shortURL shorturls.ShortUrl
+	err := s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		exists, err := dbSession.Where("org_id=? AND signature=? AND signature IS NOT NULL", orgID, signature).Get(&shortURL)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return shorturls.ErrShortURLNotFound.Errorf("short URL not found by signature")
 		}
 
 		return nil

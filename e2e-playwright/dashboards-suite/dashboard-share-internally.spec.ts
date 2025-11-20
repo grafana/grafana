@@ -118,6 +118,151 @@ test.describe(
       expect(responseBody.url).toContain('goto');
     });
 
+    test('Short URL de-duplication with locked time range', async ({ page, gotoDashboardPage, selectors }) => {
+      // Navigate to dashboard with specific time range
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_UID,
+        queryParams: new URLSearchParams({ from: 'now-6h', to: 'now' }),
+      });
+
+      // Open share internally drawer
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
+
+      // Set up response listener BEFORE opening drawer (API call happens when drawer opens with shorten URL enabled)
+      const createResponse1 = page.waitForResponse(
+        (response) => response.url().includes('/api/short-urls') && response.request().method() === 'POST'
+      );
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.menu.shareInternally)
+        .click();
+
+      await expect(page).toHaveURL(/.*shareView=link.*/);
+
+      // Wait for the first API response
+      const response1 = await createResponse1;
+      expect(response1.status()).toBe(200);
+      const responseBody1 = await response1.json();
+      const shortUrl1 = responseBody1.url;
+      expect(shortUrl1).toContain('goto');
+
+      // Ensure lock time range is enabled (default) and shorten URL is enabled
+      const lockTimeRangeSwitch = dashboardPage.getByGrafanaSelector(
+        selectors.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch
+      );
+      const shortenUrlSwitch = dashboardPage.getByGrafanaSelector(
+        selectors.pages.ShareDashboardDrawer.ShareInternally.shortenUrlSwitch
+      );
+
+      // Ensure both are checked
+      await expect(async () => {
+        const isLocked = await lockTimeRangeSwitch.isChecked();
+        if (!isLocked) {
+          await lockTimeRangeSwitch.check({ force: true });
+        }
+        const isShortened = await shortenUrlSwitch.isChecked();
+        if (!isShortened) {
+          await shortenUrlSwitch.check({ force: true });
+        }
+      }).toPass();
+
+      // Wait a moment, then trigger a rebuild to create second short URL
+      // Toggle a setting off and back on to force URL rebuild
+      await page.waitForTimeout(1000);
+
+      // Set up response listener before toggling (this will trigger URL rebuild and API call)
+      const createResponse2 = page.waitForResponse(
+        (response) => response.url().includes('/api/short-urls') && response.request().method() === 'POST'
+      );
+
+      // Toggle lock time range off and back on to force URL rebuild
+      await lockTimeRangeSwitch.uncheck({ force: true });
+      await page.waitForTimeout(500);
+      await lockTimeRangeSwitch.check({ force: true });
+
+      const response2 = await createResponse2;
+      expect(response2.status()).toBe(200);
+      const responseBody2 = await response2.json();
+      const shortUrl2 = responseBody2.url;
+      expect(shortUrl2).toContain('goto');
+
+      // Both short URLs should be the same (de-duplication)
+      expect(shortUrl1).toBe(shortUrl2);
+    });
+
+    test('Short URL de-duplication with unlocked time range', async ({ page, gotoDashboardPage, selectors }) => {
+      // Navigate to dashboard with specific time range
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_UID,
+        queryParams: new URLSearchParams({ from: 'now-6h', to: 'now' }),
+      });
+
+      // Open share internally drawer
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
+
+      // Disable lock time range first, then set up response listener
+      const lockTimeRangeSwitch = dashboardPage.getByGrafanaSelector(
+        selectors.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch
+      );
+
+      // Set up response listener BEFORE opening drawer (API call happens when drawer opens with shorten URL enabled)
+      const createResponse1 = page.waitForResponse(
+        (response) => response.url().includes('/api/short-urls') && response.request().method() === 'POST'
+      );
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.menu.shareInternally)
+        .click();
+
+      await expect(page).toHaveURL(/.*shareView=link.*/);
+
+      // Wait for the first API response
+      const response1 = await createResponse1;
+      expect(response1.status()).toBe(200);
+      const responseBody1 = await response1.json();
+      const shortUrl1 = responseBody1.url;
+      expect(shortUrl1).toContain('goto');
+
+      // Disable lock time range
+      await expect(lockTimeRangeSwitch).toBeInViewport();
+      await expect(async () => {
+        await lockTimeRangeSwitch.uncheck({ force: true });
+      }).toPass();
+
+      // Ensure shorten URL is enabled
+      const shortenUrlSwitch = dashboardPage.getByGrafanaSelector(
+        selectors.pages.ShareDashboardDrawer.ShareInternally.shortenUrlSwitch
+      );
+      await expect(async () => {
+        const isShortened = await shortenUrlSwitch.isChecked();
+        if (!isShortened) {
+          await shortenUrlSwitch.check({ force: true });
+        }
+      }).toPass();
+
+      // Wait a moment, then trigger a rebuild to create second short URL
+      await page.waitForTimeout(1000);
+
+      // Set up response listener before toggling (this will trigger URL rebuild and API call)
+      const createResponse2 = page.waitForResponse(
+        (response) => response.url().includes('/api/short-urls') && response.request().method() === 'POST'
+      );
+
+      // Toggle lock time range on and back off to force URL rebuild
+      await lockTimeRangeSwitch.check({ force: true });
+      await page.waitForTimeout(500);
+      await lockTimeRangeSwitch.uncheck({ force: true });
+
+      const response2 = await createResponse2;
+      expect(response2.status()).toBe(200);
+      const responseBody2 = await response2.json();
+      const shortUrl2 = responseBody2.url;
+      expect(shortUrl2).toContain('goto');
+
+      // Both short URLs should be the same (de-duplication)
+      expect(shortUrl1).toBe(shortUrl2);
+    });
+
     test('Share button gets configured link', async ({ page, gotoDashboardPage, selectors }) => {
       // Navigate to dashboard with specific time range
       const dashboardPage = await gotoDashboardPage({

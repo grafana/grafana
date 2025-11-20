@@ -20,6 +20,7 @@ type ShortUrl struct {
 	OrgId      int64  `json:"-"`
 	Uid        string `json:"uid"`
 	Path       string `json:"path"`
+	Signature  string `json:"-" xorm:"signature"`
 	CreatedBy  int64  `json:"-"`
 	CreatedAt  int64  `json:"-"`
 	LastSeenAt int64  `json:"lastSeenAt"`
