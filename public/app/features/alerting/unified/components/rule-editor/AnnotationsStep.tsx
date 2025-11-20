@@ -18,7 +18,7 @@ import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
-import { UnifiedDashboardDTO, useDashboardQuery } from './useDashboardQuery';
+import { DashboardResponse, useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
@@ -39,7 +39,7 @@ const AnnotationsStep = () => {
   const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
   const selectedPanelId = Number(annotations.find((annotation) => annotation.key === Annotation.panelID)?.value);
 
-  const [selectedDashboard, setSelectedDashboard] = useState<UnifiedDashboardDTO | undefined>(undefined);
+  const [selectedDashboard, setSelectedDashboard] = useState<DashboardResponse | undefined>(undefined);
   const [selectedPanel, setSelectedPanel] = useState<PanelDTO | undefined>(undefined);
 
   const { dashboard, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
