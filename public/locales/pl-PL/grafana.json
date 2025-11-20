@@ -2622,8 +2622,7 @@
         "firing": "Uruchamianie",
         "normal": "Normalny",
         "pending": "Oczekujący",
-        "recovering": "Przywracanie",
-        "unknown": "Nieznany"
+        "recovering": "Przywracanie"
       },
       "type": {
         "alert": "Reguła alertu",
@@ -2647,12 +2646,14 @@
         "placeholder-search-input": "Szukaj według nazwy lub wprowadź wyrażenie do filtrowania…"
       },
       "grafana-folder": "Folder Grafana",
+      "group-autocomplete-unavailable": "",
       "health": "Zdrowie",
       "label": {
         "hide": "Ukryj",
         "show": "Pokaż"
       },
       "manage-alerts": "W tych źródłach danych możesz wybrać „Zarządzaj alertami za pośrednictwem interfejsu alertów”, aby móc zarządzać tymi regułami alertów w interfejsie Grafany, a także w źródle danych, w którym zostały skonfigurowane.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Wszystkie źródła danych",
       "placeholder-contact-point": "Wybierz punkt kontaktowy",
       "placeholder-data-sources": "Wybierz źródła danych",
@@ -3564,6 +3565,7 @@
       "delete-modal-invalid-title": "Nie można usunąć folderu",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "To działanie spowoduje usunięcie następującej zawartości:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Usuń",
       "delete-provisioned-folder": "Usuń przydzielony folder",
       "deleting": "Usuwanie…",
@@ -3572,6 +3574,7 @@
       "move-modal-alert": "Przeniesienie tego elementu może zmienić jego uprawnienia.",
       "move-modal-field-label": "Nazwa folderu",
       "move-modal-text": "To działanie spowoduje przeniesienie następującej zawartości:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Przenieś",
       "move-provisioned-folder": "",
       "moving": "Przenoszenie…",
@@ -3669,11 +3672,11 @@
       "title-folder": "Ten folder nie zawiera jeszcze żadnych pulpitów"
     },
     "folder-actions-button": {
-      "delete": "Usuń",
+      "delete": "",
       "delete-folder-error": "Błąd podczas usuwania folderu. Spróbuj ponownie później.",
       "folder-actions": "Działania w obrębie folderu",
       "manage-permissions": "Zarządzaj uprawnieniami",
-      "move": "Przenieś"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Wybierz folder: aktualnie wybrano {{ label }}",
@@ -8658,7 +8661,9 @@
       "saving": "Zapisywanie <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Próg liniowy",
+      "linear-threshold": {
+        "label": "Próg liniowy"
+      },
       "log-base": "Baza logów"
     },
     "builder": {
