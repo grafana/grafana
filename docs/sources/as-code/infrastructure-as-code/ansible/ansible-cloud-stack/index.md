@@ -12,7 +12,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-cod
 
 # Create and manage your Grafana Cloud stack using Ansible
 
-This guide shows you how to create a Grafana Cloud stack and add a data source, dashboard, and folder using the Ansible Collection for Grafana. You'll manage your Grafana infrastructure declaratively through Ansible playbooks.
+This guide shows you how to create a Grafana Cloud stack and add a data source, dashboard, and folder using the Ansible Collection for Grafana. You'll manage your Grafana infrastructure through Ansible playbooks.
 
 ## Before you begin
 
@@ -264,7 +264,7 @@ After you've run the Ansible playbooks, you can verify the following:
 
 ## Next steps
 
-You've successfully created a Grafana Cloud stack along with a data source, folder, and dashboard using Ansible. Your Grafana infrastructure is now managed declaratively through code.
+You've successfully created a Grafana Cloud stack along with a data source, a folder, and a dashboard using Ansible. Your Grafana infrastructure is now managed through code.
 
 To learn more about managing Grafana with Infrastructure as code:
 

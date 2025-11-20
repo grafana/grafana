@@ -14,7 +14,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-cod
 
 # Provision Grafana Cloud with Infrastructure as code
 
-With Grafana Cloud, you can use as-code tools to _declaratively_ create and manage resources via code, and incorporate them efficiently into your own use cases. This enables you to review code, reuse it, and create better workflows.
+With Grafana Cloud, you can use as-code tools to create and manage resources via code, and incorporate them efficiently into your own use cases. This enables you to review code, reuse it, and create better workflows.
 
 {{< admonition type="note" >}}
 
@@ -73,7 +73,7 @@ To get started, see the [quickstart guides for the Grafana Ansible Collection](/
 
 ### Who is this recommended for?
 
-Like Terraform, the Grafana Ansible collection is best suited for people already using Ansible for non-Grafana use cases. The collection only works for Grafana Cloud right now, so it makes the most sense for Grafana Cloud customers who want to manage resources declaratively using Ansible.
+Like Terraform, the Grafana Ansible collection is best suited for people already using Ansible for non-Grafana use cases. The collection only works for Grafana Cloud right now, so it makes the most sense for Grafana Cloud customers who want to manage resources using Ansible.
 
 ### Known limitations
 
@@ -81,7 +81,7 @@ The Grafana Ansible collection only works for Grafana Cloud and only supports ei
 
 ## Grafana Operator
 
-The Grafana Operator is a Kubernetes operator that can provision, manage, and operate Grafana instances and their associated resources within Kubernetes through Custom Resources. This Kubernetes-native tool eases the administration of Grafana, offering a declarative approach to managing dashboards, data sources, and folders. It also automatically syncs the Kubernetes Custom resources and the actual resources in the Grafana Instance. It supports leveraging Grafonnet for generating Grafana dashboard definitions for seamless dashboard configuration as code.
+The Grafana Operator is a Kubernetes operator that can provision, manage, and operate Grafana instances and their associated resources within Kubernetes through Custom Resources. This Kubernetes-native tool eases the administration of Grafana, including managing dashboards, data sources, and folders. It also automatically syncs the Kubernetes Custom resources and the actual resources in the Grafana Instance. It supports leveraging Grafonnet for generating Grafana dashboard definitions for seamless dashboard configuration as code.
 
 To get started, see the [quickstart guides for the Grafana Operator](/docs/grafana-cloud/as-code/infrastructure-as-code/grafana-operator/) or check out the [Grafana Operator's documentation](https://grafana.github.io/grafana-operator/).
 
@@ -126,7 +126,7 @@ To get started with the Grafana Crossplane provider, install Crossplane in the K
 kubectl crossplane install provider grafana/crossplane-provider-grafana:v0.1.0
 ```
 
-During installation of the provider, CRDs for all the resources supported by the Terraform provider are added to the cluster so users can begin defining their Grafana resources as Kubernetes custom resources. The Crossplane provider ensures that whatever is defined in the custom resource definitions is what is visible in Grafana UI. If any changes are made directly in the UI, the changes will be discarded when the provider resyncs. This helps ensure that whatever is defined declaratively in the cluster will be the source of truth for Grafana resources.
+During installation of the provider, CRDs for all the resources supported by the Terraform provider are added to the cluster so users can begin defining their Grafana resources as Kubernetes custom resources. The Crossplane provider ensures that whatever is defined in the custom resource definitions is what is visible in Grafana UI. If any changes are made directly in the UI, the changes will be discarded when the provider resyncs. This helps ensure that whatever is defined via code in the cluster will be the source of truth for Grafana resources.
 
 To get started, refer to the examples folder in the Grafana Crossplane repository.
 
