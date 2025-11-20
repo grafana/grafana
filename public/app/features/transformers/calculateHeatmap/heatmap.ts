@@ -164,12 +164,21 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     yMatchWithLabel: Object.keys(yFields[0].labels ?? {})[0],
   };
 
-  // const bucketBounds = Array.from({ length: yFields.length }, (v, i) => i);
-
-  const bucketBounds = Array.from({ length: yFields.length }, (v, i) => Number(custom.yOrdinalDisplay[i]));
+  const bucketBounds = Array.from({ length: yFields.length }, (v, i) => Number(custom.yOrdinalDisplay?.[i] ?? '0'));
   const bucketBoundsMax = bucketBounds.slice();
   bucketBoundsMax.shift();
-  bucketBoundsMax.push(bucketBounds.at(-1)! * 1.07);
+
+  // Calculate the factor from adjacent buckets if possible
+  let factor = 1.07; // TODO determine a better default factor
+  if (bucketBounds.length >= 2) {
+    const last = bucketBounds.at(-1)!;
+    const prev = bucketBounds.at(-2)!;
+    if (prev !== 0 && !Number.isNaN(last / prev) && last / prev > 0) {
+      factor = last / prev;
+    }
+  }
+
+  bucketBoundsMax.push(bucketBounds.at(-1)! * factor);
   custom.yMatchWithLabel = undefined;
 
   // add a bukkit bound on the correct side by multiplier
