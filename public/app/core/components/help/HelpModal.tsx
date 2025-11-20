@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
-import { GrafanaTheme2 } from '@grafana/data';
+import { FeatureState, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Grid, Modal, useStyles2, Text, FeatureBadge } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
 export interface HelpModalProps {
@@ -36,7 +37,7 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
                 </tr>
               </thead>
               <tbody>
-                {shortcuts.map(({ keys, description }) => (
+                {shortcuts.map(({ keys, description, isNew }) => (
                   <tr key={keys.join()}>
                     <td className={styles.keys}>
                       {keys.map((key) => (
@@ -44,9 +45,12 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
                       ))}
                     </td>
                     <td>
-                      <Text variant="bodySmall" element="p">
-                        {description}
-                      </Text>
+                      <div className={styles.descriptionWrapper}>
+                        <Text variant="bodySmall" element="p">
+                          {description}
+                        </Text>
+                        {isNew && <FeatureBadge featureState={FeatureState.new} />}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -104,10 +108,25 @@ export const useShortcuts = () => {
       {
         category: t('help-modal.shortcuts-category.time-range', 'Time range'),
         shortcuts: [
-          {
-            keys: ['t', 'z'],
-            description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
-          },
+          ...(config.featureToggles.newTimeRangeZoomShortcuts
+            ? [
+                {
+                  keys: ['t', '+'],
+                  description: t('help-modal.shortcuts-description.zoom-in-time-range', 'Zoom in time range'),
+                  isNew: true,
+                },
+                {
+                  keys: ['t', '-'],
+                  description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
+                  isNew: true,
+                },
+              ]
+            : [
+                {
+                  keys: ['t', 'z'],
+                  description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
+                },
+              ]),
           {
             keys: ['t', '←'],
             description: t('help-modal.shortcuts-description.move-time-range-back', 'Move time range back'),
@@ -276,6 +295,12 @@ function getStyles(theme: GrafanaTheme2) {
       textAlign: 'end',
       whiteSpace: 'nowrap',
       minWidth: 83, // To match column widths with the widest
+    }),
+    descriptionWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.75),
+      flexWrap: 'nowrap',
     }),
     shortcutTableKey: css({
       display: 'inline-block',
