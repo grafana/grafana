@@ -65,127 +65,40 @@ export const useStarredItems = (group: string, kind: string) => {
   const appPlatformResponse = useListStarsQuery(queryArgs);
 
   const appPlatformStarredItems = useMemo(() => {
-    const { data, isLoading, isUninitialized, isFetching, isSuccess, isError } = appPlatformResponse;
+    const { data, isLoading, isUninitialized } = appPlatformResponse;
 
-    // If query hasn't been initiated yet, return undefined to show loading state
-    if (isUninitialized) {
+    // If query hasn't been initiated yet or is still loading, return undefined to show loading state
+    if (isUninitialized || isLoading) {
       return undefined;
     }
 
-    // If query is still loading (initial load), return undefined to show loading state
-    if (isLoading) {
-      return undefined;
-    }
-
-    // Helper function to extract starred items from data
-    const extractStarredItems = (responseData: typeof data): string[] => {
-      if (!responseData || !('items' in responseData)) {
-        return [];
-      }
-
-      const items = Array.isArray(responseData.items) ? responseData.items : [];
-      if (!items.length) {
-        return [];
-      }
-
-      const firstItem = items[0];
-      if (!firstItem || typeof firstItem !== 'object' || !('spec' in firstItem)) {
-        return [];
-      }
-
-      const spec = firstItem.spec;
-      if (!spec || typeof spec !== 'object' || !('resource' in spec)) {
-        return [];
-      }
-
-      const resources = Array.isArray(spec.resource) ? spec.resource : [];
-      const resourceInfo = resources.find((info: unknown) => {
-        if (typeof info !== 'object' || info === null) {
-          return false;
-        }
-        if (!('group' in info) || !('kind' in info)) {
-          return false;
-        }
-        // TypeScript knows info has 'group' and 'kind' properties at this point
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const groupValue = (info as { group: unknown }).group;
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const kindValue = (info as { kind: unknown }).kind;
-        return groupValue === group && kindValue === kind;
-      });
-
-      if (resourceInfo && typeof resourceInfo === 'object' && resourceInfo !== null && 'names' in resourceInfo) {
-        // TypeScript knows resourceInfo has 'names' property at this point
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const namesValue = (resourceInfo as { names: unknown }).names;
-        return Array.isArray(namesValue) ? namesValue : [];
-      }
-
-      return [];
-    };
-
-    // If query completed successfully, process the data
-    if (isSuccess && data) {
-      return extractStarredItems(data);
-    }
-
-    // If query completed with error, return empty array
-    if (isError) {
+    // If query completed but no data, return empty array
+    if (!data) {
       return [];
     }
 
-    // If query completed successfully but no data, return empty array
-    if (isSuccess && !data) {
+    const starredItems = appPlatformResponse.data?.items || [];
+    if (!starredItems.length) {
       return [];
     }
 
-    // If we're still fetching but have cached data, use it
-    // Otherwise, if fetching without cached data, show loading
-    if (isFetching) {
-      // If we have data from a previous fetch, use it
-      if (data) {
-        return extractStarredItems(data);
-      }
-      // No cached data and still fetching - show loading
-      return undefined;
-    }
-
-    // Fallback: if we have data, use it
-    if (data) {
-      return extractStarredItems(data);
-    }
-
-    // Default: no data available, return empty array
-    return [];
+    return starredItems[0]?.spec.resource.find((info) => info.group === group && info.kind === kind)?.names || [];
   }, [appPlatformResponse, group, kind]);
-
-  // Determine loading state: true if we don't have processed data yet
-  // This ensures the component shows loading spinner until we have actual data to display
-  // Key fix: when query is uninitialized, RTK Query's isLoading is false, but we need it to be true
-  const isLoadingState = appPlatformStarredItems === undefined || appPlatformResponse.isUninitialized;
 
   if (appPlatform) {
     return {
       ...appPlatformResponse,
       data: appPlatformStarredItems,
-      // Override isLoading to be true when we don't have processed data OR when query is uninitialized
-      // This is the key fix: even if RTK Query says isLoading: false (which it does when uninitialized),
-      // if we don't have data to show, we should still show loading
-      isLoading: isLoadingState,
-      // Also ensure isFetching doesn't interfere - if uninitialized, we're effectively "fetching"
-      isFetching: isLoadingState ? true : appPlatformResponse.isFetching,
+      // Ensure isLoading is true when data is undefined (still loading or uninitialized)
+      isLoading: appPlatformStarredItems === undefined ? true : appPlatformResponse.isLoading,
     };
   }
 
-  // For legacy response, handle loading state properly
-  // Legacy query returns string[] directly, so if we have data or the query completed, we're not loading
-  // Only show loading if query is uninitialized, actively loading, or fetching without data
-  const legacyIsLoading =
-    legacyResponse.isUninitialized || legacyResponse.isLoading || (legacyResponse.isFetching && !legacyResponse.data);
-
+  // For legacy response, ensure isLoading is true when query is uninitialized
+  // RTK Query sets isLoading: false when uninitialized, but we need it to be true
   return {
     ...legacyResponse,
-    isLoading: legacyIsLoading,
+    isLoading: legacyResponse.isUninitialized || legacyResponse.isLoading,
   };
 };
 

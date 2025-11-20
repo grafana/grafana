@@ -49,11 +49,11 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
     return { name: 'star', type: 'default' } as const;
   }, [isLoading, isStarred]);
 
-  const tooltipAndLabel = useMemo(() => {
+  const tooltipAndLabel = (() => {
     return isStarred
       ? { tooltip: tooltips.unstar, label: isLoading ? undefined : tooltips.unstarWithTitle }
       : { tooltip: tooltips.star, label: isLoading ? undefined : tooltips.starWithTitle };
-  }, [isStarred, isLoading, tooltips]);
+  })();
 
   const icon = <Icon {...iconProps} size="lg" key={`${isLoading}-${isStarred}`} />;
   return (
