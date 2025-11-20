@@ -17,6 +17,7 @@ import (
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/migrations")
+var logger = log.New("storage.unified.migrations")
 
 type UnifiedStorageMigrationServiceImpl struct {
 	migrator UnifiedMigrator
@@ -52,6 +53,12 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 		return nil
 	}
 
+	// skip migrations if disabled in config
+	if p.cfg.DisableDataMigrations {
+		logger.Info("Data migrations are disabled, skipping")
+		return nil
+	}
+
 	// TODO: Re-enable once migrations are ready
 	// TODO: add guarantee that this only runs once
 	// return RegisterMigrations(p.migrator, p.cfg, p.sqlStore)
@@ -69,7 +76,6 @@ func RegisterMigrations(
 ) error {
 	ctx, span := tracer.Start(context.Background(), "storage.unified.RegisterMigrations")
 	defer span.End()
-	logger := log.New("storage.unified.migrations")
 	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
 	mg.AddCreateMigration()
 
