@@ -67,9 +67,11 @@ To do so, create a file named `cloud-stack.yml` and add the following:
 
 Replace the placeholders with your values:
 
-- `<CLOUD_ACCESS_POLICY_TOKEN>`: Token from the Cloud Access Policy you created in the Grafana Cloud portal
-- `<STACK_NAME>`: Name of your stack
-- `<ORG_NAME>`: Name of the organization in Grafana Cloud
+- _`<CLOUD_ACCESS_POLICY_TOKEN>`_: Token from the Cloud Access Policy you created in the Grafana Cloud portal
+- _`<STACK_NAME>`_: Name of your stack
+- _`<ORG_NAME>`_: Name of the organization in Grafana Cloud
+
+The playbook registers the stack creation result and displays the stack URL, which you'll need for subsequent resource management.
 
 ## Create an API key in your Grafana stack
 
