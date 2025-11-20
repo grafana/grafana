@@ -1123,14 +1123,14 @@
     {
       "metadata": {
         "name": "dashboardLibrary",
-        "resourceVersion": "1762521182817",
+        "resourceVersion": "1763643877862",
         "creationTimestamp": "2025-09-26T16:02:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-07 13:13:02.817210943 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-11-20 13:04:37.862907 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enable dashboard library experiments that are production ready",
+        "description": "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad"
       }
@@ -1205,14 +1205,14 @@
     {
       "metadata": {
         "name": "dashboardTemplates",
-        "resourceVersion": "1763641187668",
+        "resourceVersion": "1763643877862",
         "creationTimestamp": "2025-10-27T14:28:32Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-20 12:19:47.668191 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-11-20 13:04:37.862907 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Suggests template dashboards when creating new dashboards",
+        "description": "Enables a flow to get started with a new dashboard from a template",
         "stage": "preview",
         "codeowner": "@grafana/sharing-squad"
       }
@@ -3912,11 +3912,14 @@
     {
       "metadata": {
         "name": "suggestedDashboards",
-        "resourceVersion": "1762521182817",
-        "creationTimestamp": "2025-11-07T13:13:02Z"
+        "resourceVersion": "1763643877862",
+        "creationTimestamp": "2025-11-07T13:13:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-20 13:04:37.862907 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enable suggested dashboards when creating new dashboards",
+        "description": "Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad"
       }

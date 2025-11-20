@@ -92,6 +92,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
 | `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
+| `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
 | `enableSCIM`                      | Enables SCIM support for user and group management                                                     |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
@@ -101,7 +102,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureResourcePickerUpdates`      | Enables the updated Azure Monitor resource picker                                                      |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
-| `dashboardTemplates`              | Suggests template dashboards when creating new dashboards                                              |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 
 ## Development feature toggles

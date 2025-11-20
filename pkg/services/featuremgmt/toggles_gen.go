@@ -468,12 +468,16 @@ const (
 	FlagQueryLibrary = "queryLibrary"
 
 	// FlagDashboardLibrary
-	// Enable dashboard library experiments that are production ready
+	// Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagDashboardLibrary = "dashboardLibrary"
 
 	// FlagSuggestedDashboards
-	// Enable suggested dashboards when creating new dashboards
+	// Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagSuggestedDashboards = "suggestedDashboards"
+
+	// FlagDashboardTemplates
+	// Enables a flow to get started with a new dashboard from a template
+	FlagDashboardTemplates = "dashboardTemplates"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
@@ -1049,10 +1053,6 @@ const (
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
-
-	// FlagDashboardTemplates
-	// Suggests template dashboards when creating new dashboards
-	FlagDashboardTemplates = "dashboardTemplates"
 
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
