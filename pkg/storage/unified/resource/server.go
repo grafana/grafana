@@ -674,7 +674,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 			s.log.Error("failed to get resource stats for quota checking", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "error", err)
 		}
 		if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
-			s.log.Info("Quota exceeded on create", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "quota", quota.Limit, "count", stats[0].Count)
+			s.log.Info("Quota exceeded on create", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
 		}
 	}
 
