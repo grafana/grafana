@@ -275,7 +275,6 @@ const rootFolder = "general"
 
 var errEmptyResults = fmt.Errorf("empty results")
 
-// nolint:gocyclo
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -335,6 +334,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
 // Supplied function is used to get dashboards shared with user.
+// nolint:gocyclo
 func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func() ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
