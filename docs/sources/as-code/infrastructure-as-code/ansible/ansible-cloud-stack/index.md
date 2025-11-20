@@ -168,10 +168,10 @@ vars:
 
 Replace the placeholders with your values:
 
-- `<FOLDER_NAME>`: Name of the folder to be added in Grafana
-- `<UID>`: UID for your folder in Grafana
-- `<STACK_NAME>`: Name of your stack
-- `<GRAFANA_API_KEY>`: API key created in the Grafana instance
+- _`<FOLDER_NAME>`_: Name of the folder to be added in Grafana
+- _`<UID>`_: UID for your folder in Grafana
+- _`<STACK_NAME>`_: Name of your stack
+- _`<GRAFANA_API_KEY>`_: API key created in the Grafana instance
 
 ### Add a dashboard to the folder
 
