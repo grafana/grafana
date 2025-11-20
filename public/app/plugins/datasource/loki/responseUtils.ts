@@ -1,4 +1,4 @@
-import { DataFrame, DataQueryResponse, FieldType, isValidGoDuration, Labels } from '@grafana/data';
+import { DataFrame, DataQueryError, DataQueryResponse, FieldType, isValidGoDuration, Labels } from '@grafana/data';
 
 import { isBytesString, processLabels } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
@@ -134,8 +134,11 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
 
 export function isRetriableError(errorResponse: DataQueryResponse) {
   const message = errorResponse.errors
-    ? (errorResponse.errors[0].message ?? '').toLowerCase()
-    : (errorResponse.error?.message ?? '');
+    ? errorResponse.errors
+        .map((err) => err.message ?? '')
+        .join()
+        .toLowerCase()
+    : (errorResponse.error?.message ?? '').toLowerCase();
 
   // max_query_bytes_read exceeded, currently 500 when should be 4xx
   if (message.includes('the query would read too many bytes') || is4xxError(errorResponse)) {
@@ -169,5 +172,6 @@ export function is5xxError(errorResponse: DataQueryResponse) {
 }
 
 function isHttpErrorType(errorResponse: DataQueryResponse, responseType: '2' | '3' | '4' | '5') {
-  return errorResponse.errors?.some((err) => err.status && Array.from(err.status?.toString())[0] === responseType);
+  const isErrOfType = (err: DataQueryError) => err.status && Array.from(err.status?.toString())[0] === responseType;
+  return (errorResponse.error && isErrOfType(errorResponse.error)) || errorResponse.errors?.some(isErrOfType);
 }
