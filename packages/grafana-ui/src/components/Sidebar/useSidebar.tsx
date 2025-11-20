@@ -37,6 +37,9 @@ export interface UseSideBarOptions {
   contentMargin?: number;
 }
 
+export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
+export const SIDE_BAR_WIDTH_WITH_TEXT = 8;
+
 export function useSidebar({
   hasOpenPane,
   position = 'right',
@@ -56,7 +59,9 @@ export function useSidebar({
   const onDockChange = useCallback(() => setIsDocked((prev) => !prev), []);
 
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
-  const toolbarWidth = (compact ? 40 : 68) + (edgeMargin + contentMargin) * theme.spacing.gridSize;
+  const toolbarWidth =
+    ((compact ? SIDE_BAR_WIDTH_ICON_ONLY : SIDE_BAR_WIDTH_WITH_TEXT) + edgeMargin + contentMargin) *
+    theme.spacing.gridSize;
 
   const outerWrapperProps = {
     style: {

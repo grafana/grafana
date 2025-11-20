@@ -142,6 +142,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       textAlign: 'center',
+      whiteSpace: 'nowrap',
     }),
     titleActive: css({
       color: theme.colors.text.primary,

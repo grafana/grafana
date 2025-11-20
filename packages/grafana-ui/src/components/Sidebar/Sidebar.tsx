@@ -9,7 +9,7 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { SidebarButton } from './SidebarButton';
 import { SidebarPaneHeader } from './SidebarPaneHeader';
 import { SidebarResizer } from './SidebarResizer';
-import { SidebarContext, SidebarContextValue } from './useSidebar';
+import { SIDE_BAR_WIDTH_ICON_ONLY, SIDE_BAR_WIDTH_WITH_TEXT, SidebarContext, SidebarContextValue } from './useSidebar';
 
 export interface Props {
   children?: ReactNode;
@@ -53,7 +53,7 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
   }
 
   return (
-    <div className={styles.toolbar}>
+    <div className={cx(styles.toolbar, context.compact && styles.toolbarIconsOnly)}>
       {children}
       <div className={styles.flexGrow} />
       {context.hasOpenPane && (
@@ -129,7 +129,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 0,
       gap: theme.spacing(1),
       overflow: 'hidden',
-      maxWidth: theme.spacing(8.5),
+      width: theme.spacing(SIDE_BAR_WIDTH_WITH_TEXT),
+    }),
+    toolbarIconsOnly: css({
+      width: theme.spacing(SIDE_BAR_WIDTH_ICON_ONLY),
     }),
     divider: css({
       height: '1px',
