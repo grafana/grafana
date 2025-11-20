@@ -31,6 +31,6 @@ export function isMaxBytesErrorResponse(response: DataQueryResponse | undefined)
 
   return errors.some((error: DataQueryError) => {
     const message = `${error.message || error.data?.message}`?.toLowerCase();
-    return message?.includes('the query would read too many bytes');
+    return message?.includes(LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX);
   });
 }
