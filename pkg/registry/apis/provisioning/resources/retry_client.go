@@ -14,13 +14,27 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-// defaultRetryBackoff returns a default backoff configuration for retries
+// defaultRetryBackoff returns a default backoff configuration for retries.
+//
+// Retry attempts will happen when:
+//   - The Kubernetes API returns transient errors: ServiceUnavailable (503), ServerTimeout (504),
+//     TooManyRequests (429), InternalError (500), or Timeout errors
+//   - Network errors occur: connection timeouts, temporary network failures, or connection errors
+//
+// The retry behavior:
+//   - Total attempts: 5 (1 initial attempt + 4 retries)
+//   - Initial delay: 100ms before the first retry
+//   - Exponential backoff: delay doubles after each failed attempt (100ms → 200ms → 400ms → 800ms)
+//   - Maximum delay: capped at 5 seconds
+//   - Jitter: 10% randomization to prevent thundering herd problems
+//
+// Non-transient errors (e.g., NotFound, BadRequest, Forbidden) are not retried and returned immediately.
 func defaultRetryBackoff() wait.Backoff {
 	return wait.Backoff{
 		Duration: 100 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
-		Steps:    5, // MaxRetries + 1 initial attempt = 5 total attempts
+		Steps:    5, // 1 initial attempt + 4 retries = 5 total attempts
 		Cap:      5 * time.Second,
 	}
 }
