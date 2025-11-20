@@ -216,9 +216,9 @@ Create a file named `dashboard.yml`:
 
 Replace the placeholders with your values:
 
-- `<PATH_TO_DASHBOARD_FILES>`: Path to the folder containing dashboard JSON source code files
-- `<STACK_NAME>`: Name of your stack
-- `<GRAFANA_API_KEY>`: API key created in the Grafana instance
+- _`<PATH_TO_DASHBOARD_FILES>`_: Path to the folder containing dashboard JSON source code files
+- _`<STACK_NAME>`_: Name of your stack
+- _`<GRAFANA_API_KEY>`_: API key created in the Grafana instance
 
 ## Run the Ansible playbooks
 
