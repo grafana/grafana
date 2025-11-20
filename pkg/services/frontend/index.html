@@ -187,7 +187,15 @@
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
       (() => {
+        // Grafana can only fail to load once
+        // However, it can fail to load in multiple different places
+        // To avoid double reporting the error, we use this boolean to check if we've already failed
+        let hasFailedToBoot = false;
         window.__grafana_load_failed = function(err) {
+          if (hasFailedToBoot) {
+            return;
+          }
+          hasFailedToBoot = true;
           console.error('Failed to load Grafana', err);
           document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
           document.querySelector('.fs-variant-error').classList.remove('fs-hidden');
@@ -355,7 +363,6 @@
           cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
           document.head.appendChild(cssLink);
         }
-
 
         window.__grafana_boot_data_promise = initGrafana()
         window.__grafana_boot_data_promise.catch((err) => {
