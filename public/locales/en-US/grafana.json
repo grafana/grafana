@@ -7218,6 +7218,7 @@
       "logs-volume": {
         "add-filters": "Add more labels to your query to narrow down your search.",
         "decrease-timerange": "Decrease the time range of your query.",
+        "max-bytes-error": "The query would read too many bytes. Try one or more of the following:",
         "much-data": "The query is trying to access too much data. Try one or more of the following:"
       },
       "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
@@ -7267,12 +7268,15 @@
       "tooltip-select-query-visualize-table": "Select a query to visualize in the table"
     },
     "logs-volume-panel": {
-      "content-streaming": "Streaming"
+      "content-streaming": "Streaming",
+      "partial-data-tips": "Try decreasing the time range or adding more labels to your query."
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Reload log volume",
       "label-reload-log-volume": "Reload log volume",
       "loading": "Loading...",
+      "message-showing-partial-data-max-bytes": "The query would read too many bytes and some sharded requests could not be completed. ",
+      "message-showing-partial-data-timeout": "The query is trying to access too much data and some sharded requests could not be completed. ",
       "title-failed-volume-query": "Failed to load log volume for this query",
       "title-no-logs-volume-available": "No logs volume available",
       "title-showing-partial-data": "Showing partial data",
