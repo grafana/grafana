@@ -70,7 +70,7 @@ test.describe(
       await page.getByLabel('Auto grid').click();
       // confirm layout change
       await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
-       
+
       // Get initial positions - standard width should have panels on different rows
       const firstPanelTop = await getPanelTop(dashboardPage, selectors);
       const lastPanel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).last();

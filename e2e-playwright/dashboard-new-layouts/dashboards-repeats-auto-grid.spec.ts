@@ -41,7 +41,9 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-     await switchToAutoGrid(page);
+      await switchToAutoGrid(page);
+      // wait for layout change to apply
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first().click();
 
@@ -77,6 +79,9 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
       await switchToAutoGrid(page);
+      // wait for layout change to apply
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
+
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
@@ -115,6 +120,8 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
       await switchToAutoGrid(page);
+      // wait for layout change to apply
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
 
       // select first/original repeat panel to activate edit pane
       await dashboardPage
