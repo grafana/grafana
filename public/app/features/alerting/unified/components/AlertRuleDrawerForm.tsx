@@ -75,9 +75,7 @@ export function AlertRuleDrawerForm({
 
   // Keep form in sync if prefill changes between openings
   useEffect(() => {
-    if (prefill) {
-      methods.reset({ ...baseDefaults, ...prefill });
-    }
+    methods.reset(prefill ? { ...baseDefaults, ...prefill } : baseDefaults);
   }, [prefill, methods, baseDefaults]);
 
   if (!isOpen) {
@@ -133,7 +131,7 @@ export function AlertRuleDrawerForm({
                 variant="secondary"
                 type="button"
                 onClick={() => {
-                  methods.reset(getDefaultFormValues(RuleFormType.grafana));
+                  methods.reset(prefill ? { ...baseDefaults, ...prefill } : baseDefaults);
                   onClose();
                 }}
               >
