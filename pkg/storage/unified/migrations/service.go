@@ -70,7 +70,7 @@ func RegisterMigrations(
 	ctx, span := tracer.Start(context.Background(), "storage.unified.RegisterMigrations")
 	defer span.End()
 	logger := log.New("storage.unified.migrations")
-	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unified-storage")
+	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedmigrations")
 	mg.AddCreateMigration()
 
 	if err := prometheus.Register(mg); err != nil {
