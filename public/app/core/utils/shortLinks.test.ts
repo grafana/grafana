@@ -1,12 +1,19 @@
 import { LogRowModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
 import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
 import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.spec.gen';
 import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.status.gen';
 
-import { createShortLink, createAndCopyShortLink, getLogsPermalinkRange, buildShortUrl } from './shortLinks';
+import {
+  createShortLink,
+  createAndCopyShortLink,
+  getLogsPermalinkRange,
+  buildShortUrl,
+  getShareUrlParams,
+} from './shortLinks';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -212,5 +219,125 @@ describe('getLogsPermalinkRange', () => {
       from: '2005-03-18T01:58:31.110Z',
       to: '2005-03-18T02:17:02.223Z',
     });
+  });
+});
+
+describe('getShareUrlParams', () => {
+  const mockTimeRange = {
+    state: {
+      value: {
+        from: new Date('2024-01-01T00:00:00Z'),
+        to: new Date('2024-01-01T06:00:00Z'),
+      },
+    },
+  } as unknown as SceneTimeRangeLike;
+
+  it('should include from and to when useAbsoluteTimeRange is true', () => {
+    const params = getShareUrlParams({ useAbsoluteTimeRange: true, theme: 'current' }, mockTimeRange);
+
+    expect(params.from).toBe('2024-01-01T00:00:00.000Z');
+    expect(params.to).toBe('2024-01-01T06:00:00.000Z');
+    expect(params.lockTimeRange).toBe('true');
+  });
+
+  it('should use relative time format when useAbsoluteTimeRange is false', () => {
+    const mockTimeRangeWithRelative = {
+      state: {
+        value: {
+          from: new Date('2024-01-01T00:00:00Z'),
+          to: new Date('2024-01-01T06:00:00Z'),
+          raw: {
+            from: 'now-6h',
+            to: 'now',
+          },
+        },
+      },
+    } as unknown as SceneTimeRangeLike;
+
+    const params = getShareUrlParams({ useAbsoluteTimeRange: false, theme: 'current' }, mockTimeRangeWithRelative);
+
+    expect(params.from).toBe('now-6h');
+    expect(params.to).toBe('now');
+    expect(params.lockTimeRange).toBe('false');
+  });
+
+  it('should include theme when theme is not current', () => {
+    const mockTimeRangeWithRelative = {
+      state: {
+        value: {
+          from: new Date('2024-01-01T00:00:00Z'),
+          to: new Date('2024-01-01T06:00:00Z'),
+          raw: {
+            from: 'now-6h',
+            to: 'now',
+          },
+        },
+      },
+    } as unknown as SceneTimeRangeLike;
+
+    const params = getShareUrlParams({ useAbsoluteTimeRange: false, theme: 'dark' }, mockTimeRangeWithRelative);
+
+    expect(params.theme).toBe('dark');
+    expect(params.from).toBe('now-6h');
+    expect(params.to).toBe('now');
+    expect(params.lockTimeRange).toBe('false');
+  });
+
+  it('should include viewPanel when panel is provided', () => {
+    const mockPanel = {
+      getPathId: () => 'panel-123',
+    } as unknown as VizPanel;
+
+    const mockTimeRangeWithRelative = {
+      state: {
+        value: {
+          from: new Date('2024-01-01T00:00:00Z'),
+          to: new Date('2024-01-01T06:00:00Z'),
+          raw: {
+            from: 'now-6h',
+            to: 'now',
+          },
+        },
+      },
+    } as unknown as SceneTimeRangeLike;
+
+    const params = getShareUrlParams(
+      { useAbsoluteTimeRange: false, theme: 'current' },
+      mockTimeRangeWithRelative,
+      mockPanel
+    );
+
+    expect(params.viewPanel).toBe('panel-123');
+    expect(params.lockTimeRange).toBe('false');
+  });
+
+  it('should include lockTimeRange parameter to distinguish locked vs unlocked time ranges', () => {
+    const mockTimeRangeWithRelative = {
+      state: {
+        value: {
+          from: new Date('2024-01-01T00:00:00Z'),
+          to: new Date('2024-01-01T06:00:00Z'),
+          raw: {
+            from: 'now-6h',
+            to: 'now',
+          },
+        },
+      },
+    } as unknown as SceneTimeRangeLike;
+
+    // Locked time range should have lockTimeRange=true and absolute timestamps
+    const lockedParams = getShareUrlParams({ useAbsoluteTimeRange: true, theme: 'current' }, mockTimeRangeWithRelative);
+    expect(lockedParams.lockTimeRange).toBe('true');
+    expect(lockedParams.from).toBe('2024-01-01T00:00:00.000Z');
+    expect(lockedParams.to).toBe('2024-01-01T06:00:00.000Z');
+
+    // Unlocked time range should have lockTimeRange=false and relative timestamps
+    const unlockedParams = getShareUrlParams(
+      { useAbsoluteTimeRange: false, theme: 'current' },
+      mockTimeRangeWithRelative
+    );
+    expect(unlockedParams.lockTimeRange).toBe('false');
+    expect(unlockedParams.from).toBe('now-6h');
+    expect(unlockedParams.to).toBe('now');
   });
 });

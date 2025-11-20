@@ -49,6 +49,24 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
 
     this.addActivationHandler(() => {
       this.buildUrl();
+
+      // Subscribe to time range changes to rebuild URL when dashboard time range changes
+      // Only rebuild if lock time range is disabled - when enabled, the URL should stay locked
+      const dashboard = getDashboardSceneFor(this);
+      const panel = state.panelRef?.resolve();
+      const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
+
+      const subscription = timeRange.subscribeToState(() => {
+        // Rebuild URL when time range changes
+        // If lock time range is enabled, this updates the absolute timestamps in the URL
+        // If disabled, this updates the relative time range in the URL
+        this.buildUrl();
+      });
+
+      // Return cleanup function to unsubscribe when component is deactivated
+      return () => {
+        subscription.unsubscribe();
+      };
     });
 
     this.onToggleLockedTime = this.onToggleLockedTime.bind(this);
@@ -56,9 +74,11 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     this.onThemeChange = this.onThemeChange.bind(this);
   }
 
-  buildUrl = async (queryOptions?: UrlQueryMap) => {
+  buildUrl = async (queryOptions?: UrlQueryMap, overrideUseLockedTime?: boolean) => {
     this.setState({ isBuildUrlLoading: true });
-    const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
+    const { panelRef, useLockedTime, useShortUrl, selectedTheme } = this.state;
+    // Use override value if provided (for immediate updates), otherwise use state
+    const useAbsoluteTimeRange = overrideUseLockedTime !== undefined ? overrideUseLockedTime : useLockedTime;
     const dashboard = getDashboardSceneFor(this);
     const panel = panelRef?.resolve();
 
@@ -101,7 +121,8 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
   async onToggleLockedTime() {
     const useLockedTime = !this.state.useLockedTime;
     this.setState({ useLockedTime });
-    await this.buildUrl();
+    // Pass the new value directly to buildUrl to ensure it uses the updated setting immediately
+    await this.buildUrl(undefined, useLockedTime);
   }
 
   async onUrlShorten() {

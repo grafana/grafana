@@ -47,7 +47,7 @@ describe('ShareLinkTab', () => {
       buildAndRenderScenario({});
 
       expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=A$panel-12'
+        'http://dashboards.grafana.com/grafana/d/dash-1?viewPanel=A$panel-12&from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&lockTimeRange=true'
       );
     });
   });
@@ -58,7 +58,7 @@ describe('ShareLinkTab', () => {
       await act(() => tab.onToggleLockedTime());
 
       expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://dashboards.grafana.com/grafana/d/dash-1?from=now-6h&to=now&viewPanel=A$panel-12'
+        'http://dashboards.grafana.com/grafana/d/dash-1?viewPanel=A$panel-12&from=now-6h&to=now&lockTimeRange=false'
       );
     });
   });
@@ -68,7 +68,7 @@ describe('ShareLinkTab', () => {
     await act(() => tab.onThemeChange('light'));
 
     expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-      'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=A$panel-12&theme=light'
+      'http://dashboards.grafana.com/grafana/d/dash-1?viewPanel=A$panel-12&from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&theme=light&lockTimeRange=true'
     );
   });
 
@@ -89,7 +89,7 @@ describe('ShareLinkTab', () => {
       await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
     ).toHaveAttribute(
       'href',
-      'http://dashboards.grafana.com/grafana/render/d-solo/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&panelId=A$panel-12&__feature.dashboardSceneSolo=true&width=1000&height=500&tz=Pacific%2FEaster'
+      'http://dashboards.grafana.com/grafana/render/d-solo/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&lockTimeRange=true&panelId=A$panel-12&__feature.dashboardSceneSolo=true&width=1000&height=500&tz=Pacific%2FEaster'
     );
   });
 });
