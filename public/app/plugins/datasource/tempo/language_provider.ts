@@ -190,9 +190,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
    * @returns the encoded tag
    */
   private encodeTag = (tag: string): string => {
-    // If we call `encodeURIComponent` only once, we still get an error when issuing a request to the backend
-    // Reference: https://stackoverflow.com/a/37456192
-    return encodeURIComponent(encodeURIComponent(tag));
+    return encodeURIComponent(tag);
   };
 
   generateQueryFromFilters({
