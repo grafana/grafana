@@ -62,7 +62,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 	t.Run("Admin configs", func(t *testing.T) {
 		client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
-			Group:    "testdata.datasource.grafana.app",
+			Group:    "grafana-testdata-datasource",
 			Version:  "v0alpha1",
 			Resource: "datasources",
 		}).Namespace("default")
@@ -92,7 +92,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 	t.Run("Call subresources", func(t *testing.T) {
 		client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
-			Group:    "testdata.datasource.grafana.app",
+			Group:    "grafana-testdata-datasource",
 			Version:  "v0alpha1",
 			Resource: "datasources",
 		}).Namespace("default")
@@ -128,7 +128,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		raw := apis.DoRequest[any](helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "GET",
-			Path:   "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resource",
+			Path:   "/apis/grafana-testdata-datasource/v0alpha1/namespaces/default/datasources/test/resource",
 		}, nil)
 		// endpoint is disabled currently because it has not been
 		// sufficiently tested.
