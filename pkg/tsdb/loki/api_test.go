@@ -281,6 +281,18 @@ func TestApiReturnValues(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "foo")
 	})
+
+	t.Run("should set status for successful requests", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(200, "application/json", []byte("{\"message\":\"foo\"}"), func(req *http.Request) {
+			called = true
+		})
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.Equal(t, backend.Status(http.StatusOK), res.Status)
+	})
 }
 
 func TestErrorSources(t *testing.T) {

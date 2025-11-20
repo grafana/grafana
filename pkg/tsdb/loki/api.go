@@ -215,6 +215,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
 	res := converter.ReadPrometheusStyleResult(iter, converter.Options{})
+	res.Status = backend.Status(resp.StatusCode)
 
 	if res.Error != nil {
 		span.RecordError(res.Error)
