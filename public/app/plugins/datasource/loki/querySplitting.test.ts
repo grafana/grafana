@@ -7,7 +7,7 @@ import { LokiDatasource } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
 import { runSplitQuery } from './querySplitting';
-import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils.ts';
+import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 

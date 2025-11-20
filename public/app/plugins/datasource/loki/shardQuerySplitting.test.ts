@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 import { LokiDatasource } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
-import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils.ts';
+import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils';
 import { runShardSplitQuery } from './shardQuerySplitting';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
