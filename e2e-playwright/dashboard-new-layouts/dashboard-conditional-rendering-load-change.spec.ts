@@ -4,6 +4,8 @@ import { test, expect, E2ESelectorGroups, DashboardPage, DashboardPageArgs } fro
 
 import testDashboard from '../dashboards/DashboardWithAllConditionalRendering.json';
 
+import { checkRepeatedPanelTitles } from './utils';
+
 test.use({
   featureToggles: {
     kubernetesDashboards: true,
@@ -406,5 +408,18 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(getTabHideMatches(dashboardPage, selectors)).toBeVisible();
     await expect(getTabShowNotMatches(dashboardPage, selectors)).toBeVisible();
     await expect(getTabHideNotMatches(dashboardPage, selectors)).not.toBeVisible();
+  });
+
+  test('Load with variable repeat and hide when equals/no data', async ({ page, gotoDashboardPage, selectors }) => {
+    const dashboardPage = await loadDashboard(page, gotoDashboardPage);
+
+    await getTab(dashboardPage, selectors, 'repeated items').click();
+
+    const options = ['go_build_info', 'grafana_build_info'];
+
+    await checkRepeatedPanelTitles(dashboardPage, selectors, 'Hide panel - ', [
+      ...options.map((o) => `custom variable equals x (current = ${o})`),
+      ...options.map((o) => `no data (current = ${o})`),
+    ]);
   });
 });
