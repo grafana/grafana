@@ -17,6 +17,7 @@ import {
   CancelActivationHandler,
 } from '@grafana/scenes';
 import { Box, useStyles2 } from '@grafana/ui';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -191,17 +192,24 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 }
 
 function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
-  const { isEditing, editPanel } = dashboard.useState();
+  const { isEditing, editPanel, uid, editable, meta } = dashboard.useState();
+  const { isPlaying } = playlistSrv.useState();
 
-  if (editPanel) {
+  if (editPanel || isPlaying) {
     return null;
   }
 
+  const canEditDashboard = dashboard.canEditDashboard();
+  const isEditable = Boolean(editable);
+  const hasUid = Boolean(uid);
+  const isSnapshot = Boolean(meta.isSnapshot);
+  const showShareButton = hasUid && !isSnapshot && !isPlaying;
+
   return (
     <>
-      <ShareDashboardButton dashboard={dashboard} />
+      {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
       {isEditing && <SaveDashboard dashboard={dashboard} />}
-      <EditDashboardSwitch dashboard={dashboard} />
+      {canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
     </>
   );
 }

@@ -88,9 +88,10 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               tooltip={t('dashboard.sidebar.dashboard-options-tooltip', 'Dashboard options')}
               active={selectedObject === dashboard ? true : false}
             />
+            <Sidebar.Divider />
           </>
         )}
-        <Sidebar.Divider />
+
         <Sidebar.Button icon="download-alt" title={t('dashboard.sidebar.export', 'Export')} />
         <Sidebar.Button
           icon="list-ui-alt"

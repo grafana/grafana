@@ -6,10 +6,13 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
-  const { meta, isDirty, uid } = dashboard.state;
+  const { meta, isDirty, uid, editview } = dashboard.state;
 
   const isNew = !Boolean(uid || dashboard.isManaged());
   const isManaged = dashboard.isManaged();
+  const isEditView = Boolean(editview);
+  // In dashboard settings we still use the nav toolbar for a short while
+  const buttonSize = isEditView ? 'sm' : 'md';
 
   // if we only can save
   if (isNew) {
@@ -17,7 +20,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
       <Button
         onClick={() => dashboard.openSaveDrawer({})}
         tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
-        size="md"
+        size={buttonSize}
         variant="primary"
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
       >
@@ -32,7 +35,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
       <Button
         onClick={() => dashboard.openSaveDrawer({ saveAsCopy: true })}
         tooltip={t('dashboard.toolbar.new.save-dashboard-copy.tooltip', 'Save as copy')}
-        size="md"
+        size={buttonSize}
         variant={isDirty ? 'primary' : 'secondary'}
       >
         <Trans i18nKey="dashboard.toolbar.new.save-dashboard-copy.label">Save as copy</Trans>
@@ -45,7 +48,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
       <Button
         onClick={() => dashboard.openSaveDrawer({})}
         tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
-        size="md"
+        size={buttonSize}
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
         variant={isDirty ? 'primary' : 'secondary'}
       >
@@ -71,7 +74,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
           aria-label={t('dashboard.toolbar.new.more-save-options', 'More save options')}
           icon="angle-down"
           variant={isDirty ? 'primary' : 'secondary'}
-          size="md"
+          size={buttonSize}
         />
       </Dropdown>
     </ButtonGroup>
