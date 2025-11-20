@@ -17,20 +17,7 @@ const alertingComponentsGlobs: StorybookConfig['stories'] = [
   },
 ];
 
-const profilingComponentsGlobs: StorybookConfig['stories'] = [
-  {
-    titlePrefix: 'Profiling',
-    directory: '../../grafana-flamegraph/src',
-    files: 'Intro.mdx',
-  },
-  {
-    titlePrefix: 'Profiling',
-    directory: '../../grafana-flamegraph/src',
-    files: process.env.NODE_ENV === 'production' ? '**/!(*.internal).story.tsx' : '**/*.story.tsx',
-  },
-];
-
-const stories = [...coreComponentsGlobs, ...alertingComponentsGlobs, ...profilingComponentsGlobs];
+const stories = [...coreComponentsGlobs, ...alertingComponentsGlobs];
 
 // Copy the assets required by storybook before starting the storybook server.
 copyAssetsSync();
