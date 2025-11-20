@@ -315,6 +315,9 @@ describe('DashboardSceneSerializer', () => {
               type: 'text',
             },
             {
+              type: 'row',
+            },
+            {
               type: 'text',
             },
             {
@@ -344,9 +347,10 @@ describe('DashboardSceneSerializer', () => {
           uid: 'my-uid',
           title: 'hello',
           schemaVersion: DASHBOARD_SCHEMA_VERSION,
-          panels_count: 3,
+          panels_count: 4,
           panel_type_text_count: 2,
           panel_type_timeseries_count: 1,
+          panel_type_row_count: 1,
           variable_type_query_count: 2,
           variable_type_textbox_count: 1,
           settings_nowdelay: undefined,
@@ -680,6 +684,7 @@ describe('DashboardSceneSerializer', () => {
           uid: 'dashboard-test',
           title: 'Cloudwatch ec2 new layout',
           panels_count: 6,
+          rowCount: 2,
           schemaVersion: DASHBOARD_SCHEMA_VERSION,
           settings_nowdelay: undefined,
           settings_livenow: true,
