@@ -146,7 +146,11 @@ async function initRudderstackBackend() {
     return;
   }
 
-  const { RudderstackBackend } = await import('./backends/analytics/RudderstackBackend');
+  const modulePromise = config.featureToggles.rudderstackUpgrade
+    ? import('./backends/analytics/RudderstackV3Backend')
+    : import('./backends/analytics/RudderstackBackend');
+
+  const { RudderstackBackend } = await modulePromise;
   registerEchoBackend(
     new RudderstackBackend({
       writeKey: config.rudderstackWriteKey,

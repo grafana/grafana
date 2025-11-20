@@ -99,10 +99,6 @@ const (
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
 	FlagLokiLogsDataplane = "lokiLogsDataplane"
 
-	// FlagDataplaneFrontendFallback
-	// Support dataplane contract field name change for transformations and field name matchers where the name is different
-	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
-
 	// FlagDisableSSEDataplane
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
@@ -138,10 +134,6 @@ const (
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
-
-	// FlagTransformationsRedesign
-	// Enables the transformations redesign
-	FlagTransformationsRedesign = "transformationsRedesign"
 
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
@@ -359,10 +351,6 @@ const (
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
-	// FlagLogRowsPopoverMenu
-	// Enable filtering menu displayed when text of a log line is selected
-	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
-
 	// FlagTableSharedCrosshair
 	// Enables shared crosshair in table panel
 	FlagTableSharedCrosshair = "tableSharedCrosshair"
@@ -427,10 +415,6 @@ const (
 	// Enables column autocomplete for SQL Expressions
 	FlagSqlExpressionsColumnAutoComplete = "sqlExpressionsColumnAutoComplete"
 
-	// FlagNewPDFRendering
-	// New implementation for the dashboard-to-PDF rendering
-	FlagNewPDFRendering = "newPDFRendering"
-
 	// FlagKubernetesAggregator
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -450,6 +434,10 @@ const (
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
+
+	// FlagRefreshTokenRequired
+	// Require that refresh tokens are present in oauth tokens.
+	FlagRefreshTokenRequired = "refreshTokenRequired"
 
 	// FlagNewDashboardWithFiltersAndGroupBy
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
@@ -694,10 +682,6 @@ const (
 	// FlagAlertingNotificationsStepMode
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
-
-	// FlagFeedbackButton
-	// Enables a button to send feedback from the Grafana UI
-	FlagFeedbackButton = "feedbackButton"
 
 	// FlagUnifiedStorageSearchUI
 	// Enable unified storage search UI
@@ -1073,4 +1057,8 @@ const (
 	// FlagTtlPluginInstanceManager
 	// Enable TTL plugin instance manager
 	FlagTtlPluginInstanceManager = "ttlPluginInstanceManager"
+
+	// FlagRudderstackUpgrade
+	// Enables the new version of rudderstack
+	FlagRudderstackUpgrade = "rudderstackUpgrade"
 )

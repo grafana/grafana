@@ -2586,8 +2586,7 @@
         "firing": "觸發",
         "normal": "一般",
         "pending": "待處理",
-        "recovering": "正在還原",
-        "unknown": "未知"
+        "recovering": "正在還原"
       },
       "type": {
         "alert": "警報規則",
@@ -2611,12 +2610,14 @@
         "placeholder-search-input": "按名稱搜尋或輸入篩選條件查詢…"
       },
       "grafana-folder": "Grafana 資料夾",
+      "group-autocomplete-unavailable": "",
       "health": "使用情況",
       "label": {
         "hide": "隱藏",
         "show": "顯示"
       },
       "manage-alerts": "在這些資料來源中，您可以選擇透過警報 UI 管理警報，以便在 Grafana UI 以及在其設定的資料來源中管理這些警報規則。",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "所有資料來源",
       "placeholder-contact-point": "選擇聯絡點",
       "placeholder-data-sources": "選擇資料來源",
@@ -3528,6 +3529,7 @@
       "delete-modal-invalid-title": "無法刪除資料夾",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "此動作將刪除以下內容：",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "刪除",
       "delete-provisioned-folder": "刪除已佈建的資料夾",
       "deleting": "正在刪除…",
@@ -3536,6 +3538,7 @@
       "move-modal-alert": "移動此項目可能會變更其權限。",
       "move-modal-field-label": "資料夾名稱",
       "move-modal-text": "此動作將移動以下內容：",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "移動",
       "move-provisioned-folder": "",
       "moving": "正在移動…",
@@ -3618,11 +3621,11 @@
       "title-folder": "此資料夾尚無任何儀表板"
     },
     "folder-actions-button": {
-      "delete": "刪除",
+      "delete": "",
       "delete-folder-error": "刪除資料夾時發生錯誤，請稍後再試。",
       "folder-actions": "資料夾動作",
       "manage-permissions": "管理權限",
-      "move": "移動"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "選取資料夾：「{{ label }}」目前已選取",
@@ -7766,6 +7769,14 @@
     "name-show-threshold-labels": "顯示閾值標籤",
     "name-show-threshold-markers": "顯示閾值標記",
     "placeholder-neutral": "自動",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8966,6 +8977,13 @@
       "copy": "複製到剪貼簿",
       "csv-counts": "",
       "csv-placeholder": "在此處輸入 CSV …",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "篩選值",
       "filter-popup-apply": "好的",
       "filter-popup-aria-label-match-case": "區分大小寫",
@@ -12351,8 +12369,10 @@
       "cancel": "取消",
       "error-title": "",
       "input": {
-        "placeholder": "選取範圍…",
-        "removeAll": "移除所有範圍"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "移除所有範圍",
+        "tooltip": ""
       },
       "title": "選取範圍"
     },

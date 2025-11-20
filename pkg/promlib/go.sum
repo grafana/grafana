@@ -130,8 +130,8 @@ github.com/googleapis/gax-go/v2 v2.15.0 h1:SyjDc1mGgZU5LncH8gimWo9lW1DtIfPibOG81
 github.com/googleapis/gax-go/v2 v2.15.0/go.mod h1:zVVkkxAQHa1RQpg9z2AUCMnKhi0Qld9rcmyfL1OZhoc=
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 h1:jSojuc7njleS3UOz223WDlXOinmuLAIPI0z2vtq8EgI=
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4/go.mod h1:VahT+GtfQIM+o8ht2StR6J9g+Ef+C2Vokh5uuSmOD/4=
-github.com/grafana/grafana-plugin-sdk-go v0.282.0 h1:9JT9E6T0h8HsK9emTZ5s01uCKaf0Ok4PjYbb7M/iOjM=
-github.com/grafana/grafana-plugin-sdk-go v0.282.0/go.mod h1:20qhoYxIgbZRmwCEO1KMP8q2yq/Kge5+xE/99/hLEk0=
+github.com/grafana/grafana-plugin-sdk-go v0.283.0 h1:G7IHshAr30rLWV9FtX3iLlFTTlBhuOkfe7xVAoIP5rE=
+github.com/grafana/grafana-plugin-sdk-go v0.283.0/go.mod h1:20qhoYxIgbZRmwCEO1KMP8q2yq/Kge5+xE/99/hLEk0=
 github.com/grafana/grafana/apps/scope v0.0.0-20251007093103-792853df9134 h1:xly75v5lFNR37q+wXnwA5yU/fPW9IOSYbhFpt4tQyt8=
 github.com/grafana/grafana/apps/scope v0.0.0-20251007093103-792853df9134/go.mod h1:zijsUNa1zi476JJIR2Lcm/Paz1nRCno9XCp6hbS6G9o=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20251007081214-26e147d01f0a h1:L7xgV9mP6MRF3L2/vDOjNR7heaBPbXPMGTDN9/jXSFQ=
@@ -239,8 +239,8 @@ github.com/prometheus/client_golang v1.23.2 h1:Je96obch5RDVy3FDMndoUsjAhG5Edi49h
 github.com/prometheus/client_golang v1.23.2/go.mod h1:Tb1a6LWHB3/SPIzCoaDXI4I8UHKeFTEQ1YCr+0Gyqmg=
 github.com/prometheus/client_model v0.6.2 h1:oBsgwpGs7iVziMvrGhE53c/GrLUsZdHnqNwqPLxwZyk=
 github.com/prometheus/client_model v0.6.2/go.mod h1:y3m2F6Gdpfy6Ut/GBsUqTWZqCUvMVzSfMLjcu6wAwpE=
-github.com/prometheus/common v0.67.2 h1:PcBAckGFTIHt2+L3I33uNRTlKTplNzFctXcWhPyAEN8=
-github.com/prometheus/common v0.67.2/go.mod h1:63W3KZb1JOKgcjlIr64WW/LvFGAqKPj0atm+knVGEko=
+github.com/prometheus/common v0.67.3 h1:shd26MlnwTw5jksTDhC7rTQIteBxy+ZZDr3t7F2xN2Q=
+github.com/prometheus/common v0.67.3/go.mod h1:gP0fq6YjjNCLssJCQp0yk4M8W6ikLURwkdd/YKtTbyI=
 github.com/prometheus/procfs v0.16.1 h1:hZ15bTNuirocR6u0JZ6BAHHmwS1p8B4P6MRqxtzMyRg=
 github.com/prometheus/procfs v0.16.1/go.mod h1:teAbpZRB1iIAJYREa1LsoWUXykVXA1KlTmWl8x/U+Is=
 github.com/prometheus/prometheus v0.303.1 h1:He/2jRE6sB23Ew38AIoR1WRR3fCMgPlJA2E0obD2WSY=

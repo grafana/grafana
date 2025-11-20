@@ -2598,8 +2598,7 @@
         "firing": "Geactiveerd",
         "normal": "Normaal",
         "pending": "In afwachting",
-        "recovering": "Herstellen",
-        "unknown": "Onbekend"
+        "recovering": "Herstellen"
       },
       "type": {
         "alert": "Waarschuwingsregel",
@@ -2623,12 +2622,14 @@
         "placeholder-search-input": "Zoeken op naam of filterquery invoeren..."
       },
       "grafana-folder": "Grafana-map",
+      "group-autocomplete-unavailable": "",
       "health": "Gezondheid",
       "label": {
         "hide": "Verbergen",
         "show": "Tonen"
       },
       "manage-alerts": "In deze gegevensbronnen kun je waarschuwingen beheren via de waarschuwingsinterface om deze waarschuwingsregels te kunnen beheren in de Grafana-gebruikersinterface en in de gegevensbron waar ze zijn geconfigureerd.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Alle gegevensbronnen",
       "placeholder-contact-point": "Contactpunt selecteren",
       "placeholder-data-sources": "Gegevensbronnen selecteren",
@@ -3540,6 +3541,7 @@
       "delete-modal-invalid-title": "Kan de map niet verwijderen",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Met deze actie wordt de volgende inhoud verwijderd:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Verwijderen",
       "delete-provisioned-folder": "Geprovisioneerde map verwijderen",
       "deleting": "Bezig met verwijderen ...",
@@ -3548,6 +3550,7 @@
       "move-modal-alert": "Het verplaatsen van dit item kan de toestemmingen wijzigen.",
       "move-modal-field-label": "Mapnaam",
       "move-modal-text": "Met deze actie wordt de volgende inhoud verplaatst:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Verplaatsen",
       "move-provisioned-folder": "",
       "moving": "Bezig met verplaatsen ...",
@@ -3635,11 +3638,11 @@
       "title-folder": "Deze map heeft nog geen dashboards"
     },
     "folder-actions-button": {
-      "delete": "Verwijderen",
+      "delete": "",
       "delete-folder-error": "Fout bij verwijderen van map. Probeer het later opnieuw.",
       "folder-actions": "Mapacties",
       "manage-permissions": "Toestemmingen beheren",
-      "move": "Verplaatsen"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Map selecteren: {{ label }} is momenteel geselecteerd",
@@ -7792,6 +7795,14 @@
     "name-show-threshold-labels": "Drempellabels weergeven",
     "name-show-threshold-markers": "Drempelmarkeringen weergeven",
     "placeholder-neutral": "automatisch",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9002,6 +9013,13 @@
       "copy": "Naar klembord kopiëren",
       "csv-counts": "",
       "csv-placeholder": "Voer hier csv in ...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filter waarden",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Case matchen",
@@ -12406,8 +12424,10 @@
       "cancel": "Annuleren",
       "error-title": "",
       "input": {
-        "placeholder": "Scopes selecteren ...",
-        "removeAll": "Alle scopes verwijderen"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Alle scopes verwijderen",
+        "tooltip": ""
       },
       "title": "Scopes selecteren"
     },

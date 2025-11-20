@@ -8,11 +8,13 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -272,6 +274,11 @@ func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
 	c, span := hs.injectSpan(c, "api.Index")
 	defer span.End()
 
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.htmlHandlerRequestsDuration.WithLabelValues("index"), time.Since(start).Seconds())
+	}()
+
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
@@ -285,6 +292,11 @@ func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusNotFound, "Not found", nil)
 		return
 	}
+
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.htmlHandlerRequestsDuration.WithLabelValues("not_found"), time.Since(start).Seconds())
+	}()
 
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
