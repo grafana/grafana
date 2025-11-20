@@ -7,10 +7,11 @@ import { usePatchUserPreferencesMutation } from '@grafana/api-clients/rtkq/legac
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { renderLimitedComponents, reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
+import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { MegaMenuHeader } from './MegaMenuHeader';
@@ -34,6 +35,11 @@ export const MegaMenu = memo(
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
+
+    // Plugin extension point restricted to grafana-setupguide-app
+    const { components } = usePluginComponents({
+      extensionPointId: 'grafana/megamenu/action',
+    });
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -110,18 +116,26 @@ export const MegaMenu = memo(
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} handleMegaMenu={handleMegaMenu} onClose={onClose} />
         <nav className={styles.content}>
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
-            <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-              {navItems.map((link, index) => (
-                <MegaMenuItem
-                  key={link.text}
-                  link={link}
-                  isPinned={isPinned}
-                  onClick={state.megaMenuDocked ? undefined : onClose}
-                  activeItem={activeItem}
-                  onPin={onPinItem}
-                />
-              ))}
-            </ul>
+            <>
+              <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
+                {navItems.map((link, index) => (
+                  <MegaMenuItem
+                    key={link.text}
+                    link={link}
+                    isPinned={isPinned}
+                    onClick={state.megaMenuDocked ? undefined : onClose}
+                    activeItem={activeItem}
+                    onPin={onPinItem}
+                  />
+                ))}
+              </ul>
+              {renderLimitedComponents({
+                props: {},
+                components: components,
+                limit: 1,
+                pluginId: 'grafana-setupguide-app',
+              })}
+            </>
           </ScrollContainer>
         </nav>
       </div>
