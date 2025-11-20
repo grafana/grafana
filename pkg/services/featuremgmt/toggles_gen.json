@@ -62,7 +62,6 @@
         "description": "Enable configuration of alert enrichments in Grafana Cloud.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -77,7 +76,6 @@
         "description": "Enable conditional alert enrichment steps.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -92,7 +90,6 @@
         "description": "Allow multiple steps per enrichment.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -133,7 +130,6 @@
         "description": "Enable AI-analyze central state history.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -148,7 +144,6 @@
         "description": "Enable AI-generated feedback from the Grafana UI.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -163,7 +158,6 @@
         "description": "Enable AI-generated alert rules.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -178,7 +172,6 @@
         "description": "Enable AI-generated alerting templates.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -193,7 +186,6 @@
         "description": "Enable AI-improve alert rules labels and annotations.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -221,7 +213,6 @@
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -229,14 +220,16 @@
     {
       "metadata": {
         "name": "alertingCentralAlertHistory",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-05-29T15:01:38Z"
+        "resourceVersion": "1763541314825",
+        "creationTimestamp": "2024-05-29T15:01:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-19 08:35:14.825756 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new central alert history.",
         "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "frontend": true
+        "codeowner": "@grafana/alerting-squad"
       }
     },
     {
@@ -249,7 +242,6 @@
         "description": "Disables the ability to send alerts to an external Alertmanager datasource.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -263,7 +255,6 @@
         "description": "Enable Assistant Investigations enrichment type.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -279,7 +270,6 @@
         "description": "Enable Assistant Investigations enrichment type in the UI.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -294,7 +284,6 @@
         "description": "Enable enrichment per rule in the alerting UI.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -322,7 +311,6 @@
         "description": "Enables the API to import Alertmanager configuration",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -337,7 +325,6 @@
         "description": "Enables the UI to see imported Alertmanager configuration",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -420,7 +407,6 @@
         "description": "Enables the notification history feature",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -462,7 +448,6 @@
         "description": "Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -504,7 +489,6 @@
         "description": "Enable rule notification message section extension.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -520,7 +504,6 @@
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -528,15 +511,16 @@
     {
       "metadata": {
         "name": "alertingRuleRecoverDeleted",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-27T14:39:26Z"
+        "resourceVersion": "1763541314825",
+        "creationTimestamp": "2025-03-27T14:39:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-19 08:35:14.825756 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the UI functionality to recover and view deleted alert rules",
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -552,7 +536,6 @@
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -588,15 +571,16 @@
     {
       "metadata": {
         "name": "alertingTriage",
-        "resourceVersion": "1756386724059",
-        "creationTimestamp": "2025-09-01T09:33:33Z"
+        "resourceVersion": "1763541314825",
+        "creationTimestamp": "2025-09-01T09:33:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-19 08:35:14.825756 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the alerting triage feature",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -625,7 +609,6 @@
         "description": "Enables the UI to use certain backend-side filters",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -644,7 +627,6 @@
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -664,7 +646,6 @@
         "stage": "deprecated",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -706,7 +687,6 @@
         "description": "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -733,7 +713,6 @@
         "description": "Enables the gRPC client to authenticate with the App Platform by using ID \u0026 access tokens",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -760,7 +739,6 @@
         "description": "Enables the gRPC server for authorization",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -895,8 +873,7 @@
         "description": "Allow elements nesting",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true,
-        "hideFromAdminPage": true
+        "frontend": true
       }
     },
     {
@@ -963,8 +940,6 @@
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "requiresRestart": true,
-        "allowSelfServe": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -990,7 +965,6 @@
         "description": "Enables cross-account querying in CloudWatch datasources",
         "stage": "GA",
         "codeowner": "@grafana/aws-datasources",
-        "allowSelfServe": true,
         "expression": "true"
       }
     },
@@ -1048,7 +1022,6 @@
         "description": "Correlations page",
         "stage": "GA",
         "codeowner": "@grafana/datapro",
-        "allowSelfServe": true,
         "expression": "true"
       }
     },
@@ -1138,14 +1111,16 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-10-23T08:55:45Z"
+        "resourceVersion": "1763533458962",
+        "creationTimestamp": "2024-10-23T08:55:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-19 06:24:18.962973 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables experimental new dashboard layouts",
         "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "frontend": true
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {
@@ -1266,7 +1241,6 @@
         "stage": "GA",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true,
-        "allowSelfServe": true,
         "expression": "true"
       }
     },
@@ -1319,8 +1293,7 @@
         "description": "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-backend-services-squad",
-        "requiresRestart": true,
-        "hideFromAdminPage": true
+        "requiresRestart": true
       }
     },
     {
@@ -1333,7 +1306,6 @@
         "description": "Disable envelope encryption (emergency only)",
         "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "hideFromAdminPage": true,
         "expression": "false"
       }
     },
@@ -1380,7 +1352,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "requiresRestart": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1441,7 +1412,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1457,7 +1427,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1465,14 +1434,16 @@
     {
       "metadata": {
         "name": "enableDatagridEditing",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-04-24T14:46:31Z"
+        "resourceVersion": "1763539789149",
+        "creationTimestamp": "2023-04-24T14:46:31Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-19 08:09:49.149669 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the edit functionality in the datagrid panel",
         "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "codeowner": "@grafana/dataviz-squad"
       }
     },
     {
@@ -1498,8 +1469,7 @@
         "description": "Enables native HTTP Histograms",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-backend-services-squad",
-        "requiresRestart": true,
-        "hideFromAdminPage": true
+        "requiresRestart": true
       }
     },
     {
@@ -1514,7 +1484,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1541,7 +1510,6 @@
         "description": "Enables the scopes usage in Metrics Explore",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -1634,8 +1602,7 @@
       "spec": {
         "description": "Automatic service account and token setup for plugins",
         "stage": "preview",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true
+        "codeowner": "@grafana/identity-access-team"
       }
     },
     {
@@ -1705,7 +1672,6 @@
         "description": "Highlight Grafana Enterprise features",
         "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "allowSelfServe": true,
         "expression": "false"
       }
     },
@@ -1751,7 +1717,6 @@
         "description": "Use a POST request to list rules by passing down the namespaces user has access to",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -1781,7 +1746,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-search-navigate-organise",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1886,7 +1850,6 @@
         "description": "Enables Grafana-managed recording rules.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -1917,7 +1880,6 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "requiresRestart": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -1958,7 +1920,6 @@
         "description": "Enable groupBy variable support in scenes dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -1989,8 +1950,7 @@
       "spec": {
         "description": "Run the GRPC server",
         "stage": "preview",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true
+        "codeowner": "@grafana/search-and-storage"
       }
     },
     {
@@ -2003,7 +1963,6 @@
         "description": "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true,
         "expression": "true"
       }
     },
@@ -2017,7 +1976,6 @@
         "description": "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true,
         "expression": "true"
       }
     },
@@ -2121,7 +2079,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2239,7 +2196,6 @@
         "description": "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2256,7 +2212,6 @@
         "description": "Enables create, delete, and update mutations for resources owned by IAM identity",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2270,7 +2225,6 @@
         "description": "Registers AuthZ /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2285,7 +2239,6 @@
         "description": "Enables K8s AuthZ endpoints",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2299,7 +2252,6 @@
         "description": "Registers AuthZ resource permission /apis endpoints",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2316,7 +2268,6 @@
         "description": "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2336,17 +2287,16 @@
     {
       "metadata": {
         "name": "kubernetesDashboards",
-        "resourceVersion": "1755157224830",
+        "resourceVersion": "1763533458962",
         "creationTimestamp": "2024-06-05T14:34:23Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-08-14 07:40:24.830741 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-11-19 06:24:18.962973 +0000 UTC"
         }
       },
       "spec": {
         "description": "Use the kubernetes API in the frontend for dashboards",
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "frontend": true,
         "expression": "true"
       }
     },
@@ -2360,8 +2310,7 @@
         "description": "Use the kubernetes API for feature toggle management in the frontend",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "frontend": true,
-        "hideFromAdminPage": true
+        "frontend": true
       }
     },
     {
@@ -2459,7 +2408,6 @@
         "description": "Populate Zanzana on AuthZ CRDs creation or update",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2498,7 +2446,6 @@
         "description": "In-development feature that will allow injection of labels into loki queries.",
         "stage": "privatePreview",
         "codeowner": "@grafana/observability-logs",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2541,7 +2488,6 @@
         "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "allowSelfServe": true,
         "expression": "true"
       }
     },
@@ -2648,7 +2594,6 @@
         "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "allowSelfServe": true,
         "expression": "true"
       }
     },
@@ -2687,7 +2632,6 @@
         "description": "Pick the dual write mode from database configs",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2792,7 +2736,6 @@
         "description": "Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2903,7 +2846,6 @@
         "description": "Enables the report creation drawer in a dashboard",
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2931,7 +2873,6 @@
         "description": "Require that sub claims is present in oauth tokens.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2961,7 +2902,6 @@
         "description": "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -3043,8 +2983,7 @@
       "spec": {
         "description": "Search for dashboards using panel title",
         "stage": "preview",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true
+        "codeowner": "@grafana/search-and-storage"
       }
     },
     {
@@ -3057,7 +2996,6 @@
         "description": "Enable passwordless login via magic link authentication",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -3127,7 +3065,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "requiresRestart": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3289,7 +3226,6 @@
         "description": "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -3318,7 +3254,6 @@
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
         "stage": "GA",
         "codeowner": "@grafana/oss-big-tent",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -3404,7 +3339,6 @@
         "description": "Enables public dashboard sharing to be restricted to only allowed emails",
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -3540,8 +3474,7 @@
       "spec": {
         "description": "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
         "stage": "preview",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {
@@ -3554,7 +3487,6 @@
         "description": "Require that refresh tokens are present in oauth tokens.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -3585,7 +3517,6 @@
         "description": "Enables reload of dashboards on scopes, time range and variables changes",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -3598,8 +3529,7 @@
       "spec": {
         "description": "Uses JWT-based auth for rendering instead of relying on remote cache",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-operator-experience-squad",
-        "hideFromAdminPage": true
+        "codeowner": "@grafana/grafana-operator-experience-squad"
       }
     },
     {
@@ -3613,7 +3543,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -3643,7 +3572,6 @@
         "description": "Enables restore deleted dashboards feature",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-search-navigate-organise",
-        "hideFromAdminPage": true,
         "expression": "false"
       }
     },
@@ -3661,7 +3589,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3730,7 +3657,6 @@
         "description": "In-development feature flag for the scope api using the app platform.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "hideFromAdminPage": true,
         "expression": "false"
       }
     },
@@ -3744,7 +3670,6 @@
         "description": "Enables the use of scope filters in Grafana",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -3761,7 +3686,6 @@
         "description": "Enable scope search to include all levels of the scope node tree",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -3829,7 +3753,6 @@
         "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -3845,8 +3768,7 @@
         "description": "Enables previous SQL data source dataset dropdown behavior",
         "stage": "preview",
         "codeowner": "@grafana/oss-big-tent",
-        "frontend": true,
-        "hideFromAdminPage": true
+        "frontend": true
       }
     },
     {
@@ -3903,7 +3825,6 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "requiresRestart": true,
-        "allowSelfServe": true,
         "expression": "true"
       }
     },
@@ -4012,7 +3933,6 @@
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true,
         "expression": "true"
       }
     },
@@ -4059,14 +3979,16 @@
     {
       "metadata": {
         "name": "tempoAlerting",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-15T13:36:36Z"
+        "resourceVersion": "1763532089512",
+        "creationTimestamp": "2025-07-15T13:36:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-19 06:01:29.512182 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables creating alerts from Tempo data source",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-traces-and-profiling",
-        "frontend": true
+        "codeowner": "@grafana/observability-traces-and-profiling"
       }
     },
     {
@@ -4170,7 +4092,6 @@
         "stage": "GA",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true,
-        "allowSelfServe": true,
         "expression": "true"
       }
     },
@@ -4227,7 +4148,6 @@
         "description": "Writes error logs to the request logger",
         "stage": "GA",
         "codeowner": "@grafana/grafana-backend-group",
-        "hideFromAdminPage": true,
         "expression": "true"
       }
     },
@@ -4253,7 +4173,6 @@
         "description": "Enables the unified storage grpc connection pool",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -4268,7 +4187,6 @@
         "description": "Enables the unified storage history pruner",
         "stage": "GA",
         "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "true"
       }
@@ -4283,7 +4201,6 @@
         "description": "Enable unified storage search",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -4302,7 +4219,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "requiresRestart": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4317,7 +4233,6 @@
         "description": "Enable dual reader for unified storage search",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -4331,7 +4246,6 @@
         "description": "Enable sprinkles on unified storage search",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -4345,7 +4259,6 @@
         "description": "Enable unified storage search UI",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -4360,7 +4273,6 @@
         "description": "Use full n-gram indexing instead of edge n-gram for unified storage search",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -4404,7 +4316,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4420,7 +4331,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4439,7 +4349,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -4470,7 +4379,6 @@
         "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -4484,7 +4392,6 @@
         "description": "Use openFGA as authorization engine.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -4501,7 +4408,6 @@
         "description": "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     }
