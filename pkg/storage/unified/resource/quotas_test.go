@@ -95,6 +95,74 @@ func TestNewQuotaService(t *testing.T) {
 	}
 }
 
+func TestQuotaService_ConfigReload(t *testing.T) {
+	ctx := context.Background()
+	logger := log.NewNopLogger()
+	reg := prometheus.NewRegistry()
+
+	// Create a temporary config file
+	tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+	initialConfig := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 1500
+`
+	require.NoError(t, os.WriteFile(tmpFile, []byte(initialConfig), 0644))
+
+	// Create service with a very short reload period
+	service, err := NewQuotaService(ctx, logger, reg, ReloadOptions{
+		FilePath:     tmpFile,
+		ReloadPeriod: 100 * time.Millisecond, // Very short reload period for testing
+	})
+	require.NoError(t, err)
+	require.NotNil(t, service)
+
+	// Initialize the service
+	err = service.init(ctx)
+	require.NoError(t, err)
+	defer service.stop()
+
+	// Verify initial config
+	nsr := NamespacedResource{
+		Namespace: "stacks-123",
+		Group:     "grafana.dashboard.app",
+		Resource:  "dashboards",
+	}
+	quota, err := service.GetQuota(nsr)
+	require.NoError(t, err)
+	assert.Equal(t, 1500, quota.Limit, "initial quota should be 1500")
+
+	// Update the config file with new values
+	updatedConfig := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 2500
+"456":
+  quotas:
+    grafana.folder.app/folders:
+      limit: 3000
+`
+	require.NoError(t, os.WriteFile(tmpFile, []byte(updatedConfig), 0644))
+
+	// Wait for the config to be reloaded (wait longer than reload period)
+	time.Sleep(500 * time.Millisecond)
+
+	// Verify the config was updated for existing tenant
+	quota, err = service.GetQuota(nsr)
+	require.NoError(t, err)
+	assert.Equal(t, 2500, quota.Limit, "quota should be updated to 2500")
+
+	// Verify new tenant config is also loaded
+	nsr2 := NamespacedResource{
+		Namespace: "stacks-456",
+		Group:     "grafana.folder.app",
+		Resource:  "folders",
+	}
+	quota2, err := service.GetQuota(nsr2)
+	require.NoError(t, err)
+	assert.Equal(t, 3000, quota2.Limit, "new tenant quota should be 3000")
+}
+
 func TestQuotaService_GetQuota(t *testing.T) {
 	tests := []struct {
 		name          string
