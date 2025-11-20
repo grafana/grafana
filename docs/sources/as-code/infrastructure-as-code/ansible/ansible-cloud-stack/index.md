@@ -98,23 +98,18 @@ Create a file named `data-source.yml`:
   hosts: localhost
 
   vars:
-    data_sources:
-      [
-        {
-          name: '<DATA_SOURCE_NAME>',
-          type: 'influxdb',
-          url: '<DATA_SOURCE_URL>',
-          user: '<USERNAME>',
-          secureJsonData: { password: '<PASSWORD>' },
-          database: '<DATABASE_NAME>',
-          id: <ID>,
-          uid: '<UID>',
-          access: 'proxy',
-        },
-      ]
-
+    grafana_url: 'https://<STACK_NAME>.grafana.net'
     grafana_api_key: '<GRAFANA_API_KEY>'
-    stack_name: '<STACK_NAME>'
+    data_source_config:
+      name: '<DATA_SOURCE_NAME>'
+      type: 'influxdb'
+      url: '<DATA_SOURCE_URL>'
+      user: '<USERNAME>'
+      secureJsonData:
+        password: '<PASSWORD>'
+      database: '<DATABASE_NAME>'
+      uid: '<UID>'
+      access: 'proxy'
 
   tasks:
     - name: Create/Update Data sources
