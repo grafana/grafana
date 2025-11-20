@@ -6,7 +6,7 @@ The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL 
 
 Git and [GitHub terminology](https://help.github.com/en/github/getting-started-with-github/github-glossary) are used throughout this document.
 
-Team members and their access to repositories is maintained through [GitHub teams](https://help.github.com/en/github/setting-up-and-managing-organizations-and-teams/about-teams). Team maintainers add and remove team members as outlined in GOVERNANCE.md.
+Team members and their access to repositories is maintained through [GitHub teams](https://help.github.com/en/github/setting-up-and-managing-organizations-and-teams/about-teams). Team maintainers add and remove team members as outlined in GOVERNANCE.md!
 
 # Code changes
 
