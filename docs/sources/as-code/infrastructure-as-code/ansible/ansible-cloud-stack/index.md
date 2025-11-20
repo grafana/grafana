@@ -260,3 +260,5 @@ To learn more about managing Grafana with Infrastructure as code:
 - [Grafana Ansible collection documentation](https://docs.ansible.com/ansible/latest/collections/grafana/grafana/)
 - [Ansible playbook best practices](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
 - [Grafana API documentation](/docs/grafana/latest/developers/http_api/)
+- [Grafana Cloud API documentation](https://grafana.com/docs/grafana-cloud/developer-resources/api-reference/)
+- [Infrastructure as Code with Terraform](/docs/grafana/latest/as-code/infrastructure-as-code/terraform/)
