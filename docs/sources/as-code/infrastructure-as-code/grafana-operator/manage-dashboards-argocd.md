@@ -41,16 +41,16 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: grafana-cloud-credentials
-  namespace: <GRAFANA_OPERATOR_NAMESPACE>
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
 stringData:
-  GRAFANA_CLOUD_INSTANCE_TOKEN: <GRAFANA_API_KEY>
+  GRAFANA_CLOUD_INSTANCE_TOKEN: '<GRAFANA_API_KEY>'
 type: Opaque
 ```
 
 Replace the placeholders with your values:
 
-- `<GRAFANA_API_KEY>`: API key from your Grafana instance. To create an API key, refer to [Grafana API Key Documentation](/docs/grafana/latest/administration/api-keys/)
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
+- _`<GRAFANA_API_KEY>`_: API key from your Grafana instance. To create an API key, refer to [Grafana API Key Documentation](/docs/grafana/latest/administration/api-keys/)
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ### Configure the Grafana Custom Resource
 
@@ -60,10 +60,10 @@ Set up the connection to your Grafana Cloud instance. Create a file named `grafa
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
-  name: <GRAFANA_CLOUD_STACK_NAME>
-  namespace: <GRAFANA_OPERATOR_NAMESPACE>
+  name: '<GRAFANA_CLOUD_STACK_NAME>'
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
   labels:
-    dashboards: <GRAFANA_CLOUD_STACK_NAME>
+    dashboards: '<GRAFANA_CLOUD_STACK_NAME>'
 spec:
   external:
     url: https://<GRAFANA_CLOUD_STACK_NAME>.grafana.net/
@@ -74,8 +74,8 @@ spec:
 
 Replace the placeholders with your values:
 
-- `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud Stack
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
+- _`<GRAFANA_CLOUD_STACK_NAME>`_: Name of your Grafana Cloud Stack
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ## Add dashboards to your Git repository
 
@@ -83,8 +83,8 @@ In your `grafana` directory, create a sub-folder called `dashboards`.
 
 This guide shows you how to creates three separate dashboards. For all dashboard configurations, replace the placeholders with your values:
 
-- `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud Stack
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
+- _`<GRAFANA_CLOUD_STACK_NAME>`_: Name of your Grafana Cloud Stack
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ### Create a simple dashboard
 
@@ -95,12 +95,12 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
   name: grafanadashboard-sample
-  namespace: <GRAFANA_OPERATOR_NAMESPACE>
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
 spec:
   resyncPeriod: 30s
   instanceSelector:
     matchLabels:
-      dashboards: <GRAFANA_CLOUD_STACK_NAME>
+      dashboards: '<GRAFANA_CLOUD_STACK_NAME>'
   json: >
     {
     "id": null,
@@ -179,11 +179,11 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
   name: grafanadashboard-from-configmap
-  namespace: <GRAFANA_OPERATOR_NAMESPACE>
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
 spec:
   instanceSelector:
     matchLabels:
-      dashboards: <GRAFANA_CLOUD_STACK_NAME>
+      dashboards: '<GRAFANA_CLOUD_STACK_NAME>'
   configMapRef:
     name: dashboard-definition
     key: json
@@ -198,11 +198,11 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
   name: node-exporter-latest
-  namespace: <GRAFANA_OPERATOR_NAMESPACE>
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
 spec:
   instanceSelector:
     matchLabels:
-      dashboards: <GRAFANA_CLOUD_STACK_NAME>
+      dashboards: '<GRAFANA_CLOUD_STACK_NAME>'
   grafanaCom:
     id: 1860
 ```
@@ -228,14 +228,14 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: Grafana
-  namespace: <ARGOCD_NAMESPACE>
+  namespace: '<ARGOCD_NAMESPACE>'
 spec:
   destination:
     name: ''
     namespace: ''
     server: 'https://kubernetes.default.svc'
   source:
-    path: <PATH_TO_GRAFANA_FOLDER>
+    path: '<PATH_TO_GRAFANA_FOLDER>'
     repoURL: '<GIT_REPO_URL>'
     targetRevision: HEAD
     directory:
@@ -258,9 +258,9 @@ spec:
 
 Replace the placeholders with your values:
 
-- `<GIT_REPO_URL>`: URL of your Git repository
-- `<PATH_TO_GRAFANA_FOLDER>`: Path to the `grafana` folder in your repository
-- `<ARGOCD_NAMESPACE>`: Namespace where ArgoCD is deployed in your Kubernetes cluster
+- _`<GIT_REPO_URL>`_: URL of your Git repository
+- _`<PATH_TO_GRAFANA_FOLDER>`_: Path to the `grafana` folder in your repository
+- _`<ARGOCD_NAMESPACE>`_: Namespace where ArgoCD is deployed in your Kubernetes cluster
 
 Create the application in ArgoCD:
 

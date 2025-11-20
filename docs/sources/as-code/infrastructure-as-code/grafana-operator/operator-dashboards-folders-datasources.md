@@ -34,16 +34,16 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: grafana-cloud-credentials
-  namespace: <GRAFANA_OPERATOR_NAMESPACE>
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
 stringData:
-  GRAFANA_CLOUD_INSTANCE_TOKEN: <GRAFANA_API_KEY>
+  GRAFANA_CLOUD_INSTANCE_TOKEN: '<GRAFANA_API_KEY>'
 type: Opaque
 ```
 
 Replace the placeholders with your values:
 
-- `<GRAFANA_API_KEY>`: API key from your Grafana instance. To create an API key, refer to [Grafana API Key Documentation](/docs/grafana/latest/administration/api-keys/)
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
+- _`<GRAFANA_API_KEY>`_: API key from your Grafana instance. To create an API key, refer to [Grafana API Key Documentation](/docs/grafana/latest/administration/api-keys/)
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ### Configure the Grafana Custom Resource
 
@@ -53,10 +53,10 @@ Set up connection to your Grafana Cloud instance. Create a file named `grafana-c
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
-  name: <GRAFANA_CLOUD_STACK_NAME>
-  namespace: <GRAFANA_OPERATOR_NAMESPACE>
+  name: '<GRAFANA_CLOUD_STACK_NAME>'
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
   labels:
-    dashboards: <GRAFANA_CLOUD_STACK_NAME>
+    dashboards: '<GRAFANA_CLOUD_STACK_NAME>'
 spec:
   external:
     url: https://<GRAFANA_CLOUD_STACK_NAME>.grafana.net/
@@ -67,8 +67,8 @@ spec:
 
 Replace the placeholders with your values:
 
-- `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud stack
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
+- _`<GRAFANA_CLOUD_STACK_NAME>`_: Name of your Grafana Cloud stack
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ## Add a data source
 
@@ -86,12 +86,12 @@ Create and save a new YAML file `datasource.yml` with your data source's configu
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:
-  name: <DATA_SOURCE_NAME>
-  namespace: <GRAFANA_OPERATOR_NAMESPACE>
+  name: '<DATA_SOURCE_NAME>'
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
 spec:
   instanceSelector:
     matchLabels:
-      dashboards: <GRAFANA_CLOUD_STACK_NAME>
+      dashboards: '<GRAFANA_CLOUD_STACK_NAME>'
   allowCrossNamespaceImport: true
   datasource:
     access: proxy
@@ -99,17 +99,17 @@ spec:
     jsonData:
       timeInterval: 5s
       tlsSkipVerify: true
-    name: <DATA_SOURCE_NAME>
+    name: '<DATA_SOURCE_NAME>'
     type: prometheus
-    url: <DATA_SOURCE_URL>
+    url: '<DATA_SOURCE_URL>'
 ```
 
 Replace the placeholders with your values:
 
-- `<DATA_SOURCE_NAME>`: Name of the data source to be added in Grafana
-- `<DATA_SOURCE_URL>`: URL of your data source
-- `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud stack
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
+- _`<DATA_SOURCE_NAME>`_: Name of the data source to be added in Grafana
+- _`<DATA_SOURCE_URL>`_: URL of your data source
+- _`<GRAFANA_CLOUD_STACK_NAME>`_: Name of your Grafana Cloud stack
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ### Add a dashboard to a folder
 
@@ -121,12 +121,12 @@ Prepare the dashboard configuration. In `dashboard.yml`, define the dashboard an
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name: <FOLDER_NAME>
-  namespace: <GRAFANA_OPERATOR_NAMESPACE>
+  name: '<FOLDER_NAME>'
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
 spec:
   instanceSelector:
     matchLabels:
-      dashboards: <GRAFANA_CLOUD_STACK_NAME>
+      dashboards: '<GRAFANA_CLOUD_STACK_NAME>'
   folder: '<FOLDER_NAME>'
   json: >
     {
@@ -137,9 +137,9 @@ spec:
 
 Replace the placeholders with your values:
 
-- `<FOLDER_NAME>`: Name of the folder in which you want the dashboard to be created
-- `<GRAFANA_CLOUD_STACK_NAME>`: Name of your Grafana Cloud stack
-- `<GRAFANA_OPERATOR_NAMESPACE>`: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
+- _`<FOLDER_NAME>`_: Name of the folder in which you want the dashboard to be created
+- _`<GRAFANA_CLOUD_STACK_NAME>`_: Name of your Grafana Cloud stack
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ## Apply the Kubernetes manifests
 
