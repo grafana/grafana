@@ -14,15 +14,22 @@ describe('ScopesService', () => {
   let selectorService: jest.Mocked<ScopesSelectorService>;
   let dashboardsService: jest.Mocked<ScopesDashboardsService>;
   let locationService: jest.Mocked<LocationService>;
-  let stateSubscription:
+  let selectorStateSubscription:
     | ((
         state: { appliedScopes: Array<{ scopeId: string; scopeNodeId?: string; parentNodeId?: string }> },
         prevState: { appliedScopes: Array<{ scopeId: string; scopeNodeId?: string; parentNodeId?: string }> }
       ) => void)
     | undefined;
+  let dashboardsStateSubscription:
+    | ((
+        state: { navigationScope?: string; drawerOpened: boolean },
+        prevState: { navigationScope?: string; drawerOpened: boolean }
+      ) => void)
+    | undefined;
 
   beforeEach(() => {
-    stateSubscription = undefined;
+    selectorStateSubscription = undefined;
+    dashboardsStateSubscription = undefined;
 
     selectorService = {
       state: {
@@ -46,7 +53,7 @@ describe('ScopesService', () => {
         tree: { scopeNodeId: '', expanded: false, query: '', children: {} },
       }),
       subscribeToState: jest.fn((callback) => {
-        stateSubscription = callback;
+        selectorStateSubscription = callback;
         return { unsubscribe: jest.fn() };
       }),
       changeScopes: jest.fn(),
@@ -73,6 +80,10 @@ describe('ScopesService', () => {
         forScopeNames: [],
         loading: false,
         searchQuery: '',
+      }),
+      subscribeToState: jest.fn((callback) => {
+        dashboardsStateSubscription = callback;
+        return { unsubscribe: jest.fn() };
       }),
     } as unknown as jest.Mocked<ScopesDashboardsService>;
 
@@ -172,11 +183,11 @@ describe('ScopesService', () => {
     });
 
     it('should write scope_node to URL when scopes change', () => {
-      if (!stateSubscription) {
-        throw new Error('stateSubscription not set');
+      if (!selectorStateSubscription) {
+        throw new Error('selectorStateSubscription not set');
       }
 
-      stateSubscription(
+      selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
         },
@@ -196,11 +207,11 @@ describe('ScopesService', () => {
     });
 
     it('should reset scope_parent to null when writing URL', () => {
-      if (!stateSubscription) {
-        throw new Error('stateSubscription not set');
+      if (!selectorStateSubscription) {
+        throw new Error('selectorStateSubscription not set');
       }
 
-      stateSubscription(
+      selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1', parentNodeId: 'parent1' }],
         },
@@ -218,11 +229,11 @@ describe('ScopesService', () => {
     });
 
     it('should handle scopeNodeId changes without scope changes', () => {
-      if (!stateSubscription) {
-        throw new Error('stateSubscription not set');
+      if (!selectorStateSubscription) {
+        throw new Error('selectorStateSubscription not set');
       }
 
-      stateSubscription(
+      selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node2' }],
         },
@@ -242,11 +253,11 @@ describe('ScopesService', () => {
     });
 
     it('should handle missing scopeNodeId gracefully', () => {
-      if (!stateSubscription) {
-        throw new Error('stateSubscription not set');
+      if (!selectorStateSubscription) {
+        throw new Error('selectorStateSubscription not set');
       }
 
-      stateSubscription(
+      selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1' }],
         },
@@ -266,13 +277,13 @@ describe('ScopesService', () => {
     });
 
     it('should not update URL when scopes and scopeNodeId have not changed', () => {
-      if (!stateSubscription) {
-        throw new Error('stateSubscription not set');
+      if (!selectorStateSubscription) {
+        throw new Error('selectorStateSubscription not set');
       }
 
       jest.clearAllMocks();
 
-      stateSubscription(
+      selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
         },
