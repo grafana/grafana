@@ -48,17 +48,17 @@ func (s *stubProvisioning) GetAllowUIUpdatesFromConfig(name string) bool {
 func (s *stubProvisioning) GetDashboardProvisionerResolvedPath(name string) string {
 	path := s.path[name]
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		s.log.Error("Cannot read directory", "error", err)
+		s.log.Warn("Cannot read directory", "error", err)
 	}
 
 	path, err := filepath.Abs(path)
 	if err != nil {
-		s.log.Error("Could not create absolute path", "path", path, "error", err)
+		s.log.Warn("Could not create absolute path", "path", path, "error", err)
 	}
 
 	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
-		s.log.Error("Failed to read content of symlinked path", "path", path, "error", err)
+		s.log.Warn("Failed to read content of symlinked path", "path", path, "error", err)
 	}
 
 	if path == "" {
