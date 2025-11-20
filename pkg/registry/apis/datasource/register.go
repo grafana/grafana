@@ -135,7 +135,6 @@ func RegisterAPIService(
 		}
 
 		apiRegistrar.RegisterAPI(builder)
-
 	}
 	return builder, nil // only used for wire
 }
