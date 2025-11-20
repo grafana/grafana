@@ -825,15 +825,22 @@ var (
 		},
 		{
 			Name:         "dashboardLibrary",
-			Description:  "Enable dashboard library experiments that are production ready",
+			Description:  "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
 		},
 		{
 			Name:         "suggestedDashboards",
-			Description:  "Enable suggested dashboards when creating new dashboards",
+			Description:  "Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+		},
+		{
+			Name:         "dashboardTemplates",
+			Description:  "Enables a flow to get started with a new dashboard from a template",
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
 		},
@@ -1903,13 +1910,6 @@ var (
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
 			HideFromDocs:    false,
-		},
-		{
-			Name:         "dashboardTemplates",
-			Description:  "Enable template dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSharingSquad,
-			FrontendOnly: false,
 		},
 		{
 			Name:        "kubernetesAnnotations",
