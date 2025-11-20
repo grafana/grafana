@@ -69,7 +69,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       )}
       {openPane === 'outline' && (
         <Sidebar.OpenPane>
-          <DashboardOutline editPane={editPane} />
+          <DashboardOutline editPane={editPane} isEditing={isEditing} />
         </Sidebar.OpenPane>
       )}
       <Sidebar.Toolbar>
