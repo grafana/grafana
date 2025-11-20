@@ -13,7 +13,7 @@ pluginV0Alpha1: {
 			id:       string
 			version:  string
 			url?: string
-			class: "core" | "external" | "cdn"
+			class: "core" | "external"
 		}
 	}
 	routes: {
