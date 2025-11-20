@@ -114,11 +114,10 @@ Create a file named `data-source.yml`:
   tasks:
     - name: Create/Update Data source
       grafana.grafana.datasource:
-        datasource: '{{ item }}'
-        stack_slug: '{{ stack_name }}'
+        dataSource: '{{ data_source_config }}'
+        grafana_url: '{{ grafana_url }}'
         grafana_api_key: '{{ grafana_api_key }}'
         state: present
-      loop: '{{ data_sources }}'
 ```
 
 Replace the placeholders with your values:
