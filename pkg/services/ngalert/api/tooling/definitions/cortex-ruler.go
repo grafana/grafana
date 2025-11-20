@@ -617,6 +617,9 @@ type GettableGrafanaRule struct {
 	Metadata                    *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 	GUID                        string                         `json:"guid" yaml:"guid"`
 	MissingSeriesEvalsToResolve *int64                         `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty"`
+
+	// Field is only populated when listing alert rule versions.
+	Message string `yaml:"message,omitempty" json:"message,omitempty"`
 }
 
 // UserInfo represents user-related information, including a unique identifier and a name.
