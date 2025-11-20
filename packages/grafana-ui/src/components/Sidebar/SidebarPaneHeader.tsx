@@ -25,10 +25,11 @@ export function SidebarPaneHeader({ children, onClose, title }: Props) {
           size="lg"
           name="times"
           onClick={onClose}
+          aria-label={t('grafana-ui.sidebar.close', 'Close')}
           tooltip={t('grafana-ui.sidebar.close', 'Close')}
         />
       )}
-      <Text weight="medium" variant="h6" truncate>
+      <Text weight="medium" variant="h6" truncate data-testid="sidebar-pane-header-title">
         {title}
       </Text>
       <div className={styles.flexGrow} />
