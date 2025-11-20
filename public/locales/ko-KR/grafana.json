@@ -2586,8 +2586,7 @@
         "firing": "발생 중",
         "normal": "정상",
         "pending": "보류 중",
-        "recovering": "복구 중",
-        "unknown": "알 수 없음"
+        "recovering": "복구 중"
       },
       "type": {
         "alert": "경고 규칙",
@@ -2611,12 +2610,14 @@
         "placeholder-search-input": "이름으로 검색하거나 필터 쿼리를 입력하세요..."
       },
       "grafana-folder": "Grafana 폴더",
+      "group-autocomplete-unavailable": "",
       "health": "상태",
       "label": {
         "hide": "숨기기",
         "show": "표시"
       },
       "manage-alerts": "이러한 데이터 소스에서 경고 UI를 통해 '경고 관리'를 선택하면 Grafana UI와 경고 규칙이 구성된 데이터 소스에서 이러한 경고 규칙을 관리할 수 있습니다.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "모든 데이터 소스",
       "placeholder-contact-point": "연락처 선택",
       "placeholder-data-sources": "데이터 소스 선택",
@@ -3528,6 +3529,7 @@
       "delete-modal-invalid-title": "폴더를 삭제할 수 없음",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "이 작업을 수행하면 다음 콘텐츠가 삭제됩니다.",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "삭제",
       "delete-provisioned-folder": "프로비저닝된 폴더 삭제",
       "deleting": "삭제 중…",
@@ -3536,6 +3538,7 @@
       "move-modal-alert": "이 항목을 이동하면 권한이 변경될 수 있습니다.",
       "move-modal-field-label": "폴더 이름",
       "move-modal-text": "이 작업을 수행하면 다음 콘텐츠가 이동됩니다.",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "이동",
       "move-provisioned-folder": "",
       "moving": "이동 중...",
@@ -3618,11 +3621,11 @@
       "title-folder": "이 폴더에는 아직 대시보드가 없습니다."
     },
     "folder-actions-button": {
-      "delete": "삭제",
+      "delete": "",
       "delete-folder-error": "폴더 삭제 도중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
       "folder-actions": "폴더 작업",
       "manage-permissions": "권한 관리",
-      "move": "이동"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "폴더 선택: 현재 {{ label }} 선택함",

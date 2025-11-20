@@ -560,11 +560,17 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], f)
 
 		rule := gen.GenerateRef()
-		history := gen.With(gen.WithUID(rule.UID)).GenerateManyRef(3)
+		historyRules := gen.With(gen.WithUID(rule.UID)).GenerateManyRef(3)
+		history := make([]*models.AlertRuleVersion, len(historyRules))
 		// simulate order of the history
 		rule.ID = 100
-		for i, alertRule := range history {
+		for i, alertRule := range historyRules {
 			alertRule.ID = rule.ID - int64(i) - 1
+
+			history[i] = &models.AlertRuleVersion{
+				AlertRule: *alertRule,
+				Message:   fmt.Sprintf("revision %d", i),
+			}
 		}
 
 		ruleStore.PutRule(context.Background(), rule)
@@ -584,9 +590,20 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 		require.Len(t, result, len(history)+1) // history + current version
 
 		t.Run("should be in correct order", func(t *testing.T) {
-			expectedHistory := append([]*models.AlertRule{rule}, history...)
+			expectedHistory := append([]*models.AlertRuleVersion{{AlertRule: *rule}}, history...)
 			for i, rul := range expectedHistory {
 				assert.Equal(t, rul.UID, result[i].GrafanaManagedAlert.UID)
+			}
+		})
+
+		t.Run("should have correct messages", func(t *testing.T) {
+			expectedMessages := make([]string, 0, len(history)+1)
+			expectedMessages = append(expectedMessages, "")
+			for i := range history {
+				expectedMessages = append(expectedMessages, history[i].Message)
+			}
+			for i := range expectedMessages {
+				assert.Equal(t, expectedMessages[i], result[i].GrafanaManagedAlert.Message)
 			}
 		})
 	})
@@ -599,10 +616,17 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 			UID:   "test",
 		}
 		guid := uuid.NewString()
-		history := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		historyRules := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		history := make([]*models.AlertRuleVersion, len(historyRules))
+		for i, alertRule := range historyRules {
+			history[i] = &models.AlertRuleVersion{
+				AlertRule: *alertRule,
+				Message:   fmt.Sprintf("revision %d", i),
+			}
+		}
 		ruleStore.History[guid] = append(ruleStore.History[guid], history...) // even if history is full of records
 
-		perms := createPermissionsForRules(history, orgID)
+		perms := createPermissionsForRules(historyRules, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
 		response := createService(ruleStore, nil).RouteGetRuleVersionsByUID(req, ruleKey.UID)
 
@@ -643,10 +667,17 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 		guid := uuid.NewString()
 		rule := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey), gen.WithNamespaceUID(anotherFolder.UID)).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
-		history := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		historyRules := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
+		history := make([]*models.AlertRuleVersion, len(historyRules))
+		for i, alertRule := range historyRules {
+			history[i] = &models.AlertRuleVersion{
+				AlertRule: *alertRule,
+				Message:   fmt.Sprintf("revision %d", i),
+			}
+		}
 		ruleStore.History[guid] = history
 
-		perms := createPermissionsForRules(history, orgID) // grant permissions to all records in history but not the rule itself
+		perms := createPermissionsForRules(historyRules, orgID) // grant permissions to all records in history but not the rule itself
 		req := createRequestContextWithPerms(orgID, perms, nil)
 		response := createService(ruleStore, nil).RouteGetRuleVersionsByUID(req, ruleKey.UID)
 
