@@ -348,10 +348,10 @@ export function getVisualPanels(dashboardDTO: DashboardResponse | undefined) {
     return [];
   }
 
-  const panelsWithoutRows = dashboard.panels.filter((panel: PanelDTO) => panel.type !== 'row');
+  const panelsWithoutRows = dashboard.panels.filter((panel) => panel.type !== 'row');
   const panelsNestedInRows = dashboard.panels
-    .filter((rowPanel: PanelDTO) => rowPanel.collapsed)
-    .flatMap((collapsedRow) => collapsedRow.rows ?? []);
+    .filter((rowPanel) => rowPanel.collapsed)
+    .flatMap((collapsedRow) => collapsedRow.panels ?? []);
 
   const allDashboardPanels = [...panelsWithoutRows, ...panelsNestedInRows];
   return allDashboardPanels;
