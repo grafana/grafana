@@ -1,5 +1,5 @@
 ---
-aliases: 
+aliases:
   - ../../panels-visualizations/query-transform-data/sql-expressions/ # /docs/grafana/next/panels-visualizations/query-transform-data/sql-expressions/
 labels:
   products:
