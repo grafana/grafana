@@ -57,19 +57,22 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     }
   };
 
+  const sidebarContext = useSidebar({
+    hasOpenPane: openPane !== '' || selectionContext.selected.length > 0,
+    contentMargin: 1,
+    position: 'right',
+  });
+
   const onClearSelection: React.PointerEventHandler<HTMLDivElement> = (evt) => {
     if (evt.shiftKey) {
       return;
     }
 
-    editPane.clearSelection();
+    // Only clear selection if we are undocked
+    if (!sidebarContext.isDocked) {
+      editPane.clearSelection();
+    }
   };
-
-  const sidebarContext = useSidebar({
-    hasOpenPane: openPane !== '',
-    contentMargin: 1,
-    position: 'right',
-  });
 
   return (
     <div className={styles.container}>

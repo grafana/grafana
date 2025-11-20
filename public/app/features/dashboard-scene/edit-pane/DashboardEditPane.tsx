@@ -91,13 +91,13 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
   }
 
-  onOpenPane = (openPane: string) => {
+  public openPane(openPane: string) {
     if (openPane === this.state.openPane) {
       openPane = '';
     }
 
     this.setState({ openPane });
-  };
+  }
 
   private performPanelEditAction(action: DashboardEditActionEvent) {
     // Some layout items are not yet active when leaving panel edit, let's wait for them to activate
@@ -274,6 +274,16 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
 
     this.updateSelection(undefined, []);
+  }
+
+  public closePane() {
+    if (this.state.selection) {
+      this.clearSelection();
+    }
+
+    if (this.state.openPane) {
+      this.setState({ openPane: '' });
+    }
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {

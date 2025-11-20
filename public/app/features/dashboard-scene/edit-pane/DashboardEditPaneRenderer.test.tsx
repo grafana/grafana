@@ -56,13 +56,7 @@ describe('DashboardEditPaneRenderer', () => {
     it('should call DashboardInteractions.outlineClicked when clicking on dashboard outline', async () => {
       const user = userEvent.setup();
       const scene = buildTestScene();
-      render(
-        <DashboardEditPaneRenderer
-          editPane={scene.state.editPane}
-          isEditPaneCollapsed={false}
-          onToggleCollapse={() => {}}
-        />
-      );
+      render(<DashboardEditPaneRenderer editPane={scene.state.editPane} dashboard={scene} />);
       const outlineButton = screen.getByTestId(selectors.components.PanelEditor.Outline.section);
       await user.click(outlineButton);
 

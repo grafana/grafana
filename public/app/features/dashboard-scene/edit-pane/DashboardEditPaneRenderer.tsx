@@ -77,7 +77,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
         {isEditing && (
           <>
             <Sidebar.Divider />
-            {/* <Sidebar.Button icon="corner-up-left" variant="primary" title="Save" /> */}
             <Sidebar.Button icon="corner-up-left" title={'Undo'} />
             <Sidebar.Button icon="corner-up-right" title={'Redo'} />
           </>
@@ -85,7 +84,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
         <Sidebar.Divider />
         <Sidebar.Button
           icon="list-ui-alt"
-          onClick={() => editPane.onOpenPane('outline')}
+          onClick={() => editPane.openPane('outline')}
           title="Outline"
           tooltip="Content outline"
           active={openPane === 'outline'}

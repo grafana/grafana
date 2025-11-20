@@ -53,7 +53,7 @@ export const ToolbarSwitch = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     border: `1px solid ${theme.components.input.borderColor}`,
-    padding: theme.spacing(0.25),
+    padding: theme.spacing(0.5),
     backgroundColor: theme.components.input.background,
     borderRadius: theme.shape.radius.default,
     width: theme.spacing(6.5),
@@ -95,14 +95,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     transform: 'translateX(0)',
     position: 'relative',
     borderRadius: styleMixins.getInternalRadius(theme, 2),
-    border: `1px solid ${theme.colors.secondary.border}`,
+    border: `1px solid ${theme.colors.border.weak}`,
 
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: 'all 0.2s ease-in-out',
     },
   }),
   boxChecked: css({
-    transform: `translateX(calc(100% - ${theme.spacing(1.5)}))`,
+    transform: `translateX(calc(100% - 14px))`,
     borderColor: 'transparent',
   }),
 });
