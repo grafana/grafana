@@ -163,7 +163,7 @@ export const reducer = (
       return state;
     }
     const metricType = queryTypeToMetricType(action.payload);
-    return [{ type: metricType, id: '1' } as MetricAggregation];
+    return [{ type: metricType, id: '1' }];
   }
 
   return state;

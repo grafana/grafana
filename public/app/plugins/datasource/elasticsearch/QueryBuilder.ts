@@ -178,7 +178,7 @@ export class ElasticQueryBuilder {
     // make sure query has defaults;
     if (!target.metrics || target.metrics.length === 0) {
       const metricType = queryTypeToMetricType(this.defaultQueryMode);
-      target.metrics = [{ type: metricType, id: '1' } as MetricAggregation];
+      target.metrics = [{ type: metricType, id: '1' }];
     }
     target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
     target.timeField = this.timeField;

@@ -1,6 +1,6 @@
-import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
 
+import { QUERY_TYPE_SELECTOR_OPTIONS } from '../../configuration/utils';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { queryTypeToMetricType } from '../../queryDef';
 import { QueryType } from '../../types';
@@ -8,13 +8,6 @@ import { QueryType } from '../../types';
 import { useQuery } from './ElasticsearchQueryContext';
 import { changeMetricType } from './MetricAggregationsEditor/state/actions';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
-
-export const OPTIONS: Array<SelectableValue<QueryType>> = [
-  { value: 'metrics', label: 'Metrics' },
-  { value: 'logs', label: 'Logs' },
-  { value: 'raw_data', label: 'Raw Data' },
-  { value: 'raw_document', label: 'Raw Document' },
-];
 
 export const QueryTypeSelector = () => {
   const query = useQuery();
@@ -33,5 +26,12 @@ export const QueryTypeSelector = () => {
     dispatch(changeMetricType({ id: firstMetric.id, type: queryTypeToMetricType(newQueryType) }));
   };
 
-  return <RadioButtonGroup<QueryType> fullWidth={false} options={OPTIONS} value={queryType} onChange={onChange} />;
+  return (
+    <RadioButtonGroup<QueryType>
+      fullWidth={false}
+      options={QUERY_TYPE_SELECTOR_OPTIONS}
+      value={queryType}
+      onChange={onChange}
+    />
+  );
 };

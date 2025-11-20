@@ -4,8 +4,9 @@ import type { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
 import { InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
 
-import { OPTIONS as DEFAULT_QUERY_MODE_OPTIONS } from '../components/QueryEditor/QueryTypeSelector';
 import type { ElasticsearchOptions, Interval, QueryType } from '../types';
+
+import { QUERY_TYPE_SELECTOR_OPTIONS } from './utils';
 
 const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },
@@ -138,7 +139,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
         <Select
           inputId="es_config_defaultQueryMode"
           value={value.jsonData.defaultQueryMode}
-          options={DEFAULT_QUERY_MODE_OPTIONS}
+          options={QUERY_TYPE_SELECTOR_OPTIONS}
           onChange={(selectedMode) => {
             onChange({
               ...value,
