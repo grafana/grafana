@@ -340,6 +340,20 @@ func TestErrorSources(t *testing.T) {
 		require.Equal(t, backend.Status(http.StatusInternalServerError), res.Status)
 	})
 
+	t.Run("should set correct error source for server timeout error", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(http.StatusGatewayTimeout, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		})
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.NotNil(t, res.Error)
+		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
+		require.Equal(t, backend.Status(http.StatusGatewayTimeout), res.Status)
+	})
+
 	t.Run("should handle downstream HTTP errors", func(t *testing.T) {
 		called := false
 		api := makeMockedAPI(http.StatusBadRequest, "application/json", errorResponse, func(req *http.Request) {
