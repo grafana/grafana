@@ -496,7 +496,7 @@ func (p *Plugin) IsCorePlugin() bool {
 }
 
 func (p *Plugin) IsExternalPlugin() bool {
-	return !p.IsCorePlugin()
+	return p.Class == ClassExternal
 }
 
 type Class string
@@ -504,7 +504,6 @@ type Class string
 const (
 	ClassCore     Class = "core"
 	ClassExternal Class = "external"
-	ClassCDN      Class = "cdn"
 )
 
 func (c Class) String() string {

@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v70 v70.0.0
-	github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37
+	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.48.2
 	github.com/grafana/grafana-app-sdk/logging v0.48.1
@@ -232,7 +232,7 @@ require (
 	github.com/prometheus/alertmanager v0.28.0 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.2 // indirect
+	github.com/prometheus/common v0.67.3 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.14.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
