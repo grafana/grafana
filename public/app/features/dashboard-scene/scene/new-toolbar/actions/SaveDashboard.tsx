@@ -17,7 +17,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
       <Button
         onClick={() => dashboard.openSaveDrawer({})}
         tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
-        size="sm"
+        size="md"
         variant="primary"
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
       >
@@ -32,7 +32,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
       <Button
         onClick={() => dashboard.openSaveDrawer({ saveAsCopy: true })}
         tooltip={t('dashboard.toolbar.new.save-dashboard-copy.tooltip', 'Save as copy')}
-        size="sm"
+        size="md"
         variant={isDirty ? 'primary' : 'secondary'}
       >
         <Trans i18nKey="dashboard.toolbar.new.save-dashboard-copy.label">Save as copy</Trans>
@@ -45,7 +45,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
       <Button
         onClick={() => dashboard.openSaveDrawer({})}
         tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
-        size="sm"
+        size="md"
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
         variant={isDirty ? 'primary' : 'secondary'}
       >
@@ -71,7 +71,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
           aria-label={t('dashboard.toolbar.new.more-save-options', 'More save options')}
           icon="angle-down"
           variant={isDirty ? 'primary' : 'secondary'}
-          size="sm"
+          size="md"
         />
       </Dropdown>
     </ButtonGroup>

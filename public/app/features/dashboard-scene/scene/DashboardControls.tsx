@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -25,6 +26,9 @@ import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
+import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
+import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
+import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
 
 export interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
@@ -32,7 +36,7 @@ export interface DashboardControlsState extends SceneObjectState {
   hideTimeControls?: boolean;
   hideVariableControls?: boolean;
   hideLinksControls?: boolean;
-  // Hides the dashbaord-controls dropdown menu
+  // Hides the dashboard-controls dropdown menu
   hideDashboardControls?: boolean;
 }
 
@@ -171,6 +175,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           </div>
         )}
         {!hideDashboardControls && model.hasDashboardControls() && <DashboardControlsButton dashboard={dashboard} />}
+        {config.featureToggles.dashboardNewLayouts && <DashboardControlActions dashboard={dashboard} />}
       </div>
       {!hideVariableControls && (
         <>
@@ -182,6 +187,22 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
+  );
+}
+
+function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
+  const { isEditing, editPanel } = dashboard.useState();
+
+  if (editPanel) {
+    return null;
+  }
+
+  return (
+    <>
+      <ShareDashboardButton dashboard={dashboard} />
+      {isEditing && <SaveDashboard dashboard={dashboard} />}
+      <EditDashboardSwitch dashboard={dashboard} />
+    </>
   );
 }
 

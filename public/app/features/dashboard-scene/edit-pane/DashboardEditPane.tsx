@@ -26,6 +26,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
 
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
+  openPane: string;
 }
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
@@ -39,6 +40,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       },
       undoStack: [],
       redoStack: [],
+      openPane: '',
     });
 
     this.addActivationHandler(this.onActivate.bind(this));
@@ -88,6 +90,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       this.panelEditAction = undefined;
     }
   }
+
+  onOpenPane = (openPane: string) => {
+    if (openPane === this.state.openPane) {
+      openPane = '';
+    }
+
+    this.setState({ openPane });
+  };
 
   private performPanelEditAction(action: DashboardEditActionEvent) {
     // Some layout items are not yet active when leaving panel edit, let's wait for them to activate
