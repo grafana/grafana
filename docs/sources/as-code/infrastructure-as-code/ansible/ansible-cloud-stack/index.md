@@ -128,15 +128,14 @@ Create a file named `data-source.yml`:
 
 Replace the placeholders with your values:
 
-- `<DATA_SOURCE_NAME>`: Name of the data source to be added in Grafana
-- `<DATA_SOURCE_URL>`: URL of your data source
-- `<USERNAME>`: Username for authenticating with your data source
-- `<PASSWORD>`: Password for authenticating with your data source
-- `<DATABASE_NAME>`: Name of your database
-- `<ID>`: ID for your data source in Grafana
-- `<UID>`: UID for your data source in Grafana
-- `<STACK_NAME>`: Name of your stack
-- `<GRAFANA_API_KEY>`: API key created in the Grafana instance
+- _`<DATA_SOURCE_NAME>`_: Name of the data source to be added in Grafana
+- _`<DATA_SOURCE_URL>`_: URL of your data source
+- _`<USERNAME>`_: Username for authenticating with your data source
+- _`<PASSWORD>`_: Password for authenticating with your data source
+- _`<DATABASE_NAME>`_: Name of your database
+- _`<UID>`_: UID for your data source in Grafana
+- _`<STACK_NAME>`_: Name of your stack
+- _`<GRAFANA_API_KEY>`_: API key created in the Grafana instance
 
 ### Add a folder
 
