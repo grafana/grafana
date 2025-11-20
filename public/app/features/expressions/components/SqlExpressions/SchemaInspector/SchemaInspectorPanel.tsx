@@ -149,62 +149,74 @@ export const SchemaInspectorPanel = ({ schemas, loading, error, onClose }: Schem
     return renderSchemaFields(columns, sampleRows);
   };
 
-  if (error) {
-    return (
-      <div className={styles.schemaInfoContainer}>
-        <Alert title={t('expressions.sql-schema.error-title', 'Error')} severity="error">
-          {error.message}
-        </Alert>
-      </div>
-    );
-  }
+  const renderContent = () => {
+    if (error) {
+      return (
+        <div className={styles.schemaInfoContainer}>
+          <Alert title={t('expressions.sql-schema.error-title', 'Error')} severity="error">
+            {error.message}
+          </Alert>
+        </div>
+      );
+    }
 
-  if (loading) {
-    return (
-      <div className={styles.schemaInfoContainer}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          <Spinner />
-          <Text variant="code" color="secondary">
-            <Trans i18nKey="expressions.sql-schema.loading">Loading schema information...</Trans>
-          </Text>
-        </Stack>
-      </div>
-    );
-  }
+    if (loading) {
+      return (
+        <div className={styles.schemaInfoContainer}>
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Spinner />
+            <Text variant="code" color="secondary">
+              <Trans i18nKey="expressions.sql-schema.loading">Loading schema information...</Trans>
+            </Text>
+          </Stack>
+        </div>
+      );
+    }
 
-  if (!activeSchemaData || refIds.length === 0) {
+    if (!activeSchemaData || refIds.length === 0) {
+      return (
+        <div className={styles.schemaInfoContainer}>
+          <Alert
+            severity="warning"
+            title={t('expressions.sql-schema.no-data-title', 'No schema information available')}
+          />
+        </div>
+      );
+    }
+
     return (
-      <div className={styles.schemaInfoContainer}>
-        <Alert
-          severity="warning"
-          title={t('expressions.sql-schema.no-data-title', 'No schema information available')}
-        />
-      </div>
+      <ScrollContainer backgroundColor="primary">
+        <TabContent>{renderSchemaTabContent(activeSchemaData)}</TabContent>
+      </ScrollContainer>
     );
-  }
+  };
 
   return (
     <div className={styles.schemaInspector}>
       <div className={styles.tabsBarWrapper}>
-        <TabsBar>
-          {refIds.map((refId) => (
-            <Tab
-              key={refId}
-              label={refId}
-              active={activeSchemaTab === refId}
-              onChangeTab={() => setSelectedTab(refId)}
-            />
-          ))}
-        </TabsBar>
+        {refIds.length > 0 && (
+          <TabsBar>
+            {refIds.map((refId) => (
+              <Tab
+                key={refId}
+                label={refId}
+                active={activeSchemaTab === refId}
+                onChangeTab={() => setSelectedTab(refId)}
+              />
+            ))}
+          </TabsBar>
+        )}
         <IconButton
           name="times"
           onClick={onClose}
           tooltip={t('expressions.sql-schema.close-schema-inspector', 'Close schema inspector')}
+          aria-label={t(
+            'expressions.schema-inspector-panel.aria-label-close-schema-inspector',
+            'Close schema inspector'
+          )}
         />
       </div>
-      <ScrollContainer backgroundColor="primary">
-        <TabContent>{renderSchemaTabContent(activeSchemaData)}</TabContent>
-      </ScrollContainer>
+      {renderContent()}
     </div>
   );
 };
