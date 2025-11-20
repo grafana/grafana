@@ -28,7 +28,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
@@ -173,7 +173,6 @@ export class BackendSrv implements BackendService {
         .subscribe(this.getChunkedResponseObserver({ controller, observer, options, requestId }));
 
       return function unsubscribe() {
-        console.log(requestId, 'unsubscribe');
         controller.abort('unsubscribe');
         sub.unsubscribe();
       };
@@ -218,7 +217,6 @@ export class BackendSrv implements BackendService {
         // Setup onabort callback so that we can cancel the reader properly
         controller.signal.onabort = () => {
           reader.cancel(controller.signal.reason);
-          console.log(requestId, 'signal.aborted');
         };
 
         async function process() {
@@ -230,13 +228,11 @@ export class BackendSrv implements BackendService {
             });
             if (chunk.done) {
               done = true;
-              console.log(requestId, 'done');
             }
           }
         }
         process()
           .then(() => {
-            console.log(requestId, 'complete');
             observer.complete();
           }) // runs in background
           .catch((e) => {
@@ -654,7 +650,12 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
   }
 
+  /**
+   * @deprecated Use getFolderByUidFacade from app/api/clients/folder/v1beta1/hooks instead
+   * or manually handle calling legacy vs app platform API based on feature toggles
+   */
   getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
+    deprecationWarning('backend_srv', 'getFolderByUid(uid)', 'getFolderByUidFacade(uid)');
     const queryParams = new URLSearchParams();
     if (options.withAccessControl) {
       queryParams.set('accesscontrol', 'true');

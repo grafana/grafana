@@ -35,6 +35,6 @@ type RuleStore interface {
 
 	// IncreaseVersionForAllRulesInNamespaces Increases version for all rules that have specified namespace uids
 	IncreaseVersionForAllRulesInNamespaces(ctx context.Context, orgID int64, namespaceUIDs []string) ([]ngmodels.AlertRuleKeyWithVersion, error)
-	GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*ngmodels.AlertRule, error)
+	GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*ngmodels.AlertRuleVersion, error)
 	accesscontrol.RuleUIDToNamespaceStore
 }

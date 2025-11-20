@@ -20,5 +20,6 @@ v0alpha1: {
 		teamv0alpha1,
 		teambindingv0alpha1,
 		serviceaccountv0alpha1,
+		externalGroupMappingv0alpha1
 	]
 }

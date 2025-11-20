@@ -8,6 +8,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -35,14 +39,25 @@ type RoleStorageBackend interface{ resource.StorageBackend }
 // Used by wire to identify the storage backend for role bindings.
 type RoleBindingStorageBackend interface{ resource.StorageBackend }
 
+// ExternalGroupMappingStorageBackend uses the resource.StorageBackend interface to provide storage for external group mappings.
+// Used by wire to identify the storage backend for external group mappings.
+type ExternalGroupMappingStorageBackend interface{ resource.StorageBackend }
+
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store                      legacy.LegacyIdentityStore
-	coreRolesStorage           CoreRoleStorageBackend
-	rolesStorage               RoleStorageBackend
-	resourcePermissionsStorage resource.StorageBackend
-	roleBindingsStorage        RoleBindingStorageBackend
+	store legacy.LegacyIdentityStore
+
+	userLegacyStore             *user.LegacyStore
+	saLegacyStore               *serviceaccount.LegacyStore
+	legacyTeamStore             *team.LegacyStore
+	teamBindingLegacyStore      *teambinding.LegacyBindingStore
+	ssoLegacyStore              *sso.LegacyStore
+	coreRolesStorage            CoreRoleStorageBackend
+	rolesStorage                RoleStorageBackend
+	resourcePermissionsStorage  resource.StorageBackend
+	roleBindingsStorage         RoleBindingStorageBackend
+	externalGroupMappingStorage ExternalGroupMappingStorageBackend
 
 	// Access Control
 	authorizer authorizer.Authorizer
@@ -73,7 +88,4 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Toggle for enabling authz management apis
 	features featuremgmt.FeatureToggles
-
-	// Toggle for enabling dual writer
-	enableDualWriter bool
 }

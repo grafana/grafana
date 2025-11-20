@@ -49,6 +49,8 @@ describe('dashboard tracking', () => {
         name: 'new dashboard',
         url: 'new-url',
         numPanels: 6,
+        numRows: 6,
+        numTabs: 4,
         conditionalRenderRules: 3,
         autoLayoutCount: 3,
         customGridLayoutCount: 2,
@@ -69,6 +71,7 @@ describe('dashboard tracking', () => {
         duration: 42,
         isScene: true,
         tabCount: 4,
+        rowCount: 2,
         templateVariableCount: 2,
         maxNestingLevel: 3,
         panel_type_timeseries_count: 6,
@@ -86,6 +89,8 @@ describe('dashboard tracking', () => {
         uid: 'dashboard-test',
         variable_type_custom_count: 1,
         variable_type_query_count: 1,
+        hasEditPermissions: true,
+        hasSavePermissions: true,
       });
     });
   });

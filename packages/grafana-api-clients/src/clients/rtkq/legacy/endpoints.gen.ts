@@ -108,13 +108,13 @@ const injectedRtkApi = api
         query: () => ({ url: `/access-control/status` }),
         providesTags: ['access_control', 'enterprise'],
       }),
-      listTeamsRoles: build.mutation<ListTeamsRolesApiResponse, ListTeamsRolesApiArg>({
+      listTeamsRoles: build.query<ListTeamsRolesApiResponse, ListTeamsRolesApiArg>({
         query: (queryArg) => ({
           url: `/access-control/teams/roles/search`,
           method: 'POST',
           body: queryArg.rolesSearchQuery,
         }),
-        invalidatesTags: ['access_control', 'enterprise'],
+        providesTags: ['access_control', 'enterprise'],
       }),
       listTeamRoles: build.query<ListTeamRolesApiResponse, ListTeamRolesApiArg>({
         query: (queryArg) => ({ url: `/access-control/teams/${queryArg.teamId}/roles` }),
@@ -129,7 +129,11 @@ const injectedRtkApi = api
         invalidatesTags: ['access_control', 'enterprise'],
       }),
       setTeamRoles: build.mutation<SetTeamRolesApiResponse, SetTeamRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/teams/${queryArg.teamId}/roles`, method: 'PUT' }),
+        query: (queryArg) => ({
+          url: `/access-control/teams/${queryArg.teamId}/roles`,
+          method: 'PUT',
+          body: queryArg.setTeamRolesCommand,
+        }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
       removeTeamRole: build.mutation<RemoveTeamRoleApiResponse, RemoveTeamRoleApiArg>({
@@ -1599,6 +1603,8 @@ const injectedRtkApi = api
             perpage: queryArg.perpage,
             name: queryArg.name,
             query: queryArg.query,
+            accesscontrol: queryArg.accesscontrol,
+            sort: queryArg.sort,
           },
         }),
         providesTags: ['teams'],
@@ -2142,6 +2148,7 @@ export type SetTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetTeamRolesApiArg = {
   teamId: number;
+  setTeamRolesCommand: SetTeamRolesCommand;
 };
 export type RemoveTeamRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -3445,6 +3452,8 @@ export type SearchTeamsApiArg = {
   name?: string;
   /** If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded. */
   query?: string;
+  accesscontrol?: boolean;
+  sort?: string;
 };
 export type RemoveTeamGroupApiQueryApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -3880,26 +3889,26 @@ export type ErrorResponseBody = {
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
 };
-export type PermissionIsTheModelForAccessControlPermissions = {
+export type Permission = {
   action?: string;
   created?: string;
   scope?: string;
   updated?: string;
 };
 export type RoleDto = {
-  created?: string;
+  created: string;
   delegatable?: boolean;
-  description?: string;
-  displayName?: string;
+  description: string;
+  displayName: string;
   global?: boolean;
-  group?: string;
+  group: string;
   hidden?: boolean;
   mapped?: boolean;
-  name?: string;
-  permissions?: PermissionIsTheModelForAccessControlPermissions[];
-  uid?: string;
-  updated?: string;
-  version?: number;
+  name: string;
+  permissions?: Permission[];
+  uid: string;
+  updated: string;
+  version: number;
 };
 export type CreateRoleForm = {
   description?: string;
@@ -3908,7 +3917,7 @@ export type CreateRoleForm = {
   group?: string;
   hidden?: boolean;
   name?: string;
-  permissions?: PermissionIsTheModelForAccessControlPermissions[];
+  permissions?: Permission[];
   uid?: string;
   version?: number;
 };
@@ -3922,7 +3931,7 @@ export type UpdateRoleCommand = {
   group: string;
   hidden?: boolean;
   name?: string;
-  permissions?: PermissionIsTheModelForAccessControlPermissions[];
+  permissions?: Permission[];
   version?: number;
 };
 export type RoleAssignmentsDto = {
@@ -3945,6 +3954,10 @@ export type RolesSearchQuery = {
 };
 export type AddTeamRoleCommand = {
   roleUid?: string;
+};
+export type SetTeamRolesCommand = {
+  includeHidden?: boolean;
+  roleUids?: string[];
 };
 export type AddUserRoleCommand = {
   global?: boolean;
@@ -5481,6 +5494,8 @@ export type AnnotationQuery = {
   iconColor?: string;
   /** Name of annotation. */
   name?: string;
+  /** Placement can be used to display the annotation query somewhere else on the dashboard other than the default location. */
+  placement?: string;
   target?: AnnotationTarget;
   /** TODO -- this should not exist here, it is based on the --grafana-- datasource */
   type?: string;
@@ -6017,7 +6032,7 @@ export type CreateDashboardSnapshotCommand = {
 };
 export type CreateTeamCommand = {
   email?: string;
-  name?: string;
+  name: string;
 };
 export type TeamDto = {
   accessControl?: {
@@ -6026,13 +6041,14 @@ export type TeamDto = {
   avatarUrl?: string;
   email?: string;
   externalUID?: string;
-  id?: number;
-  isProvisioned?: boolean;
-  memberCount?: number;
-  name?: string;
-  orgId?: number;
+  /** @deprecated Use UID instead */
+  id: number;
+  isProvisioned: boolean;
+  memberCount: number;
+  name: string;
+  orgId: number;
   permission?: PermissionType;
-  uid?: string;
+  uid: string;
 };
 export type SearchTeamQueryResult = {
   page?: number;
@@ -6076,7 +6092,7 @@ export type TeamMemberDto = {
   userUID?: string;
 };
 export type AddTeamMemberCommand = {
-  userId?: number;
+  userId: number;
 };
 export type SetTeamMembershipsCommand = {
   admins?: string[];
@@ -6513,7 +6529,8 @@ export const {
   useSetRoleAssignmentsMutation,
   useGetAccessControlStatusQuery,
   useLazyGetAccessControlStatusQuery,
-  useListTeamsRolesMutation,
+  useListTeamsRolesQuery,
+  useLazyListTeamsRolesQuery,
   useListTeamRolesQuery,
   useLazyListTeamRolesQuery,
   useAddTeamRoleMutation,

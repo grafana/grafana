@@ -51,8 +51,10 @@ func (k EventKey) Validate() error {
 
 	// Validate each field against the naming rules
 	// Validate naming conventions for all required fields
-	if err := validation.IsValidNamespace(k.Namespace); err != nil {
-		return NewValidationError("namespace", k.Namespace, err[0])
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
 	if err := validation.IsValidGroup(k.Group); err != nil {
 		return NewValidationError("group", k.Group, err[0])
