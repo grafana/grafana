@@ -578,7 +578,9 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                             map[string]UnifiedStorageConfig
+	UnifiedStorage map[string]UnifiedStorageConfig
+	// DisableDataMigrations will disable resources data migration to unified storage at startup
+	DisableDataMigrations                      bool
 	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int

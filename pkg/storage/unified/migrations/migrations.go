@@ -17,6 +17,7 @@ import (
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/migrations")
+var logger = log.New("storage.unified.migrations")
 
 // UnifiedStorageMigrationProvider provides unified storage migrations as a background service
 type UnifiedStorageMigrationProvider interface {
@@ -56,7 +57,11 @@ func (p *UnifiedStorageMigrationProviderImpl) Run(ctx context.Context) error {
 	if os.Getenv("GRAFANA_TEST_DB") != "" {
 		return nil
 	}
-
+	// skip migrations if disabled in config
+	if p.cfg.DisableDataMigrations {
+		logger.Info("Data migrations are disabled, skipping")
+		return nil
+	}
 	// TODO: Re-enable once migrations are ready
 	// return RegisterMigrations(p.legacyMigrator, p.cfg, p.client, p.sqlStore)
 	return nil
@@ -74,7 +79,6 @@ func RegisterMigrations(
 ) error {
 	ctx, span := tracer.Start(context.Background(), "storage.unified.RegisterMigrations")
 	defer span.End()
-	logger := log.New("storage.unified.migrations.folders-dashboards")
 	mg := migrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unified_storage")
 	mg.AddCreateMigration()
 
