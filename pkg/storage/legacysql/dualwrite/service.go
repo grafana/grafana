@@ -48,7 +48,10 @@ func ProvideService(
 	migrator unifiedmigrations.UnifiedStorageMigrationService,
 ) (Service, error) {
 	// Ensure migrations have run before starting dualwrite
-	_ = migrator.Run(context.Background())
+	err := migrator.Run(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("unable to start dualwrite service due to migration error: %w", err)
+	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
