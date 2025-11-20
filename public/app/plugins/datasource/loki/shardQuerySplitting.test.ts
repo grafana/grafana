@@ -260,14 +260,54 @@ describe('runShardSplitQuery()', () => {
     });
   });
 
-  test('Failed requests have loading state Error', async () => {
+  test('Failed 4xx requests have loading state Error', async () => {
     jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
     jest
       .spyOn(datasource, 'runQuery')
-      .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'parse error' }, data: [] }));
+      .mockReturnValue(
+        of({ state: LoadingState.Error, error: { refId: 'A', message: 'parse error', status: 400 }, data: [] })
+      );
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
       expect(response[0].state).toBe(LoadingState.Error);
     });
+    expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+  });
+
+  test('Failed 5xx requests are retried', async () => {
+    jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
+      callback();
+    });
+
+    const errResp: DataQueryResponse = {
+      state: LoadingState.Error,
+      errors: [{ refId: 'A', message: 'parse error', status: 500 }],
+      error: { refId: 'A', message: 'parse error', status: 500 },
+      data: [],
+    };
+    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1', '10', '4']);
+    jest
+      .spyOn(datasource, 'runQuery')
+      .mockReturnValueOnce(of(errResp))
+      .mockReturnValueOnce(of({ state: LoadingState.Done, data: [], status: 200 }));
+
+    const querySplittingRange = {
+      from: dateTime('2023-02-08T05:00:00.000Z'),
+      to: dateTime('2023-02-10T06:00:00.000Z'),
+      raw: {
+        from: dateTime('2023-02-08T05:00:00.000Z'),
+        to: dateTime('2023-02-10T06:00:00.000Z'),
+      },
+    };
+    request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }], {
+      range: querySplittingRange,
+    });
+
+    await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
+      expect(response[0].state).toBe(LoadingState.Done);
+    });
+
+    // 5 shards, 3 groups + empty shard group, 4 requests * 3 days, 3 chunks, 3 requests + 1 retriable error = 13 requests
+    expect(datasource.runQuery).toHaveBeenCalledTimes(13);
   });
 
   test('Does not retry on other errors', async () => {
