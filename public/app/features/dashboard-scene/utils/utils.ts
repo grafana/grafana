@@ -262,7 +262,11 @@ export function getDefaultVizPanel(): VizPanel {
     config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
       ? UNCONFIGURED_PANEL_PLUGIN_ID
       : 'timeseries';
-  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
+
+  const newPanelTitle =
+    config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
+      ? ''
+      : t('dashboard.new-panel-title', 'New panel');
 
   return new VizPanel({
     title: newPanelTitle,

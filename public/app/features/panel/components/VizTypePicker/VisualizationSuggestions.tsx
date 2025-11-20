@@ -6,8 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2, PanelData, PanelModel, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
-import { PanelEmptyState } from 'app/features/panel/components/PanelEmptyState';
+import { Icon, Text, useStyles2 } from '@grafana/ui';
 
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 
@@ -36,12 +35,16 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel, t
   const hasData = data?.series && data.series.length > 0 && !data.series.every((frame) => frame.length === 0);
 
   if (config.featureToggles.newVizSuggestions && !hasData && !searchQuery) {
-    const content = (
-      <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
-        Run a query to start seeing suggested visualizations
-      </Trans>
+    return (
+      <div className={styles.emptyStateWrapper}>
+        <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
+        <Text element="p" textAlignment="center" color="secondary">
+          <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
+            Run a query to start seeing suggested visualizations
+          </Trans>
+        </Text>
+      </div>
     );
-    return <PanelEmptyState type="suggestions" content={content} />;
   }
 
   return (
@@ -128,6 +131,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridTemplateColumns: 'repeat(auto-fill, 144px)',
       marginBottom: theme.spacing(1),
       justifyContent: 'space-evenly',
+    }),
+    emptyStateWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: theme.spacing(4),
+      textAlign: 'center',
+      minHeight: '200px',
+    }),
+    emptyStateIcon: css({
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing(2),
     }),
   };
 };

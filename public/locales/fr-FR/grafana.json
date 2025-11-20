@@ -7792,6 +7792,14 @@
     "name-show-threshold-labels": "Afficher les étiquettes de seuil",
     "name-show-threshold-markers": "Afficher les marqueurs de seuil",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -9002,6 +9010,13 @@
       "copy": "Copier dans le presse-papier",
       "csv-counts": "",
       "csv-placeholder": "Saisir le CSV ici…",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrer les valeurs",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Respecter la casse",
@@ -12406,8 +12421,10 @@
       "cancel": "Annuler",
       "error-title": "",
       "input": {
-        "placeholder": "Sélectionner les portées...",
-        "removeAll": "Supprimer toutes les portées"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Supprimer toutes les portées",
+        "tooltip": ""
       },
       "title": "Sélectionner les portées"
     },

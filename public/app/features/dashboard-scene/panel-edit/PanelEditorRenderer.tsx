@@ -4,14 +4,11 @@ import { useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { PanelEmptyState } from 'app/features/panel/components/PanelEmptyState';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
@@ -167,14 +164,10 @@ interface VizWrapperProps {
 function VizWrapper({ panel, tableView }: VizWrapperProps) {
   const styles = useStyles2(getStyles);
   const panelToShow = tableView ?? panel;
-  const { pluginId } = panel.useState();
-
-  const showEmptyState =
-    config.featureToggles.newVizSuggestions && pluginId === UNCONFIGURED_PANEL_PLUGIN_ID && !tableView;
 
   return (
     <div className={styles.vizWrapper}>
-      {showEmptyState ? <PanelEmptyState type="panel" /> : <panelToShow.Component model={panelToShow} />}
+      <panelToShow.Component model={panelToShow} />
     </div>
   );
 }
