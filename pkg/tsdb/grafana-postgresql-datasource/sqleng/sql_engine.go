@@ -395,8 +395,14 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 
 func (e *DataSourceHandler) newProcessCfg(queryContext context.Context, query backend.DataQuery,
 	results []*pgconn.Result, interpolatedQuery string) (*dataQueryModel, error) {
-	columnNames := []string{}
-	columnTypes := []string{}
+	// Calculate total number of fields to preallocate slices
+	totalFields := 0
+	for _, result := range results {
+		totalFields += len(result.FieldDescriptions)
+	}
+
+	columnNames := make([]string, 0, totalFields)
+	columnTypes := make([]string, 0, totalFields)
 
 	// The results will contain column information in the metadata
 	for _, result := range results {
@@ -409,6 +415,7 @@ func (e *DataSourceHandler) newProcessCfg(queryContext context.Context, query ba
 				switch field.DataTypeOID {
 				case pgtype.TimetzOID:
 					columnTypes = append(columnTypes, "timetz")
+				// money type is 790
 				case 790:
 					columnTypes = append(columnTypes, "money")
 				default:
