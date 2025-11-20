@@ -33,18 +33,19 @@ interface UseSQLSchemasOptions {
 }
 
 export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOptions) {
+  const isFeatureEnabled = useMemo(
+    () => config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs || false,
+    []
+  );
+
+  // Start with loading=true if we're going to fetch on mount
   const [schemas, setSchemas] = useState<SQLSchemasResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(enabled && isFeatureEnabled && Boolean(queries));
   const [error, setError] = useState<Error | null>(null);
 
   // Store queries in ref so we can access current value without triggering effect
   const queriesRef = useRef(queries);
   queriesRef.current = queries;
-
-  const isFeatureEnabled = useMemo(
-    () => config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs || false,
-    []
-  );
 
   const fetchSchemas = useCallback(async () => {
     if (!enabled || !isFeatureEnabled) {

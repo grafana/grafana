@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo, useRef, useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -305,7 +305,11 @@ LIMIT
     <>
       <div className={styles.sqlContainer}>
         {renderSQLButtons()}
-        <div className={`${styles.contentContainer} ${isSchemaInspectorOpen ? styles.contentContainerWithSchema : ''}`}>
+        <div
+          className={cx(styles.contentContainer, {
+            [styles.contentContainerWithSchema]: isSchemaInspectorOpen && isSchemasFeatureEnabled,
+          })}
+        >
           <div ref={containerRef} className={styles.editorContainer}>
             <SQLEditor
               query={query.expression || initialQuery}
@@ -317,16 +321,16 @@ LIMIT
               {({ formatQuery }) => renderToolbox(formatQuery)}
             </SQLEditor>
           </div>
-          <div className={`${styles.schemaInspector} ${isSchemaInspectorOpen ? styles.schemaInspectorOpen : ''}`}>
-            {isSchemaInspectorOpen && (
+          {isSchemaInspectorOpen && isSchemasFeatureEnabled && (
+            <div className={`${styles.schemaInspector} ${isSchemaInspectorOpen ? styles.schemaInspectorOpen : ''}`}>
               <SchemaInspectorPanel
                 schemas={schemas?.sqlSchemas ?? null}
                 loading={schemasLoading}
                 error={schemasError}
                 onClose={() => setIsSchemaInspectorOpen(false)}
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
       <Suspense fallback={null}>
