@@ -494,7 +494,7 @@ func TestDefaultRetryBackoff(t *testing.T) {
 	assert.Equal(t, 100*time.Millisecond, backoff.Duration)
 	assert.Equal(t, 2.0, backoff.Factor)
 	assert.Equal(t, 0.1, backoff.Jitter)
-	assert.Equal(t, 5, backoff.Steps)
+	assert.Equal(t, 8, backoff.Steps) // Updated to 8 steps for ~10s total retry window
 	assert.Equal(t, 5*time.Second, backoff.Cap)
 }
 

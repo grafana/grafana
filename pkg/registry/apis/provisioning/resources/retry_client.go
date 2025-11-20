@@ -5,6 +5,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -22,11 +23,18 @@ import (
 //   - Network errors occur: connection timeouts, temporary network failures, or connection errors
 //
 // The retry behavior:
-//   - Total attempts: 5 (1 initial attempt + 4 retries)
+//   - Total attempts: 8 (1 initial attempt + 7 retries)
 //   - Initial delay: 100ms before the first retry
-//   - Exponential backoff: delay doubles after each failed attempt (100ms → 200ms → 400ms → 800ms)
+//   - Exponential backoff: delay doubles after each failed attempt (100ms → 200ms → 400ms → 800ms → 1.6s → 3.2s → 5s)
 //   - Maximum delay: capped at 5 seconds
 //   - Jitter: 10% randomization to prevent thundering herd problems
+//   - Total retry window: approximately 10 seconds from first attempt to last retry
+//
+// All attempts will fail when:
+//   - The Kubernetes API server is completely unavailable or unreachable
+//   - Network connectivity issues persist beyond the retry window (~10 seconds)
+//   - The API server returns transient errors consistently for the entire retry duration
+//   - Context cancellation occurs before retries complete
 //
 // Non-transient errors (e.g., NotFound, BadRequest, Forbidden) are not retried and returned immediately.
 func defaultRetryBackoff() wait.Backoff {
@@ -34,7 +42,7 @@ func defaultRetryBackoff() wait.Backoff {
 		Duration: 100 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
-		Steps:    5, // 1 initial attempt + 4 retries = 5 total attempts
+		Steps:    8, // 1 initial attempt + 7 retries = 8 total attempts (~10s total retry window)
 		Cap:      5 * time.Second,
 	}
 }
@@ -94,33 +102,45 @@ func isTransientError(err error) bool {
 // retryWithBackoff executes a function with exponential backoff retry logic using wait.ExponentialBackoff
 func (r *retryResourceInterface) retryWithBackoff(ctx context.Context, fn func() error) error {
 	var lastErr error
+	attempt := 0
+	logger := logging.FromContext(ctx)
 
 	err := wait.ExponentialBackoff(r.backoff, func() (bool, error) {
+		attempt++
+		
 		// Check if context is cancelled
 		if ctx.Err() != nil {
+			logger.Debug("Retry cancelled due to context cancellation", "attempt", attempt)
 			return false, ctx.Err()
 		}
 
 		err := fn()
 		if err == nil {
+			if attempt > 1 {
+				logger.Debug("Operation succeeded after retry", "attempt", attempt)
+			}
 			return true, nil // success, stop retrying
 		}
 
 		// If not a transient error, return immediately without retrying
 		if !isTransientError(err) {
+			logger.Debug("Non-transient error, not retrying", "attempt", attempt, "error", err)
 			return false, err
 		}
 
 		// Transient error, retry
 		lastErr = err
+		logger.Info("Transient error encountered, retrying", "attempt", attempt, "max_attempts", r.backoff.Steps, "error", err)
 		return false, nil
 	})
 
 	// If wait.ExponentialBackoff returned an error, it means we exhausted retries
 	if err != nil {
 		if lastErr != nil {
+			logger.Warn("All retry attempts exhausted", "total_attempts", attempt, "error", lastErr)
 			return lastErr
 		}
+		logger.Warn("All retry attempts exhausted", "total_attempts", attempt, "error", err)
 		return err
 	}
 
