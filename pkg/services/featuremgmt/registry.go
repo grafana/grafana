@@ -180,14 +180,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "dataplaneFrontendFallback",
-			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true",
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:        "disableSSEDataplane",
 			Description: "Disables dataplane specific processing in server side expressions.",
 			Stage:       FeatureStageExperimental,
@@ -247,14 +239,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:         "transformationsRedesign",
-			Description:  "Enables the transformations redesign",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "mlExpressions",
@@ -640,14 +624,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "logRowsPopoverMenu",
-			Description:  "Enable filtering menu displayed when text of a log line is selected",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true",
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "tableSharedCrosshair",
 			Description:  "Enables shared crosshair in table panel",
 			FrontendOnly: true,
@@ -767,13 +743,6 @@ var (
 			Owner:        grafanaDataProSquad,
 		},
 		{
-			Name:        "newPDFRendering",
-			Description: "New implementation for the dashboard-to-PDF rendering",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "true", // enabled by default,
-		},
-		{
 			Name:            "kubernetesAggregator",
 			Description:     "Enable grafana's embedded kube-aggregator",
 			Stage:           FeatureStageExperimental,
@@ -806,6 +775,13 @@ var (
 		{
 			Name:         "oauthRequireSubClaim",
 			Description:  "Require that sub claims is present in oauth tokens.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "refreshTokenRequired",
+			Description:  "Require that refresh tokens are present in oauth tokens.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1250,13 +1226,6 @@ var (
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 			Expression:   "true",
-		},
-		{
-			Name:         "feedbackButton",
-			Description:  "Enables a button to send feedback from the Grafana UI",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOperatorExperienceSquad,
-			HideFromDocs: true,
 		},
 		{
 			Name:         "unifiedStorageSearchUI",
@@ -1969,6 +1938,16 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:            "rudderstackUpgrade",
+			Description:     "Enables the new version of rudderstack",
+			FrontendOnly:    true,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaFrontendPlatformSquad,
+			Expression:      "false",
+			RequiresRestart: false,
+			HideFromDocs:    false,
 		},
 	}
 )

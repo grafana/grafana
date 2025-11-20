@@ -318,6 +318,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += '&' + query.uid.map((name) => `name=${encodeURIComponent(name)}`).join('&');
     }
 
+    if (query.permission) {
+      uri += `&permission=${query.permission}`;
+    }
+
     if (query.deleted) {
       uri = `${getAPIBaseURL('dashboard.grafana.app', 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
     }

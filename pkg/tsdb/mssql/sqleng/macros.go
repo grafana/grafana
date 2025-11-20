@@ -1,4 +1,4 @@
-package mssql
+package sqleng
 
 import (
 	"fmt"
@@ -8,18 +8,17 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/grafana/grafana/pkg/tsdb/mssql/sqleng"
 )
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type msSQLMacroEngine struct {
-	*sqleng.SQLMacroEngineBase
+	*SQLMacroEngineBase
 }
 
-func newMssqlMacroEngine() sqleng.SQLMacroEngine {
-	return &msSQLMacroEngine{SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase()}
+func newMssqlMacroEngine() SQLMacroEngine {
+	return &msSQLMacroEngine{SQLMacroEngineBase: NewSQLMacroEngineBase()}
 }
 
 func (m *msSQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange,
@@ -79,7 +78,7 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := sqleng.SetupFillmode(query, interval, args[2])
+			err := SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
@@ -114,7 +113,7 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := sqleng.SetupFillmode(query, interval, args[2])
+			err := SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}

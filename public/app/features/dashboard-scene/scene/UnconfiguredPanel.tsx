@@ -6,6 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { sceneUtils } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, Dropdown, Menu, Stack } from '@grafana/ui';
 
+import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -22,6 +23,7 @@ function UnconfiguredPanelComp(props: PanelProps) {
 
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });
+    DashboardInteractions.panelActionClicked('configure', props.id, 'panel');
   };
 
   const onUseLibraryPanel = () => {
