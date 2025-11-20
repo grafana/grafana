@@ -39,10 +39,13 @@ async function getPanelsWithSuggestions(): Promise<PanelPlugin[]> {
     _pluginCache = [];
     let pluginIds: string[] = panelsToCheckFirst;
     if (config.featureToggles.externalVizSuggestions) {
-      pluginIds = (await getAllPanelPluginMeta()).map((m) => m.id);
+      pluginIds = getAllPanelPluginMeta().map((m) => m.id);
     }
-    for (const pluginId of pluginIds) {
-      _pluginCache.push(await importPanelPlugin(pluginId));
+    // import the plugins in parallel using Promise.allSettled
+    for (const settled of await Promise.allSettled(pluginIds.map((id) => importPanelPlugin(id)))) {
+      if (settled.status === 'fulfilled') {
+        _pluginCache.push(settled.value);
+      }
     }
   }
   return _pluginCache;
