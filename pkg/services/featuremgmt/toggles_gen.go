@@ -359,14 +359,6 @@ const (
 	// Enables a flow to get started with a new dashboard from a template
 	FlagDashboardTemplates = "dashboardTemplates"
 
-	// FlagLogsExploreTableDefaultVisualization
-	// Sets the logs table as default visualisation in logs explore
-	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
-
-	// FlagAlertingListViewV2
-	// Enables the new alert list view design
-	FlagAlertingListViewV2 = "alertingListViewV2"
-
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
