@@ -16,11 +16,11 @@ export async function listFolders(
   page = 1,
   pageSize = PAGE_SIZE
 ): Promise<DashboardViewItem[]> {
-  const results = getGrafanaSearcher();
+  const searcher = getGrafanaSearcher();
 
   let folders: DashboardQueryResult[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
-    const foldersResults = await results.search({
+    const foldersResults = await searcher.search({
       kind: ['folder'],
       location: parentUID || 'general',
       from: (page - 1) * pageSize, // our pages are 1-indexed, so we need to -1 to convert that to correct value to skip
