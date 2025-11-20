@@ -605,6 +605,7 @@ type GettableGrafanaRule struct {
 	UpdatedBy                   *UserInfo                      `json:"updated_by" yaml:"updated_by"`
 	IntervalSeconds             int64                          `json:"intervalSeconds" yaml:"intervalSeconds"`
 	Version                     int64                          `json:"version" yaml:"version"`
+	Message                     string                         `json:"message,omitempty" yaml:"message,omitempty"`
 	UID                         string                         `json:"uid" yaml:"uid"`
 	NamespaceUID                string                         `json:"namespace_uid" yaml:"namespace_uid"`
 	RuleGroup                   string                         `json:"rule_group" yaml:"rule_group"`
