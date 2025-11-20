@@ -10,7 +10,7 @@ import {
 import { config } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
-import { getAllPanelPluginMeta } from '../state/util';
+import { getSuggestionsPluginsMeta } from '../state/util';
 
 export const panelsToCheckFirst = [
   'timeseries',
@@ -40,7 +40,7 @@ async function getPanelsWithSuggestions(): Promise<PanelPlugin[]> {
 
     // list of plugins to load is determined by the feature flag
     const pluginIds: string[] = config.featureToggles.externalVizSuggestions
-      ? getAllPanelPluginMeta().map((m) => m.id)
+      ? getSuggestionsPluginsMeta().map((m) => m.id)
       : panelsToCheckFirst;
 
     // import the plugins in parallel using Promise.allSettled

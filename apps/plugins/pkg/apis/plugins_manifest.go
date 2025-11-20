@@ -228,6 +228,11 @@ var appManifestData = app.ManifestData{
 																					Type: []string{"boolean"},
 																				},
 																			},
+																			"suggestions": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
 																			"tracing": {
 																				SchemaProps: spec.SchemaProps{
 																					Type: []string{"boolean"},

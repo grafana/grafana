@@ -18,6 +18,10 @@ export function getVizPluginMeta(): PanelPluginMeta[] {
   return getAllPanelPluginMeta().filter((panel) => !panel.skipDataQuery);
 }
 
+export function getSuggestionsPluginsMeta(): PanelPluginMeta[] {
+  return getAllPanelPluginMeta().filter((panel) => panel.suggestions);
+}
+
 export function filterPluginList(
   pluginsList: PanelPluginMeta[],
   searchQuery: string, // Note: this will be an escaped regex string as it comes from `FilterInput`

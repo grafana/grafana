@@ -186,6 +186,7 @@ type GetMeta struct {
 	MultiValueFilterOperators *bool         `json:"multiValueFilterOperators,omitempty"`
 	PascalName                *string       `json:"pascalName,omitempty"`
 	Preload                   *bool         `json:"preload,omitempty"`
+	Suggestions               *bool         `json:"suggestions,omitempty"`
 	QueryOptions              *QueryOptions `json:"queryOptions,omitempty"`
 	// +listType=atomic
 	Routes        []Route       `json:"routes,omitempty"`

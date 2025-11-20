@@ -67,6 +67,7 @@ pluginV0Alpha1: {
 	multiValueFilterOperators?: bool
 	pascalName?: string
 	preload?: bool
+  suggestions?: bool
 	queryOptions?: #QueryOptions
 	// +listType=atomic
 	routes?: [...#Route]
