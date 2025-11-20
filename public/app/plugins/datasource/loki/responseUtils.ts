@@ -1,8 +1,11 @@
-import { DataFrame, DataQueryError, DataQueryResponse, FieldType, isValidGoDuration, Labels } from '@grafana/data';
+import { DataFrame, DataQueryResponse, FieldType, isValidGoDuration, Labels } from '@grafana/data';
 
 import { isBytesString, processLabels } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
 import { LabelType } from './types';
+
+export const LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX = 'the query would read too many bytes';
+export const LOKI_TIMEOUT_ERROR_MSG = 'timeout';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
   const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values ?? [];
@@ -141,10 +144,10 @@ export function isRetriableError(errorResponse: DataQueryResponse) {
     : (errorResponse.error?.message ?? '').toLowerCase();
 
   // max_query_bytes_read exceeded
-  if (message.includes('the query would read too many bytes')) {
+  if (message.includes(LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX)) {
     throw new Error(message);
   }
-  if (message.includes('timeout')) {
+  if (message.includes(LOKI_TIMEOUT_ERROR_MSG)) {
     return true;
   }
   if (errorResponse.data.length > 0 && errorResponse.data[0].fields.length > 0) {

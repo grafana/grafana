@@ -7,6 +7,7 @@ import { LokiDatasource } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
 import { runSplitQuery } from './querySplitting';
+import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils.ts';
 import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
@@ -99,7 +100,9 @@ describe('runSplitQuery()', () => {
   test('Retries retriable failed requests', async () => {
     jest
       .mocked(datasource.runQuery)
-      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+      .mockReturnValueOnce(
+        of({ state: LoadingState.Error, errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }], data: [] })
+      );
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 1 retry, 4 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(4);
@@ -109,7 +112,9 @@ describe('runSplitQuery()', () => {
   test('Does not retry failed queries as an option', async () => {
     jest
       .mocked(datasource.runQuery)
-      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+      .mockReturnValueOnce(
+        of({ state: LoadingState.Error, errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }], data: [] })
+      );
     await expect(runSplitQuery(datasource, request, { disableRetry: true })).toEmitValuesWith(() => {
       // No retries
       expect(datasource.runQuery).toHaveBeenCalledTimes(1);
@@ -332,7 +337,7 @@ describe('runSplitQuery()', () => {
 
   test('Handles and reports 5xx error too many bytes', async () => {
     const error: DataQueryError = {
-      message: 'the query would read too many bytes ...',
+      message: `${LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX} ...`,
       status: 500,
     };
     const response: DataQueryResponse = {
@@ -381,7 +386,7 @@ describe('runSplitQuery()', () => {
     jest.spyOn(datasource, 'runQuery').mockReturnValue(
       of({
         state: LoadingState.Error,
-        error: { refId: 'A', message: 'the query would read too many bytes ...' },
+        error: { refId: 'A', message: `${LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX} ...` },
         data: [],
         key: 'uuid',
       })
@@ -390,7 +395,7 @@ describe('runSplitQuery()', () => {
       expect(values).toHaveLength(1);
       expect(values[0]).toEqual(
         expect.objectContaining({
-          error: { refId: 'A', message: 'the query would read too many bytes ...' },
+          error: { refId: 'A', message: `${LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX} ...` },
           state: LoadingState.Error,
         })
       );

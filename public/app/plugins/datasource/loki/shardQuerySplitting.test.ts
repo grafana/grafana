@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 import { LokiDatasource } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
+import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils.ts';
 import { runShardSplitQuery } from './shardQuerySplitting';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
@@ -246,9 +247,13 @@ describe('runShardSplitQuery()', () => {
 
   test('Retries failed retriable requests', async () => {
     jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
-    jest
-      .spyOn(datasource, 'runQuery')
-      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+    jest.spyOn(datasource, 'runQuery').mockReturnValueOnce(
+      of({
+        state: LoadingState.Error,
+        errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }],
+        data: [],
+      })
+    );
     // @ts-expect-error
     jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
       callback();
@@ -295,7 +300,7 @@ describe('runShardSplitQuery()', () => {
     test('Max query bytes errors are not retried', async () => {
       const errResp: DataQueryResponse = {
         state: LoadingState.Error,
-        errors: [{ refId: 'A', message: 'the query would read too many bytes ...', status: 500 }],
+        errors: [{ refId: 'A', message: `${LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX} ...`, status: 500 }],
         data: [],
       };
       jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1', '10', '4']);
@@ -366,9 +371,13 @@ describe('runShardSplitQuery()', () => {
     );
 
     // sqrt(currentSize)
-    jest
-      .mocked(datasource.runQuery)
-      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+    jest.mocked(datasource.runQuery).mockReturnValueOnce(
+      of({
+        state: LoadingState.Error,
+        errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }],
+        data: [],
+      })
+    );
 
     // +10%
     jest.mocked(datasource.runQuery).mockReturnValueOnce(
