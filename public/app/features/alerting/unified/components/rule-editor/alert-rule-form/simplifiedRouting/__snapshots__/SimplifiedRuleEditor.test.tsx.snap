@@ -79,7 +79,9 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "B",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -115,7 +117,9 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -245,7 +249,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "B",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -281,7 +287,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -414,7 +422,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "B",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -450,7 +460,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -586,7 +598,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "B",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -622,7 +636,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -755,7 +771,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "B",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -791,7 +809,9 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
