@@ -32,7 +32,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
   })
   .setSuggestionsSupplier((ds) => {
     if (
-      !ds._data ||
+      !ds.rawFrames ||
       ds.fieldCountByType(FieldType.number) < 2 ||
       ds.rowCountTotal < 2 ||
       ds.rowCountTotal < 2 ||
@@ -41,7 +41,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
       return;
     }
 
-    const info = prepSeries(ds._data);
+    const info = prepSeries(ds.rawFrames);
     if (info.warning || !info.frames) {
       return;
     }

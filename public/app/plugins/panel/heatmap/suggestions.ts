@@ -14,7 +14,7 @@ import { Options, defaultOptions } from './types';
 
 function determineScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore {
   // look to see if the data has an explicity marker for heatmap data on it.
-  const definedFrameType = dataSummary._data![0].meta?.type;
+  const definedFrameType = dataSummary.rawFrames![0].meta?.type;
   if (definedFrameType && [DataFrameType.HeatmapRows, DataFrameType.HeatmapCells].includes(definedFrameType)) {
     return VisualizationSuggestionScore.Best;
   }
@@ -22,7 +22,7 @@ function determineScore(dataSummary: PanelDataSummary): VisualizationSuggestionS
   // we'll also look more closely at frames which return between 3 and 10 numeric fields.
   if (dataSummary.fieldCountByType(FieldType.number) > 2 || dataSummary.fieldCountByType(FieldType.number) <= 10) {
     // look through the names of the panels
-    const hasPotentialHeatmapSeries = dataSummary._data!.some((frame) => {
+    const hasPotentialHeatmapSeries = dataSummary.rawFrames!.some((frame) => {
       for (const field of frame.fields) {
         if (field.type === FieldType.number) {
           // if the field name, or "ge" or "le" label on the field, are numeric, then it's very possibly part of a heatmap.
@@ -48,7 +48,7 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opti
   dataSummary: PanelDataSummary
 ) => {
   if (
-    !dataSummary._data ||
+    !dataSummary.rawFrames ||
     !dataSummary.hasData ||
     !dataSummary.hasFieldType(FieldType.time) ||
     !dataSummary.hasFieldType(FieldType.number)
@@ -59,7 +59,7 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opti
   // parse the frame into a heatmap structure to see if it's possible.
   const palette = quantizeScheme(defaultOptions.color, config.theme2);
   const info = prepareHeatmapData({
-    frames: dataSummary._data,
+    frames: dataSummary.rawFrames,
     options: defaultOptions,
     palette,
     theme: config.theme2,

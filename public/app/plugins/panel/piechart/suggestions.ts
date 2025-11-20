@@ -41,7 +41,7 @@ export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opt
     },
   ];
 
-  let shouldDeaggregate = false;
+  let shouldUseRawValues = false;
 
   // we're filtering out data which has more than 30 slices or less than 2, and we're also
   // determining whether the reduce options should be set based on the data summary.
@@ -50,7 +50,7 @@ export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opt
       return;
     }
 
-    shouldDeaggregate = true;
+    shouldUseRawValues = true;
   } else if (
     dataSummary.fieldCountByType(FieldType.number) > SLICE_MAX ||
     dataSummary.fieldCountByType(FieldType.number) < SLICE_MIN
@@ -58,5 +58,5 @@ export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opt
     return;
   }
 
-  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldDeaggregate));
+  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldUseRawValues));
 };

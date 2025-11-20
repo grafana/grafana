@@ -51,10 +51,10 @@ export const barGaugeSugggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
     },
   ];
 
-  const shouldDeaggregate =
+  const shouldUseRawValues =
     dataSummary.hasFieldType(FieldType.string) &&
     dataSummary.frameCount === 1 &&
     dataSummary.rowCountTotal <= BAR_LIMIT;
 
-  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldDeaggregate));
+  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldUseRawValues));
 };

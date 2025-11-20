@@ -6,7 +6,7 @@ import { defaultOptions, Options } from './types';
 
 export const candlestickSuggestionSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
   if (
-    !dataSummary._data ||
+    !dataSummary.rawFrames ||
     !dataSummary.hasData ||
     dataSummary.fieldCountByType(FieldType.time) < 1 ||
     dataSummary.fieldCountByType(FieldType.number) < 2 ||
@@ -15,7 +15,7 @@ export const candlestickSuggestionSupplier: VisualizationSuggestionsSupplierFn<O
     return;
   }
 
-  const info = prepareCandlestickFields(dataSummary._data, defaultOptions, config.theme2);
+  const info = prepareCandlestickFields(dataSummary.rawFrames, defaultOptions, config.theme2);
   if (!info) {
     return;
   }

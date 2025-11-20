@@ -10,7 +10,7 @@ export const plugin = new PanelPlugin(FlameGraphPanel)
   // check that the first frame of the data has the required fields for a flamegraph
   .setSuggestionsSupplier(
     showDefaultSuggestion((ds) => {
-      const firstFrame = ds._data?.[0];
+      const firstFrame = ds.rawFrames?.[0];
       return Boolean(firstFrame && !checkFields(firstFrame));
     })
   )

@@ -64,15 +64,15 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
     },
   ];
 
-  const shouldDeaggregate =
+  const shouldUseRawValues =
     dataSummary.hasFieldType(FieldType.string) &&
     dataSummary.frameCount === 1 &&
     dataSummary.rowCountTotal <= MAX_GAUGES;
 
   return suggestions.map((s) => {
-    const suggestion = defaultReduceOptions(withDefaults(s), shouldDeaggregate);
+    const suggestion = defaultReduceOptions(withDefaults(s), shouldUseRawValues);
 
-    if (shouldDeaggregate) {
+    if (shouldUseRawValues) {
       suggestion.fieldConfig = suggestion.fieldConfig ?? {
         defaults: {},
         overrides: [],

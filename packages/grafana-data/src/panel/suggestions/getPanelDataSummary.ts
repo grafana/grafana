@@ -17,8 +17,8 @@ export interface PanelDataSummary {
   hasFieldType: (type: FieldType) => boolean;
   /** The first frame that set's this value */
   preferredVisualisationType?: PreferredVisualisationType;
-  /** pass along a reference to the raw data in case it's needed by the plugin */
-  _data?: DataFrame[];
+  /** pass along a reference to the DataFrame array in case it's needed by the plugin */
+  rawFrames?: DataFrame[];
   /* --- DEPRECATED FIELDS BELOW --- */
   /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.number) */
   numberFieldCount: number;
@@ -80,7 +80,7 @@ export function getPanelDataSummary(frames?: DataFrame[]): PanelDataSummary {
     hasData: rowCountTotal > 0,
     hasFieldType: (f: FieldType) => fieldCountByType(f) > 0,
     fieldCountByType,
-    _data: frames,
+    rawFrames: frames,
     // deprecated
     numberFieldCount: fieldCountByType(FieldType.number),
     timeFieldCount: fieldCountByType(FieldType.time),

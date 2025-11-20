@@ -45,12 +45,12 @@ function frameHasCorrectFields(frames: DataFrame[]): boolean {
 }
 
 export const nodeGraphSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
-  if (!dataSummary._data) {
+  if (!dataSummary.rawFrames) {
     return;
   }
 
-  const hasCorrectFields = frameHasCorrectFields(dataSummary._data);
-  const nodeGraphFrames = dataSummary._data.filter(
+  const hasCorrectFields = frameHasCorrectFields(dataSummary.rawFrames);
+  const nodeGraphFrames = dataSummary.rawFrames.filter(
     (df) => df.meta && df.meta.preferredVisualisationType === 'nodeGraph'
   );
 

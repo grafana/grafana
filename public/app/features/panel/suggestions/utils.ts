@@ -14,16 +14,17 @@ export function showDefaultSuggestion(fn: (panelDataSummary: PanelDataSummary) =
 /**
  * for panel plugins which render "scalar" data (stat, gauge, etc), this helper provides default reduce options
  * depending on whether deaggregation is likely needed.
- * @param shouldDeaggregate
+ * @param shouldUseRawValues if true, reduceOptions will be set to use raw values,
+ *   otherwise a calcs will be used with the default value of `lastNotNull`.
  */
 export function defaultReduceOptions(
   suggestion: VisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }>,
-  shouldDeaggregate: boolean
+  shouldUseRawValues: boolean
 ): VisualizationSuggestion {
   suggestion.options = suggestion.options ?? {};
   suggestion.options.reduceOptions =
     suggestion.options.reduceOptions ??
-    (shouldDeaggregate
+    (shouldUseRawValues
       ? {
           values: true,
           calcs: [],

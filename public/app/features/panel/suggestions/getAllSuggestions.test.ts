@@ -141,7 +141,7 @@ scenario('Single frame with time and number field', (ctx) => {
     expect(ctx.suggestions.find((x) => x.name === 'Bar chart')?.pluginId).toBe('timeseries');
   });
 
-  it('Scalar panels have reduce values disabled', () => {
+  it('Scalar panels should use calcs', () => {
     for (const suggestion of ctx.suggestions.filter((s) => SCALAR_PLUGINS.includes(s.pluginId))) {
       expect(suggestion).toEqual(
         expect.objectContaining({
@@ -197,7 +197,7 @@ scenario('Single frame with time 2 number fields', (ctx) => {
     ]);
   });
 
-  it('Scalar panels should be aggregated', () => {
+  it('Scalar panels should use calcs', () => {
     for (const suggestion of ctx.suggestions.filter((s) => SCALAR_PLUGINS.includes(s.pluginId))) {
       expect(suggestion).toEqual(
         expect.objectContaining({
@@ -299,7 +299,7 @@ scenario('Single frame with string and number field', (ctx) => {
     ]);
   });
 
-  it('Scalar panels should be aggregated', () => {
+  it('Scalar panels should contain raw values', () => {
     for (const suggestion of ctx.suggestions.filter((s) => SCALAR_PLUGINS.includes(s.pluginId))) {
       expect(suggestion).toEqual(
         expect.objectContaining({

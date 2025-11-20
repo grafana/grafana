@@ -54,10 +54,10 @@ export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Option
   ];
 
   // sometimes, we want to de-aggregate the data for the gauge suggestion
-  const shouldDeaggregate =
+  const shouldUseRawValues =
     dataSummary.hasFieldType(FieldType.string) &&
     dataSummary.frameCount === 1 &&
     dataSummary.rowCountTotal <= GAUGE_LIMIT;
 
-  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldDeaggregate));
+  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldUseRawValues));
 };
