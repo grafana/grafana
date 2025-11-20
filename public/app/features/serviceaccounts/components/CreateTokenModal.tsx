@@ -16,6 +16,9 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+const NO_EXPIRATION_OPTION = 'no-expiration';
+const CUSTOM_EXPIRATION_OPTION = 'custom-expiration';
+
 export type ServiceAccountToken = {
   name: string;
   secondsToLive?: number;
@@ -39,11 +42,15 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
   } else {
     maxExpirationDate.setDate(8640000000000000);
   }
-  const defaultExpirationDate = config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > 0;
+
+  const isTokenExpirationDayLimitConfigured =
+    config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > 0;
+
+  const defaultExpirationOption = isTokenExpirationDayLimitConfigured ? CUSTOM_EXPIRATION_OPTION : NO_EXPIRATION_OPTION;
 
   const [defaultTokenName, setDefaultTokenName] = useState('');
   const [newTokenName, setNewTokenName] = useState('');
-  const [isWithExpirationDate, setIsWithExpirationDate] = useState(defaultExpirationDate);
+  const [expirationOption, setExpirationOption] = useState(defaultExpirationOption);
   const [newTokenExpirationDate, setNewTokenExpirationDate] = useState<Date | string>(tomorrow);
   const [isExpirationDateValid, setIsExpirationDateValid] = useState(newTokenExpirationDate !== '');
   const styles = useStyles2(getStyles);
@@ -64,23 +71,21 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
   const onGenerateToken = () => {
     onCreateToken({
       name: newTokenName || defaultTokenName,
-      secondsToLive: isWithExpirationDate ? getSecondsToLive(newTokenExpirationDate) : undefined,
+      secondsToLive:
+        expirationOption === CUSTOM_EXPIRATION_OPTION ? getSecondsToLive(newTokenExpirationDate) : undefined,
     });
   };
 
   const onCloseInternal = () => {
     setNewTokenName('');
     setDefaultTokenName('');
-    setIsWithExpirationDate(defaultExpirationDate);
+    setExpirationOption(defaultExpirationOption);
     setNewTokenExpirationDate(tomorrow);
     setIsExpirationDateValid(newTokenExpirationDate !== '');
     onClose();
   };
 
   const modalTitle = !token ? 'Add service account token' : 'Service account token created';
-
-  const isTokenExpirationDayLimitConfigured =
-    config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > 0;
 
   const getExpirationOptions = () => {
     const noExpirationDescription = t(
@@ -90,10 +95,13 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
     return [
       {
         label: t('serviceaccounts.create-token-modal.label-no-expiration', 'No expiration'),
-        value: false,
+        value: NO_EXPIRATION_OPTION,
         description: isTokenExpirationDayLimitConfigured ? noExpirationDescription : undefined,
       },
-      { label: t('serviceaccounts.create-token-modal.label-set-expiration-date', 'Set expiration date'), value: true },
+      {
+        label: t('serviceaccounts.create-token-modal.label-set-expiration-date', 'Set expiration date'),
+        value: CUSTOM_EXPIRATION_OPTION,
+      },
     ];
   };
 
@@ -123,13 +131,13 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
           <Field label={t('serviceaccounts.create-token-modal.label-expiration', 'Expiration')}>
             <RadioButtonGroup
               options={getExpirationOptions()}
-              disabledOptions={isTokenExpirationDayLimitConfigured ? [false] : []}
-              value={isWithExpirationDate}
-              onChange={setIsWithExpirationDate}
+              disabledOptions={isTokenExpirationDayLimitConfigured ? [NO_EXPIRATION_OPTION] : []}
+              value={expirationOption}
+              onChange={setExpirationOption}
               size="md"
             />
           </Field>
-          {isWithExpirationDate && (
+          {expirationOption === CUSTOM_EXPIRATION_OPTION && (
             <Field label={t('serviceaccounts.create-token-modal.label-expiration-date', 'Expiration date')}>
               <DatePickerWithInput
                 onChange={onExpirationDateChange}
@@ -141,7 +149,10 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
             </Field>
           )}
           <Modal.ButtonRow>
-            <Button onClick={onGenerateToken} disabled={isWithExpirationDate && !isExpirationDateValid}>
+            <Button
+              onClick={onGenerateToken}
+              disabled={expirationOption === CUSTOM_EXPIRATION_OPTION && !isExpirationDateValid}
+            >
               <Trans i18nKey="serviceaccounts.create-token-modal.generate-token">Generate token</Trans>
             </Button>
           </Modal.ButtonRow>
