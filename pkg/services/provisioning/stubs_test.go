@@ -88,7 +88,7 @@ func TestNewStubProvisioning(t *testing.T) {
 		// Create a temporary directory with invalid YAML
 		tmpDir := t.TempDir()
 		dashboardsDir := filepath.Join(tmpDir, "dashboards")
-		err := os.MkdirAll(dashboardsDir, 0755)
+		err := os.MkdirAll(dashboardsDir, 0750)
 		require.NoError(t, err)
 
 		// Write invalid YAML
@@ -96,10 +96,9 @@ func TestNewStubProvisioning(t *testing.T) {
 		err = os.WriteFile(filepath.Join(dashboardsDir, "invalid.yaml"), []byte(invalidYAML), 0644)
 		require.NoError(t, err)
 
-		// Should handle gracefully by returning error or empty stub
+		// Should handle gracefully by returning empty stub
 		_, err = NewStubProvisioning(tmpDir)
-		// Either returns error or handles gracefully - both are acceptable
-		// The important thing is it doesn't panic
+		require.NoError(t, err)
 	})
 }
 
@@ -175,12 +174,12 @@ func TestGetDashboardProvisionerResolvedPath(t *testing.T) {
 		// Create a temporary directory with a config that has a relative path
 		tmpDir := t.TempDir()
 		dashboardsDir := filepath.Join(tmpDir, "dashboards")
-		err := os.MkdirAll(dashboardsDir, 0755)
+		err := os.MkdirAll(dashboardsDir, 0750)
 		require.NoError(t, err)
 
 		// Create a subdirectory for the dashboard path
 		dashPath := filepath.Join(tmpDir, "my-dashboards")
-		err = os.MkdirAll(dashPath, 0755)
+		err = os.MkdirAll(dashPath, 0750)
 		require.NoError(t, err)
 
 		// Write config with absolute path (relative paths in options are not resolved correctly by the stub)
@@ -208,12 +207,12 @@ providers:
 		// Create a temporary directory structure with symlink
 		tmpDir := t.TempDir()
 		dashboardsDir := filepath.Join(tmpDir, "dashboards")
-		err := os.MkdirAll(dashboardsDir, 0755)
+		err := os.MkdirAll(dashboardsDir, 0750)
 		require.NoError(t, err)
 
 		// Create actual directory
 		actualDir := filepath.Join(tmpDir, "actual-dashboards")
-		err = os.MkdirAll(actualDir, 0755)
+		err = os.MkdirAll(actualDir, 0750)
 		require.NoError(t, err)
 
 		// Create symlink
@@ -252,7 +251,7 @@ providers:
 		// by checking that even with a broken symlink, we get a path back
 		tmpDir := t.TempDir()
 		dashboardsDir := filepath.Join(tmpDir, "dashboards")
-		err := os.MkdirAll(dashboardsDir, 0755)
+		err := os.MkdirAll(dashboardsDir, 0750)
 		require.NoError(t, err)
 
 		// Create config with a path that will fail EvalSymlinks
@@ -318,7 +317,7 @@ func TestStubProvisioningEdgeCases(t *testing.T) {
 	t.Run("should handle special characters in config name", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		dashboardsDir := filepath.Join(tmpDir, "dashboards")
-		err := os.MkdirAll(dashboardsDir, 0755)
+		err := os.MkdirAll(dashboardsDir, 0750)
 		require.NoError(t, err)
 
 		configContent := `apiVersion: 1
@@ -343,12 +342,12 @@ providers:
 	t.Run("should handle paths with spaces", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		dashboardsDir := filepath.Join(tmpDir, "dashboards")
-		err := os.MkdirAll(dashboardsDir, 0755)
+		err := os.MkdirAll(dashboardsDir, 0750)
 		require.NoError(t, err)
 
 		// Create directory with spaces
 		pathWithSpaces := filepath.Join(tmpDir, "my dashboard folder")
-		err = os.MkdirAll(pathWithSpaces, 0755)
+		err = os.MkdirAll(pathWithSpaces, 0750)
 		require.NoError(t, err)
 
 		configContent := `apiVersion: 1
@@ -373,7 +372,7 @@ providers:
 	t.Run("should handle multiple YAML files in directory", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		dashboardsDir := filepath.Join(tmpDir, "dashboards")
-		err := os.MkdirAll(dashboardsDir, 0755)
+		err := os.MkdirAll(dashboardsDir, 0750)
 		require.NoError(t, err)
 
 		// Create first config file
@@ -419,7 +418,7 @@ providers:
 	t.Run("should ignore non-YAML files", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		dashboardsDir := filepath.Join(tmpDir, "dashboards")
-		err := os.MkdirAll(dashboardsDir, 0755)
+		err := os.MkdirAll(dashboardsDir, 0750)
 		require.NoError(t, err)
 
 		// Create YAML config
