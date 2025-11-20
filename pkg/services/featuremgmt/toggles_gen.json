@@ -301,6 +301,20 @@
     },
     {
       "metadata": {
+        "name": "alertingFetchRuleStatuses",
+        "resourceVersion": "1758092518968",
+        "creationTimestamp": "2025-09-17T07:01:58Z"
+      },
+      "spec": {
+        "description": "",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingFilterV2",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-09-11T11:29:26Z"
