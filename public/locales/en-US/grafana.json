@@ -6181,8 +6181,7 @@
       "radio-options": {
         "label": {
           "all-visualizations": "All visualizations",
-          "suggestions": "Suggestions",
-          "visualizations": "Visualizations"
+          "suggestions": "Suggestions"
         }
       },
       "title-close": "Close"

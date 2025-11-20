@@ -3,12 +3,11 @@ import { debounce } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Button, Field, FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { FilterInput, ScrollContainer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
@@ -50,7 +49,9 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
   };
 
   const tabKey = LS_VISUALIZATION_SELECT_TAB_KEY;
-  const defaultTab = VisualizationSelectPaneTab.Visualizations;
+  const defaultTab = config.featureToggles.newVizSuggestions
+    ? VisualizationSelectPaneTab.Suggestions
+    : VisualizationSelectPaneTab.Visualizations;
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
 
   const supportedListModes = useMemo(
@@ -74,59 +75,66 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
     }
   }, [defaultTab, listMode, setListMode, supportedListModes]);
 
-  const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
-    {
-      label: config.featureToggles.newVizSuggestions
-        ? t('dashboard-scene.panel-viz-type-picker.radio-options.label.all-visualizations', 'All visualizations')
-        : t('dashboard-scene.panel-viz-type-picker.radio-options.label.visualizations', 'Visualizations'),
-      value: VisualizationSelectPaneTab.Visualizations,
-    },
-    {
-      label: t('dashboard-scene.panel-viz-type-picker.radio-options.label.suggestions', 'Suggestions'),
-      value: VisualizationSelectPaneTab.Suggestions,
-    },
-  ];
-
   return (
     <div className={styles.wrapper}>
-      <div className={styles.searchRow}>
-        <FilterInput
-          className={styles.filter}
-          value={searchQuery}
-          onChange={handleSearchChange}
-          autoFocus={true}
-          placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+      {/*@TODO: Re-enable/move close button*/}
+      {/*<Button*/}
+      {/*  aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}*/}
+      {/*  variant="secondary"*/}
+      {/*  icon="angle-up"*/}
+      {/*  className={styles.closeButton}*/}
+      {/*  data-testid={selectors.components.PanelEditor.toggleVizPicker}*/}
+      {/*  onClick={onClose}*/}
+      {/*/>*/}
+      <TabsBar hideBorder={true}>
+        <Tab
+          label={t('dashboard-scene.panel-viz-type-picker.radio-options.label.suggestions', 'Suggestions')}
+          active={listMode === VisualizationSelectPaneTab.Suggestions}
+          onChangeTab={() => {
+            handleListModeChange(VisualizationSelectPaneTab.Suggestions);
+          }}
         />
-        <Button
-          aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
-          variant="secondary"
-          icon="angle-up"
-          className={styles.closeButton}
-          data-testid={selectors.components.PanelEditor.toggleVizPicker}
-          onClick={onClose}
+        <Tab
+          label={t(
+            'dashboard-scene.panel-viz-type-picker.radio-options.label.all-visualizations',
+            'All visualizations'
+          )}
+          active={listMode === VisualizationSelectPaneTab.Visualizations}
+          onChangeTab={() => {
+            handleListModeChange(VisualizationSelectPaneTab.Visualizations);
+          }}
         />
-      </div>
-      <Field className={styles.customFieldMargin}>
-        <RadioButtonGroup options={radioOptions} value={listMode} onChange={handleListModeChange} fullWidth />
-      </Field>
+      </TabsBar>
       <ScrollContainer>
-        {listMode === VisualizationSelectPaneTab.Visualizations && (
-          <VizTypePicker
-            pluginId={panel.state.pluginId}
-            searchQuery={searchQuery}
-            trackSearch={trackSearch}
-            onChange={onChange}
-          />
-        )}
-        {listMode === VisualizationSelectPaneTab.Suggestions && (
-          <VisualizationSuggestions
-            onChange={onChange}
-            trackSearch={trackSearch}
-            searchQuery={searchQuery}
-            panel={panelModel}
-            data={data}
-          />
-        )}
+        <TabContent>
+          {listMode === VisualizationSelectPaneTab.Suggestions && (
+            <VisualizationSuggestions
+              onChange={onChange}
+              trackSearch={trackSearch}
+              searchQuery={searchQuery}
+              panel={panelModel}
+              data={data}
+            />
+          )}
+          {listMode === VisualizationSelectPaneTab.Visualizations && (
+            <>
+              <div className={styles.searchRow}>
+                <FilterInput
+                  className={styles.filter}
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+                />
+              </div>
+              <VizTypePicker
+                pluginId={panel.state.pluginId}
+                searchQuery={searchQuery}
+                trackSearch={trackSearch}
+                onChange={onChange}
+              />
+            </>
+          )}
+        </TabContent>
       </ScrollContainer>
     </div>
   );
@@ -143,10 +151,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   searchRow: css({
     display: 'flex',
-    marginBottom: theme.spacing(1),
+    marginBottom: theme.spacing(2),
   }),
   closeButton: css({
-    marginLeft: theme.spacing(1),
+    marginLeft: 'auto',
   }),
   customFieldMargin: css({
     marginBottom: theme.spacing(1),
