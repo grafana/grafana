@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -21,6 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
+)
+
+const (
+	// featureFlagPrefix is the prefix used for plugin experimental page feature flags.
+	featureFlagPrefix = "navigation.plugin-page-visible."
 )
 
 type AuthOptions struct {
@@ -148,6 +156,13 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, log
 
 		permitted := true
 		path := normalizeIncludePath(c.Req.URL.Path)
+		// Check if experimental plugin pages are enabled
+		if !IsExperimentalPluginPageEnabled(c.Req.Context(), path) {
+			logger.Debug("Forbidden experimental plugin page", "plugin", pluginID, "path", path)
+			accessForbidden(c)
+			return
+		}
+
 		hasAccess := ac.HasAccess(accessControl, c)
 		for _, i := range p.Includes {
 			if i.Type != "page" {
@@ -293,4 +308,32 @@ func shouldForceLogin(c *contextmodel.ReqContext) bool {
 	}
 
 	return forceLogin
+}
+
+// IsExperimentalPluginPageEnabled checks if an experimental plugin page is enabled
+// via OpenFeature feature flags.
+//
+// It returns true if:
+// - The path does not contain "experimental", OR
+// - The path contains "experimental" AND the corresponding feature flag is enabled
+//
+// The feature flag key format is: "navigation.plugin-page-visible.<path>"
+func IsExperimentalPluginPageEnabled(ctx context.Context, path string) bool {
+	// If the path doesn't contain "experimental", it's not an experimental page
+	pathParts := strings.Split(path, "/")
+	isExperimental := slices.Contains(pathParts, "experimental")
+	if !isExperimental {
+		return true
+	}
+
+	// Check the feature flag for experimental pages
+	flagKey := featureFlagPrefix + path
+	enabled := openfeature.NewDefaultClient().Boolean(
+		ctx,
+		flagKey,
+		false,
+		openfeature.TransactionContext(ctx),
+	)
+
+	return enabled
 }

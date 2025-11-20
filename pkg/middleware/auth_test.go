@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -418,6 +419,55 @@ func TestCanAdminPlugin(t *testing.T) {
 			assert.Equal(t, tt.expCode, res.StatusCode)
 			assert.Equal(t, tt.expReached, reached)
 			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func TestIsExperimentalPluginPageEnabled(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name     string
+		path     string
+		expected bool
+		desc     string
+	}{
+		{
+			name:     "non-experimental path returns true",
+			path:     "/a/grafana-k8s-app/clusters",
+			expected: true,
+			desc:     "Paths without 'experimental' should always be enabled",
+		},
+		{
+			name:     "empty path returns true",
+			path:     "",
+			expected: true,
+			desc:     "Empty paths should be considered enabled",
+		},
+		{
+			name:     "root path returns true",
+			path:     "/",
+			expected: true,
+			desc:     "Root paths should be considered enabled",
+		},
+		{
+			name:     "experimental path without feature flag",
+			path:     "/a/grafana-test-app/experimental/new-feature",
+			expected: false,
+			desc:     "Experimental paths should default to disabled when feature flag is not set",
+		},
+		{
+			name:     "experimental path without feature flag",
+			path:     "/a/grafana-test-app/not-experimental/new-feature",
+			expected: true,
+			desc:     "Non-experimental paths should be enabled",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsExperimentalPluginPageEnabled(ctx, tt.path)
+			assert.Equal(t, tt.expected, result, tt.desc)
 		})
 	}
 }
