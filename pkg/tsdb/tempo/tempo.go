@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 )
@@ -45,9 +46,9 @@ type DatasourceInfo struct {
 	URL             string
 }
 
-func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer, cfg *setting.Cfg) *Service {
 	s := &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, cfg)),
 		logger: backend.NewLoggerWith("logger", "tsdb.tempo"),
 		tracer: tracer,
 	}
@@ -61,7 +62,7 @@ func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer
 	return s
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider, cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		ctxLogger := backend.NewLoggerWith("logger", "tsdb.tempo").FromContext(ctx)
 		opts, err := settings.HTTPClientOptions(ctx)
@@ -78,7 +79,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			return nil, err
 		}
 
-		streamingClient, err := newGrpcClient(ctx, settings, opts)
+		streamingClient, err := newGrpcClient(ctx, settings, opts, cfg)
 		if err != nil {
 			ctxLogger.Error("Failed to get gRPC client", "error", err, "function", logEntrypoint())
 			return nil, err

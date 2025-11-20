@@ -25,7 +25,7 @@ type Datasource struct {
 
 func NewDatasource(c context.Context, b backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &Datasource{
-		Service: tempo.ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("tempo")),
+		Service: tempo.ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("tempo"), nil),
 	}, nil
 }
 

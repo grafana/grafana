@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -26,7 +27,7 @@ var logger = backend.NewLoggerWith("logger", "tsdb.tempo")
 // standard HTTP requests.
 // Using other library like connect-go isn't possible right now because Tempo uses non-standard proto compiler which
 // makes generating different client difficult. See https://github.com/grafana/grafana/pull/81683
-func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {
+func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSettings, opts httpclient.Options, cfg *setting.Cfg) (tempopb.StreamingQuerierClient, error) {
 	parsedUrl, err := url.Parse(settings.URL)
 	if err != nil {
 		logger.Error("Error parsing URL for gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
@@ -43,7 +44,7 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 		}
 	}
 
-	dialOpts, err := getDialOpts(ctx, settings, opts)
+	dialOpts, err := getDialOpts(ctx, settings, opts, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error getting dial options: %w", err)
 	}
@@ -80,7 +81,7 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 
 // getDialOpts creates options and interceptors (middleware) this should roughly match what we do in
 // http_client_provider.go for standard http requests.
-func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, opts httpclient.Options) ([]grpc.DialOption, error) {
+func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, opts httpclient.Options, cfg *setting.Cfg) ([]grpc.DialOption, error) {
 	// TODO: Missing middleware TracingMiddleware, DataSourceMetricsMiddleware, ContextualMiddleware,
 	//  ResponseLimitMiddleware RedirectLimitMiddleware.
 	// Also User agent but that is set before each rpc call as for decoupled DS we have to get it from request context
@@ -88,8 +89,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 
 	var dialOps []grpc.DialOption
 
-	// Set maximum receive message size to 100MB to handle large trace responses
-	dialOps = append(dialOps, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100*1024*1024)))
+	dialOps = append(dialOps, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(cfg.LiveClientQueueMaxSize)))
 	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
 	if settings.BasicAuthEnabled {
 		// If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
