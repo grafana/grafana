@@ -1821,6 +1821,19 @@
             }
           },
           {
+            "name": "permission",
+            "in": "query",
+            "description": "permission needed for the resource (View, Edit, Admin)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "View",
+                "Edit",
+                "Admin"
+              ]
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "description": "sortable field",
