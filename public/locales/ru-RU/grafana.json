@@ -8661,7 +8661,9 @@
       "saving": "Сохранение <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Линейный порог",
+      "linear-threshold": {
+        "label": "Линейный порог"
+      },
       "log-base": "База журналов"
     },
     "builder": {

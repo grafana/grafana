@@ -8589,7 +8589,9 @@
       "saving": "Opslaan <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineaire drempel",
+      "linear-threshold": {
+        "label": "Lineaire drempel"
+      },
       "log-base": "Logboekbase"
     },
     "builder": {

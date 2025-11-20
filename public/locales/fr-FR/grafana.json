@@ -8589,7 +8589,9 @@
       "saving": "Enregistrement en cours <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Seuil linéaire",
+      "linear-threshold": {
+        "label": "Seuil linéaire"
+      },
       "log-base": "Base du journal"
     },
     "builder": {
