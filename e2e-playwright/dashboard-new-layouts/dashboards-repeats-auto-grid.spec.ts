@@ -12,6 +12,7 @@ import {
   getPanelPosition,
   importTestDashboard,
   goToEmbeddedPanel,
+  switchToAutoGrid,
 } from './utils';
 
 const repeatTitleBase = 'repeat - ';
@@ -41,9 +42,7 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      await switchToAutoGrid(page);
-      // wait for layout change to apply
-      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
+      await switchToAutoGrid(page, dashboardPage);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first().click();
 
@@ -78,9 +77,7 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      await switchToAutoGrid(page);
-      // wait for layout change to apply
-      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
+      await switchToAutoGrid(page, dashboardPage);
 
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
@@ -119,9 +116,7 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      await switchToAutoGrid(page);
-      // wait for layout change to apply
-      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
+      await switchToAutoGrid(page, dashboardPage);
 
       // select first/original repeat panel to activate edit pane
       await dashboardPage
@@ -141,7 +136,7 @@ test.describe(
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
     });
 
-    test.skip('can update repeats in panel editor', async ({ dashboardPage, selectors, page }) => {
+    test('can update repeats in panel editor', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -150,7 +145,8 @@ test.describe(
       );
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
+
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
@@ -205,7 +201,7 @@ test.describe(
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
     });
 
-    test.skip('can update repeats in panel editor when loaded directly', async ({ dashboardPage, selectors, page }) => {
+    test('can update repeats in panel editor when loaded directly', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -214,7 +210,8 @@ test.describe(
       );
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
+
       await saveDashboard(dashboardPage, page, selectors);
 
       // loading directly into panel editor
@@ -260,7 +257,7 @@ test.describe(
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
     });
-    test.skip('can move repeated panels', async ({ dashboardPage, selectors, page }) => {
+    test('can move repeated panels', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -270,7 +267,7 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
 
       // this moving repeated panel between two normal panels
       await movePanel(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`, 'New panel');
@@ -307,7 +304,7 @@ test.describe(
         'New panel'
       );
     });
-    test.skip('can view repeated panel', async ({ dashboardPage, selectors, page }) => {
+    test('can view repeated panel', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -316,7 +313,8 @@ test.describe(
       );
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
+
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
@@ -370,7 +368,7 @@ test.describe(
       ).toBeVisible();
     });
 
-    test.skip('can view embedded repeated panel', async ({ dashboardPage, selectors, page }) => {
+    test('can view embedded repeated panel', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -379,7 +377,8 @@ test.describe(
       );
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
+
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
@@ -396,7 +395,7 @@ test.describe(
         )
       ).toBeVisible();
     });
-    test.skip('can remove repeats', async ({ dashboardPage, selectors, page }) => {
+    test('can remove repeats', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -405,7 +404,8 @@ test.describe(
       );
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
+
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
@@ -457,8 +457,3 @@ test.describe(
     });
   }
 );
-
-async function switchToAutoGrid(page: Page) {
-  await page.getByLabel('Expand Panel layout category').click();
-  await page.getByLabel('Auto grid').click();
-}
