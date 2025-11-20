@@ -58,6 +58,11 @@ To do so, create a file named `cloud-stack.yml` and add the following:
         org_slug: '{{ org_name }}'
         delete_protection: true
         state: present
+      register: stack_result
+
+    - name: Display stack URL
+      debug:
+        msg: "Stack created at: {{ stack_result.url }}"
 ```
 
 Replace the placeholders with your values:
