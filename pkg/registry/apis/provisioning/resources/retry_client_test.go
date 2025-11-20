@@ -54,11 +54,8 @@ func TestIsTransientError(t *testing.T) {
 			err:      &net.DNSError{Err: "timeout", IsTimeout: true},
 			expected: true,
 		},
-		{
-			name:     "network temporary error",
-			err:      &net.DNSError{Err: "temporary", IsTemporary: true},
-			expected: true,
-		},
+		// Note: Temporary() is deprecated in Go 1.18+, so we no longer check for temporary errors
+		// Timeout errors are still checked and will be retried
 		{
 			name:     "network op error",
 			err:      &net.OpError{Op: "read", Err: errors.New("connection refused")},

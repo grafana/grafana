@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"net"
 	"time"
 
@@ -85,14 +86,16 @@ func isTransientError(err error) bool {
 	}
 
 	// Check for network errors
-	if netErr, ok := err.(net.Error); ok {
-		if netErr.Timeout() || netErr.Temporary() {
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		if netErr.Timeout() {
 			return true
 		}
 	}
 
 	// Check for connection errors
-	if _, ok := err.(*net.OpError); ok {
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
 		return true
 	}
 
