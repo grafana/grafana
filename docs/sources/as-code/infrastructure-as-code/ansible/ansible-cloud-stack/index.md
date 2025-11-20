@@ -184,30 +184,30 @@ Create a file named `dashboard.yml`:
   hosts: localhost
 
   vars:
-    dashboards_path: <PATH_TO_DASHBOARD_FILES> # Example "./dashboards"
-    stack_name: '<STACK_NAME>'
-    grafana_api_key: <GRAFANA_API_KEY>
+    grafana_url: 'https://<STACK_NAME>.grafana.net'
+    grafana_api_key: '<GRAFANA_API_KEY>'
+    dashboards_path: '<PATH_TO_DASHBOARD_FILES>' # Example "./dashboards"
 
   tasks:
     - name: Find dashboard files
       find:
         paths: '{{ dashboards_path }}'
         file_type: file
-        recurse: Yes
+        recurse: true
         patterns: '*.json'
       register: files_matched
-      no_log: True
+      no_log: true
 
     - name: Create list of dashboard file names
       set_fact:
-        dashboard_file_names: '{{ dashboard_file_names | default ([]) + [item.path] }}'
+        dashboard_file_names: '{{ dashboard_file_names | default([]) + [item.path] }}'
       loop: '{{ files_matched.files }}'
-      no_log: True
+      no_log: true
 
     - name: Create/Update a dashboard
       grafana.grafana.dashboard:
-        dashboard: "{{ lookup('ansible.builtin.file','{{ item }}' ) }}"
-        stack_slug: '{{ stack_name }}'
+        dashboard: "{{ lookup('ansible.builtin.file', item) }}"
+        grafana_url: '{{ grafana_url }}'
         grafana_api_key: '{{ grafana_api_key }}'
         state: present
       loop: '{{ dashboard_file_names }}'
