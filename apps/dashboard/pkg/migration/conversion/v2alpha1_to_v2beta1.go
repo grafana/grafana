@@ -125,22 +125,33 @@ func convertDataQuery_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDataQueryKin
 	if in == nil {
 		// v2beta1 requires a query even if v2alpha1 had none, so create a default
 		out.Kind = "DataQuery"
-		out.Group = ""
 		out.Version = "v0"
 		out.Spec = make(map[string]interface{})
+		// Don't set group field for manual annotations (no datasource)
 	} else {
 		out.Kind = "DataQuery"
-		out.Group = in.Kind
 		out.Version = "v0"
 		out.Spec = in.Spec
 	}
 
-	// Convert datasource reference
+	// Convert datasource reference and set group
+	// Priority: 1) datasource.Type, 2) in.Kind (if no datasource or datasource.Type is empty)
 	if datasource != nil {
 		out.Datasource = &dashv2beta1.DashboardV2beta1DataQueryKindDatasource{}
 		if datasource.Uid != nil {
 			out.Datasource.Name = datasource.Uid
 		}
+		// Set group to datasource type if available
+		if datasource.Type != nil && *datasource.Type != "" {
+			out.Group = *datasource.Type
+		}
+	}
+
+	// Fallback: if group is still empty and we have a query with a kind (datasource type), use the kind as group
+	// This preserves the datasource type information when datasource reference is missing
+	// Note: in.Kind is the datasource type (e.g., "prometheus", "elasticsearch"), not "DataQuery"
+	if out.Group == "" && in != nil && in.Kind != "" {
+		out.Group = in.Kind
 	}
 
 	return nil
@@ -256,7 +267,7 @@ func convertQueryOptions_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQueryOpti
 
 func convertVizConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVizConfigKind, out *dashv2beta1.DashboardVizConfigKind) error {
 	out.Kind = "VizConfig"
-	out.Group = in.Kind
+	out.Group = in.Kind // in.Kind is the panel type (e.g., "timeseries", "graph")
 	out.Version = in.Spec.PluginVersion
 	out.Spec = dashv2beta1.DashboardVizConfigSpec{
 		Options: in.Spec.Options,
@@ -303,6 +314,7 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 			Steps: make([]dashv2beta1.DashboardThreshold, len(in.Thresholds.Steps)),
 		}
 		for i, step := range in.Thresholds.Steps {
+			// Convert threshold values: preserve null values from v2alpha1
 			out.Thresholds.Steps[i] = dashv2beta1.DashboardThreshold{
 				Value: step.Value,
 				Color: step.Color,
@@ -329,6 +341,8 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 }
 
 func convertFieldConfigOverride_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides, out *dashv2beta1.DashboardV2beta1FieldConfigSourceOverrides) {
+	out.SystemRef = in.SystemRef
+
 	out.Matcher = dashv2beta1.DashboardMatcherConfig{
 		Id:      in.Matcher.Id,
 		Options: in.Matcher.Options,
@@ -629,6 +643,7 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 	}
 
 	if in.IntervalVariableKind != nil {
+		defaultIntervalVariableSpec := dashv2beta1.NewDashboardIntervalVariableSpec()
 		out.IntervalVariableKind = &dashv2beta1.DashboardIntervalVariableKind{
 			Kind: in.IntervalVariableKind.Kind,
 			Spec: dashv2beta1.DashboardIntervalVariableSpec{
@@ -639,7 +654,7 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 				Auto:        in.IntervalVariableKind.Spec.Auto,
 				AutoMin:     in.IntervalVariableKind.Spec.AutoMin,
 				AutoCount:   in.IntervalVariableKind.Spec.AutoCount,
-				Refresh:     dashv2beta1.DashboardVariableRefresh(in.IntervalVariableKind.Spec.Refresh),
+				Refresh:     defaultIntervalVariableSpec.Refresh,
 				Label:       in.IntervalVariableKind.Spec.Label,
 				Hide:        dashv2beta1.DashboardVariableHide(in.IntervalVariableKind.Spec.Hide),
 				SkipUrlSync: in.IntervalVariableKind.Spec.SkipUrlSync,
@@ -690,11 +705,19 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 	}
 
 	if in.AdhocVariableKind != nil {
+		group := ""
+		var uid *string
+		if in.AdhocVariableKind.Spec.Datasource != nil {
+			if in.AdhocVariableKind.Spec.Datasource.Type != nil {
+				group = *in.AdhocVariableKind.Spec.Datasource.Type
+			}
+			uid = in.AdhocVariableKind.Spec.Datasource.Uid
+		}
 		out.AdhocVariableKind = &dashv2beta1.DashboardAdhocVariableKind{
 			Kind:  in.AdhocVariableKind.Kind,
-			Group: *in.AdhocVariableKind.Spec.Datasource.Type,
+			Group: group,
 			Datasource: &dashv2beta1.DashboardV2beta1AdhocVariableKindDatasource{
-				Name: in.AdhocVariableKind.Spec.Datasource.Uid,
+				Name: uid,
 			},
 			Spec: dashv2beta1.DashboardAdhocVariableSpec{
 				Name:             in.AdhocVariableKind.Spec.Name,
@@ -744,9 +767,18 @@ func convertQueryVariableSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQuer
 func convertVariableOption_V2alpha1_to_V2beta1(in dashv2alpha1.DashboardVariableOption) dashv2beta1.DashboardVariableOption {
 	return dashv2beta1.DashboardVariableOption{
 		Selected: in.Selected,
-		Text:     dashv2beta1.DashboardStringOrArrayOfString(in.Text),
-		Value:    dashv2beta1.DashboardStringOrArrayOfString(in.Value),
+		Text:     convertStringOrArrayOfString_V2alpha1_to_V2beta1(in.Text),
+		Value:    convertStringOrArrayOfString_V2alpha1_to_V2beta1(in.Value),
 	}
+}
+
+// convertStringOrArrayOfString_V2alpha1_to_V2beta1 preserves empty strings to match unmarshaler behavior
+func convertStringOrArrayOfString_V2alpha1_to_V2beta1(in dashv2alpha1.DashboardStringOrArrayOfString) dashv2beta1.DashboardStringOrArrayOfString {
+	out := dashv2beta1.DashboardStringOrArrayOfString{
+		ArrayOfString: in.ArrayOfString,
+	}
+	out.String = in.String
+	return out
 }
 
 func convertVariableOptionPtr_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableOption) *dashv2beta1.DashboardVariableOption {
@@ -899,83 +931,37 @@ func convertConditionalRenderingGroupKind_V2alpha1_to_V2beta1(in *dashv2alpha1.D
 }
 
 func convertRowLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, scope conversion.Scope) error {
-	// Handle the different union type orderings by converting through the main layout function
-	// Create a temporary variable with the correct type ordering
-	var tempIn dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
-	var tempOut dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
-
-	// Copy the layout data with the correct ordering
 	if in.GridLayoutKind != nil {
-		tempIn.GridLayoutKind = in.GridLayoutKind
+		out.GridLayoutKind = &dashv2beta1.DashboardGridLayoutKind{
+			Kind: in.GridLayoutKind.Kind,
+		}
+		return convertGridLayoutSpec_V2alpha1_to_V2beta1(&in.GridLayoutKind.Spec, &out.GridLayoutKind.Spec, scope)
 	}
-	if in.RowsLayoutKind != nil {
-		tempIn.RowsLayoutKind = in.RowsLayoutKind
-	}
+
 	if in.AutoGridLayoutKind != nil {
-		tempIn.AutoGridLayoutKind = in.AutoGridLayoutKind
+		out.AutoGridLayoutKind = &dashv2beta1.DashboardAutoGridLayoutKind{
+			Kind: in.AutoGridLayoutKind.Kind,
+		}
+		return convertAutoGridLayoutSpec_V2alpha1_to_V2beta1(&in.AutoGridLayoutKind.Spec, &out.AutoGridLayoutKind.Spec, scope)
 	}
+
 	if in.TabsLayoutKind != nil {
-		tempIn.TabsLayoutKind = in.TabsLayoutKind
+		out.TabsLayoutKind = &dashv2beta1.DashboardTabsLayoutKind{
+			Kind: in.TabsLayoutKind.Kind,
+		}
+		return convertTabsLayoutSpec_V2alpha1_to_V2beta1(&in.TabsLayoutKind.Spec, &out.TabsLayoutKind.Spec, scope)
 	}
 
-	if err := convertLayout_V2alpha1_to_V2beta1(&tempIn, &tempOut, scope); err != nil {
-		return err
-	}
-
-	// Copy back to the output with the correct ordering
-	if tempOut.GridLayoutKind != nil {
-		out.GridLayoutKind = tempOut.GridLayoutKind
-	}
-	if tempOut.RowsLayoutKind != nil {
-		out.RowsLayoutKind = tempOut.RowsLayoutKind
-	}
-	if tempOut.AutoGridLayoutKind != nil {
-		out.AutoGridLayoutKind = tempOut.AutoGridLayoutKind
-	}
-	if tempOut.TabsLayoutKind != nil {
-		out.TabsLayoutKind = tempOut.TabsLayoutKind
+	if in.RowsLayoutKind != nil {
+		out.RowsLayoutKind = &dashv2beta1.DashboardRowsLayoutKind{
+			Kind: in.RowsLayoutKind.Kind,
+		}
+		return convertRowsLayoutSpec_V2alpha1_to_V2beta1(&in.RowsLayoutKind.Spec, &out.RowsLayoutKind.Spec, scope)
 	}
 
 	return nil
 }
 
 func convertTabLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
-	// Handle the different union type orderings by converting through the main layout function
-	// Create a temporary variable with the correct type ordering
-	var tempIn dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
-	var tempOut dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
-
-	// Copy the layout data with the correct ordering
-	if in.GridLayoutKind != nil {
-		tempIn.GridLayoutKind = in.GridLayoutKind
-	}
-	if in.RowsLayoutKind != nil {
-		tempIn.RowsLayoutKind = in.RowsLayoutKind
-	}
-	if in.AutoGridLayoutKind != nil {
-		tempIn.AutoGridLayoutKind = in.AutoGridLayoutKind
-	}
-	if in.TabsLayoutKind != nil {
-		tempIn.TabsLayoutKind = in.TabsLayoutKind
-	}
-
-	if err := convertLayout_V2alpha1_to_V2beta1(&tempIn, &tempOut, scope); err != nil {
-		return err
-	}
-
-	// Copy back to the output with the correct ordering
-	if tempOut.GridLayoutKind != nil {
-		out.GridLayoutKind = tempOut.GridLayoutKind
-	}
-	if tempOut.RowsLayoutKind != nil {
-		out.RowsLayoutKind = tempOut.RowsLayoutKind
-	}
-	if tempOut.AutoGridLayoutKind != nil {
-		out.AutoGridLayoutKind = tempOut.AutoGridLayoutKind
-	}
-	if tempOut.TabsLayoutKind != nil {
-		out.TabsLayoutKind = tempOut.TabsLayoutKind
-	}
-
-	return nil
+	return convertLayout_V2alpha1_to_V2beta1(in, out, scope)
 }

@@ -1813,6 +1813,27 @@
             }
           },
           {
+            "name": "libraryPanel",
+            "in": "query",
+            "description": "find dashboards that reference a given libraryPanel",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "permission",
+            "in": "query",
+            "description": "permission needed for the resource (View, Edit, Admin)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "View",
+                "Edit",
+                "Admin"
+              ]
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "description": "sortable field",

@@ -29,9 +29,9 @@ export const getStatusIcon = (state?: SyncStatus['state']): IconName => {
   switch (state) {
     case 'success':
       return 'check';
-    case 'working':
     case 'warning':
       return 'exclamation-triangle';
+    case 'working':
     case 'pending':
       return 'spinner';
     case 'error':

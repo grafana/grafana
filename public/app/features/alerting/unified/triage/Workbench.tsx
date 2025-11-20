@@ -27,6 +27,7 @@ type WorkbenchProps = {
   groupBy?: string[];
   filterBy?: Filter[];
   queryRunner: SceneQueryRunner;
+  isLoading?: boolean;
   hasActiveFilters?: boolean;
 };
 
@@ -115,13 +116,19 @@ function renderWorkbenchRow(
  │                         │││                                   │
  │                         │ │                                   │
  │                         │ │                                   │
- │                         │ │                                   │
- └─────────────────────────┘ └───────────────────────────────────┘
+│                         │ │                                   │
+└─────────────────────────┘ └───────────────────────────────────┘
  */
-export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters = false }: WorkbenchProps) {
+export function Workbench({
+  domain,
+  data,
+  queryRunner,
+  groupBy,
+  isLoading = false,
+  hasActiveFilters = false,
+}: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
-  const isLoading = !queryRunner.isDataReadyToDisplay();
   const [pageIndex, setPageIndex] = useState<number>(1);
 
   // Calculate once: show folder metadata only if not grouping by grafana_folder
@@ -240,7 +247,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden', // Let AutoSizer handle the overflow
     }),
     summaryContainer: css({
-      gridTemplateRows: summaryHeight,
+      minHeight: summaryHeight,
       marginBottom: theme.spacing(2),
     }),
     headerContainer: css({

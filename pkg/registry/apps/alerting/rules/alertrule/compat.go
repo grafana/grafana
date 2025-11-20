@@ -128,6 +128,10 @@ func convertToK8sResource(
 		return nil, fmt.Errorf("failed to get metadata: %w", err)
 	}
 	meta.SetFolder(rule.NamespaceUID)
+	// Keep metadata label in sync with folder annotation for downstream consumers
+	if rule.NamespaceUID != "" {
+		k8sRule.Labels[model.FolderLabelKey] = rule.NamespaceUID
+	}
 	if rule.UpdatedBy != nil {
 		meta.SetUpdatedBy(string(*rule.UpdatedBy))
 		k8sRule.SetUpdatedBy(string(*rule.UpdatedBy))

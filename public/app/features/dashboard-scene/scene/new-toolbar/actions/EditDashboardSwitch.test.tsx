@@ -58,7 +58,7 @@ describe('EditDashboardSwitch', () => {
     it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {
       render(<EditDashboardSwitch dashboard={buildTestScene()} />);
       await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
-      expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: false });
+      expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: true });
     });
 
     it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is false', async () => {

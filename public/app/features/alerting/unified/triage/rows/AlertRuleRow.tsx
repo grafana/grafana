@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { IconButton, Stack, Text } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
 
 import { MetaText } from '../../components/MetaText';
 import { RuleDetailsDrawer } from '../rule-details/RuleDetailsDrawer';
@@ -10,6 +10,7 @@ import { AlertRuleSummary } from '../scene/AlertRuleSummary';
 import { AlertRuleRow as AlertRuleRowType } from '../types';
 
 import { GenericRow } from './GenericRow';
+import { OpenDrawerIconButton } from './OpenDrawerIconButton';
 
 interface AlertRuleRowProps {
   row: AlertRuleRowType;
@@ -29,13 +30,13 @@ export const AlertRuleRow = ({
   const { ruleUID, folder, title } = row.metadata;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const handleDrawerOpen = () => {
+  const handleDrawerOpen = useCallback(() => {
     setIsDrawerOpen(true);
-  };
+  }, []);
 
-  const handleDrawerClose = () => {
+  const handleDrawerClose = useCallback(() => {
     setIsDrawerOpen(false);
-  };
+  }, []);
 
   return (
     <>
@@ -44,9 +45,7 @@ export const AlertRuleRow = ({
         width={leftColumnWidth}
         title={<Text variant="body">{title}</Text>}
         actions={
-          <IconButton
-            style={{ transform: 'rotate(180deg)' }}
-            name="web-section-alt"
+          <OpenDrawerIconButton
             aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
             onClick={handleDrawerOpen}
           />

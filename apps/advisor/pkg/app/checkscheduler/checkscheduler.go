@@ -86,6 +86,11 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 
 func (r *Runner) Run(ctx context.Context) error {
 	logger := r.log.WithContext(ctx)
+	if r.stackID == "" && r.orgService == nil {
+		logger.Debug("Check scheduler disabled")
+		return nil
+	}
+
 	// We still need the context to eventually be cancelled to exit this function
 	// but we don't want the requests to fail because of it
 	ctxWithoutCancel := context.WithoutCancel(ctx)
