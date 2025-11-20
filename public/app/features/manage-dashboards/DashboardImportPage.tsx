@@ -123,7 +123,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     if ((dashboard.spec?.elements || dashboard.elements) && !config.featureToggles.dashboardNewLayouts) {
       return appEvents.emit(AppEvents.alertError, [
         'Import failed',
-        'Cannot import v2 dashboards when dashboardNewLayouts feature toggle is disabled',
+        'Dashboard using new layout cannot be imported because the feature is not enabled',
       ]);
     }
 
