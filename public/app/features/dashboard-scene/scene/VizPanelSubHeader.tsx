@@ -131,7 +131,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     const queryRunner = dataObject?.state.$data;
 
     if (!queryRunner || !(queryRunner instanceof SceneQueryRunner)) {
-      throw new Error('SceneQueryRunner must be on VizPanel');
+      return null;
     }
 
     return queryRunner;
@@ -145,7 +145,7 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
   const groupByVar = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
 
-  if (hideNonApplicableDrilldowns || !supportsApplicability) {
+  if (!queryRunner || hideNonApplicableDrilldowns || !supportsApplicability) {
     return null;
   }
 
