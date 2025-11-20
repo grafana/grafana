@@ -156,7 +156,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: coreConfig.xRange,
+    range: (u) => {
+      const state = builder.getState();
+      if (state.isPanning) {
+        return [state.min, state.max];
+      }
+      return coreConfig.xRange(u);
+    },
   });
 
   builder.addScale({

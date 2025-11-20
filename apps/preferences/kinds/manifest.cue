@@ -10,8 +10,7 @@ manifest: {
 				go: {enabled: true}
 			}
 			kinds: [
-				preferencesV1alpha1,
-				starsV1alpha1,
+				preferencesV1alpha1
 			]
 		}
 	}

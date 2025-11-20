@@ -2598,8 +2598,7 @@
         "firing": "Ativo",
         "normal": "Normal",
         "pending": "Pendente",
-        "recovering": "Em recuperação",
-        "unknown": "Desconhecido"
+        "recovering": "Em recuperação"
       },
       "type": {
         "alert": "Regra de alerta",
@@ -2623,12 +2622,14 @@
         "placeholder-search-input": "Pesquise por nome ou insira uma consulta de filtro…"
       },
       "grafana-folder": "Pasta do Grafana",
+      "group-autocomplete-unavailable": "",
       "health": "Integridade",
       "label": {
         "hide": "Ocultar",
         "show": "Exibir"
       },
       "manage-alerts": "Nessas fontes de dados, você pode selecionar Gerenciar alertas via Interface de Envio de Alertas para gerenciar essas regras de alerta na interface da Grafana, bem como na fonte de dados onde foram configuradas.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Todas as fontes de dados",
       "placeholder-contact-point": "Selecionar ponto de contato",
       "placeholder-data-sources": "Selecionar fontes de dados",
@@ -3540,6 +3541,7 @@
       "delete-modal-invalid-title": "Não é possível excluir pasta",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Esta ação apagará o seguinte conteúdo:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Excluir",
       "delete-provisioned-folder": "Excluir pasta provisionada",
       "deleting": "Excluindo...",
@@ -3548,6 +3550,7 @@
       "move-modal-alert": "Mover este item pode alterar suas permissões.",
       "move-modal-field-label": "Nome da pasta",
       "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Mover",
       "move-provisioned-folder": "",
       "moving": "Movendo...",
@@ -3635,11 +3638,11 @@
       "title-folder": "Esta pasta ainda não contém nenhum painel de controle"
     },
     "folder-actions-button": {
-      "delete": "Excluir",
+      "delete": "",
       "delete-folder-error": "Erro ao excluir a pasta. Tente novamente mais tarde.",
       "folder-actions": "Ações da pasta",
       "manage-permissions": "Gerenciar permissões",
-      "move": "Mover"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Selecionar pasta: {{ label }} atualmente selecionada",
@@ -5930,7 +5933,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Adicionar transformação"
+      "add-transformation": "Adicionar transformação",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -7789,6 +7795,14 @@
     "name-show-threshold-labels": "Mostrar rótulos de limite",
     "name-show-threshold-markers": "Mostrar marcadores de limite",
     "placeholder-neutral": "automático",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8999,6 +9013,13 @@
       "copy": "Copiar para a área de transferência",
       "csv-counts": "",
       "csv-placeholder": "Insira o CSV aqui...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrar valores",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Corresponder maiúsculas/minúsculas",
@@ -9150,6 +9171,9 @@
     "category-legend": "Legenda",
     "category-tooltip": "Dica de uso",
     "category-y-axis": "Eixo Y",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "Opacidade",
       "label-scheme": "Esquema"
@@ -12381,6 +12405,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Recolher",
+      "exchange": "",
       "expand": "Expandir",
       "loading": "Carregando painéis de controle",
       "noResultsForFilter": "Nenhum resultado encontrado para sua consulta",
@@ -12399,8 +12424,10 @@
       "cancel": "Cancelar",
       "error-title": "",
       "input": {
-        "placeholder": "Selecione os escopos...",
-        "removeAll": "Remover todos os escopos"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Remover todos os escopos",
+        "tooltip": ""
       },
       "title": "Selecionar escopos"
     },
