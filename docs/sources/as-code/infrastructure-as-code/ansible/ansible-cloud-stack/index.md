@@ -35,7 +35,7 @@ This collection provides all the modules needed to manage Grafana Cloud stacks a
 
 First, create a Grafana Cloud Access Policy and get a token. You'll need this for the Ansible playbook to be able to create a Grafana Cloud stack. Refer to [Create a Grafana Cloud Access Policy](/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/create-access-policies/).
 
-Next, create an Ansible playbook file. This Ansible playbook will create a Grafana Cloud stack by using the [Cloud stack module](https://docs.ansible.com/ansible/latest/collections/grafana/grafana/cloud_stack_module.html#ansible-collections-grafana-grafana-cloud-stack-module).
+Next, create an Ansible playbook file. This Ansible playbook creates a Grafana Cloud stack using the [Cloud stack module](https://docs.ansible.com/ansible/latest/collections/grafana/grafana/cloud_stack_module.html#ansible-collections-grafana-grafana-cloud-stack-module).
 
 To do so, create a file named `cloud-stack.yml` and add the following:
 
