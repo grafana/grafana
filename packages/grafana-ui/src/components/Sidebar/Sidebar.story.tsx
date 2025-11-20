@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Button } from '../Button/Button';
 import { Box } from '../Layout/Box/Box';
 
-import { Sidebar, SidebarPosition, useSiderbar } from './Sidebar';
+import { Sidebar, SidebarPosition, useSidebar } from './Sidebar';
 import mdx from './Sidebar.mdx';
 
 interface StoryProps {
@@ -38,7 +38,6 @@ export const Example: StoryFn<StoryProps> = (args) => {
     flexDirection: 'column',
     position: 'relative',
     overflow: 'hidden',
-    margin: '0 16px',
   });
 
   const gridStyle = css({
@@ -58,13 +57,15 @@ export const Example: StoryFn<StoryProps> = (args) => {
     }
   };
 
-  const contextValue = useSiderbar({
+  const contextValue = useSidebar({
     hasOpenPane: !!openPane,
     position: args.position,
+    bottomMargin: 0,
+    edgeMargin: 0,
   });
 
   return (
-    <Box paddingY={2} backgroundColor={'canvas'} maxWidth={100} borderStyle={'solid'} borderColor={'weak'}>
+    <Box padding={2} backgroundColor={'canvas'} maxWidth={100} borderStyle={'solid'} borderColor={'weak'}>
       <div className={containerStyle} {...contextValue.outerWrapperProps}>
         <div className={gridStyle}>
           {renderBox('A')}
@@ -149,7 +150,7 @@ export const VerticalTabs: StoryFn = (args) => {
     display: 'flex',
   });
 
-  const contextValue = useSiderbar({
+  const contextValue = useSidebar({
     position: args.position,
     tabsMode: true,
   });

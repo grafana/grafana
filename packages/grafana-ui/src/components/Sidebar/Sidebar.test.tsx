@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React, { act } from 'react';
 
-import { Sidebar, useSiderbar } from './Sidebar';
+import { Sidebar, useSidebar } from './Sidebar';
 
 describe('Sidebar', () => {
   it('should render sidebar', async () => {
@@ -27,7 +27,7 @@ describe('Sidebar', () => {
 
 function TestSetup() {
   const [openPane, setOpenPane] = React.useState('');
-  const contextValue = useSiderbar({
+  const contextValue = useSidebar({
     position: 'right',
     hasOpenPane: openPane !== '',
   });

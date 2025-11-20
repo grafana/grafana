@@ -4,7 +4,7 @@ import { ReactNode, useContext } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 
 import { SidebarButton } from './SidebarButton';
 import { SidebarPaneHeader } from './SidebarPaneHeader';
@@ -18,7 +18,8 @@ export interface Props {
 
 export function SidebarComp({ children, contextValue }: Props) {
   const styles = useStyles2(getStyles);
-  const { isDocked, position, tabsMode, hasOpenPane } = contextValue;
+  const theme = useTheme2();
+  const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin } = contextValue;
 
   const className = cx({
     [styles.container]: true,
@@ -27,9 +28,11 @@ export function SidebarComp({ children, contextValue }: Props) {
     [styles.containerTabsMode]: tabsMode,
   });
 
+  const style = { [position]: theme.spacing(edgeMargin), bottom: theme.spacing(bottomMargin) };
+
   return (
     <SidebarContext.Provider value={contextValue}>
-      <div className={className}>
+      <div className={className} style={style}>
         {!tabsMode && <SidebarResizer />}
         {children}
       </div>
@@ -158,4 +161,4 @@ export const Sidebar = Object.assign(SidebarComp, {
   PaneHeader: SidebarPaneHeader,
 });
 
-export { type SidebarPosition, useSiderbar } from './useSidebar';
+export { type SidebarPosition, type SidebarContextValue, useSidebar } from './useSidebar';

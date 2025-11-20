@@ -1,6 +1,8 @@
 import { clamp } from 'lodash';
 import React, { useCallback } from 'react';
 
+import { useTheme2 } from '../../themes/ThemeContext';
+
 export type SidebarPosition = 'left' | 'right';
 
 export interface SidebarContextValue {
@@ -11,6 +13,9 @@ export interface SidebarContextValue {
   tabsMode?: boolean;
   outerWrapperProps: React.HTMLAttributes<HTMLDivElement>;
   paneWidth: number;
+  bottomMargin: number;
+  edgeMargin: number;
+  contentMargin: number;
   onDockChange: () => void;
   onResize: (diff: number) => void;
 }
@@ -24,14 +29,24 @@ export interface UseSideBarOptions {
   position?: SidebarPosition;
   tabsMode?: boolean;
   compactDefault?: boolean;
+  /** defaults to 2 grid units (16px) */
+  bottomMargin?: number;
+  /** defaults to 2 grid units (16px) */
+  edgeMargin?: number;
+  /** defaults to 2 grid units (16px) */
+  contentMargin?: number;
 }
 
-export function useSiderbar({
+export function useSidebar({
   hasOpenPane,
   position = 'right',
   tabsMode,
   compactDefault = true,
+  bottomMargin = 2,
+  edgeMargin = 2,
+  contentMargin = 2,
 }: UseSideBarOptions): SidebarContextValue {
+  const theme = useTheme2();
   const [isDocked, setIsDocked] = React.useState(false);
   const [paneWidth, setPaneWidth] = React.useState(280);
   const [compact, setCompact] = React.useState(compactDefault);
@@ -41,7 +56,7 @@ export function useSiderbar({
   const onDockChange = useCallback(() => setIsDocked((prev) => !prev), []);
 
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
-  const toolbarWidth = (compact ? 40 : 68) + 16; // button width + padding
+  const toolbarWidth = (compact ? 40 : 68) + (edgeMargin + contentMargin) * theme.spacing.gridSize;
 
   const outerWrapperProps = {
     style: {
@@ -86,5 +101,8 @@ export function useSiderbar({
     hasOpenPane,
     tabsMode,
     paneWidth,
+    edgeMargin,
+    bottomMargin,
+    contentMargin,
   };
 }
