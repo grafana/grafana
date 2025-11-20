@@ -1,6 +1,7 @@
 package apiregistry
 
 import (
+	"github.com/grafana/grafana/pkg/registry/apis/apiextensions"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -19,6 +20,7 @@ type Service struct{}
 // ProvideRegistryServiceSink is an entry point for each service that will force initialization
 // and give each builder the chance to register itself with the main server
 func ProvideRegistryServiceSink(
+	_ *apiextensions.APIExtensionsBuilder,
 	_ *dashboardinternal.DashboardsAPIBuilder,
 	_ *dashboardsnapshot.SnapshotsAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,

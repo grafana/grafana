@@ -374,14 +374,27 @@ func (s *service) start(ctx context.Context) error {
 
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 
+	// Wrap the not-found handler with dynamic custom resource handler
+	finalHandler := s.createDynamicHandlerWrapper(builders, notFoundHandler)
+
 	if err := appinstaller.RegisterPostStartHooks(s.appInstallers, serverConfig); err != nil {
 		return fmt.Errorf("failed to register post start hooks for app installers: %w", err)
 	}
 
 	// Create the server
-	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
+	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(finalHandler))
 	if err != nil {
 		return err
+	}
+
+	// Inject the server instance into any builders that need it (e.g., APIExtensionsBuilder for dynamic CRD registration)
+	type apiServerSetter interface {
+		SetAPIServer(server *genericapiserver.GenericAPIServer)
+	}
+	for _, b := range builders {
+		if setter, ok := b.(apiServerSetter); ok {
+			setter.SetAPIServer(server)
+		}
 	}
 
 	// Install the API group+version for existing builders
@@ -484,6 +497,77 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// createDynamicHandlerWrapper wraps the not-found handler with dynamic custom resource handlers
+func (s *service) createDynamicHandlerWrapper(builders []builder.APIGroupBuilder, notFoundHandler http.Handler) http.Handler {
+	// Look for the APIExtensionsBuilder - we'll fetch the handler lazily on each request
+	// because the handler is created during UpdateAPIGroupInfo which happens AFTER this wrapper is installed
+	fmt.Printf("createDynamicHandlerWrapper: Setting up lazy handler wrapper for %d builders...\n", len(builders))
+
+	type dynamicHandlerProvider interface {
+		GetDynamicHandler() http.Handler
+	}
+
+	var dhProvider dynamicHandlerProvider
+	for i, b := range builders {
+		fmt.Printf("  Builder %d: %T\n", i, b)
+		if provider, ok := b.(dynamicHandlerProvider); ok {
+			fmt.Printf("    ✓ Builder %d implements dynamicHandlerProvider - will fetch handler lazily\n", i)
+			dhProvider = provider
+			break
+		}
+	}
+
+	if dhProvider == nil {
+		// No dynamic handler provider found, just use the not-found handler
+		fmt.Println("  No dynamic handler provider found, using standard not-found handler")
+		return notFoundHandler
+	}
+
+	// Return a wrapper that lazily fetches and tries the dynamic handler on each request
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if this is an /apis/ request that might be for a custom resource
+		if strings.HasPrefix(r.URL.Path, "/apis/") {
+			// Fetch the dynamic handler (it will be nil until UpdateAPIGroupInfo creates it)
+			dynamicHandler := dhProvider.GetDynamicHandler()
+			if dynamicHandler != nil {
+				// Create a response recorder to capture what the dynamic handler does
+				recorder := &responseRecorder{
+					ResponseWriter: w,
+					statusCode:     0,
+				}
+
+				dynamicHandler.ServeHTTP(recorder, r)
+
+				// If the dynamic handler handled it (didn't return 404), we're done
+				if recorder.statusCode != 0 && recorder.statusCode != http.StatusNotFound {
+					return
+				}
+			}
+		}
+
+		// Otherwise, fall back to the not-found handler
+		notFoundHandler.ServeHTTP(w, r)
+	})
+}
+
+// responseRecorder captures the status code from a handler
+type responseRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (r *responseRecorder) WriteHeader(statusCode int) {
+	r.statusCode = statusCode
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (r *responseRecorder) Write(b []byte) (int, error) {
+	if r.statusCode == 0 {
+		r.statusCode = http.StatusOK
+	}
+	return r.ResponseWriter.Write(b)
 }
 
 func (s *service) startCoreServer(

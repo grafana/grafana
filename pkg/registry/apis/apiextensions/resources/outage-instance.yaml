@@ -1,0 +1,22 @@
+apiVersion: monitoring.grafana.app/v1
+kind: Outage
+metadata:
+  name: outage-2025-11-20-us-east
+  # NO namespace field - this is cluster-scoped!
+spec:
+  region: us-east-1
+  severity: critical
+  affectedServices:
+    - grafana-cloud-metrics
+    - grafana-cloud-logs
+    - grafana-cloud-traces
+  startTime: "2025-11-20T10:00:00Z"
+  description: "Database connectivity issues affecting multiple services in US East region"
+status:
+  resolved: false
+  affectedCustomers: 1247
+  updates:
+    - timestamp: "2025-11-20T10:15:00Z"
+      message: "Incident detected, investigating database connectivity"
+    - timestamp: "2025-11-20T10:30:00Z"
+      message: "Root cause identified, applying fix to primary database cluster"
