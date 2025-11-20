@@ -149,7 +149,7 @@ func ReportFSMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, err
 		return p, nil
 	}
 
-	metrics.SetPluginFSInformation(p.ID, p.FS.Type())
+	metrics.SetPluginFSInformation(p.ID, string(p.FS.Type()))
 	return p, nil
 }
 
