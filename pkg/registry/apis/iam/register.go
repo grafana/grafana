@@ -66,6 +66,7 @@ func RegisterAPIService(
 	rolesStorage RoleStorageBackend,
 	roleBindingsStorage RoleBindingStorageBackend,
 	externalGroupMappingStorageBackend ExternalGroupMappingStorageBackend,
+	externalGroupMappingLegacySearchClient ExternalGroupMappingLegacySearchClient,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
 	userService legacyuser.Service,
@@ -96,7 +97,10 @@ func RegisterAPIService(
 		enableDualWriter:            true,
 		dual:                        dual,
 		unified:                     unified,
-		userSearchClient:            resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, user.NewUserLegacySearchClient(userService), features),
+		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
+			unified, user.NewUserLegacySearchClient(userService), features),
+		externalGroupMappingSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.ExternalGroupMappingResourceInfo.GroupResource(),
+			unified, externalGroupMappingLegacySearchClient, features),
 	}
 	apiregistration.RegisterAPI(builder)
 

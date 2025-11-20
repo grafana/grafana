@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/noopsearch"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
@@ -30,6 +31,8 @@ var WireSetExts = wire.NewSet(
 	wire.Bind(new(iam.RoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	wire.Bind(new(iam.RoleBindingStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	wire.Bind(new(iam.ExternalGroupMappingStorageBackend), new(*noopstorage.StorageBackendImpl)),
+	noopsearch.ProvideLegacySearchClient,
+	wire.Bind(new(iam.ExternalGroupMappingLegacySearchClient), new(*noopsearch.NoopLegacySearchClient)),
 )
 
 var provisioningExtras = wire.NewSet(

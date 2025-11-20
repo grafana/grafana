@@ -16,7 +16,7 @@ const (
 	USER_LOGIN = "login"
 )
 
-var TableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
+var UserTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
 	USER_EMAIL: {
 		Name:        USER_EMAIL,
 		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
@@ -38,8 +38,8 @@ var TableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinitio
 }
 
 func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
-	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(TableColumnDefinitions))
-	for _, v := range TableColumnDefinitions {
+	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(UserTableColumnDefinitions))
+	for _, v := range UserTableColumnDefinitions {
 		values = append(values, v)
 	}
 	fields, err := resource.NewSearchableDocumentFields(values)

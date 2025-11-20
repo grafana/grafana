@@ -74,6 +74,11 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 		return nil, err
 	}
 
+	extGroupMappings, err := GetExternalGroupMappingBuilder()
+	if err != nil {
+		return nil, err
+	}
+
 	return []resource.DocumentBuilderInfo{
 		// The default builder
 		{
@@ -83,5 +88,7 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 		dashboards,
 		// User builder
 		users,
+		// External Group Mapping builder
+		extGroupMappings,
 	}, err
 }
