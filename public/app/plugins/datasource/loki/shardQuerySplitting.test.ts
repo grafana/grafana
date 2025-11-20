@@ -312,46 +312,6 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
 
-    test('Failed 5xx requests are retried', async () => {
-      const errResp: DataQueryResponse = {
-        state: LoadingState.Error,
-        errors: [{ refId: 'A', message: 'parse error', status: 500 }],
-        data: [],
-      };
-      jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1', '10', '4']);
-      jest
-        .spyOn(datasource, 'runQuery')
-        .mockReturnValueOnce(of(errResp))
-        .mockReturnValueOnce(of({ state: LoadingState.Done, data: [], status: 200 }));
-
-      await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
-        expect(response[0].state).toBe(LoadingState.Done);
-      });
-
-      // 5 shards, 3 groups + empty shard group, 4 requests * 3 days, 3 chunks, 3 requests + 1 retriable error = 13 requests
-      expect(datasource.runQuery).toHaveBeenCalledTimes(13);
-    });
-
-    test('Failed 5xx requests are retried (dep)', async () => {
-      const errResp: DataQueryResponse = {
-        state: LoadingState.Error,
-        error: { refId: 'A', message: 'parse error', status: 500 },
-        data: [],
-      };
-      jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1', '10', '4']);
-      jest
-        .spyOn(datasource, 'runQuery')
-        .mockReturnValueOnce(of(errResp))
-        .mockReturnValueOnce(of({ state: LoadingState.Done, data: [], status: 200 }));
-
-      await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
-        expect(response[0].state).toBe(LoadingState.Done);
-      });
-
-      // 5 shards, 3 groups + empty shard group, 4 requests * 3 days, 3 chunks, 3 requests + 1 retriable error = 13 requests
-      expect(datasource.runQuery).toHaveBeenCalledTimes(13);
-    });
-
     test('Does not retry on other errors', async () => {
       jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
       jest

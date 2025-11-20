@@ -1,6 +1,6 @@
 import { DataQueryResponse } from '@grafana/data';
 
-import { isClientErrorResponse } from './logsVolumeResponse';
+import { isTimeoutErrorResponse } from './logsVolumeResponse';
 
 const errorA =
   'Get "http://localhost:3100/loki/api/v1/query_range?direction=backward&end=1680001200000000000&limit=1000&query=sum+by+%28level%29+%28count_over_time%28%7Bcontainer_name%3D%22docker-compose-app-1%22%7D%5B1h%5D%29%29&start=1679914800000000000&step=3600000ms": net/http: request canceled (Client.Timeout exceeded while awaiting headers)';
@@ -16,7 +16,7 @@ describe('isTimeoutErrorResponse', () => {
           message: timeoutError,
         },
       };
-      expect(isClientErrorResponse(response)).toBe(true);
+      expect(isTimeoutErrorResponse(response)).toBe(true);
     }
   );
   test.each([errorA, errorB])(
@@ -33,7 +33,7 @@ describe('isTimeoutErrorResponse', () => {
           },
         ],
       };
-      expect(isClientErrorResponse(response)).toBe(true);
+      expect(isTimeoutErrorResponse(response)).toBe(true);
     }
   );
   test.each([errorA, errorB])(
@@ -54,13 +54,13 @@ describe('isTimeoutErrorResponse', () => {
           },
         ],
       };
-      expect(isClientErrorResponse(response)).toBe(true);
+      expect(isTimeoutErrorResponse(response)).toBe(true);
     }
   );
   test('does not report false positives', () => {
     const response: DataQueryResponse = {
       data: [],
     };
-    expect(isClientErrorResponse(response)).toBe(false);
+    expect(isTimeoutErrorResponse(response)).toBe(false);
   });
 });

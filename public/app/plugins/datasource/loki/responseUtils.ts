@@ -140,8 +140,8 @@ export function isRetriableError(errorResponse: DataQueryResponse) {
         .toLowerCase()
     : (errorResponse.error?.message ?? '').toLowerCase();
 
-  // max_query_bytes_read exceeded, currently 500 when should be 4xx
-  if (message.includes('the query would read too many bytes') || is4xxError(errorResponse)) {
+  // max_query_bytes_read exceeded
+  if (message.includes('the query would read too many bytes')) {
     throw new Error(message);
   }
   if (message.includes('timeout')) {
@@ -151,27 +151,5 @@ export function isRetriableError(errorResponse: DataQueryResponse) {
     // Error response but we're receiving data, continue querying.
     return false;
   }
-  if (is5xxError(errorResponse)) {
-    return true;
-  }
   throw new Error(message);
-}
-
-export function is4xxError(errorResponse: DataQueryResponse) {
-  /**
-   * Before https://github.com/grafana/grafana/pull/114201 the Loki data source always returns a 500 for every error response type in the response body, and this is what Grafana uses to populate the DataQueryError
-   * Since the frontend and backend are being deployed separately now we might want to continue to check error messages for a bit until we are sure that the correct status code is always set in the data query response.
-   *
-   * @param errorResponse
-   */
-  return isHttpErrorType(errorResponse, '4');
-}
-
-export function is5xxError(errorResponse: DataQueryResponse) {
-  return isHttpErrorType(errorResponse, '5');
-}
-
-function isHttpErrorType(errorResponse: DataQueryResponse, responseType: '2' | '3' | '4' | '5') {
-  const isErrOfType = (err: DataQueryError) => err.status && Array.from(err.status?.toString())[0] === responseType;
-  return (errorResponse.error && isErrOfType(errorResponse.error)) || errorResponse.errors?.some(isErrOfType);
 }
