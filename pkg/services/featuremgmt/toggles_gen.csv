@@ -28,7 +28,7 @@ unifiedRequestLog,GA,@grafana/grafana-backend-group,false,false,false
 renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
-enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
+enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,false
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
@@ -51,7 +51,7 @@ enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,f
 disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
-kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,true
+kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,false
 kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
@@ -78,7 +78,7 @@ annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 dashboardScene,GA,@grafana/dashboards-squad,false,false,true
-dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,true
+dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,false
 dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
@@ -119,7 +119,7 @@ logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,fa
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
-alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
+alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,false
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
 azureMonitorPrometheusExemplars,GA,@grafana/partner-datasources,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
@@ -200,14 +200,14 @@ azureMonitorLogsBuilderEditor,preview,@grafana/partner-datasources,false,false,f
 localeFormatPreference,preview,@grafana/grafana-frontend-platform,false,false,false
 unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
 alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
-alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
+alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,false
 multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
 grafanaAssistantInProfilesDrilldown,GA,@grafana/observability-traces-and-profiling,false,false,true
 postgresDSUsePGX,experimental,@grafana/oss-big-tent,false,false,false
-tempoAlerting,experimental,@grafana/observability-traces-and-profiling,false,false,true
+tempoAlerting,experimental,@grafana/observability-traces-and-profiling,false,false,false
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
@@ -241,7 +241,7 @@ newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 teamFolders,experimental,@grafana/grafana-search-navigate-organise,false,false,false
 interactiveLearning,preview,@grafana/pathfinder,false,false,false
-alertingTriage,experimental,@grafana/alerting-squad,false,false,true
+alertingTriage,experimental,@grafana/alerting-squad,false,false,false
 graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,false
 azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true
 prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
