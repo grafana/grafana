@@ -37,17 +37,28 @@ let _pluginCache: PanelPlugin[] | null = null;
 async function getPanelsWithSuggestions(): Promise<PanelPlugin[]> {
   if (!_pluginCache) {
     _pluginCache = [];
-    let pluginIds: string[] = panelsToCheckFirst;
-    if (config.featureToggles.externalVizSuggestions) {
-      pluginIds = getAllPanelPluginMeta().map((m) => m.id);
-    }
+
+    // list of plugins to load is determined by the feature flag
+    const pluginIds: string[] = config.featureToggles.externalVizSuggestions
+      ? getAllPanelPluginMeta().map((m) => m.id)
+      : panelsToCheckFirst;
+
     // import the plugins in parallel using Promise.allSettled
-    for (const settled of await Promise.allSettled(pluginIds.map((id) => importPanelPlugin(id)))) {
+    const settledPromises = await Promise.allSettled(pluginIds.map((id) => importPanelPlugin(id)));
+    for (let i = 0; i < settledPromises.length; i++) {
+      const settled = settledPromises[i];
+
       if (settled.status === 'fulfilled') {
         _pluginCache.push(settled.value);
       }
+      // TODO: do we want to somehow log if there were errors loading some of the plugins?
     }
   }
+
+  if (_pluginCache.length === 0) {
+    throw new Error('No panel plugins with visualization suggestions found');
+  }
+
   return _pluginCache;
 }
 
@@ -87,8 +98,9 @@ function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[], data
 export async function getAllSuggestions(data?: PanelData): Promise<PanelPluginVisualizationSuggestion[]> {
   const dataSummary = getPanelDataSummary(data?.series);
   const list: PanelPluginVisualizationSuggestion[] = [];
+  const plugins = await getPanelsWithSuggestions();
 
-  for (const plugin of await getPanelsWithSuggestions()) {
+  for (const plugin of plugins) {
     const suggestions = plugin.getSuggestions(dataSummary);
     if (suggestions) {
       list.push(...suggestions);

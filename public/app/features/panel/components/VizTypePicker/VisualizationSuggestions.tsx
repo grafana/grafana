@@ -4,8 +4,8 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 
@@ -21,7 +21,7 @@ export interface Props {
 
 export function VisualizationSuggestions({ searchQuery, onChange, data, trackSearch }: Props) {
   const styles = useStyles2(getStyles);
-  const { value: suggestions } = useAsync(() => getAllSuggestions(data), [data]);
+  const { value: suggestions, loading, error } = useAsync(async () => await getAllSuggestions(data), [data]);
   const filteredSuggestions = useMemo(() => {
     const result = filterSuggestionsBySearch(searchQuery, suggestions);
     if (trackSearch) {
@@ -43,6 +43,29 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, trackSea
           const columnCount = Math.floor(width / 200);
           const spaceBetween = 8 * (columnCount! - 1);
           const previewWidth = Math.floor((width - spaceBetween) / columnCount!);
+
+          if (loading) {
+            return (
+              <div className={styles.loadingContainer}>
+                <Spinner size="xxl" />
+              </div>
+            );
+          }
+
+          if (error) {
+            return (
+              <div>
+                <Alert
+                  title={t('panel.visualization-suggestions.error-loading-suggestions.title', 'Error')}
+                  severity="error"
+                >
+                  <Trans i18nKey="panel.visualization-suggestions.error-loading-suggestions.message">
+                    An error occurred when loading visualization suggestions.
+                  </Trans>
+                </Alert>
+              </div>
+            );
+          }
 
           return (
             <div>
@@ -95,6 +118,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     heading: css({
       ...theme.typography.h5,
       margin: theme.spacing(0, 0.5, 1),
+    }),
+    loadingContainer: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
     }),
     filterRow: css({
       display: 'flex',
