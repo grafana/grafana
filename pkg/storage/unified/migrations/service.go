@@ -54,8 +54,8 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 	// TODO: Re-enable once migrations are ready
 	// TODO: add guarantee that this only runs once
-	return RegisterMigrations(p.migrator, p.cfg, p.sqlStore)
-	// return nil
+	// return RegisterMigrations(p.migrator, p.cfg, p.sqlStore)
+	return nil
 }
 
 // RegisterMigrations initializes and registers all unified storage migrations.
@@ -70,7 +70,7 @@ func RegisterMigrations(
 	ctx, span := tracer.Start(context.Background(), "storage.unified.RegisterMigrations")
 	defer span.End()
 	logger := log.New("storage.unified.migrations")
-	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedmigrations")
+	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
 	mg.AddCreateMigration()
 
 	if err := prometheus.Register(mg); err != nil {
