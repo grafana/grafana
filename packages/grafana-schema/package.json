@@ -13,72 +13,14 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-schema"
   },
-  "main": "./dist/cjs/index.cjs",
-  "module": "./dist/esm/index.mjs",
-  "types": "./dist/types/index.d.ts",
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "@grafana-app/source": "./src/index.ts",
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.cjs"
-    },
-    "./index": {
-      "@grafana-app/source": "./src/index.ts",
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.cjs"
-    },
-    "./common/*": {
-      "@grafana-app/source": "./src/common/*.ts",
-      "types": "./dist/types/common/*.d.ts",
-      "import": "./dist/esm/common/*.mjs",
-      "require": "./dist/cjs/common/*.cjs"
-    },
-    "./raw/composable/*": {
-      "@grafana-app/source": "./src/raw/composable/*.ts",
-      "types": "./dist/types/raw/composable/*.d.ts",
-      "import": "./dist/esm/raw/composable/*.mjs",
-      "require": "./dist/cjs/raw/composable/*.cjs"
-    },
-    "./raw/preferences": {
-      "@grafana-app/source": "./src/raw/preferences/x/preferences_types.gen.ts",
-      "types": "./dist/types/raw/preferences/x/preferences_types.gen.d.ts",
-      "import": "./dist/esm/raw/preferences/x/preferences_types.gen.mjs",
-      "require": "./dist/cjs/raw/preferences/x/preferences_types.gen.cjs"
-    },
-    "./raw/dashboard": {
-      "@grafana-app/source": "./src/raw/dashboard/x/dashboard_types.gen.ts",
-      "types": "./dist/types/raw/dashboard/x/dashboard_types.gen.d.ts",
-      "import": "./dist/esm/raw/dashboard/x/dashboard_types.gen.mjs",
-      "require": "./dist/cjs/raw/dashboard/x/dashboard_types.gen.cjs"
-    },
-    "./raw/librarypanel": {
-      "@grafana-app/source": "./src/raw/librarypanel/x/librarypanel_types.gen.ts",
-      "types": "./dist/types/raw/librarypanel/x/librarypanel_types.gen.d.ts",
-      "import": "./dist/esm/raw/librarypanel/x/librarypanel_types.gen.mjs",
-      "require": "./dist/cjs/raw/librarypanel/x/librarypanel_types.gen.cjs"
-    },
-    "./schema/dashboard/*": {
-      "@grafana-app/source": "./src/schema/dashboard/*.ts",
-      "types": "./dist/types/schema/dashboard/*.d.ts",
-      "import": "./dist/esm/schema/dashboard/*.mjs",
-      "require": "./dist/cjs/schema/dashboard/*.cjs"
-    },
-    "./veneer/*": {
-      "@grafana-app/source": "./src/veneer/*.types.ts",
-      "types": "./dist/types/veneer/*.types.d.ts",
-      "import": "./dist/esm/veneer/*.types.mjs",
-      "require": "./dist/cjs/veneer/*.types.cjs"
-    },
-    "./dist/*": {
-      "types": "./dist/*",
-      "default": "./dist/*"
-    }
-  },
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "main": "./dist/cjs/index.cjs",
+    "module": "./dist/esm/index.mjs",
+    "types": "./dist/types/index.d.ts"
   },
   "files": [
     "dist",
