@@ -26,7 +26,7 @@ import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRan
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
-import { isTimeoutErrorResponse } from './utils/logsVolumeResponse';
+import { isClientErrorResponse } from './utils/logsVolumeResponse';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
@@ -92,7 +92,7 @@ export const LogsVolumePanelList = ({
 
   const canShowPartialData =
     config.featureToggles.lokiShardSplitting && logsVolumeData && logsVolumeData.data.length > 0;
-  const timeoutError = isTimeoutErrorResponse(logsVolumeData);
+  const clientError = isClientErrorResponse(logsVolumeData);
 
   const from = dateTime(Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from));
   const to = dateTime(Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to));
@@ -123,7 +123,7 @@ export const LogsVolumePanelList = ({
         <Trans i18nKey="explore.logs-volume-panel-list.loading">Loading...</Trans>
       </span>
     );
-  } else if (timeoutError && !canShowPartialData) {
+  } else if (clientError && !canShowPartialData) {
     return (
       <SupplementaryResultError
         title={t('explore.logs-volume-panel-list.title-unable-to-show-log-volume', 'Unable to show log volume')}
@@ -184,7 +184,7 @@ export const LogsVolumePanelList = ({
 
   return (
     <div className={styles.listContainer}>
-      {timeoutError && canShowPartialData && (
+      {clientError && canShowPartialData && (
         <SupplementaryResultError
           title={t('explore.logs-volume-panel-list.title-showing-partial-data', 'Showing partial data')}
           message="The query is trying to access too much data and some sharded requests could not be completed. Try decreasing the time range or adding more labels to your query."
