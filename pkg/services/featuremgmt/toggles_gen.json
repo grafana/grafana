@@ -1574,11 +1574,14 @@
     {
       "metadata": {
         "name": "exploreLogsShardSplitting",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-08-29T13:55:59Z"
+        "resourceVersion": "1763611567823",
+        "creationTimestamp": "2024-08-29T13:55:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-20 04:06:07.82367 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
+        "description": "Deprecated. Replace with lokiShardSplitting. Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true
