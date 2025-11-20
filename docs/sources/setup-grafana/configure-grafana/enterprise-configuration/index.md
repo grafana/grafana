@@ -190,6 +190,10 @@ Name of the TrueType font file with bold style.
 
 Name of the TrueType font file with italic style. Default is `DejaVuSansCondensed-Oblique.ttf`.
 
+### font_min_text_size
+
+The minimum pixel size that Grafana uses when rendering fonts. Default is `4`.
+
 ### max_retries_per_panel
 
 Maximum number of times the following reporting rendering requests are retried before returning an error: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle. Default is `3`.
