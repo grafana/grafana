@@ -284,12 +284,11 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 	} else {
-		ca := &connectionAccess{
+		storage[ds.StoragePath()] = &connectionAccess{
 			datasources:    b.datasources,
 			resourceInfo:   ds,
 			tableConverter: ds.TableConverter(),
 		}
-		storage[ds.StoragePath()] = ca
 	}
 
 	// Frontend proxy
