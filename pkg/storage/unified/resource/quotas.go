@@ -152,15 +152,24 @@ func (q *QuotaService) SetConfig(overrides *QuotaOverrides) {
 	q.overridesMutex.Unlock()
 }
 
-func (q *QuotaService) GetQuota(nsr NamespacedResource) ResourceQuota {
+func (q *QuotaService) GetQuota(nsr NamespacedResource) (ResourceQuota, error) {
+	if nsr.Namespace == "" || nsr.Resource == "" || nsr.Group == "" {
+		return ResourceQuota{}, fmt.Errorf("invalid namespaced resource: %+v", nsr)
+	}
+
 	overrides := q.GetConfig()
+	// should never be nil - but just in case
+	if overrides == nil {
+		return ResourceQuota{Limit: DEFAULT_RESOURCE_LIMIT}, nil
+	}
+
 	tenantId := strings.TrimPrefix(nsr.Namespace, "stacks-")
 	groupResource := nsr.Group + "/" + nsr.Resource
 	if tenantQuotas, ok := overrides.Tenants[tenantId]; ok {
 		if resourceQuota, ok := tenantQuotas.Quotas[groupResource]; ok {
-			return resourceQuota
+			return resourceQuota, nil
 		}
 	}
 
-	return ResourceQuota{Limit: DEFAULT_RESOURCE_LIMIT}
+	return ResourceQuota{Limit: DEFAULT_RESOURCE_LIMIT}, nil
 }

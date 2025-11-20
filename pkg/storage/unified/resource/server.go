@@ -668,13 +668,17 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 			Group:     req.Key.Group,
 			Resource:  req.Key.Resource,
 		}
-		quota := s.quotaService.GetQuota(nsr)
-		stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+		quota, err := s.quotaService.GetQuota(nsr)
 		if err != nil {
-			s.log.Error("failed to get resource stats for quota checking", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "error", err)
-		}
-		if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
-			s.log.Info("Quota exceeded on create", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
+			s.log.Error("failed to get quota for resource", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "error", err)
+		} else {
+			stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+			if err != nil {
+				s.log.Error("failed to get resource stats for quota checking", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "error", err)
+			}
+			if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
+				s.log.Info("Quota exceeded on create", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
+			}
 		}
 	}
 
