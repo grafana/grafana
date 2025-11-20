@@ -260,7 +260,7 @@ After you've run the Ansible playbooks, you can verify the following:
 
   ![InfluxDB datasource](/media/docs/grafana-cloud/screenshot-influxdb_datasource_tf.png)
 
-- A new folder is available in Grafana. In the following image, a folder named `Demos` was added.
+- A new folder is available in your Grafana stack. In the following image, a folder named `Demos` was added.
 
   ![Folder](/media/docs/grafana-cloud/screenshot-folder_tf.png)
 
