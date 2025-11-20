@@ -259,22 +259,6 @@ const (
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
 
-	// FlagCanvasPanelPanZoom
-	// Allow pan and zoom in canvas panel
-	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
-
-	// FlagTimeComparison
-	// Enables time comparison option in supported panels
-	FlagTimeComparison = "timeComparison"
-
-	// FlagTableSharedCrosshair
-	// Enables shared crosshair in table panel
-	FlagTableSharedCrosshair = "tableSharedCrosshair"
-
-	// FlagKubernetesFeatureToggles
-	// Use the kubernetes API for feature toggle management in the frontend
-	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"
-
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
 	FlagCloudRBACRoles = "cloudRBACRoles"
