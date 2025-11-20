@@ -111,15 +111,13 @@ describe('runSplitQuery()', () => {
   });
 
   test('Does not retry max bytes errors (error on initial)', async () => {
-    jest
-      .mocked(datasource.runQuery)
-      .mockReturnValueOnce(
-        of({
-          state: LoadingState.Error,
-          errors: [{ refId: 'A', message: LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX }],
-          data: [],
-        })
-      );
+    jest.mocked(datasource.runQuery).mockReturnValueOnce(
+      of({
+        state: LoadingState.Error,
+        errors: [{ refId: 'A', message: LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX }],
+        data: [],
+      })
+    );
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
       expect(response[0].state).toBe(LoadingState.Error);
       // Stop immediately
