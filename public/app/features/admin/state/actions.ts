@@ -4,7 +4,7 @@ import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { featureEnabled, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { FetchDataArgs } from '@grafana/ui';
 import config from 'app/core/config';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { AccessControlAction } from 'app/types/accessControl';
 import { LdapUser } from 'app/types/ldap';

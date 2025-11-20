@@ -912,6 +912,39 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
 			require.Equal(t, expectedRule.Title, result.Data.RuleGroups[0].Rules[0].Name)
 		})
+
+		t.Run("should only return rules with given rule_uid list", func(t *testing.T) {
+			expectedRuleInGroup1 := rulesInGroup1[0]
+			expectedRuleInGroup3 := rulesInGroup3[1]
+
+			r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?rule_uid=%s&rule_uid=%s", expectedRuleInGroup1.UID, expectedRuleInGroup3.UID), nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.True(t, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-1"
+			}))
+			require.True(t, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-3"
+			}))
+			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
+			require.Len(t, result.Data.RuleGroups[1].Rules, 1)
+
+			if result.Data.RuleGroups[0].Name == "rule-group-1" {
+				require.Equal(t, expectedRuleInGroup1.UID, result.Data.RuleGroups[0].Rules[0].UID)
+				require.Equal(t, expectedRuleInGroup3.UID, result.Data.RuleGroups[1].Rules[0].UID)
+			} else {
+				require.Equal(t, expectedRuleInGroup1.UID, result.Data.RuleGroups[1].Rules[0].UID)
+				require.Equal(t, expectedRuleInGroup3.UID, result.Data.RuleGroups[0].Rules[0].UID)
+			}
+		})
 	})
 
 	t.Run("when requesting rules with pagination", func(t *testing.T) {
@@ -1056,6 +1089,154 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 		t.Run("should return nothing when using group_limit=0", func(t *testing.T) {
 			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=0", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 0)
+		})
+	})
+
+	t.Run("when requesting rules with rule_limit pagination", func(t *testing.T) {
+		const namespaceUID = "namespace_0"
+
+		ruleStore := fakes.NewRuleStore(t)
+		fakeAIM := NewFakeAlertInstanceManager(t)
+
+		// Generate 3 rule groups with 10 rules each
+		allRules := make([]*ngmodels.AlertRule, 0, 30)
+		for i := range 3 {
+			rules := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+				RuleGroup:    fmt.Sprintf("rule_group_%d", i),
+				NamespaceUID: namespaceUID,
+				OrgID:        orgID,
+			})).GenerateManyRef(10)
+
+			allRules = append(allRules, rules...)
+			ruleStore.PutRule(context.Background(), rules...)
+		}
+
+		api := NewPrometheusSrv(
+			log.NewNopLogger(),
+			fakeAIM,
+			newFakeSchedulerReader(t).setupStates(fakeAIM),
+			ruleStore,
+			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+			fakes.NewFakeProvisioningStore(),
+		)
+
+		permissions := createPermissionsForRules(allRules, orgID)
+		user := &user.SignedInUser{
+			OrgID:       orgID,
+			Permissions: permissions,
+		}
+		c := &contextmodel.ReqContext{
+			SignedInUser: user,
+		}
+
+		t.Run("should return complete groups until rule_limit is met", func(t *testing.T) {
+			// With rule_limit=15, should return group-0 (10) + group-1 (10)
+			// Even though 20 > 15, we never return partial groups
+			r, err := http.NewRequest("GET", "/api/v1/rules?rule_limit=15", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2, "should return 2 groups")
+			require.Len(t, result.Data.Totals, 0)
+			require.Equal(t, "rule_group_0", result.Data.RuleGroups[0].Name)
+			require.Equal(t, "rule_group_1", result.Data.RuleGroups[1].Name)
+			require.Len(t, result.Data.RuleGroups[0].Rules, 10)
+			require.Len(t, result.Data.RuleGroups[1].Rules, 10)
+
+			expectedToken := ngmodels.EncodeGroupCursor(ngmodels.GroupCursor{
+				NamespaceUID: namespaceUID,
+				RuleGroup:    "rule_group_1",
+			})
+			require.Equal(t, expectedToken, result.Data.NextToken)
+		})
+
+		t.Run("should return two groups when the number of alerts == limit", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?rule_limit=20", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2, "should return 2 groups")
+			require.Len(t, result.Data.Totals, 0)
+			require.Equal(t, "rule_group_0", result.Data.RuleGroups[0].Name)
+			require.Equal(t, "rule_group_1", result.Data.RuleGroups[1].Name)
+			require.Len(t, result.Data.RuleGroups[0].Rules, 10)
+			require.Len(t, result.Data.RuleGroups[1].Rules, 10)
+
+			expectedToken := ngmodels.EncodeGroupCursor(ngmodels.GroupCursor{
+				NamespaceUID: namespaceUID,
+				RuleGroup:    "rule_group_1",
+			})
+			require.Equal(t, expectedToken, result.Data.NextToken)
+		})
+
+		t.Run("should respect group_limit when it is reached first", func(t *testing.T) {
+			// group_limit=1 with rule_limit=100: group limit reached first
+			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=1&rule_limit=100", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 1, "should return 1 group (group_limit=1)")
+			require.Len(t, result.Data.Totals, 0)
+
+			expectedToken := ngmodels.EncodeGroupCursor(ngmodels.GroupCursor{
+				NamespaceUID: namespaceUID,
+				RuleGroup:    "rule_group_0",
+			})
+			require.Equal(t, expectedToken, result.Data.NextToken)
+		})
+
+		t.Run("should respect rule_limit when it is reached first", func(t *testing.T) {
+			// rule_limit=15 with group_limit=5: rule limit reached first (returns 2 groups, 20 rules)
+			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=5&rule_limit=15", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2, "should return 2 groups (20 rules exceeds rule_limit=15)")
+			require.Len(t, result.Data.Totals, 0)
+
+			expectedToken := ngmodels.EncodeGroupCursor(ngmodels.GroupCursor{
+				NamespaceUID: namespaceUID,
+				RuleGroup:    "rule_group_1",
+			})
+			require.Equal(t, expectedToken, result.Data.NextToken)
+		})
+
+		t.Run("should return nothing when using rule_limit=0", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?rule_limit=0", nil)
 			require.NoError(t, err)
 
 			c.Context = &web.Context{Req: r}
