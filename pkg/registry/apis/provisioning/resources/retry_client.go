@@ -95,11 +95,7 @@ func isTransientError(err error) bool {
 
 	// Check for connection errors
 	var opErr *net.OpError
-	if errors.As(err, &opErr) {
-		return true
-	}
-
-	return false
+	return errors.As(err, &opErr)
 }
 
 // retryWithBackoff executes a function with exponential backoff retry logic using wait.ExponentialBackoff
