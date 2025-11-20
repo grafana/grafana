@@ -12,8 +12,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -377,8 +377,8 @@ func TestOpenTsdbExecutor(t *testing.T) {
 						"disableDownsampling": true,
 						"shouldComputeRate": true,
 						"isCounter": true,
-						"counterMax": 45,
-						"counterResetValue": 60,
+						"counterMax": "45",
+						"counterResetValue": "60",
 						"tags": {
 							"env": "prod",
 							"app": "grafana"
@@ -388,6 +388,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		}
 
 		metric := service.buildMetric(query)
+		t.Log(metric)
 
 		require.Len(t, metric, 5)
 		require.Equal(t, "cpu.average.percent", metric["metric"])

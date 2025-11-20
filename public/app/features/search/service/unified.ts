@@ -5,10 +5,10 @@ import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/preferences/v1alpha1';
+import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
 import { dispatch } from 'app/store/store';
 
@@ -318,6 +318,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += '&' + query.uid.map((name) => `name=${encodeURIComponent(name)}`).join('&');
     }
 
+    if (query.permission) {
+      uri += `&permission=${query.permission}`;
+    }
+
     if (query.deleted) {
       uri = `${getAPIBaseURL('dashboard.grafana.app', 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
     }
@@ -382,7 +386,9 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       ...hit,
       uid: hit.name,
       url: toURL(hit.resource, hit.name, hit.title),
-      tags: hit.tags || [],
+      // Sort tags so we aren't reliant on the backend having done this for us
+      // Sorting order can be different between APIs/search implementations
+      tags: (hit.tags || []).sort(),
       folder: hit.folder || 'general',
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID

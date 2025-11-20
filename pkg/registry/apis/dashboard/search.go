@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
@@ -128,6 +129,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "find dashboards that reference a given libraryPanel",
 										Required:    false,
 										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "permission",
+										In:          "query",
+										Description: "permission needed for the resource (View, Edit, Admin)",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("View", "Edit", "Admin"),
 									},
 								},
 								{
@@ -314,6 +324,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	searchRequest.Fields = fields
+
+	switch strings.ToLower(queryParams.Get("permission")) {
+	case "edit":
+		searchRequest.Permission = int64(dashboardaccess.PERMISSION_EDIT)
+	case "view":
+		searchRequest.Permission = int64(dashboardaccess.PERMISSION_VIEW)
+	case "admin":
+		searchRequest.Permission = int64(dashboardaccess.PERMISSION_ADMIN)
+	}
 
 	// A search request can include multiple types, we need to acces the slice directly.
 	types := queryParams["type"]
