@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, dateTime, LoadingState } from '@grafana/data';
+import { DataQueryError, DataQueryRequest, DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { LokiDatasource } from './datasource';
@@ -330,20 +330,108 @@ describe('runSplitQuery()', () => {
     });
   });
 
-  test('Handles and reports errors', async () => {
+  test('Retries 5xx errors', async () => {
+    const { metricFrameA, metricFrameB, metricFrameAB } = getMockFrames();
+    const error: DataQueryError = {
+      message: 'OOPSIE',
+      status: 518,
+    };
+    const errResponse: DataQueryResponse = {
+      state: LoadingState.Error,
+      data: [],
+      errors: [error],
+      key: 'uuid',
+    };
+    const response: DataQueryResponse = {
+      state: LoadingState.Done,
+      data: [metricFrameA],
+      key: 'uuid',
+    };
+    const response2: DataQueryResponse = {
+      state: LoadingState.Done,
+      data: [metricFrameB],
+      key: 'uuid',
+    };
+    jest
+      .spyOn(datasource, 'runQuery')
+      .mockReturnValueOnce(of(errResponse))
+      .mockReturnValueOnce(of(response))
+      .mockReturnValueOnce(of(response2));
+
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
+      expect(values).toHaveLength(4);
+      expect(values[0]).toEqual(
+        expect.objectContaining({
+          data: [metricFrameAB],
+          key: 'uuid',
+          state: LoadingState.Done,
+        })
+      );
+    });
+    expect(datasource.runQuery).toHaveBeenCalledTimes(4);
+  });
+  test('Handles and reports 5xx error too many bytes', async () => {
+    const error: DataQueryError = {
+      message: 'the query would read too many bytes ...',
+      status: 500,
+    };
+    const response: DataQueryResponse = {
+      state: LoadingState.Error,
+      data: [],
+      errors: [error],
+    };
+    jest.spyOn(datasource, 'runQuery').mockReturnValue(of(response));
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
+      expect(values).toHaveLength(1);
+      expect(values[0]).toEqual(
+        expect.objectContaining({
+          errors: [error],
+          state: LoadingState.Error,
+        })
+      );
+    });
+    // Errors are not retried
+    expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+  });
+  test('Handles and reports 4xx errors', async () => {
+    const error: DataQueryError = {
+      message: 'BAD REQUEST',
+      status: 418,
+    };
+    const response: DataQueryResponse = {
+      state: LoadingState.Error,
+      data: [],
+      errors: [error],
+    };
+    jest.spyOn(datasource, 'runQuery').mockReturnValue(of(response));
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
+      expect(values).toHaveLength(1);
+      expect(values[0]).toEqual(
+        expect.objectContaining({
+          errors: [error],
+          state: LoadingState.Error,
+        })
+      );
+    });
+    // Errors are not retried
+    expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+  });
+
+  test('Handles and reports errors (deprecated error)', async () => {
     jest.spyOn(datasource, 'runQuery').mockReturnValue(
       of({
         state: LoadingState.Error,
-        error: { refId: 'A', message: 'the query would read too many bytes...' },
+        error: { refId: 'A', message: 'the query would read too many bytes ...' },
         data: [],
+        key: 'uuid',
       })
     );
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
       expect(values).toHaveLength(1);
       expect(values[0]).toEqual(
         expect.objectContaining({
-          error: { refId: 'A', message: 'the query would read too many bytes...' },
-          state: LoadingState.Streaming,
+          error: { refId: 'A', message: 'the query would read too many bytes ...' },
+          state: LoadingState.Error,
         })
       );
     });

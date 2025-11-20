@@ -148,6 +148,9 @@ export function isRetriableError(errorResponse: DataQueryResponse) {
     // Error response but we're receiving data, continue querying.
     return false;
   }
+  if (is5xxError(errorResponse)) {
+    return true;
+  }
   throw new Error(message);
 }
 
@@ -158,5 +161,13 @@ export function is4xxError(errorResponse: DataQueryResponse) {
    *
    * @param errorResponse
    */
-  return errorResponse.errors?.some((err) => err.status && Array.from(err.status?.toString())[0] === '4');
+  return isHttpErrorType(errorResponse, '4');
+}
+
+export function is5xxError(errorResponse: DataQueryResponse) {
+  return isHttpErrorType(errorResponse, '5');
+}
+
+function isHttpErrorType(errorResponse: DataQueryResponse, responseType: '2' | '3' | '4' | '5') {
+  return errorResponse.errors?.some((err) => err.status && Array.from(err.status?.toString())[0] === responseType);
 }

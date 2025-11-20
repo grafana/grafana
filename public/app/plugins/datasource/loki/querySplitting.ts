@@ -99,6 +99,7 @@ const addLimitsToSplitRequests = (splitQueryIndex: number, shardQueryIndex: numb
     request: {
       ...r.request,
       targets: r.request.targets.map((t) => {
+        // @todo if we retry the first request, we will strip out the query limits context
         if (splitQueryIndex === 0 && shardQueryIndex === 0) {
           // Don't pull from request if it has already been added by `addLimitsToShardGroups`
           return t.limitsContext === undefined ? addQueryLimitsContext(t, r.request) : t;
@@ -145,7 +146,10 @@ export function runSplitGroupedQueries(
     }
 
     const done = () => {
-      mergedResponse.state = LoadingState.Done;
+      if (mergedResponse.state !== LoadingState.Error) {
+        mergedResponse.state = LoadingState.Done;
+      }
+
       subscriber.next(mergedResponse);
       subscriber.complete();
     };
