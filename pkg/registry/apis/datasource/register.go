@@ -37,17 +37,25 @@ var (
 	_ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 )
 
+type DataSourceAPIBuilderConfig struct {
+	LoadQueryTypes bool
+	UseDualWriter  bool
+
+	// This should be removed once we are using the shorter api group names everywhere
+	UseShorterAPIGroupName bool
+}
+
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	datasourceResourceInfo utils.ResourceInfo
-	pluginJSON             plugins.JSONData
-	client                 PluginClient // will only ever be called with the same plugin id!
-	datasources            PluginDatasourceProvider
-	contextProvider        PluginContextWrapper
-	accessControl          accesscontrol.AccessControl
-	queryTypes             *queryV0.QueryTypeDefinitionList
-	configCrudUseNewApis   bool
-	dataSourceCRUDMetric   *prometheus.HistogramVec
+
+	pluginJSON      plugins.JSONData
+	client          PluginClient // will only ever be called with the same plugin id!
+	datasources     PluginDatasourceProvider
+	contextProvider PluginContextWrapper
+	accessControl   accesscontrol.AccessControl
+	queryTypes      *queryV0.QueryTypeDefinitionList
+	cfg             DataSourceAPIBuilderConfig
 }
 
 func RegisterAPIService(
@@ -116,10 +124,11 @@ func RegisterAPIService(
 			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
 			accessControl,
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			false,
-			true, // useShorterAPIGroupName
+			DataSourceAPIBuilderConfig{
+				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+				UseDualWriter:          false,
+				UseShorterAPIGroupName: true,
+			},
 		)
 		if err != nil {
 			return nil, err
@@ -146,14 +155,12 @@ func NewDataSourceAPIBuilder(
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl,
-	loadQueryTypes bool,
-	configCrudUseNewApis bool,
-	useShorterAPIGroupName bool,
+	cfg DataSourceAPIBuilderConfig,
 ) (*DataSourceAPIBuilder, error) {
 	var group string
 	var err error
 
-	if useShorterAPIGroupName {
+	if cfg.UseShorterAPIGroupName {
 		group = plugin.ID
 	} else {
 		group, err = plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
@@ -169,9 +176,9 @@ func NewDataSourceAPIBuilder(
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
-		configCrudUseNewApis:   configCrudUseNewApis,
+		cfg:                    cfg,
 	}
-	if loadQueryTypes {
+	if cfg.LoadQueryTypes {
 		// In the future, this will somehow come from the plugin
 		builder.queryTypes, err = getHardcodedQueryTypes(group)
 	}
@@ -262,7 +269,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storage["connections"] = &noopREST{}                            // hidden from openapi
 	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
 
-	if b.configCrudUseNewApis {
+	if b.cfg.UseDualWriter {
 		legacyStore := &legacyStorage{
 			datasources:                     b.datasources,
 			resourceInfo:                    &ds,
@@ -277,11 +284,12 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 	} else {
-		storage[ds.StoragePath()] = &connectionAccess{
+		ca := &connectionAccess{
 			datasources:    b.datasources,
 			resourceInfo:   ds,
 			tableConverter: ds.TableConverter(),
 		}
+		storage[ds.StoragePath()] = ca
 	}
 
 	// Frontend proxy
