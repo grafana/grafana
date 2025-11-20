@@ -273,6 +273,7 @@ describe('runShardSplitQuery()', () => {
       request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }], {
         range: querySplittingRange,
       });
+      // @ts-expect-error
       jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
         callback();
       });
