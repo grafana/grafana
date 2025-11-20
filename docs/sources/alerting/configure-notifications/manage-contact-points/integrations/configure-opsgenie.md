@@ -20,6 +20,10 @@ weight: 145
 
 Use the Grafana Alerting - Opsgenie integration to receive alert notifications in your Opsgenie alert dashboard when your Grafana alert rules are triggered and resolved.
 
+{{< admonition type="note" >}}
+Atlassian has deprecated OpsGenie in favor of Jira.
+{{< /admonition >}}
+
 ## Before you begin
 
 Create an API key to enable Grafana to send alert notifications to Opsgenie alert dashboard.
