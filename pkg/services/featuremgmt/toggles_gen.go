@@ -1051,7 +1051,7 @@ const (
 	FlagPanelTimeSettings = "panelTimeSettings"
 
 	// FlagDashboardTemplates
-	// Enable template dashboards
+	// Suggests template dashboards when creating new dashboards
 	FlagDashboardTemplates = "dashboardTemplates"
 
 	// FlagKubernetesAnnotations

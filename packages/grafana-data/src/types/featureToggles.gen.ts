@@ -1167,7 +1167,7 @@ export interface FeatureToggles {
   */
   panelTimeSettings?: boolean;
   /**
-  * Enable template dashboards
+  * Suggests template dashboards when creating new dashboards
   */
   dashboardTemplates?: boolean;
   /**

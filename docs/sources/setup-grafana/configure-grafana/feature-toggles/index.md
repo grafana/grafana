@@ -101,6 +101,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureResourcePickerUpdates`      | Enables the updated Azure Monitor resource picker                                                      |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
+| `dashboardTemplates`              | Suggests template dashboards when creating new dashboards                                              |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 
 ## Development feature toggles

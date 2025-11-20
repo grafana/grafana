@@ -2031,7 +2031,7 @@ var (
 		},
 		{
 			Name:         "dashboardTemplates",
-			Description:  "Enable template dashboards",
+			Description:  "Suggests template dashboards when creating new dashboards",
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,

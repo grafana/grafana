@@ -1205,12 +1205,15 @@
     {
       "metadata": {
         "name": "dashboardTemplates",
-        "resourceVersion": "1761575312733",
-        "creationTimestamp": "2025-10-27T14:28:32Z"
+        "resourceVersion": "1763641187668",
+        "creationTimestamp": "2025-10-27T14:28:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-20 12:19:47.668191 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enable template dashboards",
-        "stage": "experimental",
+        "description": "Suggests template dashboards when creating new dashboards",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad"
       }
     },
