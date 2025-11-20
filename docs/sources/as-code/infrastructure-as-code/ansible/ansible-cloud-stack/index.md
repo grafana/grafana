@@ -112,7 +112,7 @@ Create a file named `data-source.yml`:
       access: 'proxy'
 
   tasks:
-    - name: Create/Update Data sources
+    - name: Create/Update Data source
       grafana.grafana.datasource:
         datasource: '{{ item }}'
         stack_slug: '{{ stack_name }}'
