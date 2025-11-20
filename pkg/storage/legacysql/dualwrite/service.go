@@ -15,6 +15,25 @@ import (
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
 
+// fakeMigrator is a no-op implementation of UnifiedStorageMigrationService
+type fakeMigrator struct{}
+
+func (f *fakeMigrator) Run(ctx context.Context) error {
+	return nil
+}
+
+var _ unifiedmigrations.UnifiedStorageMigrationService = (*fakeMigrator)(nil)
+
+func NewFakeMigrator() unifiedmigrations.UnifiedStorageMigrationService {
+	return &fakeMigrator{}
+}
+
+func NewFakeConfig() *setting.Cfg {
+	return &setting.Cfg{
+		UnifiedStorage: make(map[string]setting.UnifiedStorageConfig),
+	}
+}
+
 func ProvideStaticServiceForTests(cfg *setting.Cfg) Service {
 	if cfg == nil {
 		cfg = &setting.Cfg{}

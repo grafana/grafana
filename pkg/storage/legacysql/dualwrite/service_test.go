@@ -12,34 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
-
-// fakeMigrator is a no-op implementation of UnifiedStorageMigrationService for tests.
-type fakeMigrator struct{}
-
-func (f *fakeMigrator) Run(ctx context.Context) error {
-	return nil
-}
-
-var _ unifiedmigrations.UnifiedStorageMigrationService = (*fakeMigrator)(nil)
-
-// newFakeMigrator creates a fake migrator for testing.
-func newFakeMigrator() unifiedmigrations.UnifiedStorageMigrationService {
-	return &fakeMigrator{}
-}
-
-// newFakeConfig creates a minimal config for testing.
-func newFakeConfig() *setting.Cfg {
-	return &setting.Cfg{
-		UnifiedStorage: make(map[string]setting.UnifiedStorageConfig),
-	}
-}
 
 func TestService(t *testing.T) {
 	t.Run("dynamic", func(t *testing.T) {
 		ctx := context.Background()
-		mode, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), kvstore.NewFakeKVStore(), newFakeConfig(), newFakeMigrator())
+		mode, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator())
 		require.NoError(t, err)
 
 		gr := schema.GroupResource{Group: "ggg", Resource: "rrr"}
@@ -144,7 +122,7 @@ func TestService(t *testing.T) {
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				ctx := context.Background()
-				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg, newFakeMigrator())
+				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg, NewFakeMigrator())
 				if tc.error != "" {
 					require.ErrorContains(t, err, tc.error)
 					require.Nil(t, svc, "expect a nil service when an error exts")
