@@ -125,6 +125,7 @@ func RegisterAPIService(
 			contextProvider,
 			accessControl,
 			DataSourceAPIBuilderConfig{
+				//nolint:staticcheck // not yet migrated to OpenFeature
 				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
 				UseDualWriter:          false,
 				UseShorterAPIGroupName: true,
