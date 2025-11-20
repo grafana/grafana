@@ -252,7 +252,7 @@ ansible-playbook dashboard.yml
 
 After you've run the Ansible playbooks, you can verify the following:
 
-- The new Grafana stack is created and visible in the Cloud Portal.
+- The new Grafana Cloud stack is created and visible in the Cloud Portal.
 
   ![Cloud Portal](/static/img/docs/grafana-cloud/terraform/cloud_portal_tf.png)
 
