@@ -16,11 +16,11 @@ import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
+import { hasClientSideFilters } from './hooks/grafanaFilter';
 import {
   GrafanaRuleWithOrigin,
   PromRuleWithOrigin,
   RuleWithOrigin,
-  hasClientSideFilters,
   useFilteredRulesIteratorProvider,
 } from './hooks/useFilteredRulesIterator';
 import { FRONTEND_LIST_PAGE_SIZE, getSearchApiGroupPageSize } from './paginationLimits';

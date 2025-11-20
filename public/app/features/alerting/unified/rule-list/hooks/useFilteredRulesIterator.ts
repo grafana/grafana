@@ -15,7 +15,6 @@ import {
   PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { shouldUseBackendFilters } from '../../featureToggles';
 import { RuleSource, RulesFilter } from '../../search/rulesSearchParser';
 import {
   getDataSourceByUid,
@@ -25,7 +24,8 @@ import {
 } from '../../utils/datasource';
 import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
-import { getDatasourceFilter, getGrafanaFilter } from './filters';
+import { getDatasourceFilter } from './datasourceFilter';
+import { getGrafanaFilter } from './grafanaFilter';
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
 export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
@@ -144,28 +144,6 @@ export function useFilteredRulesIteratorProvider() {
   };
 
   return getFilteredRulesIterable;
-}
-
-/**
- * Determines if client-side filtering is needed for Grafana-managed rules.
- */
-export function hasClientSideFilters(filterState: RulesFilter): boolean {
-  const useBackendFilters = shouldUseBackendFilters();
-
-  return (
-    // When backend filters are disabled, title search, type filter, dashboard filter, and group name filter need client-side filtering
-    (!useBackendFilters &&
-      (filterState.freeFormWords.length > 0 ||
-        Boolean(filterState.ruleName) ||
-        Boolean(filterState.ruleType) ||
-        Boolean(filterState.dashboardUid) ||
-        Boolean(filterState.groupName))) ||
-    // Client-side only filters:
-    Boolean(filterState.namespace) ||
-    filterState.dataSourceNames.length > 0 ||
-    filterState.labels.length > 0 ||
-    filterState.ruleSource === RuleSource.DataSource
-  );
 }
 
 function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): AsyncIterableX<RuleWithOrigin> {

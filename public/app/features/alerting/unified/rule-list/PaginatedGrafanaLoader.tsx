@@ -18,7 +18,7 @@ import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
-import { getGrafanaFilter } from './hooks/filters';
+import { getGrafanaFilter } from './hooks/grafanaFilter';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
