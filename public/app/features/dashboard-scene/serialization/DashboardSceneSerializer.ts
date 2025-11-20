@@ -65,6 +65,7 @@ export interface DashboardTrackingInfo {
   title?: string;
   schemaVersion: number;
   panels_count: number;
+  rowCount?: number;
   settings_nowdelay?: number;
   settings_livenow?: boolean;
 }
@@ -455,11 +456,18 @@ export class V2DashboardSerializer
     const variables =
       'variables' in this.initialSaveModel! ? getV2SchemaVariables(this.initialSaveModel.variables) : [];
 
+    const rowCount =
+      'layout' in this.initialSaveModel
+        ? this.initialSaveModel.layout.kind === 'RowsLayout'
+          ? this.initialSaveModel.layout.spec.rows.length
+          : 0
+        : 0;
     return {
       schemaVersion: DASHBOARD_SCHEMA_VERSION,
       uid: s.state.uid,
       title: this.initialSaveModel.title,
       panels_count: panelPluginIds.length || 0,
+      rowCount,
       settings_nowdelay: undefined,
       settings_livenow: !!this.initialSaveModel.liveNow,
       ...panels,
