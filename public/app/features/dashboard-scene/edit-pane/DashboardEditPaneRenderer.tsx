@@ -35,7 +35,7 @@ export function DashboardEditPaneRenderer({ editPane, isEditPaneCollapsed, onTog
   const isNewElement = selection?.isNewElement() ?? false;
   const [outlineCollapsed, setOutlineCollapsed] = useLocalStorage(
     'grafana.dashboard.edit-pane.outline.collapsed',
-    true
+    false
   );
   const [outlinePaneSize = 0.4, setOutlinePaneSize] = useLocalStorage('grafana.dashboard.edit-pane.outline.size', 0.4);
 

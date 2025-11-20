@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
@@ -20,6 +23,7 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -35,15 +39,29 @@ import (
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 var (
-	_      DashboardAccess = (*dashboardSqlAccess)(nil)
-	tracer                 = otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy")
+	tracer = otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy")
 )
+
+type MigrateOptions struct {
+	Namespace   string
+	Resources   []schema.GroupResource
+	WithHistory bool // only applies to dashboards
+	OnlyCount   bool // just count the values
+	Progress    func(count int, msg string)
+}
+
+type BlobStoreInfo struct {
+	Count int64
+	Size  int64
+}
 
 type dashboardRow struct {
 	// The numeric version for this dashboard
@@ -63,8 +81,9 @@ type dashboardRow struct {
 type dashboardSqlAccess struct {
 	sql          legacysql.LegacyDatabaseProvider
 	namespacer   request.NamespaceMapper
-	provisioning provisioning.ProvisioningService
+	provisioning provisioning.StubProvisioningService
 
+	// TODO: consider enabling this by default for on-prem migrations
 	invalidDashboardParseFallbackEnabled bool
 
 	// Use for writing (not reading)
@@ -73,7 +92,7 @@ type dashboardSqlAccess struct {
 	dashboardPermissionSvc accesscontrol.DashboardPermissionsService
 
 	accessControl   accesscontrol.AccessControl
-	libraryPanelSvc librarypanels.Service
+	libraryPanelSvc librarypanels.Service // only used for save dashboard
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -81,7 +100,27 @@ type dashboardSqlAccess struct {
 	log         log.Logger
 }
 
-func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
+// ProvideMigratorDashboardAccessor creates a DashboardAccess specifically for migration purposes.
+// This provider is used by Wire DI and only includes the minimal dependencies needed for migrations.
+func ProvideMigratorDashboardAccessor(
+	sql legacysql.LegacyDatabaseProvider,
+	provisioning provisioning.StubProvisioningService,
+	accessControl accesscontrol.AccessControl,
+	features featuremgmt.FeatureToggles,
+) MigrationDashboardAccessor {
+	return &dashboardSqlAccess{
+		sql:                                  sql,
+		namespacer:                           claims.OrgNamespaceFormatter,
+		dashStore:                            nil, // not needed for migration
+		provisioning:                         provisioning,
+		dashboardPermissionSvc:               nil, // not needed for migration
+		libraryPanelSvc:                      nil, // not needed for migration
+		accessControl:                        accessControl,
+		invalidDashboardParseFallbackEnabled: features.IsEnabled(context.Background(), featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled),
+	}
+}
+
+func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
@@ -90,7 +129,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	features featuremgmt.FeatureToggles,
-) DashboardAccess {
+) *dashboardSqlAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
 		sql:                                  sql,
@@ -101,7 +140,6 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		dashboardPermissionSvc:               dashboardPermissionSvc,
 		libraryPanelSvc:                      libraryPanelSvc,
 		accessControl:                        accessControl,
-		log:                                  log.New("dashboard.legacysql"),
 		invalidDashboardParseFallbackEnabled: features.IsEnabled(context.Background(), featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled),
 	}
 }
@@ -147,6 +185,290 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		a:       a,
 		history: query.GetHistory,
 	}, err
+}
+
+// CountResources counts resources without migrating them
+func (a *dashboardSqlAccess) CountResources(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error) {
+	sql, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ns, err := claims.ParseNamespace(opts.Namespace)
+	if err != nil {
+		return nil, err
+	}
+	orgId := ns.OrgID
+	rsp := &resourcepb.BulkResponse{}
+	err = sql.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for _, res := range opts.Resources {
+			switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
+			case "folder.grafana.app/folders":
+				summary := &resourcepb.BulkResponse_Summary{}
+				summary.Group = folders.GROUP
+				summary.Group = folders.RESOURCE
+				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
+					" WHERE is_folder=TRUE AND org_id=?", orgId).Get(&summary.Count)
+				rsp.Summary = append(rsp.Summary, summary)
+
+			case "dashboard.grafana.app/librarypanels":
+				summary := &resourcepb.BulkResponse_Summary{}
+				summary.Group = dashboardV1.GROUP
+				summary.Resource = dashboardV1.LIBRARY_PANEL_RESOURCE
+				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("library_element")+
+					" WHERE org_id=?", orgId).Get(&summary.Count)
+				rsp.Summary = append(rsp.Summary, summary)
+
+			case "dashboard.grafana.app/dashboards":
+				summary := &resourcepb.BulkResponse_Summary{}
+				summary.Group = dashboardV1.GROUP
+				summary.Resource = dashboardV1.DASHBOARD_RESOURCE
+				rsp.Summary = append(rsp.Summary, summary)
+
+				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
+					" WHERE is_folder=FALSE AND org_id=?", orgId).Get(&summary.Count)
+				if err != nil {
+					return err
+				}
+
+				// Also count history
+				_, err = sess.SQL(`SELECT COUNT(*)
+						FROM `+sql.Table("dashboard_version")+` as dv
+						JOIN `+sql.Table("dashboard")+`         as dd
+						ON dd.id = dv.dashboard_id
+						WHERE org_id=?`, orgId).Get(&summary.History)
+			}
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return rsp, nil
+}
+
+// MigrateDashboards handles the dashboard migration logic
+func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+	query := &DashboardQuery{
+		OrgID:         orgId,
+		Limit:         100000000,
+		GetHistory:    opts.WithHistory, // include history
+		AllowFallback: true,             // allow fallback to dashboard table during migration
+		Order:         "ASC",            // oldest first
+	}
+
+	blobs := &BlobStoreInfo{}
+	sql, err := a.sql(ctx)
+	if err != nil {
+		return blobs, err
+	}
+
+	opts.Progress(-1, "migrating dashboards...")
+	rows, err := a.getRows(ctx, sql, query)
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
+	}
+	if err != nil {
+		return blobs, err
+	}
+
+	// Now send each dashboard
+	for i := 1; rows.Next(); i++ {
+		dash := rows.row.Dash
+		if dash.APIVersion == "" {
+			dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboardV1.GROUP)
+		}
+		dash.SetNamespace(opts.Namespace)
+		dash.SetResourceVersion("") // it will be filled in by the backend
+
+		body, err := json.Marshal(dash)
+		if err != nil {
+			err = fmt.Errorf("error reading json from: %s // %w", rows.row.Dash.Name, err)
+			return blobs, err
+		}
+
+		req := &resourcepb.BulkRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: opts.Namespace,
+				Group:     dashboardV1.GROUP,
+				Resource:  dashboardV1.DASHBOARD_RESOURCE,
+				Name:      rows.Name(),
+			},
+			Value:  body,
+			Folder: rows.row.FolderUID,
+			Action: resourcepb.BulkRequest_ADDED,
+		}
+		if dash.Generation > 1 {
+			req.Action = resourcepb.BulkRequest_MODIFIED
+		} else if dash.Generation < 0 {
+			req.Action = resourcepb.BulkRequest_DELETED
+		}
+
+		opts.Progress(i, fmt.Sprintf("[v:%2d] %s (size:%d / %d|%d)", dash.Generation, dash.Name, len(req.Value), i, rows.count))
+
+		err = stream.Send(req)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				opts.Progress(i, fmt.Sprintf("stream EOF/cancelled. index=%d", i))
+				err = nil
+			}
+			return blobs, err
+		}
+	}
+
+	if len(rows.rejected) > 0 {
+		for _, row := range rows.rejected {
+			id := row.Dash.Labels[utils.LabelKeyDeprecatedInternalID]
+			a.log.Warn("rejected dashboard",
+				"namespace", opts.Namespace,
+				"dashboard", row.Dash.Name,
+				"uid", row.Dash.UID,
+				"id", id,
+				"version", row.Dash.Generation,
+			)
+			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
+		}
+	}
+
+	if rows.Error() != nil {
+		return blobs, rows.Error()
+	}
+
+	opts.Progress(-2, fmt.Sprintf("finished dashboards... (%d)", rows.count))
+	return blobs, err
+}
+
+// MigrateFolders handles the folder migration logic
+func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+	query := &DashboardQuery{
+		OrgID:      orgId,
+		Limit:      100000000,
+		GetFolders: true,
+		Order:      "ASC",
+	}
+
+	sql, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	opts.Progress(-1, "migrating folders...")
+	rows, err := a.getRows(ctx, sql, query)
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Now send each dashboard
+	for i := 1; rows.Next(); i++ {
+		dash := rows.row.Dash
+		dash.APIVersion = "folder.grafana.app/v1beta1"
+		dash.Kind = "Folder"
+		dash.SetNamespace(opts.Namespace)
+		dash.SetResourceVersion("") // it will be filled in by the backend
+
+		spec := map[string]any{
+			"title": dash.Spec.Object["title"],
+		}
+		description := dash.Spec.Object["description"]
+		if description != nil {
+			spec["description"] = description
+		}
+		dash.Spec.Object = spec
+
+		body, err := json.Marshal(dash)
+		if err != nil {
+			return nil, err
+		}
+
+		req := &resourcepb.BulkRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: opts.Namespace,
+				Group:     "folder.grafana.app",
+				Resource:  "folders",
+				Name:      rows.Name(),
+			},
+			Value:  body,
+			Folder: rows.row.FolderUID,
+			Action: resourcepb.BulkRequest_ADDED,
+		}
+		if dash.Generation > 1 {
+			req.Action = resourcepb.BulkRequest_MODIFIED
+		} else if dash.Generation < 0 {
+			req.Action = resourcepb.BulkRequest_DELETED
+		}
+
+		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", dash.Generation, dash.Name, len(req.Value)))
+
+		err = stream.Send(req)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
+			return nil, err
+		}
+	}
+
+	if rows.Error() != nil {
+		return nil, rows.Error()
+	}
+
+	opts.Progress(-2, fmt.Sprintf("finished folders... (%d)", rows.count))
+	return nil, err
+}
+
+// MigrateLibraryPanels handles the library panel migration logic
+func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+	opts.Progress(-1, "migrating library panels...")
+	panels, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
+		OrgID: orgId,
+		Limit: 1000000,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for i, panel := range panels.Items {
+		meta, err := utils.MetaAccessor(&panel)
+		if err != nil {
+			return nil, err
+		}
+		body, err := json.Marshal(panel)
+		if err != nil {
+			return nil, err
+		}
+
+		req := &resourcepb.BulkRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: opts.Namespace,
+				Group:     dashboardV1.GROUP,
+				Resource:  dashboardV1.LIBRARY_PANEL_RESOURCE,
+				Name:      panel.Name,
+			},
+			Value:  body,
+			Folder: meta.GetFolder(),
+			Action: resourcepb.BulkRequest_ADDED,
+		}
+		if panel.Generation > 1 {
+			req.Action = resourcepb.BulkRequest_MODIFIED
+		}
+
+		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", i, meta.GetName(), len(req.Value)))
+
+		err = stream.Send(req)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
+			return nil, err
+		}
+	}
+	opts.Progress(-2, fmt.Sprintf("finished panels... (%d)", len(panels.Items)))
+	return nil, nil
 }
 
 var _ resource.ListIterator = (*rowsWrapper)(nil)
