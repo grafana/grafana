@@ -69,10 +69,11 @@ type alertRuleVersion struct {
 	NotificationSettings        string `xorm:"notification_settings"`
 	Metadata                    string `xorm:"metadata"`
 	MissingSeriesEvalsToResolve *int64 `xorm:"missing_series_evals_to_resolve"`
+	Message                     string
 }
 
 // EqualSpec compares two alertRuleVersion objects for equality based on their specifications and returns true if they match.
-// The comparison is very basic and can produce false-negative. Fields excluded: ID, ParentVersion, RestoredFrom, Version, Created, RuleGroupIndex and CreatedBy
+// The comparison is very basic and can produce false-negative. Fields excluded: ID, ParentVersion, RestoredFrom, Version, Created, RuleGroupIndex, CreatedBy and Message
 func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
 	return a.RuleOrgID == b.RuleOrgID &&
 		a.RuleGUID == b.RuleGUID &&
