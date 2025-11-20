@@ -21,6 +21,16 @@ Before you begin, make sure you have the following available:
 - A Grafana Cloud account
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/index.html) installed on your machine
 
+## Install the Grafana Ansible collection
+
+Install the Grafana Ansible collection:
+
+```sh
+ansible-galaxy collection install grafana.grafana
+```
+
+This collection provides all the modules needed to manage Grafana Cloud stacks and resources.
+
 ## Create a Cloud stack
 
 First, create a Grafana Cloud Access Policy and get a token. You'll need this for the Ansible playbook to be able to create a Grafana Cloud stack. Refer to [Create a Grafana Cloud Access Policy](/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/create-access-policies/).
