@@ -9,7 +9,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { RuleDefinitionSection } from 'app/features/alerting/unified/components/RuleDefinitionSection';
 
-import { isGrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
+import { isCloudGroupUpdatedResponse, isGrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
 import { useAddRuleToRuleGroup } from '../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { AlertManagerManualRouting, ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
@@ -19,6 +19,13 @@ import { getRuleGroupLocationFromFormValues } from '../utils/rules';
 import { RuleConditionSection } from './RuleConditionSection';
 import { RuleNotificationSection } from './RuleNotificationSection';
 
+/**
+ * Normalizes contact point fields to ensure all properties have defined values.
+ * This is only needed for the "Continue in Alerting" flow, which passes RuleFormValues
+ * directly to the rule editor page. The submit flow doesn't need this because
+ * getNotificationSettingsForDTO (called by formValuesToRulerGrafanaRuleDTO) already
+ * handles partial/missing fields when building the DTO for the backend.
+ */
 function normalizeContactPoints(
   contactPoints: AlertManagerManualRouting | undefined
 ): AlertManagerManualRouting | undefined {
@@ -84,6 +91,9 @@ export function AlertRuleDrawerForm({
 
   const submit = async (values: RuleFormValues) => {
     try {
+      // The drawer doesn't expose a group field to keep the UX simple.
+      // We derive the group name from the rule name as a sensible default.
+      // The 'default' fallback should rarely occur since 'name' is a required field.
       const groupName =
         values.group && values.group.trim().length > 0 ? values.group : values.name?.trim() || 'default';
       const effectiveValues: RuleFormValues = { ...values, group: groupName };
@@ -97,10 +107,11 @@ export function AlertRuleDrawerForm({
         return;
       }
 
-      // Check if result has an error message
-      if (result && typeof result === 'object' && 'error' in result) {
-        notifyApp.error('Failed to create rule', String(result.error));
+      // Handle cloud rules error response
+      if (isCloudGroupUpdatedResponse(result)) {
+        notifyApp.error('Failed to create rule', result.error);
       } else {
+        // This should not happen with the current discriminated union types
         notifyApp.error('Failed to create rule', 'Please review the form and try again.');
       }
     } catch (err) {
@@ -147,6 +158,7 @@ export function AlertRuleDrawerForm({
                       ...currentValues,
                       contactPoints: normalizeContactPoints(currentValues.contactPoints),
                     });
+                    onClose();
                   }}
                 >
                   {t('alerting.simplified.continue-in-alerting', 'Continue in Alerting')}
