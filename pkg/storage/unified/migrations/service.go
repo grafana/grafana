@@ -65,8 +65,8 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 	// TODO: Re-enable once migrations are ready
 	// TODO: add guarantee that this only runs once
-	return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client)
-	// return nil
+	// return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client)
+	return nil
 }
 
 // RegisterMigrations initializes and registers all unified storage migrations.
