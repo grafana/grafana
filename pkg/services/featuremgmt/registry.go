@@ -616,14 +616,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "logsInfiniteScrolling",
-			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true",
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "tableSharedCrosshair",
 			Description:  "Enables shared crosshair in table panel",
 			FrontendOnly: true,
@@ -825,15 +817,22 @@ var (
 		},
 		{
 			Name:         "dashboardLibrary",
-			Description:  "Enable dashboard library experiments that are production ready",
+			Description:  "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
 		},
 		{
 			Name:         "suggestedDashboards",
-			Description:  "Enable suggested dashboards when creating new dashboards",
+			Description:  "Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+		},
+		{
+			Name:         "dashboardTemplates",
+			Description:  "Enables a flow to get started with a new dashboard from a template",
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
 		},
@@ -984,7 +983,7 @@ var (
 		},
 		{
 			Name:         "exploreLogsShardSplitting",
-			Description:  "Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
+			Description:  "Deprecated. Replace with lokiShardSplitting. Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
@@ -1088,6 +1087,13 @@ var (
 		{
 			Name:         "timeRangePan",
 			Description:  "Enables time range panning functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "newTimeRangeZoomShortcuts",
+			Description:  "Enables new keyboard shortcuts for time range zoom operations",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
@@ -1899,13 +1905,6 @@ var (
 			HideFromDocs:    false,
 		},
 		{
-			Name:         "dashboardTemplates",
-			Description:  "Enable template dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSharingSquad,
-			FrontendOnly: false,
-		},
-		{
 			Name:        "kubernetesAnnotations",
 			Description: "Enables app platform API for annotations",
 			Stage:       FeatureStageExperimental,
@@ -1932,6 +1931,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "lokiQueryLimitsContext",
+			Description:  "Send X-Loki-Query-Limits-Context header to Loki on first split request",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:            "rudderstackUpgrade",

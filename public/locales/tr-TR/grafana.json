@@ -8589,7 +8589,13 @@
       "saving": "<1></1> kaydediliyor"
     },
     "axis-builder": {
-      "linear-threshold": "Doğrusal eşik",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Günlük tabanı"
     },
     "builder": {
@@ -8995,6 +9001,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Sağ Y eksenini kullan"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9286,6 +9297,7 @@
       "toggle-panel-edit": "Panel düzenleme görünümünü aç/kapat",
       "toggle-panel-fullscreen": "Panel tam ekran görünümünü aç/kapat",
       "toggle-panel-legend": "Panel açıklamasını aç/kapat",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Zaman aralığını büyüt"
     },
     "title": "Kısayollar"
@@ -12538,11 +12550,14 @@
       "copy-clipboard": "Panoya kopyala",
       "copy-to-clipboard-and-close": "Panoya kopyala ve kapat",
       "description-name-to-easily-identify-the-token": "Belirteci kolayca tanımlamak için ad",
+      "description-no-expiration-disabled": "",
       "description-token": "Bu noktada belirteci kopyalayın çünkü tekrar göremeyeceksiniz. Belirtecin kaybedilmesi yeni bir belirteç oluşturulmasını gerektirir.",
       "generate-token": "Belirteç oluştur",
       "label-display-name": "Görünen ad",
       "label-expiration": "Son",
       "label-expiration-date": "Son kullanma tarihi",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Belirteç"
     },
     "get-actions-cell": {

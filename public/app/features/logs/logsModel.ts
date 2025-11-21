@@ -41,7 +41,6 @@ import {
 } from '@grafana/data';
 import { SIPrefix } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
@@ -576,8 +575,7 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
         metaLimitValue = `${limit} lines shown — ${coverage}% (${rangeUtil.msRangeToTimeString(visibleRangeMs)}) of ${rangeUtil.msRangeToTimeString(requestedRangeMs)}`;
       }
     } else {
-      const description = config.featureToggles.logsInfiniteScrolling ? 'displayed' : 'returned';
-      metaLimitValue = `${logsModel.rows.length} ${logsModel.rows.length > 1 ? 'lines' : 'line'} ${description}`;
+      metaLimitValue = `${logsModel.rows.length} ${logsModel.rows.length > 1 ? 'lines' : 'line'} displayed`;
     }
 
     logsModelMeta[limitIndex] = {
