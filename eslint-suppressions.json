@@ -597,9 +597,6 @@
   "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/DataSourceSettings/types.ts": {
