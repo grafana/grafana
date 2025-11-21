@@ -886,11 +886,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/UnitPicker/UnitPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
