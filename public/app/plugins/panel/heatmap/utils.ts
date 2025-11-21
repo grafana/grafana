@@ -54,6 +54,7 @@ interface PrepConfigOpts {
   ySizeDivisor?: number;
   selectionMode?: HeatmapSelectionMode;
   xAxisConfig?: Parameters<UPlotConfigPrepFn>[0]['xAxisConfig'];
+  rowsFrame?: { yBucketScale?: { type: ScaleDistribution; log?: number; linearThreshold?: number } };
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -69,7 +70,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     ySizeDivisor,
     selectionMode = HeatmapSelectionMode.X,
     xAxisConfig,
+    rowsFrame,
   } = opts;
+
+  const yBucketScale = rowsFrame?.yBucketScale;
 
   const xScaleKey = 'x';
   let isTime = true;
@@ -196,8 +200,14 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
-  // const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || isSparseHeatmap;
-  const shouldUseLogScale = false;
+
+  // Determine shouldUseLogScale based on yBucketScale option when available (calculate from data: No)
+  // If yBucketScale is undefined (Auto), use the old behavior (check yScale)
+  // If yBucketScale is Linear, force linear scale (current PR behavior)
+  const shouldUseLogScale = yBucketScale
+    ? yBucketScale.type !== ScaleDistribution.Linear
+    : yScale.type !== ScaleDistribution.Linear || isSparseHeatmap;
+
   const isOrdinalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   // random to prevent syncing y in other heatmaps
@@ -384,7 +394,7 @@ export function prepConfig(opts: PrepConfigOpts) {
             return splits.map((v) =>
               v < 0
                 ? (meta.yMinDisplay ?? '') // Check prometheus style labels
-                : (meta.yOrdinalDisplay[v] ?? '')
+                : (meta.yOrdinalDisplay?.[v] ?? '')
             );
           }
           return splits;

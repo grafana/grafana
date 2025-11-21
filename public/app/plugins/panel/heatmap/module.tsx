@@ -15,6 +15,7 @@ import { addHeatmapCalculationOptions } from 'app/features/transformers/calculat
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapPanel } from './HeatmapPanel';
+import { YBucketScaleEditor } from './YBucketScaleEditor';
 import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { colorSchemes, quantizeScheme } from './palettes';
@@ -92,6 +93,17 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
 
     if (opts.calculate) {
       addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
+    }
+
+    if (!opts.calculate) {
+      builder.addCustomEditor({
+        id: 'rowsFrame-yBucketScale',
+        path: 'rowsFrame.yBucketScale',
+        name: t('heatmap.name-y-bucket-scale', 'Y bucket scale'),
+        category,
+        editor: YBucketScaleEditor,
+        defaultValue: undefined,
+      });
     }
 
     category = [t('heatmap.category-y-axis', 'Y Axis')];
@@ -175,7 +187,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         path: 'rowsFrame.layout',
         name: t('heatmap.name-tick-alignment', 'Tick alignment'),
         defaultValue: defaultOptions.rowsFrame?.layout ?? HeatmapCellLayout.auto,
-        category,
+        category: [t('heatmap.category-y-axis', 'Y Axis')],
         settings: {
           options: [
             { label: t('heatmap.tick-alignment-options.label-auto', 'Auto'), value: HeatmapCellLayout.auto },
