@@ -1,8 +1,5 @@
 ---
 aliases:
-  - data-sources/
-  - overview/
-  - ./features/datasources/
 labels:
   products:
     - cloud
