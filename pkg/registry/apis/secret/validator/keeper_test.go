@@ -35,36 +35,6 @@ func TestValidateKeeper(t *testing.T) {
 		})
 	})
 
-	t.Run("only one `keeper` must be present", func(t *testing.T) {
-		keeper := &secretv1beta1.Keeper{
-			ObjectMeta: objectMeta,
-			Spec: secretv1beta1.KeeperSpec{
-				Description:    "short description",
-				Aws:            &secretv1beta1.KeeperAWSConfig{},
-				Azure:          &secretv1beta1.KeeperAzureConfig{},
-				Gcp:            &secretv1beta1.KeeperGCPConfig{},
-				HashiCorpVault: &secretv1beta1.KeeperHashiCorpConfig{},
-			},
-		}
-
-		errs := validator.Validate(keeper, nil, admission.Create)
-		require.Len(t, errs, 1)
-		require.Equal(t, "spec", errs[0].Field)
-	})
-
-	t.Run("at least one `keeper` must be present", func(t *testing.T) {
-		keeper := &secretv1beta1.Keeper{
-			ObjectMeta: objectMeta,
-			Spec: secretv1beta1.KeeperSpec{
-				Description: "description",
-			},
-		}
-
-		errs := validator.Validate(keeper, nil, admission.Create)
-		require.Len(t, errs, 1)
-		require.Equal(t, "spec", errs[0].Field)
-	})
-
 	t.Run("aws keeper validation", func(t *testing.T) {
 		validKeeperAWS := &secretv1beta1.Keeper{
 			ObjectMeta: objectMeta,
@@ -340,5 +310,28 @@ func TestValidateKeeper(t *testing.T) {
 		errs = validator.Validate(keeper, nil, admission.Create)
 		require.Len(t, errs, 1)
 		require.Equal(t, "metadata.namespace", errs[0].Field)
+	})
+
+	t.Run("keeper name `system` is reserved", func(t *testing.T) {
+		keeper := &secretv1beta1.Keeper{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "system",
+				Namespace: "ns1",
+			},
+			Spec: secretv1beta1.KeeperSpec{
+				Description: "description",
+				HashiCorpVault: &secretv1beta1.KeeperHashiCorpConfig{
+					Address: "http://address",
+					Token: secretv1beta1.KeeperCredentialValue{
+						ValueFromConfig: "config.path.value",
+					},
+				},
+			},
+		}
+
+		errs := validator.Validate(keeper, nil, admission.Create)
+		require.Len(t, errs, 1)
+		require.Equal(t, "name", errs[0].Field)
+		require.Equal(t, "the keeper name `system` is reserved", errs[0].Detail)
 	})
 }

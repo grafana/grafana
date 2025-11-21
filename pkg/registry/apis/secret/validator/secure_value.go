@@ -110,11 +110,6 @@ func validateSecureValueUpdate(sv, oldSv *secretv1beta1.SecureValue) field.Error
 		}
 	}
 
-	// Keeper cannot be changed.
-	if sv.Spec.Keeper != oldSv.Spec.Keeper {
-		errs = append(errs, field.Forbidden(field.NewPath("spec"), "the `keeper` cannot be changed"))
-	}
-
 	return errs
 }
 

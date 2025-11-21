@@ -31,7 +31,7 @@ type ReadOpts struct {
 
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.
 type SecureValueMetadataStorage interface {
-	Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
+	Create(ctx context.Context, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
 	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv1beta1.SecureValue, error)
 	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.SecureValue, error)
 	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
@@ -47,6 +47,7 @@ type SecureValueService interface {
 	List(ctx context.Context, namespace xkube.Namespace) (*secretv1beta1.SecureValueList, error)
 	Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
+	SetKeeperAsActive(ctx context.Context, namespace xkube.Namespace, keeperName string) error
 }
 
 type SecureValueClient interface {
