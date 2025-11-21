@@ -255,6 +255,9 @@ module.exports = [
     name: 'grafana/jsx-a11y-overrides',
     files: ['**/*.tsx'],
     ignores: ['**/*.{spec,test}.tsx'],
+    plugins: {
+      'jsx-a11y': jsxA11yPlugin,
+    },
     rules: {
       ...jsxA11yPlugin.configs.recommended.rules,
       'jsx-a11y/no-autofocus': [
@@ -279,6 +282,9 @@ module.exports = [
     name: 'grafana/packages',
     files: ['packages/**/*.{ts,tsx}'],
     ignores: [],
+    plugins: {
+      import: importPlugin,
+    },
     rules: {
       'import/no-extraneous-dependencies': ['error', { includeInternal: true }],
       'no-restricted-imports': [
@@ -379,6 +385,7 @@ module.exports = [
     plugins: {
       'testing-library': testingLibraryPlugin,
       'jest-dom': jestDomPlugin,
+      jest: jestPlugin,
     },
     files: [
       'public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)',
