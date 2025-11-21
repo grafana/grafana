@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path"
 	"strings"
 	"testing"
 	"time"
@@ -1453,18 +1455,18 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 func TestSocialAzureAD_TokenSource_ManagedIdentity(t *testing.T) {
 	info := &social.OAuthInfo{
 		ClientId:                    "client-id",
-		ClientAuthentication:        social.ManagedIdentity,
+		ClientAuthentication:        social.WorkloadIdentity,
 		ManagedIdentityClientID:     "mi-client-id",
 		FederatedCredentialAudience: "api://AzureADTokenExchange",
 		TokenUrl:                    "https://login.microsoftonline.com/token",
 	}
 
-	s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+	workloadFile := path.Join(t.TempDir(), "workload.json")
+	err := os.WriteFile(workloadFile, []byte("mock-client-assertion"), 0600)
+	require.NoError(t, err)
 
-	// Mock the managed identity token provider
-	s.managedIdentityTokenProvider = func(ctx context.Context, info *social.OAuthInfo) (string, error) {
-		return "mock-client-assertion", nil
-	}
+	s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+	s.info.WorkloadIdentityTokenFile = workloadFile
 
 	// Mock the token endpoint
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
