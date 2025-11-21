@@ -4,7 +4,8 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping struct {
-	GroupId string `json:"groupId"`
+	Name          string `json:"name"`
+	ExternalGroup string `json:"externalGroup"`
 }
 
 // NewVersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping creates a new VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping object.

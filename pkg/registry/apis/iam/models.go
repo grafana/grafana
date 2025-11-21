@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -72,7 +73,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	unified          resource.ResourceClient
 	userSearchClient resourcepb.ResourceIndexClient
 
-	externalGroupMappingSearchClient resourcepb.ResourceIndexClient
+	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST

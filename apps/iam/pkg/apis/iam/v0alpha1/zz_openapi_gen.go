@@ -2936,7 +2936,14 @@ func schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds7RoutesGroupsGETResponseE
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"groupId": {
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"externalGroup": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -2944,7 +2951,7 @@ func schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds7RoutesGroupsGETResponseE
 						},
 					},
 				},
-				Required: []string{"groupId"},
+				Required: []string{"name", "externalGroup"},
 			},
 		},
 	}

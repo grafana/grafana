@@ -23,7 +23,8 @@ teamv0alpha1: teamKind & {
 			"GET": {
 				response: {
 					#ExternalGroupMapping: {
-						groupId:   string
+						name:	  		string
+						externalGroup:  string
 					}
 					items: [...#ExternalGroupMapping]
 				}

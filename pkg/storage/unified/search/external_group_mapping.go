@@ -12,15 +12,15 @@ import (
 )
 
 const (
-	EXTERNAL_GROUP_MAPPING_TEAM_UID       = "team"
-	EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP = "group"
+	EXTERNAL_GROUP_MAPPING_TEAM_NAME      = "team"
+	EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP = "external_group"
 )
 
 var ExternalGroupMappingTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
-	EXTERNAL_GROUP_MAPPING_TEAM_UID: {
-		Name:        EXTERNAL_GROUP_MAPPING_TEAM_UID,
+	EXTERNAL_GROUP_MAPPING_TEAM_NAME: {
+		Name:        EXTERNAL_GROUP_MAPPING_TEAM_NAME,
 		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		Description: "The team UID associated with the external group mapping",
+		Description: "The team name associated with the external group mapping",
 		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 			Filterable: true,
 		},
@@ -40,6 +40,8 @@ func GetExternalGroupMappingBuilder() (resource.DocumentBuilderInfo, error) {
 	for _, v := range ExternalGroupMappingTableColumnDefinitions {
 		values = append(values, v)
 	}
+	// stdFields := res.StandardSearchFields()
+
 	fields, err := resource.NewSearchableDocumentFields(values)
 	return resource.DocumentBuilderInfo{
 		GroupResource: iamv0.ExternalGroupMappingResourceInfo.GroupResource(),
@@ -54,13 +56,13 @@ type extGroupMappingDocumentBuilder struct{}
 
 // BuildDocument implements resource.DocumentBuilder.
 func (u *extGroupMappingDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	user := &iamv0.ExternalGroupMapping{}
-	err := json.NewDecoder(bytes.NewReader(value)).Decode(user)
+	extGroupMapping := &iamv0.ExternalGroupMapping{}
+	err := json.NewDecoder(bytes.NewReader(value)).Decode(extGroupMapping)
 	if err != nil {
 		return nil, err
 	}
 
-	obj, err := utils.MetaAccessor(user)
+	obj, err := utils.MetaAccessor(extGroupMapping)
 	if err != nil {
 		return nil, err
 	}
@@ -68,11 +70,11 @@ func (u *extGroupMappingDocumentBuilder) BuildDocument(ctx context.Context, key 
 	doc := resource.NewIndexableDocument(key, rv, obj)
 
 	doc.Fields = make(map[string]any)
-	if user.Spec.TeamRef.Name != "" {
-		doc.Fields[EXTERNAL_GROUP_MAPPING_TEAM_UID] = user.Spec.TeamRef.Name
+	if extGroupMapping.Spec.TeamRef.Name != "" {
+		doc.Fields[EXTERNAL_GROUP_MAPPING_TEAM_NAME] = extGroupMapping.Spec.TeamRef.Name
 	}
-	if user.Spec.ExternalGroupId != "" {
-		doc.Fields[EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP] = user.Spec.ExternalGroupId
+	if extGroupMapping.Spec.ExternalGroupId != "" {
+		doc.Fields[EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP] = extGroupMapping.Spec.ExternalGroupId
 	}
 
 	return doc, nil

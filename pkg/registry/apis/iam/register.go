@@ -66,7 +66,7 @@ func RegisterAPIService(
 	rolesStorage RoleStorageBackend,
 	roleBindingsStorage RoleBindingStorageBackend,
 	externalGroupMappingStorageBackend ExternalGroupMappingStorageBackend,
-	externalGroupMappingLegacySearchClient ExternalGroupMappingLegacySearchClient,
+	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
 	userService legacyuser.Service,
@@ -84,6 +84,7 @@ func RegisterAPIService(
 		resourcePermissionsStorage:  resourcepermission.ProvideStorageBackend(dbProvider),
 		roleBindingsStorage:         roleBindingsStorage,
 		externalGroupMappingStorage: externalGroupMappingStorageBackend,
+		teamGroupsHandler:           teamGroupsHandlerImpl,
 		sso:                         ssoService,
 		authorizer:                  authorizer,
 		legacyAccessClient:          legacyAccessClient,
@@ -99,8 +100,6 @@ func RegisterAPIService(
 		unified:                     unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(userService), features),
-		externalGroupMappingSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.ExternalGroupMappingResourceInfo.GroupResource(),
-			unified, externalGroupMappingLegacySearchClient, features),
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -204,6 +203,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	teamLegacyStore := team.NewLegacyStore(b.store, b.legacyAccessClient, enableAuthnMutation)
 	storage[teamResource.StoragePath()] = teamLegacyStore
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
+	storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
 
 	if b.enableDualWriter {
 		teamStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
