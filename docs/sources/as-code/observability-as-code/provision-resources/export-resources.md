@@ -11,8 +11,8 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Export non-provisioned resources from Grafana
-menuTitle: Export non-provisioned resources
+title: Add non-provisioned resources from Grafana
+menuTitle: Add non-provisioned resources
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/export-resources/
 ---
