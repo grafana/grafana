@@ -21,7 +21,7 @@ type sqlAdapter struct {
 	cfg      *setting.Cfg
 }
 
-func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, nsMapper request.NamespaceMapper, cfg *setting.Cfg) Store {
+func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, nsMapper request.NamespaceMapper, cfg *setting.Cfg) *sqlAdapter {
 	return &sqlAdapter{
 		repo:     repo,
 		cleaner:  cleaner,

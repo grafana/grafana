@@ -51,26 +51,33 @@ func RegisterAppInstaller(
 	installer := &AnnotationAppInstaller{
 		cfg: cfg,
 	}
+
+	var tagHandler func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error
+	if service != nil {
+		mapper := grafrequest.GetNamespaceMapper(cfg)
+		sqlAdapter := NewSQLAdapter(service, cleaner, mapper, cfg)
+		installer.legacy = &legacyStorage{
+			store:  sqlAdapter,
+			mapper: mapper,
+		}
+		// Create the tags handler using the sqlAdapter as TagProvider
+		tagHandler = newTagsHandler(sqlAdapter)
+	}
+
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
 	appConfig := app.Config{
 		KubeConfig:   restclient.Config{},
 		ManifestData: *apis.LocalManifest().ManifestData,
+		SpecificConfig: &annotationapp.AnnotationConfig{
+			TagHandler: tagHandler,
+		},
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.NewGoTypeAssociator())
 	if err != nil {
 		return nil, err
 	}
 	installer.AppInstaller = i
-
-	if service != nil {
-		mapper := grafrequest.GetNamespaceMapper(cfg)
-		store := NewSQLAdapter(service, cleaner, mapper, cfg)
-		installer.legacy = &legacyStorage{
-			store:  store,
-			mapper: mapper,
-		}
-	}
 
 	return installer, nil
 }
@@ -82,21 +89,11 @@ func (a *AnnotationAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 		Version:  kind.Version(),
 		Resource: kind.Plural(),
 	}
-	
-	tagsGVR := schema.GroupVersionResource{
-		Group:    kind.Group(),
-		Version:  kind.Version(),
-		Resource: "tags",
-	}
-	
-	if requested.String() == tagsGVR.String() && a.legacy != nil {
-		return &tagsREST{store: a.legacy.store}
-	}
-	
+
 	if requested.String() != gvr.String() {
 		return nil
 	}
-	
+
 	a.legacy.tableConverter = utils.NewTableConverter(
 		gvr.GroupResource(),
 		utils.TableColumns{
