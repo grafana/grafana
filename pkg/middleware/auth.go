@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -26,9 +25,10 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
+var openfeatureClient = openfeature.NewDefaultClient()
+
 const (
-	// featureFlagPrefix is the prefix used for plugin experimental page feature flags.
-	featureFlagPrefix = "navigation.plugin-page-visible."
+	pluginPageFeatureFlagPrefix = "plugin-page-visible."
 )
 
 type AuthOptions struct {
@@ -154,15 +154,14 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, log
 			return
 		}
 
-		permitted := true
-		path := normalizeIncludePath(c.Req.URL.Path)
-		// Check if experimental plugin pages are enabled
-		if !IsExperimentalPluginPageEnabled(c.Req.Context(), path) {
-			logger.Debug("Forbidden experimental plugin page", "plugin", pluginID, "path", path)
+		if !PageIsFeatureToggleEnabled(c.Req.Context(), c.Req.URL.Path) {
+			logger.Debug("Forbidden experimental plugin page", "plugin", pluginID, "path", c.Req.URL.Path)
 			accessForbidden(c)
 			return
 		}
 
+		permitted := true
+		path := normalizeIncludePath(c.Req.URL.Path)
 		hasAccess := ac.HasAccess(accessControl, c)
 		for _, i := range p.Includes {
 			if i.Type != "page" {
@@ -310,28 +309,15 @@ func shouldForceLogin(c *contextmodel.ReqContext) bool {
 	return forceLogin
 }
 
-// IsExperimentalPluginPageEnabled checks if an experimental plugin page is enabled
-// via OpenFeature feature flags.
-//
-// It returns true if:
-// - The path does not contain "experimental", OR
-// - The path contains "experimental" AND the corresponding feature flag is enabled
-//
-// The feature flag key format is: "navigation.plugin-page-visible.<path>"
-func IsExperimentalPluginPageEnabled(ctx context.Context, path string) bool {
-	// If the path doesn't contain "experimental", it's not an experimental page
-	pathParts := strings.Split(path, "/")
-	isExperimental := slices.Contains(pathParts, "experimental")
-	if !isExperimental {
-		return true
-	}
-
-	// Check the feature flag for experimental pages
-	flagKey := featureFlagPrefix + path
-	enabled := openfeature.NewDefaultClient().Boolean(
+// PageIsFeatureToggleEnabled checks if a page is enabled via OpenFeature feature flags.
+// It returns false if the feature flag is set and set to false.
+// The feature flag key format is: "plugin-page-visible.<path>"
+func PageIsFeatureToggleEnabled(ctx context.Context, path string) bool {
+	flagKey := pluginPageFeatureFlagPrefix + path
+	enabled := openfeatureClient.Boolean(
 		ctx,
 		flagKey,
-		false,
+		true,
 		openfeature.TransactionContext(ctx),
 	)
 

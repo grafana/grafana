@@ -8,6 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -423,51 +426,49 @@ func TestCanAdminPlugin(t *testing.T) {
 	}
 }
 
-func TestIsExperimentalPluginPageEnabled(t *testing.T) {
-	ctx := context.Background()
+func TestPageIsFeatureToggleEnabled(t *testing.T) {
+	type testCase struct {
+		desc           string
+		path           string
+		flags          map[string]bool
+		expectedResult bool
+	}
 
-	tests := []struct {
-		name     string
-		path     string
-		expected bool
-		desc     string
-	}{
+	tests := []testCase{
 		{
-			name:     "non-experimental path returns true",
-			path:     "/a/grafana-k8s-app/clusters",
-			expected: true,
-			desc:     "Paths without 'experimental' should always be enabled",
+			desc: "returns true when feature flag is enabled",
+			path: "/a/my-plugin/settings",
+			flags: map[string]bool{
+				pluginPageFeatureFlagPrefix + "/a/my-plugin/settings": true,
+			},
+			expectedResult: true,
 		},
 		{
-			name:     "empty path returns true",
-			path:     "",
-			expected: true,
-			desc:     "Empty paths should be considered enabled",
+			desc: "returns false when feature flag is disabled",
+			path: "/a/my-plugin/settings",
+			flags: map[string]bool{
+				pluginPageFeatureFlagPrefix + "/a/my-plugin/settings": false,
+			},
+			expectedResult: false,
 		},
 		{
-			name:     "root path returns true",
-			path:     "/",
-			expected: true,
-			desc:     "Root paths should be considered enabled",
-		},
-		{
-			name:     "experimental path without feature flag",
-			path:     "/a/grafana-test-app/experimental/new-feature",
-			expected: false,
-			desc:     "Experimental paths should default to disabled when feature flag is not set",
-		},
-		{
-			name:     "experimental path without feature flag",
-			path:     "/a/grafana-test-app/not-experimental/new-feature",
-			expected: true,
-			desc:     "Non-experimental paths should be enabled",
+			desc:           "returns true when feature flag does not exist",
+			path:           "/a/my-plugin/settings",
+			flags:          map[string]bool{},
+			expectedResult: true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := IsExperimentalPluginPageEnabled(ctx, tt.path)
-			assert.Equal(t, tt.expected, result, tt.desc)
+		t.Run(tt.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			testProvider := setupTestProvider(t, tt.flags)
+
+			result := PageIsFeatureToggleEnabled(ctx, tt.path)
+
+			assert.Equal(t, tt.expectedResult, result)
+			testProvider.Cleanup()
 		})
 	}
 }
@@ -486,4 +487,28 @@ func contextProvider(modifiers ...func(c *contextmodel.ReqContext)) web.Handler 
 		}
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
 	}
+}
+
+// setupTestProvider creates a test OpenFeature provider with the given flags.
+func setupTestProvider(t *testing.T, flags map[string]bool) oftesting.TestProvider {
+	t.Helper()
+
+	testProvider := oftesting.NewTestProvider()
+	flagsMap := map[string]memprovider.InMemoryFlag{}
+
+	for key, value := range flags {
+		flagsMap[key] = memprovider.InMemoryFlag{
+			DefaultVariant: "defaultVariant",
+			Variants: map[string]any{
+				"defaultVariant": value,
+			},
+		}
+	}
+
+	testProvider.UsingFlags(t, flagsMap)
+
+	err := openfeature.SetProvider(testProvider)
+	require.NoError(t, err)
+
+	return testProvider
 }
