@@ -596,7 +596,7 @@ export interface FeatureToggles {
   */
   alertingPrometheusRulesPrimary?: boolean;
   /**
-  * Used in Logs Drilldown to split queries into multiple queries based on the number of shards
+  * Deprecated. Replace with lokiShardSplitting. Used in Logs Drilldown to split queries into multiple queries based on the number of shards
   */
   exploreLogsShardSplitting?: boolean;
   /**
@@ -1177,6 +1177,10 @@ export interface FeatureToggles {
   * Enable TTL plugin instance manager
   */
   ttlPluginInstanceManager?: boolean;
+  /**
+  * Send X-Loki-Query-Limits-Context header to Loki on first split request
+  */
+  lokiQueryLimitsContext?: boolean;
   /**
   * Enables the new version of rudderstack
   * @default false
