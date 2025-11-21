@@ -12,7 +12,7 @@ export function showDefaultSuggestion(fn: (panelDataSummary: PanelDataSummary) =
 
 /**
  * @internal
- * Checks if panel the panel has data
+ * Checks if the panel has data
  * @param data - PanelData
  * @returns true if data exists and has at least one non-empty series
  */

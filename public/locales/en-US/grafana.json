@@ -11038,7 +11038,7 @@
     },
     "visualization-suggestions": {
       "based-on-current-data": "Based on current data",
-      "no-results-matched-your-query": "No results matched your query"
+      "use-this-suggestion": "Use this suggestion"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"

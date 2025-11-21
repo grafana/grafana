@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -26,20 +26,16 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const filteredSuggestions = useMemo(() => suggestions || [], [suggestions]);
+  const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
 
   // auto-select first suggestion when nothing is selected
   useEffect(() => {
-    if (
-      config.featureToggles.newVizSuggestions &&
-      filteredSuggestions &&
-      filteredSuggestions.length > 0 &&
-      selectedIndex === null
-    ) {
+    if (isNewVizSuggestionsEnabled && filteredSuggestions && filteredSuggestions.length > 0 && selectedIndex === null) {
       setSelectedIndex(0);
     }
-  }, [filteredSuggestions, selectedIndex]);
+  }, [filteredSuggestions, isNewVizSuggestionsEnabled, selectedIndex]);
 
-  const handleApplySuggestion = () => {
+  const handleApplySuggestion = useCallback(() => {
     if (selectedIndex !== null && filteredSuggestions[selectedIndex]) {
       const selectedSuggestion = filteredSuggestions[selectedIndex];
       onChange({
@@ -49,9 +45,13 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
         withModKey: false,
       });
     }
-  };
+  }, [selectedIndex, filteredSuggestions, onChange]);
 
-  if (config.featureToggles.newVizSuggestions && !hasData(data)) {
+  const handleCardSelect = useCallback((index: number) => {
+    setSelectedIndex(index);
+  }, []);
+
+  if (isNewVizSuggestionsEnabled && !hasData(data)) {
     return (
       <div className={styles.emptyStateWrapper}>
         <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
@@ -86,28 +86,33 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                 </div>
               </div>
               <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth}px)` }}>
-                {filteredSuggestions.map((suggestion, index) => (
-                  <div key={index} className={styles.cardContainer}>
-                    {config.featureToggles.newVizSuggestions && selectedIndex === index && (
-                      <Button
-                        variant="primary"
-                        size={'md'}
-                        onClick={handleApplySuggestion}
-                        className={styles.applySuggestionButton}
-                      >
-                        {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
-                      </Button>
-                    )}
-                    <VisualizationSuggestionCard
-                      data={data!}
-                      suggestion={suggestion}
-                      onChange={onChange}
-                      width={previewWidth - 1}
-                      isSelected={config.featureToggles.newVizSuggestions ? selectedIndex === index : false}
-                      onSelect={config.featureToggles.newVizSuggestions ? () => setSelectedIndex(index) : undefined}
-                    />
-                  </div>
-                ))}
+                {filteredSuggestions.map((suggestion, index) => {
+                  const isCardSelected = isNewVizSuggestionsEnabled && selectedIndex === index;
+                  const cardSelectHandler = isNewVizSuggestionsEnabled ? () => handleCardSelect(index) : undefined;
+
+                  return (
+                    <div key={index} className={styles.cardContainer}>
+                      {isCardSelected && (
+                        <Button
+                          variant="primary"
+                          size={'md'}
+                          onClick={handleApplySuggestion}
+                          className={styles.applySuggestionButton}
+                        >
+                          {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
+                        </Button>
+                      )}
+                      <VisualizationSuggestionCard
+                        data={data!}
+                        suggestion={suggestion}
+                        onChange={onChange}
+                        width={previewWidth - 1}
+                        isSelected={isCardSelected}
+                        onSelect={cardSelectHandler}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
@@ -119,10 +124,6 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    heading: css({
-      ...theme.typography.h5,
-      margin: theme.spacing(0, 0.5, 1),
-    }),
     filterRow: css({
       display: 'flex',
       flexDirection: 'row',
