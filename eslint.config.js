@@ -132,6 +132,7 @@ module.exports = [
       reportUnusedDisableDirectives: false,
     },
     files: ['**/*.{ts,tsx,js}'],
+    ignores: ['packages/grafana-ui/src/components/Forms/Legacy/**'],
     plugins: {
       '@emotion': emotionPlugin,
       lodash: lodashPlugin,
