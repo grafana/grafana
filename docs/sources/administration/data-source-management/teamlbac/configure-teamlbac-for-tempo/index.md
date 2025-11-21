@@ -112,7 +112,6 @@ This example matches spans with team A **or** team B. This single example is fas
 
 #### Multiple rules
 
-This example matches spans from the `prod` environment for either the `checkout` team or the `billing` team.
 
 Two rules combined to give user access to spans from `prod` environment or the `billing` team.
 
