@@ -559,7 +559,7 @@ export const getDefaultRecordingRulesQueries = (
   ];
 };
 
-const getDefaultExpressions = (...refIds: [string, string] | [string, string, string]): AlertQuery[] => {
+export const getDefaultExpressions = (...refIds: [string, string] | [string, string, string]): AlertQuery[] => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
   // If a third parameter is provided, use it as the source query refId, otherwise default to 'A'
@@ -583,7 +583,7 @@ const getDefaultExpressions = (...refIds: [string, string] | [string, string, st
           type: 'and',
         },
         query: {
-          params: [refOne],
+          params: [],
         },
         reducer: {
           params: [],
