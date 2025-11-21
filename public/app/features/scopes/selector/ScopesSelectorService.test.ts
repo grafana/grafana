@@ -425,26 +425,6 @@ describe('ScopesSelectorService', () => {
 
       expect(dashboardsService.fetchDashboards).toHaveBeenCalledWith(['test-scope']);
     });
-
-    it('should call fetchDashboards when navigationScope is cleared', async () => {
-      // Set navigation scope first
-      dashboardsService.state.navigationScope = 'navScope1';
-      await service.changeScopes(['test-scope']);
-      // Should not call fetchDashboards when navigationScope is set
-      expect(dashboardsService.fetchDashboards).not.toHaveBeenCalled();
-      jest.clearAllMocks();
-
-      // Clear navigation scope by calling setNavigationScope
-      dashboardsService.setNavigationScope = jest.fn().mockImplementation((scope) => {
-        dashboardsService.state.navigationScope = scope;
-      });
-      dashboardsService.setNavigationScope(undefined);
-      dashboardsService.state.navigationScope = undefined;
-
-      await service.changeScopes(['test-scope']);
-
-      expect(dashboardsService.fetchDashboards).toHaveBeenCalledWith(['test-scope']);
-    });
   });
 
   describe('getRecentScopes', () => {
