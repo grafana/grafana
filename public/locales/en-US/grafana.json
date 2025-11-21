@@ -8695,8 +8695,12 @@
     },
     "components": {
       "sparkline": {
+        "alert": {
+          "title": "Cannot render sparkline"
+        },
         "warning": {
-          "too-few-values": "Sparkline requires at least two values to render."
+          "too-few-values": "Sparkline requires at least two values to render.",
+          "x-not-ascending": "The data in your Sparkline's x series must be sorted in ascending order."
         }
       }
     },
