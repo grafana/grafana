@@ -215,7 +215,7 @@ export const prepareConfig = (
       lineInterpolation: customConfig.lineInterpolation,
       showPoints: pointsMode,
       // TODO: #112977 enable highlight index
-      // pointSize: hasHighlightIndex ? HIGHLIGHT_IDX_POINT_SIZE : customConfig.pointSize,
+      pointSize: /* hasHighlightIndex ? HIGHLIGHT_IDX_POINT_SIZE : */ customConfig.pointSize,
       // pointsFilter: hasHighlightIndex ? [sparkline.highlightIndex!] : undefined,
       fillOpacity: customConfig.fillOpacity,
       fillColor: customConfig.fillColor,
