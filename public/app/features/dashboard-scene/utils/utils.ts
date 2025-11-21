@@ -96,6 +96,7 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
 
   return null;
 }
+
 export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
     return null;
@@ -258,8 +259,15 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultVizPanel(): VizPanel {
-  const defaultPluginId = config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
-  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
+  const defaultPluginId =
+    config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
+      ? UNCONFIGURED_PANEL_PLUGIN_ID
+      : 'timeseries';
+
+  const newPanelTitle =
+    config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
+      ? ''
+      : t('dashboard.new-panel-title', 'New panel');
 
   return new VizPanel({
     title: newPanelTitle,
