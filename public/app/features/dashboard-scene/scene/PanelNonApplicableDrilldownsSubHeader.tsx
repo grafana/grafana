@@ -58,9 +58,7 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
       const applicability = await getDrilldownApplicability(queryRunner, filtersVar, groupByVar);
       if (filterValues.length) {
         const nonApplicableFilters = filterValues.filter((filter) => {
-          const result = applicability?.find(
-            (entry) => entry.key === filter.key && entry.origin === filter.origin && entry.type === 'filter'
-          );
+          const result = applicability?.find((entry) => entry.key === filter.key && entry.origin === filter.origin);
           return result && !result.applicable;
         });
         labels.push(...nonApplicableFilters.map((filter) => `${filter.key} ${filter.operator} ${filter.value}`));
@@ -69,7 +67,7 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
       if (groupByValues.length) {
         const nonApplicableKeys = groupByValues
           .filter((groupByKey) => {
-            const result = applicability?.find((entry) => entry.key === groupByKey && entry.type === 'groupby');
+            const result = applicability?.find((entry) => entry.key === groupByKey);
             return result && !result.applicable;
           })
           .map((key) => String(key));

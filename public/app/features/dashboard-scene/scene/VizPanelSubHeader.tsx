@@ -1,3 +1,5 @@
+import { Unsubscribable } from 'rxjs';
+
 import {
   SceneComponentProps,
   SceneObjectState,
@@ -29,6 +31,10 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 
   private _adHocVar?: AdHocFiltersVariable;
   private _groupByVar?: GroupByVariable;
+
+  private _adHocSub?: Unsubscribable;
+  private _groupBySub?: Unsubscribable;
+
   private _queryRunnerDatasource?: DataSourceRef;
 
   constructor(state: Partial<VizPanelSubHeaderState>) {
@@ -48,6 +54,11 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     if (!this.state.hideNonApplicableDrilldowns) {
       this.subscribeToDrilldownVariableChanges();
     }
+
+    return () => {
+      this._groupBySub?.unsubscribe();
+      this._adHocSub?.unsubscribe();
+    };
   };
 
   private subscribeToDrilldownVariableChanges() {
@@ -76,23 +87,35 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
       vars.subscribeToState((n) => {
         this._adHocVar = n.variables.find((variable) => variable instanceof AdHocFiltersVariable);
         this._groupByVar = n.variables.find((variable) => variable instanceof GroupByVariable);
+
+        this.refreshDrilldownVarsSubscriptions();
       })
     );
 
     // adhoc sub so if that changes, we potentially update rendering
-    this._subs.add(
-      this._adHocVar?.subscribeToState((n, p) => {
-        if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
-          this.setDrilldownApplicabilitySupportHelper({
-            datasource: n.datasource,
-            applicabilityEnabled: n.applicabilityEnabled,
-          });
-        }
-      })
-    );
+    this._adHocSub = this._adHocVar?.subscribeToState((n, p) => {
+      if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
+        this.setDrilldownApplicabilitySupportHelper({
+          datasource: n.datasource,
+          applicabilityEnabled: n.applicabilityEnabled,
+        });
+      }
+    });
 
     // same for groupBy
-    this._subs.add(
+    this._groupBySub = this._groupByVar?.subscribeToState((n, p) => {
+      if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
+        this.setDrilldownApplicabilitySupportHelper(undefined, {
+          datasource: n.datasource,
+          applicabilityEnabled: n.applicabilityEnabled,
+        });
+      }
+    });
+  }
+
+  private refreshDrilldownVarsSubscriptions() {
+    if (this._groupByVar) {
+      this._groupBySub?.unsubscribe();
       this._groupByVar?.subscribeToState((n, p) => {
         if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
           this.setDrilldownApplicabilitySupportHelper(undefined, {
@@ -100,8 +123,19 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
             applicabilityEnabled: n.applicabilityEnabled,
           });
         }
-      })
-    );
+      });
+    }
+
+    if (this._adHocVar) {
+      this._adHocVar?.subscribeToState((n, p) => {
+        if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
+          this.setDrilldownApplicabilitySupportHelper({
+            datasource: n.datasource,
+            applicabilityEnabled: n.applicabilityEnabled,
+          });
+        }
+      });
+    }
   }
 
   private setDrilldownApplicabilitySupportHelper(
