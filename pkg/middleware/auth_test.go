@@ -513,12 +513,12 @@ func setupTestProvider(t *testing.T, flags map[string]bool) oftesting.TestProvid
 
 	testProvider.UsingFlags(t, flagsMap)
 
-	err := openfeature.SetProvider(testProvider)
+	err := openfeature.SetProviderAndWait(testProvider)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
 		testProvider.Cleanup()
-		_ = openfeature.SetProvider(openfeature.NoopProvider{})
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
 		// Unlock after cleanup to allow other tests to run
 		openfeatureTestMutex.Unlock()
 	})
