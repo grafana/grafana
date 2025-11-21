@@ -381,11 +381,6 @@ export interface FeatureToggles {
   */
   timeComparison?: boolean;
   /**
-  * Enables infinite scrolling for the Logs panel in Explore and Dashboards
-  * @default true
-  */
-  logsInfiniteScrolling?: boolean;
-  /**
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
@@ -668,6 +663,10 @@ export interface FeatureToggles {
   * Enables time range panning functionality
   */
   timeRangePan?: boolean;
+  /**
+  * Enables new keyboard shortcuts for time range zoom operations
+  */
+  newTimeRangeZoomShortcuts?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false

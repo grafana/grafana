@@ -616,14 +616,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "logsInfiniteScrolling",
-			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true",
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "tableSharedCrosshair",
 			Description:  "Enables shared crosshair in table panel",
 			FrontendOnly: true,
@@ -1095,6 +1087,13 @@ var (
 		{
 			Name:         "timeRangePan",
 			Description:  "Enables time range panning functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "newTimeRangeZoomShortcuts",
+			Description:  "Enables new keyboard shortcuts for time range zoom operations",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
