@@ -28,7 +28,7 @@ describe('Sparkline', () => {
     ).not.toThrow();
   });
 
-  it('should ot throw an error if there is a single value', () => {
+  it('should not throw an error if there is a single value', () => {
     const sparkline: FieldSparkline = {
       x: {
         name: 'x',
@@ -51,7 +51,7 @@ describe('Sparkline', () => {
     ).not.toThrow();
   });
 
-  it('should ot throw an error if there are no values', () => {
+  it('should not throw an error if there are no values', () => {
     const sparkline: FieldSparkline = {
       x: {
         name: 'x',
