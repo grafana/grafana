@@ -474,10 +474,7 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-
-	routes := b.teamSearch.GetAPIRoutes(defs)
-	routes.Namespace = append(routes.Namespace, b.display.GetAPIRoutes(defs).Namespace...)
-	return routes
+	return b.display.GetAPIRoutes(defs)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {

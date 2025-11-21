@@ -2,6 +2,10 @@ package v0alpha1
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 )
@@ -77,4 +81,28 @@ func (c *TeamClient) Patch(ctx context.Context, identifier resource.Identifier, 
 
 func (c *TeamClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
+}
+
+type GetTeamssearchRequest struct {
+	Params  GetTeamssearchRequestParams
+	Headers http.Header
+}
+
+func (c *TeamClient) GetTeamssearch(ctx context.Context, identifier resource.Identifier, request GetTeamssearchRequest) (*GetTeamssearch, error) {
+	params := url.Values{}
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "teams/search",
+		Verb:    "GET",
+		Query:   params,
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := GetTeamssearch{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetTeamssearch: %w", err)
+	}
+	return &cast, nil
 }

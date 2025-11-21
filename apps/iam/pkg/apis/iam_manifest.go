@@ -18,6 +18,8 @@ import (
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
 	AppName:          "iam",
 	Group:            "iam.grafana.app",
@@ -81,6 +83,99 @@ var appManifestData = app.ManifestData{
 					Plural:     "Teams",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Routes: map[string]spec3.PathProps{
+						"teams/search": {
+							Get: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "getTeamssearch",
+
+									Parameters: []*spec3.Parameter{
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:        "query",
+												In:          "query",
+												Description: "team name query string",
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type:        []string{"string"},
+														Description: "team name query string",
+													},
+												},
+											},
+										},
+									},
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"hits": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"array"},
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																			"maxScore": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"number"},
+																				},
+																			},
+																			"offset": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"integer"},
+																				},
+																			},
+																			"queryCost": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"number"},
+																				},
+																			},
+																			"totalHits": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"integer"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"offset",
+																			"totalHits",
+																			"hits",
+																			"queryCost",
+																			"maxScore",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
+					},
 				},
 
 				{
@@ -142,7 +237,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 	return goType, exists
 }
 
-var customRouteToGoResponseType = map[string]any{}
+var customRouteToGoResponseType = map[string]any{
+	"v0alpha1|Team|teams/search|GET": v0alpha1.GetTeamssearch{},
+}
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
@@ -156,7 +253,9 @@ func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (g
 	return goType, exists
 }
 
-var customRouteToGoParamsType = map[string]runtime.Object{}
+var customRouteToGoParamsType = map[string]runtime.Object{
+	"v0alpha1|Team|teams/search|GET": &v0alpha1.GetTeamssearchRequestParamsObject{},
+}
 
 func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goType runtime.Object, exists bool) {
 	if len(path) > 0 && path[0] == '/' {
