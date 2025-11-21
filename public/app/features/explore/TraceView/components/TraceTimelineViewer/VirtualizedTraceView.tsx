@@ -644,7 +644,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           <ToolbarButton
             className={styles.scrollToTopButton}
             onClick={this.scrollToTop}
-            title={t('explore.unthemed-virtualized-trace-view.title-scroll-to-top', 'Scroll to top')}
+            tooltip={t('explore.unthemed-virtualized-trace-view.title-scroll-to-top', 'Scroll to top')}
             icon="arrow-up"
           ></ToolbarButton>
         )}

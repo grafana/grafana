@@ -369,6 +369,13 @@ type AlertRule struct {
 	MissingSeriesEvalsToResolve *int64
 }
 
+type AlertRuleVersion struct {
+	AlertRule
+
+	// Message is only stored in the alert_rule_version table.
+	Message string
+}
+
 type AlertRuleMetadata struct {
 	EditorSettings      EditorSettings       `json:"editor_settings"`
 	PrometheusStyleRule *PrometheusStyleRule `json:"prometheus_style_rule,omitempty"`
@@ -994,6 +1001,7 @@ type ListAlertRulesExtendedQuery struct {
 	RuleType RuleTypeFilter
 
 	Limit         int64
+	RuleLimit     int64
 	ContinueToken string
 }
 
