@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
+import { getAPINamespace } from '@grafana/api-clients';
+import {
+  useListLogsDrilldownQuery,
+  useListLogsDrilldownDefaultsQuery,
+  useCreateLogsDrilldownMutation,
+  useCreateLogsDrilldownDefaultsMutation,
+} from '@grafana/api-clients/rtkq/logsdrilldown/v1alpha1';
 import {
   applyFieldOverrides,
   CustomTransformOperator,
@@ -44,6 +51,101 @@ export function LogsTable(props: Props) {
   const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
   const timeIndex = logsFrame?.timeField.index;
+
+  const { currentData: logsDrilldownData, error: logsDrilldownError } = useListLogsDrilldownQuery({});
+  const { currentData: logsDrilldownDefaultsData, error: logsDrilldownDefaultsError } =
+    useListLogsDrilldownDefaultsQuery({});
+
+  const [createLogsDrilldown] = useCreateLogsDrilldownMutation();
+  const [createLogsDrilldownDefaults] = useCreateLogsDrilldownDefaultsMutation();
+
+  useEffect(() => {
+    if (logsDrilldownDefaultsData) {
+      console.log('LogsDrilldownDefaults API Response:', logsDrilldownDefaultsData);
+    }
+    if (logsDrilldownDefaultsError) {
+      console.error('LogsDrilldownDefaults API Error:', logsDrilldownDefaultsError);
+    }
+    if (logsDrilldownData) {
+      console.log('LogsDrilldown API Response:', logsDrilldownData);
+    }
+    if (logsDrilldownError) {
+      console.error('LogsDrilldown API Error:', logsDrilldownError);
+    }
+  }, [logsDrilldownData, logsDrilldownError, logsDrilldownDefaultsData, logsDrilldownDefaultsError]);
+
+  // Create LogsDrilldown with default fields if none exist
+  useEffect(() => {
+    const createDefaultLogsDrilldown = async () => {
+      // Check if items array is empty (no resources exist)
+      if (logsDrilldownData && logsDrilldownData.items && logsDrilldownData.items.length === 0) {
+        try {
+          const namespace = getAPINamespace();
+          const result = await createLogsDrilldown({
+            logsDrilldown: {
+              apiVersion: 'logsdrilldown.grafana.app/v1alpha1',
+              kind: 'LogsDrilldown',
+              metadata: {
+                namespace,
+                generateName: 'logs-drilldown-',
+              },
+              spec: {
+                defaultFields: ['time', 'body', 'level'],
+                prettifyJSON: false,
+                wrapLogMessage: false,
+                interceptDismissed: false,
+              },
+            },
+          }).unwrap();
+          console.log('Created LogsDrilldown with default fields:', result);
+        } catch (error) {
+          console.error('Failed to create LogsDrilldown:', error);
+        }
+      }
+    };
+
+    if (logsDrilldownData !== undefined) {
+      createDefaultLogsDrilldown();
+    }
+  }, [logsDrilldownData, createLogsDrilldown]);
+
+  // Create LogsDrilldown with default fields if none exist
+  useEffect(() => {
+    const createDefaultLogsDrilldownDefaults = async () => {
+      // Check if items array is empty (no resources exist)
+      if (
+        logsDrilldownDefaultsData &&
+        logsDrilldownDefaultsData.items &&
+        logsDrilldownDefaultsData.items.length === 0
+      ) {
+        try {
+          const result = await createLogsDrilldownDefaults({
+            logsDrilldownDefaults: {
+              apiVersion: 'logsdrilldown.grafana.app/v1alpha1',
+              kind: 'LogsDrilldownDefaults',
+              metadata: {
+                namespace: getAPINamespace(),
+                generateName: 'logs-drilldown-defaults',
+              },
+              spec: {
+                defaultFields: ['app', 'cluster', 'level'],
+                prettifyJSON: false,
+                wrapLogMessage: false,
+                interceptDismissed: false,
+              },
+            },
+          }).unwrap();
+          console.log('Created LogsDrilldown with default fields:', result);
+        } catch (error) {
+          console.error('Failed to create LogsDrilldown:', error);
+        }
+      }
+    };
+
+    if (logsDrilldownDefaultsData !== undefined) {
+      createDefaultLogsDrilldownDefaults();
+    }
+  }, [logsDrilldownDefaultsData, createLogsDrilldownDefaults]);
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
