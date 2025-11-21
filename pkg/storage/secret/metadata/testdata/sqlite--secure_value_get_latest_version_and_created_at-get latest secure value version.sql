@@ -1,5 +1,7 @@
 SELECT
-  "version"
+  "created",
+  "version",
+  "active"
 FROM
   "secret_secure_value"
 WHERE 
