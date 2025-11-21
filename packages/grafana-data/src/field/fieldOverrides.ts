@@ -34,6 +34,7 @@ import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { FieldMatcherID } from '../transformations/matchers/ids';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -85,12 +86,19 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   let seriesIndex = 0;
   let globalRange: NumericRange | undefined = undefined;
 
+  let checkAllHiddenSeries = false;
+  let hasVisibleSeries = false;
+
   // Prepare the Matchers
   const override: OverrideProps[] = [];
   if (source.overrides) {
     for (const rule of source.overrides) {
       const info = fieldMatchers.get(rule.matcher.id);
       if (info) {
+        if (rule.matcher.id === FieldMatcherID.byNames && rule.properties.some((r) => r.id === 'custom.hideFrom')) {
+          checkAllHiddenSeries = true;
+        }
+
         override.push({
           match: info.get(rule.matcher.options),
           properties: rule.properties,
@@ -99,7 +107,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     }
   }
 
-  return options.data.map((originalFrame, index) => {
+  const dataWithOverrides = options.data.map((originalFrame, index) => {
     // Need to define this new frame here as it's passed to the getLinkSupplier function inside the fields loop
     const newFrame: DataFrame = { ...originalFrame };
     // Copy fields
@@ -245,10 +253,32 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           ),
         });
       }
+
+      if (checkAllHiddenSeries && !hasVisibleSeries) {
+        hasVisibleSeries = field.config.custom?.hideFrom?.viz === false;
+      }
     }
 
     return newFrame;
   });
+
+  if (checkAllHiddenSeries && !hasVisibleSeries) {
+    return dataWithOverrides.map((frame) => {
+      for (const field of frame.fields) {
+        if (field.config.custom?.hideFrom) {
+          field.config.custom.hideFrom = {
+            viz: false,
+            legend: false,
+            tooltip: false,
+          };
+        }
+      }
+
+      return frame;
+    });
+  }
+
+  return dataWithOverrides;
 }
 
 function calculateRange(
