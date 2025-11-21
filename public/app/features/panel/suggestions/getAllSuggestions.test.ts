@@ -134,6 +134,7 @@ scenario('Single frame with time and number field', (ctx) => {
       expect.objectContaining({ pluginId: 'state-timeline' }),
       expect.objectContaining({ pluginId: 'status-history' }),
       expect.objectContaining({ pluginId: 'heatmap' }),
+      expect.objectContaining({ pluginId: 'histogram' }),
     ]);
   });
 
@@ -194,6 +195,7 @@ scenario('Single frame with time 2 number fields', (ctx) => {
       expect.objectContaining({ pluginId: 'state-timeline' }),
       expect.objectContaining({ pluginId: 'status-history' }),
       expect.objectContaining({ pluginId: 'heatmap' }),
+      expect.objectContaining({ pluginId: 'histogram' }),
     ]);
   });
 
@@ -296,6 +298,7 @@ scenario('Single frame with string and number field', (ctx) => {
         options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Lcd }),
       }),
       expect.objectContaining({ pluginId: 'table' }),
+      expect.objectContaining({ pluginId: 'histogram' }),
     ]);
   });
 
@@ -363,6 +366,7 @@ scenario('Single frame with string and 2 number field', (ctx) => {
         options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Lcd }),
       }),
       expect.objectContaining({ pluginId: 'table' }),
+      expect.objectContaining({ pluginId: 'histogram' }),
     ]);
   });
 });
