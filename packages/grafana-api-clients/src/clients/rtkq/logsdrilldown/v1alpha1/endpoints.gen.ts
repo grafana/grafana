@@ -7,7 +7,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
-        query: () => ({ url: `/apis/logsdrilldown.grafana.app/v1alpha1/` }),
+        query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
       }),
       listLogsDrilldownDefaults: build.query<ListLogsDrilldownDefaultsApiResponse, ListLogsDrilldownDefaultsApiArg>({
@@ -874,7 +874,20 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type LogsDrilldownDefaultsLogsDefaultColumns = {
+  datasource: {
+    dsUID: string;
+    records: {
+      columns: string[];
+      labels: {
+        key: string;
+        value: string;
+      }[];
+    }[];
+  }[];
+};
 export type LogsDrilldownDefaultsSpec = {
+  defaultColumns: LogsDrilldownDefaultsLogsDefaultColumns;
   defaultFields: string[];
   interceptDismissed: boolean;
   prettifyJSON: boolean;
@@ -980,7 +993,20 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
+export type LogsDrilldownLogsDefaultColumns = {
+  datasource: {
+    dsUID: string;
+    records: {
+      columns: string[];
+      labels: {
+        key: string;
+        value: string;
+      }[];
+    }[];
+  }[];
+};
 export type LogsDrilldownSpec = {
+  defaultColumns: LogsDrilldownLogsDefaultColumns;
   defaultFields: string[];
   interceptDismissed: boolean;
   prettifyJSON: boolean;
