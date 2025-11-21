@@ -64,6 +64,7 @@ func (l *loggerImpl) Middleware() web.Middleware {
 			// put the start time on context so we can measure it later.
 			r = r.WithContext(log.InitstartTime(r.Context(), time.Now()))
 
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if l.flags.IsEnabled(r.Context(), featuremgmt.FlagUnifiedRequestLog) {
 				r = r.WithContext(errutil.SetUnifiedLogging(r.Context()))
 			}

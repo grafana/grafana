@@ -77,6 +77,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		return response.Error(http.StatusBadRequest, "Invalid alertmanager choice specified", err)
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	disableExternal := srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingDisableSendAlertsExternal)
 	if disableExternal && sendAlertsTo != ngmodels.InternalAlertmanager {
 		return response.Error(http.StatusBadRequest, "Sending alerts to external alertmanagers is disallowed on this instance", err)
