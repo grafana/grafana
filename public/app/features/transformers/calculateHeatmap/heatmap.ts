@@ -211,21 +211,6 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     xs[i] = xValues[xi];
   }
 
-  // ymax = [1,  2,4,8,16]
-  // ymin = [0.5,1,2,4,8]
-
-  // ymin = [1,2,4,8,16]
-  // ymax = [2,4,8,16,32]
-
-  // // le
-  // if (ordinalFieldName === 'yMax') {
-  //   let yFirst = ys[0] / 1.07;
-  //   ys2 = ys.slice()
-  // }
-  // if (ordinalFieldName === 'yMin') {
-
-  // }
-
   if (custom.yMatchWithLabel) {
     custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
     if (custom.yMatchWithLabel === 'le') {
