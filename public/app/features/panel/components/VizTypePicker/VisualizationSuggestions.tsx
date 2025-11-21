@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, PanelData, PanelModel } from '@grafana/data';
+import { GrafanaTheme2, PanelData, PanelModel, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Icon, Text, useStyles2 } from '@grafana/ui';

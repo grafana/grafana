@@ -122,17 +122,16 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 }
 
 // toCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
-func toCreateRow(now time.Time, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (*secureValueDB, error) {
+func toCreateRow(createdAt, updatedAt int64, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (*secureValueDB, error) {
 	row, err := toRow(keeper, sv, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert SecureValue to secureValueDB: %w", err)
 	}
 
-	timestamp := now.UTC().Unix()
 	row.GUID = uuid.New().String()
-	row.Created = timestamp
+	row.Created = createdAt
 	row.CreatedBy = actorUID
-	row.Updated = timestamp
+	row.Updated = updatedAt
 	row.UpdatedBy = actorUID
 
 	return row, nil

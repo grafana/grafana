@@ -141,10 +141,10 @@ func TestSecureValueQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlGetLatestSecureValueVersion: {
+			sqlGetLatestSecureValueVersionAndCreatedAt: {
 				{
 					Name: "get latest secure value version",
-					Data: &getLatestSecureValueVersion{
+					Data: &getLatestSecureValueVersionAndCreatedAt{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Name:        "name",
 						Namespace:   "ns",
