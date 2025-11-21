@@ -199,8 +199,8 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
 				sv := anySecureValueGen.Draw(t, "sv")
-				modelCreatedSv, modelErr := model.create(sut.Clock.Now(), deepCopy(sv))
-				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(deepCopy(sv)))
+				modelCreatedSv, modelErr := model.create(sut.Clock.Now(), sv.DeepCopy())
+				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
