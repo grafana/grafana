@@ -1046,3 +1046,7 @@ func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
 
 	return item, nil
 }
+
+func (b *dashboardSqlAccess) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
