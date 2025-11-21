@@ -249,6 +249,11 @@ describe('AlertRuleDrawerForm', () => {
       // Click Create
       await user.click(screen.getByRole('button', { name: /Create/i }));
 
+      // Wait for the execute function to be called
+      await waitFor(() => {
+        expect(mockExecute).toHaveBeenCalled();
+      });
+
       // Drawer should close on success
       await waitFor(() => {
         expect(onClose).toHaveBeenCalled();
