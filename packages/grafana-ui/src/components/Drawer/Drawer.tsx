@@ -107,7 +107,17 @@ export function Drawer({
       open={true}
       onClose={onClose}
       placement="right"
-      getContainer={'.main-view'}
+      getContainer={() => {
+        // Use the panes container instead of main, so drawer positions relative to sidebar layout
+        // The panes container has position: relative when sidebar is open, so drawer will position correctly
+        const panesContainer = document.querySelector('.page-panes');
+        const container = panesContainer || document.querySelector('main') || document.body;
+        // Ensure container has position: relative for absolute positioning to work
+        if (container instanceof HTMLElement && getComputedStyle(container).position === 'static') {
+          container.style.position = 'relative';
+        }
+        return container;
+      }}
       className={styles.drawerContent}
       rootClassName={styles.drawer}
       classNames={{
@@ -264,10 +274,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     drawer: css({
+      // Override rc-drawer's default position: fixed to position: absolute
+      // so it positions relative to its container (.page-panes) instead of viewport
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      position: 'absolute !important' as 'absolute',
+      inset: 0,
       top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
 
       '.rc-drawer-content-wrapper': {
         boxShadow: theme.shadows.z3,
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        bottom: 0,
       },
     }),
     drawerContent: css({
@@ -297,24 +319,34 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
-    // we want the mask itself to span the whole page including the top bar
-    // this ensures trying to click something in the top bar will close the drawer correctly
-    // but we don't want the backdrop styling to apply over the top bar as it looks weird
-    // instead have a child pseudo element to apply the backdrop styling below the top bar
+    // Mask should cover the entire viewport, but be invisible over the top nav bar
+    // We use a pseudo-element that starts below the top nav bar for the visible overlay
+    // Extension sidebar has z-index modal (1060), same as drawer, so clicks on sidebar won't hit mask
     mask: css({
       // The !important here is to override the default .rc-drawer-mask styles
       backgroundColor: 'transparent !important',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       position: 'fixed !important' as 'fixed',
+      inset: 0,
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: theme.zIndex.modal - 1, // Below drawer (modal = 1060) and sidebar (modal = 1060)
 
+      // Create a visible overlay that starts below the top nav bar
+      // Top nav bar height can be 40px (1 level) or 80px (2 levels)
+      // We'll use a CSS variable or calculate dynamically, but for now estimate at 80px max
       '&:before': {
         backgroundColor: `${theme.components.overlay.background} !important`,
         bottom: 0,
         content: '""',
         left: 0,
         position: 'fixed',
+        // Start below the top nav bar
+        top: '40px',
         right: 0,
-        top: 0,
+        pointerEvents: 'auto',
       },
     }),
     maskMotion: css({
@@ -372,6 +404,7 @@ function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
   return css({
     label: `drawer-content-wrapper-${size}`,
     overflow: 'unset !important',
+    zIndex: theme.zIndex.modal, // Ensure drawer wrapper is above mask
 
     [theme.breakpoints.down('md')]: {
       width: `calc(100% - ${theme.spacing(2)}) !important`,

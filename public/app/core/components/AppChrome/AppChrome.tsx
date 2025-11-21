@@ -281,7 +281,9 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       position: 'fixed !important' as 'fixed',
       top: headerHeight,
       bottom: 0,
-      zIndex: theme.zIndex.navbarFixed + 1,
+      // z-index needs to be above drawer mask (modal - 1 = 1059) so clicks on sidebar don't close drawer
+      // Using modal (1060) same as drawer - drawer will still appear on top as a modal overlay
+      zIndex: theme.zIndex.modal,
       right: 0,
     }),
   };
