@@ -4,7 +4,7 @@ import React, { memo } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { renderLimitedComponents, ScopesContextValue } from '@grafana/runtime';
+import { ScopesContextValue } from '@grafana/runtime';
 import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
@@ -12,7 +12,6 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
-import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 import { useSelector } from 'app/types/store';
 
@@ -29,6 +28,7 @@ import { InviteUserButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
+import { TopBarExtensionPoint } from './TopBarExtensionPoint';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { getChromeHeaderLevelHeight } from './useChromeHeaderHeight';
 
@@ -65,11 +65,6 @@ export const SingleTopBar = memo(function SingleTopBar({
   const isLargeScreen = useMediaQueryMinWidth('lg');
   const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
 
-  // Plugin extension point restricted to grafana-setupguide-app
-  const { components } = usePluginComponents({
-    extensionPointId: 'grafana/singletopbar/action',
-  });
-
   return (
     <>
       <div className={styles.layout}>
@@ -100,12 +95,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           data-testid={!showToolbarLevel ? Components.NavToolbar.container : undefined}
           minWidth={{ xs: 'unset', lg: 0 }}
         >
-          {renderLimitedComponents({
-            props: {},
-            components: components,
-            limit: 1,
-            pluginId: 'grafana-setupguide-app',
-          })}
+          <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
           {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
           {!isSmallScreen && <QuickAdd />}
