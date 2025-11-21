@@ -2598,8 +2598,7 @@
         "firing": "Auslösung",
         "normal": "Normal",
         "pending": "Ausstehend",
-        "recovering": "Wird wiederhergestellt",
-        "unknown": "Unbekannt"
+        "recovering": "Wird wiederhergestellt"
       },
       "type": {
         "alert": "Alertregel",
@@ -2623,12 +2622,14 @@
         "placeholder-search-input": "Nach Name suchen oder Filterabfrage eingeben …"
       },
       "grafana-folder": "Grafana-Ordner",
+      "group-autocomplete-unavailable": "",
       "health": "Zustand",
       "label": {
         "hide": "Ausblenden",
         "show": "Anzeigen"
       },
       "manage-alerts": "In diesen Datenquellen können Sie über die Alerting-Benutzeroberfläche „Warnungen verwalten“ auswählen, um diese Warnregeln sowohl in der Grafana-Benutzeroberfläche als auch in der Datenquelle, in der sie konfiguriert wurden, verwalten zu können.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Alle Datenquellen",
       "placeholder-contact-point": "Kontaktpunkt auswählen",
       "placeholder-data-sources": "Datenquellen auswählen",
@@ -3540,6 +3541,7 @@
       "delete-modal-invalid-title": "Ordner kann nicht gelöscht werden",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Diese Aktion wird folgenden Inhalt löschen:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Löschen",
       "delete-provisioned-folder": "Bereitgestellten Ordner löschen",
       "deleting": "Löschen...",
@@ -3548,6 +3550,7 @@
       "move-modal-alert": "Das Verschieben dieses Elements kann seine Berechtigungen ändern.",
       "move-modal-field-label": "Ordnername",
       "move-modal-text": "Diese Aktion wird folgenden Inhalt verschieben:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Verschieben",
       "move-provisioned-folder": "",
       "moving": "Verschieben...",
@@ -3635,11 +3638,11 @@
       "title-folder": "Dieser Ordner enthält noch keine Dashboards"
     },
     "folder-actions-button": {
-      "delete": "Löschen",
+      "delete": "",
       "delete-folder-error": "Beim Löschen des Ordners ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
       "folder-actions": "Ordneraktionen",
       "manage-permissions": "Berechtigungen verwalten",
-      "move": "Verschieben"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Ordner auswählen: {{ label }} aktuell ausgewählt",
@@ -8586,7 +8589,13 @@
       "saving": "<1></1> wird gespeichert"
     },
     "axis-builder": {
-      "linear-threshold": "Linearer Schwellenwert",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Logarithmische Basis"
     },
     "builder": {
@@ -8992,6 +9001,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Rechte y-Achse verwenden"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9283,6 +9297,7 @@
       "toggle-panel-edit": "Fenster bearbeiten-Ansicht umschalten",
       "toggle-panel-fullscreen": "Vollbildansicht des Fensters umschalten",
       "toggle-panel-legend": "Legende des Fensters umschalten",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Zeitbereich verkleinern"
     },
     "title": "Shortcuts"
@@ -12535,11 +12550,14 @@
       "copy-clipboard": "In die Zwischenablage kopieren",
       "copy-to-clipboard-and-close": "In Zwischenablage kopieren und schließen",
       "description-name-to-easily-identify-the-token": "Name zur einfachen Identifizierung des Tokens",
+      "description-no-expiration-disabled": "",
       "description-token": "Kopieren Sie den Token jetzt, denn Sie werden ihn später nicht mehr sehen können. Wenn Sie einen Token verlieren, müssen Sie einen neuen Token erstellen.",
       "generate-token": "Token generieren",
       "label-display-name": "Anzeigename",
       "label-expiration": "Ablauf",
       "label-expiration-date": "Ablaufdatum",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {

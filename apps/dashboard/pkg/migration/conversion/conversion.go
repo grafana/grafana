@@ -11,11 +11,13 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSourceIndexProvider, _ schemaversion.LibraryElementIndexProvider) error {
+func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
 	// Wrap the provider once with 10s caching for all conversions.
 	// This prevents repeated DB queries across multiple conversion calls while allowing
 	// the cache to refresh periodically, making it suitable for long-lived singleton usage.
 	dsIndexProvider = schemaversion.WrapIndexProviderWithCache(dsIndexProvider)
+	// Wrap library element provider with caching as well
+	leIndexProvider = schemaversion.WrapLibraryElementProviderWithCache(leIndexProvider)
 
 	// v0 conversions
 	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv1.Dashboard)(nil),
@@ -26,13 +28,13 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	}
 	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv2alpha1.Dashboard)(nil),
 		withConversionMetrics(dashv0.APIVERSION, dashv2alpha1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V0_to_V2alpha1(a.(*dashv0.Dashboard), b.(*dashv2alpha1.Dashboard), scope, dsIndexProvider)
+			return Convert_V0_to_V2alpha1(a.(*dashv0.Dashboard), b.(*dashv2alpha1.Dashboard), scope, dsIndexProvider, leIndexProvider)
 		})); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil),
 		withConversionMetrics(dashv0.APIVERSION, dashv2beta1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V0_to_V2beta1(a.(*dashv0.Dashboard), b.(*dashv2beta1.Dashboard), scope, dsIndexProvider)
+			return Convert_V0_to_V2beta1(a.(*dashv0.Dashboard), b.(*dashv2beta1.Dashboard), scope, dsIndexProvider, leIndexProvider)
 		})); err != nil {
 		return err
 	}
@@ -46,13 +48,13 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	}
 	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv2alpha1.Dashboard)(nil),
 		withConversionMetrics(dashv1.APIVERSION, dashv2alpha1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V1beta1_to_V2alpha1(a.(*dashv1.Dashboard), b.(*dashv2alpha1.Dashboard), scope, dsIndexProvider)
+			return Convert_V1beta1_to_V2alpha1(a.(*dashv1.Dashboard), b.(*dashv2alpha1.Dashboard), scope, dsIndexProvider, leIndexProvider)
 		})); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil),
 		withConversionMetrics(dashv1.APIVERSION, dashv2beta1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V1beta1_to_V2beta1(a.(*dashv1.Dashboard), b.(*dashv2beta1.Dashboard), scope, dsIndexProvider)
+			return Convert_V1beta1_to_V2beta1(a.(*dashv1.Dashboard), b.(*dashv2beta1.Dashboard), scope, dsIndexProvider, leIndexProvider)
 		})); err != nil {
 		return err
 	}
