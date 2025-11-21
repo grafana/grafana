@@ -5,44 +5,8 @@
   "items": [
     {
       "metadata": {
-        "name": "addFieldFromCalculationStatFunctions",
-        "resourceVersion": "1762442825881",
-        "creationTimestamp": "2023-11-03T14:39:58Z",
-        "deletionTimestamp": "2025-11-17T15:58:43Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Add cumulative and window functions to the add field from calculation transformation",
-        "stage": "GA",
-        "codeowner": "@grafana/datapro",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
-        "name": "adhocFiltersInTooltips",
-        "resourceVersion": "1756814786992",
-        "creationTimestamp": "2025-07-29T17:53:43Z",
-        "deletionTimestamp": "2025-11-12T10:05:30Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enable adhoc filter buttons in visualization tooltips",
-        "stage": "GA",
-        "codeowner": "@grafana/datapro",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "aiGeneratedDashboardChanges",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-03-05T12:01:31Z"
       },
       "spec": {
@@ -55,7 +19,7 @@
     {
       "metadata": {
         "name": "alertEnrichment",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-06-06T12:16:07Z"
       },
       "spec": {
@@ -69,7 +33,7 @@
     {
       "metadata": {
         "name": "alertEnrichmentConditional",
-        "resourceVersion": "1757418974334",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -84,7 +48,7 @@
     {
       "metadata": {
         "name": "alertEnrichmentMultiStep",
-        "resourceVersion": "1757418224384",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -99,7 +63,7 @@
     {
       "metadata": {
         "name": "alertRuleRestore",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-03-05T14:15:26Z"
       },
       "spec": {
@@ -112,7 +76,7 @@
     {
       "metadata": {
         "name": "alertRuleUseFiredAtForStartsAt",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-22T11:16:38Z"
       },
       "spec": {
@@ -125,7 +89,7 @@
     {
       "metadata": {
         "name": "alertingAIAnalyzeCentralStateHistory",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-16T16:42:42Z"
       },
       "spec": {
@@ -139,7 +103,7 @@
     {
       "metadata": {
         "name": "alertingAIFeedback",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-23T12:38:09Z"
       },
       "spec": {
@@ -153,7 +117,7 @@
     {
       "metadata": {
         "name": "alertingAIGenAlertRules",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-16T16:42:42Z"
       },
       "spec": {
@@ -167,7 +131,7 @@
     {
       "metadata": {
         "name": "alertingAIGenTemplates",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-16T16:42:42Z"
       },
       "spec": {
@@ -181,7 +145,7 @@
     {
       "metadata": {
         "name": "alertingAIImproveAlertRules",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-16T16:42:42Z"
       },
       "spec": {
@@ -195,7 +159,7 @@
     {
       "metadata": {
         "name": "alertingBacktesting",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-12-14T14:44:14Z"
       },
       "spec": {
@@ -207,7 +171,7 @@
     {
       "metadata": {
         "name": "alertingBulkActionsInUI",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-24T14:49:59Z"
       },
       "spec": {
@@ -222,11 +186,8 @@
     {
       "metadata": {
         "name": "alertingCentralAlertHistory",
-        "resourceVersion": "1763541314825",
-        "creationTimestamp": "2024-05-29T15:01:38Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-19 08:35:14.825756 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2024-05-29T15:01:38Z"
       },
       "spec": {
         "description": "Enables the new central alert history.",
@@ -237,7 +198,7 @@
     {
       "metadata": {
         "name": "alertingDisableSendAlertsExternal",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-05-23T12:29:19Z"
       },
       "spec": {
@@ -250,7 +211,7 @@
     {
       "metadata": {
         "name": "alertingEnrichmentAssistantInvestigations",
-        "resourceVersion": "1757606567075",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
@@ -264,23 +225,8 @@
     },
     {
       "metadata": {
-        "name": "alertingEnrichmentAssistantInvestigationsUI",
-        "resourceVersion": "1757541861834",
-        "creationTimestamp": "2025-09-10T22:04:21Z",
-        "deletionTimestamp": "2025-09-11T16:02:47Z"
-      },
-      "spec": {
-        "description": "Enable Assistant Investigations enrichment type in the UI.",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "alertingEnrichmentPerRule",
-        "resourceVersion": "1756206837948",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -295,7 +241,7 @@
     {
       "metadata": {
         "name": "alertingFilterV2",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-09-11T11:29:26Z"
       },
       "spec": {
@@ -308,7 +254,7 @@
     {
       "metadata": {
         "name": "alertingImportAlertmanagerAPI",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-06-10T08:32:50Z"
       },
       "spec": {
@@ -322,7 +268,7 @@
     {
       "metadata": {
         "name": "alertingImportAlertmanagerUI",
-        "resourceVersion": "1754585847887",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -337,7 +283,7 @@
     {
       "metadata": {
         "name": "alertingImportYAMLUI",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-05-21T15:59:41Z"
       },
       "spec": {
@@ -351,7 +297,7 @@
     {
       "metadata": {
         "name": "alertingJiraIntegration",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-02-14T12:22:04Z"
       },
       "spec": {
@@ -365,7 +311,7 @@
     {
       "metadata": {
         "name": "alertingListViewV2",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-05-24T14:40:49Z"
       },
       "spec": {
@@ -378,7 +324,7 @@
     {
       "metadata": {
         "name": "alertingListViewV2PreviewToggle",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-22T08:50:34Z"
       },
       "spec": {
@@ -391,7 +337,7 @@
     {
       "metadata": {
         "name": "alertingMigrationUI",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-03-14T16:40:05Z"
       },
       "spec": {
@@ -405,7 +351,7 @@
     {
       "metadata": {
         "name": "alertingNotificationHistory",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-17T13:26:26Z"
       },
       "spec": {
@@ -419,7 +365,7 @@
     {
       "metadata": {
         "name": "alertingNotificationsStepMode",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-22T11:07:45Z"
       },
       "spec": {
@@ -433,7 +379,7 @@
     {
       "metadata": {
         "name": "alertingPrometheusRulesPrimary",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-09-27T12:27:16Z"
       },
       "spec": {
@@ -446,7 +392,7 @@
     {
       "metadata": {
         "name": "alertingProvenanceLockWrites",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-23T18:16:06Z"
       },
       "spec": {
@@ -459,7 +405,7 @@
     {
       "metadata": {
         "name": "alertingQueryAndExpressionsStepMode",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-09-26T06:33:14Z"
       },
       "spec": {
@@ -473,7 +419,7 @@
     {
       "metadata": {
         "name": "alertingQueryOptimization",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-01-10T20:52:58Z"
       },
       "spec": {
@@ -485,23 +431,8 @@
     },
     {
       "metadata": {
-        "name": "alertingRuleNotificationMessageSectionExtension",
-        "resourceVersion": "1756193222535",
-        "creationTimestamp": "2025-08-26T07:27:02Z",
-        "deletionTimestamp": "2025-08-26T11:13:57Z"
-      },
-      "spec": {
-        "description": "Enable rule notification message section extension.",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "alertingRulePermanentlyDelete",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-03T11:18:25Z"
       },
       "spec": {
@@ -516,11 +447,8 @@
     {
       "metadata": {
         "name": "alertingRuleRecoverDeleted",
-        "resourceVersion": "1763541314825",
-        "creationTimestamp": "2025-03-27T14:39:26Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-19 08:35:14.825756 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-03-27T14:39:26Z"
       },
       "spec": {
         "description": "Enables the UI functionality to recover and view deleted alert rules",
@@ -533,7 +461,7 @@
     {
       "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-02-17T12:25:32Z"
       },
       "spec": {
@@ -548,11 +476,8 @@
     {
       "metadata": {
         "name": "alertingSaveStateCompressed",
-        "resourceVersion": "1759485036332",
-        "creationTimestamp": "2025-01-27T17:47:33Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-03 09:50:36.332762 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-01-27T17:47:33Z"
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage. Default is enabled.",
@@ -564,7 +489,7 @@
     {
       "metadata": {
         "name": "alertingSaveStatePeriodic",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-01-23T16:03:30Z"
       },
       "spec": {
@@ -576,12 +501,9 @@
     {
       "metadata": {
         "name": "alertingTriage",
-        "resourceVersion": "1763541314825",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-19 08:35:14.825756 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
       "spec": {
         "description": "Enables the alerting triage feature",
@@ -594,7 +516,7 @@
     {
       "metadata": {
         "name": "alertingUIOptimizeReducer",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-18T10:59:00Z"
       },
       "spec": {
@@ -608,7 +530,7 @@
     {
       "metadata": {
         "name": "alertingUIUseBackendFilters",
-        "resourceVersion": "1762966218072",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-11-13T14:52:14Z"
       },
       "spec": {
@@ -621,12 +543,9 @@
     {
       "metadata": {
         "name": "alertingUseNewSimplifiedRoutingHashAlgorithm",
-        "resourceVersion": "1759339813575",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-01 17:30:13.575464 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
       "spec": {
         "description": "",
@@ -639,27 +558,8 @@
     },
     {
       "metadata": {
-        "name": "alertingUseOldSimplifiedRoutingHashAlgorithm",
-        "resourceVersion": "1759339782639",
-        "creationTimestamp": "2025-10-01T17:29:29Z",
-        "deletionTimestamp": "2025-10-01T17:30:13Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-01 17:29:42.63941 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "",
-        "stage": "deprecated",
-        "codeowner": "@grafana/alerting-squad",
-        "requiresRestart": true,
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "alertmanagerRemotePrimary",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-10-30T16:27:08Z"
       },
       "spec": {
@@ -671,7 +571,7 @@
     {
       "metadata": {
         "name": "alertmanagerRemoteSecondary",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-10-30T16:27:08Z"
       },
       "spec": {
@@ -683,11 +583,8 @@
     {
       "metadata": {
         "name": "alertmanagerRemoteSecondaryWithRemoteState",
-        "resourceVersion": "1753776005753",
-        "creationTimestamp": "2025-07-25T15:06:59Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-07-29 08:00:05.753498 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-07-25T15:06:59Z"
       },
       "spec": {
         "description": "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
@@ -699,7 +596,7 @@
     {
       "metadata": {
         "name": "annotationPermissionUpdate",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-10-31T13:30:13Z"
       },
       "spec": {
@@ -712,7 +609,7 @@
     {
       "metadata": {
         "name": "appPlatformGrpcClientAuth",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-10-14T10:47:18Z"
       },
       "spec": {
@@ -725,7 +622,7 @@
     {
       "metadata": {
         "name": "assetSriChecks",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-03-04T10:56:35Z"
       },
       "spec": {
@@ -738,7 +635,7 @@
     {
       "metadata": {
         "name": "authZGRPCServer",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-06-13T09:41:35Z"
       },
       "spec": {
@@ -751,7 +648,7 @@
     {
       "metadata": {
         "name": "awsAsyncQueryCaching",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-07-21T15:34:07Z"
       },
       "spec": {
@@ -764,11 +661,8 @@
     {
       "metadata": {
         "name": "awsDatasourcesHttpProxy",
-        "resourceVersion": "1762964349996",
-        "creationTimestamp": "2025-11-12T18:51:23Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-12 16:19:09.996919 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-11-12T18:51:23Z"
       },
       "spec": {
         "description": "Enables http proxy settings for aws datasources",
@@ -780,7 +674,7 @@
     {
       "metadata": {
         "name": "awsDatasourcesTempCredentials",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-07-06T15:06:11Z"
       },
       "spec": {
@@ -793,7 +687,7 @@
     {
       "metadata": {
         "name": "azureMonitorDisableLogLimit",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-10-24T13:32:09Z"
       },
       "spec": {
@@ -806,7 +700,7 @@
     {
       "metadata": {
         "name": "azureMonitorEnableUserAuth",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-27T14:01:54Z"
       },
       "spec": {
@@ -819,7 +713,7 @@
     {
       "metadata": {
         "name": "azureMonitorLogsBuilderEditor",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-02T14:15:25Z"
       },
       "spec": {
@@ -832,7 +726,7 @@
     {
       "metadata": {
         "name": "azureMonitorPrometheusExemplars",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-06-06T16:53:17Z"
       },
       "spec": {
@@ -845,7 +739,7 @@
     {
       "metadata": {
         "name": "azureResourcePickerUpdates",
-        "resourceVersion": "1754910058337",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -860,7 +754,7 @@
     {
       "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-10-12T16:56:49Z"
       },
       "spec": {
@@ -872,9 +766,8 @@
     {
       "metadata": {
         "name": "canvasPanelNesting",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2022-05-31T19:03:34Z",
-        "deletionTimestamp": "2025-11-06T14:43:27Z"
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2022-05-31T19:03:34Z"
       },
       "spec": {
         "description": "Allow elements nesting",
@@ -886,7 +779,7 @@
     {
       "metadata": {
         "name": "canvasPanelPanZoom",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-01-02T19:52:21Z"
       },
       "spec": {
@@ -899,7 +792,7 @@
     {
       "metadata": {
         "name": "cdnPluginsLoadFirst",
-        "resourceVersion": "1758882341746",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
@@ -912,22 +805,8 @@
     },
     {
       "metadata": {
-        "name": "cdnPluginsLoadedFirst",
-        "resourceVersion": "1758881920003",
-        "creationTimestamp": "2025-09-26T10:18:40Z",
-        "deletionTimestamp": "2025-09-26T10:25:41Z"
-      },
-      "spec": {
-        "description": "Prioritize loading plugins from the CDN before other sources",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "cdnPluginsUrls",
-        "resourceVersion": "1759489886228",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
@@ -941,7 +820,7 @@
     {
       "metadata": {
         "name": "cloudRBACRoles",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-01-10T13:19:01Z"
       },
       "spec": {
@@ -955,7 +834,7 @@
     {
       "metadata": {
         "name": "cloudWatchBatchQueries",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-10-20T19:09:41Z"
       },
       "spec": {
@@ -967,7 +846,7 @@
     {
       "metadata": {
         "name": "cloudWatchCrossAccountQuerying",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-11-28T11:39:12Z"
       },
       "spec": {
@@ -980,7 +859,7 @@
     {
       "metadata": {
         "name": "cloudWatchNewLabelParsing",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-04-05T15:57:56Z"
       },
       "spec": {
@@ -993,7 +872,7 @@
     {
       "metadata": {
         "name": "cloudWatchRoundUpEndTime",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-06-27T15:10:28Z"
       },
       "spec": {
@@ -1006,7 +885,7 @@
     {
       "metadata": {
         "name": "configurableSchedulerTick",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-07-26T16:44:12Z"
       },
       "spec": {
@@ -1019,25 +898,8 @@
     },
     {
       "metadata": {
-        "name": "correlations",
-        "resourceVersion": "1762442825881",
-        "creationTimestamp": "2022-09-16T13:14:27Z",
-        "deletionTimestamp": "2025-11-13T09:21:46Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Correlations page",
-        "stage": "GA",
-        "codeowner": "@grafana/datapro",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "crashDetection",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-12T15:07:27Z"
       },
       "spec": {
@@ -1050,7 +912,7 @@
     {
       "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-11T16:52:46Z"
       },
       "spec": {
@@ -1062,7 +924,7 @@
     {
       "metadata": {
         "name": "dashboardDisableSchemaValidationV2",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-11T16:52:46Z"
       },
       "spec": {
@@ -1073,26 +935,8 @@
     },
     {
       "metadata": {
-        "name": "dashboardDsAdHocFiltering",
-        "resourceVersion": "1756814786992",
-        "creationTimestamp": "2025-07-23T08:12:25Z",
-        "deletionTimestamp": "2025-11-10T17:17:49Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables adhoc filtering support for the dashboard datasource",
-        "stage": "GA",
-        "codeowner": "@grafana/datapro",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "dashboardLevelTimeMacros",
-        "resourceVersion": "1753435849295",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T09:49:07Z"
       },
       "spec": {
@@ -1105,12 +949,9 @@
     {
       "metadata": {
         "name": "dashboardLibrary",
-        "resourceVersion": "1763643877862",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-20 13:04:37.862907 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
       "spec": {
         "description": "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
@@ -1121,11 +962,8 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1763533458962",
-        "creationTimestamp": "2024-10-23T08:55:45Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-19 06:24:18.962973 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2024-10-23T08:55:45Z"
       },
       "spec": {
         "description": "Enables experimental new dashboard layouts",
@@ -1136,7 +974,7 @@
     {
       "metadata": {
         "name": "dashboardScene",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-11-13T08:51:21Z"
       },
       "spec": {
@@ -1150,7 +988,7 @@
     {
       "metadata": {
         "name": "dashboardSceneForViewers",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-11-02T19:02:25Z"
       },
       "spec": {
@@ -1164,7 +1002,7 @@
     {
       "metadata": {
         "name": "dashboardSceneSolo",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-02-11T08:08:47Z"
       },
       "spec": {
@@ -1178,7 +1016,7 @@
     {
       "metadata": {
         "name": "dashboardSchemaValidationLogging",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-11T16:52:46Z"
       },
       "spec": {
@@ -1190,11 +1028,8 @@
     {
       "metadata": {
         "name": "dashboardTemplates",
-        "resourceVersion": "1763643877862",
-        "creationTimestamp": "2025-10-28T20:05:32Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-20 13:04:37.862907 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-10-28T20:05:32Z"
       },
       "spec": {
         "description": "Enables a flow to get started with a new dashboard from a template",
@@ -1205,7 +1040,7 @@
     {
       "metadata": {
         "name": "dashboardUndoRedo",
-        "resourceVersion": "1757940426210",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
@@ -1219,7 +1054,7 @@
     {
       "metadata": {
         "name": "dashgpt",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-08-30T20:22:05Z"
       },
       "spec": {
@@ -1233,7 +1068,7 @@
     {
       "metadata": {
         "name": "dataplaneAggregator",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-08-09T08:41:07Z"
       },
       "spec": {
@@ -1245,23 +1080,8 @@
     },
     {
       "metadata": {
-        "name": "dataplaneFrontendFallback",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-04-07T21:13:19Z",
-        "deletionTimestamp": "2025-11-06T17:39:31Z"
-      },
-      "spec": {
-        "description": "Support dataplane contract field name change for transformations and field name matchers where the name is different",
-        "stage": "GA",
-        "codeowner": "@grafana/observability-metrics",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "datasourceAPIServers",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-09-19T08:28:27Z"
       },
       "spec": {
@@ -1274,7 +1094,7 @@
     {
       "metadata": {
         "name": "datasourceConnectionsTab",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-01-21T17:39:48Z"
       },
       "spec": {
@@ -1287,7 +1107,7 @@
     {
       "metadata": {
         "name": "datasourceQueryTypes",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-05-23T16:46:28Z"
       },
       "spec": {
@@ -1300,7 +1120,7 @@
     {
       "metadata": {
         "name": "disableClassicHTTPHistogram",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-06-18T19:37:44Z"
       },
       "spec": {
@@ -1313,7 +1133,7 @@
     {
       "metadata": {
         "name": "disableEnvelopeEncryption",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-05-24T08:34:47Z"
       },
       "spec": {
@@ -1326,7 +1146,7 @@
     {
       "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-04-16T14:52:47Z"
       },
       "spec": {
@@ -1339,11 +1159,8 @@
     {
       "metadata": {
         "name": "disableSSEDataplane",
-        "resourceVersion": "1762552416963",
-        "creationTimestamp": "2023-04-12T16:24:34Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-07 21:53:36.963146843 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2023-04-12T16:24:34Z"
       },
       "spec": {
         "description": "Disables dataplane specific processing in server side expressions.",
@@ -1353,48 +1170,9 @@
     },
     {
       "metadata": {
-        "name": "dskitBackgroundServices",
-        "resourceVersion": "1757339637779",
-        "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-08 13:53:57.77994 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables dskit background service wrapper",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "requiresRestart": true,
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "editPanelCSVDragAndDrop",
-        "resourceVersion": "1762783224740",
-        "creationTimestamp": "2023-01-24T09:43:44Z",
-        "deletionTimestamp": "2025-11-12T14:47:44Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-10 14:00:24.740459 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables drag and drop for CSV and Excel files",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
         "name": "elasticsearchCrossClusterSearch",
-        "resourceVersion": "1757441088767",
-        "creationTimestamp": "2024-12-12T22:20:04Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-09 18:04:48.76781 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2024-12-12T22:20:04Z"
       },
       "spec": {
         "description": "Enables cross cluster search in the Elasticsearch data source",
@@ -1406,7 +1184,7 @@
     {
       "metadata": {
         "name": "elasticsearchImprovedParsing",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-01-15T17:05:54Z"
       },
       "spec": {
@@ -1418,7 +1196,7 @@
     {
       "metadata": {
         "name": "enableAppChromeExtensions",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-06-30T04:32:08Z"
       },
       "spec": {
@@ -1433,7 +1211,7 @@
     {
       "metadata": {
         "name": "enableDashboardEmptyExtensions",
-        "resourceVersion": "1759194774156",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-10-13T07:03:13Z"
       },
       "spec": {
@@ -1448,11 +1226,8 @@
     {
       "metadata": {
         "name": "enableDatagridEditing",
-        "resourceVersion": "1763539789149",
-        "creationTimestamp": "2023-04-24T14:46:31Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-19 08:09:49.149669 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2023-04-24T14:46:31Z"
       },
       "spec": {
         "description": "Enables the edit functionality in the datagrid panel",
@@ -1463,7 +1238,7 @@
     {
       "metadata": {
         "name": "enableExtensionsAdminPage",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-05T15:55:10Z"
       },
       "spec": {
@@ -1476,7 +1251,7 @@
     {
       "metadata": {
         "name": "enableNativeHTTPHistogram",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-10-03T18:23:55Z"
       },
       "spec": {
@@ -1488,24 +1263,8 @@
     },
     {
       "metadata": {
-        "name": "enablePluginImporter",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-16T04:42:28Z",
-        "deletionTimestamp": "2025-10-23T04:18:23Z"
-      },
-      "spec": {
-        "description": "Set this to true to use the new PluginImporter functionality",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "frontend": true,
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "enableSCIM",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-07T14:38:46Z"
       },
       "spec": {
@@ -1517,7 +1276,7 @@
     {
       "metadata": {
         "name": "enableScopesInMetricsExplore",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-06T13:11:33Z"
       },
       "spec": {
@@ -1530,7 +1289,7 @@
     {
       "metadata": {
         "name": "exploreLogsAggregatedMetrics",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
@@ -1543,7 +1302,7 @@
     {
       "metadata": {
         "name": "exploreLogsLimitedTimeRange",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
@@ -1556,11 +1315,11 @@
     {
       "metadata": {
         "name": "exploreLogsShardSplitting",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
-        "description": "Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
+        "description": "Deprecated. Replace with lokiShardSplitting. Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true
@@ -1569,7 +1328,7 @@
     {
       "metadata": {
         "name": "exploreMetricsRelatedLogs",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-05T16:28:43Z"
       },
       "spec": {
@@ -1581,36 +1340,8 @@
     },
     {
       "metadata": {
-        "name": "expressionParser",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-02-17T00:59:11Z",
-        "deletionTimestamp": "2025-07-31T22:56:50Z"
-      },
-      "spec": {
-        "description": "Enable new expression parser",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "extensionSidebar",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-04-03T10:16:35Z",
-        "deletionTimestamp": "2025-07-31T22:56:50Z"
-      },
-      "spec": {
-        "description": "Enables the extension sidebar",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-logs",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
         "name": "externalServiceAccounts",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-09-28T07:26:37Z"
       },
       "spec": {
@@ -1622,7 +1353,7 @@
     {
       "metadata": {
         "name": "extraThemes",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-05-10T13:37:04Z",
         "deletionTimestamp": "2025-05-20T08:18:08Z"
       },
@@ -1635,25 +1366,8 @@
     },
     {
       "metadata": {
-        "name": "extractFieldsNameDeduplication",
-        "resourceVersion": "1762442825881",
-        "creationTimestamp": "2023-11-02T15:47:42Z",
-        "deletionTimestamp": "2025-11-12T10:08:13Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Make sure extracted field names are unique in the dataframe",
-        "stage": "experimental",
-        "codeowner": "@grafana/datapro",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
         "name": "faroDatasourceSelector",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-05-05T00:35:10Z"
       },
       "spec": {
@@ -1666,7 +1380,7 @@
     {
       "metadata": {
         "name": "favoriteDatasources",
-        "resourceVersion": "1754648387873",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -1680,7 +1394,7 @@
     {
       "metadata": {
         "name": "featureHighlights",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-02-03T11:53:23Z"
       },
       "spec": {
@@ -1692,40 +1406,8 @@
     },
     {
       "metadata": {
-        "name": "featureToggleAdminPage",
-        "resourceVersion": "1758022099771",
-        "creationTimestamp": "2023-07-18T20:43:32Z",
-        "deletionTimestamp": "2025-08-29T14:46:39Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-16 11:28:19.771156 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-backend-services-squad",
-        "requiresRestart": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "feedbackButton",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-12-02T17:08:15Z",
-        "deletionTimestamp": "2025-11-20T09:53:52Z"
-      },
-      "spec": {
-        "description": "Enables a button to send feedback from the Grafana UI",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-operator-experience-squad",
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "fetchRulesUsingPost",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-01-29T12:17:44Z"
       },
       "spec": {
@@ -1737,23 +1419,8 @@
     },
     {
       "metadata": {
-        "name": "filterOutBotsFromFrontendLogs",
-        "resourceVersion": "1758000919535",
-        "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z"
-      },
-      "spec": {
-        "description": "Filter out bots from collecting data for Frontend Observability",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "foldersAppPlatformAPI",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-03T14:15:23Z"
       },
       "spec": {
@@ -1767,26 +1434,8 @@
     },
     {
       "metadata": {
-        "name": "formatString",
-        "resourceVersion": "1762442825881",
-        "creationTimestamp": "2023-10-13T18:17:12Z",
-        "deletionTimestamp": "2025-11-17T13:06:30Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enable format string transformer",
-        "stage": "GA",
-        "codeowner": "@grafana/datapro",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-12-06T20:21:21Z"
       },
       "spec": {
@@ -1800,7 +1449,7 @@
     {
       "metadata": {
         "name": "grafanaAPIServerWithExperimentalAPIs",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-10-06T18:55:22Z"
       },
       "spec": {
@@ -1814,7 +1463,7 @@
     {
       "metadata": {
         "name": "grafanaAdvisor",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-01-20T10:08:00Z"
       },
       "spec": {
@@ -1826,12 +1475,9 @@
     {
       "metadata": {
         "name": "grafanaAssistantInProfilesDrilldown",
-        "resourceVersion": "1754572610001",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-08-07 13:16:50.001205 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
       "spec": {
         "description": "Enables integration with Grafana Assistant in Profiles Drilldown",
@@ -1843,22 +1489,8 @@
     },
     {
       "metadata": {
-        "name": "grafanaAssistantInProfilesDrillfown",
-        "resourceVersion": "1754034112469",
-        "creationTimestamp": "2025-08-01T07:41:52Z",
-        "deletionTimestamp": "2025-08-01T07:43:17Z"
-      },
-      "spec": {
-        "description": "Enables interation with Grafana Assitant in Profiles Drilldown",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-traces-and-profiling",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
         "name": "grafanaManagedRecordingRules",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-04-22T17:53:16Z",
         "deletionTimestamp": "2025-05-19T10:15:49Z"
       },
@@ -1871,24 +1503,8 @@
     },
     {
       "metadata": {
-        "name": "grafanaPathfinder",
-        "resourceVersion": "1760434668782",
-        "creationTimestamp": "2025-10-14T10:40:40Z",
-        "deletionTimestamp": "2025-10-22T08:06:21Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-14 09:37:48.782577 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables Pathfinder app",
-        "stage": "preview",
-        "codeowner": "@grafana/pathfinder"
-      }
-    },
-    {
-      "metadata": {
         "name": "grafanaconThemes",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-02-06T11:08:04Z"
       },
       "spec": {
@@ -1903,7 +1519,7 @@
     {
       "metadata": {
         "name": "graphiteBackendMode",
-        "resourceVersion": "1755870507537",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -1917,7 +1533,7 @@
     {
       "metadata": {
         "name": "groupAttributeSync",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-09-09T15:29:43Z"
       },
       "spec": {
@@ -1930,7 +1546,7 @@
     {
       "metadata": {
         "name": "groupByVariable",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-02-14T17:18:04Z"
       },
       "spec": {
@@ -1942,26 +1558,8 @@
     },
     {
       "metadata": {
-        "name": "groupToNestedTableTransformation",
-        "resourceVersion": "1762442825881",
-        "creationTimestamp": "2024-02-07T14:28:26Z",
-        "deletionTimestamp": "2025-11-17T11:57:22Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables the group to nested table transformation",
-        "stage": "GA",
-        "codeowner": "@grafana/datapro",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "grpcServer",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-09-26T20:25:34Z"
       },
       "spec": {
@@ -1973,7 +1571,7 @@
     {
       "metadata": {
         "name": "improvedExternalSessionHandling",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-09-17T10:54:39Z"
       },
       "spec": {
@@ -1986,7 +1584,7 @@
     {
       "metadata": {
         "name": "improvedExternalSessionHandlingSAML",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-01-09T17:02:49Z"
       },
       "spec": {
@@ -1999,7 +1597,7 @@
     {
       "metadata": {
         "name": "individualCookiePreferences",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-02-21T10:19:07Z"
       },
       "spec": {
@@ -2011,7 +1609,7 @@
     {
       "metadata": {
         "name": "infinityRunQueriesInParallel",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-03-14T12:54:04Z"
       },
       "spec": {
@@ -2023,7 +1621,7 @@
     {
       "metadata": {
         "name": "influxdbBackendMigration",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-02-09T18:26:16Z",
         "deletionTimestamp": "2023-01-17T14:11:26Z"
       },
@@ -2038,7 +1636,7 @@
     {
       "metadata": {
         "name": "influxdbRunQueriesInParallel",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-02-01T10:58:24Z"
       },
       "spec": {
@@ -2050,7 +1648,7 @@
     {
       "metadata": {
         "name": "influxqlStreamingParser",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-11-29T17:29:35Z"
       },
       "spec": {
@@ -2062,7 +1660,7 @@
     {
       "metadata": {
         "name": "interactiveLearning",
-        "resourceVersion": "1761063016739",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-10-22T08:06:21Z"
       },
       "spec": {
@@ -2074,7 +1672,7 @@
     {
       "metadata": {
         "name": "investigationsBackend",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-12-18T08:31:03Z"
       },
       "spec": {
@@ -2086,23 +1684,8 @@
     },
     {
       "metadata": {
-        "name": "inviteUserExperimental",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-07T19:09:59Z",
-        "deletionTimestamp": "2025-11-14T15:33:26Z"
-      },
-      "spec": {
-        "description": "Renders invite user button along the app",
-        "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
-        "frontend": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "jaegerEnableGrpcEndpoint",
-        "resourceVersion": "1760451551713",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-10-31T18:19:16Z"
       },
       "spec": {
@@ -2114,7 +1697,7 @@
     {
       "metadata": {
         "name": "jitterAlertRulesWithinGroups",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-01-18T18:48:11Z"
       },
       "spec": {
@@ -2128,7 +1711,7 @@
     {
       "metadata": {
         "name": "k8SFolderCounts",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-12-27T17:10:44Z"
       },
       "spec": {
@@ -2141,7 +1724,7 @@
     {
       "metadata": {
         "name": "k8SFolderMove",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-12-27T17:10:44Z"
       },
       "spec": {
@@ -2154,7 +1737,7 @@
     {
       "metadata": {
         "name": "kubernetesAggregator",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-02-12T20:59:35Z"
       },
       "spec": {
@@ -2167,7 +1750,7 @@
     {
       "metadata": {
         "name": "kubernetesAggregatorCapTokenAuth",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-05-15T18:14:23Z"
       },
       "spec": {
@@ -2180,7 +1763,7 @@
     {
       "metadata": {
         "name": "kubernetesAlertingRules",
-        "resourceVersion": "1754340669702",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -2194,7 +1777,7 @@
     {
       "metadata": {
         "name": "kubernetesAnnotations",
-        "resourceVersion": "1761142826172",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-11-06T18:22:20Z"
       },
       "spec": {
@@ -2207,7 +1790,7 @@
     {
       "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
-        "resourceVersion": "1758820248165",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
@@ -2221,11 +1804,8 @@
     {
       "metadata": {
         "name": "kubernetesAuthnMutation",
-        "resourceVersion": "1753454405614",
-        "creationTimestamp": "2025-07-25T15:05:32Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-07-25 14:40:05.614358 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-07-25T15:05:32Z"
       },
       "spec": {
         "description": "Enables create, delete, and update mutations for resources owned by IAM identity",
@@ -2237,7 +1817,7 @@
     {
       "metadata": {
         "name": "kubernetesAuthzApis",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-06-18T07:43:01Z"
       },
       "spec": {
@@ -2249,22 +1829,8 @@
     },
     {
       "metadata": {
-        "name": "kubernetesAuthzEndpoints",
-        "resourceVersion": "1758779666607",
-        "creationTimestamp": "2025-09-25T05:54:26Z",
-        "deletionTimestamp": "2025-09-25T17:10:48Z"
-      },
-      "spec": {
-        "description": "Enables K8s AuthZ endpoints",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "kubernetesAuthzResourcePermissionApis",
-        "resourceVersion": "1754668670559",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -2278,11 +1844,8 @@
     {
       "metadata": {
         "name": "kubernetesAuthzZanzanaSync",
-        "resourceVersion": "1758887751768",
-        "creationTimestamp": "2025-10-13T19:37:13Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-26 11:55:51.768754 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-10-13T19:37:13Z"
       },
       "spec": {
         "description": "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
@@ -2294,7 +1857,7 @@
     {
       "metadata": {
         "name": "kubernetesCorrelations",
-        "resourceVersion": "1757513374180",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
@@ -2308,11 +1871,8 @@
     {
       "metadata": {
         "name": "kubernetesDashboards",
-        "resourceVersion": "1763533458962",
-        "creationTimestamp": "2024-06-05T14:34:23Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-19 06:24:18.962973 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2024-06-05T14:34:23Z"
       },
       "spec": {
         "description": "Use the kubernetes API in the frontend for dashboards",
@@ -2324,7 +1884,7 @@
     {
       "metadata": {
         "name": "kubernetesFeatureToggles",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-01-18T05:32:44Z"
       },
       "spec": {
@@ -2337,7 +1897,7 @@
     {
       "metadata": {
         "name": "kubernetesLibraryPanels",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-06-25T22:21:56Z"
       },
       "spec": {
@@ -2350,11 +1910,8 @@
     {
       "metadata": {
         "name": "kubernetesLogsDrilldown",
-        "resourceVersion": "1760632282014",
-        "creationTimestamp": "2025-10-16T21:31:42Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-16 16:31:22.014483 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-10-16T21:31:42Z"
       },
       "spec": {
         "description": "Adds support for Kubernetes logs drilldown",
@@ -2366,7 +1923,7 @@
     {
       "metadata": {
         "name": "kubernetesQueryCaching",
-        "resourceVersion": "1760972620939",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-10-20T16:11:25Z"
       },
       "spec": {
@@ -2379,12 +1936,9 @@
     {
       "metadata": {
         "name": "kubernetesShortURLs",
-        "resourceVersion": "1756914263808",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-03 15:44:23.80856 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
       "spec": {
         "description": "Enables k8s short url api and uses it under the hood when handling legacy /api",
@@ -2396,7 +1950,7 @@
     {
       "metadata": {
         "name": "kubernetesSnapshots",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-12-05T22:31:49Z"
       },
       "spec": {
@@ -2409,7 +1963,7 @@
     {
       "metadata": {
         "name": "kubernetesStars",
-        "resourceVersion": "1759149842036",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
@@ -2422,22 +1976,8 @@
     },
     {
       "metadata": {
-        "name": "kubernetesZanzanaPopulate",
-        "resourceVersion": "1758879077577",
-        "creationTimestamp": "2025-09-26T09:31:17Z",
-        "deletionTimestamp": "2025-09-26T09:35:02Z"
-      },
-      "spec": {
-        "description": "Populate Zanzana on AuthZ CRDs creation or update",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "localeFormatPreference",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-03-31T13:59:07Z"
       },
       "spec": {
@@ -2448,21 +1988,8 @@
     },
     {
       "metadata": {
-        "name": "localizationForPlugins",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-31T04:38:38Z",
-        "deletionTimestamp": "2025-08-29T14:46:39Z"
-      },
-      "spec": {
-        "description": "Enables localization for plugins",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
-      }
-    },
-    {
-      "metadata": {
         "name": "logQLScope",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-11T11:53:24Z"
       },
       "spec": {
@@ -2476,7 +2003,7 @@
     {
       "metadata": {
         "name": "logRequestsInstrumentedAsUnknown",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-06-10T08:56:55Z"
       },
       "spec": {
@@ -2487,23 +2014,8 @@
     },
     {
       "metadata": {
-        "name": "logRowsPopoverMenu",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-11-16T09:48:10Z",
-        "deletionTimestamp": "2025-11-07T10:57:27Z"
-      },
-      "spec": {
-        "description": "Enable filtering menu displayed when text of a log line is selected",
-        "stage": "GA",
-        "codeowner": "@grafana/observability-logs",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "logsContextDatasourceUi",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-01-27T14:12:01Z"
       },
       "spec": {
@@ -2517,7 +2029,7 @@
     {
       "metadata": {
         "name": "logsExploreTableDefaultVisualization",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-05-02T15:28:15Z"
       },
       "spec": {
@@ -2530,7 +2042,7 @@
     {
       "metadata": {
         "name": "logsExploreTableVisualisation",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-07-12T13:52:42Z"
       },
       "spec": {
@@ -2543,23 +2055,8 @@
     },
     {
       "metadata": {
-        "name": "logsInfiniteScrolling",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-11-09T10:54:03Z",
-        "deletionTimestamp": "2025-11-07T10:59:01Z"
-      },
-      "spec": {
-        "description": "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
-        "stage": "GA",
-        "codeowner": "@grafana/observability-logs",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "logsPanelControls",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-07T14:38:55Z"
       },
       "spec": {
@@ -2573,7 +2070,7 @@
     {
       "metadata": {
         "name": "lokiExperimentalStreaming",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-06-19T10:03:51Z"
       },
       "spec": {
@@ -2585,7 +2082,7 @@
     {
       "metadata": {
         "name": "lokiLabelNamesQueryApi",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-12-13T14:31:41Z"
       },
       "spec": {
@@ -2598,7 +2095,7 @@
     {
       "metadata": {
         "name": "lokiLogsDataplane",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-07-13T07:58:00Z"
       },
       "spec": {
@@ -2609,8 +2106,21 @@
     },
     {
       "metadata": {
+        "name": "lokiQueryLimitsContext",
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-11-21T12:11:03Z"
+      },
+      "spec": {
+        "description": "Send X-Loki-Query-Limits-Context header to Loki on first split request",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "lokiQuerySplitting",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-02-09T17:27:02Z"
       },
       "spec": {
@@ -2624,7 +2134,7 @@
     {
       "metadata": {
         "name": "lokiRunQueriesInParallel",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-09-19T09:34:01Z"
       },
       "spec": {
@@ -2636,7 +2146,7 @@
     {
       "metadata": {
         "name": "lokiShardSplitting",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-10-23T11:21:03Z"
       },
       "spec": {
@@ -2649,7 +2159,7 @@
     {
       "metadata": {
         "name": "managedDualWriter",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-02-19T14:50:39Z"
       },
       "spec": {
@@ -2662,7 +2172,7 @@
     {
       "metadata": {
         "name": "metricsFromProfiles",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-09T10:55:28Z"
       },
       "spec": {
@@ -2675,7 +2185,7 @@
     {
       "metadata": {
         "name": "mlExpressions",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-07-13T17:37:50Z"
       },
       "spec": {
@@ -2686,21 +2196,8 @@
     },
     {
       "metadata": {
-        "name": "multiTenantFrontend",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-04-25T09:24:25Z",
-        "deletionTimestamp": "2025-07-31T22:56:50Z"
-      },
-      "spec": {
-        "description": "Register MT frontend",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
-      }
-    },
-    {
-      "metadata": {
         "name": "multiTenantTempCredentials",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-02T20:25:50Z"
       },
       "spec": {
@@ -2713,7 +2210,7 @@
     {
       "metadata": {
         "name": "mysqlAnsiQuotes",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-10-12T11:43:35Z"
       },
       "spec": {
@@ -2725,7 +2222,7 @@
     {
       "metadata": {
         "name": "newClickhouseConfigPageDesign",
-        "resourceVersion": "1754075145003",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -2738,23 +2235,8 @@
     },
     {
       "metadata": {
-        "name": "newDashboardSharingComponent",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-05-03T15:02:18Z",
-        "deletionTimestamp": "2025-08-29T14:46:39Z"
-      },
-      "spec": {
-        "description": "Enables the new sharing drawer design",
-        "stage": "GA",
-        "codeowner": "@grafana/sharing-squad",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "newDashboardWithFiltersAndGroupBy",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-04-04T11:25:21Z"
       },
       "spec": {
@@ -2767,7 +2249,7 @@
     {
       "metadata": {
         "name": "newFiltersUI",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-08-30T12:48:13Z"
       },
       "spec": {
@@ -2780,7 +2262,7 @@
     {
       "metadata": {
         "name": "newGauge",
-        "resourceVersion": "1760700645318",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-10-20T16:33:19Z"
       },
       "spec": {
@@ -2794,7 +2276,7 @@
     {
       "metadata": {
         "name": "newInfluxDSConfigPageDesign",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-06-25T16:39:54Z"
       },
       "spec": {
@@ -2807,7 +2289,7 @@
     {
       "metadata": {
         "name": "newLogContext",
-        "resourceVersion": "1754044501326",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z"
       },
       "spec": {
@@ -2820,11 +2302,8 @@
     {
       "metadata": {
         "name": "newLogsPanel",
-        "resourceVersion": "1762166984808",
-        "creationTimestamp": "2025-02-04T17:40:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-03 10:49:44.808226 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-02-04T17:40:17Z"
       },
       "spec": {
         "description": "Enables the new logs panel",
@@ -2836,22 +2315,8 @@
     },
     {
       "metadata": {
-        "name": "newPDFRendering",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-02-08T12:09:34Z",
-        "deletionTimestamp": "2025-11-14T14:39:41Z"
-      },
-      "spec": {
-        "description": "New implementation for the dashboard-to-PDF rendering",
-        "stage": "GA",
-        "codeowner": "@grafana/grafana-operator-experience-squad",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "newPanelPadding",
-        "resourceVersion": "1760780310038",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-11-12T15:40:46Z"
       },
       "spec": {
@@ -2864,7 +2329,7 @@
     {
       "metadata": {
         "name": "newShareReportDrawer",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-02-17T19:05:46Z"
       },
       "spec": {
@@ -2877,8 +2342,8 @@
     {
       "metadata": {
         "name": "newTimeRangeZoomShortcuts",
-        "resourceVersion": "1763646782694",
-        "creationTimestamp": "2025-11-20T13:53:02Z"
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-11-21T12:11:03Z"
       },
       "spec": {
         "description": "Enables new keyboard shortcuts for time range zoom operations",
@@ -2890,7 +2355,7 @@
     {
       "metadata": {
         "name": "newVizSuggestions",
-        "resourceVersion": "1762456851857",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-11-12T19:26:29Z"
       },
       "spec": {
@@ -2904,7 +2369,7 @@
     {
       "metadata": {
         "name": "oauthRequireSubClaim",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-03-25T13:22:24Z"
       },
       "spec": {
@@ -2917,7 +2382,7 @@
     {
       "metadata": {
         "name": "onPremToCloudMigrations",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-01-22T16:09:08Z"
       },
       "spec": {
@@ -2930,11 +2395,8 @@
     {
       "metadata": {
         "name": "onlyStoreActionSets",
-        "resourceVersion": "1759844046154",
-        "creationTimestamp": "2025-10-20T15:02:56Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-07 13:34:06.15476 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-10-20T15:02:56Z"
       },
       "spec": {
         "description": "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
@@ -2947,7 +2409,7 @@
     {
       "metadata": {
         "name": "otelLogsFormatting",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-16T15:42:14Z"
       },
       "spec": {
@@ -2960,7 +2422,7 @@
     {
       "metadata": {
         "name": "panelFilterVariable",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-11-03T12:15:54Z"
       },
       "spec": {
@@ -2973,37 +2435,8 @@
     },
     {
       "metadata": {
-        "name": "panelMonitoring",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-10-09T05:19:08Z",
-        "deletionTimestamp": "2025-11-07T19:04:42Z"
-      },
-      "spec": {
-        "description": "Enables panel monitoring through logs and measurements",
-        "stage": "GA",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
-        "name": "panelPadding",
-        "resourceVersion": "1760779980125",
-        "creationTimestamp": "2025-10-18T09:33:00Z",
-        "deletionTimestamp": "2025-10-18T09:38:30Z"
-      },
-      "spec": {
-        "description": "Increases panel padding globally",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "panelTimeSettings",
-        "resourceVersion": "1761555646368",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-10-29T08:06:23Z"
       },
       "spec": {
@@ -3015,7 +2448,7 @@
     {
       "metadata": {
         "name": "panelTitleSearch",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-02-15T18:26:03Z"
       },
       "spec": {
@@ -3027,7 +2460,7 @@
     {
       "metadata": {
         "name": "passwordlessMagicLinkAuthentication",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-14T13:50:55Z"
       },
       "spec": {
@@ -3040,7 +2473,7 @@
     {
       "metadata": {
         "name": "pdfTables",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-11-06T13:39:22Z"
       },
       "spec": {
@@ -3052,7 +2485,7 @@
     {
       "metadata": {
         "name": "permissionsFilterRemoveSubquery",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-08-02T07:39:25Z"
       },
       "spec": {
@@ -3063,25 +2496,8 @@
     },
     {
       "metadata": {
-        "name": "pinNavItems",
-        "resourceVersion": "1762958248290",
-        "creationTimestamp": "2024-06-10T11:40:03Z",
-        "deletionTimestamp": "2025-11-17T12:12:47Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables pinning of nav items",
-        "stage": "GA",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "playlistsReconciler",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-12-20T03:09:31Z"
       },
       "spec": {
@@ -3093,24 +2509,8 @@
     },
     {
       "metadata": {
-        "name": "pluginAssetProvider",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-17T15:20:35Z",
-        "deletionTimestamp": "2025-10-10T09:35:22Z"
-      },
-      "spec": {
-        "description": "Allows decoupled core plugins to load from the Grafana CDN",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "requiresRestart": true,
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "pluginContainers",
-        "resourceVersion": "1756911074581",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -3125,7 +2525,7 @@
     {
       "metadata": {
         "name": "pluginInstallAPISync",
-        "resourceVersion": "1760543624249",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-10-24T12:09:26Z"
       },
       "spec": {
@@ -3138,7 +2538,7 @@
     {
       "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-06-05T11:36:14Z"
       },
       "spec": {
@@ -3151,11 +2551,8 @@
     {
       "metadata": {
         "name": "pluginStoreServiceLoading",
-        "resourceVersion": "1761144346944",
-        "creationTimestamp": "2025-10-17T20:01:43Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-22 14:45:46.944669 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-10-17T20:01:43Z"
       },
       "spec": {
         "description": "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
@@ -3167,7 +2564,7 @@
     {
       "metadata": {
         "name": "pluginsAutoUpdate",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-16T11:44:39Z"
       },
       "spec": {
@@ -3178,34 +2575,8 @@
     },
     {
       "metadata": {
-        "name": "pluginsFrontendSandbox",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-05T08:51:36Z",
-        "deletionTimestamp": "2025-11-06T10:06:53Z"
-      },
-      "spec": {
-        "description": "Enables the plugins frontend sandbox",
-        "stage": "privatePreview",
-        "codeowner": "@grafana/plugins-platform-backend"
-      }
-    },
-    {
-      "metadata": {
-        "name": "pluginsSkipHostEnvVars",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-11-15T17:09:14Z",
-        "deletionTimestamp": "2025-11-13T15:31:57Z"
-      },
-      "spec": {
-        "description": "Disables passing host environment variable to plugin processes",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
-      }
-    },
-    {
-      "metadata": {
         "name": "pluginsSriChecks",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-10-04T12:55:09Z"
       },
       "spec": {
@@ -3218,7 +2589,7 @@
     {
       "metadata": {
         "name": "postgresDSUsePGX",
-        "resourceVersion": "1753174666056",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-05-26T06:54:18Z",
         "deletionTimestamp": "2025-06-03T12:45:07Z"
       },
@@ -3231,7 +2602,7 @@
     {
       "metadata": {
         "name": "preferLibraryPanelTitle",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-06-17T11:21:21Z"
       },
       "spec": {
@@ -3243,22 +2614,8 @@
     },
     {
       "metadata": {
-        "name": "preinstallAutoUpdate",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-11-07T12:14:25Z",
-        "deletionTimestamp": "2025-11-10T14:06:30Z"
-      },
-      "spec": {
-        "description": "Enables automatic updates for pre-installed plugins",
-        "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-05-27T12:28:06Z"
       },
       "spec": {
@@ -3271,7 +2628,7 @@
     {
       "metadata": {
         "name": "preventPanelChromeOverflow",
-        "resourceVersion": "1760704390127",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-10-17T14:40:08Z"
       },
       "spec": {
@@ -3284,23 +2641,8 @@
     },
     {
       "metadata": {
-        "name": "promQLScope",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-01-29T20:22:17Z",
-        "deletionTimestamp": "2025-10-10T14:53:18Z"
-      },
-      "spec": {
-        "description": "In-development feature that will allow injection of labels into prometheus queries.",
-        "stage": "GA",
-        "codeowner": "@grafana/oss-big-tent",
-        "hideFromDocs": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "prometheusAzureOverrideAudience",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-05-30T15:43:32Z",
         "deletionTimestamp": "2023-07-16T21:30:14Z"
       },
@@ -3313,22 +2655,8 @@
     },
     {
       "metadata": {
-        "name": "prometheusCodeModeMetricNamesSearch",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-04-04T20:38:23Z",
-        "deletionTimestamp": "2025-07-31T22:56:50Z"
-      },
-      "spec": {
-        "description": "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
-        "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
         "name": "prometheusSpecialCharsInLabelValues",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-12-18T21:31:08Z"
       },
       "spec": {
@@ -3341,12 +2669,9 @@
     {
       "metadata": {
         "name": "prometheusTypeMigration",
-        "resourceVersion": "1757089774247",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-05 16:29:34.247055837 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
       "spec": {
         "description": "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
@@ -3359,7 +2684,7 @@
     {
       "metadata": {
         "name": "provisioning",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-22T09:03:50Z"
       },
       "spec": {
@@ -3372,7 +2697,7 @@
     {
       "metadata": {
         "name": "publicDashboardsEmailSharing",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-01-03T19:45:15Z"
       },
       "spec": {
@@ -3385,7 +2710,7 @@
     {
       "metadata": {
         "name": "publicDashboardsScene",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-03-22T14:48:21Z"
       },
       "spec": {
@@ -3399,7 +2724,7 @@
     {
       "metadata": {
         "name": "queryCacheRequestDeduplication",
-        "resourceVersion": "1757521912495",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
@@ -3413,12 +2738,9 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1758208636622",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-10-07T18:31:45Z",
-        "deletionTimestamp": "2023-03-20T16:00:14Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-18 15:17:16.622111 +0000 UTC"
-        }
+        "deletionTimestamp": "2023-03-20T16:00:14Z"
       },
       "spec": {
         "description": "Enables Saved queries (query library) feature",
@@ -3429,7 +2751,7 @@
     {
       "metadata": {
         "name": "queryService",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-04-19T09:26:21Z"
       },
       "spec": {
@@ -3442,7 +2764,7 @@
     {
       "metadata": {
         "name": "queryServiceFromExplore",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-02T10:00:33Z"
       },
       "spec": {
@@ -3455,7 +2777,7 @@
     {
       "metadata": {
         "name": "queryServiceFromUI",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-04-19T09:26:21Z"
       },
       "spec": {
@@ -3468,7 +2790,7 @@
     {
       "metadata": {
         "name": "queryServiceRewrite",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-04-19T09:26:21Z"
       },
       "spec": {
@@ -3481,7 +2803,7 @@
     {
       "metadata": {
         "name": "queryServiceWithConnections",
-        "resourceVersion": "1756367172351",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-28T19:28:26Z",
         "deletionTimestamp": "2025-08-29T12:49:57Z"
       },
@@ -3494,22 +2816,8 @@
     },
     {
       "metadata": {
-        "name": "recordedQueriesMulti",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-14T12:34:22Z",
-        "deletionTimestamp": "2025-11-10T20:31:43Z"
-      },
-      "spec": {
-        "description": "Enables writing multiple items from a single query within Recorded Queries",
-        "stage": "GA",
-        "codeowner": "@grafana/observability-metrics",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "refactorVariablesTimeRange",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-06-06T13:12:09Z"
       },
       "spec": {
@@ -3521,8 +2829,8 @@
     {
       "metadata": {
         "name": "refreshTokenRequired",
-        "resourceVersion": "1763561990273",
-        "creationTimestamp": "2025-11-19T14:19:50Z"
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-11-21T12:11:03Z"
       },
       "spec": {
         "description": "Require that refresh tokens are present in oauth tokens.",
@@ -3533,25 +2841,8 @@
     },
     {
       "metadata": {
-        "name": "regressionTransformation",
-        "resourceVersion": "1762442825881",
-        "creationTimestamp": "2023-11-24T14:49:16Z",
-        "deletionTimestamp": "2025-07-01T13:59:22Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables regression analysis transformation",
-        "stage": "preview",
-        "codeowner": "@grafana/datapro",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
         "name": "reloadDashboardsOnParamsChange",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-10-25T12:56:54Z"
       },
       "spec": {
@@ -3564,7 +2855,7 @@
     {
       "metadata": {
         "name": "renderAuthJWT",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-04-03T16:53:38Z"
       },
       "spec": {
@@ -3576,7 +2867,7 @@
     {
       "metadata": {
         "name": "rendererDisableAppPluginsPreload",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-02-24T14:43:06Z"
       },
       "spec": {
@@ -3590,7 +2881,7 @@
     {
       "metadata": {
         "name": "reportingRetries",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-08-31T07:47:47Z"
       },
       "spec": {
@@ -3603,11 +2894,8 @@
     {
       "metadata": {
         "name": "restoreDashboards",
-        "resourceVersion": "1762958248290",
-        "creationTimestamp": "2025-05-23T14:35:54Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-05-23T14:35:54Z"
       },
       "spec": {
         "description": "Enables restore deleted dashboards feature",
@@ -3619,12 +2907,9 @@
     {
       "metadata": {
         "name": "restrictedPluginApis",
-        "resourceVersion": "1753776783657",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-07-29 08:13:03.657209 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
       "spec": {
         "description": "Enables sharing a list of APIs with a list of plugins",
@@ -3638,7 +2923,7 @@
     {
       "metadata": {
         "name": "rolePickerDrawer",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-09-26T12:51:38Z"
       },
       "spec": {
@@ -3650,8 +2935,8 @@
     {
       "metadata": {
         "name": "rudderstackUpgrade",
-        "resourceVersion": "1763481217872",
-        "creationTimestamp": "2025-11-18T15:53:37Z"
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-11-21T12:11:03Z"
       },
       "spec": {
         "description": "Enables the new version of rudderstack",
@@ -3663,24 +2948,8 @@
     },
     {
       "metadata": {
-        "name": "savedQueries",
-        "resourceVersion": "1756920131554",
-        "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-03 17:22:11.554759 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables Saved Queries feature",
-        "stage": "preview",
-        "codeowner": "@grafana/sharing-squad"
-      }
-    },
-    {
-      "metadata": {
         "name": "scanRowInvalidDashboardParseFallbackEnabled",
-        "resourceVersion": "1753730899886",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-30T14:18:38Z"
       },
       "spec": {
@@ -3692,7 +2961,7 @@
     {
       "metadata": {
         "name": "scopeApi",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-11-27T07:58:25Z"
       },
       "spec": {
@@ -3705,7 +2974,7 @@
     {
       "metadata": {
         "name": "scopeFilters",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-03-05T15:41:19Z"
       },
       "spec": {
@@ -3718,11 +2987,8 @@
     {
       "metadata": {
         "name": "scopeSearchAllLevels",
-        "resourceVersion": "1762958248290",
-        "creationTimestamp": "2025-04-14T07:42:16Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-04-14T07:42:16Z"
       },
       "spec": {
         "description": "Enable scope search to include all levels of the scope node tree",
@@ -3734,7 +3000,7 @@
     {
       "metadata": {
         "name": "secretsManagementAppPlatform",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-03-19T09:25:14Z"
       },
       "spec": {
@@ -3746,7 +3012,7 @@
     {
       "metadata": {
         "name": "secretsManagementAppPlatformUI",
-        "resourceVersion": "1756816818369",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -3759,11 +3025,8 @@
     {
       "metadata": {
         "name": "sharingDashboardImage",
-        "resourceVersion": "1761782859498",
-        "creationTimestamp": "2025-07-15T21:07:39Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-30 00:07:39.498343 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-07-15T21:07:39Z"
       },
       "spec": {
         "description": "Enables image sharing functionality for dashboards",
@@ -3776,7 +3039,7 @@
     {
       "metadata": {
         "name": "showDashboardValidationWarnings",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-10-14T13:51:05Z"
       },
       "spec": {
@@ -3787,41 +3050,9 @@
     },
     {
       "metadata": {
-        "name": "skipTokenRotationIfRecent",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-06-03T06:59:40Z",
-        "deletionTimestamp": "2025-10-23T08:02:41Z"
-      },
-      "spec": {
-        "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
-        "stage": "GA",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromDocs": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
-        "name": "sqlDatasourceDatabaseSelection",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-06T16:28:52Z",
-        "deletionTimestamp": "2025-07-31T22:56:50Z"
-      },
-      "spec": {
-        "description": "Enables previous SQL data source dataset dropdown behavior",
-        "stage": "preview",
-        "codeowner": "@grafana/oss-big-tent",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1756828051955",
-        "creationTimestamp": "2024-02-27T21:16:00Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-02 15:47:31.955288671 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2024-02-27T21:16:00Z"
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
@@ -3832,7 +3063,7 @@
     {
       "metadata": {
         "name": "sqlExpressionsColumnAutoComplete",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-23T21:49:58Z"
       },
       "spec": {
@@ -3845,11 +3076,8 @@
     {
       "metadata": {
         "name": "sseGroupByDatasource",
-        "resourceVersion": "1762552416963",
-        "creationTimestamp": "2023-09-07T20:02:07Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-07 21:53:36.963146843 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2023-09-07T20:02:07Z"
       },
       "spec": {
         "description": "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
@@ -3860,7 +3088,7 @@
     {
       "metadata": {
         "name": "ssoSettingsLDAP",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-06-18T11:31:27Z"
       },
       "spec": {
@@ -3874,12 +3102,9 @@
     {
       "metadata": {
         "name": "starsFromAPIServer",
-        "resourceVersion": "1762958248290",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
       "spec": {
         "description": "populate star status from apiserver",
@@ -3892,7 +3117,7 @@
     {
       "metadata": {
         "name": "storage",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2022-03-17T17:19:23Z"
       },
       "spec": {
@@ -3904,11 +3129,8 @@
     {
       "metadata": {
         "name": "suggestedDashboards",
-        "resourceVersion": "1763643877862",
-        "creationTimestamp": "2025-11-07T13:38:59Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-20 13:04:37.862907 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-11-07T13:38:59Z"
       },
       "spec": {
         "description": "Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page",
@@ -3918,22 +3140,8 @@
     },
     {
       "metadata": {
-        "name": "tableNextGen",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-26T03:57:57Z",
-        "deletionTimestamp": "2025-07-31T22:56:50Z"
-      },
-      "spec": {
-        "description": "Allows access to the new react-data-grid based table component.",
-        "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
         "name": "tableSharedCrosshair",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-12-13T09:33:14Z"
       },
       "spec": {
@@ -3946,7 +3154,7 @@
     {
       "metadata": {
         "name": "tabularNumbers",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-06-24T11:52:03Z"
       },
       "spec": {
@@ -3959,7 +3167,7 @@
     {
       "metadata": {
         "name": "teamFolders",
-        "resourceVersion": "1755099058649",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
         "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
@@ -3972,22 +3180,8 @@
     },
     {
       "metadata": {
-        "name": "teamHttpHeadersMimir",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-13T10:42:47Z",
-        "deletionTimestamp": "2025-07-31T22:56:50Z"
-      },
-      "spec": {
-        "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-        "stage": "GA",
-        "codeowner": "@grafana/identity-access-team",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "teamHttpHeadersTempo",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-05-22T19:13:31Z"
       },
       "spec": {
@@ -3998,40 +3192,9 @@
     },
     {
       "metadata": {
-        "name": "templateDashboards",
-        "resourceVersion": "1758897202631",
-        "creationTimestamp": "2025-09-26T14:33:22Z",
-        "deletionTimestamp": "2025-09-26T16:02:12Z"
-      },
-      "spec": {
-        "description": "Enables template dashboards suggestions when creating new dashboards",
-        "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "templateVariablesUsesCombobox",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-31T09:53:13Z",
-        "deletionTimestamp": "2025-11-13T03:31:18Z"
-      },
-      "spec": {
-        "description": "Use new **Combobox** component for template variables",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
         "name": "tempoAlerting",
-        "resourceVersion": "1763532089512",
-        "creationTimestamp": "2025-07-15T13:36:36Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-19 06:01:29.512182 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-07-15T13:36:36Z"
       },
       "spec": {
         "description": "Enables creating alerts from Tempo data source",
@@ -4042,12 +3205,9 @@
     {
       "metadata": {
         "name": "tempoSearchBackendMigration",
-        "resourceVersion": "1758029567165",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-16 13:32:47.165146 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
       "spec": {
         "description": "Run search queries through the tempo backend",
@@ -4060,7 +3220,7 @@
     {
       "metadata": {
         "name": "timeComparison",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-24T20:07:28Z"
       },
       "spec": {
@@ -4073,12 +3233,8 @@
     {
       "metadata": {
         "name": "timeRangePan",
-        "resourceVersion": "1762290731154",
-        "creationTimestamp": "2025-11-05T01:39:46Z",
-        "deletionTimestamp": "2025-11-06T17:39:31Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-04 21:12:11.154822 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-11-05T01:39:46Z"
       },
       "spec": {
         "description": "Enables time range panning functionality",
@@ -4090,7 +3246,7 @@
     {
       "metadata": {
         "name": "timeRangeProvider",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-10-22T10:52:33Z"
       },
       "spec": {
@@ -4101,26 +3257,9 @@
     },
     {
       "metadata": {
-        "name": "tlsMemcached",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-05-09T19:12:08Z",
-        "deletionTimestamp": "2025-11-12T15:49:28Z"
-      },
-      "spec": {
-        "description": "Use TLS-enabled memcached in the enterprise caching feature",
-        "stage": "GA",
-        "codeowner": "@grafana/grafana-operator-experience-squad",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "transformationsEmptyPlaceholder",
-        "resourceVersion": "1763373021129",
-        "creationTimestamp": "2025-11-17T13:57:05Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-17 09:50:21.129721 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-11-17T13:57:05Z"
       },
       "spec": {
         "description": "Show transformation quick-start cards in empty transformations state",
@@ -4131,23 +3270,8 @@
     },
     {
       "metadata": {
-        "name": "transformationsRedesign",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-07-12T16:35:49Z",
-        "deletionTimestamp": "2025-11-06T20:37:15Z"
-      },
-      "spec": {
-        "description": "Enables the transformations redesign",
-        "stage": "GA",
-        "codeowner": "@grafana/observability-metrics",
-        "frontend": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "ttlPluginInstanceManager",
-        "resourceVersion": "1763462850634",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-11-18T11:17:23Z"
       },
       "spec": {
@@ -4160,11 +3284,8 @@
     {
       "metadata": {
         "name": "unifiedHistory",
-        "resourceVersion": "1762958248290",
-        "creationTimestamp": "2024-12-13T10:41:18Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2024-12-13T10:41:18Z"
       },
       "spec": {
         "description": "Displays the navigation history so the user can navigate back to previous pages",
@@ -4176,7 +3297,7 @@
     {
       "metadata": {
         "name": "unifiedNavbars",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-04-09T12:51:22Z"
       },
       "spec": {
@@ -4190,7 +3311,7 @@
     {
       "metadata": {
         "name": "unifiedRequestLog",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2023-03-31T13:38:09Z"
       },
       "spec": {
@@ -4203,7 +3324,7 @@
     {
       "metadata": {
         "name": "unifiedStorageBigObjectsSupport",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-10-17T10:18:29Z"
       },
       "spec": {
@@ -4215,7 +3336,7 @@
     {
       "metadata": {
         "name": "unifiedStorageGrpcConnectionPool",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-03-21T13:24:54Z"
       },
       "spec": {
@@ -4227,23 +3348,8 @@
     },
     {
       "metadata": {
-        "name": "unifiedStorageHistoryPruner",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-17T10:36:38Z",
-        "deletionTimestamp": "2025-11-17T19:47:37Z"
-      },
-      "spec": {
-        "description": "Enables the unified storage history pruner",
-        "stage": "GA",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromDocs": true,
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "unifiedStorageSearch",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-09-30T19:46:14Z"
       },
       "spec": {
@@ -4255,27 +3361,8 @@
     },
     {
       "metadata": {
-        "name": "unifiedStorageSearchAfterWriteExperimentalAPI",
-        "resourceVersion": "1755089543487",
-        "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-08-13 12:52:23.487521 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enable experimental search-after-write guarantees to unified-storage search endpoints",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
-        "requiresRestart": true,
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "unifiedStorageSearchDualReaderEnabled",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-18T12:43:56Z"
       },
       "spec": {
@@ -4288,7 +3375,7 @@
     {
       "metadata": {
         "name": "unifiedStorageSearchSprinkles",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-12-18T17:00:54Z"
       },
       "spec": {
@@ -4301,7 +3388,7 @@
     {
       "metadata": {
         "name": "unifiedStorageSearchUI",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-12-19T18:21:48Z"
       },
       "spec": {
@@ -4313,22 +3400,8 @@
     },
     {
       "metadata": {
-        "name": "unifiedStorageUseFullNgram",
-        "resourceVersion": "1758820248165",
-        "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z"
-      },
-      "spec": {
-        "description": "Use full n-gram indexing instead of edge n-gram for unified storage search",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "unlimitedLayoutsNesting",
-        "resourceVersion": "1760013838902",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-10-10T12:15:54Z"
       },
       "spec": {
@@ -4341,12 +3414,9 @@
     {
       "metadata": {
         "name": "useKubernetesShortURLsAPI",
-        "resourceVersion": "1756914263808",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-03 15:44:23.80856 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
       "spec": {
         "description": "Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
@@ -4358,7 +3428,7 @@
     {
       "metadata": {
         "name": "useMultipleScopeNodesEndpoint",
-        "resourceVersion": "1759237515008",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z"
       },
@@ -4374,7 +3444,7 @@
     {
       "metadata": {
         "name": "useScopeSingleNodeEndpoint",
-        "resourceVersion": "1753960766702",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T14:32:41Z"
       },
       "spec": {
@@ -4389,11 +3459,8 @@
     {
       "metadata": {
         "name": "useScopesNavigationEndpoint",
-        "resourceVersion": "1762958248290",
-        "creationTimestamp": "2025-03-31T15:20:00Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-03-31T15:20:00Z"
       },
       "spec": {
         "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
@@ -4406,7 +3473,7 @@
     {
       "metadata": {
         "name": "useSessionStorageForRedirection",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-09-23T09:31:23Z"
       },
       "spec": {
@@ -4419,12 +3486,9 @@
     {
       "metadata": {
         "name": "vizActionsAuth",
-        "resourceVersion": "1756904995830",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-09-03 13:09:55.830412 +0000 UTC"
-        }
+        "deletionTimestamp": "2025-08-01T11:30:17Z"
       },
       "spec": {
         "description": "Allows authenticated API calls in actions",
@@ -4437,7 +3501,7 @@
     {
       "metadata": {
         "name": "zanzana",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1763727063618",
         "creationTimestamp": "2024-06-19T13:59:47Z"
       },
       "spec": {
@@ -4450,11 +3514,8 @@
     {
       "metadata": {
         "name": "zanzanaNoLegacyClient",
-        "resourceVersion": "1761063016739",
-        "creationTimestamp": "2025-10-21T14:03:17Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-21 16:10:16.739546 +0000 UTC"
-        }
+        "resourceVersion": "1763727063618",
+        "creationTimestamp": "2025-10-21T14:03:17Z"
       },
       "spec": {
         "description": "Use openFGA as main authorization engine and disable legacy RBAC clietn.",

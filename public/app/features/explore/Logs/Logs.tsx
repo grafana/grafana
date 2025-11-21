@@ -774,6 +774,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         <PanelChrome
           title={t('explore.unthemed-logs.title-logs-volume', 'Logs volume')}
           collapsible
+          loadingState={logsVolumeData?.state}
           collapsed={!logsVolumeEnabled}
           onToggleCollapse={onToggleLogsVolumeCollapse}
         >

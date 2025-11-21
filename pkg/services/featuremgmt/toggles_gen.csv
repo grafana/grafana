@@ -263,4 +263,5 @@ kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false
 awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false
 transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 ttlPluginInstanceManager,experimental,@grafana/plugins-platform-backend,false,false,true
+lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true

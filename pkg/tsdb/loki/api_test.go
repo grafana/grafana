@@ -2,10 +2,12 @@ package loki
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
@@ -42,6 +44,56 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "Source=logsample", req.Header.Get("X-Query-Tags"))
 		})
 
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+	})
+
+	t.Run("X-Loki-Query-Limits-Context header should be set when LimitsContext is provided", func(t *testing.T) {
+		called := false
+		from := time.Now().Truncate(time.Millisecond).Add(-1 * time.Hour)
+		to := time.Now().Truncate(time.Millisecond)
+		limitsContext := LimitsContext{
+			Expr: "{cluster=\"us-central1\"}",
+			From: from,
+			To:   to,
+		}
+
+		limitsContextJson, _ := json.Marshal(limitsContext)
+		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
+			called = true
+			require.Equal(t, string(limitsContextJson), req.Header.Get("X-Loki-Query-Limits-Context"))
+		})
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange, LimitsContext: limitsContext}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+	})
+
+	t.Run("X-Loki-Query-Limits-Context header should not get set when LimitsContext is missing expr", func(t *testing.T) {
+		called := false
+		from := time.Now().Truncate(time.Millisecond).Add(-1 * time.Hour)
+		to := time.Now().Truncate(time.Millisecond)
+		limitsContext := LimitsContext{
+			Expr: "",
+			From: from,
+			To:   to,
+		}
+
+		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
+			called = true
+			require.Equal(t, "", req.Header.Get("X-Loki-Query-Limits-Context"))
+		})
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange, LimitsContext: limitsContext}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+	})
+
+	t.Run("X-Loki-Query-Limits-Context header should not get set when LimitsContext is not provided", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
+			called = true
+			require.Equal(t, "", req.Header.Get("X-Loki-Query-Limits-Context"))
+		})
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
 		require.True(t, called)
