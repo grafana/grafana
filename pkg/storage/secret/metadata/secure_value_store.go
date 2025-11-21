@@ -47,13 +47,14 @@ type secureValueMetadataStorage struct {
 	tracer  trace.Tracer
 }
 
-func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, svmCreateErr error) {
+func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, svmCreateErr error) {
 	start := s.clock.Now()
 	name := sv.GetName()
 	namespace := sv.GetNamespace()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Create", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace),
+		attribute.String("keeper", keeper),
 		attribute.String("actorUID", actorUID),
 	))
 	defer span.End()
@@ -64,6 +65,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1bet
 		args := []any{
 			"name", name,
 			"namespace", namespace,
+			"keeper", keeper,
 			"actorUID", actorUID,
 		}
 
@@ -83,33 +85,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1bet
 	var row *secureValueDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
-		if sv.Spec.Keeper != nil {
-			// Validate before inserting that the chosen `keeper` exists.
-
-			// -- This is a copy of KeeperMetadataStore.read, which is not public at the moment, and is not defined in contract.KeeperMetadataStorage
-			req := &readKeeper{
-				SQLTemplate: sqltemplate.New(s.dialect),
-				Namespace:   sv.Namespace,
-				Name:        *sv.Spec.Keeper,
-				IsForUpdate: true,
-			}
-
-			query, err := sqltemplate.Execute(sqlKeeperRead, req)
-			if err != nil {
-				return fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
-			}
-
-			res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
-			if err != nil {
-				return fmt.Errorf("getting row: %w", err)
-			}
-			defer func() { _ = res.Close() }()
-
-			if !res.Next() {
-				return contracts.ErrKeeperNotFound
-			}
-		}
-
 		latest, err := s.getLatestVersionAndCreatedAt(ctx, xkube.Namespace(sv.Namespace), sv.Name)
 		if err != nil {
 			return fmt.Errorf("fetching latest secure value version: %w", err)
@@ -135,7 +110,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1bet
 			}
 			updatedAt := now
 
-			row, err = toCreateRow(createdAt, updatedAt, sv, actorUID)
+			row, err = toCreateRow(createdAt, updatedAt, keeper, sv, actorUID)
 			if err != nil {
 				return fmt.Errorf("to create row: %w", err)
 			}

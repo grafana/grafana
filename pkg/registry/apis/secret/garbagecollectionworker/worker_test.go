@@ -50,7 +50,7 @@ func TestBasic(t *testing.T) {
 		sv, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
 
-		keeperCfg, err := sut.KeeperMetadataStorage.GetKeeperConfig(t.Context(), sv.Namespace, sv.Spec.Keeper, contracts.ReadOpts{ForUpdate: false})
+		keeperCfg, err := sut.KeeperMetadataStorage.GetKeeperConfig(t.Context(), sv.Namespace, sv.Status.Keeper, contracts.ReadOpts{ForUpdate: false})
 		require.NoError(t, err)
 
 		keeper, err := sut.KeeperService.KeeperForConfig(keeperCfg)

@@ -79,7 +79,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 	}
 
 	if sv.Keeper.Valid {
-		resource.Spec.Keeper = &sv.Keeper.String
+		resource.Status.Keeper = sv.Keeper.String
 	}
 	if sv.Ref.Valid {
 		resource.Spec.Ref = &sv.Ref.String
@@ -122,8 +122,8 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 }
 
 // toCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
-func toCreateRow(createdAt, updatedAt int64, sv *secretv1beta1.SecureValue, actorUID string) (*secureValueDB, error) {
-	row, err := toRow(sv, "")
+func toCreateRow(createdAt, updatedAt int64, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (*secureValueDB, error) {
+	row, err := toRow(keeper, sv, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert SecureValue to secureValueDB: %w", err)
 	}
@@ -138,7 +138,7 @@ func toCreateRow(createdAt, updatedAt int64, sv *secretv1beta1.SecureValue, acto
 }
 
 // toRow maps a Kubernetes resource into a DB row.
-func toRow(sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, error) {
+func toRow(keeper string, sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, error) {
 	var annotations string
 	if len(sv.Annotations) > 0 {
 		cleanedAnnotations := xkube.CleanAnnotations(sv.Annotations)
@@ -235,7 +235,7 @@ func toRow(sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, er
 		Version: sv.Status.Version,
 
 		Description: sv.Spec.Description,
-		Keeper:      toNullString(sv.Spec.Keeper),
+		Keeper:      toNullString(&keeper),
 		Decrypters:  toNullString(decrypters),
 		Ref:         toNullString(sv.Spec.Ref),
 		ExternalID:  externalID,
