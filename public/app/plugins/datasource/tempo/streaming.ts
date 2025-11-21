@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   DataFrame,
   dataFrameFromJSON,
+  DataFrameJSON,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -165,7 +166,16 @@ export function doTempoMetricsStreaming(
           }
 
           newResult = {
-            data: data?.map(dataFrameFromJSON) ?? [],
+            data: data?.map((frame: DataFrameJSON) => {
+              const df = dataFrameFromJSON(frame);
+              // Preserve the query's refId to prevent conflation of series from different queries
+              // The backend sets RefID to the series name, which causes multiple queries with the same
+              // labels to be merged incorrectly by combineResponses
+              if (query.refId) {
+                df.refId = query.refId;
+              }
+              return df;
+            }) ?? [],
             state,
           };
         }
