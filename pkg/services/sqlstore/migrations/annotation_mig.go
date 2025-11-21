@@ -249,7 +249,7 @@ func (m *SetDashboardUIDMigration) Exec(sess *xorm.Session, mg *Migrator) error 
 
 func RunDashboardUIDMigrations(sess *xorm.Session, driverName string, logger log.Logger) error {
 	batchSize := 5000
-	logger.Info("Starting batched dashboard_uid migration for annotations", "batchSize", batchSize)
+	logger.Info("Starting batched dashboard_uid migration for annotations (newest first)", "batchSize", batchSize)
 	updateSQL := `UPDATE annotation
 		SET dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = annotation.dashboard_id)
 		WHERE dashboard_uid IS NULL 
@@ -258,7 +258,7 @@ func RunDashboardUIDMigrations(sess *xorm.Session, driverName string, logger log
 		  AND annotation.id IN (
 			SELECT id FROM annotation
 			WHERE dashboard_uid IS NULL AND dashboard_id != 0
-			ORDER BY id
+			ORDER BY id DESC
 			LIMIT ?
 		  )`
 	switch driverName {
@@ -272,7 +272,7 @@ func RunDashboardUIDMigrations(sess *xorm.Session, driverName string, logger log
 		 AND annotation.id IN (
 			SELECT id FROM annotation
 			WHERE dashboard_uid IS NULL AND dashboard_id != 0
-			ORDER BY id
+			ORDER BY id DESC
 			LIMIT $1
 		 )`
 	case MySQL:
@@ -285,7 +285,7 @@ func RunDashboardUIDMigrations(sess *xorm.Session, driverName string, logger log
 			SELECT id FROM (
 				SELECT id FROM annotation
 				WHERE dashboard_uid IS NULL AND dashboard_id != 0
-				ORDER BY id
+				ORDER BY id DESC
 				LIMIT ?
 			) AS batch
 		  )`
