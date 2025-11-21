@@ -965,7 +965,6 @@ func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, 
 // Don't run deletion of "last import times" more often than this duration.
 const limitLastImportTimesDeletion = 1 * time.Hour
 
-// GetResourceLastImportTimes provides an iterator for Last Import times and accepts an optional filter for NamespacedResources
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetLastImportTimes")
 	defer span.End()

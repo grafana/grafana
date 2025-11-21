@@ -142,7 +142,7 @@ message ResourceSearchResponse {
 }
 
 message RebuildIndexesRequest {
-  // Namespace (tenant)
+  // Namespace (tenant) must be the same as all keys' namespace
   string namespace = 1;
 
   // List of ResourceKeys (Namespace + Group + Resource)

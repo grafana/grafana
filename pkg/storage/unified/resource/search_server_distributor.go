@@ -122,6 +122,15 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	ctx, span := ds.tracing.Start(ctx, "distributor.RebuildIndexes")
 	defer span.End()
 
+	// validate input
+	for _, key := range r.Keys {
+		if r.Namespace != key.Namespace {
+			return &resourcepb.RebuildIndexesResponse{
+				Error: NewBadRequestError("key namespace does not match request namespace"),
+			}, nil
+		}
+	}
+
 	// distribute the request to all search pods to minimize risk of stale index
 	// it will not rebuild on those which don't have the index open
 	rs, err := ds.ring.GetAllHealthy(searchRingRead)
@@ -133,6 +142,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	if !ok {
 		md = make(metadata.MD)
 	}
+	rCtx := userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), r.Namespace)
 
 	var wg sync.WaitGroup
 	var totalRebuildCount atomic.Int64
@@ -141,36 +151,22 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 
 	for _, inst := range rs.Instances {
 		wg.Add(1)
-		go func(inst ring.InstanceDesc) {
+		go func() {
 			defer wg.Done()
 
 			client, err := ds.clientPool.GetClientForInstance(inst)
 			if err != nil {
-				ds.log.Error("failed to get client for instance", "instance", inst.Id, "err", err)
 				errorCh <- fmt.Errorf("instance %s: failed to get client, %w", inst.Id, err)
 				return
 			}
 
-			// context for each req
-			instanceCtx := userutils.InjectOrgID(
-				metadata.NewOutgoingContext(ctx, md),
-				r.Namespace,
-			)
-
-			err = grpc.SetHeader(instanceCtx, metadata.Pairs("proxied-instance-id", inst.Id))
+			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
 			if err != nil {
-				ds.log.Debug("error setting grpc header", "err", err)
-			}
-
-			rsp, err := client.(*RingClient).Client.RebuildIndexes(instanceCtx, r)
-			if err != nil {
-				ds.log.Error("failed to distribute rebuild index request", "instance", inst.Id, "error", err)
 				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
 				return
 			}
 
 			if rsp.Error != nil {
-				ds.log.Error("rebuild index failed for instance", "instance", inst.Id, "error", rsp.Error.Message)
 				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %s", inst.Id, rsp.Error.Message)
 				return
 			}
@@ -180,7 +176,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			totalRebuildCount.Add(rsp.RebuildCount)
-		}(inst)
+		}()
 	}
 
 	wg.Wait()
@@ -189,6 +185,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 
 	var errs []error
 	for err := range errorCh {
+		ds.log.Error("rebuild indexes call failed with %w", err)
 		errs = append(errs, err)
 	}
 
