@@ -767,13 +767,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		}},
 	}
 
-	search := &mockSearchBackend{
-		cache: map[NamespacedResource]ResourceIndex{
-			key: &MockResourceIndex{
-				buildInfo: IndexBuildInfo{BuildVersion: semver.MustParse("5.0.0"), BuildTime: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)},
-			},
-		},
-	}
+	search := &mockSearchBackend{}
 	supplier := &TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
 			"group": "resource",
@@ -790,33 +784,50 @@ func TestRebuildIndexesForResource(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
+	err = support.init(t.Context())
+	require.NoError(t, err)
+
 	require.Equal(t, 0, support.rebuildQueue.Len())
 
+	// invalid request
 	rebuildReq := &resourcepb.RebuildIndexesRequest{
-		Namespace: key.Namespace,
+		Namespace: "some-other-namespace",
 		Keys: []*resourcepb.ResourceKey{{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}}}
+	rsp, err := support.RebuildIndexes(t.Context(), rebuildReq)
+	require.NoError(t, err)
+	require.Equal(t, "key namespace does not match request namespace", rsp.Error.Message)
+
+	rebuildReq.Namespace = key.Namespace
+
+	// cached index info
+	search.cache[key] = &MockResourceIndex{
+		buildInfo: IndexBuildInfo{BuildVersion: semver.MustParse("5.0.0"), BuildTime: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)},
+	}
 
 	// old import time will not be rebuilt
 	storage.lastImportTimes = []ResourceLastImportTime{{
 		NamespacedResource: key,
 		LastImportTime:     time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 	}}
-	rsp, err := support.RebuildIndexes(t.Context(), rebuildReq)
+	rsp, err = support.RebuildIndexes(t.Context(), rebuildReq)
 	require.NoError(t, err)
-	require.Equal(t, int64(0), rsp.RebuiltCount)
+	require.Equal(t, int64(0), rsp.RebuildCount)
 	require.Equal(t, 0, support.rebuildQueue.Len())
 
-	// recent import time gets added to rebuild queue
+	// recent import time gets added to rebuild queue and processed
 	storage.lastImportTimes = []ResourceLastImportTime{{
 		NamespacedResource: key,
 		LastImportTime:     time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
 	}}
+
 	rsp, err = support.RebuildIndexes(t.Context(), rebuildReq)
 	require.NoError(t, err)
-	require.Equal(t, int64(1), rsp.RebuiltCount)
-	require.Equal(t, 1, support.rebuildQueue.Len())
+	require.Equal(t, int64(1), rsp.RebuildCount)
+
+	// rebuild waited for rebuild queue to process
+	require.Equal(t, 0, support.rebuildQueue.Len())
 }
