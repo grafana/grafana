@@ -19,15 +19,19 @@ func ProvideStubProvisioningService(cfg *setting.Cfg) (StubProvisioningService, 
 }
 
 func NewStubProvisioning(path string) (StubProvisioningService, error) {
-	cfgs, err := dashboards.ReadDashboardConfig(filepath.Join(path, "dashboards"))
-	if err != nil {
-		return nil, err
-	}
+	logger := log.New("provisioning.stub")
 	stub := &stubProvisioning{
 		path:           make(map[string]string),
 		allowUIUpdates: make(map[string]bool),
-		log:            log.New("provisioning.stub"),
+		log:            logger,
 	}
+
+	cfgs, err := dashboards.ReadDashboardConfig(filepath.Join(path, "dashboards"))
+	if err != nil {
+		logger.Warn("can't read dashboard provisioning files from directory", "path", filepath.Join(path, "dashboards"), "error", err)
+		return stub, nil
+	}
+
 	for _, cfg := range cfgs {
 		stub.path[cfg.Name] = cfg.Options["path"].(string)
 		stub.allowUIUpdates[cfg.Name] = cfg.AllowUIUpdates
