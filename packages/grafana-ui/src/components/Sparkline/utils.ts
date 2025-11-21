@@ -123,6 +123,15 @@ export const prepareSeries = (
       frame,
     };
   }
+  if (sparkline.x && !isLikelyAscendingVector(sparkline.x.values)) {
+    return {
+      warning: t(
+        'grafana-ui.components.sparkline.warning.x-not-ascending',
+        "The data in your Sparkline's x series must be sorted in ascending order."
+      ),
+      frame,
+    };
+  }
   return { frame };
 };
 
