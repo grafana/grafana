@@ -597,7 +597,8 @@
       "metadata": {
         "name": "annotationPermissionUpdate",
         "resourceVersion": "1763734583253",
-        "creationTimestamp": "2023-10-31T13:30:13Z"
+        "creationTimestamp": "2023-10-31T13:30:13Z",
+        "deletionTimestamp": "2025-11-21T17:15:09Z"
       },
       "spec": {
         "description": "Change the way annotation permissions work by scoping them to folders and dashboards.",
@@ -1361,6 +1362,20 @@
         "description": "Enables extra themes",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "extractFieldsNameDeduplication",
+        "resourceVersion": "1763745309876",
+        "creationTimestamp": "2023-11-02T15:47:42Z",
+        "deletionTimestamp": "2025-11-12T10:08:13Z"
+      },
+      "spec": {
+        "description": "Make sure extracted field names are unique in the dataframe",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
         "frontend": true
       }
     },

@@ -60,32 +60,23 @@ func (authz *AuthService) Authorize(ctx context.Context, query annotations.ItemQ
 	}
 	scopeTypes := annotationScopeTypes(scopes)
 	_, canAccessOrgAnnotations := scopeTypes[annotations.Organization.String()]
-	_, canAccessDashAnnotations := scopeTypes[annotations.Dashboard.String()]
-	if authz.features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-		canAccessDashAnnotations = true
+
+	if query.AnnotationID != 0 {
+		annotationDashboardUID, err := authz.getAnnotationDashboard(ctx, query)
+		if err != nil {
+			return nil, ErrAccessControlInternal.Errorf("failed to fetch annotations: %w", err)
+		}
+		query.DashboardUID = annotationDashboardUID
 	}
 
-	var visibleDashboards map[string]int64
-	var err error
-	if canAccessDashAnnotations {
-		if query.AnnotationID != 0 {
-			annotationDashboardUID, err := authz.getAnnotationDashboard(ctx, query)
-			if err != nil {
-				return nil, ErrAccessControlInternal.Errorf("failed to fetch annotations: %w", err)
-			}
-			query.DashboardUID = annotationDashboardUID
-		}
-
-		visibleDashboards, err = authz.dashboardsWithVisibleAnnotations(ctx, query)
-		if err != nil {
-			return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
-		}
+	visibleDashboards, err := authz.dashboardsWithVisibleAnnotations(ctx, query)
+	if err != nil {
+		return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
 	}
 
 	return &AccessResources{
-		Dashboards:               visibleDashboards,
-		CanAccessDashAnnotations: canAccessDashAnnotations,
-		CanAccessOrgAnnotations:  canAccessOrgAnnotations,
+		Dashboards:              visibleDashboards,
+		CanAccessOrgAnnotations: canAccessOrgAnnotations,
 	}, nil
 }
 
@@ -121,13 +112,8 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 		return nil, err
 	}
 
-	filterType := searchstore.TypeDashboard
-	if authz.features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-		filterType = searchstore.TypeAnnotation
-	}
-
 	filters := []any{
-		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, dashboardaccess.PERMISSION_VIEW, filterType, authz.features, recursiveQueriesSupported, authz.db.GetDialect()),
+		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeAnnotation, authz.features, recursiveQueriesSupported, authz.db.GetDialect()),
 		searchstore.OrgFilter{OrgId: query.OrgID},
 	}
 
@@ -145,7 +131,7 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 		Filters:       filters,
 		SignedInUser:  query.SignedInUser,
 		Page:          query.Page,
-		Type:          filterType,
+		Type:          searchstore.TypeAnnotation,
 		Limit:         authz.searchDashboardsPageLimit,
 	})
 	if err != nil {

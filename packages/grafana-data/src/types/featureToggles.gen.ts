@@ -333,10 +333,9 @@ export interface FeatureToggles {
   */
   alertmanagerRemotePrimary?: boolean;
   /**
-  * Change the way annotation permissions work by scoping them to folders and dashboards.
-  * @default true
+  * Make sure extracted field names are unique in the dataframe
   */
-  annotationPermissionUpdate?: boolean;
+  extractFieldsNameDeduplication?: boolean;
   /**
   * Enables dashboard rendering using Scenes for viewer roles
   * @default true

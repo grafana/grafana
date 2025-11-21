@@ -1230,10 +1230,7 @@ export class DashboardModel implements TimeModel {
       canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
     }
 
-    if (config.featureToggles.annotationPermissionUpdate) {
-      return canEdit;
-    }
-    return this.canEditDashboard() && canEdit;
+    return canEdit;
   }
 
   canDeleteAnnotations(dashboardUID?: string) {
@@ -1246,10 +1243,7 @@ export class DashboardModel implements TimeModel {
       canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
     }
 
-    if (config.featureToggles.annotationPermissionUpdate) {
-      return canDelete;
-    }
-    return canDelete && this.canEditDashboard();
+    return canDelete;
   }
 
   canAddAnnotations() {
@@ -1259,12 +1253,7 @@ export class DashboardModel implements TimeModel {
       return false;
     }
 
-    // If RBAC is enabled there are additional conditions to check.
-    if (config.featureToggles.annotationPermissionUpdate) {
-      return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
-    }
-
-    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd) && this.canEditDashboard();
+    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
   }
 
   canEditDashboard() {

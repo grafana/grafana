@@ -247,10 +247,6 @@ const (
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
 
-	// FlagAnnotationPermissionUpdate
-	// Change the way annotation permissions work by scoping them to folders and dashboards.
-	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
-
 	// FlagDashboardNewLayouts
 	// Enables experimental new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
