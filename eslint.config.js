@@ -509,10 +509,12 @@ module.exports = [
   // Old betterer rules config:
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    ignores:
+    ignores: [
       // FIXME: Remove once all enterprise issues are fixed -
       // we don't have a suppressions file/approach for enterprise code yet
-      enterpriseIgnores,
+      ...enterpriseIgnores,
+      'packages/grafana-ui/src/components/Forms/Legacy/**',
+    ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',

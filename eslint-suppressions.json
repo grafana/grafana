@@ -633,13 +633,7 @@
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    },
     "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -649,38 +643,18 @@
     }
   },
   "packages/grafana-ui/src/components/Forms/Legacy/Select/Select.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    },
     "no-restricted-syntax": {
       "count": 6
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/Forms/Legacy/Select/SelectOption.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    },
     "no-restricted-syntax": {
       "count": 4
-    }
-  },
-  "packages/grafana-ui/src/components/Forms/Legacy/Select/SelectOptionGroup.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Forms/Legacy/Switch/Switch.tsx": {
     "no-restricted-syntax": {
       "count": 3
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Gauge/Gauge.tsx": {
