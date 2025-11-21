@@ -21,6 +21,7 @@ import {
   getQueryRunnerFor,
 } from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -744,6 +745,9 @@ export const panelToRuleFormValues = async (
     return undefined;
   }
 
+  // Interpolate interval to replace dashboard variables
+  const interpolatedInterval = panel.interval ? panel.replaceVariables(panel.interval, undefined) : undefined;
+
   const relativeTimeRange = rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(dashboard.time));
   const queries = await dataQueriesToGrafanaQueries(
     targets,
@@ -751,7 +755,7 @@ export const panelToRuleFormValues = async (
     panel.scopedVars || {},
     panel.datasource ?? undefined,
     panel.maxDataPoints ?? undefined,
-    panel.interval ?? undefined
+    interpolatedInterval
   );
   // if no alerting capable queries are found, can't create a rule
   if (!queries.length || !queries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
@@ -825,13 +829,19 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
     return undefined;
   }
 
+  const scopedVars: ScopedVars = { __sceneObject: { value: vizPanel } };
+
+  // Interpolate minInterval to replace dashboard variables
+  // timeRange.state.value.raw is already interpolated with dashboard variables
+  const interpolatedMinInterval = minInterval ? getTemplateSrv().replace(minInterval, scopedVars) : undefined;
+
   const grafanaQueries = await dataQueriesToGrafanaQueries(
     queries,
     rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(timeRange.state.value.raw)),
-    { __sceneObject: { value: vizPanel } },
+    scopedVars,
     datasource,
     maxDataPoints,
-    minInterval
+    interpolatedMinInterval
   );
 
   // if no alerting capable queries are found, can't create a rule

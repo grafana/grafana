@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
-      "disabled-tooltip": "You don't have sufficient permissions to preview",
       "error": "Could not load routing preview for {{alertmanager}}",
       "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
+      "no-condition-tooltip": "Select a query condition to preview routing",
+      "permission-warning": "Preview not available",
+      "permission-warning-message": "You don't have permission to view notification policies. Preview is not available.",
       "preview-routing": "Preview routing",
       "select-folder-tooltip": "Select a folder to preview routing",
       "text-loading-preview": "Loading preview...",
@@ -7218,6 +7220,7 @@
       "logs-volume": {
         "add-filters": "Add more labels to your query to narrow down your search.",
         "decrease-timerange": "Decrease the time range of your query.",
+        "max-bytes-error": "The query would read too many bytes. Try one or more of the following:",
         "much-data": "The query is trying to access too much data. Try one or more of the following:"
       },
       "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
@@ -7267,12 +7270,15 @@
       "tooltip-select-query-visualize-table": "Select a query to visualize in the table"
     },
     "logs-volume-panel": {
-      "content-streaming": "Streaming"
+      "content-streaming": "Streaming",
+      "partial-data-tips": "Try decreasing the time range or adding more labels to your query."
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Reload log volume",
       "label-reload-log-volume": "Reload log volume",
       "loading": "Loading...",
+      "message-showing-partial-data-max-bytes": "The query would read too many bytes and some sharded requests could not be completed. ",
+      "message-showing-partial-data-timeout": "The query is trying to access too much data and some sharded requests could not be completed. ",
       "title-failed-volume-query": "Failed to load log volume for this query",
       "title-no-logs-volume-available": "No logs volume available",
       "title-showing-partial-data": "Showing partial data",
@@ -8589,7 +8595,13 @@
       "saving": "Saving <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Linear threshold",
+      "linear-threshold": {
+        "label": "Linear threshold",
+        "warning": {
+          "nan": "Linear threshold must be a number",
+          "zero": "Linear threshold cannot be zero"
+        }
+      },
       "log-base": "Log base"
     },
     "builder": {
@@ -9291,6 +9303,7 @@
       "toggle-panel-edit": "Toggle panel edit view",
       "toggle-panel-fullscreen": "Toggle panel fullscreen view",
       "toggle-panel-legend": "Toggle panel legend",
+      "zoom-in-time-range": "Zoom in time range",
       "zoom-out-time-range": "Zoom out time range"
     },
     "title": "Shortcuts"
@@ -9966,11 +9979,7 @@
       "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
-      "newer-logs": "Newer logs",
-      "older-logs": "Older logs",
-      "scroll-bottom": "Scroll to bottom",
-      "scroll-top": "Scroll to top",
-      "start-of-range": "Start of range"
+      "scroll-top": "Scroll to top"
     },
     "logs-panel": {
       "render-common-labels": {

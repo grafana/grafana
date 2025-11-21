@@ -386,7 +386,9 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       ...hit,
       uid: hit.name,
       url: toURL(hit.resource, hit.name, hit.title),
-      tags: hit.tags || [],
+      // Sort tags so we aren't reliant on the backend having done this for us
+      // Sorting order can be different between APIs/search implementations
+      tags: (hit.tags || []).sort(),
       folder: hit.folder || 'general',
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math"
 	"os"
 	"path/filepath"
@@ -71,7 +70,7 @@ type BleveOptions struct {
 
 	BuildVersion string
 
-	Logger *slog.Logger
+	Logger log.Logger
 
 	// Minimum time between index updates.
 	IndexMinUpdateInterval time.Duration
@@ -84,7 +83,7 @@ type BleveOptions struct {
 
 type bleveBackend struct {
 	tracer trace.Tracer
-	log    *slog.Logger
+	log    log.Logger
 	opts   BleveOptions
 
 	// set from opts.OwnsIndex, always non-nil
@@ -125,9 +124,9 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		}
 	}
 
-	log := opts.Logger
-	if log == nil {
-		log = slog.Default().With("logger", "bleve-backend")
+	l := opts.Logger
+	if l == nil {
+		l = log.New("bleve-backend")
 	}
 
 	ownFn := opts.OwnsIndex
@@ -137,7 +136,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 	}
 
 	be := &bleveBackend{
-		log:          log,
+		log:          l,
 		tracer:       tracer,
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
@@ -381,7 +380,7 @@ func (b *bleveBackend) BuildIndex(
 		return nil, err
 	}
 
-	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "reason", indexBuildReason)
+	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "reason", indexBuildReason)
 
 	// Close the newly created/opened index by default.
 	closeIndex := true
@@ -462,7 +461,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Batch all the changes
-	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater, b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
+	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
 
 	if build {
 		if b.indexMetrics != nil {
@@ -714,7 +713,7 @@ type bleveIndex struct {
 	// The values returned with all
 	allFields []*resourcepb.ResourceTableColumnDefinition
 	tracing   trace.Tracer
-	logger    *slog.Logger
+	logger    log.Logger
 
 	updaterFn         resource.UpdateFn
 	minUpdateInterval time.Duration
@@ -741,7 +740,7 @@ func (b *bleveBackend) newBleveIndex(
 	allFields []*resourcepb.ResourceTableColumnDefinition,
 	standardSearchFields resource.SearchableDocumentFields,
 	updaterFn resource.UpdateFn,
-	logger *slog.Logger,
+	logger log.Logger,
 ) *bleveIndex {
 	bi := &bleveIndex{
 		key:               key,

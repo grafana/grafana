@@ -8589,7 +8589,13 @@
       "saving": "Mentés: <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineáris küszöbérték",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Naplóbázis"
     },
     "builder": {
@@ -8995,6 +9001,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Jobb y tengely használata"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9286,6 +9297,7 @@
       "toggle-panel-edit": "Panelszerkesztési nézet ki- és bekapcsolása",
       "toggle-panel-fullscreen": "Panel teljes képernyős nézetének ki- és bekapcsolása",
       "toggle-panel-legend": "Panel jelmagyarázatának ki- és bekapcsolása",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Időtartomány kicsinyítése"
     },
     "title": "Billentyűparancsok"
@@ -12538,11 +12550,14 @@
       "copy-clipboard": "Másolás vágólapra",
       "copy-to-clipboard-and-close": "Másolás vágólapra és bezárás",
       "description-name-to-easily-identify-the-token": "Név a token egyszerű azonosításához",
+      "description-no-expiration-disabled": "",
       "description-token": "Másolja át most a tokent, mert később nem lesz látható. A token elvesztése esetén új tokent kell létrehozni.",
       "generate-token": "Token generálása",
       "label-display-name": "Megjelenített név",
       "label-expiration": "Lejárat",
       "label-expiration-date": "Lejárati dátum",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {
