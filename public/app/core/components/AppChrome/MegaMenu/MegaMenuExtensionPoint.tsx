@@ -1,7 +1,4 @@
-import { useContext } from 'react';
-
 import { renderLimitedComponents } from '@grafana/runtime';
-import { AddedComponentsRegistryContext } from 'app/features/plugins/extensions/ExtensionRegistriesContext';
 import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
 /**
@@ -9,18 +6,14 @@ import { usePluginComponents } from 'app/features/plugins/extensions/usePluginCo
  * Currently restricted to grafana-setupguide-app plugin.
  */
 export function MegaMenuExtensionPoint() {
-  // Check if plugin extension context is available (not available in tests)
-  const context = useContext(AddedComponentsRegistryContext);
-
-  if (!context) {
-    // Silently return null in test environments or when plugin context is not available
-    return null;
-  }
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { components } = usePluginComponents({
     extensionPointId: 'grafana/megamenu/action',
   });
+
+  // Return null if no components are registered
+  if (components.length === 0) {
+    return null;
+  }
 
   return (
     <>
