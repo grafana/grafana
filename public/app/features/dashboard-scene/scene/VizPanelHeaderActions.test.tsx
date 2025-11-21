@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { of } from 'rxjs';
 
+import { DataQueryRequest, DataSourceApi, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
   GroupByVariable,
@@ -12,14 +12,29 @@ import {
   VizPanelState,
 } from '@grafana/scenes';
 
+import { activateFullSceneTree } from '../utils/test-utils';
+
 import { DashboardScene } from './DashboardScene';
 import { VizPanelHeaderActions } from './VizPanelHeaderActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
+const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
+  return of({
+    state: LoadingState.Loading,
+    series: [],
+    timeRange: request.range,
+  });
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
+    return runRequestMock(ds, request);
+  },
   getDataSourceSrv: () => ({
-    get: jest.fn().mockResolvedValue({}),
+    get: jest.fn().mockResolvedValue({
+      getRef: () => ({ uid: 'ds-1', type: 'test' }),
+    }),
     getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds-1', type: 'test' }),
   }),
   getPluginImportUtils: () => ({
@@ -32,42 +47,55 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-const groupByHeaderActionTestId = selectors.components.Panels.Panel.PanelGroupByHeaderAction;
-
 describe('VizPanelHeaderActions', () => {
   it('renders PanelGroupByAction when the group by variable applies to the panel', async () => {
-    const { headerActions, panel } = buildScene();
+    const { headerActions } = await buildScene();
 
-    const { unmount } = render(<headerActions.Component model={headerActions} />);
-
-    await waitFor(() => expect(screen.queryByRole('button', { name: /group by/i })).toBeInTheDocument());
-    expect(screen.queryByTestId(groupByHeaderActionTestId)).toBeInTheDocument();
-    expect(panel.state.showMenuAlways).toBe(true);
-
-    unmount();
-    expect(panel.state.showMenuAlways).toBe(false);
+    expect(headerActions.state.supportsApplicability).toBe(true);
   });
 
-  it('returns null when applicability is disabled', async () => {
-    const { headerActions, panel } = buildScene({ applicabilityEnabled: false });
+  it('does not set when applicability is disabled', async () => {
+    const { headerActions } = await buildScene({ applicabilityEnabled: false });
 
-    render(<headerActions.Component model={headerActions} />);
-
-    await waitFor(() => expect(screen.queryByRole('button', { name: /group by/i })).not.toBeInTheDocument());
-    expect(screen.queryByTestId(groupByHeaderActionTestId)).not.toBeInTheDocument();
-    expect(panel.state.showMenuAlways).toBeFalsy();
+    expect(headerActions.state.supportsApplicability).toBe(false);
   });
 
-  it('returns null when the datasource uid does not match', async () => {
-    const { headerActions, panel } = buildScene({
+  it('does not set when the datasource uid does not match', async () => {
+    const { headerActions } = await buildScene({
       variableDatasourceUid: 'other-ds',
     });
 
-    render(<headerActions.Component model={headerActions} />);
+    expect(headerActions.state.supportsApplicability).toBe(false);
+  });
 
-    await waitFor(() => expect(screen.queryByRole('button', { name: /group by/i })).not.toBeInTheDocument());
-    expect(screen.queryByTestId(groupByHeaderActionTestId)).not.toBeInTheDocument();
-    expect(panel.state.showMenuAlways).toBeFalsy();
+  it('does not set if variable ds changes to a different type', async () => {
+    const { headerActions, groupByVariable } = await buildScene();
+
+    expect(headerActions.state.supportsApplicability).toBe(true);
+
+    groupByVariable.setState({ datasource: { uid: 'ds-2' } });
+
+    expect(headerActions.state.supportsApplicability).toBe(false);
+  });
+
+  it('does not set if variable applicability becomes disabled', async () => {
+    const { headerActions, groupByVariable } = await buildScene();
+
+    expect(headerActions.state.supportsApplicability).toBe(true);
+
+    groupByVariable.setState({ applicabilityEnabled: false });
+
+    expect(headerActions.state.supportsApplicability).toBe(false);
+  });
+
+  it('sdoes not set if queryRunner changes datasource to different one than vars', async () => {
+    const { headerActions, queryRunner } = await buildScene();
+
+    expect(headerActions.state.supportsApplicability).toBe(true);
+
+    queryRunner.setState({ datasource: { uid: 'ds-2' } });
+
+    expect(headerActions.state.supportsApplicability).toBe(false);
   });
 });
 
@@ -76,7 +104,7 @@ interface BuildSceneOptions {
   variableDatasourceUid?: string;
 }
 
-function buildScene(options?: BuildSceneOptions) {
+async function buildScene(options?: BuildSceneOptions) {
   const headerActions = new VizPanelHeaderActions({});
 
   const queryRunner = new SceneQueryRunner({
@@ -111,12 +139,16 @@ function buildScene(options?: BuildSceneOptions) {
 
   const panel = new VizPanel(panelState);
 
-  new DashboardScene({
+  const scene = new DashboardScene({
     $variables: new SceneVariableSet({
       variables: [groupByVariable],
     }),
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
 
-  return { headerActions, panel };
+  activateFullSceneTree(scene);
+
+  await new Promise((r) => setTimeout(r, 1));
+
+  return { headerActions, panel, groupByVariable, queryRunner };
 }
