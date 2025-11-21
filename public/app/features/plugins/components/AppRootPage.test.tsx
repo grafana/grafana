@@ -14,7 +14,6 @@ import { ExtensionRegistriesProvider } from '../extensions/ExtensionRegistriesCo
 import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
-import { CommandPaletteDynamicRegistry } from '../extensions/registry/CommandPaletteDynamicRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
 import { pluginImporter } from '../importer/pluginImporter';
 import { getPluginSettings } from '../pluginSettings';
@@ -94,7 +93,6 @@ function renderUnderRouter(page = '') {
     exposedComponentsRegistry: new ExposedComponentsRegistry(),
     addedLinksRegistry: new AddedLinksRegistry(),
     addedFunctionsRegistry: new AddedFunctionsRegistry(),
-    commandPaletteDynamicRegistry: new CommandPaletteDynamicRegistry(),
   };
   const pagePath = page ? `/${page}` : '';
   const route = {

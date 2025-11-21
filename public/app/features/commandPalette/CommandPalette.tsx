@@ -16,11 +16,8 @@ import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './actions/scopeActions';
-import {
-  useRegisterDynamicActions,
-  useRegisterRecentDashboardsActions,
-  useRegisterStaticActions,
-} from './actions/useActions';
+import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import { useDynamicExtensionResults } from './actions/useDynamicExtensionActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
@@ -51,11 +48,12 @@ function CommandPaletteContents() {
   useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
 
-  // Register dynamic actions from plugins based on search query
-  const { isLoading: isDynamicLoading } = useRegisterDynamicActions(searchQuery);
-
   const queryToggle = useCallback(() => query.toggle(), [query]);
   const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
+
+  // Fetch dynamic results from plugins - these bypass kbar's fuzzy filtering
+  // since they're already filtered by the plugin's searchProvider
+  const { results: dynamicResults, isLoading: isDynamicLoading } = useDynamicExtensionResults(searchQuery);
 
   // This searches dashboards and folders it shows only if we are not in some specific category (and there is no
   // dashboards category right now, so if any category is selected, we don't show these).
@@ -95,7 +93,11 @@ function CommandPaletteContents() {
             </div>
             {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
             <div className={styles.resultsContainer}>
-              <RenderResults isFetchingSearchResults={isFetchingSearchResults} searchResults={searchResults} />
+              <RenderResults
+                isFetchingSearchResults={isFetchingSearchResults}
+                searchResults={searchResults}
+                dynamicResults={dynamicResults}
+              />
             </div>
           </div>
         </FocusScope>
@@ -138,9 +140,10 @@ function AncestorBreadcrumbs() {
 interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
+  dynamicResults: Array<{ section: string; items: ActionImpl[] }>;
 }
 
-const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResultsProps) => {
+const RenderResults = ({ isFetchingSearchResults, searchResults, dynamicResults }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
@@ -166,6 +169,16 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
 
   const items = useMemo(() => {
     const results = [...kbarResults];
+
+    // Add dynamic results from plugins (already filtered by searchProvider)
+    dynamicResults.forEach(({ section, items }) => {
+      if (items.length > 0) {
+        results.push(section);
+        results.push(...items);
+      }
+    });
+
+    // Add dashboard and folder search results
     if (folderResultItems.length > 0) {
       results.push(foldersSectionTitle);
       results.push(...folderResultItems);
@@ -175,7 +188,14 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
       results.push(...dashboardResultItems);
     }
     return results;
-  }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
+  }, [
+    kbarResults,
+    dynamicResults,
+    dashboardsSectionTitle,
+    dashboardResultItems,
+    foldersSectionTitle,
+    folderResultItems,
+  ]);
 
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
   useEffect(() => {

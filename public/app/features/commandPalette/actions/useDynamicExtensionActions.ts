@@ -1,3 +1,4 @@
+import { ActionImpl } from 'kbar';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -9,8 +10,8 @@ import {
 import { appEvents } from 'app/core/app_events';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
-import { commandPaletteDynamicRegistry } from '../../plugins/extensions/registry/setup';
 import { createOpenModalFunction } from '../../plugins/extensions/utils';
+import { commandPaletteDynamicRegistry, CommandPaletteDynamicSearchResult } from '../CommandPaletteDynamicRegistry';
 import { CommandPaletteAction } from '../types';
 import { EXTENSIONS_PRIORITY } from '../values';
 
@@ -19,8 +20,18 @@ interface DynamicResultWithAction extends CommandPaletteDynamicResult {
   onSelect?: CommandPaletteDynamicResultAction;
 }
 
-export function useDynamicExtensionActions(searchQuery: string): {
-  actions: CommandPaletteAction[];
+export interface DynamicExtensionResultGroup {
+  section: string;
+  items: ActionImpl[];
+}
+
+/**
+ * Fetches dynamic results from plugin extensions without registering them with kbar.
+ * This allows the results to bypass kbar's fuzzy filtering since they're already
+ * filtered by the plugin's searchProvider function.
+ */
+export function useDynamicExtensionResults(searchQuery: string): {
+  results: DynamicExtensionResultGroup[];
   isLoading: boolean;
 } {
   const [dynamicResults, setDynamicResults] = useState<DynamicResultWithAction[]>([]);
@@ -65,15 +76,15 @@ export function useDynamicExtensionActions(searchQuery: string): {
     // Execute search across all registered providers
     commandPaletteDynamicRegistry
       .search(context)
-      .then((resultsMap) => {
+      .then((resultsMap: Map<string, CommandPaletteDynamicSearchResult>) => {
         if (abortController.signal.aborted) {
           return;
         }
 
         const allResults: DynamicResultWithAction[] = [];
 
-        resultsMap.forEach(({ items, config }) => {
-          items.forEach((item) => {
+        resultsMap.forEach(({ items, config }: CommandPaletteDynamicSearchResult) => {
+          items.forEach((item: CommandPaletteDynamicResult) => {
             allResults.push({
               ...item,
               pluginId: config.pluginId,
@@ -86,7 +97,7 @@ export function useDynamicExtensionActions(searchQuery: string): {
         setDynamicResults(allResults);
         setIsLoading(false);
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         if (!abortController.signal.aborted) {
           console.error('[CommandPalette] Dynamic search failed:', error);
           setDynamicResults([]);
@@ -100,55 +111,74 @@ export function useDynamicExtensionActions(searchQuery: string): {
     };
   }, [debouncedSearchQuery]);
 
-  const actions: CommandPaletteAction[] = useMemo(() => {
-    return dynamicResults.map((result) => ({
-      id: `dynamic-${result.pluginId}-${result.id}`,
-      name: result.title,
-      section: result.section ?? 'Dynamic Results',
-      subtitle: result.description,
-      priority: EXTENSIONS_PRIORITY - 0.5, // Slightly lower than static extensions
-      keywords: result.keywords?.join(' '),
-      perform: () => {
-        if (result.onSelect) {
-          const extensionPointId = 'grafana/commandpalette/action';
-          result.onSelect(result, {
-            context: { searchQuery: debouncedSearchQuery },
-            extensionPointId,
-            openModal: createOpenModalFunction({
-              pluginId: result.pluginId,
-              title: result.title,
-              description: result.description,
+  // Group results by section and convert to ActionImpl objects
+  const results: DynamicExtensionResultGroup[] = useMemo(() => {
+    const groups = new Map<string, CommandPaletteAction[]>();
+
+    dynamicResults.forEach((result) => {
+      const section = result.section ?? 'Dynamic Results';
+      
+      if (!groups.has(section)) {
+        groups.set(section, []);
+      }
+
+      const action: CommandPaletteAction = {
+        id: `dynamic-${result.pluginId}-${result.id}`,
+        name: result.title,
+        section,
+        subtitle: result.description,
+        priority: EXTENSIONS_PRIORITY - 0.5,
+        keywords: result.keywords?.join(' '),
+        perform: () => {
+          if (result.onSelect) {
+            const extensionPointId = 'grafana/commandpalette/action';
+            result.onSelect(result, {
+              context: { searchQuery: debouncedSearchQuery },
               extensionPointId,
-              path: result.path,
-              category: result.section,
-            }),
-            openSidebar: (componentTitle, context) => {
-              appEvents.publish(
-                new OpenExtensionSidebarEvent({
-                  props: context,
-                  pluginId: result.pluginId,
-                  componentTitle,
-                })
-              );
-            },
-            closeSidebar: () => {
-              appEvents.publish(new CloseExtensionSidebarEvent());
-            },
-            toggleSidebar: (componentTitle, context) => {
-              appEvents.publish(
-                new ToggleExtensionSidebarEvent({
-                  props: context,
-                  pluginId: result.pluginId,
-                  componentTitle,
-                })
-              );
-            },
-          });
-        }
-      },
-      url: result.path,
+              openModal: createOpenModalFunction({
+                pluginId: result.pluginId,
+                title: result.title,
+                description: result.description,
+                extensionPointId,
+                path: result.path,
+                category: result.section,
+              }),
+              openSidebar: (componentTitle, context) => {
+                appEvents.publish(
+                  new OpenExtensionSidebarEvent({
+                    props: context,
+                    pluginId: result.pluginId,
+                    componentTitle,
+                  })
+                );
+              },
+              closeSidebar: () => {
+                appEvents.publish(new CloseExtensionSidebarEvent());
+              },
+              toggleSidebar: (componentTitle, context) => {
+                appEvents.publish(
+                  new ToggleExtensionSidebarEvent({
+                    props: context,
+                    pluginId: result.pluginId,
+                    componentTitle,
+                  })
+                );
+              },
+            });
+          }
+        },
+        url: result.path,
+      };
+
+      groups.get(section)!.push(action);
+    });
+
+    // Convert to array of groups with ActionImpl objects
+    return Array.from(groups.entries()).map(([section, actions]) => ({
+      section,
+      items: actions.map((action) => new ActionImpl(action, { store: {} })),
     }));
   }, [dynamicResults, debouncedSearchQuery]);
 
-  return { actions, isLoading };
+  return { results, isLoading };
 }

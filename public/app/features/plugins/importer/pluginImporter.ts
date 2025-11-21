@@ -13,6 +13,7 @@ import {
   throwIfAngular,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { commandPaletteDynamicRegistry } from 'app/features/commandPalette/CommandPaletteDynamicRegistry';
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
@@ -20,7 +21,6 @@ import {
   addedComponentsRegistry,
   addedFunctionsRegistry,
   addedLinksRegistry,
-  commandPaletteDynamicRegistry,
   exposedComponentsRegistry,
 } from '../extensions/registry/setup';
 import { pluginsLogger } from '../utils';

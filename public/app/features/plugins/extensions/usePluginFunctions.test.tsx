@@ -16,7 +16,6 @@ import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
-import { CommandPaletteDynamicRegistry } from './registry/CommandPaletteDynamicRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
@@ -68,7 +67,6 @@ describe('usePluginFunctions()', () => {
       exposedComponentsRegistry: new ExposedComponentsRegistry(),
       addedLinksRegistry: new AddedLinksRegistry(),
       addedFunctionsRegistry: new AddedFunctionsRegistry(),
-      commandPaletteDynamicRegistry: new CommandPaletteDynamicRegistry(),
     };
     resetLogMock(log);
 
