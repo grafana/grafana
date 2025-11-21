@@ -16,54 +16,6 @@
             "properties": {
               "spec": {
                 "properties": {
-                  "defaultColumns": {
-                    "properties": {
-                      "datasource": {
-                        "items": {
-                          "properties": {
-                            "dsUID": {
-                              "type": "string"
-                            },
-                            "records": {
-                              "items": {
-                                "properties": {
-                                  "columns": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  },
-                                  "labels": {
-                                    "items": {
-                                      "properties": {
-                                        "key": {
-                                          "type": "string"
-                                        },
-                                        "value": {
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": ["key", "value"],
-                                      "type": "object"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "required": ["columns", "labels"],
-                                "type": "object"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "required": ["dsUID", "records"],
-                          "type": "object"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "required": ["datasource"],
-                    "type": "object"
-                  },
                   "defaultFields": {
                     "items": {
                       "type": "string"
@@ -80,7 +32,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": ["defaultFields", "prettifyJSON", "wrapLogMessage", "interceptDismissed", "defaultColumns"],
+                "required": ["defaultFields", "prettifyJSON", "wrapLogMessage", "interceptDismissed"],
                 "type": "object"
               },
               "status": {

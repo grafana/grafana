@@ -2,7 +2,7 @@
   "kind": "CustomResourceDefinition",
   "apiVersion": "apiextensions.k8s.io/v1",
   "metadata": {
-    "name": "logsdrilldowns.logsdrilldown.grafana.app"
+    "name": "logsdrilldowndefaultcolumns.logsdrilldown.grafana.app"
   },
   "spec": {
     "group": "logsdrilldown.grafana.app",
@@ -16,23 +16,50 @@
             "properties": {
               "spec": {
                 "properties": {
-                  "defaultFields": {
+                  "datasource": {
                     "items": {
-                      "type": "string"
+                      "properties": {
+                        "dsUID": {
+                          "type": "string"
+                        },
+                        "records": {
+                          "items": {
+                            "properties": {
+                              "columns": {
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              },
+                              "labels": {
+                                "items": {
+                                  "properties": {
+                                    "key": {
+                                      "type": "string"
+                                    },
+                                    "value": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": ["key", "value"],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              }
+                            },
+                            "required": ["columns", "labels"],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": ["dsUID", "records"],
+                      "type": "object"
                     },
                     "type": "array"
-                  },
-                  "interceptDismissed": {
-                    "type": "boolean"
-                  },
-                  "prettifyJSON": {
-                    "type": "boolean"
-                  },
-                  "wrapLogMessage": {
-                    "type": "boolean"
                   }
                 },
-                "required": ["defaultFields", "prettifyJSON", "wrapLogMessage", "interceptDismissed"],
+                "required": ["datasource"],
                 "type": "object"
               },
               "status": {
@@ -84,8 +111,8 @@
       }
     ],
     "names": {
-      "kind": "LogsDrilldown",
-      "plural": "logsdrilldowns"
+      "kind": "LogsDrilldownDefaultColumns",
+      "plural": "logsdrilldowndefaultcolumns"
     },
     "scope": "Namespaced"
   }

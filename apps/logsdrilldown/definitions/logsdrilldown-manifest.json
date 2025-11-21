@@ -17,58 +17,6 @@
             "plural": "LogsDrilldowns",
             "scope": "Namespaced",
             "schemas": {
-              "LogsDefaultColumns": {
-                "additionalProperties": false,
-                "properties": {
-                  "datasource": {
-                    "items": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "dsUID": {
-                          "type": "string"
-                        },
-                        "records": {
-                          "items": {
-                            "additionalProperties": false,
-                            "properties": {
-                              "columns": {
-                                "items": {
-                                  "type": "string"
-                                },
-                                "type": "array"
-                              },
-                              "labels": {
-                                "items": {
-                                  "additionalProperties": false,
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": ["key", "value"],
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "required": ["columns", "labels"],
-                            "type": "object"
-                          },
-                          "type": "array"
-                        }
-                      },
-                      "required": ["dsUID", "records"],
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                },
-                "required": ["datasource"],
-                "type": "object"
-              },
               "LogsDrilldown": {
                 "properties": {
                   "spec": {
@@ -111,9 +59,6 @@
               "spec": {
                 "additionalProperties": false,
                 "properties": {
-                  "defaultColumns": {
-                    "$ref": "#/components/schemas/LogsDefaultColumns"
-                  },
                   "defaultFields": {
                     "items": {
                       "type": "string"
@@ -130,7 +75,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": ["defaultFields", "prettifyJSON", "wrapLogMessage", "interceptDismissed", "defaultColumns"],
+                "required": ["defaultFields", "prettifyJSON", "wrapLogMessage", "interceptDismissed"],
                 "type": "object"
               },
               "status": {
@@ -162,58 +107,6 @@
             "plural": "LogsDrilldownDefaults",
             "scope": "Namespaced",
             "schemas": {
-              "LogsDefaultColumns": {
-                "additionalProperties": false,
-                "properties": {
-                  "datasource": {
-                    "items": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "dsUID": {
-                          "type": "string"
-                        },
-                        "records": {
-                          "items": {
-                            "additionalProperties": false,
-                            "properties": {
-                              "columns": {
-                                "items": {
-                                  "type": "string"
-                                },
-                                "type": "array"
-                              },
-                              "labels": {
-                                "items": {
-                                  "additionalProperties": false,
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": ["key", "value"],
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "required": ["columns", "labels"],
-                            "type": "object"
-                          },
-                          "type": "array"
-                        }
-                      },
-                      "required": ["dsUID", "records"],
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                },
-                "required": ["datasource"],
-                "type": "object"
-              },
               "LogsDrilldownDefaults": {
                 "properties": {
                   "spec": {
@@ -256,9 +149,6 @@
               "spec": {
                 "additionalProperties": false,
                 "properties": {
-                  "defaultColumns": {
-                    "$ref": "#/components/schemas/LogsDefaultColumns"
-                  },
                   "defaultFields": {
                     "items": {
                       "type": "string"
@@ -275,7 +165,136 @@
                     "type": "boolean"
                   }
                 },
-                "required": ["defaultFields", "prettifyJSON", "wrapLogMessage", "interceptDismissed", "defaultColumns"],
+                "required": ["defaultFields", "prettifyJSON", "wrapLogMessage", "interceptDismissed"],
+                "type": "object"
+              },
+              "status": {
+                "additionalProperties": false,
+                "properties": {
+                  "additionalFields": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "description": "additionalFields is reserved for future use",
+                    "type": "object"
+                  },
+                  "operatorStates": {
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/OperatorState"
+                    },
+                    "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "conversion": false
+          },
+          {
+            "kind": "LogsDrilldownDefaultColumns",
+            "plural": "LogsDrilldownDefaultColumns",
+            "scope": "Namespaced",
+            "schemas": {
+              "LogsDefaultColumnsDatasource": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "dsUID": {
+                      "type": "string"
+                    },
+                    "records": {
+                      "$ref": "#/components/schemas/LogsDefaultColumnsRecords"
+                    }
+                  },
+                  "required": ["dsUID", "records"],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "LogsDefaultColumnsLabels": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["key", "value"],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "LogsDefaultColumnsRecords": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "columns": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "labels": {
+                      "$ref": "#/components/schemas/LogsDefaultColumnsLabels"
+                    }
+                  },
+                  "required": ["columns", "labels"],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "LogsDrilldownDefaultColumns": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/status"
+                  }
+                },
+                "required": ["spec"]
+              },
+              "OperatorState": {
+                "additionalProperties": false,
+                "properties": {
+                  "descriptiveState": {
+                    "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+                    "type": "string"
+                  },
+                  "details": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "description": "details contains any extra information that is operator-specific",
+                    "type": "object"
+                  },
+                  "lastEvaluation": {
+                    "description": "lastEvaluation is the ResourceVersion last evaluated",
+                    "type": "string"
+                  },
+                  "state": {
+                    "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+                    "enum": ["success", "in_progress", "failed"],
+                    "type": "string"
+                  }
+                },
+                "required": ["lastEvaluation", "state"],
+                "type": "object"
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "datasource": {
+                    "$ref": "#/components/schemas/LogsDefaultColumnsDatasource"
+                  }
+                },
+                "required": ["datasource"],
                 "type": "object"
               },
               "status": {
