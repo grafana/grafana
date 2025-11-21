@@ -381,11 +381,6 @@ export interface FeatureToggles {
   */
   timeComparison?: boolean;
   /**
-  * Enables infinite scrolling for the Logs panel in Explore and Dashboards
-  * @default true
-  */
-  logsInfiniteScrolling?: boolean;
-  /**
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
@@ -601,7 +596,7 @@ export interface FeatureToggles {
   */
   alertingPrometheusRulesPrimary?: boolean;
   /**
-  * Used in Logs Drilldown to split queries into multiple queries based on the number of shards
+  * Deprecated. Replace with lokiShardSplitting. Used in Logs Drilldown to split queries into multiple queries based on the number of shards
   */
   exploreLogsShardSplitting?: boolean;
   /**
@@ -668,6 +663,10 @@ export interface FeatureToggles {
   * Enables time range panning functionality
   */
   timeRangePan?: boolean;
+  /**
+  * Enables new keyboard shortcuts for time range zoom operations
+  */
+  newTimeRangeZoomShortcuts?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -1178,6 +1177,10 @@ export interface FeatureToggles {
   * Enable TTL plugin instance manager
   */
   ttlPluginInstanceManager?: boolean;
+  /**
+  * Send X-Loki-Query-Limits-Context header to Loki on first split request
+  */
+  lokiQueryLimitsContext?: boolean;
   /**
   * Enables the new version of rudderstack
   * @default false

@@ -534,7 +534,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl, featureToggles)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(migrationDashboardAccessor, resourceClient)
-	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore)
+	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService)
 	if err != nil {
 		return nil, err
@@ -1181,7 +1181,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl, featureToggles)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(migrationDashboardAccessor, resourceClient)
-	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore)
+	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService)
 	if err != nil {
 		return nil, err
