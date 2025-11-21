@@ -5,6 +5,7 @@ import (
 	"net"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -40,10 +41,14 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 
 	runtimeConfig := apiserverCfg.Key("runtime_config").String()
-	if runtimeConfig != "" {
-		if err := o.APIEnablementOptions.RuntimeConfig.Set(runtimeConfig); err != nil {
-			return fmt.Errorf("failed to set runtime config: %w", err)
-		}
+	runtimeConfigSplit := strings.Split(runtimeConfig, ",")
+
+	// explicitly set the runtime config for features.grafana.app
+	featureConfig := fmt.Sprintf("features.grafana.app/v0alpha1=%v", cfg.OpenFeature.APIEnabled)
+	runtimeConfigSplit = append(runtimeConfigSplit, featureConfig)
+
+	if err := o.APIEnablementOptions.RuntimeConfig.Set(strings.Join(runtimeConfigSplit, ",")); err != nil {
+		return fmt.Errorf("failed to set runtime config: %w", err)
 	}
 
 	o.RecommendedOptions.Etcd.StorageConfig.Transport.ServerList = apiserverCfg.Key("etcd_servers").Strings(",")
