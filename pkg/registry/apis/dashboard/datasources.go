@@ -2,8 +2,10 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -112,6 +114,13 @@ func (l *libraryElementIndexProvider) GetLibraryElementInfo(ctx context.Context)
 		}
 
 		for _, elem := range result.Elements {
+			var modelUnstructured v0alpha1.Unstructured
+			if len(elem.Model) > 0 {
+				var modelObj map[string]any
+				if err := json.Unmarshal(elem.Model, &modelObj); err == nil {
+					modelUnstructured.Object = modelObj
+				}
+			}
 			info = append(info, schemaversion.LibraryElementInfo{
 				UID:         elem.UID,
 				Name:        elem.Name,
@@ -119,6 +128,7 @@ func (l *libraryElementIndexProvider) GetLibraryElementInfo(ctx context.Context)
 				Type:        elem.Type,
 				Description: elem.Description,
 				FolderUID:   elem.FolderUID,
+				Model:       modelUnstructured,
 			})
 		}
 

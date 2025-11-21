@@ -109,9 +109,9 @@ func TestV0ConversionErrorHandling(t *testing.T) {
 			case *dashv1.Dashboard:
 				err = Convert_V0_to_V1beta1(tt.source, target, nil)
 			case *dashv2alpha1.Dashboard:
-				err = Convert_V0_to_V2alpha1(tt.source, target, nil, dsProvider)
+				err = Convert_V0_to_V2alpha1(tt.source, target, nil, dsProvider, leProvider)
 			case *dashv2beta1.Dashboard:
-				err = Convert_V0_to_V2beta1(tt.source, target, nil, dsProvider)
+				err = Convert_V0_to_V2beta1(tt.source, target, nil, dsProvider, leProvider)
 			default:
 				t.Fatalf("unexpected target type: %T", target)
 			}
@@ -192,7 +192,7 @@ func TestV0ConversionErrorPropagation(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider)
+		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider, leProvider)
 
 		require.Error(t, err, "expected error to be returned on first step failure")
 		require.NotNil(t, target.Status.Conversion)
@@ -243,7 +243,7 @@ func TestV0ConversionSuccessPaths(t *testing.T) {
 		}
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V0_to_V2alpha1(source, target, nil, dsProvider)
+		err := Convert_V0_to_V2alpha1(source, target, nil, dsProvider, leProvider)
 
 		require.NoError(t, err, "expected successful conversion")
 		// Layout should be set even on success
@@ -264,7 +264,7 @@ func TestV0ConversionSuccessPaths(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider)
+		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider, leProvider)
 
 		require.NoError(t, err, "expected successful conversion")
 	})
@@ -293,7 +293,7 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 		}
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V0_to_V2alpha1(source, target, nil, dsProvider)
+		err := Convert_V0_to_V2alpha1(source, target, nil, dsProvider, leProvider)
 
 		// Convert_V0_to_V2alpha1 doesn't return error, just sets status
 		require.NoError(t, err, "Convert_V0_to_V2alpha1 doesn't return error")
@@ -327,7 +327,7 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 		}
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V0_to_V2alpha1(source, target, nil, dsProvider)
+		err := Convert_V0_to_V2alpha1(source, target, nil, dsProvider, leProvider)
 
 		// Convert_V0_to_V2alpha1 doesn't return error, just sets status
 		require.NoError(t, err, "Convert_V0_to_V2alpha1 doesn't return error")
@@ -357,7 +357,7 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider)
+		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider, leProvider)
 
 		// May or may not error depending on dashboard content
 		// But if it does error on second step, status should be set
@@ -383,7 +383,7 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider)
+		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider, leProvider)
 
 		// May or may not error depending on dashboard content
 		// But if it does error on third step, status should be set
