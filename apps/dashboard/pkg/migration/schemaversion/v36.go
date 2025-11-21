@@ -76,21 +76,21 @@ import (
 //	    refId: "A"
 //	  }]
 //	}
-func V36(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
+func V36(dsIndexProvider DataSourceIndexProvider) SchemaVersionMigrationFunc {
 	return func(ctx context.Context, dashboard map[string]interface{}) error {
-		datasources := dsInfo.GetDataSourceInfo(ctx)
+		dsIndex := dsIndexProvider.Index(ctx)
 		dashboard["schemaVersion"] = int(36)
 
-		migrateAnnotations(dashboard, datasources)
-		migrateTemplateVariables(dashboard, datasources)
-		migratePanels(dashboard, datasources)
+		migrateAnnotations(dashboard, dsIndex)
+		migrateTemplateVariables(dashboard, dsIndex)
+		migratePanels(dashboard, dsIndex)
 
 		return nil
 	}
 }
 
 // migrateAnnotations updates datasource references in dashboard annotations
-func migrateAnnotations(dashboard map[string]interface{}, datasources []DataSourceInfo) {
+func migrateAnnotations(dashboard map[string]interface{}, index *DatasourceIndex) {
 	annotations, ok := dashboard["annotations"].(map[string]interface{})
 	if !ok {
 		return
@@ -109,12 +109,12 @@ func migrateAnnotations(dashboard map[string]interface{}, datasources []DataSour
 
 		// Always migrate datasource, even if it doesn't exist (will be set to default)
 		ds := queryMap["datasource"]
-		queryMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
+		queryMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, index)
 	}
 }
 
 // migrateTemplateVariables updates datasource references in dashboard variables
-func migrateTemplateVariables(dashboard map[string]interface{}, datasources []DataSourceInfo) {
+func migrateTemplateVariables(dashboard map[string]interface{}, index *DatasourceIndex) {
 	templating, ok := dashboard["templating"].(map[string]interface{})
 	if !ok {
 		return
@@ -125,7 +125,7 @@ func migrateTemplateVariables(dashboard map[string]interface{}, datasources []Da
 		return
 	}
 
-	defaultDS := GetDefaultDSInstanceSettings(datasources)
+	defaultDS := index.GetDefault()
 	for _, variable := range list {
 		varMap, ok := variable.(map[string]interface{})
 		if !ok {
@@ -149,7 +149,7 @@ func migrateTemplateVariables(dashboard map[string]interface{}, datasources []Da
 }
 
 // migratePanels updates datasource references in dashboard panels
-func migratePanels(dashboard map[string]interface{}, datasources []DataSourceInfo) {
+func migratePanels(dashboard map[string]interface{}, index *DatasourceIndex) {
 	panels, ok := dashboard["panels"].([]interface{})
 	if !ok {
 		return
@@ -160,7 +160,7 @@ func migratePanels(dashboard map[string]interface{}, datasources []DataSourceInf
 		if !ok {
 			continue
 		}
-		migratePanelDatasources(panelMap, datasources)
+		migratePanelDatasources(panelMap, index)
 
 		// Handle nested panels in collapsed rows
 		nestedPanels, hasNested := panelMap["panels"].([]interface{})
@@ -173,24 +173,24 @@ func migratePanels(dashboard map[string]interface{}, datasources []DataSourceInf
 			if !ok {
 				continue
 			}
-			migratePanelDatasourcesInternal(np, datasources, true)
+			migratePanelDatasourcesInternal(np, index, true)
 		}
 	}
 }
 
 // migratePanelDatasources updates datasource references in a single panel and its targets
-func migratePanelDatasources(panelMap map[string]interface{}, datasources []DataSourceInfo) {
-	migratePanelDatasourcesInternal(panelMap, datasources, false)
+func migratePanelDatasources(panelMap map[string]interface{}, index *DatasourceIndex) {
+	migratePanelDatasourcesInternal(panelMap, index, false)
 }
 
 // migratePanelDatasourcesInternal updates datasource references with nesting awareness
-func migratePanelDatasourcesInternal(panelMap map[string]interface{}, datasources []DataSourceInfo, isNested bool) {
+func migratePanelDatasourcesInternal(panelMap map[string]interface{}, index *DatasourceIndex, isNested bool) {
 	// NOTE: Even though row panels don't technically need datasource or targets fields,
 	// we process them anyway to exactly match frontend behavior and avoid inconsistencies
 	// between frontend and backend migrations. The frontend DashboardMigrator processes
 	// all panels uniformly without special row panel handling.
 
-	defaultDS := GetDefaultDSInstanceSettings(datasources)
+	defaultDS := index.GetDefault()
 	panelDataSourceWasDefault := false
 
 	// Handle targets - only add default targets to top-level panels (matches frontend behavior)
@@ -228,7 +228,7 @@ func migratePanelDatasourcesInternal(panelMap map[string]interface{}, datasource
 			// Keep empty object {} as-is (set by V33 migration for empty strings)
 			panelMap["datasource"] = ds
 		} else {
-			migrated := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
+			migrated := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, index)
 			panelMap["datasource"] = migrated
 		}
 	}
@@ -273,12 +273,12 @@ func migratePanelDatasourcesInternal(panelMap map[string]interface{}, datasource
 					targetMap["datasource"] = result
 				} else {
 					// Frontend: target.datasource = migrateDatasourceNameToRef(target.datasource, { returnDefaultAsNull: false });
-					targetMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
+					targetMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, index)
 				}
 			}
 		} else {
 			// Migrate existing target datasource
-			targetMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
+			targetMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, index)
 		}
 
 		// Update panel datasource if it was default and target is not an expression
