@@ -34,9 +34,9 @@ var (
 	sqlSecureValueLeaseInactive    = mustTemplate("secure_value_lease_inactive.sql")
 	sqlSecureValueListByLeaseToken = mustTemplate("secure_value_list_by_lease_token.sql")
 
-	sqlGetLatestSecureValueVersion     = mustTemplate("secure_value_get_latest_version.sql")
-	sqlSecureValueSetVersionToActive   = mustTemplate("secure_value_set_version_to_active.sql")
-	sqlSecureValueSetVersionToInactive = mustTemplate("secure_value_set_version_to_inactive.sql")
+	sqlGetLatestSecureValueVersionAndCreatedAt = mustTemplate("secure_value_get_latest_version_and_created_at.sql")
+	sqlSecureValueSetVersionToActive           = mustTemplate("secure_value_set_version_to_active.sql")
+	sqlSecureValueSetVersionToInactive         = mustTemplate("secure_value_set_version_to_inactive.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -171,13 +171,13 @@ func (r readSecureValue) Validate() error {
 	return nil // TODO
 }
 
-type getLatestSecureValueVersion struct {
+type getLatestSecureValueVersionAndCreatedAt struct {
 	sqltemplate.SQLTemplate
 	Namespace string
 	Name      string
 }
 
-func (r getLatestSecureValueVersion) Validate() error {
+func (r getLatestSecureValueVersionAndCreatedAt) Validate() error {
 	return nil
 }
 
