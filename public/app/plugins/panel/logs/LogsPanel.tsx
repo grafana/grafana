@@ -464,7 +464,7 @@ export const LogsPanel = ({
 
   const loadMoreLogs = useCallback(
     async (scrollRange: AbsoluteTimeRange) => {
-      if (!data.request || !config.featureToggles.logsInfiniteScrolling || loadingRef.current) {
+      if (!data.request || loadingRef.current) {
         return;
       }
 
