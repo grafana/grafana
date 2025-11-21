@@ -31,7 +31,6 @@ type UnifiedStorageMigrationServiceImpl struct {
 var _ contract.UnifiedStorageMigrationService = (*UnifiedStorageMigrationServiceImpl)(nil)
 
 // ProvideUnifiedStorageMigrationService is a Wire provider that creates the migration service.
-// The service implements registry.BackgroundService and runs migrations during server startup.
 func ProvideUnifiedStorageMigrationService(
 	migrator UnifiedMigrator,
 	cfg *setting.Cfg,
@@ -48,9 +47,6 @@ func ProvideUnifiedStorageMigrationService(
 	}
 }
 
-// Run executes unified storage migrations as a background service.
-// This blocks until migrations complete. If migrations fail, an error is returned
-// which will prevent Grafana from starting.
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 	// TODO: temporary skip migrations in test environments to prevent integration test timeouts.
 	if os.Getenv("GRAFANA_TEST_DB") != "" {
@@ -69,10 +65,6 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 	return nil
 }
 
-// RegisterMigrations initializes and registers all unified storage migrations.
-// This function is the entry point for all data migrations from legacy storage
-// to unified storage. It returns an error if migrations fail, preventing Grafana
-// from starting with inconsistent data.
 func RegisterMigrations(
 	migrator UnifiedMigrator,
 	cfg *setting.Cfg,
@@ -104,8 +96,6 @@ func RegisterMigrations(
 	return nil
 }
 
-// registerResourceMigrations registers all unified storage resource migrations.
-// Add new resource types here by creating additional ResourceMigration instances.
 func registerResourceMigrations(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
 	dashboardsAndFolders := NewResourceMigration(
 		migrator,

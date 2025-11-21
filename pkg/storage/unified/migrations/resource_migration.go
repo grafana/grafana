@@ -16,21 +16,9 @@ import (
 )
 
 // ValidationFunc is a function that validates migration results.
-// It receives the context, resource client for querying unified storage, database session for legacy queries,
-// migration response, and logger for reporting.
-// Return an error if validation fails, nil if validation passes or is skipped.
 type ValidationFunc func(ctx context.Context, client resourcepb.ResourceIndexClient, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
 
 // ResourceMigration handles migration of specific resource types from legacy to unified storage.
-// It implements migrator.CodeMigration and provides a generic, extensible way to migrate any
-// resource type by:
-//
-//  1. Iterating through all organizations
-//  2. For each org, delegating to LegacyMigrator to read from legacy and write to unified storage
-//  3. Validating migration results using the provided validation function (if any)
-//
-// To add a new resource type migration, simply create a new ResourceMigration instance in
-// service.go with the appropriate schema.GroupResource specifications and optional validation function.
 type ResourceMigration struct {
 	migrator.MigrationBase
 	migrator       UnifiedMigrator
@@ -42,31 +30,6 @@ type ResourceMigration struct {
 }
 
 // NewResourceMigration creates a new migration for the specified resources.
-// This is the primary way to register new resource migrations.
-//
-// Parameters:
-//   - legacyMigrator: handles reading from legacy storage and writing to unified storage
-//   - resources: list of GroupResource to migrate
-//   - migrationID: unique identifier for this migration
-//   - validationFunc: optional validation function to verify migration results.
-//     If nil, no validation will be performed.
-//   - client: resource client for validation queries to unified storage
-//
-// Example with legacy table count validation:
-//
-//	NewResourceMigration(
-//	    migrator,
-//	    []schema.GroupResource{{Group: "playlist.grafana.app", Resource: "playlists"}},
-//	    "playlists",
-//	    NewLegacyTableCountValidator(map[string]LegacyTableInfo{
-//	        "playlist.grafana.app/playlists": {Table: "playlist", WhereClause: "org_id = ?"},
-//	    }),
-//	    client,
-//	)
-//
-// Example without validation:
-//
-//	NewResourceMigration(migrator, resources, "new-resource", nil, client)
 func NewResourceMigration(
 	migrator UnifiedMigrator,
 	resources []schema.GroupResource,
@@ -178,21 +141,6 @@ type LegacyTableInfo struct {
 
 // NewCountValidator creates a ValidationFunc that validates migration by comparing
 // counts between legacy tables and unified storage using the GetStats API.
-//
-// This is a helper for the common case of validating that all items from legacy tables
-// were successfully migrated to unified storage. It queries unified storage using GetStats
-// to verify the actual indexed count matches the legacy table count.
-//
-// Parameters:
-//   - legacyTableMap: maps "group/resource" keys to LegacyTableInfo for validation.
-//     Only resources with mappings will be validated.
-//
-// Example:
-//
-//	validator := NewCountValidator(map[string]LegacyTableInfo{
-//	    "dashboard.grafana.app/dashboards": {Table: "dashboard", WhereClause: "org_id = ? and is_folder = false"},
-//	    "folder.grafana.app/folders": {Table: "dashboard", WhereClause: "org_id = ? and is_folder = true"},
-//	})
 func NewCountValidator(legacyTableMap map[string]LegacyTableInfo) ValidationFunc {
 	return func(ctx context.Context, client resourcepb.ResourceIndexClient, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error {
 		// Check for rejected items
