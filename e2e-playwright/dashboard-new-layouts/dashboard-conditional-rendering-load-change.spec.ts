@@ -414,22 +414,19 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     const repeatOptions = ['a', 'b', 'c'];
 
     async function failTestDataRequestForOption(page: Page, option: string) {
-      await page.route(
-        /^http:\/\/localhost:[^/]+\/api\/ds\/query\?.*\bds_type=grafana-testdata-datasource/,
-        async (route) => {
-          const rawPostData = route.request().postData();
-          if (!rawPostData) {
-            return;
-          }
-
-          // the first panel query has a label set to the current variable value
-          if (JSON.parse(rawPostData).queries[0].labels === `key=${option}`) {
-            await route.fulfill({ status: 500, body: '{}' });
-          } else {
-            await route.continue();
-          }
+      await page.route(/\/api\/ds\/query\?.*\bds_type=grafana-testdata-datasource/, async (route) => {
+        const rawPostData = route.request().postData();
+        if (!rawPostData) {
+          return;
         }
-      );
+
+        // the first panel query has a label set to the current variable value
+        if (JSON.parse(rawPostData).queries[0].labels === `key=${option}`) {
+          await route.fulfill({ status: 500, body: '{}' });
+        } else {
+          await route.continue();
+        }
+      });
     }
 
     test('Hide when equals, hide when no data', async ({ page, gotoDashboardPage, selectors }) => {
