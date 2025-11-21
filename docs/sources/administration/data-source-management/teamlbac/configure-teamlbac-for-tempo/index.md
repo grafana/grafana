@@ -57,28 +57,28 @@ Follow this workflow when adding a new data source. The data source must be host
 
 1. Start your Grafana Cloud instance.
 2. Access Tempo or Cloud Traces data sources details for your stack.
-1. Copy Tempo or Cloud Traces details and create a Cloud Access Policy.
+3. Copy Tempo or Cloud Traces details and create a Cloud Access Policy.
    - Copy the [details of your Tempo or Cloud Traces setup](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/locate-url-user-password/).
-1. In Grafana Cloud, navigate to **Administration > Users and access > Cloud Access Policies**.
+4. In Grafana Cloud, navigate to **Administration > Users and access > Cloud Access Policies**.
    - Create a access policy for the Tempo or Cloud Traces data source.
    - Ensure the access policy includes `traces:read` permissions.
    - Ensure the access policy doesn't include `labels` rules.
-1. In Grafana, select Tempo or Cloud Traces or create new data source.
-1. Navigate back to the Tempo or Cloud Traces data source.
+5. In Grafana, select Tempo or Cloud Traces or create new data source.
+6. Navigate back to the Tempo or Cloud Traces data source.
    - Set up the Tempo or Cloud Traces data source using basic authentication. Use the [userID/tenantID](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/locate-url-user-password/) as the username. Use the token from your access policy as the password.
    - Select **Save and connect**.
-1. Go to the **Permissions** tab of the newly created Tempo or Cloud Traces data source. Here, you'll find the LBAC for data sources rules section.
+7. Go to the **Permissions** tab of the newly created Tempo or Cloud Traces data source. Here, you'll find the LBAC for data sources rules section.
 
-1. Choose a team from the **Team** dropdown.
-1. Enter attribute selectors such as:
+8. Choose a team from the **Team** dropdown.
+9. Enter attribute selectors such as:
 
    ```
    { resource.service.name="checkout", resource.env="prod" }
    ```
+
    Refer to the Examples section below for more examples.
 
-1. Select **Save**.
-
+10. Select **Save**.
 
 ### Examples of LBAC rules
 
@@ -115,12 +115,14 @@ This example matches spans with team A **or** team B. This single example is fas
 This example matches spans from the `prod` environment for either the `checkout` team or the `billing` team.
 
 Two rules combined to give user access to spans from `prod` environment or the `billing` team.
+
 ```
 { resource.env="prod" }
 { resource.team="billing" }
 ```
 
 This example gives users access to spans from the `frontend` team in the `prod` environment or the `checkout` team but doesn't enforce additional conditions. The comma (`,`) acts as an `AND` operator within the same rule.
+
 ```
 { resource.env="prod", resource.team="frontend" }
 { resource.team="checkout" }
@@ -158,6 +160,7 @@ To edit an existing LBAC rule, follow these steps:
 To delete an existing LBAC rule, follow these steps:
 
 Open your stack and select your **Tempo** or **Cloud Traces** data source.
+
 1. Select **Permissions**.
 2. Scroll to **Data access**.
 3. Select the rule you want to edit.
