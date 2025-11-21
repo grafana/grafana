@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
-      "disabled-tooltip": "You don't have sufficient permissions to preview",
       "error": "Could not load routing preview for {{alertmanager}}",
       "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
+      "no-condition-tooltip": "Select a query condition to preview routing",
+      "permission-warning": "Preview not available",
+      "permission-warning-message": "You don't have permission to view notification policies. Preview is not available.",
       "preview-routing": "Preview routing",
       "select-folder-tooltip": "Select a folder to preview routing",
       "text-loading-preview": "Loading preview...",
