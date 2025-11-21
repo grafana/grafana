@@ -1,0 +1,24 @@
+apiVersion: 1
+
+providers:
+- name: 'editable-dashboard'
+  orgId: 1
+  folder: 'test-folder'
+  type: file
+  allowUiUpdates: true
+  options:
+    path: /tmp/editable-dashboards
+
+- name: 'readonly-dashboard'
+  orgId: 2
+  folder: 'readonly-folder'
+  type: file
+  allowUiUpdates: false
+  options:
+    path: /tmp/readonly-dashboards
+
+- name: 'default-dashboard'
+  orgId: 1
+  type: file
+  options:
+    path: /tmp/default-dashboards
