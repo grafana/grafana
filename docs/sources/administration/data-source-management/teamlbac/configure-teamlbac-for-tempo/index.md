@@ -38,10 +38,10 @@ Multiple conditions in the same rule use **AND**, while multiple rules across te
 
 Follow this workflow when adding a new data source.
 
-1. Access Tempo or Cloud Traces data sources details for your stack through grafana.com
+1. Access Tempo or Cloud Traces data sources details for your stack. 
 1. Copy Tempo or Cloud Traces details and create a CAP
    - Copy the details of your Tempo or Cloud Traces setup.
-   - Create a Cloud Access Policy (CAP) for the Tempo or Cloud Traces data source in grafana.com.
+   - Create a Cloud Access Policy (CAP) for the Tempo or Cloud Traces data source.
    - Ensure the CAP includes `traces:read` permissions.
    - Ensure the CAP does not include `labels` rules.
 1. Create a new Tempo or Cloud Traces data source
@@ -63,7 +63,7 @@ Follow this workflow when adding a new data source.
 
 ## Add an LBAC rule to an existing data source
 
-1. In grafana.com, open your stack and select your **Tempo or Cloud Traces** data source.
+1. Open your stack and select your **Tempo** or **Cloud Traces** data source.
 2. Select **Permissions**.
 3. Scroll to **Data access**.
 4. Select **+ Add a LBAC rule**.
@@ -88,7 +88,7 @@ Unsupported endpoints return an error when LBAC rules are active.
 
 To edit an existing LBAC rule, follow these steps:
 
-1. In grafana.com, open your stack and select your **Tempo or Cloud Traces** data source.
+1. Open your stack and select your **Tempo** or **Cloud Traces** data source.
 2. Select **Permissions**.
 3. Scroll to **Data access**.
 4. Select the rule you want to edit.
