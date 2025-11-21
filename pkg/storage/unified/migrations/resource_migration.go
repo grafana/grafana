@@ -16,17 +16,19 @@ import (
 )
 
 // ValidationFunc is a function that validates migration results.
-type ValidationFunc func(ctx context.Context, client resourcepb.ResourceIndexClient, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
+
+type Validator interface {
+	Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
+}
 
 // ResourceMigration handles migration of specific resource types from legacy to unified storage.
 type ResourceMigration struct {
 	migrator.MigrationBase
-	migrator       UnifiedMigrator
-	resources      []schema.GroupResource
-	migrationID    string
-	validationFunc ValidationFunc // Optional: custom validation logic for this migration
-	client         resourcepb.ResourceIndexClient
-	log            log.Logger
+	migrator    UnifiedMigrator
+	resources   []schema.GroupResource
+	migrationID string
+	validator   Validator // Optional: custom validation logic for this migration
+	log         log.Logger
 }
 
 // NewResourceMigration creates a new migration for the specified resources.
@@ -34,16 +36,14 @@ func NewResourceMigration(
 	migrator UnifiedMigrator,
 	resources []schema.GroupResource,
 	migrationID string,
-	validationFunc ValidationFunc,
-	client resourcepb.ResourceIndexClient,
+	validator Validator,
 ) *ResourceMigration {
 	return &ResourceMigration{
-		migrator:       migrator,
-		resources:      resources,
-		migrationID:    migrationID,
-		validationFunc: validationFunc,
-		client:         client,
-		log:            log.New("storage.unified.resource_migration." + migrationID),
+		migrator:    migrator,
+		resources:   resources,
+		migrationID: migrationID,
+		validator:   validator,
+		log:         log.New("storage.unified.resource_migration." + migrationID),
 	}
 }
 
@@ -125,103 +125,18 @@ func (m *ResourceMigration) migrateOrg(ctx context.Context, sess *xorm.Session, 
 
 // validateMigration calls the custom validation function if provided
 func (m *ResourceMigration) validateMigration(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse) error {
-	if m.validationFunc == nil {
+	if m.validator == nil {
 		m.log.Debug("No validation function provided, skipping validation")
 		return nil
 	}
 
-	return m.validationFunc(ctx, m.client, sess, response, m.log)
+	return m.validator.Validate(ctx, sess, response, m.log)
 }
 
 // LegacyTableInfo defines how to map a unified storage resource to its legacy table
 type LegacyTableInfo struct {
 	Table       string // Legacy table name (e.g., "dashboard", "playlist")
 	WhereClause string // WHERE clause template with org_id parameter (e.g., "org_id = ? and is_folder = false")
-}
-
-// NewCountValidator creates a ValidationFunc that validates migration by comparing
-// counts between legacy tables and unified storage using the GetStats API.
-func NewCountValidator(legacyTableMap map[string]LegacyTableInfo) ValidationFunc {
-	return func(ctx context.Context, client resourcepb.ResourceIndexClient, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error {
-		// Check for rejected items
-		if len(response.Rejected) > 0 {
-			log.Warn("Migration had rejected items", "count", len(response.Rejected))
-			for i, rejected := range response.Rejected {
-				if i < 10 { // Log first 10 rejected items
-					log.Warn("Rejected item",
-						"namespace", rejected.Key.Namespace,
-						"group", rejected.Key.Group,
-						"resource", rejected.Key.Resource,
-						"name", rejected.Key.Name,
-						"reason", rejected.Error)
-				}
-			}
-			// Rejections are not fatal - they may be expected for invalid data
-		}
-
-		// Validate counts for each resource type
-		for _, summary := range response.Summary {
-			key := fmt.Sprintf("%s/%s", summary.Group, summary.Resource)
-			tableInfo, ok := legacyTableMap[key]
-			if !ok {
-				log.Debug("No legacy table mapping for resource, skipping count validation",
-					"resource", fmt.Sprintf("%s.%s", summary.Resource, summary.Group),
-					"namespace", summary.Namespace)
-				continue
-			}
-
-			// Get legacy count from database
-			orgID, err := ParseOrgIDFromNamespace(summary.Namespace)
-			if err != nil {
-				return fmt.Errorf("invalid namespace %s: %w", summary.Namespace, err)
-			}
-
-			legacyCount, err := sess.Table(tableInfo.Table).Where(tableInfo.WhereClause, orgID).Count()
-			if err != nil {
-				return fmt.Errorf("failed to count %s: %w", tableInfo.Table, err)
-			}
-
-			// Get unified storage count using GetStats API
-			statsResp, err := client.GetStats(ctx, &resourcepb.ResourceStatsRequest{
-				Namespace: summary.Namespace,
-				Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
-			})
-			if err != nil {
-				return fmt.Errorf("failed to get stats for %s/%s in namespace %s: %w",
-					summary.Group, summary.Resource, summary.Namespace, err)
-			}
-
-			// Find the count for this specific resource type
-			var unifiedCount int64
-			for _, stat := range statsResp.Stats {
-				if stat.Group == summary.Group && stat.Resource == summary.Resource {
-					unifiedCount = stat.Count
-					break
-				}
-			}
-
-			// Account for rejected items in validation
-			expectedCount := unifiedCount + int64(len(response.Rejected))
-
-			log.Info("Count validation",
-				"resource", fmt.Sprintf("%s.%s", summary.Resource, summary.Group),
-				"namespace", summary.Namespace,
-				"legacy_count", legacyCount,
-				"unified_count", unifiedCount,
-				"migration_summary_count", summary.Count,
-				"rejected", len(response.Rejected),
-				"history", summary.History)
-
-			// Validate that we migrated all items (allowing for rejected items)
-			if legacyCount > expectedCount {
-				return fmt.Errorf("count mismatch for %s.%s in namespace %s: legacy has %d, unified has %d, rejected %d",
-					summary.Resource, summary.Group, summary.Namespace,
-					legacyCount, unifiedCount, len(response.Rejected))
-			}
-		}
-
-		return nil
-	}
 }
 
 func ParseOrgIDFromNamespace(namespace string) (int64, error) {

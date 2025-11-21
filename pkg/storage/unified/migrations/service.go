@@ -104,11 +104,10 @@ func registerResourceMigrations(mg *sqlstoremigrator.Migrator, migrator UnifiedM
 			{Group: "dashboard.grafana.app", Resource: "dashboards"},
 		},
 		"folders-dashboards",
-		NewCountValidator(map[string]LegacyTableInfo{
+		NewCountValidator(client, map[string]LegacyTableInfo{
 			"folder.grafana.app/folders":       {Table: "dashboard", WhereClause: "org_id = ? and is_folder = true"},
 			"dashboard.grafana.app/dashboards": {Table: "dashboard", WhereClause: "org_id = ? and is_folder = false"},
 		}),
-		client,
 	)
 	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
 }
