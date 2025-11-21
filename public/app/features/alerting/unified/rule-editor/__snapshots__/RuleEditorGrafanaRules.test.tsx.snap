@@ -81,9 +81,7 @@ exports[`RuleEditor grafana managed rules can create new grafana managed alert 1
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "B",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
