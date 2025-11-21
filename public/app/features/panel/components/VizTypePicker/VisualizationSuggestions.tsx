@@ -3,12 +3,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, PanelData, PanelModel, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { GrafanaTheme2, PanelData, PanelModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
+import { hasData } from '../../suggestions/utils';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 import { VizTypeChangeDetails } from './types';
@@ -25,8 +26,6 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const filteredSuggestions = useMemo(() => suggestions || [], [suggestions]);
-
-  const hasData = data?.series && data.series.length > 0 && !data.series.every((frame) => frame.length === 0);
 
   // auto-select first suggestion when nothing is selected
   useEffect(() => {
@@ -52,7 +51,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     }
   };
 
-  if (config.featureToggles.newVizSuggestions && !hasData) {
+  if (config.featureToggles.newVizSuggestions && !hasData(data)) {
     return (
       <div className={styles.emptyStateWrapper}>
         <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
