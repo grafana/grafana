@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom-v5-compat';
 
@@ -30,7 +30,7 @@ const mockScopesSelectorService = {
 
 const mockScopesDashboardsService = {
   state: {
-    navigationScope: undefined,
+    navigationScope: undefined as string | undefined,
   },
   setNavigationScope: jest.fn(),
 };
@@ -290,9 +290,6 @@ describe('ScopesNavigationTreeLink', () => {
       mockScopesDashboardsService.state.navigationScope = undefined;
       mockScopesSelectorService.state.appliedScopes = [{ scopeId: 'currentScope' }];
 
-      // Mock console.error to avoid jsdom navigation errors
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
       renderWithRouter(
         <ScopesNavigationTreeLink
           to="/test-path?param1=value1&param2=value2"
@@ -309,8 +306,6 @@ describe('ScopesNavigationTreeLink', () => {
       const pushedUrl = mockLocationServicePush.mock.calls[0][0];
       expect(pushedUrl).toContain('scopes=subScope1');
       expect(pushedUrl).toContain('navigation_scope=currentScope');
-
-      consoleErrorSpy.mockRestore();
     });
   });
 });
