@@ -1,10 +1,12 @@
 import { defaultsDeep } from 'lodash';
 
 import {
+  DataFrameType,
   DataTransformerID,
   FieldType,
   PanelPluginVisualizationSuggestion,
   VisualizationSuggestion,
+  VisualizationSuggestionScore,
   VisualizationSuggestionsSupplierFn,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -92,6 +94,13 @@ export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplierFn<O
     return;
   }
 
+  const score: VisualizationSuggestionScore = dataSummary.dataFrameTypes.some(
+    (t) =>
+      t === DataFrameType.TimeSeriesLong || t === DataFrameType.TimeSeriesWide || t === DataFrameType.TimeSeriesMulti
+  )
+    ? VisualizationSuggestionScore.Good
+    : VisualizationSuggestionScore.OK;
+
   const suggestions: Array<VisualizationSuggestion<Options, GraphFieldConfig>> = [
     {
       name: t('timeseries.suggestions.line', 'Line chart'),
@@ -141,7 +150,10 @@ export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplierFn<O
     }
   }
 
-  return suggestions.map(withDefaults);
+  return suggestions.map((s) => {
+    s.score = score;
+    return withDefaults(s);
+  });
 };
 
 // This will try to get a suggestion that will add a long to wide conversion

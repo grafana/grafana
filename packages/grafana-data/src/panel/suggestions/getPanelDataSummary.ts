@@ -1,5 +1,6 @@
 import { PreferredVisualisationType } from '../../types/data';
 import { DataFrame, FieldType } from '../../types/dataFrame';
+import { DataFrameType } from '../../types/dataFrameTypes';
 
 /**
  * @alpha
@@ -17,6 +18,8 @@ export interface PanelDataSummary {
   hasFieldType: (type: FieldType) => boolean;
   /** The first frame that set's this value */
   preferredVisualisationType?: PreferredVisualisationType;
+  /** An array of all unique DataFrameTypes set on the frames in this panel */
+  dataFrameTypes: DataFrameType[];
   /** pass along a reference to the DataFrame array in case it's needed by the plugin */
   rawFrames?: DataFrame[];
   /* --- DEPRECATED FIELDS BELOW --- */
@@ -47,12 +50,16 @@ export function getPanelDataSummary(frames?: DataFrame[]): PanelDataSummary {
   let fieldCountMax = 0;
   const countByType: Partial<Record<FieldType, number>> = {};
   let preferredVisualisationType: PreferredVisualisationType | undefined;
+  const dataFrameTypes = new Set<DataFrameType>();
 
   for (const frame of frames ?? []) {
     rowCountTotal += frame.length;
 
     if (frame.meta?.preferredVisualisationType) {
       preferredVisualisationType = frame.meta.preferredVisualisationType;
+    }
+    if (frame.meta?.type) {
+      dataFrameTypes.add(frame.meta.type);
     }
 
     for (const field of frame.fields) {
@@ -76,6 +83,7 @@ export function getPanelDataSummary(frames?: DataFrame[]): PanelDataSummary {
     fieldCount,
     fieldCountMax,
     preferredVisualisationType,
+    dataFrameTypes: Array.from(dataFrameTypes),
     frameCount: frames?.length ?? 0,
     hasData: rowCountTotal > 0,
     hasFieldType: (f: FieldType) => fieldCountByType(f) > 0,
