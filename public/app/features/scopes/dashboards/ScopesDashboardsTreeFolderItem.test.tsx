@@ -212,7 +212,6 @@ describe('ScopesDashboardsTreeFolderItem', () => {
   });
 
   it('prevents default and stops propagation when exchange icon is clicked', async () => {
-    const user = userEvent.setup();
     const folder = createMockFolder({ subScopeName: 'subScope1' });
     const preventDefault = jest.fn();
     const stopPropagation = jest.fn();
@@ -237,10 +236,11 @@ describe('ScopesDashboardsTreeFolderItem', () => {
     // Note: userEvent.click doesn't trigger preventDefault/stopPropagation directly,
     // but the handler should call them. We verify the handler was called correctly.
     expect(mockScopesDashboardsService.setNavigationScope).toHaveBeenCalled();
+    expect(stopPropagation).toHaveBeenCalled();
+    expect(preventDefault).toHaveBeenCalled();
   });
 
   it('does not call setNavigationScope when subScopeName is missing', async () => {
-    const user = userEvent.setup();
     const folder = createMockFolder({ subScopeName: undefined });
 
     render(
@@ -254,6 +254,9 @@ describe('ScopesDashboardsTreeFolderItem', () => {
 
     // No exchange button should be present, so no click should trigger setNavigationScope
     expect(mockScopesDashboardsService.setNavigationScope).not.toHaveBeenCalled();
+    // Check precense of exchange button
+    const exchangeButton = screen.queryByRole('button', { name: /change root scope/i });
+    expect(exchangeButton).not.toBeInTheDocument();
   });
 
   it('does not call setNavigationScope when scopesSelectorService is not available', async () => {
