@@ -250,18 +250,6 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		rsp.Error = AsErrorResult(runner.err)
 	}
 
-	// Trigger immediate index rebuild for successful bulk imports
-	// This ensures search indexes are updated immediately after the data is committed
-	if rsp.Error == nil && s.search != nil {
-		for _, key := range settings.Collection {
-			s.search.TriggerRebuild(NamespacedResource{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			})
-		}
-	}
-
 	return sendAndClose(rsp)
 }
 

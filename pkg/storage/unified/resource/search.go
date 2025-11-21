@@ -594,27 +594,6 @@ func (s *searchSupport) stop() {
 	s.bgTaskWg.Wait()
 }
 
-// It immediately queues a rebuild request for the given resource.
-func (s *searchSupport) TriggerRebuild(key NamespacedResource) {
-	if s == nil || s.rebuildQueue == nil {
-		s.log.Warn("cannot trigger rebuild: search support not initialized", "key", key.String())
-		return
-	}
-
-	s.log.Info("triggering immediate index rebuild", "key", key.String())
-
-	// Queue rebuild with current time as lastImportTime
-	// This ensures shouldRebuildIndex will trigger a rebuild
-	s.rebuildQueue.Add(rebuildRequest{
-		NamespacedResource: key,
-		lastImportTime:     time.Now(),
-	})
-
-	if s.indexMetrics != nil {
-		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
-	}
-}
-
 func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 	defer s.bgTaskWg.Done()
 
