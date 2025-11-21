@@ -8661,7 +8661,13 @@
       "saving": "Zapisywanie <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Próg liniowy",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Baza logów"
     },
     "builder": {
@@ -9067,6 +9073,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Użyj prawej półosi OY"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9358,6 +9369,7 @@
       "toggle-panel-edit": "Przełącz widok edycji panelu",
       "toggle-panel-fullscreen": "Przełącz widok pełnoekranowy panelu",
       "toggle-panel-legend": "Przełącz legendę panelu",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Oddal zakres czasu"
     },
     "title": "Skróty"
@@ -12648,11 +12660,14 @@
       "copy-clipboard": "Kopiuj do schowka",
       "copy-to-clipboard-and-close": "Kopiuj do schowka i zamknij",
       "description-name-to-easily-identify-the-token": "Nazwa ułatwiająca identyfikację tokena",
+      "description-no-expiration-disabled": "",
       "description-token": "Skopiuj token teraz, ponieważ później nie będzie go można ponownie wyświetlić. Utrata tokena wymaga utworzenia nowego.",
       "generate-token": "Wygeneruj token",
       "label-display-name": "Nazwa wyświetlana",
       "label-expiration": "Wygaśnięcie",
       "label-expiration-date": "Data ważności",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {

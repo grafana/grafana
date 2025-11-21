@@ -8661,7 +8661,13 @@
       "saving": "Сохранение <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Линейный порог",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "База журналов"
     },
     "builder": {
@@ -9067,6 +9073,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Использовать правую ось y"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9358,6 +9369,7 @@
       "toggle-panel-edit": "Включение/выключение представления редактирования панели",
       "toggle-panel-fullscreen": "Включение/выключение полноэкранного представления панели",
       "toggle-panel-legend": "Включение/выключение условных обозначений панели",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Уменьшение масштаба временного диапазона"
     },
     "title": "Сочетания клавиш"
@@ -12648,11 +12660,14 @@
       "copy-clipboard": "Копировать в буфер обмена",
       "copy-to-clipboard-and-close": "Копировать в буфер обмена и закрыть",
       "description-name-to-easily-identify-the-token": "Название для удобной идентификации токена",
+      "description-no-expiration-disabled": "",
       "description-token": "Скопируйте токен сейчас, так как вы не сможете увидеть его снова. При потере токена требуется создать новый.",
       "generate-token": "Создать токен",
       "label-display-name": "Отображаемое имя",
       "label-expiration": "Срок действия",
       "label-expiration-date": "Срок действия",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Токен"
     },
     "get-actions-cell": {

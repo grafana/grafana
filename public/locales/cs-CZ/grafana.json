@@ -8661,7 +8661,13 @@
       "saving": "Ukládání <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineární práh",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Základ protokolu"
     },
     "builder": {
@@ -9067,6 +9073,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Použít pravou osu y"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9358,6 +9369,7 @@
       "toggle-panel-edit": "Přepnout zobrazení úprav panelu",
       "toggle-panel-fullscreen": "Přepnout zobrazení panelu na celou obrazovku",
       "toggle-panel-legend": "Přepnout legendu panelu",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Oddálit časový rozsah"
     },
     "title": "Zkratky"
@@ -12648,11 +12660,14 @@
       "copy-clipboard": "Kopírovat do schránky",
       "copy-to-clipboard-and-close": "Kopírovat do schránky a zavřít",
       "description-name-to-easily-identify-the-token": "Název pro snadnou identifikaci tokenu",
+      "description-no-expiration-disabled": "",
       "description-token": "Zkopírujte token teď, protože ho znovu neuvidíte. Ztráta tokenu vyžaduje vytvoření nového tokenu.",
       "generate-token": "Generování tokenu",
       "label-display-name": "Zobrazované jméno",
       "label-expiration": "Expirace",
       "label-expiration-date": "Datum vypršení platnosti",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {
