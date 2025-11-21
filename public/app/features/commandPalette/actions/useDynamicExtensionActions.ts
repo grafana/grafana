@@ -117,7 +117,7 @@ export function useDynamicExtensionResults(searchQuery: string): {
 
     dynamicResults.forEach((result) => {
       const section = result.section ?? 'Dynamic Results';
-      
+
       if (!groups.has(section)) {
         groups.set(section, []);
       }
