@@ -196,7 +196,7 @@ func indexExternalGroupMappingDocuments(t *testing.T, index resource.ResourceInd
 
 func checkExternalGroupMappingSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest, expectedNames []string) {
 	t.Helper()
-	res, err := index.Search(context.Background(), nil, query, nil)
+	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(expectedNames)), res.TotalHits)
 	names := make([]string, len(res.Results.Rows))
@@ -208,7 +208,7 @@ func checkExternalGroupMappingSearchQuery(t *testing.T, index resource.ResourceI
 
 func checkExternalGroupMappingSearchQueryOrdered(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest, orderedExpectedNames []string) {
 	t.Helper()
-	res, err := index.Search(context.Background(), nil, query, nil)
+	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(orderedExpectedNames)), res.TotalHits)
 	names := make([]string, len(res.Results.Rows))

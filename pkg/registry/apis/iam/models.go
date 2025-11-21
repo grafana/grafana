@@ -44,8 +44,6 @@ type RoleBindingStorageBackend interface{ resource.StorageBackend }
 // Used by wire to identify the storage backend for external group mappings.
 type ExternalGroupMappingStorageBackend interface{ resource.StorageBackend }
 
-type ExternalGroupMappingLegacySearchClient interface{ resourcepb.ResourceIndexClient }
-
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores

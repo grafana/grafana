@@ -40,7 +40,6 @@ func GetExternalGroupMappingBuilder() (resource.DocumentBuilderInfo, error) {
 	for _, v := range ExternalGroupMappingTableColumnDefinitions {
 		values = append(values, v)
 	}
-	// stdFields := res.StandardSearchFields()
 
 	fields, err := resource.NewSearchableDocumentFields(values)
 	return resource.DocumentBuilderInfo{
