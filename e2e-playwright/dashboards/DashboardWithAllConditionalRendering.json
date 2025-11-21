@@ -3336,7 +3336,7 @@
           "description": "",
           "id": 37,
           "links": [],
-          "title": "Hide panel - custom variable equals x (current = ${myCustomVariable})",
+          "title": "Hide panel - custom variable equals a (current = ${myCustomVariable})",
           "vizConfig": {
             "group": "text",
             "kind": "VizConfig",
@@ -3372,16 +3372,14 @@
                     "hidden": false,
                     "query": {
                       "datasource": {
-                        "name": "gdev-prometheus"
+                        "name": "PD8C576611E62080A"
                       },
-                      "group": "prometheus",
+                      "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
                       "spec": {
-                        "editorMode": "code",
-                        "expr": "${myCustomVariable}",
-                        "instant": false,
-                        "legendFormat": "__auto",
-                        "range": true
+                        "labels": "key=$myCustomVariable",
+                        "scenarioId": "random_walk",
+                        "seriesCount": 1
                       },
                       "version": "v0"
                     },
@@ -5278,7 +5276,7 @@
                                 "kind": "ConditionalRenderingVariable",
                                 "spec": {
                                   "operator": "equals",
-                                  "value": "x",
+                                  "value": "a",
                                   "variable": "myCustomVariable"
                                 }
                               }
@@ -5378,21 +5376,21 @@
           "options": [
             {
               "selected": false,
-              "text": "x",
-              "value": "x"
+              "text": "a",
+              "value": "a"
             },
             {
               "selected": false,
-              "text": "go_build_info",
-              "value": "go_build_info"
+              "text": "b",
+              "value": "b"
             },
             {
               "selected": false,
-              "text": "grafana_build_info",
-              "value": "grafana_build_info"
+              "text": "c",
+              "value": "c"
             }
           ],
-          "query": "x, go_build_info, grafana_build_info",
+          "query": "a, b, c",
           "skipUrlSync": false
         }
       }

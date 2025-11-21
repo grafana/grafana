@@ -410,16 +410,54 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(getTabHideNotMatches(dashboardPage, selectors)).not.toBeVisible();
   });
 
-  test('Load with variable repeat and hide when equals/no data', async ({ page, gotoDashboardPage, selectors }) => {
-    const dashboardPage = await loadDashboard(page, gotoDashboardPage);
+  test.describe('Variable repeat', () => {
+    const repeatOptions = ['a', 'b', 'c'];
 
-    await getTab(dashboardPage, selectors, 'repeated items').click();
+    async function failTestDataRequestForOption(page: Page, option: string) {
+      await page.route(
+        /^http:\/\/localhost:[^/]+\/api\/ds\/query\?.*\bds_type=grafana-testdata-datasource/,
+        async (route) => {
+          const rawPostData = route.request().postData();
+          if (!rawPostData) {
+            return;
+          }
 
-    const options = ['go_build_info', 'grafana_build_info'];
+          // the first panel query has a label set to the current variable value
+          if (JSON.parse(rawPostData).queries[0].labels === `key=${option}`) {
+            await route.fulfill({ status: 500, body: '{}' });
+          } else {
+            await route.continue();
+          }
+        }
+      );
+    }
 
-    await checkRepeatedPanelTitles(dashboardPage, selectors, 'Hide panel - ', [
-      ...options.map((o) => `custom variable equals x (current = ${o})`),
-      ...options.map((o) => `no data (current = ${o})`),
-    ]);
+    test('Hide when equals, hide when no data', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await loadDashboard(page, gotoDashboardPage);
+
+      await getTab(dashboardPage, selectors, 'repeated items').click();
+
+      const optionForHiddenPanels = repeatOptions[0];
+
+      await failTestDataRequestForOption(page, optionForHiddenPanels);
+
+      await checkRepeatedPanelTitles(
+        dashboardPage,
+        selectors,
+        'Hide panel - ',
+        [
+          `custom variable equals ${optionForHiddenPanels} (current = ${optionForHiddenPanels})`,
+          `no data (current = ${optionForHiddenPanels})`,
+        ],
+        true
+      );
+
+      const optionsForVisiblePanels = repeatOptions.slice(1);
+
+      await checkRepeatedPanelTitles(dashboardPage, selectors, 'Hide panel - ', [
+        ...optionsForVisiblePanels.map((o) => `custom variable equals ${optionForHiddenPanels} (current = ${o})`),
+        ...optionsForVisiblePanels.map((o) => `no data (current = ${o})`),
+      ]);
+    });
   });
 });
