@@ -58,7 +58,7 @@ export function ScopesDashboardsTreeFolderItem({
               e.stopPropagation();
               if (folder.subScopeName && scopesSelectorService) {
                 scopesDashboardsService?.setNavigationScope(undefined, [folder.subScopeName]);
-                //scopesSelectorService.changeScopes([folder.subScopeName]);
+                scopesSelectorService.changeScopes([folder.subScopeName]);
               }
             }}
           />

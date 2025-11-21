@@ -58,14 +58,15 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   }
 
   // The fallbackScopeNames is used to fetch the ScopeNavigations for the current dashboard when the navigationScope is not set.
-  public setNavigationScope = (navigationScope?: string, fallbackScopeNames?: string[]) => {
+  // You only need to awaut this function if you need to wait for the dashboards to be fetched before doing something else.
+  public setNavigationScope = async (navigationScope?: string, fallbackScopeNames?: string[]) => {
     if (this.state.navigationScope === navigationScope) {
       return;
     }
 
     const forScopeNames = navigationScope ? [navigationScope] : (fallbackScopeNames ?? []);
     this.updateState({ navigationScope, drawerOpened: forScopeNames.length > 0 });
-    this.fetchDashboards(forScopeNames);
+    await this.fetchDashboards(forScopeNames);
   };
 
   // Expand the group that matches the current path, if it is not already expanded
