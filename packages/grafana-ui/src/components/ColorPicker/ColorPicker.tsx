@@ -1,6 +1,12 @@
 import { css } from '@emotion/css';
-import { memo, useRef } from 'react';
-import * as React from 'react';
+import {
+  type ComponentType,
+  createElement,
+  type PropsWithChildren,
+  type ReactNode,
+  type RefObject,
+  useRef,
+} from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -20,24 +26,24 @@ import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
  * component as a custom trigger you will need to forward the reference to first HTMLElement child.
  */
 type ColorPickerTriggerRenderer = (props: {
-  // This should be a React.RefObject<HTMLElement> but due to how object refs are defined you cannot downcast from that
-  // to a specific type like React.RefObject<HTMLDivElement> even though it would be fine in runtime.
-  ref: React.RefObject<any>;
+  // This should be a RefObject<HTMLElement> but due to how object refs are defined you cannot downcast from that
+  // to a specific type like RefObject<HTMLDivElement> even though it would be fine in runtime.
+  ref: RefObject<any>;
   showColorPicker: () => void;
   hideColorPicker: () => void;
-}) => React.ReactNode;
+}) => ReactNode;
 
 export const colorPickerFactory = <T extends ColorPickerProps>(
-  popover: React.ComponentType<React.PropsWithChildren<T>>,
+  popover: ComponentType<PropsWithChildren<T>>,
   displayName = 'ColorPicker'
 ) => {
-  const ColorPickerComponent = memo<T & { children?: ColorPickerTriggerRenderer }>((props) => {
+  const ColorPickerComponent = (props: T & { children?: ColorPickerTriggerRenderer }) => {
     const { children, onChange, color, id } = props;
     const theme = useTheme2();
     const pickerTriggerRef = useRef<any>(null);
     const styles = getStyles(theme);
 
-    const popoverElement = React.createElement(
+    const popoverElement = createElement(
       popover,
       {
         ...props,
@@ -83,9 +89,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
         }}
       </PopoverController>
     );
-  });
-
-  ColorPickerComponent.displayName = displayName;
+  };
 
   return ColorPickerComponent;
 };

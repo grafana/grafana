@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
-import { memo, useState } from 'react';
-import * as React from 'react';
+import { type ComponentType, createElement, useState } from 'react';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -29,14 +28,14 @@ export interface Props<T> extends ColorPickerProps, PopoverContentProps {
 
 export interface CustomPickersDescriptor {
   [key: string]: {
-    tabComponent: React.ComponentType<ColorPickerProps>;
+    tabComponent: ComponentType<ColorPickerProps>;
     name: string;
   };
 }
 
 type PickerType = 'palette' | 'spectrum';
 
-export const ColorPickerPopover = memo(<T extends CustomPickersDescriptor>(props: Props<T>) => {
+export const ColorPickerPopover = <T extends CustomPickersDescriptor>(props: Props<T>) => {
   const { color, onChange, enableNamedColors, customPickers } = props;
   const theme = useTheme2();
   const [activePicker, setActivePicker] = useState<PickerType | keyof T>('palette');
@@ -59,7 +58,7 @@ export const ColorPickerPopover = memo(<T extends CustomPickersDescriptor>(props
       return null;
     }
 
-    return React.createElement(customPickers[tabKey].tabComponent, {
+    return createElement(customPickers[tabKey].tabComponent, {
       color,
       onChange: handleChange,
     });
@@ -114,9 +113,7 @@ export const ColorPickerPopover = memo(<T extends CustomPickersDescriptor>(props
       </div>
     </FocusScope>
   );
-});
-
-ColorPickerPopover.displayName = 'ColorPickerPopover';
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
