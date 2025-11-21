@@ -881,11 +881,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Tooltip/PopoverController.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Typeahead/Typeahead.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 2
