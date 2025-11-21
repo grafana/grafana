@@ -1,21 +1,9 @@
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import {
-  generatedAPI as correlationAPIv0alpha1,
-  Correlation as CorrelationK8s,
-} from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import {
-  getDataSourceSrv,
-  FetchResponse,
-  CorrelationData,
-  CorrelationsData,
-  config,
-  CorrelationExternal,
-  CorrelationQuery,
-} from '@grafana/runtime';
+import { getDataSourceSrv, FetchResponse, CorrelationData, CorrelationsData } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { dispatch } from 'app/store/store';
+//import { dispatch } from 'app/store/store';
 
 import {
   Correlation,
@@ -36,7 +24,7 @@ export interface CorrelationsResponse {
   totalCount: number;
 }
 
-const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
+export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
   const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
   const targetDatasource =
     correlation.type === 'query' ? getDataSourceSrv().getInstanceSettings(correlation.targetUID) : undefined;
@@ -80,60 +68,6 @@ const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): 
   return undefined;
 };
 
-/*
-the various todos in this function relate to some changes that were required for correlations to be added to app platform
-we now must resolve those changes with the way correlations currently functions
-the main one is around the various source/target references - current this just refers to datasources by UID, but I was 
-required to do a group/name combination - how do I resolve this?
-
-secondly, I was required to remove the provisioned flag. This provisioned flag locks the correlations record and makes it readonly
-so people don't make edits that will be overwritten by provisioned correlations. Maybe this isn't relevant for app platform and hardcoding it to false is fine.
-
-With transformations, I just didn't convert because they should be straightforward, that can be ignored for now and I'll work on it
-
-also, maybe this should be closer to the app platform code, like in the client code? any other best practices?
-*/
-const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | undefined => {
-  if (item.metadata.name !== undefined) {
-    const baseCor = {
-      uid: item.metadata.name,
-      sourceUID: item.spec.source.name, //todo
-      label: item.spec.label,
-      description: item.spec.description,
-      provisioned: false, // todo,
-    };
-
-    if (item.spec.type === 'external') {
-      const extCorr: CorrelationExternal = {
-        ...baseCor,
-        type: 'external',
-        config: {
-          field: item.spec.config.field,
-          target: {
-            url: item.spec.config.target.url || '',
-          },
-          transformations: [], // todo fix
-        },
-      };
-      return toEnrichedCorrelationData(extCorr);
-    } else {
-      const queryCorr: CorrelationQuery = {
-        ...baseCor,
-        type: 'query',
-        targetUID: item.spec.target?.name || '', // todo
-        config: {
-          field: item.spec.config.field,
-          target: item.spec.config.target,
-          transformations: [], // todo fix
-        },
-      };
-      return toEnrichedCorrelationData(queryCorr);
-    }
-  } else {
-    return undefined;
-  }
-};
-
 const validSourceFilter = (correlation: CorrelationData | undefined): correlation is CorrelationData => !!correlation;
 
 export const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsResponse): CorrelationsData => {
@@ -158,27 +92,16 @@ export const useCorrelations = () => {
 
   const [getInfo, get] = useAsyncFn<(params: GetCorrelationsParams) => Promise<CorrelationsData>>(
     async (params) => {
-      if (config.featureToggles.kubernetesCorrelations) {
-        // the legacy version has pages , how does one accomplish this when getting a full list back?
-        const { data } = correlationAPIv0alpha1.endpoints.listCorrelation.useQuery({});
-        const enrichedCorrelations =
-          data !== undefined
-            ? data.items.map((item) => toEnrichedCorrelationDataK8s(item)).filter((i) => i !== undefined)
-            : [];
-        // todo returning bad response data, how to fix?
-        return { correlations: enrichedCorrelations, page: 0, limit: 1000, totalCount: enrichedCorrelations.length };
-      } else {
-        return lastValueFrom(
-          backend.fetch<CorrelationsResponse>({
-            url: '/api/datasources/correlations',
-            params: { page: params.page },
-            method: 'GET',
-            showErrorAlert: false,
-          })
-        )
-          .then(getData)
-          .then(toEnrichedCorrelationsData);
-      }
+      return lastValueFrom(
+        backend.fetch<CorrelationsResponse>({
+          url: '/api/datasources/correlations',
+          params: { page: params.page },
+          method: 'GET',
+          showErrorAlert: false,
+        })
+      )
+        .then(getData)
+        .then(toEnrichedCorrelationsData);
     },
 
     [backend]
@@ -186,35 +109,17 @@ export const useCorrelations = () => {
 
   const [createInfo, create] = useAsyncFn<(params: CreateCorrelationParams) => Promise<CorrelationData>>(
     async ({ sourceUID, ...correlation }) => {
-      if (config.featureToggles.kubernetesCorrelations) {
-        const result = await dispatch(
-          correlationAPIv0alpha1.endpoints.createCorrelation.initiate({
-            correlation: {
-              apiVersion: 'correlations.grafana.app/v0alpha1',
-              kind: 'Correlations',
-              metadata: {},
-              spec: {
-                ...correlation,
-                label: correlation.label ?? '',
-                source: { name: sourceUID, group: '' },
-                config: { ...correlation.config, transformations: [] },
-              },
-            },
-          })
-        );
-        return result;
-      } else {
-        return backend
-          .post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
-          .then((response) => {
-            const enrichedCorrelation = toEnrichedCorrelationData(response.result);
-            if (enrichedCorrelation !== undefined) {
-              return enrichedCorrelation;
-            } else {
-              throw new Error('invalid sourceUID');
-            }
-          });
-      }
+      return backend
+        .post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
+        .then((response) => {
+          const enrichedCorrelation = toEnrichedCorrelationData(response.result);
+          if (enrichedCorrelation !== undefined) {
+            return enrichedCorrelation;
+          } else {
+            throw new Error('invalid sourceUID');
+          }
+        });
+      // }
     },
     [backend]
   );

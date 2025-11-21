@@ -4,7 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { CorrelationData, isFetchError, reportInteraction } from '@grafana/runtime';
+import { CorrelationData, CorrelationsData, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
   Button,
@@ -27,8 +27,17 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
-import type { Correlation, RemoveCorrelationParams } from './types';
-import { useCorrelations } from './useCorrelations';
+import type { Correlation, GetCorrelationsParams, RemoveCorrelationParams } from './types';
+
+type CorrelationsPageProps = {
+  fetchCorrelations: (params: GetCorrelationsParams) => Promise<CorrelationsData>;
+  correlations?: CorrelationsData;
+  isLoading: boolean;
+  removeFn?: (params: RemoveCorrelationParams) => Promise<{
+    message: string;
+  }>;
+  error?: Error;
+};
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
   a.values[column].name.localeCompare(b.values[column].name);
@@ -40,7 +49,8 @@ const loaderWrapper = css({
   justifyContent: 'center',
 });
 
-export default function CorrelationsPage() {
+export default function CorrelationsPage(props: CorrelationsPageProps) {
+  const { fetchCorrelations, correlations, isLoading, error, removeFn } = props;
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
   const page = useRef(1);
@@ -51,11 +61,6 @@ export default function CorrelationsPage() {
       reportInteraction('grafana_correlations_adding_started');
     }
   };
-
-  const {
-    remove,
-    get: { execute: fetchCorrelations, ...get },
-  } = useCorrelations();
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
@@ -72,7 +77,7 @@ export default function CorrelationsPage() {
 
   const handleDelete = useCallback(
     async (params: RemoveCorrelationParams, isLastRow: boolean) => {
-      await remove.execute(params);
+      await removeFn(params);
       reportInteraction('grafana_correlations_deleted');
 
       if (isLastRow) {
@@ -80,7 +85,7 @@ export default function CorrelationsPage() {
       }
       fetchCorrelations({ page: page.current });
     },
-    [remove, fetchCorrelations]
+    [removeFn, fetchCorrelations]
   );
 
   useEffect(() => {
@@ -145,8 +150,8 @@ export default function CorrelationsPage() {
     [RowActions, canWriteCorrelations]
   );
 
-  const data = useMemo(() => get.value, [get.value]);
-  const showEmptyListCTA = data?.correlations.length === 0 && !isAdding && !get.error;
+  const data = useMemo(() => correlations, [correlations]);
+  const showEmptyListCTA = data?.correlations.length === 0 && !isAdding && !error;
   const addButton = canWriteCorrelations && data?.correlations?.length !== 0 && data !== undefined && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
       <Trans i18nKey="correlations.add-new">Add new</Trans>
@@ -170,7 +175,7 @@ export default function CorrelationsPage() {
     >
       <Page.Contents>
         <div>
-          {!data && get.loading && (
+          {!data && isLoading && (
             <div className={loaderWrapper}>
               <LoadingPlaceholder text={t('correlations.list.loading', 'loading...')} />
             </div>
@@ -182,13 +187,13 @@ export default function CorrelationsPage() {
 
           {
             // This error is not actionable, it'd be nice to have a recovery button
-            get.error && (
+            error && (
               <Alert
                 severity="error"
                 title={t('correlations.alert.title', 'Error fetching correlation data')}
                 topSpacing={2}
               >
-                {(isFetchError(get.error) && get.error.data?.message) ||
+                {(isFetchError(error) && error.data?.message) ||
                   t(
                     'correlations.alert.error-message',
                     'An unknown error occurred while fetching correlation data. Please try again.'
