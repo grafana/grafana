@@ -41,6 +41,8 @@
 /docs/sources/                                                                    @irenerl24
 
 /docs/sources/alerting/                                                           @JohnnyK-Grafana
+/docs/sources/as-code/                                                            @urbiz-grafana
+/docs/sources/developer-resources/                                                @urbiz-grafana
 /docs/sources/datasources/                                                        @lwandz13
 /docs/sources/upgrade-guide/                                                      @jtvdez
 /docs/sources/whatsnew/                                                           @jtvdez
@@ -87,6 +89,7 @@
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/plugins/ @grafana/plugins-platform-backend
+/apps/collections/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/shorturl/ @grafana/sharing-squad
 /apps/secret/ @grafana/grafana-operator-experience-squad
@@ -741,6 +744,14 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/api-clients
 /packages/grafana-api-clients/ @grafana/grafana-frontend-platform @grafana/grafana-search-navigate-organise
+/packages/grafana-api-clients/src/clients/rtkq/advisor/ @grafana/plugins-platform-frontend
+/packages/grafana-api-clients/src/clients/rtkq/correlations/ @grafana/datapro
+/packages/grafana-api-clients/src/clients/rtkq/dashboard/ @grafana/dashboards-squad
+/packages/grafana-api-clients/src/clients/rtkq/folder/ @grafana/grafana-search-navigate-organise
+/packages/grafana-api-clients/src/clients/rtkq/iam/ @grafana/access-squad @grafana/identity-squad
+/packages/grafana-api-clients/src/clients/rtkq/preferences/ @grafana/plugins-platform-frontend
+/packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-git-ui-sync-team
+/packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
@@ -834,7 +845,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/constants.ts @grafana/grafana-frontend-platform
 /public/app/core/context/ @grafana/grafana-frontend-platform
 /public/app/core/copy/appNotification.ts @grafana/grafana-search-navigate-organise
-/public/app/core/core.ts @grafana/grafana-frontend-platform
 /public/app/core/crash/ @grafana/observability-traces-and-profiling
 /public/app/core/history/ @grafana/observability-traces-and-profiling
 /public/app/core/hooks/useBusEvent.ts @grafana/grafana-frontend-platform
@@ -1100,6 +1110,7 @@ eslint-suppressions.json @grafanabot
 # Grafana Sharing Squad
 /public/app/features/dashboard-scene/sharing/ @grafana/sharing-squad
 /public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
+/public/app/features/dashboard/dashgrid/DashboardLibrary/ @grafana/sharing-squad
 /public/app/features/manage-dashboards/components/SnapshotListTable.tsx @grafana/sharing-squad
 /pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /public/app/features/explore/QueryLibrary/ @grafana/sharing-squad

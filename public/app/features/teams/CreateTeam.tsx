@@ -10,7 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { Role } from 'app/types/accessControl';
 import { TeamDTO } from 'app/types/teams';
 

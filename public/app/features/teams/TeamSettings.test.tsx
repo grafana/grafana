@@ -4,8 +4,8 @@ import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
-import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import TeamSettings from './TeamSettings';
 

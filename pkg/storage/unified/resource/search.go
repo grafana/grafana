@@ -75,16 +75,16 @@ type ResourceIndex interface {
 
 	// Search within a namespaced resource
 	// When working with federated queries, the additional indexes will be passed in explicitly
-	Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex) (*resourcepb.ResourceSearchResponse, error)
+	Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex, stats *SearchStats) (*resourcepb.ResourceSearchResponse, error)
 
 	// List within an response
-	ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error)
+	ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *SearchStats) (*resourcepb.ListManagedObjectsResponse, error)
 
 	// Counts the values in a repo
-	CountManagedObjects(ctx context.Context) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error)
+	CountManagedObjects(ctx context.Context, stats *SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error)
 
 	// Get the number of documents in the index
-	DocCount(ctx context.Context, folder string) (int64, error)
+	DocCount(ctx context.Context, folder string, stats *SearchStats) (int64, error)
 
 	// UpdateIndex updates the index with the latest data (using update function provided when index was built) to guarantee strong consistency during the search.
 	// Returns RV to which index was updated.
@@ -238,6 +238,9 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 }
 
 func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.ListManagedObjects")
+	defer span.End()
+
 	if req.NextPageToken != "" {
 		return &resourcepb.ListManagedObjectsResponse{
 			Error: NewBadRequestError("multiple pages not yet supported"),
@@ -245,14 +248,20 @@ func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.
 	}
 
 	rsp := &resourcepb.ListManagedObjectsResponse{}
-	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	nsr := NamespacedResource{
+		Namespace: req.Namespace,
+	}
+	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
 	}
 
-	for _, info := range stats {
-		idx, err := s.getOrCreateIndex(ctx, NamespacedResource{
+	stats := NewSearchStats("ListManagedObjects")
+	defer s.logStats(ctx, stats, span, "namespace", req.Namespace)
+
+	for _, info := range resourceStats {
+		idx, err := s.getOrCreateIndex(ctx, stats, NamespacedResource{
 			Namespace: req.Namespace,
 			Group:     info.Group,
 			Resource:  info.Resource,
@@ -262,7 +271,7 @@ func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.
 			return rsp, nil
 		}
 
-		kind, err := idx.ListManagedObjects(ctx, req)
+		kind, err := idx.ListManagedObjects(ctx, req, stats)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -277,23 +286,69 @@ func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.
 	}
 
 	// Sort based on path
+	start := time.Now()
 	slices.SortFunc(rsp.Items, func(a, b *resourcepb.ListManagedObjectsResponse_Item) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
+	stats.AddResultsConversionTime(time.Since(start))
 
 	return rsp, nil
 }
 
+func (s *searchSupport) logWithTraceID(ctx context.Context) *slog.Logger {
+	l := s.log
+	if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
+		l = l.With("traceID", traceID)
+	}
+	return l
+}
+
+func (s *searchSupport) logStats(ctx context.Context, stats *SearchStats, span trace.Span, params ...any) {
+	elapsed := time.Since(stats.startTime)
+
+	args := []any{
+		"operation", stats.operation,
+		"elapsedTime", elapsed,
+		"indexBuildTime", stats.indexBuildTime,
+		"indexUpdateTime", stats.indexUpdateTime,
+		"requestConversionTime", stats.requestConversion,
+		"searchTime", stats.searchTime,
+		"totalHits", stats.totalHits,
+		"returnedDocuments", stats.returnedDocuments,
+		"resultsConversionTime", stats.resultsConversionTime,
+	}
+	args = append(args, params...)
+
+	s.logWithTraceID(ctx).Debug("Search stats", args...)
+
+	if span != nil {
+		attrs := make([]attribute.KeyValue, 0, len(args)/2)
+		for i := 0; i < len(args); i += 2 {
+			attrs = append(attrs, attribute.String(fmt.Sprint(args[i]), fmt.Sprint(args[i+1])))
+		}
+		span.AddEvent("search stats", trace.WithAttributes(attrs...))
+	}
+}
+
 func (s *searchSupport) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.CountManagedObjects")
+	defer span.End()
+
+	stats := NewSearchStats("CountManagedObjects")
+	defer s.logStats(ctx, stats, span, "namespace", req.Namespace)
+
 	rsp := &resourcepb.CountManagedObjectsResponse{}
-	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	nsr := NamespacedResource{
+		Namespace: req.Namespace,
+	}
+	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
 	}
 
-	for _, info := range stats {
-		idx, err := s.getOrCreateIndex(ctx, NamespacedResource{
+	for _, info := range resourceStats {
+		idx, err := s.getOrCreateIndex(ctx, stats, NamespacedResource{
 			Namespace: req.Namespace,
 			Group:     info.Group,
 			Resource:  info.Resource,
@@ -303,7 +358,7 @@ func (s *searchSupport) CountManagedObjects(ctx context.Context, req *resourcepb
 			return rsp, nil
 		}
 
-		counts, err := idx.CountManagedObjects(ctx)
+		counts, err := idx.CountManagedObjects(ctx, stats)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -343,12 +398,15 @@ func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSear
 		}, nil
 	}
 
+	stats := NewSearchStats("Search")
+	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
+
 	nsr := NamespacedResource{
 		Group:     req.Options.Key.Group,
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
-	idx, err := s.getOrCreateIndex(ctx, nsr, "search")
+	idx, err := s.getOrCreateIndex(ctx, stats, nsr, "search")
 	if err != nil {
 		return &resourcepb.ResourceSearchResponse{
 			Error: AsErrorResult(err),
@@ -360,7 +418,7 @@ func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSear
 	for i, f := range req.Federated {
 		nsr.Group = f.Group
 		nsr.Resource = f.Resource
-		federate[i], err = s.getOrCreateIndex(ctx, nsr, "federatedSearch")
+		federate[i], err = s.getOrCreateIndex(ctx, stats, nsr, "federatedSearch")
 		if err != nil {
 			return &resourcepb.ResourceSearchResponse{
 				Error: AsErrorResult(err),
@@ -368,16 +426,23 @@ func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSear
 		}
 	}
 
-	return idx.Search(ctx, s.access, req, federate)
+	return idx.Search(ctx, s.access, req, federate, stats)
 }
 
 // GetStats implements ResourceServer.
 func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.GetStats")
+	defer span.End()
+
 	if req.Namespace == "" {
 		return &resourcepb.ResourceStatsResponse{
 			Error: NewBadRequestError("missing namespace"),
 		}, nil
 	}
+
+	stats := NewSearchStats("GetStats")
+	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", req.Folder)
+
 	rsp := &resourcepb.ResourceStatsResponse{}
 
 	// Explicit list of kinds
@@ -385,7 +450,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 		rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(req.Kinds))
 		for i, k := range req.Kinds {
 			parts := strings.SplitN(k, "/", 2)
-			index, err := s.getOrCreateIndex(ctx, NamespacedResource{
+			index, err := s.getOrCreateIndex(ctx, stats, NamespacedResource{
 				Namespace: req.Namespace,
 				Group:     parts[0],
 				Resource:  parts[1],
@@ -394,7 +459,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
 			}
-			count, err := index.DocCount(ctx, req.Folder)
+			count, err := index.DocCount(ctx, req.Folder, stats)
 			if err != nil {
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
@@ -408,17 +473,20 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 		return rsp, nil
 	}
 
-	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	nsr := NamespacedResource{
+		Namespace: req.Namespace,
+	}
+	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		return &resourcepb.ResourceStatsResponse{
 			Error: AsErrorResult(err),
 		}, nil
 	}
-	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(stats))
+	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(resourceStats))
 
 	// When not filtered by folder or repository, we can use the results directly
 	if req.Folder == "" {
-		for i, stat := range stats {
+		for i, stat := range resourceStats {
 			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    stat.Group,
 				Resource: stat.Resource,
@@ -428,8 +496,8 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 		return rsp, nil
 	}
 
-	for i, stat := range stats {
-		index, err := s.getOrCreateIndex(ctx, NamespacedResource{
+	for i, stat := range resourceStats {
+		index, err := s.getOrCreateIndex(ctx, stats, NamespacedResource{
 			Namespace: req.Namespace,
 			Group:     stat.Group,
 			Resource:  stat.Resource,
@@ -438,7 +506,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		count, err := index.DocCount(ctx, req.Folder)
+		count, err := index.DocCount(ctx, req.Folder, stats)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -457,7 +525,7 @@ func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
-	stats, err := s.storage.GetResourceStats(ctx, "", s.initMinSize)
+	stats, err := s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
 	if err != nil {
 		return 0, err
 	}
@@ -657,7 +725,12 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 
 	// Get the correct value of size + RV for building the index. This is important for our Bleve
 	// backend to decide whether to build index in-memory or as file-based.
-	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	nsr := NamespacedResource{
+		Namespace: req.Namespace,
+		Group:     req.Group,
+		Resource:  req.Resource,
+	}
+	stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		span.RecordError(fmt.Errorf("failed to get resource stats: %w", err))
 		l.Error("failed to get resource stats", "error", err)
@@ -719,7 +792,7 @@ type rebuildRequest struct {
 	minBuildVersion *semver.Version // if not nil, rebuild index with build version older than this.
 }
 
-func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource, reason string) (ResourceIndex, error) {
+func (s *searchSupport) getOrCreateIndex(ctx context.Context, stats *SearchStats, key NamespacedResource, reason string) (ResourceIndex, error) {
 	if s == nil || s.search == nil {
 		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
 	}
@@ -736,6 +809,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	idx := s.search.GetIndex(key)
 	if idx == nil {
 		span.AddEvent("Building index")
+		buildStartTime := time.Now()
 		ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
 			// We want to finish building of the index even if original context is canceled.
 			// We reuse original context without cancel to keep the tracing spans correct.
@@ -750,7 +824,10 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 
 			// Get correct value of size + RV for building the index. This is important for our Bleve
 			// backend to decide whether to build index in-memory or as file-based.
-			stats, err := s.storage.GetResourceStats(ctx, key.Namespace, 0)
+			nsr := NamespacedResource{
+				Namespace: key.Namespace,
+			}
+			stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get resource stats: %w", err)
 			}
@@ -778,6 +855,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 			if res.Err != nil {
 				return nil, tracing.Error(span, res.Err)
 			}
+			stats.AddIndexBuildTime(time.Since(buildStartTime))
 			idx = res.Val.(ResourceIndex)
 		case <-ctx.Done():
 			return nil, tracing.Error(span, fmt.Errorf("failed to get index: %w", ctx.Err()))
@@ -791,10 +869,11 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		return nil, tracing.Error(span, fmt.Errorf("failed to update index to guarantee strong consistency: %w", err))
 	}
 	elapsed := time.Since(start)
+	stats.AddIndexUpdateTime(elapsed)
 	if s.indexMetrics != nil {
 		s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
 	}
-	s.log.Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
+	s.logWithTraceID(ctx).Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
 	span.AddEvent("Index updated")
 
 	return idx, nil
@@ -811,7 +890,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		attribute.Int64("size", size),
 	)
 
-	logger := s.log.With("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
+	logger := s.logWithTraceID(ctx).With("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
 
 	builder, err := s.builders.get(ctx, nsr)
 	if err != nil {
@@ -974,7 +1053,9 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 
 	// Record the number of objects indexed for the kind/resource
-	docCount, err := index.DocCount(ctx, "")
+	// We don't pass searchStats to DocCount here, as it's not really user-initiated search. Time spent
+	// here will be recorded in the index build time instead.
+	docCount, err := index.DocCount(ctx, "", nil)
 	if err != nil {
 		logger.Warn("error getting doc count", "error", err)
 	}
