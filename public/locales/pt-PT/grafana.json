@@ -8589,7 +8589,13 @@
       "saving": "A guardar <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Limite linear",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Base de registo"
     },
     "builder": {
@@ -8995,6 +9001,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Utilizar o eixo y direito"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9286,6 +9297,7 @@
       "toggle-panel-edit": "Alternar vista de edição do painel",
       "toggle-panel-fullscreen": "Alternar vista de ecrã inteiro do painel",
       "toggle-panel-legend": "Alternar legenda do painel",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Diminuir o zoom do intervalo de tempo"
     },
     "title": "Atalhos"
@@ -12538,11 +12550,14 @@
       "copy-clipboard": "Copiar para a área de transferência",
       "copy-to-clipboard-and-close": "Copiar para a área de transferência e fechar",
       "description-name-to-easily-identify-the-token": "Nome para identificar facilmente o token",
+      "description-no-expiration-disabled": "",
       "description-token": "Copie o token agora, pois não poderá vê-lo novamente. Perder um token requer a criação de um novo.",
       "generate-token": "Gerar token",
       "label-display-name": "Nome de exibição",
       "label-expiration": "Validade",
       "label-expiration-date": "Data de vencimento",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {

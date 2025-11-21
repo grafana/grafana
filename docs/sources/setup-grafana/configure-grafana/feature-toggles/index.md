@@ -41,7 +41,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboardSceneForViewers`            | Enables dashboard rendering using Scenes for viewer roles                                                                                                     | Yes                |
 | `dashboardSceneSolo`                  | Enables rendering dashboards using scenes for solo panels                                                                                                     | Yes                |
 | `dashboardScene`                      | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
-| `logsInfiniteScrolling`               | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                                                       | Yes                |
 | `alertingQueryOptimization`           | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `onPremToCloudMigrations`             | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.                                 | Yes                |
 | `cloudWatchNewLabelParsing`           | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
@@ -90,6 +89,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
 | `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
+| `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
 | `enableSCIM`                      | Enables SCIM support for user and group management                                                     |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |

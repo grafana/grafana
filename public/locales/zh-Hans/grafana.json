@@ -8553,7 +8553,13 @@
       "saving": "正在保存<1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "线性阈值",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "记录基础"
     },
     "builder": {
@@ -8959,6 +8965,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "使用右侧 Y 轴"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9250,6 +9261,7 @@
       "toggle-panel-edit": "切换面板编辑视图",
       "toggle-panel-fullscreen": "切换面板全屏视图",
       "toggle-panel-legend": "切换面板图例",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "缩放时间范围"
     },
     "title": "快捷键"
@@ -12483,11 +12495,14 @@
       "copy-clipboard": "复制到剪贴板",
       "copy-to-clipboard-and-close": "复制到剪贴板并关闭",
       "description-name-to-easily-identify-the-token": "用于轻松识别令牌的名称",
+      "description-no-expiration-disabled": "",
       "description-token": "现在就复制令牌，因为您将无法再次看到它。丢失令牌后需要创建一个新令牌。",
       "generate-token": "生成令牌",
       "label-display-name": "显示名称",
       "label-expiration": "到期",
       "label-expiration-date": "到期日期",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "令牌"
     },
     "get-actions-cell": {

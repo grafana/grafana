@@ -8589,7 +8589,13 @@
       "saving": "Saving <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Linear threshold",
+      "linear-threshold": {
+        "label": "Linear threshold",
+        "warning": {
+          "nan": "Linear threshold must be a number",
+          "zero": "Linear threshold cannot be zero"
+        }
+      },
       "log-base": "Log base"
     },
     "builder": {
@@ -9291,6 +9297,7 @@
       "toggle-panel-edit": "Toggle panel edit view",
       "toggle-panel-fullscreen": "Toggle panel fullscreen view",
       "toggle-panel-legend": "Toggle panel legend",
+      "zoom-in-time-range": "Zoom in time range",
       "zoom-out-time-range": "Zoom out time range"
     },
     "title": "Shortcuts"
@@ -9966,11 +9973,7 @@
       "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
-      "newer-logs": "Newer logs",
-      "older-logs": "Older logs",
-      "scroll-bottom": "Scroll to bottom",
-      "scroll-top": "Scroll to top",
-      "start-of-range": "Start of range"
+      "scroll-top": "Scroll to top"
     },
     "logs-panel": {
       "render-common-labels": {

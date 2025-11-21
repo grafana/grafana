@@ -8589,7 +8589,13 @@
       "saving": "Opslaan <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineaire drempel",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Logboekbase"
     },
     "builder": {
@@ -8995,6 +9001,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Rechter y-as gebruiken"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9286,6 +9297,7 @@
       "toggle-panel-edit": "Paneelbewerkingsweergave in-/uitschakelen",
       "toggle-panel-fullscreen": "Paneelweergave volledig scherm in-/uitschakelen",
       "toggle-panel-legend": "Paneellegenda in-/uitschakelen",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Tijdsbereik uitzoomen"
     },
     "title": "Snelkoppelingen"
@@ -12538,11 +12550,14 @@
       "copy-clipboard": "Kopiëren naar klembord",
       "copy-to-clipboard-and-close": "Kopiëren naar klembord en sluiten",
       "description-name-to-easily-identify-the-token": "Naam om het token gemakkelijk te identificeren",
+      "description-no-expiration-disabled": "",
       "description-token": "Kopieer het token nu, want hierna kun je het niet meer zien. Als je een token verliest, moet je een nieuw token maken.",
       "generate-token": "Token genereren",
       "label-display-name": "Weergavenaam",
       "label-expiration": "Vervaldatum",
       "label-expiration-date": "Vervaldatum",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {

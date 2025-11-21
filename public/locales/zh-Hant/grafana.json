@@ -8553,7 +8553,13 @@
       "saving": "正在儲存<1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "線性臨界值",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "日誌基礎"
     },
     "builder": {
@@ -8959,6 +8965,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "使用右 y 軸"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9250,6 +9261,7 @@
       "toggle-panel-edit": "切換面板編輯檢視",
       "toggle-panel-fullscreen": "切換面板全螢幕檢視",
       "toggle-panel-legend": "切換面板圖例",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "縮小時間範圍"
     },
     "title": "捷徑"
@@ -12483,11 +12495,14 @@
       "copy-clipboard": "複製至剪貼簿",
       "copy-to-clipboard-and-close": "複製至剪貼簿並關閉",
       "description-name-to-easily-identify-the-token": "輕鬆識別權杖的名稱",
+      "description-no-expiration-disabled": "",
       "description-token": "請立即複製權杖，因為您將無法再次看到它。若您遺失權杖，則需要建立新的權杖。",
       "generate-token": "產生權杖",
       "label-display-name": "顯示名稱",
       "label-expiration": "過期",
       "label-expiration-date": "過期日期",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "權杖"
     },
     "get-actions-cell": {
