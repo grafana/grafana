@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -626,7 +628,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	minBuildTimeDashboard := now5m.Add(-1 * time.Hour)
 
 	vals := support.rebuildQueue.Elements()
-	require.ElementsMatch(t, vals, []rebuildRequest{
+	expected := []rebuildRequest{
 		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v5", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 		{NamespacedResource: NamespacedResource{Namespace: "resource-10h-v5", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 		{NamespacedResource: NamespacedResource{Namespace: "resource-10h-v6", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
@@ -636,7 +638,10 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
 
 		{NamespacedResource: NamespacedResource{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard, lastImportTime: lastImportTime},
-	})
+	}
+	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
+		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)
+	}
 }
 
 func TestRebuildIndexes(t *testing.T) {

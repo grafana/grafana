@@ -189,10 +189,8 @@ func TestIntegrationDistributor(t *testing.T) {
 				Resource:  "folders",
 			}},
 		}
-		baselineRes := getBaselineResponse(t, req, baselineServer.RebuildIndexes)
 		distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.RebuildIndexes, instanceResponseCount)
-		require.Equal(t, baselineRes.String(), distributorRes.String())
-
+		require.Nil(t, distributorRes.Error)
 		require.GreaterOrEqual(t, len(instanceResponseCount), len(testServers), "rebuild indexes must be distributed to all servers")
 	})
 

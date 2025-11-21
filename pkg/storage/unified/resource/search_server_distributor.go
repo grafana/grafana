@@ -138,6 +138,11 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 		return nil, fmt.Errorf("failed to get all healthy instances from the ring")
 	}
 
+	err = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", "all"))
+	if err != nil {
+		ds.log.Debug("error setting grpc header", "err", err)
+	}
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		md = make(metadata.MD)
@@ -183,7 +188,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	close(errorCh)
 	close(detailsCh)
 
-	var errs []error
+	errs := make([]error, 0, len(errorCh))
 	for err := range errorCh {
 		ds.log.Error("rebuild indexes call failed with %w", err)
 		errs = append(errs, err)
