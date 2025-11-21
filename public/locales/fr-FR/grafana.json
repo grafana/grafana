@@ -8589,7 +8589,13 @@
       "saving": "Enregistrement en cours <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Seuil linéaire",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Base du journal"
     },
     "builder": {
@@ -8995,6 +9001,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Utiliser l'axe y droit"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9286,6 +9297,7 @@
       "toggle-panel-edit": "Activer/Désactiver la vue Édition du panneau",
       "toggle-panel-fullscreen": "Activer/Désactiver la vue Plein écran",
       "toggle-panel-legend": "Activer/désactiver la légende du panneau",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Dézoomer la plage de temps"
     },
     "title": "Raccourcis"
@@ -12538,11 +12550,14 @@
       "copy-clipboard": "Copier dans le presse-papiers",
       "copy-to-clipboard-and-close": "Copier dans le presse-papiers et fermer",
       "description-name-to-easily-identify-the-token": "Nom pour identifier facilement le jeton",
+      "description-no-expiration-disabled": "",
       "description-token": "Copiez le jeton maintenant, car vous ne pourrez plus le revoir. Si vous perdez un jeton, vous devrez 'en créer un nouveau.",
       "generate-token": "Générer un jeton",
       "label-display-name": "Pseudo",
       "label-expiration": "Expiration",
       "label-expiration-date": "Date d’expiration",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Jeton"
     },
     "get-actions-cell": {

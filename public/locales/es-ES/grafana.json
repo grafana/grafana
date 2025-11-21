@@ -8589,7 +8589,13 @@
       "saving": "Guardando <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Umbral lineal",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Base de registro"
     },
     "builder": {
@@ -8995,6 +9001,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Usar eje y derecho"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9286,6 +9297,7 @@
       "toggle-panel-edit": "Cambiar la vista de edición del panel",
       "toggle-panel-fullscreen": "Cambiar la vista de pantalla completa del panel",
       "toggle-panel-legend": "Cambiar leyenda del panel",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Reducir el intervalo de tiempo"
     },
     "title": "Accesos directos"
@@ -12538,11 +12550,14 @@
       "copy-clipboard": "Copiar al portapapeles",
       "copy-to-clipboard-and-close": "Copiar al portapapeles y cerrar",
       "description-name-to-easily-identify-the-token": "Nombre para identificar fácilmente el token",
+      "description-no-expiration-disabled": "",
       "description-token": "Copia el token ahora, ya que no lo volverás a ver. Si lo pierdes, deberás crear uno nuevo.",
       "generate-token": "Generar token",
       "label-display-name": "Nombre para mostrar",
       "label-expiration": "Caducidad",
       "label-expiration-date": "Fecha de vencimiento",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {

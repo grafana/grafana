@@ -379,7 +379,7 @@ func InstallAPIs(
 			case grafanarest.Mode4, grafanarest.Mode5:
 				return storage, nil
 			default:
-				return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
+				return dualwrite.NewStaticStorage(gr, currentMode, legacy, storage)
 			}
 		}
 	}

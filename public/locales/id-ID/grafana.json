@@ -8553,7 +8553,13 @@
       "saving": "Menyimpan <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Ambang linear",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Basis log"
     },
     "builder": {
@@ -8959,6 +8965,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Gunakan sumbu y kanan"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9250,6 +9261,7 @@
       "toggle-panel-edit": "Alihkan tampilan edit panel",
       "toggle-panel-fullscreen": "Alihkan tampilan layar penuh panel",
       "toggle-panel-legend": "Alihkan legenda panel",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Perkecil rentang waktu"
     },
     "title": "Pintasan"
@@ -12483,11 +12495,14 @@
       "copy-clipboard": "Salin ke papan klip",
       "copy-to-clipboard-and-close": "Salin ke papan klip dan tutup",
       "description-name-to-easily-identify-the-token": "Nama untuk mengidentifikasi token dengan mudah",
+      "description-no-expiration-disabled": "",
       "description-token": "Salin token sekarang karena Anda tidak akan dapat melihatnya lagi. Kehilangan token membutuhkan pembuatan token baru.",
       "generate-token": "Buat token",
       "label-display-name": "Nama tampilan",
       "label-expiration": "Kedaluwarsa",
       "label-expiration-date": "Tanggal kedaluwarsa",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {
