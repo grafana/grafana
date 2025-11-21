@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"log/slog"
 	"slices"
 	"strings"
 	"sync"
@@ -23,6 +22,7 @@ import (
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/debouncer"
@@ -129,7 +129,7 @@ type SearchBackend interface {
 
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	log          *slog.Logger
+	log          log.Logger
 	storage      StorageBackend
 	search       SearchBackend
 	indexMetrics *BleveIndexMetrics
@@ -184,7 +184,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		access:         access,
 		storage:        storage,
 		search:         opts.Backend,
-		log:            slog.Default().With("logger", "resource-search"),
+		log:            log.New("resource-search"),
 		initWorkers:    opts.InitWorkerThreads,
 		rebuildWorkers: opts.IndexRebuildWorkers,
 		initMinSize:    opts.InitMinCount,
@@ -295,14 +295,6 @@ func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.
 	return rsp, nil
 }
 
-func (s *searchSupport) logWithTraceID(ctx context.Context) *slog.Logger {
-	l := s.log
-	if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
-		l = l.With("traceID", traceID)
-	}
-	return l
-}
-
 func (s *searchSupport) logStats(ctx context.Context, stats *SearchStats, span trace.Span, params ...any) {
 	elapsed := time.Since(stats.startTime)
 
@@ -319,7 +311,7 @@ func (s *searchSupport) logStats(ctx context.Context, stats *SearchStats, span t
 	}
 	args = append(args, params...)
 
-	s.logWithTraceID(ctx).Debug("Search stats", args...)
+	s.log.FromContext(ctx).Debug("Search stats", args...)
 
 	if span != nil {
 		attrs := make([]attribute.KeyValue, 0, len(args)/2)
@@ -696,7 +688,7 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	ctx, span := tracer.Start(ctx, "resource.searchSupport.rebuildIndex")
 	defer span.End()
 
-	l := s.log.With("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
+	l := s.log.New("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
 
 	idx := s.search.GetIndex(req.NamespacedResource)
 	if idx == nil {
@@ -752,7 +744,7 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 }
 
-func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, rebuildLogger *slog.Logger) bool {
+func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, rebuildLogger log.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			if rebuildLogger != nil {
@@ -873,7 +865,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, stats *SearchStats
 	if s.indexMetrics != nil {
 		s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
 	}
-	s.logWithTraceID(ctx).Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
+	s.log.FromContext(ctx).Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
 	span.AddEvent("Index updated")
 
 	return idx, nil
@@ -890,7 +882,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		attribute.Int64("size", size),
 	)
 
-	logger := s.logWithTraceID(ctx).With("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
+	logger := s.log.New("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
 
 	builder, err := s.builders.get(ctx, nsr)
 	if err != nil {

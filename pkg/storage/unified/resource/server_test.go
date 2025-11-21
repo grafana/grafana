@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -581,7 +580,7 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 			MaxRetries: 2,
 			MinBackoff: 10 * time.Millisecond,
 		},
-		log: slog.Default(),
+		log: log.NewNopLogger(),
 	}
 	return s, q
 }
@@ -589,7 +588,7 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
-		log:                            slog.Default(),
+		log:                            log.NewNopLogger(),
 	}
 
 	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {

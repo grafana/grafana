@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math"
 	"os"
 	"path/filepath"
@@ -26,7 +25,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
@@ -772,7 +771,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 	opts := BleveOptions{
 		FileThreshold: defaultFileThreshold,
 		IndexCacheTTL: defaultIndexCacheTTL,
-		Logger:        slog.New(logtest.NewNopHandler(t)),
+		Logger:        log.NewNopLogger(),
 		BuildVersion:  buildVersion,
 	}
 	for _, opt := range options {
