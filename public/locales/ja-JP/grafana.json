@@ -8554,7 +8554,11 @@
     },
     "axis-builder": {
       "linear-threshold": {
-        "label": "線形のしきい値"
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
       },
       "log-base": "ログベース"
     },
@@ -8961,6 +8965,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "右y軸を使用"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9252,6 +9261,7 @@
       "toggle-panel-edit": "パネル編集ビューを切り替え",
       "toggle-panel-fullscreen": "パネルの全画面表示を切り替え",
       "toggle-panel-legend": "パネルの凡例を切り替え",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "時間範囲をズームアウト"
     },
     "title": "ショートカット"
@@ -12485,11 +12495,14 @@
       "copy-clipboard": "クリップボードにコピー",
       "copy-to-clipboard-and-close": "クリップボードにコピーして閉じる",
       "description-name-to-easily-identify-the-token": "トークンを簡単に識別するための名前",
+      "description-no-expiration-disabled": "",
       "description-token": "トークンはもう表示できなくなるため、今すぐコピーしてください。トークンを失うと、新しいトークンを作成する必要があります。",
       "generate-token": "トークンを生成",
       "label-display-name": "表示名",
       "label-expiration": "有効期限",
       "label-expiration-date": "有効期日",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "トークン"
     },
     "get-actions-cell": {
