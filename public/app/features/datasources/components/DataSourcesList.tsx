@@ -61,6 +61,30 @@ export type ViewProps = {
   favoriteDataSources?: FavoriteDatasources;
 };
 
+function EmptyList({ addButtonDisabled }: { addButtonDisabled: boolean }) {
+  return (
+    <EmptyState
+      variant="call-to-action"
+      button={
+        <LinkButton disabled={addButtonDisabled} href={ROUTES.DataSourcesNew} icon="database" size="lg">
+          <Trans i18nKey="data-source-list.empty-state.button-title">Add data source</Trans>
+        </LinkButton>
+      }
+      message={t('data-source-list.empty-state.title', 'No data sources defined')}
+    >
+      <Trans i18nKey="data-source-list.empty-state.pro-tip">
+        You can also define data sources through configuration files.{' '}
+        <TextLink
+          external
+          href="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
+        >
+          Learn more
+        </TextLink>
+      </Trans>
+    </EmptyState>
+  );
+}
+
 export function DataSourcesListView({
   dataSources: allDataSources,
   dataSourcesCount,
@@ -99,27 +123,7 @@ export function DataSourcesListView({
   }, [location]);
 
   if (!isLoading && dataSourcesCount === 0) {
-    return (
-      <EmptyState
-        variant="call-to-action"
-        button={
-          <LinkButton disabled={!hasCreateRights} href={ROUTES.DataSourcesNew} icon="database" size="lg">
-            <Trans i18nKey="data-source-list.empty-state.button-title">Add data source</Trans>
-          </LinkButton>
-        }
-        message={t('data-source-list.empty-state.title', 'No data sources defined')}
-      >
-        <Trans i18nKey="data-source-list.empty-state.pro-tip">
-          You can also define data sources through configuration files.{' '}
-          <TextLink
-            external
-            href="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
-          >
-            Learn more
-          </TextLink>
-        </Trans>
-      </EmptyState>
-    );
+    return <EmptyList addButtonDisabled={!hasCreateRights} />;
   }
 
   const getDataSourcesList = () => {
@@ -147,7 +151,7 @@ export function DataSourcesListView({
 
       {/* List */}
       {dataSources.length === 0 && !isLoading ? (
-        <EmptyState variant="not-found" message={t('data-sources.empty-state.message', 'No data sources found')} />
+        <EmptyList addButtonDisabled={!hasCreateRights} />
       ) : (
         <ul className={styles.list}>{getDataSourcesList()}</ul>
       )}
