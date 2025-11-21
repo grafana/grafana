@@ -65,20 +65,24 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   };
 
   const sidebarContext = useSidebar({
-    hasOpenPane: openPane !== '' || selectionContext.selected.length > 0,
+    hasOpenPane: Boolean(openPane),
     contentMargin: 1,
     position: 'right',
   });
+
+  /**
+   * Sync docked state to editPane state
+   */
+  useEffect(() => {
+    editPane.setState({ isDocked: sidebarContext.isDocked });
+  }, [sidebarContext.isDocked, editPane]);
 
   const onClearSelection: React.PointerEventHandler<HTMLDivElement> = (evt) => {
     if (evt.shiftKey) {
       return;
     }
 
-    // Only clear selection if we are undocked
-    if (!sidebarContext.isDocked) {
-      editPane.clearSelection();
-    }
+    editPane.clearSelection();
   };
 
   return (
@@ -105,7 +109,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             {body}
           </div>
           <Sidebar contextValue={sidebarContext}>
-            <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+            <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} isDocked={sidebarContext.isDocked} />
           </Sidebar>
         </div>
       </ElementSelectionContext.Provider>

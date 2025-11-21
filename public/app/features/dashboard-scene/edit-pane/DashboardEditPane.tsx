@@ -26,8 +26,11 @@ export interface DashboardEditPaneState extends SceneObjectState {
 
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
-  openPane: string;
+  openPane?: DashboardSidebarPaneName;
+  isDocked?: boolean;
 }
+
+export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public constructor() {
@@ -40,7 +43,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       },
       undoStack: [],
       redoStack: [],
-      openPane: '',
     });
 
     this.addActivationHandler(this.onActivate.bind(this));
@@ -214,10 +216,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public selectObject(obj: SceneObject, id: string, { multi, force }: ElementSelectionOnSelectOptions = {}) {
-    if (this.state.openPane !== '') {
-      this.setState({ openPane: '' });
-    }
-
     if (!force) {
       if (multi) {
         if (this.state.selection?.hasValue(id)) {
@@ -233,7 +231,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
 
     const elementSelection = this.state.selection ?? new ElementSelection([[id, obj.getRef()]]);
-
     const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
 
     this.updateSelection(new ElementSelection(selection), selected);
@@ -261,36 +258,55 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       document.activeElement.blur();
     }
 
-    this.setState({ selection, selectionContext: { ...this.state.selectionContext, selected } });
+    this.setState({
+      selection,
+      selectionContext: { ...this.state.selectionContext, selected },
+      openPane: 'element',
+    });
   }
 
-  public clearSelection() {
+  /**
+   * @param force If force = true it will clear selection even when docked
+   * @returns
+   */
+  public clearSelection(force = false) {
     if (!this.state.selection) {
+      return;
+    }
+
+    // If we are docked then clearing selection should select dashboard itself
+    // Unless the user explicitly closes pane
+    if (this.state.isDocked && !force) {
+      const obj = this.state.selection?.getFirstObject();
+      const dashboard = getDashboardSceneFor(this);
+      if (obj !== dashboard) {
+        this.selectObject(dashboard, dashboard.state.key!);
+      }
       return;
     }
 
     this.updateSelection(undefined, []);
   }
 
-  public openPane(openPane: string) {
+  public openPane(openPane: DashboardSidebarPaneName) {
+    if (this.state.selection) {
+      this.clearSelection(true);
+    }
+
     if (openPane === this.state.openPane) {
-      openPane = '';
+      this.setState({ openPane: undefined });
+    } else {
+      this.setState({ openPane });
     }
-
-    if (openPane !== '' && this.state.selection) {
-      this.clearSelection();
-    }
-
-    this.setState({ openPane });
   }
 
   public closePane() {
     if (this.state.selection) {
-      this.clearSelection();
+      this.clearSelection(true);
     }
 
     if (this.state.openPane) {
-      this.setState({ openPane: '' });
+      this.setState({ openPane: undefined });
     }
   }
 

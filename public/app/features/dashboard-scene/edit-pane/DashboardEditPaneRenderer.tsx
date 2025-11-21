@@ -15,17 +15,25 @@ import { ElementEditPane } from './ElementEditPane';
 export interface Props {
   editPane: DashboardEditPane;
   dashboard: DashboardScene;
+  isDocked?: boolean;
 }
 
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
+export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing } = dashboard.useState();
-  const editableElement = useMemo(() => (selection ? selection.createSelectionElement() : undefined), [selection]);
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
+
+  const editableElement = useMemo(() => {
+    if (selection) {
+      return selection.createSelectionElement();
+    }
+
+    return undefined;
+  }, [selection]);
 
   // const [outlineCollapsed, setOutlineCollapsed] = useLocalStorage(
   //   'grafana.dashboard.edit-pane.outline.collapsed',

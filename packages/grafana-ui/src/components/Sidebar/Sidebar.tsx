@@ -59,7 +59,7 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
       {context.hasOpenPane && (
         <SidebarButton
           icon={'web-section-alt'}
-          onClick={context.onDockChange}
+          onClick={context.onToggleDock}
           title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
         />
       )}
