@@ -31,14 +31,15 @@ export function VisualizationSuggestionCard({
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
+  const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: cx(styles.vizBox, config.featureToggles.newVizSuggestions && isSelected && styles.selectedBox),
+    className: cx(styles.vizBox, isNewVizSuggestionsEnabled && isSelected && styles.selectedBox),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
     onClick: () => {
-      if (config.featureToggles.newVizSuggestions && onSelect) {
+      if (isNewVizSuggestionsEnabled && onSelect) {
         onSelect();
         onChange({
           pluginId: suggestion.pluginId,
@@ -61,11 +62,7 @@ export function VisualizationSuggestionCard({
       <Tooltip content={suggestion.description ?? suggestion.name}>
         <button
           {...commonButtonProps}
-          className={cx(
-            styles.vizBox,
-            styles.imgBox,
-            config.featureToggles.newVizSuggestions && isSelected && styles.selectedBox
-          )}
+          className={cx(styles.vizBox, styles.imgBox, isNewVizSuggestionsEnabled && isSelected && styles.selectedBox)}
         >
           <div className={styles.name}>{suggestion.name}</div>
           <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />

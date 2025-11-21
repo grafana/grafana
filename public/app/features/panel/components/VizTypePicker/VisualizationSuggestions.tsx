@@ -51,17 +51,23 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     setSelectedIndex(index);
   }, []);
 
-  if (isNewVizSuggestionsEnabled && !hasData(data)) {
-    return (
-      <div className={styles.emptyStateWrapper}>
-        <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
-        <Text element="p" textAlignment="center" color="secondary">
-          <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
-            Run a query to start seeing suggested visualizations
-          </Trans>
-        </Text>
-      </div>
-    );
+  const renderEmptyState = () => (
+    <div className={styles.emptyStateWrapper}>
+      <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
+      <Text element="p" textAlignment="center" color="secondary">
+        <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
+          Run a query to start seeing suggested visualizations
+        </Trans>
+      </Text>
+    </div>
+  );
+
+  if (isNewVizSuggestionsEnabled && (!data || !hasData(data))) {
+    return renderEmptyState();
+  }
+
+  if (!data) {
+    return null;
   }
 
   return (
@@ -98,12 +104,17 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                           size={'md'}
                           onClick={handleApplySuggestion}
                           className={styles.applySuggestionButton}
+                          aria-label={t(
+                            'panel.visualization-suggestions.apply-suggestion-aria-label',
+                            'Apply {{suggestionName}} visualization',
+                            { suggestionName: suggestion.name }
+                          )}
                         >
                           {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
                         </Button>
                       )}
                       <VisualizationSuggestionCard
-                        data={data!}
+                        data={data}
                         suggestion={suggestion}
                         onChange={onChange}
                         width={previewWidth - 1}
