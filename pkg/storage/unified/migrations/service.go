@@ -118,7 +118,7 @@ func registerResourceMigrations(mg *sqlstoremigrator.Migrator, migrator UnifiedM
 			"folder.grafana.app/folders":       {Table: "dashboard", WhereClause: "org_id = ? and is_folder = true"},
 			"dashboard.grafana.app/dashboards": {Table: "dashboard", WhereClause: "org_id = ? and is_folder = false"},
 		}),
-		client, // Pass the resource client for validation
+		client,
 	)
 	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
 }
