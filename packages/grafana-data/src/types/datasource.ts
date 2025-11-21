@@ -646,7 +646,7 @@ export interface MetricFindValue {
 }
 
 export interface DataSourceGetDrilldownsApplicabilityOptions<TQuery extends DataQuery = DataQuery> {
-  filters: AdHocVariableFilter[];
+  filters?: AdHocVariableFilter[];
   groupByKeys?: string[];
   timeRange?: TimeRange;
   queries?: TQuery[];
