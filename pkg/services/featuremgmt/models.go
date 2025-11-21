@@ -25,6 +25,7 @@ type FeatureToggles interface {
 	// Deprecated: FeatureToggles.IsEnabledGlobally is deprecated and will be removed in a future release.
 	// Toggles that must be reliably evaluated at the service startup should be
 	// changed to settings (see setting.StartupSettings), and/or removed entirely.
+	// For app registration please use `grafana-apiserver.runtime_config` in settings.ini
 	IsEnabledGlobally(flag string) bool
 
 	// Get the enabled flags -- this *may* also include disabled flags (with value false)
