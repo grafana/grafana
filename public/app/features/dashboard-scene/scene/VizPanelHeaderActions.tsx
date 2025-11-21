@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Unsubscribable } from 'rxjs';
 
 import {
   GroupByVariable,
@@ -13,7 +14,7 @@ import { DataSourceRef } from '@grafana/schema';
 
 import { verifyDrilldownApplicability } from '../utils/drilldownUtils';
 
-import { PanelGroupByAction } from './PanelGroupByAction';
+import { PanelGroupByAction } from './panel-actions/PanelGroupByAction/PanelGroupByAction';
 
 export interface VizPanelHeaderActionsState extends SceneObjectState {
   hideGroupByAction?: boolean;
@@ -24,6 +25,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
   static Component = VizPanelHeaderActionsRenderer;
 
   private _groupByVar?: GroupByVariable;
+  private _groupBySub?: Unsubscribable;
   private _queryRunnerDatasource?: DataSourceRef;
 
   constructor(state: Partial<VizPanelHeaderActionsState>) {
@@ -36,13 +38,18 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
   }
 
   private _onActivate = () => {
-    if (!this.parent || !(this.parent instanceof VizPanel)) {
+    const panel = this.parent;
+    if (!panel || !(panel instanceof VizPanel)) {
       throw new Error('VizPanelHeaderActions must be a child of a VizPanel');
     }
 
     if (!this.state.hideGroupByAction) {
-      this.subscribeToGroupByChanges();
+      this.subscribeToGroupByChanges(panel);
     }
+
+    return () => {
+      this._groupBySub?.unsubscribe();
+    };
   };
 
   private setAplicabilitySupport(groupByDs?: DataSourceRef | null, groupByApplicability?: boolean) {
@@ -56,7 +63,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
     });
   }
 
-  private subscribeToGroupByChanges() {
+  private subscribeToGroupByChanges(panel: VizPanel) {
     const vars = sceneGraph.getVariables(this);
     const queryRunner = this.getQueryRunner();
 
@@ -64,11 +71,22 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
     this._queryRunnerDatasource = queryRunner?.state.datasource;
 
     this.setAplicabilitySupport();
+    panel.setState({ showMenuAlways: !this.state.hideGroupByAction && this.state.supportsApplicability });
 
     // check when var set updates and search for groupBy var
     this._subs.add(
       vars.subscribeToState((n) => {
         this._groupByVar = n.variables.find((variable) => variable instanceof GroupByVariable);
+
+        if (this._groupByVar) {
+          this._groupBySub?.unsubscribe();
+          this._groupBySub = this._groupByVar?.subscribeToState((n, p) => {
+            if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
+              this.setAplicabilitySupport(n.datasource, n.applicabilityEnabled);
+              panel.setState({ showMenuAlways: !this.state.hideGroupByAction && this.state.supportsApplicability });
+            }
+          });
+        }
       })
     );
 
@@ -79,32 +97,20 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
           this._queryRunnerDatasource = n.datasource;
 
           this.setAplicabilitySupport();
+          panel.setState({ showMenuAlways: !this.state.hideGroupByAction && this.state.supportsApplicability });
         }
       })
     );
+
+    this._groupBySub = this._groupByVar?.subscribeToState((n, p) => {
+      if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
+        this.setAplicabilitySupport(n.datasource, n.applicabilityEnabled);
+        panel.setState({ showMenuAlways: !this.state.hideGroupByAction && this.state.supportsApplicability });
+      }
+    });
 
     // add groupBy subscription to update the action
-    this._subs.add(
-      this._groupByVar?.subscribeToState((n, p) => {
-        if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
-          this.setAplicabilitySupport(n.datasource, n.applicabilityEnabled);
-        }
-      })
-    );
-  }
-
-  public updatePanelShowAlwaysMenu(showMenuAlways: boolean) {
-    const panel = this.parent;
-
-    if (panel instanceof VizPanel && panel.state.showMenuAlways !== showMenuAlways) {
-      panel.setState({ showMenuAlways });
-    }
-
-    return () => {
-      if (panel instanceof VizPanel && panel.state.showMenuAlways) {
-        panel.setState({ showMenuAlways: false });
-      }
-    };
+    this._subs.add(this._groupBySub);
   }
 
   public getQueryRunner() {
@@ -130,6 +136,8 @@ export function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<Viz
     () => variables.state.variables.find((variable) => variable instanceof GroupByVariable),
     [variables]
   );
+
+  console.log(hideGroupByAction, supportsApplicability);
 
   return (
     <>
