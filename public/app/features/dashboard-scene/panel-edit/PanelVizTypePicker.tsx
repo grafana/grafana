@@ -108,13 +108,7 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
       <ScrollContainer>
         <TabContent>
           {listMode === VisualizationSelectPaneTab.Suggestions && (
-            <VisualizationSuggestions
-              onChange={onChange}
-              trackSearch={trackSearch}
-              searchQuery={searchQuery}
-              panel={panelModel}
-              data={data}
-            />
+            <VisualizationSuggestions onChange={onChange} panel={panelModel} data={data} />
           )}
           {listMode === VisualizationSelectPaneTab.Visualizations && (
             <>

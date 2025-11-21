@@ -4,6 +4,7 @@ import { CSSProperties } from 'react';
 
 import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelRenderer } from '../PanelRenderer';
@@ -15,31 +16,57 @@ export interface Props {
   width: number;
   suggestion: PanelPluginVisualizationSuggestion;
   onChange: (details: VizTypeChangeDetails) => void;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
-export function VisualizationSuggestionCard({ data, suggestion, onChange, width }: Props) {
+export function VisualizationSuggestionCard({
+  data,
+  suggestion,
+  onChange,
+  width,
+  isSelected = false,
+  onSelect,
+}: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: styles.vizBox,
+    className: cx(styles.vizBox, config.featureToggles.newVizSuggestions && isSelected && styles.selectedBox),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
     onClick: () => {
-      onChange({
-        pluginId: suggestion.pluginId,
-        options: suggestion.options,
-        fieldConfig: suggestion.fieldConfig,
-      });
+      if (config.featureToggles.newVizSuggestions && onSelect) {
+        onSelect();
+        onChange({
+          pluginId: suggestion.pluginId,
+          options: suggestion.options,
+          fieldConfig: suggestion.fieldConfig,
+          withModKey: true, // stay in suggestions view
+        });
+      } else {
+        onChange({
+          pluginId: suggestion.pluginId,
+          options: suggestion.options,
+          fieldConfig: suggestion.fieldConfig,
+        });
+      }
     },
   };
 
   if (cardOptions.imgSrc) {
     return (
       <Tooltip content={suggestion.description ?? suggestion.name}>
-        <button {...commonButtonProps} className={cx(styles.vizBox, styles.imgBox)}>
+        <button
+          {...commonButtonProps}
+          className={cx(
+            styles.vizBox,
+            styles.imgBox,
+            config.featureToggles.newVizSuggestions && isSelected && styles.selectedBox
+          )}
+        >
           <div className={styles.name}>{suggestion.name}</div>
           <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
         </button>
@@ -99,6 +126,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         background: theme.colors.background.secondary,
       },
+    }),
+    selectedBox: css({
+      border: `2px solid ${theme.colors.primary.main}`,
+      boxShadow: `0 0 0 1px ${theme.colors.primary.main}`,
     }),
     imgBox: css({
       display: 'flex',

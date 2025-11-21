@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, PanelData, PanelModel, PanelPluginVisualizationSuggestion } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { GrafanaTheme2, PanelData, PanelModel } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Icon, Text, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 
@@ -14,27 +14,45 @@ import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 import { VizTypeChangeDetails } from './types';
 
 export interface Props {
-  searchQuery: string;
   onChange: (options: VizTypeChangeDetails) => void;
   data?: PanelData;
   panel?: PanelModel;
-  trackSearch?: (q: string, count: number) => void;
 }
 
-export function VisualizationSuggestions({ searchQuery, onChange, data, panel, trackSearch }: Props) {
+export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
   const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
-  const filteredSuggestions = useMemo(() => {
-    const result = filterSuggestionsBySearch(searchQuery, suggestions);
-    if (trackSearch) {
-      trackSearch(searchQuery, result.length);
-    }
-    return result;
-  }, [searchQuery, suggestions, trackSearch]);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const filteredSuggestions = useMemo(() => suggestions || [], [suggestions]);
 
   const hasData = data?.series && data.series.length > 0 && !data.series.every((frame) => frame.length === 0);
 
-  if (config.featureToggles.newVizSuggestions && !hasData && !searchQuery) {
+  // auto-select first suggestion when nothing is selected
+  useEffect(() => {
+    if (
+      config.featureToggles.newVizSuggestions &&
+      filteredSuggestions &&
+      filteredSuggestions.length > 0 &&
+      selectedIndex === null
+    ) {
+      setSelectedIndex(0);
+    }
+  }, [filteredSuggestions, selectedIndex]);
+
+  const handleApplySuggestion = () => {
+    if (selectedIndex !== null && filteredSuggestions[selectedIndex]) {
+      const selectedSuggestion = filteredSuggestions[selectedIndex];
+      onChange({
+        pluginId: selectedSuggestion.pluginId,
+        options: selectedSuggestion.options,
+        fieldConfig: selectedSuggestion.fieldConfig,
+        withModKey: false,
+      });
+    }
+  };
+
+  if (config.featureToggles.newVizSuggestions && !hasData) {
     return (
       <div className={styles.emptyStateWrapper}>
         <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
@@ -70,21 +88,27 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel, t
               </div>
               <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth}px)` }}>
                 {filteredSuggestions.map((suggestion, index) => (
-                  <VisualizationSuggestionCard
-                    key={index}
-                    data={data!}
-                    suggestion={suggestion}
-                    onChange={onChange}
-                    width={previewWidth - 1}
-                  />
-                ))}
-                {searchQuery && filteredSuggestions.length === 0 && (
-                  <div className={styles.infoText}>
-                    <Trans i18nKey="panel.visualization-suggestions.no-results-matched-your-query">
-                      No results matched your query
-                    </Trans>
+                  <div key={index} className={styles.cardContainer}>
+                    {config.featureToggles.newVizSuggestions && selectedIndex === index && (
+                      <Button
+                        variant="primary"
+                        size={'md'}
+                        onClick={handleApplySuggestion}
+                        className={styles.applySuggestionButton}
+                      >
+                        {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
+                      </Button>
+                    )}
+                    <VisualizationSuggestionCard
+                      data={data!}
+                      suggestion={suggestion}
+                      onChange={onChange}
+                      width={previewWidth - 1}
+                      isSelected={config.featureToggles.newVizSuggestions ? selectedIndex === index : false}
+                      onSelect={config.featureToggles.newVizSuggestions ? () => setSelectedIndex(index) : undefined}
+                    />
                   </div>
-                )}
+                ))}
               </div>
             </div>
           );
@@ -92,19 +116,6 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel, t
       </AutoSizer>
     </div>
   );
-}
-
-function filterSuggestionsBySearch(
-  searchQuery: string,
-  suggestions?: PanelPluginVisualizationSuggestion[]
-): PanelPluginVisualizationSuggestion[] {
-  if (!searchQuery || !suggestions) {
-    return suggestions || [];
-  }
-
-  const regex = new RegExp(searchQuery, 'i');
-
-  return suggestions.filter((s) => regex.test(s.name) || regex.test(s.pluginId));
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -144,6 +155,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     emptyStateIcon: css({
       color: theme.colors.text.secondary,
       marginBottom: theme.spacing(2),
+    }),
+    cardContainer: css({
+      position: 'relative',
+    }),
+    applySuggestionButton: css({
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      zIndex: 10,
+      padding: '0 16px',
     }),
   };
 };
