@@ -2545,7 +2545,8 @@
       "metadata": {
         "name": "logsInfiniteScrolling",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-11-09T10:54:03Z"
+        "creationTimestamp": "2023-11-09T10:54:03Z",
+        "deletionTimestamp": "2025-11-07T10:59:01Z"
       },
       "spec": {
         "description": "Enables infinite scrolling for the Logs panel in Explore and Dashboards",

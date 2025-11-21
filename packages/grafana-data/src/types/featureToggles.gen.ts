@@ -381,11 +381,6 @@ export interface FeatureToggles {
   */
   timeComparison?: boolean;
   /**
-  * Enables infinite scrolling for the Logs panel in Explore and Dashboards
-  * @default true
-  */
-  logsInfiniteScrolling?: boolean;
-  /**
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
