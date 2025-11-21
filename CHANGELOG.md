@@ -53,7 +53,6 @@
 - **Dynamic Dashboards:** Expand dashboards_init_dashboard_completed tracking info [#111102](https://github.com/grafana/grafana/pull/111102), [@idastambuk](https://github.com/idastambuk)
 - **ErrorBoundary:** Report specific boundary type to Faro [#112071](https://github.com/grafana/grafana/pull/112071), [@tskarhed](https://github.com/tskarhed)
 - **Explore:** Use compact mode only when targeting Tempo [#113037](https://github.com/grafana/grafana/pull/113037), [@ifrost](https://github.com/ifrost)
-- **Explore:** Fix issue where tags were double escaped before passing to Tempo resulting in errors. [#114275](https://github.com/grafana/grafana/pull/114275), [@joe-elliott](https://github.com/joe-elliott)
 - **FeatureToggles:** Remove deprecated experimental apiserver [#111617](https://github.com/grafana/grafana/pull/111617), [@ryantxu](https://github.com/ryantxu)
 - **Fields Selector:** Add component and integrate with Logs and Logs table visualization [#112534](https://github.com/grafana/grafana/pull/112534), [@matyax](https://github.com/matyax)
 - **Flame Graph:** Anchor exact match when clicking a table symbol in search [#111101](https://github.com/grafana/grafana/pull/111101), [@samarthbagga-meesho](https://github.com/samarthbagga-meesho)
