@@ -672,11 +672,6 @@
       "count": 3
     }
   },
-  "packages/grafana-ui/src/components/JSONFormatter/JSONFormatter.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
