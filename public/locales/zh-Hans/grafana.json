@@ -2586,8 +2586,7 @@
         "firing": "触发中",
         "normal": "正常",
         "pending": "待处理",
-        "recovering": "恢复中",
-        "unknown": "未知"
+        "recovering": "恢复中"
       },
       "type": {
         "alert": "警报规则",
@@ -2611,12 +2610,14 @@
         "placeholder-search-input": "按名称搜索或输入筛选条件查询……"
       },
       "grafana-folder": "Grafana 文件夹",
+      "group-autocomplete-unavailable": "",
       "health": "健康",
       "label": {
         "hide": "隐藏",
         "show": "显示"
       },
       "manage-alerts": "在这些数据源中，您可以选择通过警报用户界面管理警报，以便能够在 Grafana 用户界面以及在其配置所在的数据源中管理这些警报规则。",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "所有数据源",
       "placeholder-contact-point": "选择联络点",
       "placeholder-data-sources": "选择数据源",
@@ -3528,6 +3529,7 @@
       "delete-modal-invalid-title": "无法删除文件夹",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "此操作将删除以下内容：",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "删除",
       "delete-provisioned-folder": "删除已预置的文件夹",
       "deleting": "正在删除...",
@@ -3536,6 +3538,7 @@
       "move-modal-alert": "移动此项目可能会改变其权限。",
       "move-modal-field-label": "文件夹名称",
       "move-modal-text": "此操作将移动以下内容：",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "移动",
       "move-provisioned-folder": "",
       "moving": "正在移动...",
@@ -3618,11 +3621,11 @@
       "title-folder": "此文件夹尚无任何数据面板"
     },
     "folder-actions-button": {
-      "delete": "删除",
+      "delete": "",
       "delete-folder-error": "删除文件夹时出错。请稍后重试。",
       "folder-actions": "文件夹操作",
       "manage-permissions": "管理权限",
-      "move": "移动"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "选择文件夹：{{ label }} 当前已选择",
@@ -7766,6 +7769,14 @@
     "name-show-threshold-labels": "显示阈值标签",
     "name-show-threshold-markers": "显示阈值标记",
     "placeholder-neutral": "自动",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8542,7 +8553,13 @@
       "saving": "正在保存<1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "线性阈值",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "记录基础"
     },
     "builder": {
@@ -8948,6 +8965,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "使用右侧 Y 轴"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -8966,6 +8988,13 @@
       "copy": "复制到剪贴板",
       "csv-counts": "",
       "csv-placeholder": "在此处输入 CSV...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "筛选值",
       "filter-popup-apply": "好",
       "filter-popup-aria-label-match-case": "区分大小写",
@@ -9232,6 +9261,7 @@
       "toggle-panel-edit": "切换面板编辑视图",
       "toggle-panel-fullscreen": "切换面板全屏视图",
       "toggle-panel-legend": "切换面板图例",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "缩放时间范围"
     },
     "title": "快捷键"
@@ -12351,8 +12381,10 @@
       "cancel": "取消",
       "error-title": "",
       "input": {
-        "placeholder": "选择范围…",
-        "removeAll": "移除所有范围"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "移除所有范围",
+        "tooltip": ""
       },
       "title": "选择范围"
     },
@@ -12463,11 +12495,14 @@
       "copy-clipboard": "复制到剪贴板",
       "copy-to-clipboard-and-close": "复制到剪贴板并关闭",
       "description-name-to-easily-identify-the-token": "用于轻松识别令牌的名称",
+      "description-no-expiration-disabled": "",
       "description-token": "现在就复制令牌，因为您将无法再次看到它。丢失令牌后需要创建一个新令牌。",
       "generate-token": "生成令牌",
       "label-display-name": "显示名称",
       "label-expiration": "到期",
       "label-expiration-date": "到期日期",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "令牌"
     },
     "get-actions-cell": {

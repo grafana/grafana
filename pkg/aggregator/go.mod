@@ -4,7 +4,7 @@ go 1.25.3
 
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
-	github.com/grafana/grafana-plugin-sdk-go v0.282.0
+	github.com/grafana/grafana-plugin-sdk-go v0.283.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
@@ -47,7 +47,6 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/cel-go v0.26.1 // indirect
@@ -90,7 +89,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.2 // indirect
+	github.com/prometheus/common v0.67.3 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/cobra v1.10.1 // indirect

@@ -2598,8 +2598,7 @@
         "firing": "Déclenché",
         "normal": "Normal",
         "pending": "En attente",
-        "recovering": "Récupération en cours",
-        "unknown": "Inconnu"
+        "recovering": "Récupération en cours"
       },
       "type": {
         "alert": "Règle d’alerte",
@@ -2623,12 +2622,14 @@
         "placeholder-search-input": "Rechercher par nom ou saisir une requête de filtre..."
       },
       "grafana-folder": "Dossier Grafana",
+      "group-autocomplete-unavailable": "",
       "health": "Santé",
       "label": {
         "hide": "Masquer",
         "show": "Afficher"
       },
       "manage-alerts": "Dans ces sources de données, vous pouvez sélectionner Gérer les alertes via l’interface utilisateur d’alerte pour pouvoir gérer ces règles d’alerte dans l’interface utilisateur Grafana, ainsi que dans la source de données où elles ont été configurées.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Toutes les sources de données",
       "placeholder-contact-point": "Sélectionner un point de contact",
       "placeholder-data-sources": "Sélectionner des sources de données",
@@ -3540,6 +3541,7 @@
       "delete-modal-invalid-title": "Impossible de supprimer le dossier",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Cette action supprimera le contenu suivant :",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Supprimer",
       "delete-provisioned-folder": "Supprimer le dossier provisionné",
       "deleting": "Suppression…",
@@ -3548,6 +3550,7 @@
       "move-modal-alert": "Le déplacement de cet élément peut modifier ses permissions.",
       "move-modal-field-label": "Nom du dossier",
       "move-modal-text": "Cette action déplacera le contenu suivant :",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Déplacer",
       "move-provisioned-folder": "",
       "moving": "Déplacement...",
@@ -3635,11 +3638,11 @@
       "title-folder": "Ce dossier ne contient pas encore de tableaux de bord"
     },
     "folder-actions-button": {
-      "delete": "Supprimer",
+      "delete": "",
       "delete-folder-error": "Erreur lors de la suppression du dossier. Veuillez réessayer plus tard.",
       "folder-actions": "Actions sur le dossier",
       "manage-permissions": "Gérer les autorisations",
-      "move": "Déplacer"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Sélectionnez un dossier : {{ label }} est sélectionné actuellement",
@@ -7792,6 +7795,14 @@
     "name-show-threshold-labels": "Afficher les étiquettes de seuil",
     "name-show-threshold-markers": "Afficher les marqueurs de seuil",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8578,7 +8589,13 @@
       "saving": "Enregistrement en cours <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Seuil linéaire",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Base du journal"
     },
     "builder": {
@@ -8984,6 +9001,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Utiliser l'axe y droit"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9002,6 +9024,13 @@
       "copy": "Copier dans le presse-papier",
       "csv-counts": "",
       "csv-placeholder": "Saisir le CSV ici…",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filtrer les valeurs",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Respecter la casse",
@@ -9268,6 +9297,7 @@
       "toggle-panel-edit": "Activer/Désactiver la vue Édition du panneau",
       "toggle-panel-fullscreen": "Activer/Désactiver la vue Plein écran",
       "toggle-panel-legend": "Activer/désactiver la légende du panneau",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Dézoomer la plage de temps"
     },
     "title": "Raccourcis"
@@ -12406,8 +12436,10 @@
       "cancel": "Annuler",
       "error-title": "",
       "input": {
-        "placeholder": "Sélectionner les portées...",
-        "removeAll": "Supprimer toutes les portées"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Supprimer toutes les portées",
+        "tooltip": ""
       },
       "title": "Sélectionner les portées"
     },
@@ -12518,11 +12550,14 @@
       "copy-clipboard": "Copier dans le presse-papiers",
       "copy-to-clipboard-and-close": "Copier dans le presse-papiers et fermer",
       "description-name-to-easily-identify-the-token": "Nom pour identifier facilement le jeton",
+      "description-no-expiration-disabled": "",
       "description-token": "Copiez le jeton maintenant, car vous ne pourrez plus le revoir. Si vous perdez un jeton, vous devrez 'en créer un nouveau.",
       "generate-token": "Générer un jeton",
       "label-display-name": "Pseudo",
       "label-expiration": "Expiration",
       "label-expiration-date": "Date d’expiration",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Jeton"
     },
     "get-actions-cell": {
