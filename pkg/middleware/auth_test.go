@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -31,6 +32,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+var openfeatureTestMutex sync.Mutex
 
 func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr error) *contexthandler.ContextHandler {
 	return contexthandler.ProvideService(setting.NewCfg(), &authntest.FakeService{
@@ -463,12 +466,11 @@ func TestPageIsFeatureToggleEnabled(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			ctx := context.Background()
 
-			testProvider := setupTestProvider(t, tt.flags)
+			setupTestProvider(t, tt.flags)
 
 			result := PageIsFeatureToggleEnabled(ctx, tt.path)
 
 			assert.Equal(t, tt.expectedResult, result)
-			testProvider.Cleanup()
 		})
 	}
 }
@@ -490,8 +492,12 @@ func contextProvider(modifiers ...func(c *contextmodel.ReqContext)) web.Handler 
 }
 
 // setupTestProvider creates a test OpenFeature provider with the given flags.
+// Uses a global lock to prevent concurrent provider changes across tests.
 func setupTestProvider(t *testing.T, flags map[string]bool) oftesting.TestProvider {
 	t.Helper()
+
+	// Lock to prevent concurrent provider changes
+	openfeatureTestMutex.Lock()
 
 	testProvider := oftesting.NewTestProvider()
 	flagsMap := map[string]memprovider.InMemoryFlag{}
@@ -509,6 +515,13 @@ func setupTestProvider(t *testing.T, flags map[string]bool) oftesting.TestProvid
 
 	err := openfeature.SetProvider(testProvider)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		testProvider.Cleanup()
+		_ = openfeature.SetProvider(openfeature.NoopProvider{})
+		// Unlock after cleanup to allow other tests to run
+		openfeatureTestMutex.Unlock()
+	})
 
 	return testProvider
 }
