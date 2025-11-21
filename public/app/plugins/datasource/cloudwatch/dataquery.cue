@@ -155,7 +155,7 @@ composableKinds: DataQuery: {
 
 					// Whether a query is a Metrics, Logs, or Annotations query
 					queryMode: #CloudWatchQueryMode
-					// Whether a query is a Logs Insights or Logs Anomalies query
+					// Whether a query is a Logs Insights or Log Anomalies query
 					logsMode?: #LogsMode
 					id:        string
 					// AWS region to query for the logs
@@ -173,7 +173,7 @@ composableKinds: DataQuery: {
 					queryLanguage?: #LogsQueryLanguage
 				} @cuetsy(kind="interface")
 
-				// Shape of a Cloudwatch Logs Anomalies query
+				// Shape of a Cloudwatch Log Anomalies query
 				#CloudWatchLogsAnomaliesQuery: {
 					common.DataQuery
 					id:        string
@@ -181,7 +181,7 @@ composableKinds: DataQuery: {
 					region: string
 					// Whether a query is a Metrics, Logs or Annotations query
 					queryMode?: #CloudWatchQueryMode
-					// Whether a query is a Logs Insights or Logs Anomalies query
+					// Whether a query is a Logs Insights or Log Anomalies query
 					logsMode?: #LogsMode
 					// Filter to return only anomalies that are 'SUPPRESSED', 'UNSUPPRESSED', or 'ALL' (default)
 					suppressionState?: string

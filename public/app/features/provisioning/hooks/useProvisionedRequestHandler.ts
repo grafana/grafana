@@ -90,6 +90,11 @@ export function useProvisionedRequestHandler<T>({
       workflow,
     };
 
+    // Reset handler guard when a new request starts loading
+    if (request.isLoading) {
+      hasHandled.current = false;
+    }
+
     if (request.isError) {
       hasHandled.current = true;
       handlers.onError?.(request.error, info);

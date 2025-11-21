@@ -1757,7 +1757,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/Receiver"
+                "$ref": "#/components/schemas/ReceiverStatus"
               },
               "type": "array"
             }
@@ -2262,6 +2262,9 @@
             "type": "integer"
           }
         },
+        "required": [
+          "userId"
+        ],
         "type": "object"
       },
       "AddTeamRoleCommand": {
@@ -3239,6 +3242,10 @@
           },
           "name": {
             "description": "Name of annotation.",
+            "type": "string"
+          },
+          "placement": {
+            "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
             "type": "string"
           },
           "target": {
@@ -4456,6 +4463,9 @@
             "type": "string"
           }
         },
+        "required": [
+          "name"
+        ],
         "type": "object"
       },
       "DashboardACLInfoDTO": {
@@ -6020,6 +6030,12 @@
             },
             "type": "array"
           },
+          "msteamsv2_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsV2Config"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -6830,6 +6846,32 @@
         "title": "InspectType is a type for the Inspect property of a Notice.",
         "type": "integer"
       },
+      "IntegrationStatus": {
+        "properties": {
+          "lastNotifyAttempt": {
+            "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastNotifyAttemptDuration": {
+            "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+            "type": "string"
+          },
+          "lastNotifyAttemptError": {
+            "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the integration.",
+            "type": "string"
+          },
+          "sendResolved": {
+            "description": "Whether the integration is configured to send resolved notifications.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "InternalDataLink": {
         "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
         "properties": {
@@ -7211,6 +7253,29 @@
           },
           "summary": {
             "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "webhook_url": {
+            "$ref": "#/components/schemas/SecretURL"
+          },
+          "webhook_url_file": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MSTeamsV2Config": {
+        "properties": {
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "send_resolved": {
+            "type": "boolean"
           },
           "text": {
             "type": "string"
@@ -8154,6 +8219,7 @@
         "type": "object"
       },
       "Permission": {
+        "description": "Permission is the model for access control permissions",
         "properties": {
           "action": {
             "type": "string"
@@ -8170,7 +8236,6 @@
             "type": "string"
           }
         },
-        "title": "Permission is the model for access control permissions.",
         "type": "object"
       },
       "PermissionDenied": {
@@ -8446,6 +8511,12 @@
           "msteams_configs": {
             "items": {
               "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
+          "msteamsv2_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsV2Config"
             },
             "type": "array"
           },
@@ -9531,6 +9602,12 @@
             },
             "type": "array"
           },
+          "msteamsv2_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsV2Config"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -9615,6 +9692,26 @@
           }
         },
         "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+        "type": "object"
+      },
+      "ReceiverStatus": {
+        "properties": {
+          "active": {
+            "description": "Whether the receiver is used in a route or not.",
+            "type": "boolean"
+          },
+          "integrations": {
+            "description": "Integrations configured for this receiver.",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationStatus"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the receiver.",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "Record": {
@@ -10111,6 +10208,16 @@
             "type": "integer"
           }
         },
+        "required": [
+          "version",
+          "uid",
+          "name",
+          "displayName",
+          "description",
+          "group",
+          "updated",
+          "created"
+        ],
         "type": "object"
       },
       "RolesSearchQuery": {
@@ -10951,6 +11058,20 @@
         },
         "type": "object"
       },
+      "SetTeamRolesCommand": {
+        "properties": {
+          "includeHidden": {
+            "type": "boolean"
+          },
+          "roleUids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "SetUserRolesCommand": {
         "properties": {
           "global": {
@@ -11403,6 +11524,7 @@
             "type": "string"
           },
           "id": {
+            "description": "@deprecated Use UID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -11427,6 +11549,14 @@
             "type": "string"
           }
         },
+        "required": [
+          "id",
+          "uid",
+          "orgId",
+          "name",
+          "isProvisioned",
+          "memberCount"
+        ],
         "type": "object"
       },
       "TeamGroupDTO": {
@@ -14203,6 +14333,17 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTeamRolesCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/okResponse"
@@ -17784,7 +17925,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.",
+        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary or suggestedDashboards feature flags and is subject to change.",
         "tags": [
           "dashboards"
         ]
@@ -24508,6 +24649,21 @@
             "description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
             "in": "query",
             "name": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accesscontrol",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
             "schema": {
               "type": "string"
             }

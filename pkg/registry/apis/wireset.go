@@ -3,6 +3,7 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -28,6 +29,7 @@ var WireSetExts = wire.NewSet(
 	wire.Bind(new(iam.CoreRoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	wire.Bind(new(iam.RoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	wire.Bind(new(iam.RoleBindingStorageBackend), new(*noopstorage.StorageBackendImpl)),
+	wire.Bind(new(iam.ExternalGroupMappingStorageBackend), new(*noopstorage.StorageBackendImpl)),
 )
 
 var provisioningExtras = wire.NewSet(
@@ -49,6 +51,7 @@ var WireSet = wire.NewSet(
 	// Secrets
 	secret.RegisterDependencies,
 	// Provisioning
+	provisioning.RegisterDependencies,
 	provisioningExtras,
 
 	// Each must be added here *and* in the ServiceSink above
@@ -61,6 +64,7 @@ var WireSet = wire.NewSet(
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	preferences.RegisterAPIService,
+	collections.RegisterAPIService,
 	userstorage.RegisterAPIService,
 	ofrep.RegisterAPIService,
 )

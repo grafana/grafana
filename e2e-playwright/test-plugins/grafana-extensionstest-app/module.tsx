@@ -78,6 +78,13 @@ export const plugin = new AppPlugin<{}>()
           return undefined;
       }
     },
+  })
+  .addLink({
+    targets: 'grafana/dynamic/nav-landing-page/nav-id-cfg/cards/v1',
+    title: 'Extensions Test App',
+    description: 'This card tests the admin page card extension point',
+    path: `/a/${pluginJson.id}/`,
+    category: 'error',
   });
 
 function isSupported(context?: PluginExtensionPanelContext): boolean {

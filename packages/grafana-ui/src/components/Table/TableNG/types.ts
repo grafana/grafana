@@ -308,7 +308,6 @@ export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRo
 export interface FromFieldsResult {
   columns: TableColumn[];
   cellRootRenderers: Record<string, CellRootRenderer>;
-  colsWithTooltip: Record<string, boolean>;
 }
 
 export interface FooterFieldState extends FieldState {

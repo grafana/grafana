@@ -191,6 +191,9 @@ type Panel struct {
 	TimeShift *string `json:"timeShift,omitempty"`
 	// Controls if the timeFrom or timeShift overrides are shown in the panel header
 	HideTimeOverride *bool `json:"hideTimeOverride,omitempty"`
+	// Compare the current time range with a previous period
+	// For example "1d" to compare current period but shifted back 1 day
+	TimeCompare *string `json:"timeCompare,omitempty"`
 	// Dynamically load the panel
 	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 	// Sets panel queries cache timeout.
@@ -965,6 +968,8 @@ type AnnotationQuery struct {
 	Type *string `json:"type,omitempty"`
 	// Set to 1 for the standard annotation query all dashboards have by default.
 	BuiltIn *float64 `json:"builtIn,omitempty"`
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	Placement *string `json:"placement,omitempty"`
 }
 
 // NewAnnotationQuery creates a new AnnotationQuery object.
@@ -974,6 +979,7 @@ func NewAnnotationQuery() *AnnotationQuery {
 		Enable:     true,
 		Hide:       (func(input bool) *bool { return &input })(false),
 		BuiltIn:    (func(input float64) *float64 { return &input })(0),
+		Placement:  (func(input string) *string { return &input })(AnnotationQueryPlacement),
 	}
 }
 
@@ -1015,6 +1021,10 @@ func NewAnnotationTarget() *AnnotationTarget {
 		Tags: []string{},
 	}
 }
+
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+const AnnotationQueryPlacement = "inControlsMenu"
 
 // A dashboard snapshot shares an interactive dashboard publicly.
 // It is a read-only version of a dashboard, and is not editable.

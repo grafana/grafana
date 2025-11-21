@@ -38,8 +38,9 @@ type FSFrontendSettings struct {
 	AnalyticsConsoleReporting bool                           `json:"analyticsConsoleReporting,omitempty"`
 	GrafanaJavascriptAgent    setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent,omitempty"`
 
-	ApplicationInsightsConnectionString string `json:"applicationInsightsConnectionString,omitempty"`
-	ApplicationInsightsEndpointUrl      string `json:"applicationInsightsEndpointUrl,omitempty"`
+	ApplicationInsightsConnectionString  string `json:"applicationInsightsConnectionString,omitempty"`
+	ApplicationInsightsEndpointUrl       string `json:"applicationInsightsEndpointUrl,omitempty"`
+	ApplicationInsightsAutoRouteTracking bool   `json:"applicationInsightsAutoRouteTracking,omitempty"`
 
 	TrustedTypesDefaultPolicyEnabled bool              `json:"trustedTypesDefaultPolicyEnabled,omitempty"`
 	CSPReportOnlyEnabled             bool              `json:"cspReportOnlyEnabled,omitempty"`
