@@ -528,6 +528,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "createAlertRuleFromPanel",
+			Description:  "Enables creating alert rules from a panel using a drawer UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "alertmanagerRemotePrimary",
 			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
 			Stage:       FeatureStageExperimental,
