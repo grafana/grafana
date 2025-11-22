@@ -1,7 +1,7 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { Dropdown, Sidebar, Stack } from '@grafana/ui';
+import { Dropdown, Sidebar } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { ShowConfirmModalEvent } from 'app/types/events';

@@ -36,34 +36,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
     return undefined;
   }, [selection]);
 
-  // const [outlineCollapsed, setOutlineCollapsed] = useLocalStorage(
-  //   'grafana.dashboard.edit-pane.outline.collapsed',
-  //   true
-  // );
-  // const [outlinePaneSize = 0.4, setOutlinePaneSize] = useLocalStorage('grafana.dashboard.edit-pane.outline.size', 0.4);
-
-  // splitter for template and payload editor
-  // const splitter = useSplitter({
-  //   direction: 'column',
-  //   handleSize: 'sm',
-  //   // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
-  //   initialSize: 1 - outlinePaneSize,
-  //   dragPosition: 'middle',
-  //   onSizeChanged: (size) => {
-  //     setOutlinePaneSize(1 - size);
-  //   },
-  // });
-
-  // if (outlineCollapsed) {
-  //   splitter.primaryProps.style.flexGrow = 1;
-  //   splitter.primaryProps.style.minHeight = 'unset';
-  //   splitter.secondaryProps.style.flexGrow = 0;
-  //   splitter.secondaryProps.style.minHeight = 'min-content';
-  // } else {
-  //   splitter.primaryProps.style.minHeight = 'unset';
-  //   splitter.secondaryProps.style.minHeight = 'unset';
-  // }
-
   return (
     <>
       {editableElement && (

@@ -222,6 +222,12 @@ export const versionedPages = {
         },
       },
       NewExportButton: {
+        container: {
+          '11.2.0': 'data-testid new export button',
+        },
+        arrowMenu: {
+          '11.2.0': 'data-testid new export button arrow menu',
+        },
         Menu: {
           container: {
             '11.2.0': 'data-testid new export button menu',
