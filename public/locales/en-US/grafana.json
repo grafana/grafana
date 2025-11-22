@@ -11037,6 +11037,7 @@
       "tooltip-delete": "Delete"
     },
     "visualization-suggestions": {
+      "apply-suggestion-aria-label": "Apply {{suggestionName}} visualization",
       "based-on-current-data": "Based on current data",
       "use-this-suggestion": "Use this suggestion"
     },
