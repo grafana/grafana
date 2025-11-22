@@ -406,45 +406,8 @@ func InstallAPIs(
 	for group, buildersForGroup := range buildersGroupMap {
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
-			if err := b.UpdateAPIGroupInfo(&g, APIGroupOptions{
-				Scheme:              scheme,
-				OptsGetter:          optsGetter,
-				DualWriteBuilder:    dualWrite,
-				MetricsRegister:     reg,
-				StorageOptsRegister: optsregister,
-				StorageOpts:         storageOpts,
-			}); err != nil {
+			if err := installAPIGroupsForBuilder(&g, group, b, apiResourceConfig, scheme, optsGetter, dualWrite, reg, optsregister, storageOpts, features); err != nil {
 				return err
-			}
-			if len(g.PrioritizedVersions) < 1 {
-				continue
-			}
-
-			// filter out api groups that are disabled in APIEnablementOptions
-			for version := range g.VersionedResourcesStorageMap {
-				gvr := schema.GroupVersionResource{
-					Group:   group,
-					Version: version,
-				}
-				if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gvr) {
-					klog.InfoS("Skipping storage for disabled resource", "gvr", gvr.String())
-					delete(g.VersionedResourcesStorageMap, version)
-				}
-			}
-
-			// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-				if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
-					for name := range resources {
-						if !allowRegisteringResourceByInfo(b.AllowedV0Alpha1Resources(), name) {
-							delete(resources, name)
-						}
-					}
-					if len(resources) == 0 {
-						delete(g.VersionedResourcesStorageMap, "v0alpha1")
-					}
-				}
 			}
 		}
 
@@ -456,6 +419,53 @@ func InstallAPIs(
 		err := server.InstallAPIGroup(&g)
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func installAPIGroupsForBuilder(g *genericapiserver.APIGroupInfo, group string, b APIGroupBuilder, apiResourceConfig *serverstorage.ResourceConfig, scheme *runtime.Scheme,
+	optsGetter generic.RESTOptionsGetter, dualWrite grafanarest.DualWriteBuilder, reg prometheus.Registerer, optsregister apistore.StorageOptionsRegister,
+	storageOpts *options.StorageOptions, features featuremgmt.FeatureToggles) error {
+	if err := b.UpdateAPIGroupInfo(g, APIGroupOptions{
+		Scheme:              scheme,
+		OptsGetter:          optsGetter,
+		DualWriteBuilder:    dualWrite,
+		MetricsRegister:     reg,
+		StorageOptsRegister: optsregister,
+		StorageOpts:         storageOpts,
+	}); err != nil {
+		return err
+	}
+	if len(g.PrioritizedVersions) < 1 {
+		return nil
+	}
+
+	// filter out api groups that are disabled in APIEnablementOptions
+	for version := range g.VersionedResourcesStorageMap {
+		gvr := schema.GroupVersionResource{
+			Group:   group,
+			Version: version,
+		}
+		if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gvr) {
+			klog.InfoS("Skipping storage for disabled resource", "gvr", gvr.String())
+			delete(g.VersionedResourcesStorageMap, version)
+		}
+	}
+
+	// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
+			for name := range resources {
+				if !allowRegisteringResourceByInfo(b.AllowedV0Alpha1Resources(), name) {
+					delete(resources, name)
+				}
+			}
+			if len(resources) == 0 {
+				delete(g.VersionedResourcesStorageMap, "v0alpha1")
+			}
 		}
 	}
 
