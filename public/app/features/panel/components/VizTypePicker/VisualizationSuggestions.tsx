@@ -7,6 +7,7 @@ import { GrafanaTheme2, PanelData, PanelModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
@@ -28,12 +29,14 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const filteredSuggestions = useMemo(() => suggestions || [], [suggestions]);
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
 
+  const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
+
   // auto-select first suggestion when nothing is selected
   useEffect(() => {
-    if (isNewVizSuggestionsEnabled && filteredSuggestions && filteredSuggestions.length > 0 && selectedIndex === null) {
+    if (isNewVizSuggestionsEnabled && filteredSuggestions.length > 0 && selectedIndex === null && isUnconfiguredPanel) {
       setSelectedIndex(0);
     }
-  }, [filteredSuggestions, isNewVizSuggestionsEnabled, selectedIndex]);
+  }, [filteredSuggestions, isNewVizSuggestionsEnabled, isUnconfiguredPanel, selectedIndex]);
 
   const handleApplySuggestion = useCallback(() => {
     if (selectedIndex !== null && filteredSuggestions[selectedIndex]) {
