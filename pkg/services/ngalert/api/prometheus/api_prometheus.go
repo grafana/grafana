@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
 	"slices"
 	"sort"
@@ -26,6 +27,9 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type RuleStoreReader interface {
@@ -53,6 +57,9 @@ type PrometheusSrv struct {
 	authz           RuleGroupAccessControlService
 	provenanceStore ProvenanceStore
 }
+
+// Package-level OpenTelemetry tracer per Grafana instrumentation conventions.
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/ngalert/api/prometheus")
 
 func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store RuleStoreReader, authz RuleGroupAccessControlService, provenanceStore ProvenanceStore) *PrometheusSrv {
 	return &PrometheusSrv{
@@ -219,6 +226,14 @@ func GetStatesFromQuery(v url.Values) (map[eval.State]struct{}, error) {
 	return states, nil
 }
 
+func MapStateSetToStrings(stateSet map[eval.State]struct{}) []string {
+	states := make([]string, 0, len(stateSet))
+	for state := range stateSet {
+		states = append(states, state.String())
+	}
+	return states
+}
+
 func GetHealthFromQuery(v url.Values) (map[string]struct{}, error) {
 	health := make(map[string]struct{})
 	for _, s := range v["health"] {
@@ -252,6 +267,13 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
 	c.Query("")
 
+	ctx, span := tracer.Start(c.Req.Context(), "api.prometheus.RouteGetRuleStatuses")
+	defer span.End()
+	// Propagate the new context so child spans can attach to it.
+	c.Req = c.Req.WithContext(ctx)
+	orgID := c.GetOrgID()
+	span.SetAttributes(attribute.Int64("org_id", orgID))
+
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -261,13 +283,14 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		},
 	}
 
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.GetOrgID(), c.SignedInUser)
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), orgID, c.SignedInUser)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
 		ruleResponse.ErrorType = apiv1.ErrServer
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
+	span.AddEvent("User visible namespaces retrieved")
 
 	allowedNamespaces := map[string]string{}
 	for namespaceUID, folder := range namespaceMap {
@@ -283,6 +306,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 			allowedNamespaces[namespaceUID] = folder.Fullpath
 		}
 	}
+	span.AddEvent("User permissions checked")
+	span.SetAttributes(attribute.Int("allowedNamespaces", len(allowedNamespaces)))
 
 	provenanceRecords, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
@@ -297,7 +322,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		srv.store,
 		RuleGroupStatusesOptions{
 			Ctx:               c.Req.Context(),
-			OrgID:             c.OrgID,
+			OrgID:             orgID,
 			Query:             c.Req.Form,
 			AllowedNamespaces: allowedNamespaces,
 		},
@@ -405,6 +430,10 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 }
 
 func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
+	ctx, span := tracer.Start(opts.Ctx, "api.prometheus.PrepareRuleGroupStatusesV2")
+	defer span.End()
+	opts.Ctx = ctx
+
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -428,9 +457,17 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
+	span.SetAttributes(
+		attribute.String("dashboard_uid", dashboardUID),
+		attribute.Int64("panel_id", panelID),
+	)
 
 	limitRulesPerGroup := getInt64WithDefault(opts.Query, "limit_rules", -1)
 	limitAlertsPerRule := getInt64WithDefault(opts.Query, "limit_alerts", -1)
+	span.SetAttributes(
+		attribute.Int64("limit_rules", limitRulesPerGroup),
+		attribute.Int64("limit_alerts", limitAlertsPerRule),
+	)
 	matchers, err := getMatchersFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
@@ -438,6 +475,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
+	span.SetAttributes(attribute.Int("matcher_count", len(matchers)))
+
 	stateFilterSet, err := GetStatesFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
@@ -445,6 +484,10 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
+	span.SetAttributes(
+		attribute.Int("state_filter_count", len(stateFilterSet)),
+		attribute.StringSlice("state_filter", MapStateSetToStrings(stateFilterSet)),
+	)
 
 	healthFilterSet, err := GetHealthFromQuery(opts.Query)
 	if err != nil {
@@ -453,11 +496,18 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
+	span.SetAttributes(
+		attribute.Int("health_filter_count", len(healthFilterSet)),
+		attribute.StringSlice("health_filter", slices.Collect(maps.Keys(healthFilterSet))),
+	)
 
 	var labelOptions []ngmodels.LabelOption
 	if !getBoolWithDefault(opts.Query, queryIncludeInternalLabels, false) {
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
+	span.SetAttributes(
+		attribute.Bool("include_internal_labels", len(labelOptions) == 0),
+	)
 
 	if len(opts.AllowedNamespaces) == 0 {
 		log.Debug("User does not have access to any namespaces")
@@ -476,40 +526,86 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		}
 	}
 
+	span.SetAttributes(
+		attribute.Bool("folder_uid_set", folderUID != ""),
+		attribute.Int("namespace_count", len(namespaceUIDs)),
+	)
+
 	ruleGroups := opts.Query["rule_group"]
+	ruleUIDs := opts.Query["rule_uid"]
+
+	span.SetAttributes(
+		attribute.Int("rule_group_count", len(ruleGroups)),
+		attribute.Int("rule_uid_count", len(ruleUIDs)),
+	)
 
 	receiverName := opts.Query.Get("receiver_name")
+	span.SetAttributes(attribute.Bool("receiver_name_set", receiverName != ""))
+
 	title := opts.Query.Get("search.rule_name")
+	span.SetAttributes(attribute.Bool("search_rule_name_set", title != ""))
+
+	searchRuleGroup := opts.Query.Get("search.rule_group")
+	span.SetAttributes(attribute.Bool("search_rule_group_set", searchRuleGroup != ""))
 
 	var ruleType ngmodels.RuleTypeFilter
 	switch ngmodels.RuleType(opts.Query.Get("rule_type")) {
 	case ngmodels.RuleTypeAlerting:
 		ruleType = ngmodels.RuleTypeFilterAlerting
+		span.SetAttributes(attribute.Bool("alerting_only", true))
 	case ngmodels.RuleTypeRecording:
 		ruleType = ngmodels.RuleTypeFilterRecording
+		span.SetAttributes(attribute.Bool("recording_only", true))
 	default:
 		ruleType = ngmodels.RuleTypeFilterAll
 	}
 
+	// Pagination limits
+	//
+	// group_limit: Maximum number of rule groups to return
+	//   - Returns exactly this many groups or fewer if not enough exist
+	//
+	// rule_limit: Maximum number of rules to return across all groups
+	//   - Returns complete groups until total rules meets or exceeds this limit
+	//   - May exceed the rule limit if needed to include the final complete group
+	//   - Example: rule_limit=15 with groups of [10, 10, 10] rules returns first 2 groups, 20 rules total
+	//
+	// When both limits are specified, whichever limit is reached first takes precedence.
 	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
+	maxRules := getInt64WithDefault(opts.Query, "rule_limit", -1)
 	nextToken := opts.Query.Get("group_next_token")
+	span.SetAttributes(
+		attribute.Int64("group_limit", maxGroups),
+		attribute.Int64("rule_limit", maxRules),
+		attribute.Bool("group_next_token_set", nextToken != ""),
+	)
 
-	if maxGroups == 0 {
+	if maxGroups == 0 || maxRules == 0 {
 		return ruleResponse
 	}
 
+	ruleNames := opts.Query["rule_name"]
+	ruleNamesSet := make(map[string]struct{}, len(ruleNames))
+	for _, rn := range ruleNames {
+		ruleNamesSet[rn] = struct{}{}
+	}
+	span.SetAttributes(attribute.Int("rule_name_count", len(ruleNamesSet)))
+
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
-			OrgID:         opts.OrgID,
-			NamespaceUIDs: namespaceUIDs,
-			DashboardUID:  dashboardUID,
-			PanelID:       panelID,
-			RuleGroups:    ruleGroups,
-			ReceiverName:  receiverName,
-			SearchTitle:   title,
+			OrgID:           opts.OrgID,
+			NamespaceUIDs:   namespaceUIDs,
+			RuleUIDs:        ruleUIDs,
+			DashboardUID:    dashboardUID,
+			PanelID:         panelID,
+			RuleGroups:      ruleGroups,
+			ReceiverName:    receiverName,
+			SearchTitle:     title,
+			SearchRuleGroup: searchRuleGroup,
 		},
 		RuleType:      ruleType,
 		Limit:         maxGroups,
+		RuleLimit:     maxRules,
 		ContinueToken: nextToken,
 	}
 	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
@@ -519,12 +615,11 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ruleResponse.ErrorType = apiv1.ErrServer
 		return ruleResponse
 	}
-
-	ruleNames := opts.Query["rule_name"]
-	ruleNamesSet := make(map[string]struct{}, len(ruleNames))
-	for _, rn := range ruleNames {
-		ruleNamesSet[rn] = struct{}{}
-	}
+	span.SetAttributes(
+		attribute.Int("store_rule_list_len", len(ruleList)),
+		attribute.Bool("store_continue_token_set", continueToken != ""),
+	)
+	span.AddEvent("Alert rules retrieved from store")
 
 	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
 	rulesTotals := make(map[string]int64, len(groupedRules))
@@ -555,7 +650,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	ruleResponse.Data.NextToken = continueToken
 
 	// Only return Totals if there is no pagination
-	if maxGroups == -1 {
+	if maxGroups == -1 && maxRules == -1 {
 		ruleResponse.Data.Totals = rulesTotals
 	}
 
@@ -635,18 +730,22 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	}
 
 	ruleGroups := opts.Query["rule_group"]
+	ruleUIDs := opts.Query["rule_uid"]
 
 	receiverName := opts.Query.Get("receiver_name")
 	title := opts.Query.Get("search.rule_name")
+	searchRuleGroup := opts.Query.Get("search.rule_group")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:         opts.OrgID,
-		NamespaceUIDs: namespaceUIDs,
-		DashboardUID:  dashboardUID,
-		PanelID:       panelID,
-		RuleGroups:    ruleGroups,
-		ReceiverName:  receiverName,
-		SearchTitle:   title,
+		OrgID:           opts.OrgID,
+		NamespaceUIDs:   namespaceUIDs,
+		RuleUIDs:        ruleUIDs,
+		DashboardUID:    dashboardUID,
+		PanelID:         panelID,
+		RuleGroups:      ruleGroups,
+		ReceiverName:    receiverName,
+		SearchTitle:     title,
+		SearchRuleGroup: searchRuleGroup,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {

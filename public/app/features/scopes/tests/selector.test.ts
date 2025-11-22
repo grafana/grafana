@@ -15,6 +15,7 @@ import {
   expandResultApplications,
   selectRecentScope,
   clearSelector,
+  hoverSelector,
 } from './utils/actions';
 import {
   expectRecentScope,
@@ -121,7 +122,8 @@ describe('Selector', () => {
       await selectResultApplicationsMimir();
       await applyScopes();
 
-      // recent scopes only show on top level, so we need to make sure the scopes tree is not exapnded.
+      // recent scopes only show on top level, so we need to make sure the scopes tree is not expanded.
+      await hoverSelector();
       await clearSelector();
 
       await openSelector();

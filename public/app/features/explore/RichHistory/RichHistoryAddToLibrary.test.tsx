@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { QueryLibraryContextProviderMock } from '../QueryLibrary/mocks';
 
