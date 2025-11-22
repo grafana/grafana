@@ -9,6 +9,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
 
 import { DashboardEditPane } from './DashboardEditPane';
+import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 
@@ -92,20 +93,25 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
             <Sidebar.Button
               icon="cog"
               onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
-              title={t('dashboard.sidebar.dashboard-options', 'Options')}
-              tooltip={t('dashboard.sidebar.dashboard-options-tooltip', 'Dashboard options')}
+              title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
+              tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               active={selectedObject === dashboard ? true : false}
+            />
+            <Sidebar.Button
+              tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
+              title={t('dashboard.sidebar.edit-schema.title', 'Code')}
+              icon="brackets-curly"
+              onClick={() => dashboard.openV2SchemaEditor()}
             />
             <Sidebar.Divider />
           </>
         )}
-
-        <Sidebar.Button icon="download-alt" title={t('dashboard.sidebar.export', 'Export')} />
+        <ShareExportDashboardButton dashboard={dashboard} />
         <Sidebar.Button
           icon="list-ui-alt"
           onClick={() => editPane.openPane('outline')}
-          title={t('dashboard.sidebar.outline', 'Outline')}
-          tooltip={t('dashboard.sidebar.outline-tooltip', 'Content outline')}
+          title={t('dashboard.sidebar.outline.title', 'Outline')}
+          tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
           active={openPane === 'outline'}
         ></Sidebar.Button>
       </Sidebar.Toolbar>

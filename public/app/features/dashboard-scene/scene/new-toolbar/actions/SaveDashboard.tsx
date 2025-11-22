@@ -6,13 +6,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
-  const { meta, isDirty, uid, editview } = dashboard.state;
+  const { meta, isDirty, uid, editview, editPanel } = dashboard.state;
 
   const isNew = !Boolean(uid || dashboard.isManaged());
   const isManaged = dashboard.isManaged();
-  const isEditView = Boolean(editview);
   // In dashboard settings we still use the nav toolbar for a short while
-  const buttonSize = isEditView ? 'sm' : 'md';
+  const buttonSize = Boolean(editview) || editPanel ? 'sm' : 'md';
 
   // if we only can save
   if (isNew) {
