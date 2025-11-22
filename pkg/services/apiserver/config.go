@@ -44,8 +44,8 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	runtimeConfigSplit := strings.Split(runtimeConfig, ",")
 
 	// explicitly set the runtime config for features.grafana.app
-	featureConfig := fmt.Sprintf("features.grafana.app/v0alpha1=%v", cfg.OpenFeature.APIEnabled)
-	runtimeConfigSplit = append(runtimeConfigSplit, featureConfig)
+	// featureConfig := fmt.Sprintf("features.grafana.app/v0alpha1=%v", cfg.OpenFeature.APIEnabled)
+	//runtimeConfigSplit = append(runtimeConfigSplit, featureConfig)
 
 	if err := o.APIEnablementOptions.RuntimeConfig.Set(strings.Join(runtimeConfigSplit, ",")); err != nil {
 		return fmt.Errorf("failed to set runtime config: %w", err)
