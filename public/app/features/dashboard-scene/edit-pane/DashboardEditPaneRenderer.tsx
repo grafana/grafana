@@ -6,6 +6,7 @@ import { useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
 
 import { DashboardEditPane } from './DashboardEditPane';
@@ -24,7 +25,8 @@ export interface Props {
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
-  const { isEditing } = dashboard.useState();
+  const { isEditing, meta, uid } = dashboard.useState();
+  const hasUid = Boolean(uid);
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
 
@@ -78,7 +80,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
             <Sidebar.Divider />
           </>
         )}
-        <ShareExportDashboardButton dashboard={dashboard} />
+        {hasUid && <ShareExportDashboardButton dashboard={dashboard} />}
         <Sidebar.Button
           icon="list-ui-alt"
           onClick={() => editPane.openPane('outline')}
@@ -86,6 +88,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
           tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
           active={openPane === 'outline'}
         ></Sidebar.Button>
+        {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
       </Sidebar.Toolbar>
     </>
   );
