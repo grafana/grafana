@@ -223,7 +223,7 @@ jobs:
           docker load -i grafana.docker.tar.gz | tee out.txt
           echo "GRAFANA_IMAGE=$(awk '{ print $3; }' out.txt)" >> "$GITHUB_ENV"
       - name: Run test
-        working-directory: grafana
+        working-directory: ./
         # Workaround for 'go: no such tool "covdata"', see https://github.com/golang/go/issues/75031
         run: GOTOOLCHAIN=go1.25.0+auto go test -p=1 -count=1 -covermode=atomic -timeout=5m
           ./pkg/services/apiserver/apiserver_test/... -v
