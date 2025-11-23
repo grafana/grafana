@@ -226,7 +226,7 @@ jobs:
         working-directory: ./
         # Workaround for 'go: no such tool "covdata"', see https://github.com/golang/go/issues/75031
         run: GOTOOLCHAIN=go1.25.0+auto go test -p=1 -count=1 -covermode=atomic -timeout=5m
-          ./pkg/services/apiserver/apiserver_test/... -v
+          ./pkg/services/apiserver/apiserver_test/scenarios/... -v
 
   run-e2e-tests:
     needs:
