@@ -117,33 +117,52 @@ export function useNamespaceAndGroupOptions(): {
 
   const groupOptions = useCallback(
     async (inputValue: string) => {
-      const grafanaResponse = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: THRESHOLD_LIMIT + 1 }).unwrap();
-      const groupNames = Array.from(new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.name)));
-
-      // If we have more than THRESHOLD_LIMIT unique groups, show info message
-      if (groupNames.length > THRESHOLD_LIMIT) {
+      // Require minimum 3 characters for search
+      const trimmedInput = inputValue?.trim() || '';
+      if (trimmedInput.length < 3) {
         return [
           createInfoOption(
-            t(
-              'alerting.rules-filter.group-autocomplete-unavailable',
-              'Due to large number of groups, autocomplete is not available'
-            )
+            t('alerting.rules-filter.group-search-prompt', 'Type at least 3 characters to search groups')
           ),
         ];
       }
 
-      const options: Array<ComboboxOption<string>> = groupNames
-        .map((name) => ({ label: name, value: name }))
-        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+      try {
+        // Use the backend search with lightweight response
+        const grafanaResponse = await fetchGrafanaGroups({
+          limitAlerts: 0, // Lightweight - no alert data
+          searchGroupName: trimmedInput, // Backend filtering via search.rule_group parameter
+          groupLimit: 100, // Reasonable limit for dropdown results
+        }).unwrap();
 
-      const filtered = filterBySearch(options, inputValue);
-      return filtered;
+        const groupNames = Array.from(new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.name)));
+
+        // No results found
+        if (groupNames.length === 0) {
+          return [
+            createInfoOption(
+              t('alerting.rules-filter.group-no-results', 'No groups found matching "{{search}}"', {
+                search: trimmedInput,
+              })
+            ),
+          ];
+        }
+
+        const options: Array<ComboboxOption<string>> = groupNames
+          .map((name) => ({ label: name, value: name }))
+          .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+
+        return options;
+      } catch (error) {
+        console.error('Error fetching groups:', error);
+        return [createInfoOption(t('alerting.rules-filter.group-search-error', 'Error searching groups'))];
+      }
     },
     [fetchGrafanaGroups]
   );
 
   const namespacePlaceholder = t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
-  const groupPlaceholder = t('grafana.select-group', 'Select group');
+  const groupPlaceholder = t('alerting.rules-filter.placeholder-group-search', 'Search group (min 3 characters)');
 
   return { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder };
 }
