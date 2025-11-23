@@ -3,11 +3,12 @@ import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, PanelData, PanelModel, VisualizationSuggestion } from '@grafana/data';
+import { GrafanaTheme2, PanelData, PanelModel, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Icon, Text, useStyles2 } from '@grafana/ui';
 
-import { getAllSuggestions } from '../../state/getAllSuggestions';
+import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 import { VizTypeChangeDetails } from './types';
@@ -30,6 +31,21 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel, t
     }
     return result;
   }, [searchQuery, suggestions, trackSearch]);
+
+  const hasData = data?.series && data.series.length > 0 && !data.series.every((frame) => frame.length === 0);
+
+  if (config.featureToggles.newVizSuggestions && !hasData && !searchQuery) {
+    return (
+      <div className={styles.emptyStateWrapper}>
+        <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
+        <Text element="p" textAlignment="center" color="secondary">
+          <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
+            Run a query to start seeing suggested visualizations
+          </Trans>
+        </Text>
+      </div>
+    );
+  }
 
   return (
     // This div is needed in some places to make AutoSizer work
@@ -80,8 +96,8 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel, t
 
 function filterSuggestionsBySearch(
   searchQuery: string,
-  suggestions?: VisualizationSuggestion[]
-): VisualizationSuggestion[] {
+  suggestions?: PanelPluginVisualizationSuggestion[]
+): PanelPluginVisualizationSuggestion[] {
   if (!searchQuery || !suggestions) {
     return suggestions || [];
   }
@@ -115,6 +131,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridTemplateColumns: 'repeat(auto-fill, 144px)',
       marginBottom: theme.spacing(1),
       justifyContent: 'space-evenly',
+    }),
+    emptyStateWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: theme.spacing(4),
+      textAlign: 'center',
+      minHeight: '200px',
+    }),
+    emptyStateIcon: css({
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing(2),
     }),
   };
 };

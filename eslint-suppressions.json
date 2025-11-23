@@ -237,7 +237,7 @@
   },
   "packages/grafana-data/src/types/panel.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 13
+      "count": 11
     }
   },
   "packages/grafana-data/src/types/plugin.ts": {
@@ -602,30 +602,12 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/DataSourceSettings/AlertingSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     },
-    "no-restricted-syntax": {
-      "count": 3
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/DataSourceSettings/SecureSocksProxySettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/DataSourceSettings/TLSAuthSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/DataSourceSettings/types.ts": {
@@ -747,11 +729,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Menu/Menu.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Modal/ModalsContext.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -762,16 +739,6 @@
   },
   "packages/grafana-ui/src/components/Monaco/CodeEditor.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -1177,11 +1144,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/Login/LoginCtrl.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/components/Login/LoginForm.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -1200,9 +1162,6 @@
   "public/app/core/components/OptionsUI/NumberInput.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/core/components/OptionsUI/fieldColor.tsx": {
@@ -1216,11 +1175,6 @@
     }
   },
   "public/app/core/components/OptionsUI/select.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/OptionsUI/strings.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
@@ -1242,11 +1196,6 @@
   },
   "public/app/core/components/RolePickerDrawer/RolePickerDrawer.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/Select/TeamPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -1302,11 +1251,6 @@
   "public/app/core/config.ts": {
     "no-barrel-files/no-barrel-files": {
       "count": 2
-    }
-  },
-  "public/app/core/core.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 7
     }
   },
   "public/app/core/navigation/types.ts": {
@@ -1440,14 +1384,6 @@
   "public/app/features/admin/UserOrgs.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/admin/UserProfile.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/admin/ldap/LdapDrawer.tsx": {
@@ -1869,11 +1805,6 @@
       "count": 1
     }
   },
-  "public/app/features/annotations/components/AnnotationResultMapper.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/annotations/components/StandardAnnotationQueryEditor.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -1914,26 +1845,6 @@
   },
   "public/app/features/browse-dashboards/components/NewFolderForm.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/element.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/frame.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/root.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/scene.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2030,11 +1941,6 @@
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/pages/DashboardScenePageStateManager.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
@@ -2278,10 +2184,10 @@
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 3
+      "count": 1
     }
   },
   "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsEdit.tsx": {
@@ -2365,11 +2271,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
@@ -2378,14 +2279,6 @@
       "count": 1
     },
     "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/PanelEditor/OptionsPaneOptions.test.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2398,11 +2291,6 @@
     }
   },
   "public/app/features/dashboard/components/PanelEditor/PanelEditorQueries.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/PanelEditor/PanelHeaderCorner.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
@@ -2464,17 +2352,11 @@
     },
     "no-restricted-syntax": {
       "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareLink.tsx": {
     "no-restricted-syntax": {
       "count": 3
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareModal.tsx": {
@@ -2823,11 +2705,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/RawPrometheus/RawPrometheusContainer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/RichHistory/RichHistorySettingsTab.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2838,11 +2715,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/TraceView.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    }
-  },
   "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/CanvasSpanGraph.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -2850,11 +2722,6 @@
   },
   "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/ViewingLayer.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TracePageHeader/TracePageHeader.tsx": {
-    "react-hooks/rules-of-hooks": {
       "count": 1
     }
   },
@@ -3232,16 +3099,6 @@
       "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/extensions/usePluginComponents.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/extensions/usePluginFunctions.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
   },
@@ -4551,16 +4408,6 @@
     }
   },
   "public/app/plugins/panel/canvas/CanvasPanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/components/connections/Connections.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/components/connections/Connections2.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }

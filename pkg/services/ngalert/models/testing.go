@@ -1256,6 +1256,18 @@ func (n ReceiverMutators) WithOrigin(origin ResourceOrigin) Mutator[Receiver] {
 	}
 }
 
+func (n ReceiverMutators) WithEmptyIntegrations() Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.Integrations = []*Integration{}
+	}
+}
+
+func (n ReceiverMutators) WithUID(uid string) Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.UID = uid
+	}
+}
+
 // Integrations
 
 // CopyIntegrationWith creates a deep copy of Integration and then applies mutators to it.

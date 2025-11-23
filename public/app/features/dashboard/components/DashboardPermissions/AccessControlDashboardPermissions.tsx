@@ -1,6 +1,6 @@
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { SettingsPageProps } from '../DashboardSettings/types';

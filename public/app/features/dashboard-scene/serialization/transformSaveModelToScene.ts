@@ -45,6 +45,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
+import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -242,7 +243,9 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
     layout: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         // If the row is collapsed it will have panels within the row model.
-        children: (row.panels?.map((p) => buildGridItemForPanel(p)) ?? []).concat(panels),
+        children: (
+          row.panels?.map((p) => buildGridItemForPanel(p instanceof PanelModel ? p : new PanelModel(p))) ?? []
+        ).concat(panels),
       }),
     }),
     repeatByVariable: row.repeat,
@@ -438,6 +441,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
