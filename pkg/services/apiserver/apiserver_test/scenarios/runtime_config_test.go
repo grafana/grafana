@@ -107,11 +107,12 @@ func TestRuntimeConfig(t *testing.T) {
 			token := ensureKubeconfig(t, s)
 
 			// Query the /apis discovery endpoint
-			discoveryURL := fmt.Sprintf("https://%s/apis", grafana.DevK8sEndpoint())
+			discoveryURL := fmt.Sprintf("http://%s", grafana.HTTPEndpoint())
+
 			httpCli := util.NewHTTPTestClient(discoveryURL, httpClient, map[string]string{
 				"Authorization": fmt.Sprintf("Bearer %s", token),
 			})
-			resp, err := httpCli.GetRequest(discoveryURL)
+			resp, err := httpCli.GetRequest("/apis")
 			require.NoError(t, err, "failed to query /apis endpoint")
 			defer resp.Body.Close()
 

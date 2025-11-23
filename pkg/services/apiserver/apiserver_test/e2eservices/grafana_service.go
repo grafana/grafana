@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	stGrafanaHTTPPort = 3000
-	stDevK8sPort      = 6443 // used with loopback config to avoid the need to provision GLSA tokens
-	stGrafanaGRPCPort = 10000
+	grafanaHTTPPort = 3000
+	devK8sPort      = 6443 // used with loopback config to avoid the need to provision GLSA tokens
+	grafanaGRPCPort = 10000
 )
 
 type GrafanaService struct {
@@ -59,13 +59,13 @@ func (g *GrafanaService) Start(ctx context.Context) error {
 		Image:        util.GetGrafanaImage(),
 		Cmd:          args,
 		Env:          env,
-		ExposedPorts: []string{fmt.Sprintf("%d/tcp", stGrafanaHTTPPort), fmt.Sprintf("%d/tcp", stGrafanaGRPCPort), fmt.Sprintf("%d/tcp", stDevK8sPort)},
+		ExposedPorts: []string{fmt.Sprintf("%d/tcp", grafanaHTTPPort), fmt.Sprintf("%d/tcp", grafanaGRPCPort), fmt.Sprintf("%d/tcp", devK8sPort)},
 		Networks:     []string{g.network.Name},
 		NetworkAliases: map[string][]string{
 			g.network.Name: {g.name},
 		},
 		WaitingFor: wait.ForHTTP("/api/health").
-			WithPort(nat.Port(fmt.Sprintf("%d/tcp", stGrafanaHTTPPort))).
+			WithPort(nat.Port(fmt.Sprintf("%d/tcp", grafanaHTTPPort))).
 			WithStatusCodeMatcher(func(status int) bool {
 				return status >= 200 && status <= 299
 			}).WithStartupTimeout(120 * time.Second),
@@ -87,7 +87,7 @@ func (g *GrafanaService) Start(ctx context.Context) error {
 
 // GetKubeconfigPath returns the path to the kubeconfig file on the host filesystem
 func (g *GrafanaService) GetKubeconfigPath() string {
-	return filepath.Join(g.tempDir, "st-grafana", "grafana.kubeconfig")
+	return filepath.Join(g.tempDir, "grafana.kubeconfig")
 }
 
 // GetKubeconfig retrieves the kubeconfig file from the container and caches it to the host filesystem
@@ -101,7 +101,7 @@ func (g *GrafanaService) GetKubeconfig(ctx context.Context) ([]byte, error) {
 	}
 
 	// File doesn't exist yet, try to copy it from the container
-	kubeconfigDir := filepath.Join(g.tempDir, "st-grafana")
+	kubeconfigDir := filepath.Join(g.tempDir)
 	if err := os.MkdirAll(kubeconfigDir, 0750); err != nil {
 		return nil, fmt.Errorf("failed to create kubeconfig directory: %w", err)
 	}
@@ -167,13 +167,13 @@ func (g *GrafanaService) NetworkEndpoint(port int) string {
 }
 
 func (g *GrafanaService) HTTPEndpoint() string {
-	return g.Endpoint(stGrafanaHTTPPort)
+	return g.Endpoint(grafanaHTTPPort)
 }
 
 func (g *GrafanaService) DevK8sEndpoint() string {
-	return g.Endpoint(stDevK8sPort)
+	return g.Endpoint(devK8sPort)
 }
 
 func (g *GrafanaService) GRPCEndpoint() string {
-	return g.NetworkEndpoint(stGrafanaGRPCPort)
+	return g.NetworkEndpoint(grafanaGRPCPort)
 }
