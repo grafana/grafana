@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -16,7 +17,7 @@ import {
   SceneObjectUrlValues,
   CancelActivationHandler,
 } from '@grafana/scenes';
-import { Box, useStyles2 } from '@grafana/ui';
+import { Box, Button, useStyles2 } from '@grafana/ui';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
@@ -195,7 +196,7 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
   const { isEditing, editPanel, uid, editable, meta } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
 
-  if (editPanel || isPlaying) {
+  if (editPanel) {
     return null;
   }
 
@@ -209,7 +210,16 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
       {isEditing && <SaveDashboard dashboard={dashboard} />}
-      {canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
+      {!isPlaying && canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
+      {isPlaying && (
+        <Button
+          variant="secondary"
+          onClick={() => playlistSrv.stop()}
+          data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
+        >
+          <Trans i18nKey="dashboard.toolbar.new.playlist-stop">Stop playlist</Trans>
+        </Button>
+      )}
     </>
   );
 }
