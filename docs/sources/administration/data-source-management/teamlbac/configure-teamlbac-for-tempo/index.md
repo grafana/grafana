@@ -60,7 +60,7 @@ Follow this workflow when adding a new data source. The data source must be host
 3. Copy Tempo or Cloud Traces details and create a Cloud Access Policy.
    - Copy the [details of your Tempo or Cloud Traces setup](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/locate-url-user-password/).
 4. In Grafana Cloud, navigate to **Administration > Users and access > Cloud Access Policies**.
-   - Create a access policy for the Tempo or Cloud Traces data source.
+   - Create an access policy for the Tempo or Cloud Traces data source.
    - Ensure the access policy includes `traces:read` permissions.
    - Ensure the access policy doesn't include `labels` rules.
 5. In Grafana, select Tempo or Cloud Traces or create new data source.
