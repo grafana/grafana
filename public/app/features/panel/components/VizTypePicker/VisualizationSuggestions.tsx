@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAsync, useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 

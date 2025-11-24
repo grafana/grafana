@@ -100,7 +100,7 @@ export class VisualizationSuggestionsBuilder {
   }
 
   getListAppender<TOptions extends unknown, TFieldConfig extends {} = {}>(
-    defaults: PanelPluginVisualizationSuggestion<TOptions, TFieldConfig>
+    defaults: Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfig>, 'hash'>
   ) {
     return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
   }
