@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Waarschuwingsmanager:",
-      "disabled-tooltip": "",
       "error": "Kon routeringsvoorbeeld niet laden voor {{alertmanager}}",
       "initialized": "Op basis van de toegevoegde labels worden waarschuwingsinstanties gerouteerd naar het volgende meldingsbeleid. Vouw elk meldingsbeleid hieronder uit voor meer informatie.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Voorbeeld routering",
       "select-folder-tooltip": "",
       "text-loading-preview": "Voorbeeldweergave laden...",
@@ -2598,8 +2600,7 @@
         "firing": "Geactiveerd",
         "normal": "Normaal",
         "pending": "In afwachting",
-        "recovering": "Herstellen",
-        "unknown": "Onbekend"
+        "recovering": "Herstellen"
       },
       "type": {
         "alert": "Waarschuwingsregel",
@@ -2623,12 +2624,14 @@
         "placeholder-search-input": "Zoeken op naam of filterquery invoeren..."
       },
       "grafana-folder": "Grafana-map",
+      "group-autocomplete-unavailable": "",
       "health": "Gezondheid",
       "label": {
         "hide": "Verbergen",
         "show": "Tonen"
       },
       "manage-alerts": "In deze gegevensbronnen kun je waarschuwingen beheren via de waarschuwingsinterface om deze waarschuwingsregels te kunnen beheren in de Grafana-gebruikersinterface en in de gegevensbron waar ze zijn geconfigureerd.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Alle gegevensbronnen",
       "placeholder-contact-point": "Contactpunt selecteren",
       "placeholder-data-sources": "Gegevensbronnen selecteren",
@@ -3540,6 +3543,7 @@
       "delete-modal-invalid-title": "Kan de map niet verwijderen",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Met deze actie wordt de volgende inhoud verwijderd:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Verwijderen",
       "delete-provisioned-folder": "Geprovisioneerde map verwijderen",
       "deleting": "Bezig met verwijderen ...",
@@ -3548,6 +3552,7 @@
       "move-modal-alert": "Het verplaatsen van dit item kan de toestemmingen wijzigen.",
       "move-modal-field-label": "Mapnaam",
       "move-modal-text": "Met deze actie wordt de volgende inhoud verplaatst:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Verplaatsen",
       "move-provisioned-folder": "",
       "moving": "Bezig met verplaatsen ...",
@@ -3635,11 +3640,11 @@
       "title-folder": "Deze map heeft nog geen dashboards"
     },
     "folder-actions-button": {
-      "delete": "Verwijderen",
+      "delete": "",
       "delete-folder-error": "Fout bij verwijderen van map. Probeer het later opnieuw.",
       "folder-actions": "Mapacties",
       "manage-permissions": "Toestemmingen beheren",
-      "move": "Verplaatsen"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Map selecteren: {{ label }} is momenteel geselecteerd",
@@ -5095,8 +5100,12 @@
     "new-panel": {
       "configure-button": "Configureren",
       "configure-button-menu": "Navigatiemenu",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Configureren",
-      "menu-use-library-panel": "Bibliotheekpaneel gebruiken"
+      "menu-use-library-panel": "Bibliotheekpaneel gebruiken",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Nieuw paneel",
     "on-create-new-row": {
@@ -7215,6 +7224,7 @@
       "logs-volume": {
         "add-filters": "Voeg meer labels toe aan je query om je zoekopdracht te verfijnen.",
         "decrease-timerange": "Verkort het tijdsbereik van je query.",
+        "max-bytes-error": "",
         "much-data": "De query probeert toegang te krijgen tot te veel gegevens. Probeer een of meer van de volgende oplossingen:"
       },
       "maximum-pinned-logs": "Maximum aantal van {{PINNED_LOGS_LIMIT}} vastgezette logs bereikt. Maak een logboek los om een ander toe te voegen.",
@@ -7264,12 +7274,15 @@
       "tooltip-select-query-visualize-table": "Selecteer een query om te visualiseren in de tabel"
     },
     "logs-volume-panel": {
-      "content-streaming": "Streamen"
+      "content-streaming": "Streamen",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Logvolume opnieuw laden",
       "label-reload-log-volume": "Logvolume opnieuw laden",
       "loading": "Laden...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Kan het logvolume voor deze query niet laden",
       "title-no-logs-volume-available": "Geen logvolume beschikbaar",
       "title-showing-partial-data": "Gedeeltelijke gegevens weergeven",
@@ -7792,6 +7805,14 @@
     "name-show-threshold-labels": "Drempellabels weergeven",
     "name-show-threshold-markers": "Drempelmarkeringen weergeven",
     "placeholder-neutral": "automatisch",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8578,7 +8599,13 @@
       "saving": "Opslaan <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineaire drempel",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Logboekbase"
     },
     "builder": {
@@ -8984,6 +9011,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Rechter y-as gebruiken"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9002,6 +9034,13 @@
       "copy": "Naar klembord kopiëren",
       "csv-counts": "",
       "csv-placeholder": "Voer hier csv in ...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filter waarden",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Case matchen",
@@ -9268,6 +9307,7 @@
       "toggle-panel-edit": "Paneelbewerkingsweergave in-/uitschakelen",
       "toggle-panel-fullscreen": "Paneelweergave volledig scherm in-/uitschakelen",
       "toggle-panel-legend": "Paneellegenda in-/uitschakelen",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Tijdsbereik uitzoomen"
     },
     "title": "Snelkoppelingen"
@@ -9943,11 +9983,7 @@
       "wrap-lines": "Lijnen omsluiten"
     },
     "logs-navigation": {
-      "newer-logs": "Nieuwere logboeken",
-      "older-logs": "Oudere logboeken",
-      "scroll-bottom": "Naar beneden scrollen",
-      "scroll-top": "Naar boven scrollen",
-      "start-of-range": "Begin van het bereik"
+      "scroll-top": "Naar boven scrollen"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12406,8 +12442,10 @@
       "cancel": "Annuleren",
       "error-title": "",
       "input": {
-        "placeholder": "Scopes selecteren ...",
-        "removeAll": "Alle scopes verwijderen"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Alle scopes verwijderen",
+        "tooltip": ""
       },
       "title": "Scopes selecteren"
     },
@@ -12518,11 +12556,14 @@
       "copy-clipboard": "Kopiëren naar klembord",
       "copy-to-clipboard-and-close": "Kopiëren naar klembord en sluiten",
       "description-name-to-easily-identify-the-token": "Naam om het token gemakkelijk te identificeren",
+      "description-no-expiration-disabled": "",
       "description-token": "Kopieer het token nu, want hierna kun je het niet meer zien. Als je een token verliest, moet je een nieuw token maken.",
       "generate-token": "Token genereren",
       "label-display-name": "Weergavenaam",
       "label-expiration": "Vervaldatum",
       "label-expiration-date": "Vervaldatum",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {
