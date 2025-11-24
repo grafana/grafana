@@ -15,7 +15,9 @@ function getExternalRuleDataSources() {
   return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url);
 }
 
-const THRESHOLD_LIMIT = 500;
+const NAMESPACE_THRESHOLD_LIMIT = 500;
+const MIN_GROUP_SEARCH_CHARACTERS = 3;
+const GROUP_SEARCH_LIMIT = 100;
 
 function createInfoOption(message: string): ComboboxOption<string> {
   return {
@@ -60,7 +62,10 @@ export function useNamespaceAndGroupOptions(): {
   const namespaceOptions = useCallback(
     async (inputValue: string) => {
       // Grafana namespaces - fetch with limit to check threshold
-      const grafanaResponse = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: THRESHOLD_LIMIT + 1 }).unwrap();
+      const grafanaResponse = await fetchGrafanaGroups({
+        limitAlerts: 0,
+        groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
+      }).unwrap();
       const grafanaFolderNames = Array.from(
         new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default'))
       );
@@ -71,7 +76,7 @@ export function useNamespaceAndGroupOptions(): {
         fetchExternalGroups({
           ruleSource: { uid: ds.uid },
           excludeAlerts: true,
-          groupLimit: THRESHOLD_LIMIT + 1,
+          groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
           notificationOptions: { showErrorAlert: false },
         }).unwrap()
       );
@@ -84,8 +89,8 @@ export function useNamespaceAndGroupOptions(): {
 
       const totalNamespaces = grafanaFolderNames.length + namespaceNameSet.size;
 
-      // If we have more than THRESHOLD_LIMIT unique namespaces, show info message
-      if (totalNamespaces > THRESHOLD_LIMIT) {
+      // If we have more than NAMESPACE_THRESHOLD_LIMIT unique namespaces, show info message
+      if (totalNamespaces > NAMESPACE_THRESHOLD_LIMIT) {
         return [
           createInfoOption(
             t(
@@ -117,9 +122,9 @@ export function useNamespaceAndGroupOptions(): {
 
   const groupOptions = useCallback(
     async (inputValue: string) => {
-      // Require minimum 3 characters for search
+      // Require minimum characters for search
       const trimmedInput = inputValue?.trim() || '';
-      if (trimmedInput.length < 3) {
+      if (trimmedInput.length < MIN_GROUP_SEARCH_CHARACTERS) {
         return [
           createInfoOption(
             t('alerting.rules-filter.group-search-prompt', 'Type at least 3 characters to search groups')
@@ -132,13 +137,19 @@ export function useNamespaceAndGroupOptions(): {
         const grafanaResponse = await fetchGrafanaGroups({
           limitAlerts: 0, // Lightweight - no alert data
           searchGroupName: trimmedInput, // Backend filtering via search.rule_group parameter
-          groupLimit: 100, // Reasonable limit for dropdown results
+          groupLimit: GROUP_SEARCH_LIMIT, // Reasonable limit for dropdown results
         }).unwrap();
 
-        const groupNames = Array.from(new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.name)));
+        // Deduplicate group names efficiently
+        const groupNamesSet = new Set<string>();
+        grafanaResponse.data.groups.forEach((g: GrafanaPromRuleGroupDTO) => {
+          if (g.name) {
+            groupNamesSet.add(g.name);
+          }
+        });
 
         // No results found
-        if (groupNames.length === 0) {
+        if (groupNamesSet.size === 0) {
           return [
             createInfoOption(
               t('alerting.rules-filter.group-no-results', 'No groups found matching "{{search}}"', {
@@ -148,7 +159,7 @@ export function useNamespaceAndGroupOptions(): {
           ];
         }
 
-        const options: Array<ComboboxOption<string>> = groupNames
+        const options: Array<ComboboxOption<string>> = Array.from(groupNamesSet)
           .map((name) => ({ label: name, value: name }))
           .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
 
