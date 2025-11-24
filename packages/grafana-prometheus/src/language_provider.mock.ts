@@ -10,10 +10,10 @@ export class EmptyLanguageProviderMock {
     });
   }
 
-  getLabelKeys = jest.fn().mockReturnValue([]);
-  getLabelValues = jest.fn().mockReturnValue([]);
+  retrieveMetrics = jest.fn().mockReturnValue(['metric']);
   queryLabelKeys = jest.fn().mockResolvedValue([]);
   queryLabelValues = jest.fn().mockResolvedValue([]);
+  retrieveLabelKeys = jest.fn().mockReturnValue([]);
   retrieveMetricsMetadata = jest
     .fn()
     .mockReturnValue({ histogram_metric_sum: { type: 'counter', help: '', unit: 'sum' } });
