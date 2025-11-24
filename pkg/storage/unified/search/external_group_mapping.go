@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	EXTERNAL_GROUP_MAPPING_TEAM_NAME      = "team"
+	EXTERNAL_GROUP_MAPPING_TEAM           = "team"
 	EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP = "external_group"
 )
 
 var ExternalGroupMappingTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
-	EXTERNAL_GROUP_MAPPING_TEAM_NAME: {
-		Name:        EXTERNAL_GROUP_MAPPING_TEAM_NAME,
+	EXTERNAL_GROUP_MAPPING_TEAM: {
+		Name:        EXTERNAL_GROUP_MAPPING_TEAM,
 		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 		Description: "The team name associated with the external group mapping",
 		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
@@ -70,7 +70,7 @@ func (u *extGroupMappingDocumentBuilder) BuildDocument(ctx context.Context, key 
 
 	doc.Fields = make(map[string]any)
 	if extGroupMapping.Spec.TeamRef.Name != "" {
-		doc.Fields[EXTERNAL_GROUP_MAPPING_TEAM_NAME] = extGroupMapping.Spec.TeamRef.Name
+		doc.Fields[EXTERNAL_GROUP_MAPPING_TEAM] = extGroupMapping.Spec.TeamRef.Name
 	}
 	if extGroupMapping.Spec.ExternalGroupId != "" {
 		doc.Fields[EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP] = extGroupMapping.Spec.ExternalGroupId

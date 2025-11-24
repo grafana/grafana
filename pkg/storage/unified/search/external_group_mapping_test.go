@@ -184,7 +184,7 @@ func indexExternalGroupMappingDocuments(t *testing.T, index resource.ResourceInd
 				},
 				Title: mapping.Name,
 				Fields: map[string]any{
-					search.EXTERNAL_GROUP_MAPPING_TEAM_NAME:      mapping.Spec.TeamRef.Name,
+					search.EXTERNAL_GROUP_MAPPING_TEAM:           mapping.Spec.TeamRef.Name,
 					search.EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP: mapping.Spec.ExternalGroupId,
 				},
 			},
