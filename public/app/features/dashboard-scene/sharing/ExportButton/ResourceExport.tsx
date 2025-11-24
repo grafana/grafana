@@ -19,7 +19,6 @@ interface Props {
   dashboardJson: AsyncState<{
     json: Dashboard | DashboardJson | DashboardV2Spec | ExportableResource | { error: unknown };
     hasLibraryPanels?: boolean;
-    initialSaveModelVersion: 'v1' | 'v2';
   }>;
   isSharingExternally: boolean;
   exportMode: ExportMode;

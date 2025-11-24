@@ -113,9 +113,6 @@ describe('ShareExportTab', () => {
       // Should call transformSceneToV1 (not transform V2→V1)
       expect(transformSceneToV1Spy).toHaveBeenCalled();
       expect(transformV2ToV1Spy).not.toHaveBeenCalled();
-
-      // Should report correct initial version
-      expect(result.initialSaveModelVersion).toBe('v1');
     });
 
     // If V2 dashboard → V1 Resource should auto-transform with V1 apiVersion
@@ -136,9 +133,6 @@ describe('ShareExportTab', () => {
       // Should auto-transform V2→V1
       expect(transformSceneToV2Spy).toHaveBeenCalled(); // Get V2 spec first
       expect(transformV2ToV1Spy).toHaveBeenCalled(); // Then transform to V1
-
-      // Should report correct initial version
-      expect(result.initialSaveModelVersion).toBe('v2');
     });
 
     // If V2 dashboard → V1 Resource with external sharing should transform and apply external sharing
@@ -164,9 +158,6 @@ describe('ShareExportTab', () => {
 
       // Should call makeExportableV1 for external sharing
       expect(makeExportableV1Spy).toHaveBeenCalled();
-
-      // Should report correct initial version
-      expect(result.initialSaveModelVersion).toBe('v2');
     });
   });
 
@@ -187,9 +178,6 @@ describe('ShareExportTab', () => {
 
       // Should not call V2→V1 transformation since source is already V2
       expect(transformV2ToV1Spy).not.toHaveBeenCalled();
-
-      // Should report correct initial version
-      expect(result.initialSaveModelVersion).toBe('v2');
     });
 
     // If V1 dashboard → V2 Resource should detect library panels correctly
@@ -201,7 +189,6 @@ describe('ShareExportTab', () => {
 
       // Should detect library panels from V1 dashboard
       expect(result.hasLibraryPanels).toBe(true);
-      expect(result.initialSaveModelVersion).toBe('v1');
     });
 
     // If V1 dashboard with dashboardNewLayouts disabled → V2 Resource should detect library panels correctly
@@ -213,7 +200,6 @@ describe('ShareExportTab', () => {
 
       // Should detect library panels from V1 dashboard (first branch of the logic)
       expect(result.hasLibraryPanels).toBe(true);
-      expect(result.initialSaveModelVersion).toBe('v1');
     });
 
     // If V1 dashboard without library panels → V2 Resource should return false
@@ -225,7 +211,6 @@ describe('ShareExportTab', () => {
 
       // Should not detect library panels
       expect(result.hasLibraryPanels).toBe(false);
-      expect(result.initialSaveModelVersion).toBe('v1');
     });
   });
 
@@ -247,7 +232,6 @@ describe('ShareExportTab', () => {
 
       // Should detect library panels from V2 dashboard elements (second branch of the logic)
       expect(result.hasLibraryPanels).toBe(true);
-      expect(result.initialSaveModelVersion).toBe('v2');
     });
 
     // Test the second branch: V2 dashboard with V1 initial save model
@@ -259,7 +243,6 @@ describe('ShareExportTab', () => {
 
       // Should detect library panels from V2 dashboard elements (second branch of the logic)
       expect(result.hasLibraryPanels).toBe(true);
-      expect(result.initialSaveModelVersion).toBe('v1');
     });
 
     // If V2 dashboard without library panels → V2 Resource should return false
@@ -271,7 +254,6 @@ describe('ShareExportTab', () => {
 
       // Should not detect library panels
       expect(result.hasLibraryPanels).toBe(false);
-      expect(result.initialSaveModelVersion).toBe('v2');
     });
   });
 
@@ -294,9 +276,6 @@ describe('ShareExportTab', () => {
       expect(result.json).not.toHaveProperty('apiVersion');
       expect(result.json).not.toHaveProperty('kind');
       expect(result.json).not.toHaveProperty('status');
-
-      // Should report correct initial version
-      expect(result.initialSaveModelVersion).toBe('v1');
     });
   });
 
