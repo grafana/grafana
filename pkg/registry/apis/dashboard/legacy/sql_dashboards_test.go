@@ -35,10 +35,9 @@ func TestScanRow(t *testing.T) {
 	provisioner := provisioning.NewProvisioningServiceMock(context.Background())
 	provisioner.GetDashboardProvisionerResolvedPathFunc = func(name string) string { return "provisioner" }
 	store := &dashboardSqlAccess{
-		namespacer:                           func(_ int64) string { return "default" },
-		provisioning:                         provisioner,
-		log:                                  log.New("test"),
-		invalidDashboardParseFallbackEnabled: false,
+		namespacer:   func(_ int64) string { return "default" },
+		provisioning: provisioner,
+		log:          log.New("test"),
 	}
 
 	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
@@ -194,39 +193,25 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "dashboard.grafana.app/"+migrationAPIVersion, row.Dash.APIVersion)
 	})
 
-	t.Run("should follow dashboard template when failing to unmarshal dashboard if feature flag X is enabled", func(t *testing.T) {
+	t.Run("should follow dashboard template when failing to unmarshal dashboard", func(t *testing.T) {
 		// row with bad data
 		badData := []byte(`{"rows":[{"panels":[{"targets":[{"refId":"A","target":"aliasSub(alias, '^(.{27}).+', '\1...')"}]}]}]}`)
 		rows := sqlmock.NewRows(columns).AddRow(1, id, uid, title, folderUID, nil, "", "", "", "", 0, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, badData, "vXyz")
 		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
 		resultRows, err := mockDB.Query("SELECT *")
 		require.NoError(t, err)
-		defer resultRows.Close() // nolint:errcheck
+		defer func() {
+			_ = resultRows.Close()
+		}()
 		resultRows.Next()
 
-		row, err := store.scanRow(resultRows, false)
-		require.Error(t, err, "JSON unmarshal error for: Test Dashboard // invalid character '1' in string escape code")
-		require.NotNil(t, row)
-		// correctly scans these
-		require.Equal(t, uid, row.Dash.Name)
-		require.Equal(t, version, row.RV)
-		require.Equal(t, "default", row.Dash.Namespace)
-		require.Equal(t, &continueToken{orgId: int64(1), id: id}, row.token)
-
-		// failure case: does NOT parse the dashboard itself
-		require.Equal(t, common.Unstructured{
-			Object: nil,
-		}, row.Dash.Spec)
-
-		// store with feature flag enabled
 		store = &dashboardSqlAccess{
-			namespacer:                           func(_ int64) string { return "default" },
-			provisioning:                         provisioner,
-			log:                                  log.New("test"),
-			invalidDashboardParseFallbackEnabled: true,
+			namespacer:   func(_ int64) string { return "default" },
+			provisioning: provisioner,
+			log:          log.New("test"),
 		}
 
-		row, err = store.scanRow(resultRows, false)
+		row, err := store.scanRow(resultRows, false)
 		require.NoError(t, err)
 		require.NotNil(t, row)
 		require.Equal(t, uid, row.Dash.Name)
