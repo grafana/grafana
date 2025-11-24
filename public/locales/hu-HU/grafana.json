@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Riasztáskezelő:",
-      "disabled-tooltip": "",
       "error": "Nem sikerült betölteni az irányítási előnézetet ehhez: {{alertmanager}}",
       "initialized": "A hozzáadott címkék alapján a riasztáspéldányok a következő értesítési házirendekhez vannak irányítva. További részletek megtekintéséhez bontsa ki az alábbi értesítési házirendeket.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Irányítás előnézete",
       "select-folder-tooltip": "",
       "text-loading-preview": "Előnézet betöltése…",
@@ -5098,8 +5100,12 @@
     "new-panel": {
       "configure-button": "Konfigurálás",
       "configure-button-menu": "Menü átkapcsolása",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Konfigurálás",
-      "menu-use-library-panel": "Könyvtárpanel használata"
+      "menu-use-library-panel": "Könyvtárpanel használata",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Új panel",
     "on-create-new-row": {
@@ -7218,6 +7224,7 @@
       "logs-volume": {
         "add-filters": "Adjon hozzá több címkét a lekérdezéshez a keresés szűkítése érdekében.",
         "decrease-timerange": "Csökkentse a lekérdezés időtartományát.",
+        "max-bytes-error": "",
         "much-data": "A lekérdezés túl sok adathoz próbál hozzáférni. Próbálkozzon a következőkkel:"
       },
       "maximum-pinned-logs": "Elérte a rögzített naplók maximális számát ({{PINNED_LOGS_LIMIT}}). Egy másik hozzáadásához oldja fel egy napló rögzítését.",
@@ -7267,12 +7274,15 @@
       "tooltip-select-query-visualize-table": "Jelölje ki a táblázatban megjelenítendő lekérdezést"
     },
     "logs-volume-panel": {
-      "content-streaming": "Adatfolyam"
+      "content-streaming": "Adatfolyam",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Naplómennyiség újratöltése",
       "label-reload-log-volume": "Naplómennyiség újratöltése",
       "loading": "Betöltés…",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "A lekérdezés naplómennyiségének betöltése nem sikerült",
       "title-no-logs-volume-available": "Nincs rendelkezésre álló naplómennyiség",
       "title-showing-partial-data": "Részadatok megjelenítése",
@@ -9973,11 +9983,7 @@
       "wrap-lines": "Sortörés"
     },
     "logs-navigation": {
-      "newer-logs": "Újabb naplók",
-      "older-logs": "Régebbi naplók",
-      "scroll-bottom": "Görgetés az aljára",
-      "scroll-top": "Görgetés a tetejére",
-      "start-of-range": "Tartomány kezdete"
+      "scroll-top": "Görgetés a tetejére"
     },
     "logs-panel": {
       "render-common-labels": {
