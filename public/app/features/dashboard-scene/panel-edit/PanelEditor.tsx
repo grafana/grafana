@@ -17,6 +17,7 @@ import {
   sceneUtils,
   VizPanel,
   isSceneObject,
+  CancelActivationHandler,
 } from '@grafana/scenes';
 import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
@@ -103,12 +104,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     const deactivateParents = activateSceneObjectAndParentTree(panel);
 
+    const actionDeactivationHandlers: CancelActivationHandler[] = [];
+
     // Ensure headerActions are activated
     const headerActions = panel.state.headerActions;
     if (headerActions) {
       (Array.isArray(headerActions) ? headerActions : [headerActions]).forEach((action) => {
         if (isSceneObject(action)) {
-          action.activate();
+          actionDeactivationHandlers.push(action.activate());
         }
       });
     }
@@ -120,6 +123,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
       if (deactivateParents) {
         deactivateParents();
+
+        actionDeactivationHandlers.forEach((handler) => handler());
       }
     };
   }
