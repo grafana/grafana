@@ -81,8 +81,7 @@ func RegisterMigrations(
 	}
 
 	// Register resource migrations
-	// To add a new resource type, simply add another migration here with the appropriate resources
-	registerResourceMigrations(mg, migrator, client)
+	registerDashboardAndFolderMigration(mg, migrator, client)
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
@@ -96,18 +95,31 @@ func RegisterMigrations(
 	return nil
 }
 
-func registerResourceMigrations(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
+func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
+	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+
+	folderCountValidator := NewCountValidator(
+		client,
+		folders,
+		"dashboard",
+		"org_id = ? and is_folder = true",
+	)
+
+	dashboardCountValidator := NewCountValidator(
+		client,
+		dashboards,
+		"dashboard",
+		"org_id = ? and is_folder = false",
+	)
+
+	folderTreeValidator := NewFolderTreeValidator(client, folders)
+
 	dashboardsAndFolders := NewResourceMigration(
 		migrator,
-		[]schema.GroupResource{
-			{Group: "folder.grafana.app", Resource: "folders"},
-			{Group: "dashboard.grafana.app", Resource: "dashboards"},
-		},
+		[]schema.GroupResource{folders, dashboards},
 		"folders-dashboards",
-		NewCountValidator(client, map[string]LegacyTableInfo{
-			"folder.grafana.app/folders":       {Table: "dashboard", WhereClause: "org_id = ? and is_folder = true"},
-			"dashboard.grafana.app/dashboards": {Table: "dashboard", WhereClause: "org_id = ? and is_folder = false"},
-		}),
+		[]Validator{folderCountValidator, dashboardCountValidator, folderTreeValidator},
 	)
 	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
 }
