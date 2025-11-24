@@ -5,26 +5,27 @@ keywords:
   - Grafana Cloud
   - Grafana Operator
 title: Manage folders, data sources, and dashboards using Grafana Operator
+menuTitle: Manage resources with the Grafana Operator
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/grafana-operator/operator-dashboards-folders-datasources/
 ---
 
-# Creating and managing folders, data sources, and dashboards using the Grafana Operator
+# Manage folders, data sources, and dashboards using the Grafana Operator
 
-Learn how to manage data sources, folders and dashboard, using Grafana Operator.
+This guide shows you how to manage data sources, folders, and dashboards using the Grafana Operator. You'll create these resources declaratively using Kubernetes custom resources.
 
 ## Prerequisites
 
-Before you begin, you should have the following available:
+Before you begin, make sure you have the following:
 
-- An existing Grafana Cloud stack.
-- Grafana Operator Installed in your Cluster, as shown in [Grafana Operator Installation](/docs/grafana-cloud/as-code/infrastructure-as-code/grafana-operator/#installing-the-grafana-operator).
+- An existing Grafana Cloud stack
+- Grafana Operator installed in your cluster, as shown in [Grafana Operator Installation](/docs/grafana-cloud/as-code/infrastructure-as-code/grafana-operator/#installing-the-grafana-operator)
 
-## Grafana Operator Setup
+## Set up the Grafana Operator
 
-The Grafana Operator allows us to authenticate with the Grafana instance using the Grafana Custom Resource (CR).
+The Grafana Operator allows you to authenticate with your Grafana instance using the Grafana Custom Resource (CR).
 
-1. **Create the Grafana API Token Secret:**
+### Create the Grafana API Token Secret
 
 Store the Grafana API Token in a secret with the following content in a file named `grafana-token.yml`:
 
@@ -33,61 +34,64 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: grafana-cloud-credentials
-  namespace: <grafana-operator-namespace>
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
 stringData:
-  GRAFANA_CLOUD_INSTANCE_TOKEN: <Grafana-API-Key>
+  GRAFANA_CLOUD_INSTANCE_TOKEN: '<GRAFANA_API_KEY>'
 type: Opaque
 ```
 
-Replace the following field values:
+Replace the placeholders with your values:
 
-- `<Grafana-API-Key>` with API key from the Grafana instance. To create an API key, refer [Grafana API Key Documentation](/docs/grafana/latest/administration/api-keys/).
-- `<grafana-operator-namespace>` with the namespace where the grafana-operator is deployed in Kubernetes Cluster.
+- _`<GRAFANA_API_KEY>`_: API key from your Grafana instance. To create an API key, refer to [Grafana API Key Documentation](/docs/grafana/latest/administration/api-keys/)
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
-2. **Configure the Grafana Custom Resource:**
+### Configure the Grafana Custom Resource
 
-Set up connection to your Grafana Cloud instance by creating a file named `grafana-cloud.yml` with the following contents:
+Set up connection to your Grafana Cloud instance. Create a file named `grafana-cloud.yml`:
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: Grafana
 metadata:
-  name: <Grafana-cloud-stack-name>
-  namespace: <grafana-operator-namespace>
+  name: '<GRAFANA_CLOUD_STACK_NAME>'
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
   labels:
-    dashboards: <Grafana-cloud-stack-name>
+    dashboards: '<GRAFANA_CLOUD_STACK_NAME>'
 spec:
   external:
-    url: https://<Grafana-cloud-stack-name>.grafana.net/
+    url: https://<GRAFANA_CLOUD_STACK_NAME>.grafana.net/
     apiKey:
       name: grafana-cloud-credentials
       key: GRAFANA_CLOUD_INSTANCE_TOKEN
 ```
 
-Replace the following field values:
+Replace the placeholders with your values:
 
-- `<Grafana-API-Key>` with API key from the Grafana instance.
-- `<Grafana-cloud-stack-name>` with the name of your Grafana Cloud Stack.
-- `<grafana-operator-namespace>` with the namespace where the grafana-operator is deployed in Kubernetes Cluster.
+- _`<GRAFANA_CLOUD_STACK_NAME>`_: Name of your Grafana Cloud stack
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
 ## Add a data source
 
-The following steps use the Prometheus data source. The required arguments vary depending on the data source you select.
+{{< admonition type="note" >}}
 
-1. **Create the Data Source Configuration:**
+This example uses the Prometheus data source. Note that the required arguments vary depending on the data source you select.
 
-Save a new YAML file `datasource.yml` with the following content:
+{{< /admonition >}}
+
+### Create a data source configuration
+
+Create and save a new YAML file `datasource.yml` with your data source's configuration:
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:
-  name: <data-source-name>
-  namespace: <grafana-operator-namespace>
+  name: '<DATA_SOURCE_NAME>'
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
 spec:
   instanceSelector:
     matchLabels:
-      dashboards: <Grafana-cloud-stack-name>
+      dashboards: '<GRAFANA_CLOUD_STACK_NAME>'
   allowCrossNamespaceImport: true
   datasource:
     access: proxy
@@ -95,74 +99,76 @@ spec:
     jsonData:
       timeInterval: 5s
       tlsSkipVerify: true
-    name: <data-source-name>
+    name: '<DATA_SOURCE_NAME>'
     type: prometheus
-    url: <data-source-url>
+    url: '<DATA_SOURCE_URL>'
 ```
 
-Replace the following field values:
+Replace the placeholders with your values:
 
-- `<data-source-name>` with the name of the data source to be added in Grafana.
-- `<data-source-url>` with URL of your data source.
-- `<Grafana-cloud-stack-name>` with the name of your Grafana Cloud Stack.
-- `<grafana-operator-namespace>` with the namespace where the grafana-operator is deployed in Kubernetes Cluster.
+- _`<DATA_SOURCE_NAME>`_: Name of the data source to be added in Grafana
+- _`<DATA_SOURCE_URL>`_: URL of your data source
+- _`<GRAFANA_CLOUD_STACK_NAME>`_: Name of your Grafana Cloud stack
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
-## Add a dashboard to a folder
+### Add a dashboard to a folder
 
-Use the following YAML definition to create a simple dashboard in the Grafana instance under a custom folder. If the folder defined under spec.folder fields doesnt not exist, The operator will create it before placing the dashboard inside the folder.
+Use the following YAML definition to create a simple dashboard in the Grafana instance under a custom folder. If the folder defined under the `spec.folder` field doesn't exist, the operator creates it before placing the dashboard inside the folder.
 
-1. **Prepare the Dashboard Configuration File:**
-
-In `dashboard.yml`, define the dashboard and assign it to a folder:
+Prepare the dashboard configuration. In `dashboard.yml`, define the dashboard and assign it to a folder:
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name: <folder-name>
-  namespace: <grafana-operator-namespace>
+  name: '<FOLDER_NAME>'
+  namespace: '<GRAFANA_OPERATOR_NAMESPACE>'
 spec:
   instanceSelector:
     matchLabels:
-      dashboards: <Grafana-cloud-stack-name>
-  folder: "<folder-name>"
+      dashboards: '<GRAFANA_CLOUD_STACK_NAME>'
+  folder: '<FOLDER_NAME>'
   json: >
-  {
-    "title": "as-code dashboard",
-    “uid” : “ascode”
-  }
+    {
+      "title": "as-code dashboard",
+      "uid" : "ascode"
+    }
 ```
 
-Replace the following field values:
+Replace the placeholders with your values:
 
-- `<folder-name>` with the name of the folder in which you want the Dashboard to be created.
-- `<Grafana-cloud-stack-name>` with the name of your Grafana Cloud Stack.
-- `<grafana-operator-namespace>` with the namespace where the grafana-operator is deployed in Kubernetes Cluster.
+- _`<FOLDER_NAME>`_: Name of the folder in which you want the dashboard to be created
+- _`<GRAFANA_CLOUD_STACK_NAME>`_: Name of your Grafana Cloud stack
+- _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster
 
-## Apply Kubernetes Manifests
+## Apply the Kubernetes manifests
 
 In a terminal, run the following commands from the directory where all of the above Kubernetes YAML definitions are located.
 
-1. Create Kubernetes Custom resources for all of the above configurations.
+Create Kubernetes Custom resources for all of the configurations:
 
-   ```shell
-   kubectl apply -f grafana-token.yml grafana-cloud.yml datasource.yml dashboard.yml
-   ```
+```sh
+kubectl apply -f grafana-token.yml grafana-cloud.yml datasource.yml dashboard.yml
+```
 
-## Validation
+## Validate your configuration
 
-Once you apply the configurations, you should be able to verify the following:
+After you apply the configurations, verify that:
 
-- A new data source is visible in Grafana. In the following image a datasource named `InfluxDB` was created.
+- A new data source is visible in Grafana. In the following image, a data source named `InfluxDB` was created.
 
   ![InfluxDB datasource](/static/img/docs/grafana-cloud/terraform/influxdb_datasource_tf.png)
 
-- A new dashboard and folder in Grafana. In the following image a dashboard named `InfluxDB Cloud Demos` was created inside the `Demos` folder.
+- A new dashboard and folder have been created in Grafana. In the following image, a dashboard named `InfluxDB Cloud Demos` was created inside the `Demos` folder.
 
   ![InfluxDB dashboard](/static/img/docs/grafana-cloud/grizzly/grizzly-folder-dashboard-datasource.png)
 
-## Conclusion
+## Next steps
 
-In this guide, you created a data source, folder, and dashboard using the Grafana Operator.
+You've successfully created a data source, folder, and dashboard using the Grafana Operator. Your Grafana resources are now managed declaratively through Kubernetes custom resources.
 
-To learn more about managing Grafana using Grafana Operator, see the [Grafana Operator documentation](https://grafana.github.io/grafana-operator/docs/).
+To learn more about managing Grafana:
+
+- [Grafana Operator documentation](https://grafana.github.io/grafana-operator/docs/)
+- [Grafana dashboard provisioning](/docs/grafana/latest/administration/provisioning/#dashboards)
+- [Grafana data source provisioning](/docs/grafana/latest/administration/provisioning/#data-sources)

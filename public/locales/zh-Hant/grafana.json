@@ -1976,9 +1976,11 @@
     },
     "notification-preview": {
       "alertmanager": "警報管理：",
-      "disabled-tooltip": "",
       "error": "無法載入路由預覽：{{alertmanager}}",
       "initialized": "根據新增的標籤，警報執行個體被路由到以下通知策略。展開下方的每個通知政策以檢視更多詳細資訊。",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "預覽路由",
       "select-folder-tooltip": "",
       "text-loading-preview": "正在載入預覽…",
@@ -2586,8 +2588,7 @@
         "firing": "觸發",
         "normal": "一般",
         "pending": "待處理",
-        "recovering": "正在還原",
-        "unknown": "未知"
+        "recovering": "正在還原"
       },
       "type": {
         "alert": "警報規則",
@@ -2611,12 +2612,14 @@
         "placeholder-search-input": "按名稱搜尋或輸入篩選條件查詢…"
       },
       "grafana-folder": "Grafana 資料夾",
+      "group-autocomplete-unavailable": "",
       "health": "使用情況",
       "label": {
         "hide": "隱藏",
         "show": "顯示"
       },
       "manage-alerts": "在這些資料來源中，您可以選擇透過警報 UI 管理警報，以便在 Grafana UI 以及在其設定的資料來源中管理這些警報規則。",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "所有資料來源",
       "placeholder-contact-point": "選擇聯絡點",
       "placeholder-data-sources": "選擇資料來源",
@@ -3528,6 +3531,7 @@
       "delete-modal-invalid-title": "無法刪除資料夾",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "此動作將刪除以下內容：",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "刪除",
       "delete-provisioned-folder": "刪除已佈建的資料夾",
       "deleting": "正在刪除…",
@@ -3536,6 +3540,7 @@
       "move-modal-alert": "移動此項目可能會變更其權限。",
       "move-modal-field-label": "資料夾名稱",
       "move-modal-text": "此動作將移動以下內容：",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "移動",
       "move-provisioned-folder": "",
       "moving": "正在移動…",
@@ -3618,11 +3623,11 @@
       "title-folder": "此資料夾尚無任何儀表板"
     },
     "folder-actions-button": {
-      "delete": "刪除",
+      "delete": "",
       "delete-folder-error": "刪除資料夾時發生錯誤，請稍後再試。",
       "folder-actions": "資料夾動作",
       "manage-permissions": "管理權限",
-      "move": "移動"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "選取資料夾：「{{ label }}」目前已選取",
@@ -5075,8 +5080,12 @@
     "new-panel": {
       "configure-button": "設定",
       "configure-button-menu": "切換選單",
+      "empty-state-message": "",
       "menu-open-panel-editor": "設定",
-      "menu-use-library-panel": "使用資料庫面板"
+      "menu-use-library-panel": "使用資料庫面板",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "新的面板",
     "on-create-new-row": {
@@ -7191,6 +7200,7 @@
       "logs-volume": {
         "add-filters": "在您的查詢中新增更多標籤，以縮小搜尋範圍。",
         "decrease-timerange": "縮小查詢的時間範圍。",
+        "max-bytes-error": "",
         "much-data": "查詢嘗試存取的資料過多。請嘗試以下一個或多個方法："
       },
       "maximum-pinned-logs": "已達到固定日誌的最大值 {{PINNED_LOGS_LIMIT}}。取消固定一個日誌以便新增另一個。",
@@ -7240,12 +7250,15 @@
       "tooltip-select-query-visualize-table": "選擇要在表格中視覺化呈現的查詢項目"
     },
     "logs-volume-panel": {
-      "content-streaming": "串流"
+      "content-streaming": "串流",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "重新載入紀錄容量",
       "label-reload-log-volume": "重新載入紀錄容量",
       "loading": "正在載入…",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "無法載入此查詢的紀錄容量",
       "title-no-logs-volume-available": "沒有可用的紀錄容量",
       "title-showing-partial-data": "顯示部分資料",
@@ -8550,7 +8563,13 @@
       "saving": "正在儲存<1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "線性臨界值",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "日誌基礎"
     },
     "builder": {
@@ -8956,6 +8975,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "使用右 y 軸"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9247,6 +9271,7 @@
       "toggle-panel-edit": "切換面板編輯檢視",
       "toggle-panel-fullscreen": "切換面板全螢幕檢視",
       "toggle-panel-legend": "切換面板圖例",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "縮小時間範圍"
     },
     "title": "捷徑"
@@ -9914,11 +9939,7 @@
       "wrap-lines": "換行"
     },
     "logs-navigation": {
-      "newer-logs": "較新的日誌",
-      "older-logs": "較舊的日誌",
-      "scroll-bottom": "滾動到底部",
-      "scroll-top": "捲動回頂部",
-      "start-of-range": "範圍開始"
+      "scroll-top": "捲動回頂部"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12480,11 +12501,14 @@
       "copy-clipboard": "複製至剪貼簿",
       "copy-to-clipboard-and-close": "複製至剪貼簿並關閉",
       "description-name-to-easily-identify-the-token": "輕鬆識別權杖的名稱",
+      "description-no-expiration-disabled": "",
       "description-token": "請立即複製權杖，因為您將無法再次看到它。若您遺失權杖，則需要建立新的權杖。",
       "generate-token": "產生權杖",
       "label-display-name": "顯示名稱",
       "label-expiration": "過期",
       "label-expiration-date": "過期日期",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "權杖"
     },
     "get-actions-cell": {

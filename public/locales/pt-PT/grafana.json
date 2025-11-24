@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
-      "disabled-tooltip": "",
       "error": "Não foi possível carregar a pré-visualização de encaminhamento para {{alertmanager}}",
       "initialized": "Com base nas etiquetas adicionadas, as instâncias de alerta são encaminhadas para as seguintes políticas de notificação. Expanda cada política de notificação abaixo para ver mais detalhes.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Pré-visualizar encaminhamento",
       "select-folder-tooltip": "",
       "text-loading-preview": "A carregar a pré-visualização...",
@@ -2598,8 +2600,7 @@
         "firing": "Ativado",
         "normal": "Normal",
         "pending": "Pendente",
-        "recovering": "A recuperar",
-        "unknown": "Desconhecido"
+        "recovering": "A recuperar"
       },
       "type": {
         "alert": "Regra de alerta",
@@ -2623,12 +2624,14 @@
         "placeholder-search-input": "Pesquise por nome ou introduza uma consulta de filtro..."
       },
       "grafana-folder": "Pasta Grafana",
+      "group-autocomplete-unavailable": "",
       "health": "Saúde",
       "label": {
         "hide": "Ocultar",
         "show": "Mostrar"
       },
       "manage-alerts": "Nestas origens de dados, pode selecionar Gerir alertas através da interface do utilizador Alerting para poder gerir estas regras de alerta na interface do utilizador Grafana, bem como na origem de dados onde foram configuradas.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Todas as origens de dados",
       "placeholder-contact-point": "Selecionar ponto de contacto",
       "placeholder-data-sources": "Selecionar origens de dados",
@@ -3540,6 +3543,7 @@
       "delete-modal-invalid-title": "Não é possível eliminar a pasta",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Esta ação eliminará o seguinte conteúdo:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Eliminar",
       "delete-provisioned-folder": "Eliminar a pasta disponibilizada",
       "deleting": "A eliminar...",
@@ -3548,6 +3552,7 @@
       "move-modal-alert": "Mover este elemento pode alterar as suas permissões.",
       "move-modal-field-label": "Nome da pasta",
       "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Mover",
       "move-provisioned-folder": "",
       "moving": "A mover...",
@@ -3635,11 +3640,11 @@
       "title-folder": "Esta pasta ainda não tem qualquer painel de controlo"
     },
     "folder-actions-button": {
-      "delete": "Eliminar",
+      "delete": "",
       "delete-folder-error": "Erro ao eliminar a pasta. Tente novamente mais tarde.",
       "folder-actions": "Ações da pasta",
       "manage-permissions": "Gerir permissões",
-      "move": "Mover"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Selecionar a pasta: {{ label }} selecionada atualmente",
@@ -5095,8 +5100,12 @@
     "new-panel": {
       "configure-button": "Configurar",
       "configure-button-menu": "Alternar menu",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Configurar",
-      "menu-use-library-panel": "Utilizar o painel de biblioteca"
+      "menu-use-library-panel": "Utilizar o painel de biblioteca",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Novo painel",
     "on-create-new-row": {
@@ -7215,6 +7224,7 @@
       "logs-volume": {
         "add-filters": "Adicione mais etiquetas à sua consulta para restringir a sua pesquisa.",
         "decrease-timerange": "Diminua o intervalo de tempo da sua consulta.",
+        "max-bytes-error": "",
         "much-data": "A consulta está a tentar aceder a demasiados dados. Tente um ou mais dos seguintes procedimentos:"
       },
       "maximum-pinned-logs": "Máximo de registos {{PINNED_LOGS_LIMIT}} fixados atingidos. Retire um registo para adicionar outro.",
@@ -7264,12 +7274,15 @@
       "tooltip-select-query-visualize-table": "Selecione uma consulta para visualizar na tabela"
     },
     "logs-volume-panel": {
-      "content-streaming": "Transmissão"
+      "content-streaming": "Transmissão",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Recarregar volume de registo",
       "label-reload-log-volume": "Recarregar volume de registo",
       "loading": "A carregar...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Falha ao carregar o volume de registos para esta consulta",
       "title-no-logs-volume-available": "Nenhum volume de registos disponível",
       "title-showing-partial-data": "A mostrar dados parciais",
@@ -8586,7 +8599,13 @@
       "saving": "A guardar <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Limite linear",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Base de registo"
     },
     "builder": {
@@ -8992,6 +9011,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Utilizar o eixo y direito"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9283,6 +9307,7 @@
       "toggle-panel-edit": "Alternar vista de edição do painel",
       "toggle-panel-fullscreen": "Alternar vista de ecrã inteiro do painel",
       "toggle-panel-legend": "Alternar legenda do painel",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Diminuir o zoom do intervalo de tempo"
     },
     "title": "Atalhos"
@@ -9958,11 +9983,7 @@
       "wrap-lines": "Quebra de linhas"
     },
     "logs-navigation": {
-      "newer-logs": "Registos mais recentes",
-      "older-logs": "Registos mais antigos",
-      "scroll-bottom": "Rolar para baixo",
-      "scroll-top": "Rolar para o topo",
-      "start-of-range": "Início do intervalo"
+      "scroll-top": "Rolar para o topo"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12535,11 +12556,14 @@
       "copy-clipboard": "Copiar para a área de transferência",
       "copy-to-clipboard-and-close": "Copiar para a área de transferência e fechar",
       "description-name-to-easily-identify-the-token": "Nome para identificar facilmente o token",
+      "description-no-expiration-disabled": "",
       "description-token": "Copie o token agora, pois não poderá vê-lo novamente. Perder um token requer a criação de um novo.",
       "generate-token": "Gerar token",
       "label-display-name": "Nome de exibição",
       "label-expiration": "Validade",
       "label-expiration-date": "Data de vencimento",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {

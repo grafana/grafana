@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
-      "disabled-tooltip": "",
       "error": "Die Weiterleitungsvorschau für {{alertmanager}} konnte nicht geladen werden",
       "initialized": "Basierend auf den hinzugefügten Labels werden Warninstanzen an die folgenden Benachrichtigungsrichtlinien weitergeleitet. Erweitern Sie unten die einzelnen Benachrichtigungsrichtlinien, um weitere Details anzuzeigen.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Weiterleitungsvorschau",
       "select-folder-tooltip": "",
       "text-loading-preview": "Vorschau wird geladen ...",
@@ -2598,8 +2600,7 @@
         "firing": "Auslösung",
         "normal": "Normal",
         "pending": "Ausstehend",
-        "recovering": "Wird wiederhergestellt",
-        "unknown": "Unbekannt"
+        "recovering": "Wird wiederhergestellt"
       },
       "type": {
         "alert": "Alertregel",
@@ -2623,12 +2624,14 @@
         "placeholder-search-input": "Nach Name suchen oder Filterabfrage eingeben …"
       },
       "grafana-folder": "Grafana-Ordner",
+      "group-autocomplete-unavailable": "",
       "health": "Zustand",
       "label": {
         "hide": "Ausblenden",
         "show": "Anzeigen"
       },
       "manage-alerts": "In diesen Datenquellen können Sie über die Alerting-Benutzeroberfläche „Warnungen verwalten“ auswählen, um diese Warnregeln sowohl in der Grafana-Benutzeroberfläche als auch in der Datenquelle, in der sie konfiguriert wurden, verwalten zu können.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Alle Datenquellen",
       "placeholder-contact-point": "Kontaktpunkt auswählen",
       "placeholder-data-sources": "Datenquellen auswählen",
@@ -3540,6 +3543,7 @@
       "delete-modal-invalid-title": "Ordner kann nicht gelöscht werden",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Diese Aktion wird folgenden Inhalt löschen:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Löschen",
       "delete-provisioned-folder": "Bereitgestellten Ordner löschen",
       "deleting": "Löschen...",
@@ -3548,6 +3552,7 @@
       "move-modal-alert": "Das Verschieben dieses Elements kann seine Berechtigungen ändern.",
       "move-modal-field-label": "Ordnername",
       "move-modal-text": "Diese Aktion wird folgenden Inhalt verschieben:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Verschieben",
       "move-provisioned-folder": "",
       "moving": "Verschieben...",
@@ -3635,11 +3640,11 @@
       "title-folder": "Dieser Ordner enthält noch keine Dashboards"
     },
     "folder-actions-button": {
-      "delete": "Löschen",
+      "delete": "",
       "delete-folder-error": "Beim Löschen des Ordners ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
       "folder-actions": "Ordneraktionen",
       "manage-permissions": "Berechtigungen verwalten",
-      "move": "Verschieben"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Ordner auswählen: {{ label }} aktuell ausgewählt",
@@ -5095,8 +5100,12 @@
     "new-panel": {
       "configure-button": "Konfigurieren",
       "configure-button-menu": "Menü umschalten",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Konfigurieren",
-      "menu-use-library-panel": "Bibliotheks-Panel verwenden"
+      "menu-use-library-panel": "Bibliotheks-Panel verwenden",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Neues Panel",
     "on-create-new-row": {
@@ -7215,6 +7224,7 @@
       "logs-volume": {
         "add-filters": "Fügen Sie Ihrer Abfrage weitere Labels hinzu, um Ihre Suche einzugrenzen.",
         "decrease-timerange": "Verringern Sie den Zeitbereich Ihrer Abfrage.",
+        "max-bytes-error": "",
         "much-data": "Die Abfrage versucht, auf zu viele Daten zuzugreifen. Probieren Sie eine oder mehrere der folgenden Möglichkeiten aus:"
       },
       "maximum-pinned-logs": "Maximale Anzahl von {{PINNED_LOGS_LIMIT}} fixierten Protokollen erreicht. Heben Sie die Fixierung eines Protokolls auf, um ein weiteres hinzuzufügen.",
@@ -7264,12 +7274,15 @@
       "tooltip-select-query-visualize-table": "Wählen Sie eine Abfrage für die Visualisierung in der Tabelle"
     },
     "logs-volume-panel": {
-      "content-streaming": "Streaming"
+      "content-streaming": "Streaming",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Log-Volumen neu laden",
       "label-reload-log-volume": "Log-Volumen neu laden",
       "loading": "Wird geladen ...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Das Log-Volumen für diese Abfrage konnte nicht geladen werden",
       "title-no-logs-volume-available": "Kein Logs-Volumen verfügbar",
       "title-showing-partial-data": "Teildaten werden angezeigt",
@@ -8586,7 +8599,13 @@
       "saving": "<1></1> wird gespeichert"
     },
     "axis-builder": {
-      "linear-threshold": "Linearer Schwellenwert",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Logarithmische Basis"
     },
     "builder": {
@@ -8992,6 +9011,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Rechte y-Achse verwenden"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9283,6 +9307,7 @@
       "toggle-panel-edit": "Fenster bearbeiten-Ansicht umschalten",
       "toggle-panel-fullscreen": "Vollbildansicht des Fensters umschalten",
       "toggle-panel-legend": "Legende des Fensters umschalten",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Zeitbereich verkleinern"
     },
     "title": "Shortcuts"
@@ -9958,11 +9983,7 @@
       "wrap-lines": "Zeilen umbrechen"
     },
     "logs-navigation": {
-      "newer-logs": "Neuere Protokolle",
-      "older-logs": "Ältere Protokolle",
-      "scroll-bottom": "Nach unten scrollen",
-      "scroll-top": "Nach oben scrollen",
-      "start-of-range": "Anfang des Bereichs"
+      "scroll-top": "Nach oben scrollen"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12535,11 +12556,14 @@
       "copy-clipboard": "In die Zwischenablage kopieren",
       "copy-to-clipboard-and-close": "In Zwischenablage kopieren und schließen",
       "description-name-to-easily-identify-the-token": "Name zur einfachen Identifizierung des Tokens",
+      "description-no-expiration-disabled": "",
       "description-token": "Kopieren Sie den Token jetzt, denn Sie werden ihn später nicht mehr sehen können. Wenn Sie einen Token verlieren, müssen Sie einen neuen Token erstellen.",
       "generate-token": "Token generieren",
       "label-display-name": "Anzeigename",
       "label-expiration": "Ablauf",
       "label-expiration-date": "Ablaufdatum",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {
