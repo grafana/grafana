@@ -67,7 +67,7 @@ Follow this workflow when adding a new data source. The data source must be host
 6. Navigate back to the Tempo or Cloud Traces data source.
    - Set up the Tempo or Cloud Traces data source using basic authentication. Use the [userID/tenantID](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/locate-url-user-password/) as the username. Use the token from your access policy as the password.
    - Select **Save and connect**.
-7. Go to the **Permissions** tab of the newly created Tempo or Cloud Traces data source. Here, you'll find the LBAC for data sources rules section.
+7. Go to the **Permissions** tab of the newly created Tempo or Cloud Traces data source. Here, you find the LBAC for data sources rules section.
 
 8. Choose a team from the **Team** dropdown.
 9. Enter attribute selectors such as:
