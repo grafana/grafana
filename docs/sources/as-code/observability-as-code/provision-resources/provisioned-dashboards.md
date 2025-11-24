@@ -82,6 +82,11 @@ If you want to add an existing dashboard to your provisioned resources, refer to
 
 {{< /admonition >}}
 
+You have two options for creating **new** dashboards or folders in Git Sync:
+
+- Create them directly within Git Sync-managed folders in the Grafana UI
+- Add them by committing JSON files to your Git repository
+
 When you create a new dashboard in a provisioned folder associated with a GitHub repository, you follow the same process you use for any new dashboard.
 Refer to [Create a dashboard](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/) for more information.
 

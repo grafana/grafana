@@ -27,14 +27,12 @@ Git Sync and local file provisioning are [experimental features](https://grafana
 
 {{< /admonition >}}
 
-Git Sync is under development, and traditional operations like `import`, `copy`, `move`, or `save` are not yet supported for dashboards already existing in Grafana. If you want to use Git Sync with those dashboards, they must be exported to the repository first. Currently, Git Sync doesn't offer any built-in functionality to easily export those from Grafana in bulk, but if you really want to use Git Sync, the following options are available for you in the meantime: 
-- Copy as JSON and committing them into the repository. 
-- Export them with [grafanactl]() and commit. (recommended)
+Git Sync is under development, and traditional operations like `import`, `copy`, `move`, or `save` are not yet supported for dashboards already existing in Grafana. To use Git Sync with existing dashboards you must export them to the repository first. 
 
-You have two options for creating new dashboards or folders in Git Sync:
+Currently, Git Sync doesn't offer any built-in functionality to easily export resources from Grafana in bulk. However, the following options are available: 
 
-- Create them directly within Git Sync-managed folders in the Grafana UI
-- Add them by committing JSON files to your Git repository, as described in this document
+- Export the dashboard with [grafanactl](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) and commit (recommended)
+- Copy the dashboard as JSON and commit to the repository 
 
 ## Add an existing Grafana dashboard to Git Sync
 
@@ -65,24 +63,12 @@ The structure includes:
 
 - `apiVersion`: Specifies the API version (currently `v1beta1`)
 - `kind`: Identifies the resource type (Dashboard)
-- `metadata`: Contains the dashboard identifier
+- `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dahsboard's URL or in the exported JSON
 - `spec`: Wraps your original dashboard JSON
 
 ## Edit Git-managed dashboards
 
-When a dashboard is under Git Sync management, you can edit, delete, or save it similarly to traditional dashboards. However, these operations require a Git-based workflow:
-
-- Make your changes in the Grafana UI
-- Provide a commit message describing your changes
-- Push to a branch in your repository
-- Open a pull request for review
-
-This workflow ensures all changes are version-controlled and can be reviewed before being applied, aligning with GitOps principles and enabling team collaboration through standard Git workflows.
-
-For more information:
-
-- [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/)
-- [GitSync demo](https://github.com/grafana/grafana-git-sync-demo) 
+After you've saved a dashboard in Git, it'll be synchronized automatically, and you'll be able to work with it as any other provisioned resource. Refer to [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/) for more information.
 
 
 
