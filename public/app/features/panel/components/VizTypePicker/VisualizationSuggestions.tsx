@@ -83,17 +83,12 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
           }
 
           width = width - 1;
-          const columnCount = Math.floor(width / 200);
+          const columnCount = Math.floor(Math.min(width / 260, 2));
           const spaceBetween = 8 * (columnCount! - 1);
           const previewWidth = Math.floor((width - spaceBetween) / columnCount!);
 
           return (
             <div>
-              <div className={styles.filterRow}>
-                <div className={styles.infoText}>
-                  <Trans i18nKey="panel.visualization-suggestions.based-on-current-data">Based on current data</Trans>
-                </div>
-              </div>
               <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth}px)` }}>
                 {filteredSuggestions.map((suggestion, index) => {
                   const isCardSelected = isNewVizSuggestionsEnabled && selectedIndex === index;
@@ -153,7 +148,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     grid: css({
       display: 'grid',
       gridGap: theme.spacing(1),
-      gridTemplateColumns: 'repeat(auto-fill, 144px)',
       marginBottom: theme.spacing(1),
       justifyContent: 'space-evenly',
     }),
