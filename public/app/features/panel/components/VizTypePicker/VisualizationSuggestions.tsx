@@ -50,15 +50,14 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     [onChange]
   );
 
-  // auto-select first suggestion when nothing is selected, and take care of the firstCardHash state
   useEffect(() => {
     if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0) {
       return;
     }
 
-    // if the first suggestion has changed, we're going to remove the currently selected suggestion and
-    // set the firstCardHash to the new first suggestion's hash. We also choose the first suggestion if the previously
-    // selected suggestion is no longer present in the list.
+    // if the first suggestion has changed, we're going to change the currently selected suggestion and
+    // set the firstCardHash to the new first suggestion's hash. We also choose the first suggestion if
+    // the previously selected suggestion is no longer present in the list.
     const newFirstCardHash = suggestions?.[0]?.hash ?? null;
     if (firstCardHash !== newFirstCardHash || suggestions.every((s) => s.hash !== suggestionHash)) {
       applySuggestion(suggestions[0], true);
