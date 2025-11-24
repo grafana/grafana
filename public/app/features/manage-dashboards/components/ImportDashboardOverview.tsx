@@ -1,18 +1,21 @@
 import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { dateTimeFormat, TypedVariableModel } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTimeFormat, locationUtil, TypedVariableModel } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationService, reportInteraction, config } from '@grafana/runtime';
-import { AnnotationQuery } from '@grafana/schema/dist/esm/veneer/dashboard.types';
+import { Panel } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
+import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { Box, Legend, TextLink } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { addLibraryPanel } from 'app/features/library-panels/state/api';
 import { StoreState } from 'app/types/store';
 
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
-import { DashboardSource, ImportDashboardDTO } from '../state/reducers';
+import { DashboardSource, DataSourceInput, ImportDashboardDTO, LibraryPanelInputState } from '../state/reducers';
 
 import { ImportDashboardForm } from './ImportDashboardForm';
 
@@ -48,123 +51,76 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
     uidReset: false,
   };
 
-  onSubmit = (form: ImportDashboardDTO) => {
+  onSubmit = async (form: ImportDashboardDTO) => {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
     const { dashboard, inputs, folder } = this.props;
 
-    // TODO: add logic when kubernetesDashboards are enabled
+    // when kubernetesDashboard are enabled, we bypass api/dashboard/import
+    // and hit the k8s dashboard API directly
     if (config.featureToggles.kubernetesDashboards) {
       // 1. process datasources so the template placeholder is replaced with the actual value user selected
 
       const annotations = dashboard.annotations.list.map((annotation: AnnotationQuery) => {
-        if (annotation.datasource && annotation.datasource.uid && annotation.datasource.uid.startsWith('$')) {
-          // clean ${} from the datasource name
-          const dsName = annotation.datasource.uid.replace(/\$\{(.*)\}/, '$1');
-          const input = inputs.dataSources.find((ds) => ds.name === dsName);
-          const userInput = input && form.dataSources.find((ds) => ds.type === input.pluginId);
-          if (userInput) {
-            return {
-              ...annotation,
-              datasource: {
-                ...annotation.datasource,
-                uid: userInput.uid,
-              },
-            };
-          }
-        }
-        return annotation;
+        return processAnnotation(annotation, inputs, form);
       });
 
-      const panels = dashboard.panels.map((panel: any) => {
-        if (panel.datasource && panel.datasource.uid && panel.datasource.uid.startsWith('$')) {
-          // clean ${} from the datasource name
-          const dsName = panel.datasource.uid.replace(/\$\{(.*)\}/, '$1');
-          const input = inputs.dataSources.find((ds) => ds.name === dsName);
-          const userInput = input && form.dataSources.find((ds) => ds.type === input.pluginId);
-
-          const queries = panel.targets.map((target: any) => {
-            if (target.datasource && target.datasource.uid && target.datasource.uid.startsWith('$')) {
-              const dsName = target.datasource.uid.replace(/\$\{(.*)\}/, '$1');
-              const input = inputs.dataSources.find((ds) => ds.name === dsName);
-              const userInput = input && form.dataSources.find((ds) => ds.type === input.pluginId);
-              if (userInput) {
-                return {
-                  ...target,
-                  datasource: {
-                    ...target.datasource,
-                    uid: userInput.uid,
-                  },
-                };
-              }
-            }
-            return target;
-          });
-
-          panel = {
-            ...panel,
-            targets: queries,
-          };
-
-          if (userInput) {
-            return {
-              ...panel,
-              datasource: {
-                ...panel.datasource,
-                uid: userInput.uid,
-              },
-            };
-          }
-        }
-        return panel;
+      const panels = dashboard.panels.map((panel: Panel) => {
+        return processPanel(panel, inputs, form);
       });
 
       const variables = dashboard.templating.list.map((variable: TypedVariableModel) => {
-        if (variable.type === 'query') {
-          if (variable.datasource && variable.datasource.uid?.startsWith('$')) {
-            // clean ${} from the datasource name
-            const dsName = variable.datasource.uid.replace(/\$\{(.*)\}/, '$1');
-            const input = inputs.dataSources.find((ds) => ds.name === dsName);
-            const userInput = input && form.dataSources.find((ds) => ds.type === input.pluginId);
-            if (userInput) {
-              return {
-                ...variable,
-                datasource: userInput.uid,
-              };
-            }
-          }
-        }
-
-        if (variable.type === 'datasource') {
-          if (variable.current && variable.current.value && String(variable.current.value).startsWith('$')) {
-            // clean ${} from the datasource name
-            const dsName = String(variable.current.value).replace(/\$\{(.*)\}/, '$1');
-            const input = inputs.dataSources.find((ds) => ds.name === dsName);
-            const userInput = input && form.dataSources.find((ds) => ds.type === input.pluginId);
-            if (userInput) {
-              return {
-                ...variable,
-                current: {
-                  ...variable.current,
-                  value: userInput.uid,
-                },
-              };
-            }
-          }
-        }
-
-        return variable;
+        return processVariable(variable, inputs, form);
       });
 
-      const dashboardWithDataSources: DashboardDataDTO = {
+      const dashboardWithDataSources: Dashboard = {
         ...dashboard,
         title: form.title,
         annotations,
+        panels,
+        templating: {
+          list: variables,
+        },
+        uid: form.uid,
       };
-      // 2. if library panel doesn't exist in the instance, create it by hitting the library panel API
-      // you can use getLibraryPanel or getLibraryPanelInputs to check if panel exists and addLibraryPanel from library panel from public/app/features/library-panels/state/api.ts
 
-      // 3. hit v1 API POST directly
+      const newLibraryPanels = inputs.libraryPanels.filter((lp) => lp.state === LibraryPanelInputState.New);
+
+      // for library panels that don't exist in the instance, we create them by hitting the library panel API
+      for (const lp of newLibraryPanels) {
+        const libPanelWithPanelModel = new PanelModel(lp.model.model);
+        let { scopedVars, ...panelSaveModel } = libPanelWithPanelModel.getSaveModel();
+        panelSaveModel = {
+          libraryPanel: {
+            name: lp.model.name,
+            uid: lp.model.uid,
+          },
+          ...panelSaveModel,
+        };
+
+        try {
+          await addLibraryPanel(panelSaveModel, folder.uid);
+        } catch (error) {
+          console.error('Error adding library panel during dashboard import', error);
+        }
+      }
+
+      const dashboardK8SPayload: SaveDashboardCommand<Dashboard> = {
+        dashboard: dashboardWithDataSources,
+        k8s: {
+          annotations: {
+            'grafana.app/folder': form.folder.uid,
+          },
+        },
+      };
+
+      // hit v1 API directly
+      const result = await getDashboardAPI('v1').saveDashboard(dashboardK8SPayload);
+
+      if (result.url) {
+        const dashboardUrl = locationUtil.stripBaseFromUrl(result.url);
+        locationService.push(dashboardUrl);
+      }
 
       return;
     }
@@ -247,3 +203,116 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
 
 export const ImportDashboardOverview = connector(ImportDashboardOverviewUnConnected);
 ImportDashboardOverview.displayName = 'ImportDashboardOverview';
+
+function hasUid(query: Record<string, unknown> | {}): query is { uid: string } {
+  return 'uid' in query && typeof query['uid'] === 'string';
+}
+
+/*
+Checks whether the templateized uid matches the user prodvided datasource input
+*/
+function checkUserInputMatch(
+  templateizedUid: string,
+  datasourceInputs: DataSourceInput[],
+  userDsInputs: DataSourceInstanceSettings[]
+) {
+  const dsName = templateizedUid.replace(/\$\{(.*)\}/, '$1');
+  const input = datasourceInputs?.find((ds) => ds.name === dsName);
+  const userInput = input && userDsInputs.find((ds) => ds.type === input.pluginId);
+  return userInput;
+}
+
+function processAnnotation(
+  annotation: AnnotationQuery,
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+): AnnotationQuery {
+  if (annotation.datasource && annotation.datasource.uid && annotation.datasource.uid.startsWith('$')) {
+    const userInput = checkUserInputMatch(annotation.datasource.uid, inputs.dataSources, form.dataSources);
+    if (userInput) {
+      return {
+        ...annotation,
+        datasource: {
+          ...annotation.datasource,
+          uid: userInput.uid,
+        },
+      };
+    }
+  }
+
+  return annotation;
+}
+
+function processPanel(panel: Panel, inputs: { dataSources: DataSourceInput[] }, form: ImportDashboardDTO): Panel {
+  if (panel.datasource && panel.datasource.uid && panel.datasource.uid.startsWith('$')) {
+    const userInput = checkUserInputMatch(panel.datasource.uid, inputs.dataSources, form.dataSources);
+
+    const queries = panel.targets?.map((target) => {
+      if (target.datasource && hasUid(target.datasource) && target.datasource.uid.startsWith('$')) {
+        const userInput = checkUserInputMatch(target.datasource.uid, inputs.dataSources, form.dataSources);
+        if (userInput) {
+          return {
+            ...target,
+            datasource: {
+              ...target.datasource,
+              uid: userInput.uid,
+            },
+          };
+        }
+      }
+      return target;
+    });
+
+    if (userInput) {
+      return {
+        ...panel,
+        targets: queries,
+        datasource: {
+          ...panel.datasource,
+          uid: userInput.uid,
+        },
+      };
+    }
+  }
+
+  return panel;
+}
+
+function processVariable(
+  variable: TypedVariableModel,
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+): TypedVariableModel {
+  if (variable.type === 'query') {
+    if (variable.datasource && variable.datasource.uid?.startsWith('$')) {
+      const userInput = checkUserInputMatch(variable.datasource.uid, inputs.dataSources, form.dataSources);
+      if (userInput) {
+        return {
+          ...variable,
+          datasource: {
+            ...variable.datasource,
+            uid: userInput.uid,
+          },
+        };
+      }
+    }
+  }
+
+  if (variable.type === 'datasource') {
+    if (variable.current && variable.current.value && String(variable.current.value).startsWith('$')) {
+      const userInput = checkUserInputMatch(String(variable.current.value), inputs.dataSources, form.dataSources);
+      if (userInput) {
+        return {
+          ...variable,
+          current: {
+            selected: variable.current.selected,
+            text: userInput.name,
+            value: userInput.uid,
+          },
+        };
+      }
+    }
+  }
+
+  return variable;
+}
