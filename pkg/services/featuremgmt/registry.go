@@ -528,12 +528,11 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:              "alertingUIUseFullyCompatBackendFilters",
-			Description:       "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
+			Name:         "alertingUIUseFullyCompatBackendFilters",
+			Description:  "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
 		},
 		{
 			Name:        "alertmanagerRemotePrimary",
