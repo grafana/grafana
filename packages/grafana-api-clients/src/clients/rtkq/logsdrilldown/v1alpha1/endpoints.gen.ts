@@ -1278,7 +1278,7 @@ export type LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords = {
 }[];
 export type LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource = {
   records: LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords;
-}[];
+};
 export type LogsDrilldownDefaultColumnsSpec = {
   datasource: LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource;
 };
