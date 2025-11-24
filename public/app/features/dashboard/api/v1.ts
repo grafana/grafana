@@ -25,6 +25,8 @@ import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/ty
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
+import { ResponseTransformers } from './ResponseTransformers';
+import { getDashboardAPI } from './dashboard_api';
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
 import { isV2StoredVersion } from './utils';
 
@@ -125,7 +127,14 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       // This could come as conversion error from v0 or v2 to V1.
       if (dash.status?.conversion?.failed && isV2StoredVersion(dash.status.conversion.storedVersion)) {
-        throw new DashboardVersionError(dash.status.conversion.storedVersion, dash.status.conversion.error);
+        // Always try frontend conversion as fallback when backend conversion fails for v2 dashboards
+        try {
+          const v2Dash = await getDashboardAPI('v2').getDashboardDTO(uid, params);
+          return ResponseTransformers.ensureV1Response(v2Dash);
+        } catch (e) {
+          // If v2 load fails, throw the original conversion error
+          throw new DashboardVersionError(dash.status.conversion.storedVersion, dash.status.conversion.error);
+        }
       }
 
       const result: DashboardDTO = {

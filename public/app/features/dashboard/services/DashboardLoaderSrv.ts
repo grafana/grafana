@@ -16,6 +16,7 @@ import { appEvents } from '../../../core/app_events';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from '../api/types';
+import { isV2StoredVersion } from '../api/utils';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -144,6 +145,19 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
           return result;
         })
         .catch((e) => {
+          // If backend conversion failed for a v2 dashboard, try frontend conversion
+          if (e instanceof DashboardVersionError && isV2StoredVersion(e.data.storedVersion)) {
+            // Try loading as v2 and converting on frontend
+            return getDashboardAPI('v2')
+              .getDashboardDTO(uid, params)
+              .then((v2Result) => {
+                return ResponseTransformers.ensureV1Response(v2Result);
+              })
+              .catch((v2Error) => {
+                // If v2 load also fails, throw original error
+                throw e;
+              });
+          }
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;

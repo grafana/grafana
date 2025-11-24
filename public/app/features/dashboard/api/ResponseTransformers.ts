@@ -40,6 +40,7 @@ import {
   defaultDataQueryKind,
   RowsLayoutRowKind,
   GridLayoutKind,
+  TabsLayoutTabKind,
   defaultDashboardLinkType,
   defaultDashboardLink,
   defaultFieldConfigSource,
@@ -47,6 +48,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
+import { GRID_COLUMN_COUNT, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -1012,19 +1014,15 @@ function getPanelsV1(
   layout: DashboardV2Spec['layout']
 ): Array<Panel | LibraryPanelDTO> {
   const panelsV1: Array<Panel | LibraryPanelDTO | RowPanel> = [];
-
   let maxPanelId = 0;
 
-  if (layout.kind !== 'GridLayout') {
-    throw new Error('Cannot convert non-GridLayout layout to v1');
-  }
+  // Flatten nested layouts and convert to v1 panels
+  const flattenedPanels = flattenLayoutToV1Panels(panels, layout, 0);
 
-  for (const item of layout.spec.items) {
-    const panel = panels[item.spec.element.name];
-    const v1Panel = transformV2PanelToV1Panel(panel, item);
-    panelsV1.push(v1Panel);
-    if (v1Panel.id ?? 0 > maxPanelId) {
-      maxPanelId = v1Panel.id ?? 0;
+  for (const panel of flattenedPanels) {
+    panelsV1.push(panel);
+    if (panel.id ?? 0 > maxPanelId) {
+      maxPanelId = panel.id ?? 0;
     }
   }
 
@@ -1035,6 +1033,305 @@ function getPanelsV1(
     }
   }
   return panelsV1;
+}
+
+/**
+ * Converts AutoGridLayout rowHeight to pixels
+ * Based on getNamedHeightInPixels from AutoGridLayoutManager
+ */
+function getRowHeightInPixels(rowHeightMode: 'short' | 'standard' | 'tall' | 'custom', rowHeight?: number): number {
+  if (rowHeightMode === 'custom' && rowHeight !== undefined) {
+    return rowHeight;
+  }
+
+  switch (rowHeightMode) {
+    case 'short':
+      return 168;
+    case 'tall':
+      return 512;
+    case 'standard':
+    default:
+      return 320;
+  }
+}
+
+/**
+ * Converts pixel height to grid height units
+ * Based on getGridHeight from DashboardMigrator
+ */
+function convertPixelsToGridHeight(pixels: number): number {
+  return Math.ceil(pixels / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
+}
+
+function flattenLayoutToV1Panels(
+  elements: DashboardV2Spec['elements'],
+  layout: DashboardV2Spec['layout'],
+  baseY: number
+): Array<Panel | LibraryPanelDTO | RowPanel> {
+  const result: Array<Panel | LibraryPanelDTO | RowPanel> = [];
+
+  switch (layout.kind) {
+    case 'GridLayout':
+      for (const item of layout.spec.items) {
+        const element = elements[item.spec.element.name];
+        if (element) {
+          const v1Panel = transformV2PanelToV1Panel(element, item, baseY);
+          result.push(v1Panel);
+        }
+      }
+      break;
+
+    case 'RowsLayout':
+      for (let rowIndex = 0; rowIndex < layout.spec.rows.length; rowIndex++) {
+        const row = layout.spec.rows[rowIndex];
+        // Special case: Only the first row with hideHeader: true and empty title represents panels that existed
+        // outside of a row in v1. These should not be converted to RowPanels, but their panels
+        // should be extracted directly.
+        const isHiddenHeaderRow =
+          rowIndex === 0 && row.spec.hideHeader === true && (!row.spec.title || row.spec.title === '');
+
+        if (isHiddenHeaderRow) {
+          // Extract panels directly without creating a RowPanel
+          // For hidden header rows, panels use absolute Y positions (not relative to baseY)
+          // since they represent panels that existed outside of a row in v1.
+          // The Y positions in the grid layout are already absolute (calculated with legacyRowY = -1)
+          const nestedLayout = row.spec.layout;
+
+          // For GridLayout inside hidden header row, extract panels with their absolute Y positions
+          if (nestedLayout.kind === 'GridLayout') {
+            for (const item of nestedLayout.spec.items) {
+              const element = elements[item.spec.element.name];
+              if (element) {
+                // Use undefined for yOverride to use the Y position from the grid item directly
+                const v1Panel = transformV2PanelToV1Panel(element, item, undefined);
+                result.push(v1Panel);
+              }
+            }
+          } else {
+            // For other layout types, flatten recursively
+            const flattenedPanels = flattenLayoutToV1Panels(elements, nestedLayout, 0);
+            for (const panel of flattenedPanels) {
+              if (panel.type === 'row' && 'panels' in panel) {
+                result.push(panel);
+              } else if ('gridPos' in panel) {
+                result.push(panel);
+              }
+            }
+          }
+
+          // Update baseY based on the panels we just added
+          const maxY = Math.max(
+            ...result
+              .filter((p) => 'gridPos' in p && p.type !== 'row')
+              .map((p) => (p.gridPos?.y ?? 0) + (p.gridPos?.h ?? 0)),
+            baseY
+          );
+          baseY = maxY;
+        } else {
+          const { rowPanel, nestedRows, extractedPanels } = convertRowsLayoutRowToV1(elements, row, baseY);
+          result.push(rowPanel);
+          // Add nested rows to result (they will be at the top level)
+          result.push(...nestedRows);
+          // For expanded rows, panels should be at the top level, not in row.panels array
+          if (!rowPanel.collapsed && extractedPanels.length > 0) {
+            result.push(...extractedPanels);
+            // Calculate next Y position: row height (1) + max panel Y in extracted panels
+            const maxPanelY = Math.max(...extractedPanels.map((p) => (p.gridPos?.y ?? 0) + (p.gridPos?.h ?? 0)));
+            baseY = Math.max(baseY + 1, maxPanelY);
+          } else {
+            // For collapsed rows, panels are in row.panels array, so just increment by row height
+            baseY += 1;
+          }
+        }
+      }
+      break;
+
+    case 'TabsLayout':
+      for (const tab of layout.spec.tabs) {
+        const { rowPanel, nestedRows, extractedPanels } = convertTabToV1(elements, tab, baseY);
+        result.push(rowPanel);
+        // Add nested rows to result (they will be at the top level)
+        result.push(...nestedRows);
+        // Tabs are converted to expanded rows, so panels should be at the top level
+        if (extractedPanels.length > 0) {
+          result.push(...extractedPanels);
+          // Calculate next Y position: row height (1) + max panel Y in extracted panels
+          const maxPanelY = Math.max(...extractedPanels.map((p) => (p.gridPos?.y ?? 0) + (p.gridPos?.h ?? 0)));
+          baseY = Math.max(baseY + 1, maxPanelY);
+        } else {
+          // No panels, just increment by row height
+          baseY += 1;
+        }
+      }
+      break;
+
+    case 'AutoGridLayout':
+      const maxColumnCount = layout.spec.maxColumnCount ?? 3;
+      const panelWidth = Math.floor(GRID_COLUMN_COUNT / maxColumnCount);
+      // Convert rowHeight to grid height
+      const rowHeightMode = layout.spec.rowHeightMode ?? 'standard';
+      const rowHeightPixels = getRowHeightInPixels(rowHeightMode, layout.spec.rowHeight);
+      const panelHeight = convertPixelsToGridHeight(rowHeightPixels);
+      let currentX = 0;
+      let currentY = baseY;
+
+      for (const item of layout.spec.items) {
+        const element = elements[item.spec.element.name];
+        if (element) {
+          // Create a GridLayoutItemKind-like structure for auto grid items
+          const gridItem: GridLayoutItemKind = {
+            kind: 'GridLayoutItem',
+            spec: {
+              x: currentX,
+              y: currentY,
+              width: panelWidth,
+              height: panelHeight,
+              element: item.spec.element,
+              ...(item.spec.repeat && { repeat: item.spec.repeat }),
+            },
+          };
+          const v1Panel = transformV2PanelToV1Panel(element, gridItem);
+          result.push(v1Panel);
+
+          // Move to next position
+          currentX += panelWidth;
+          if (currentX + panelWidth > GRID_COLUMN_COUNT) {
+            currentX = 0;
+            currentY += panelHeight;
+          }
+        }
+      }
+      break;
+  }
+
+  return result;
+}
+
+function convertRowsLayoutRowToV1(
+  elements: DashboardV2Spec['elements'],
+  row: RowsLayoutRowKind,
+  baseY: number
+): { rowPanel: RowPanel; nestedRows: RowPanel[]; extractedPanels: Panel[] } {
+  const rowPanels: Panel[] = [];
+  const nestedRows: RowPanel[] = [];
+  const extractedPanels: Panel[] = [];
+  const nestedLayout = row.spec.layout;
+  const isCollapsed = row.spec.collapse ?? false;
+
+  // Panels in v2 have Y positions relative to the row, we need to convert them to absolute
+  // by processing the grid layout directly and converting relative Y to absolute Y
+  if (nestedLayout.kind === 'GridLayout') {
+    // For GridLayout, convert relative Y positions to absolute
+    for (const item of nestedLayout.spec.items) {
+      const element = elements[item.spec.element.name];
+      if (element) {
+        // Convert relative Y to absolute: rowY + rowHeaderHeight + relativeY
+        const absoluteY = baseY + GRID_ROW_HEIGHT + item.spec.y;
+        const v1Panel = transformV2PanelToV1Panel(element, item, absoluteY);
+        if (v1Panel.type !== 'row') {
+          if (isCollapsed) {
+            // For collapsed rows, panels go in row.panels array
+            rowPanels.push(v1Panel);
+          } else {
+            // For expanded rows, panels go to top level
+            extractedPanels.push(v1Panel);
+          }
+        }
+      }
+    }
+  } else {
+    // For other layout types, flatten recursively
+    const flattenedPanels = flattenLayoutToV1Panels(elements, nestedLayout, baseY + GRID_ROW_HEIGHT);
+    for (const panel of flattenedPanels) {
+      if (panel.type === 'row' && 'panels' in panel) {
+        // This is a nested row (could be a tab converted to a row)
+        nestedRows.push(panel);
+      } else if ('gridPos' in panel && panel.type !== 'row') {
+        if (isCollapsed) {
+          // For collapsed rows, panels go in row.panels array
+          rowPanels.push(panel);
+        } else {
+          // For expanded rows, panels go to top level
+          extractedPanels.push(panel);
+        }
+      }
+    }
+  }
+
+  const rowPanel: RowPanel = {
+    id: -1, // Will be assigned later
+    type: 'row',
+    title: row.spec.title ?? '',
+    collapsed: isCollapsed,
+    gridPos: {
+      x: 0,
+      y: baseY,
+      w: GRID_COLUMN_COUNT,
+      h: 1,
+    },
+    panels: rowPanels, // Only populated for collapsed rows
+    ...(row.spec.repeat && { repeat: row.spec.repeat.value }),
+  };
+
+  return { rowPanel, nestedRows, extractedPanels };
+}
+
+function convertTabToV1(
+  elements: DashboardV2Spec['elements'],
+  tab: TabsLayoutTabKind,
+  baseY: number
+): { rowPanel: RowPanel; nestedRows: RowPanel[]; extractedPanels: Panel[] } {
+  const nestedRows: RowPanel[] = [];
+  const extractedPanels: Panel[] = [];
+  const nestedLayout = tab.spec.layout;
+
+  // Panels in v2 have Y positions relative to the row, we need to convert them to absolute
+  // by processing the grid layout directly and converting relative Y to absolute Y
+  // Tabs are converted to expanded rows, so panels go to top level (extractedPanels)
+
+  if (nestedLayout.kind === 'GridLayout') {
+    // For GridLayout, convert relative Y positions to absolute
+    for (const item of nestedLayout.spec.items) {
+      const element = elements[item.spec.element.name];
+      if (element) {
+        // Convert relative Y to absolute: rowY + rowHeaderHeight + relativeY
+        const absoluteY = baseY + GRID_ROW_HEIGHT + item.spec.y;
+        const v1Panel = transformV2PanelToV1Panel(element, item, absoluteY);
+        if (v1Panel.type !== 'row') {
+          // Tabs are expanded rows, so panels go to top level
+          extractedPanels.push(v1Panel);
+        }
+      }
+    }
+  } else {
+    // For other layout types, flatten recursively
+    const flattenedPanels = flattenLayoutToV1Panels(elements, nestedLayout, baseY + GRID_ROW_HEIGHT);
+    for (const panel of flattenedPanels) {
+      if (panel.type === 'row' && 'panels' in panel) {
+        nestedRows.push(panel);
+      } else if ('gridPos' in panel && panel.type !== 'row') {
+        // Tabs are expanded rows, so panels go to top level
+        extractedPanels.push(panel);
+      }
+    }
+  }
+
+  const rowPanel: RowPanel = {
+    id: -1, // Will be assigned later
+    type: 'row',
+    title: tab.spec.title ?? '',
+    collapsed: false, // Tabs are always expanded in v1 (as rows)
+    gridPos: {
+      x: 0,
+      y: baseY,
+      w: GRID_COLUMN_COUNT,
+      h: 1,
+    },
+    panels: [], // Tabs are expanded rows, so panels array is empty
+    ...(tab.spec.repeat && { repeat: tab.spec.repeat.value }),
+  };
+
+  return { rowPanel, nestedRows, extractedPanels };
 }
 
 function transformV2PanelToV1Panel(
@@ -1125,7 +1422,7 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
     }
   };
 
-  const transformedDefaults: any = {
+  const transformedDefaults: Record<string, unknown> = {
     ...fieldConfig.defaults,
   };
 
