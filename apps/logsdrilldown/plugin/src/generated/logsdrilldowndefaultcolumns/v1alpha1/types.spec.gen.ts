@@ -1,10 +1,12 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-export type LogsDefaultColumnsDatasource = {
+export interface LogsDefaultColumnsDatasource {
 	records: LogsDefaultColumnsRecords;
-}[];
+}
 
-export const defaultLogsDefaultColumnsDatasource = (): LogsDefaultColumnsDatasource => ([]);
+export const defaultLogsDefaultColumnsDatasource = (): LogsDefaultColumnsDatasource => ({
+	records: defaultLogsDefaultColumnsRecords(),
+});
 
 export type LogsDefaultColumnsRecords = {
 	columns: string[];

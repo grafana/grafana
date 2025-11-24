@@ -3,7 +3,14 @@
 package v1alpha1
 
 // +k8s:openapi-gen=true
-type LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource []LogsDrilldownDefaultColumnsV1alpha1LogsDefaultColumnsDatasource
+type LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource struct {
+	Records LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords `json:"records"`
+}
+
+// NewLogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource creates a new LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource object.
+func NewLogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource() *LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource {
+	return &LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource{}
+}
 
 // +k8s:openapi-gen=true
 type LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords []LogsDrilldownDefaultColumnsV1alpha1LogsDefaultColumnsRecords
@@ -18,17 +25,9 @@ type LogsDrilldownDefaultColumnsSpec struct {
 
 // NewLogsDrilldownDefaultColumnsSpec creates a new LogsDrilldownDefaultColumnsSpec object.
 func NewLogsDrilldownDefaultColumnsSpec() *LogsDrilldownDefaultColumnsSpec {
-	return &LogsDrilldownDefaultColumnsSpec{}
-}
-
-// +k8s:openapi-gen=true
-type LogsDrilldownDefaultColumnsV1alpha1LogsDefaultColumnsDatasource struct {
-	Records LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords `json:"records"`
-}
-
-// NewLogsDrilldownDefaultColumnsV1alpha1LogsDefaultColumnsDatasource creates a new LogsDrilldownDefaultColumnsV1alpha1LogsDefaultColumnsDatasource object.
-func NewLogsDrilldownDefaultColumnsV1alpha1LogsDefaultColumnsDatasource() *LogsDrilldownDefaultColumnsV1alpha1LogsDefaultColumnsDatasource {
-	return &LogsDrilldownDefaultColumnsV1alpha1LogsDefaultColumnsDatasource{}
+	return &LogsDrilldownDefaultColumnsSpec{
+		Datasource: *NewLogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource(),
+	}
 }
 
 // +k8s:openapi-gen=true

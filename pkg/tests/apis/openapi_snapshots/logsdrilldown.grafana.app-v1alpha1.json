@@ -3522,19 +3522,16 @@
         ]
       },
       "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "required": [
-            "records"
-          ],
-          "properties": {
-            "records": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords"
-            }
-          },
-          "additionalProperties": false
-        }
+        "type": "object",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords"
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels": {
         "type": "array",
