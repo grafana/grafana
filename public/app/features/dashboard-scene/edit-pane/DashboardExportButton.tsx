@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Dropdown, Sidebar } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -17,16 +17,11 @@ interface Props {
 const newExportButtonSelector = selectors.pages.Dashboard.DashNav.NewExportButton;
 
 export function ShareExportDashboardButton({ dashboard }: Props) {
-  const buttonTooltip = config.featureToggles.kubernetesDashboards
-    ? t('dashboard.sidebar.export.tooltip.as-code', 'Export as code')
-    : t('dashboard.sidebar.export.tooltip.json', 'Export as JSON');
-
   return (
     <Dropdown overlay={<ExportMenu dashboard={dashboard} />} placement="left-end">
       <Sidebar.Button
         icon="download-alt"
         data-testid={newExportButtonSelector.Menu.container}
-        tooltip={buttonTooltip}
         title={t('dashboard.sidebar.export.title', 'Export')}
         onClick={(evt) => {
           if (dashboard.state.isEditing && dashboard.state.isDirty) {
