@@ -1518,6 +1518,81 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, res.Data.RuleGroups[0].Rules, 1)
 			require.Len(t, res.Data.RuleGroups[1].Rules, 1)
 		})
+
+		t.Run("with limit_rules=0 returns empty rule groups", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=0", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Should return rule groups but with no rules
+			require.Len(t, res.Data.RuleGroups, 2)
+			require.Len(t, res.Data.RuleGroups[0].Rules, 0)
+			require.Len(t, res.Data.RuleGroups[1].Rules, 0)
+		})
+
+		t.Run("with limit_rules=0 and state filter returns error", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=0&state=firing", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusBadRequest, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Equal(t, "error", res.Status)
+			require.Contains(t, res.Error, "limit_rules=0 cannot be used together with state or health filters")
+		})
+
+		t.Run("with limit_rules=0 and health filter returns error", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=0&health=ok", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusBadRequest, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Equal(t, "error", res.Status)
+			require.Contains(t, res.Error, "limit_rules=0 cannot be used together with state or health filters")
+		})
+
+		t.Run("then with limit_rules=0 and both state and health filters returns error", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=0&state=firing&health=ok", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusBadRequest, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Equal(t, "error", res.Status)
+			require.Contains(t, res.Error, "limit_rules=0 cannot be used together with state or health filters")
+		})
 	})
 
 	t.Run("test with limit alerts", func(t *testing.T) {

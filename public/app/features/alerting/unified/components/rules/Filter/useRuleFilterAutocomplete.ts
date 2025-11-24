@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ComboboxOption } from '@grafana/ui';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -63,8 +63,10 @@ export function useNamespaceAndGroupOptions(): {
   const namespaceOptions = useCallback(
     async (inputValue: string) => {
       // Grafana namespaces - fetch with limit to check threshold
+      const useLimitRules = config.featureToggles.alertingUIUseLimitRules;
       const grafanaResponse = await fetchGrafanaGroups({
         limitAlerts: 0,
+        limitRules: useLimitRules ? 0 : undefined,
         groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
       }).unwrap();
       const grafanaFolderNames = Array.from(
@@ -135,8 +137,10 @@ export function useNamespaceAndGroupOptions(): {
 
       try {
         // Use the backend search with lightweight response
+        const useLimitRules = config.featureToggles.alertingUIUseLimitRules;
         const grafanaResponse = await fetchGrafanaGroups({
           limitAlerts: 0, // Lightweight - no alert data
+          limitRules: useLimitRules ? 0 : undefined,
           searchGroupName: trimmedInput, // Backend filtering via search.rule_group parameter
           groupLimit: GROUP_SEARCH_LIMIT, // Reasonable limit for dropdown results
         }).unwrap();

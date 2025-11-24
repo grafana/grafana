@@ -328,6 +328,10 @@ export interface FeatureToggles {
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
+  * Enables the UI to use limit_rules=0 when calling the API and rules information is not needed
+  */
+  alertingUIUseLimitRules?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
