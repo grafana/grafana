@@ -13,6 +13,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
 
+import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
@@ -110,18 +111,21 @@ export const MegaMenu = memo(
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} handleMegaMenu={handleMegaMenu} onClose={onClose} />
         <nav className={styles.content}>
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
-            <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-              {navItems.map((link, index) => (
-                <MegaMenuItem
-                  key={link.text}
-                  link={link}
-                  isPinned={isPinned}
-                  onClick={state.megaMenuDocked ? undefined : onClose}
-                  activeItem={activeItem}
-                  onPin={onPinItem}
-                />
-              ))}
-            </ul>
+            <>
+              <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
+                {navItems.map((link, index) => (
+                  <MegaMenuItem
+                    key={link.text}
+                    link={link}
+                    isPinned={isPinned}
+                    onClick={state.megaMenuDocked ? undefined : onClose}
+                    activeItem={activeItem}
+                    onPin={onPinItem}
+                  />
+                ))}
+              </ul>
+              <MegaMenuExtensionPoint />
+            </>
           </ScrollContainer>
         </nav>
       </div>

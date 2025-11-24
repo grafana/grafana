@@ -23,6 +23,9 @@ import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponents } from './usePluginComponents';
 import { isGrafanaDevMode } from './utils';
 
+// Unmock usePluginComponents to test the real implementation
+jest.unmock('./usePluginComponents');
+
 jest.mock('./useLoadAppPlugins');
 
 jest.mock('./utils', () => ({

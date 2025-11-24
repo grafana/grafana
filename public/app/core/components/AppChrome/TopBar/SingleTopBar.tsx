@@ -28,6 +28,7 @@ import { InviteUserButton } from './InviteUserButton';
 import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
+import { TopBarExtensionPoint } from './TopBarExtensionPoint';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { getChromeHeaderLevelHeight } from './useChromeHeaderHeight';
 
@@ -94,6 +95,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           data-testid={!showToolbarLevel ? Components.NavToolbar.container : undefined}
           minWidth={{ xs: 'unset', lg: 0 }}
         >
+          <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
           {unifiedHistoryEnabled && !isSmallScreen && <HistoryContainer />}
           {!isSmallScreen && <QuickAdd />}
