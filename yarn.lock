@@ -2454,7 +2454,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     fast-deep-equal: "npm:^3.1.3"
     i18next: "npm:^25.0.0"
-    i18next-cli: "npm:^1.24.18"
+    i18next-cli: "npm:^1.24.22"
     immer: "npm:10.2.0"
     jest: "npm:29.7.0"
     lodash: "npm:4.17.21"
@@ -2739,7 +2739,7 @@ __metadata:
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
-    i18next-cli: "npm:^1.24.18"
+    i18next-cli: "npm:^1.24.22"
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
     rxjs: "npm:7.8.2"
@@ -3019,7 +3019,7 @@ __metadata:
     "@types/tinycolor2": "npm:^1"
     fishery: "npm:^2.3.1"
     i18next: "npm:^25.5.2"
-    i18next-cli: "npm:^1.24.18"
+    i18next-cli: "npm:^1.24.22"
     lodash: "npm:^4.17.21"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -3521,7 +3521,7 @@ __metadata:
     "@types/uuid": "npm:10.0.0"
     debounce-promise: "npm:3.1.2"
     esbuild: "npm:0.25.8"
-    i18next-cli: "npm:^1.24.18"
+    i18next-cli: "npm:^1.24.22"
     jest: "npm:29.7.0"
     jest-environment-jsdom: "npm:29.7.0"
     lodash: "npm:4.17.21"
@@ -3709,7 +3709,7 @@ __metadata:
     "@types/react-virtualized-auto-sizer": "npm:1.0.8"
     "@types/systemjs": "npm:6.15.3"
     "@types/uuid": "npm:10.0.0"
-    i18next-cli: "npm:^1.24.18"
+    i18next-cli: "npm:^1.24.22"
     immutable: "npm:5.1.4"
     jest: "npm:^29.6.4"
     lodash: "npm:4.17.21"
@@ -19215,7 +19215,7 @@ __metadata:
     http-server: "npm:14.1.1"
     i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
-    i18next-cli: "npm:^1.24.18"
+    i18next-cli: "npm:^1.24.22"
     i18next-pseudo: "npm:^2.2.1"
     immer: "npm:10.2.0"
     immutable: "npm:5.1.4"
@@ -20078,7 +20078,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next-cli@npm:^1.24.18":
+"i18next-cli@npm:^1.24.22":
   version: 1.24.22
   resolution: "i18next-cli@npm:1.24.22"
   dependencies:
