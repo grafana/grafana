@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -43,7 +42,6 @@ func TestGetAlertMuteTimings(t *testing.T) {
 		t.Parallel()
 
 		s := setUpServiceTest(t).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
 
 		user := &user.SignedInUser{OrgID: 1}
 

@@ -8,7 +8,7 @@ require (
 	github.com/grafana/grafana/apps/scope v0.0.0-20251007093103-792853df9134
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.23.2
-	github.com/prometheus/common v0.67.2
+	github.com/prometheus/common v0.67.3
 	github.com/prometheus/prometheus v0.303.1
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.38.0

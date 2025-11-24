@@ -5,7 +5,7 @@ go 1.25.3
 require (
 	github.com/grafana/grafana-app-sdk v0.48.2
 	github.com/grafana/grafana-app-sdk/logging v0.48.1
-	github.com/prometheus/common v0.67.2
+	github.com/prometheus/common v0.67.3
 	k8s.io/apimachinery v0.34.2
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
 )
