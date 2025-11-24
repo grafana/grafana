@@ -17,7 +17,7 @@ const DashboardAnnotationField = ({
   onEditClick,
   onDeleteClick,
 }: {
-  dashboard?: DashboardResponse | undefined;
+  dashboard?: DashboardResponse;
   panel?: PanelDTO;
   dashboardUid: string; //fallback
   panelId: string; //fallback
