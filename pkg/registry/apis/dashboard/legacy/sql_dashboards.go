@@ -83,8 +83,6 @@ type dashboardSqlAccess struct {
 	namespacer   request.NamespaceMapper
 	provisioning provisioning.StubProvisioningService
 
-	invalidDashboardParseFallbackEnabled bool
-
 	// Use for writing (not reading)
 	dashStore              dashboards.Store
 	dashboardSearchClient  legacysearcher.DashboardSearchClient
@@ -107,14 +105,13 @@ func ProvideMigratorDashboardAccessor(
 	accessControl accesscontrol.AccessControl,
 ) MigrationDashboardAccessor {
 	return &dashboardSqlAccess{
-		sql:                                  sql,
-		namespacer:                           claims.OrgNamespaceFormatter,
-		dashStore:                            nil, // not needed for migration
-		provisioning:                         provisioning,
-		dashboardPermissionSvc:               nil, // not needed for migration
-		libraryPanelSvc:                      nil, // not needed for migration
-		accessControl:                        accessControl,
-		invalidDashboardParseFallbackEnabled: true,
+		sql:                    sql,
+		namespacer:             claims.OrgNamespaceFormatter,
+		dashStore:              nil, // not needed for migration
+		provisioning:           provisioning,
+		dashboardPermissionSvc: nil, // not needed for migration
+		libraryPanelSvc:        nil, // not needed for migration
+		accessControl:          accessControl,
 	}
 }
 
@@ -138,8 +135,6 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 		dashboardPermissionSvc: dashboardPermissionSvc,
 		libraryPanelSvc:        libraryPanelSvc,
 		accessControl:          accessControl,
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		invalidDashboardParseFallbackEnabled: features.IsEnabled(context.Background(), featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled),
 	}
 }
 
@@ -712,14 +707,8 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		}
 
 		if len(data) > 0 {
-			if a.invalidDashboardParseFallbackEnabled {
-				if err := a.parseDashboard(dash, data, dashboard_id, title); err != nil {
-					return row, err
-				}
-			} else {
-				if err := dash.Spec.UnmarshalJSON(data); err != nil {
-					return row, fmt.Errorf("JSON unmarshal error for %s: %w", dash.Name, err)
-				}
+			if err := a.parseDashboard(dash, data, dashboard_id, title); err != nil {
+				return row, err
 			}
 		}
 		// Ignore any saved values for id/version/uid
