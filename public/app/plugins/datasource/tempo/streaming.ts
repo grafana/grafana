@@ -168,9 +168,7 @@ export function doTempoMetricsStreaming(
           newResult = {
             data: data?.map((frame: DataFrameJSON) => {
               const df = dataFrameFromJSON(frame);
-              // Preserve the query's refId to prevent conflation of series from different queries
-              // The backend sets RefID to the series name, which causes multiple queries with the same
-              // labels to be merged incorrectly by combineResponses
+              // preserve the query's refId to prevent conflation of series from different queries
               if (query.refId) {
                 df.refId = query.refId;
               }
