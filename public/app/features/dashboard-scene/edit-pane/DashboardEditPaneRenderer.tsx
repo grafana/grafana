@@ -4,10 +4,13 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
+import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
@@ -89,9 +92,32 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
           active={openPane === 'outline'}
         ></Sidebar.Button>
         {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
+        {renderEnterpriseItems()}
+        {Boolean(meta.isSnapshot) && (
+          <Sidebar.Button
+            data-testid="button-snapshot"
+            tooltip={t('dashboard.sidebar.snapshot.tooltip', 'Open original dashboard')}
+            title={t('dashboard.toolbar.snapshot.title', 'Source')}
+            icon="link"
+            onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
+          />
+        )}
       </Sidebar.Toolbar>
     </>
   );
+}
+
+function renderEnterpriseItems() {
+  const dashboard = getDashboardSrv().getCurrent()!;
+  const showProps = { dashboard };
+
+  return dynamicDashNavActions.right.map((action, index) => {
+    if (action.show(showProps)) {
+      const ActionComponent = action.component;
+      return <ActionComponent key={index} dashboard={dashboard} />;
+    }
+    return null;
+  });
 }
 
 function UndoButton({ dashboard }: ToolbarActionProps) {

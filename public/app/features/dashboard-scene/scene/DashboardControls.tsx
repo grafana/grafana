@@ -193,7 +193,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 }
 
 function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
-  const { isEditing, editPanel, uid, editable, meta } = dashboard.useState();
+  const { isEditing, editPanel, uid, meta } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
 
   if (editPanel) {
@@ -201,7 +201,6 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
   }
 
   const canEditDashboard = dashboard.canEditDashboard();
-  const isEditable = Boolean(editable);
   const hasUid = Boolean(uid);
   const isSnapshot = Boolean(meta.isSnapshot);
   const showShareButton = hasUid && !isSnapshot && !isPlaying;
@@ -210,7 +209,7 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
       {isEditing && <SaveDashboard dashboard={dashboard} />}
-      {!isPlaying && canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
+      {!isPlaying && canEditDashboard && <EditDashboardSwitch dashboard={dashboard} />}
       {isPlaying && (
         <Button
           variant="secondary"
