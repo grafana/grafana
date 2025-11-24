@@ -606,10 +606,6 @@ const (
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
 
-	// FlagPostgresDSUsePGX
-	// Enables using PGX instead of libpq for PostgreSQL datasource
-	FlagPostgresDSUsePGX = "postgresDSUsePGX"
-
 	// FlagTempoAlerting
 	// Enables creating alerts from Tempo data source
 	FlagTempoAlerting = "tempoAlerting"

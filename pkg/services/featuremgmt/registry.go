@@ -1519,12 +1519,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:        "postgresDSUsePGX",
-			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOSSBigTent,
-		},
-		{
 			Name:        "tempoAlerting",
 			Description: "Enables creating alerts from Tempo data source",
 			Stage:       FeatureStageExperimental,
