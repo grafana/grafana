@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { CSSProperties } from 'react';
+import { CSSProperties, HTMLAttributes } from 'react';
 
 import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,25 +9,14 @@ import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelRenderer } from '../PanelRenderer';
 
-import { VizTypeChangeDetails } from './types';
-
-export interface Props {
+export interface Props extends HTMLAttributes<HTMLButtonElement> {
   data: PanelData;
   width: number;
   suggestion: PanelPluginVisualizationSuggestion;
-  onChange: (details: VizTypeChangeDetails) => void;
   isSelected?: boolean;
-  onSelect?: () => void;
 }
 
-export function VisualizationSuggestionCard({
-  data,
-  suggestion,
-  onChange,
-  width,
-  isSelected = false,
-  onSelect,
-}: Props) {
+export function VisualizationSuggestionCard({ data, suggestion, width, isSelected = false, onClick }: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
@@ -38,23 +27,7 @@ export function VisualizationSuggestionCard({
     className: cx(styles.vizBox, isNewVizSuggestionsEnabled && isSelected && styles.selectedBox),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
-    onClick: () => {
-      if (isNewVizSuggestionsEnabled && onSelect) {
-        onSelect();
-        onChange({
-          pluginId: suggestion.pluginId,
-          options: suggestion.options,
-          fieldConfig: suggestion.fieldConfig,
-          withModKey: true, // stay in suggestions view
-        });
-      } else {
-        onChange({
-          pluginId: suggestion.pluginId,
-          options: suggestion.options,
-          fieldConfig: suggestion.fieldConfig,
-        });
-      }
-    },
+    onClick,
   };
 
   if (cardOptions.imgSrc) {

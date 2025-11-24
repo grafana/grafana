@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAsync, useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, PanelData, PanelModel } from '@grafana/data';
+import { GrafanaTheme2, PanelData, PanelModel, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
@@ -26,36 +26,46 @@ const MIN_COLUMN_SIZE = 260;
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
   const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
+  const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
 
-  const filteredSuggestions = useMemo(() => suggestions || [], [suggestions]);
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
 
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
 
-  // auto-select first suggestion when nothing is selected
-  useEffect(() => {
-    if (isNewVizSuggestionsEnabled && filteredSuggestions.length > 0 && selectedIndex === null && isUnconfiguredPanel) {
-      setSelectedIndex(0);
-    }
-  }, [filteredSuggestions, isNewVizSuggestionsEnabled, isUnconfiguredPanel, selectedIndex]);
-
-  const handleApplySuggestion = useCallback(() => {
-    if (selectedIndex !== null && filteredSuggestions[selectedIndex]) {
-      const selectedSuggestion = filteredSuggestions[selectedIndex];
+  const applySuggestion = useCallback(
+    (suggestion: PanelPluginVisualizationSuggestion, isPreview?: boolean) => {
       onChange({
-        pluginId: selectedSuggestion.pluginId,
-        options: selectedSuggestion.options,
-        fieldConfig: selectedSuggestion.fieldConfig,
-        withModKey: false,
+        pluginId: suggestion.pluginId,
+        options: suggestion.options,
+        fieldConfig: suggestion.fieldConfig,
+        withModKey: isPreview,
       });
-    }
-  }, [selectedIndex, filteredSuggestions, onChange]);
 
-  const handleCardSelect = useCallback((index: number) => {
-    setSelectedIndex(index);
-  }, []);
+      if (isPreview) {
+        setSuggestionHash(suggestion.hash);
+      }
+    },
+    [onChange]
+  );
+
+  // auto-select first suggestion when nothing is selected, and take care of the firstCardHash state
+  useEffect(() => {
+    if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0) {
+      return;
+    }
+
+    // if the first suggestion has changed, we're going to remove the currently selected suggestion and
+    // set the firstCardHash to the new first suggestion's hash. We also choose the first suggestion if the previously
+    // selected suggestion is no longer present in the list.
+    const newFirstCardHash = suggestions?.[0]?.hash ?? null;
+    if (firstCardHash !== newFirstCardHash || suggestions.every((s) => s.hash !== suggestionHash)) {
+      applySuggestion(suggestions[0], true);
+      setFirstCardHash(newFirstCardHash);
+      return;
+    }
+  }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel, applySuggestion]);
 
   const renderEmptyState = () => (
     <div className={styles.emptyStateWrapper}>
@@ -83,9 +93,8 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
         {() => (
           <div>
             <div className={styles.grid}>
-              {filteredSuggestions.map((suggestion, index) => {
-                const isCardSelected = isNewVizSuggestionsEnabled && selectedIndex === index;
-                const cardSelectHandler = isNewVizSuggestionsEnabled ? () => handleCardSelect(index) : undefined;
+              {suggestions?.map((suggestion, index) => {
+                const isCardSelected = isNewVizSuggestionsEnabled && suggestionHash === suggestion.hash;
 
                 return (
                   <div key={index} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
@@ -93,7 +102,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                       <Button
                         variant="primary"
                         size={'md'}
-                        onClick={handleApplySuggestion}
+                        onClick={() => applySuggestion(suggestion)}
                         className={styles.applySuggestionButton}
                         aria-label={t(
                           'panel.visualization-suggestions.apply-suggestion-aria-label',
@@ -107,10 +116,9 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                     <VisualizationSuggestionCard
                       data={data}
                       suggestion={suggestion}
-                      onChange={onChange}
                       width={width}
                       isSelected={isCardSelected}
-                      onSelect={cardSelectHandler}
+                      onClick={() => applySuggestion(suggestion, isNewVizSuggestionsEnabled)}
                     />
                   </div>
                 );

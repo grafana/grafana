@@ -1,4 +1,4 @@
-import { PanelData, PanelDataSummary } from '@grafana/data';
+import { PanelData, PanelDataSummary, PanelPluginVisualizationSuggestion } from '@grafana/data';
 
 /**
  * @internal

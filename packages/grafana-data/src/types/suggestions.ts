@@ -9,6 +9,22 @@ import { FieldConfigSource } from './fieldOverrides';
 import { PanelData } from './panel';
 
 /**
+ * @internal
+ * generates a hash for a suggestion based for use by the UI.
+ */
+export function getSuggestionHash(suggestion: Omit<PanelPluginVisualizationSuggestion, 'hash'>): string {
+  const baseString = `${suggestion.pluginId}|${JSON.stringify(suggestion.options || {})}|${JSON.stringify(suggestion.fieldConfig || {})}`;
+  let hash = 0;
+  for (let i = 0; i < baseString.length; i++) {
+    const char = baseString.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+
+  return hash.toString(36);
+}
+
+/**
  * @alpha
  * A suggestion for a visualization given some data. This represents the shape of the panel (including options and field config)
  * that will be used to show a small preview in the Grafana UI when suggesting visualizations in the Panel Editor.
@@ -49,6 +65,8 @@ export interface PanelPluginVisualizationSuggestion<TOptions extends unknown = {
   name: string;
   /** Panel plugin id */
   pluginId: string;
+  /** unique hash assigned by Grafana for use by the UI. */
+  hash: string;
 }
 
 /**
@@ -127,10 +145,21 @@ export class VisualizationSuggestionsListAppender<TOptions extends unknown, TFie
   ) {}
 
   append(suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) {
-    this.list.push(defaultsDeep(suggestion, this.defaults));
+    this.appendAll([suggestion]);
   }
 
   appendAll(suggestions: Array<VisualizationSuggestion<TOptions, TFieldConfig>>) {
-    this.list.push(...suggestions.map((o) => defaultsDeep(o, this.defaults)));
+    this.list.push(
+      ...suggestions.map((s) => {
+        const s2: Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfig>, 'hash'> = defaultsDeep(
+          s,
+          this.defaults
+        );
+        const s3: PanelPluginVisualizationSuggestion<TOptions, TFieldConfig> = Object.assign(s2, {
+          hash: getSuggestionHash(s2),
+        });
+        return s3;
+      })
+    );
   }
 }
