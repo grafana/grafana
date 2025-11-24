@@ -1,0 +1,93 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "library-panel-repeat-options-test",
+    "labels": {
+      "test": "library-panel-repeat"
+    }
+  },
+  "spec": {
+    "title": "Library Panel Repeat Options Test Dashboard",
+    "description": "Testing library panel repeat options migration from v1beta1 to v2alpha1",
+    "tags": ["test", "library-panels", "repeat"],
+    "schemaVersion": 38,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Library Panel with Horizontal Repeat",
+        "type": "library-panel-ref",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 8
+        },
+        "libraryPanel": {
+          "uid": "lib-panel-repeat-h",
+          "name": "Library Panel with Horizontal Repeat"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Library Panel with Vertical Repeat",
+        "type": "library-panel-ref",
+        "gridPos": {
+          "x": 0,
+          "y": 8,
+          "w": 6,
+          "h": 4
+        },
+        "libraryPanel": {
+          "uid": "lib-panel-repeat-v",
+          "name": "Library Panel with Vertical Repeat"
+        }
+      },
+      {
+        "id": 3,
+        "title": "Library Panel Instance Override",
+        "type": "library-panel-ref",
+        "gridPos": {
+          "x": 6,
+          "y": 8,
+          "w": 12,
+          "h": 8
+        },
+        "libraryPanel": {
+          "uid": "lib-panel-repeat-h",
+          "name": "Library Panel with Horizontal Repeat"
+        },
+        "repeat": "instance-var",
+        "repeatDirection": "v",
+        "maxPerRow": 5
+      },
+      {
+        "id": 4,
+        "title": "Library Panel without Repeat",
+        "type": "library-panel-ref",
+        "gridPos": {
+          "x": 0,
+          "y": 12,
+          "w": 6,
+          "h": 3
+        },
+        "libraryPanel": {
+          "uid": "lib-panel-no-repeat",
+          "name": "Library Panel without Repeat"
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": []
+    },
+    "links": []
+  }
+}
+

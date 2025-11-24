@@ -85,6 +85,9 @@ export const versionedPages = {
     dataSources: {
       [MIN_GRAFANA_VERSION]: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
     },
+    dataSourceAddButton: {
+      '12.4.0': 'data-testid data-source-add-button',
+    },
   },
   EditDataSource: {
     url: {

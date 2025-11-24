@@ -1976,9 +1976,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager：",
-      "disabled-tooltip": "",
       "error": "无法加载 {{alertmanager}} 的路由预览",
       "initialized": "根据添加的标签，提醒实例会被路由到以下通知策略。展开下面的每个通知策略以查看更多详细信息。",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "预览路由",
       "select-folder-tooltip": "",
       "text-loading-preview": "正在加载预览...",
@@ -5078,8 +5080,12 @@
     "new-panel": {
       "configure-button": "配置",
       "configure-button-menu": "切换菜单",
+      "empty-state-message": "",
       "menu-open-panel-editor": "配置",
-      "menu-use-library-panel": "使用库面板"
+      "menu-use-library-panel": "使用库面板",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "新面板",
     "on-create-new-row": {
@@ -7194,6 +7200,7 @@
       "logs-volume": {
         "add-filters": "向您的查询添加更多标签以缩小搜索范围。",
         "decrease-timerange": "缩小查询的时间范围。",
+        "max-bytes-error": "",
         "much-data": "该查询正在尝试访问过多的数据。请尝试以下一种或多种方法："
       },
       "maximum-pinned-logs": "已达到固定日志的最大数量限制 {{PINNED_LOGS_LIMIT}}。取消固定某个日志，以添加另一个日志。",
@@ -7243,12 +7250,15 @@
       "tooltip-select-query-visualize-table": "选择要在表中可视化的查询"
     },
     "logs-volume-panel": {
-      "content-streaming": "流媒体传输"
+      "content-streaming": "流媒体传输",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "重新加载日志卷",
       "label-reload-log-volume": "重新加载日志卷",
       "loading": "加载中...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "加载此查询的日志卷失败",
       "title-no-logs-volume-available": "没有可用的日志卷",
       "title-showing-partial-data": "显示部分数据",
@@ -8553,7 +8563,13 @@
       "saving": "正在保存<1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "线性阈值",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "记录基础"
     },
     "builder": {
@@ -8959,6 +8975,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "使用右侧 Y 轴"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9250,6 +9271,7 @@
       "toggle-panel-edit": "切换面板编辑视图",
       "toggle-panel-fullscreen": "切换面板全屏视图",
       "toggle-panel-legend": "切换面板图例",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "缩放时间范围"
     },
     "title": "快捷键"
@@ -9917,11 +9939,7 @@
       "wrap-lines": "多行显示"
     },
     "logs-navigation": {
-      "newer-logs": "新日志",
-      "older-logs": "旧日志",
-      "scroll-bottom": "滚动到底部",
-      "scroll-top": "滚动到顶部",
-      "start-of-range": "范围的开始"
+      "scroll-top": "滚动到顶部"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12483,11 +12501,14 @@
       "copy-clipboard": "复制到剪贴板",
       "copy-to-clipboard-and-close": "复制到剪贴板并关闭",
       "description-name-to-easily-identify-the-token": "用于轻松识别令牌的名称",
+      "description-no-expiration-disabled": "",
       "description-token": "现在就复制令牌，因为您将无法再次看到它。丢失令牌后需要创建一个新令牌。",
       "generate-token": "生成令牌",
       "label-display-name": "显示名称",
       "label-expiration": "到期",
       "label-expiration-date": "到期日期",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "令牌"
     },
     "get-actions-cell": {

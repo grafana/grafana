@@ -131,6 +131,22 @@ const AlwaysSupported = true;
 const NotSupported = false;
 
 export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction | EnrichmentAction;
+
+/**
+ * Represents the ability to perform an action, with two distinct checks:
+ *
+ * @param actionSupported - Whether the action is technically possible in the current context.
+ *   This depends on system capabilities (e.g., API availability), feature availability
+ *   (e.g., Grafana vs external alertmanager), and rule state (e.g., provisioned/immutable rules).
+ *   Examples: Can't edit provisioned rules, can't export from external alertmanagers.
+ *
+ * @param actionAllowed - Whether the user has permission to perform the action.
+ *   This is based on RBAC permissions, folder-specific permissions, and admin status.
+ *   Examples: User lacks AlertingRuleUpdate permission, user can't edit in this folder.
+ *
+ * Both must be true for an action to be available. This separation allows showing appropriate
+ * messages: "Feature not available" vs "You don't have permission".
+ */
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
