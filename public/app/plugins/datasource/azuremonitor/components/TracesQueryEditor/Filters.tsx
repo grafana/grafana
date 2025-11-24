@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { EditorList } from '@grafana/plugin-ui';
 import { Field } from '@grafana/ui';
 
-import { AzureTracesFilter } from '../../types/query';
+import { AzureTracesFilter } from '../../dataquery.gen';
 import { AzureQueryEditorFieldProps } from '../../types/types';
 
 import { makeRenderItem } from './Filter';
