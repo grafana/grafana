@@ -259,6 +259,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      position: 'relative',
     }),
     pageContainerWithSidebar: css({
       overflow: 'auto',
