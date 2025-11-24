@@ -22,12 +22,15 @@ import {
   getExternalRulesSources,
   isSupportedExternalRulesSourceType,
 } from '../../utils/datasource';
-import { RULE_LIMIT_WITH_BACKEND_FILTERS } from '../paginationLimits';
 import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
 import { getDatasourceFilter } from './datasourceFilter';
 import { getGrafanaFilter } from './grafanaFilter';
-import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
+import {
+  FetchGroupsLimitOptions,
+  useGrafanaGroupsGenerator,
+  usePrometheusGroupsGenerator,
+} from './prometheusGroupsGenerator';
 
 export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
 
@@ -75,7 +78,7 @@ export function useFilteredRulesIteratorProvider() {
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
 
-  const getFilteredRulesIterable = (filterState: RulesFilter, groupLimit: number): GetIteratorResult => {
+  const getFilteredRulesIterable = (filterState: RulesFilter, options: FetchGroupsLimitOptions): GetIteratorResult => {
     /* this is the abort controller that allows us to stop an AsyncIterable */
     const abortController = new AbortController();
 
@@ -83,14 +86,8 @@ export function useFilteredRulesIteratorProvider() {
 
     const { backendFilter, frontendFilter } = getGrafanaFilter(filterState);
 
-    const needsClientSideFiltering = hasClientSideFilters(filterState);
-
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
-      grafanaGroupsGenerator(
-        groupLimit,
-        backendFilter,
-        needsClientSideFiltering ? undefined : RULE_LIMIT_WITH_BACKEND_FILTERS
-      )
+      grafanaGroupsGenerator(options.gmaLimit, backendFilter)
     ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>
@@ -117,7 +114,7 @@ export function useFilteredRulesIteratorProvider() {
     const dataSourceGenerators: Array<AsyncIterableX<RuleWithOrigin>> = externalRulesSourcesToFetchFrom.map(
       (dataSourceIdentifier) => {
         const promGroupsGenerator: AsyncIterableX<RuleWithOrigin> = from(
-          prometheusGroupsGenerator(dataSourceIdentifier, groupLimit)
+          prometheusGroupsGenerator(dataSourceIdentifier, options.dmaLimit.groupLimit)
         ).pipe(
           withAbort(abortController.signal),
           concatMap((groups) =>
