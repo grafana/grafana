@@ -1,21 +1,27 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana/pkg/services/apiserver/contracts"
 )
 
-type DiscoveryClient interface {
-	discovery.DiscoveryInterface
-	GetResourceForKind(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
-	GetKindForResource(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error)
-	GetPreferredVesion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
-	GetPreferredVersionForKind(gk schema.GroupKind) (schema.GroupVersionResource, schema.GroupVersionKind, error)
-}
+var (
+	defaultPollInterval        = 500 * time.Millisecond
+	defaultAvailabilityTimeout = 10 * time.Second
+)
+
+// DiscoveryClient is now defined in pkg/services/apiserver/contracts to avoid import cycles.
+// This is a type alias for backward compatibility.
+type DiscoveryClient = contracts.DiscoveryClient
 
 type DiscoveryClientImpl struct {
 	restConfig *rest.Config
@@ -133,4 +139,14 @@ func (d *DiscoveryClientImpl) GetPreferredVersionForKind(gk schema.GroupKind) (s
 		}
 	}
 	return schema.GroupVersionResource{}, schema.GroupVersionKind{}, fmt.Errorf("preferred version not found for kind %s in group %s", gk.Kind, gk.Group)
+}
+
+func (d *DiscoveryClientImpl) WaitForAvailability(ctx context.Context, gv schema.GroupVersion) error {
+	return wait.PollUntilContextTimeout(ctx, defaultPollInterval, defaultAvailabilityTimeout, true, func(ctx context.Context) (bool, error) {
+		_, err := d.ServerResourcesForGroupVersion(gv.String())
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
 }
