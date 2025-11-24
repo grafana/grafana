@@ -1976,9 +1976,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager：",
-      "disabled-tooltip": "",
       "error": "无法加载 {{alertmanager}} 的路由预览",
       "initialized": "根据添加的标签，提醒实例会被路由到以下通知策略。展开下面的每个通知策略以查看更多详细信息。",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "预览路由",
       "select-folder-tooltip": "",
       "text-loading-preview": "正在加载预览...",
@@ -5078,8 +5080,12 @@
     "new-panel": {
       "configure-button": "配置",
       "configure-button-menu": "切换菜单",
+      "empty-state-message": "",
       "menu-open-panel-editor": "配置",
-      "menu-use-library-panel": "使用库面板"
+      "menu-use-library-panel": "使用库面板",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "新面板",
     "on-create-new-row": {
@@ -7194,6 +7200,7 @@
       "logs-volume": {
         "add-filters": "向您的查询添加更多标签以缩小搜索范围。",
         "decrease-timerange": "缩小查询的时间范围。",
+        "max-bytes-error": "",
         "much-data": "该查询正在尝试访问过多的数据。请尝试以下一种或多种方法："
       },
       "maximum-pinned-logs": "已达到固定日志的最大数量限制 {{PINNED_LOGS_LIMIT}}。取消固定某个日志，以添加另一个日志。",
@@ -7243,12 +7250,15 @@
       "tooltip-select-query-visualize-table": "选择要在表中可视化的查询"
     },
     "logs-volume-panel": {
-      "content-streaming": "流媒体传输"
+      "content-streaming": "流媒体传输",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "重新加载日志卷",
       "label-reload-log-volume": "重新加载日志卷",
       "loading": "加载中...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "加载此查询的日志卷失败",
       "title-no-logs-volume-available": "没有可用的日志卷",
       "title-showing-partial-data": "显示部分数据",
@@ -9929,11 +9939,7 @@
       "wrap-lines": "多行显示"
     },
     "logs-navigation": {
-      "newer-logs": "新日志",
-      "older-logs": "旧日志",
-      "scroll-bottom": "滚动到底部",
-      "scroll-top": "滚动到顶部",
-      "start-of-range": "范围的开始"
+      "scroll-top": "滚动到顶部"
     },
     "logs-panel": {
       "render-common-labels": {
