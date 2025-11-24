@@ -1,7 +1,7 @@
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -342,6 +342,18 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   }
 
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
+
+  // Wrapper for adding expressions that tracks the interaction
+  const handleAddExpression = (type: ExpressionQueryType) => {
+    // Track when user adds a new expression from the dropdown
+    reportInteraction('dashboards_expression_interaction', {
+      action: 'add_expression',
+      expression_type: type,
+      context: 'panel_query_section',
+    });
+    model.onAddExpressionOfType(type);
+  };
+
   const onSelectQueryFromLibrary = async (query: DataQuery) => {
     // ensure all queries explicitly define a datasource
     const enrichedQueries = queries.map((q) =>
@@ -421,7 +433,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
-          <ExpressionTypeDropdown handleOnSelect={model.onAddExpressionOfType}>
+          <ExpressionTypeDropdown handleOnSelect={handleAddExpression}>
             <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
             </Button>

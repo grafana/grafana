@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { ReactElement, useCallback, useMemo, memo } from 'react';
 
 import { FeatureState, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { Dropdown, FeatureBadge, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 
@@ -29,15 +28,7 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect }) =>
   const { value, label, description } = item;
   const styles = useStyles2(getStyles);
 
-  const handleClick = useCallback(() => {
-    // Track the interaction when user clicks an expression type in the dropdown
-    reportInteraction('dashboards_expression_interaction', {
-      action: 'add_expression',
-      expression_type: value,
-      context: 'panel_query_section',
-    });
-    onSelect(value!);
-  }, [value, onSelect]);
+  const handleClick = useCallback(() => onSelect(value!), [value, onSelect]);
 
   return (
     <Menu.Item
