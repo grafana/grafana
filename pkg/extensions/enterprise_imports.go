@@ -58,5 +58,4 @@ import (
 
 	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
 	_ "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
-	_ "github.com/testcontainers/testcontainers-go"
 )
