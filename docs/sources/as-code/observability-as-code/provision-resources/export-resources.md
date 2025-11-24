@@ -36,22 +36,22 @@ Currently, Git Sync doesn't offer any built-in functionality to easily export re
 
 ## Add a dashboard with Grafana CLI
 
-You can export an existing dashboard with the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) and commit it to your Git repository. 
+You can export an existing dashboard with the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) and commit it to your Git repository.
 
 To do so:
 
 1. Make changes to dashboards and other resources using the Grafana UI in your development instance.
 1. Pull those resources from the development environment to your local machine:
-  ```grafanactl resources pull dashboards --path <DASHBOARDS_PATH>``` 
+   `grafanactl resources pull dashboards --path <DASHBOARDS_PATH>`
 1. Push the resources to your Git repository:
-  ```grafanactl resources push dashboards --path <GIT_REPO>```
+   `grafanactl resources push dashboards --path <GIT_REPO>`
 
 Where:
 
 - _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located
 - _<GIT_REPO>_: The path to the repository synced with Git Sync
 
-See more at [Manage resources with Grafana CLI](https://grafana.github.io/grafanactl/guides/manage-resources/). 
+See more at [Manage resources with Grafana CLI](https://grafana.github.io/grafanactl/guides/manage-resources/).
 
 ## Add a dashboard via JSON export
 
