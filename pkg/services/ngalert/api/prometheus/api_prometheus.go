@@ -581,7 +581,7 @@ func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *pagina
 			rulesReturned += int64(len(group.Rules))
 
 			// Check if we've hit limits
-			if (maxGroups > 0 && groupsReturned >= maxGroups) || (maxRules > 0 && rulesReturned >= maxRules) {
+			if (maxGroups > 0 && groupsReturned == maxGroups) || (maxRules > 0 && rulesReturned >= maxRules) {
 				return allGroups, rulesTotals, page.nextToken, nil
 			}
 		}
