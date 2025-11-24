@@ -46,22 +46,23 @@ export function getPanelPluginCounts(panels: string[]) {
 }
 
 export function getV1SchemaVariables(variableList: VariableModel[]) {
-  const list = variableList
-    .map((v) => v.type)
-    .reduce((r: Record<string, number>, k) => {
-      r[variableName(k)] = 1 + r[variableName(k)] || 1;
-      return r;
-    }, {});
-  const varsWithDataSource: Array<{ type: string; datasource: string }> = [];
-  variableList.forEach((v) => {
-    if (v.datasource?.type) {
-      varsWithDataSource.push({
-        type: v.type,
-        datasource: v.datasource.type,
-      });
-    }
-  });
-  return { ...list, varsWithDataSource };
+  return {
+    // Count variable types
+    ...variableList.reduce<Record<string, number>>((variables, current) => {
+      variables[variableName(current.type)] = 1 + (variables[variableName(current.type)] || 0);
+      return variables;
+    }, {}),
+    // List of variables with data source types
+    varsWithDataSource: variableList.reduce<Array<{ type: string; datasource: string }>>((variablesWithDs, current) => {
+      if (current.datasource?.type) {
+        variablesWithDs.push({
+          type: current.type,
+          datasource: current.datasource.type,
+        });
+      }
+      return variablesWithDs;
+    }, []),
+  };
 }
 
 function mapNewToOldTypes(type: VariableKind['kind']): VariableModel['type'] | undefined {
@@ -88,48 +89,34 @@ function mapNewToOldTypes(type: VariableKind['kind']): VariableModel['type'] | u
 }
 
 export function getV2SchemaVariables(variableList: VariableKind[]) {
-  const list = variableList
-    .map((v) => mapNewToOldTypes(v.kind))
-    .filter((v) => v !== undefined)
-    .reduce((r: Record<string, number>, k) => {
-      r[variableName(k)] = 1 + r[variableName(k)] || 1;
-      return r;
-    }, {});
-
   return {
-    ...list,
-    varsWithDataSource: getV2SchemaVariablesWithDatasource(variableList),
+    // Count variable types
+    ...variableList.reduce<Record<string, number>>((variables, current) => {
+      const type = mapNewToOldTypes(current.kind);
+      if (type) {
+        variables[variableName(type)] = 1 + (variables[variableName(type)] || 0);
+      }
+      return variables;
+    }, {}),
+    // List of variables with data source types
+    varsWithDataSource: variableList.reduce<Array<{ type: string; datasource: string }>>((variablesWithDs, current) => {
+      let datasource = '';
+      const type = mapNewToOldTypes(current.kind);
+      datasource = getDatasourceFromVar(current);
+      if (datasource && type) {
+        variablesWithDs.push({ type, datasource });
+      }
+      return variablesWithDs;
+    }, []),
   };
 }
 
 export const variableName = (type: string) => `variable_type_${type}_count`;
 const panelName = (type: string) => `panel_type_${type}_count`;
 
-export const getV2SchemaVariablesWithDatasource = (variableList: VariableKind[]) => {
-  const variablesWithDS: Array<{ type: string; datasource: string }> = [];
-  variableList.forEach((v) => {
-    let datasource = '';
-    const type = mapNewToOldTypes(v.kind);
-    /* eslint-disable @typescript-eslint/consistent-type-assertions  */
-    switch (v.kind) {
-      case 'AdhocVariable':
-        datasource = (v as AdhocVariableKind).group ?? '';
-        break;
-      case 'DatasourceVariable':
-        datasource = (v as DatasourceVariableKind).spec.pluginId ?? '';
-        break;
-      case 'QueryVariable':
-        datasource = (v as QueryVariableKind).spec.query?.group ?? '';
-        break;
-      default:
-        break;
-    }
-    if (datasource && type) {
-      variablesWithDS.push({
-        type,
-        datasource,
-      });
-    }
-  });
-  return variablesWithDS;
-};
+const isAdhocVar: (v: VariableKind) => v is AdhocVariableKind = (v) => v.kind === 'AdhocVariable';
+const isDatasourceVar: (v: VariableKind) => v is DatasourceVariableKind = (v) => v.kind === 'DatasourceVariable';
+const isQueryVar: (v: VariableKind) => v is QueryVariableKind = (v) => v.kind === 'QueryVariable';
+
+const getDatasourceFromVar = (v: VariableKind) =>
+  isAdhocVar(v) ? v.group : isDatasourceVar(v) ? v.spec.pluginId : isQueryVar(v) ? v.spec?.query.group : '';
