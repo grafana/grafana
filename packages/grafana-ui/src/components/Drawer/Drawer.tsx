@@ -107,17 +107,7 @@ export function Drawer({
       open={true}
       onClose={onClose}
       placement="right"
-      getContainer={() => {
-        // Use the panes container instead of main, so drawer positions relative to sidebar layout
-        // The panes container has position: relative when sidebar is open, so drawer will position correctly
-        const panesContainer = document.querySelector('.page-panes');
-        const container = panesContainer || document.querySelector('main') || document.body;
-        // Ensure container has position: relative for absolute positioning to work
-        if (container instanceof HTMLElement && getComputedStyle(container).position === 'static') {
-          container.style.position = 'relative';
-        }
-        return container;
-      }}
+      getContainer={'main'}
       className={styles.drawerContent}
       rootClassName={styles.drawer}
       classNames={{
@@ -278,18 +268,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       // so it positions relative to its container (.page-panes) instead of viewport
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       position: 'absolute !important' as 'absolute',
-      inset: 0,
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
 
       '.rc-drawer-content-wrapper': {
         boxShadow: theme.shadows.z3,
-        position: 'absolute',
-        right: 0,
-        top: 0,
-        bottom: 0,
       },
     }),
     drawerContent: css({
@@ -327,11 +308,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: 'transparent !important',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       position: 'fixed !important' as 'fixed',
-      inset: 0,
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
       zIndex: theme.zIndex.modal - 1, // Below drawer (modal = 1060) and sidebar (modal = 1060)
 
       // Create a visible overlay that starts below the top nav bar
@@ -346,7 +322,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         // Start below the top nav bar
         top: '40px',
         right: 0,
-        pointerEvents: 'auto',
       },
     }),
     maskMotion: css({
