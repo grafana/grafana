@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/nat"
-	"github.com/grafana/grafana/pkg/extensions/apiserver/apiserver_test/testcontainer"
+	"github.com/grafana/grafana/pkg/services/apiserver/apiserver_test/testcontainer"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
