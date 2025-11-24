@@ -73,7 +73,7 @@ func RegisterAPIService(
 	unified resource.ResourceClient,
 ) (*APIExtensionsBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagApiExtensions) {
-		return nil, fmt.Errorf("apiextensions feature flag is not enabled")
+		return nil, nil
 	}
 
 	b := &APIExtensionsBuilder{
@@ -188,6 +188,7 @@ func (b *APIExtensionsBuilder) loadAndRegisterCRDs(ctx context.Context, crdStore
 	// This allows us to list CRDs without a user session during server startup
 	// TODO(@konsalex): Does this cause any security issue? Not 100% how to authenticate
 	// a service call like this
+	// Use well-know constants, and co-ord with IAM and SnStorage to ensure this is secure.
 	systemCtx := resource.WithFallback(ctx)
 	systemCtx = authlib.WithAuthInfo(systemCtx, &identity.StaticRequester{
 		Type:           authlib.TypeServiceAccount,

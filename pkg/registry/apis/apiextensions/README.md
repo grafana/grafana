@@ -63,7 +63,7 @@ kubectl apply -f ./pkg/registry/apis/apiextensions/resources/example-widget.yaml
 Or use curl:
 
 ```bash
-curl -k -X POST https://localhost:1111/apis/apiextensions.k8s.io/v1/customresourcedefinitions \
+curl -k -X POST https://localhost:1111/apis/customcrdtest.grafana.app/v1/namespaces/default/widgets \
   -H "$AUTH_SVC" \
   -H "Content-Type: application/yaml" \
   --data-binary @$PWD/pkg/registry/apis/apiextensions/resources/example-widget.yaml
