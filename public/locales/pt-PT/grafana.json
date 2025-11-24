@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
-      "disabled-tooltip": "",
       "error": "Não foi possível carregar a pré-visualização de encaminhamento para {{alertmanager}}",
       "initialized": "Com base nas etiquetas adicionadas, as instâncias de alerta são encaminhadas para as seguintes políticas de notificação. Expanda cada política de notificação abaixo para ver mais detalhes.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Pré-visualizar encaminhamento",
       "select-folder-tooltip": "",
       "text-loading-preview": "A carregar a pré-visualização...",
@@ -5098,8 +5100,12 @@
     "new-panel": {
       "configure-button": "Configurar",
       "configure-button-menu": "Alternar menu",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Configurar",
-      "menu-use-library-panel": "Utilizar o painel de biblioteca"
+      "menu-use-library-panel": "Utilizar o painel de biblioteca",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Novo painel",
     "on-create-new-row": {
@@ -7218,6 +7224,7 @@
       "logs-volume": {
         "add-filters": "Adicione mais etiquetas à sua consulta para restringir a sua pesquisa.",
         "decrease-timerange": "Diminua o intervalo de tempo da sua consulta.",
+        "max-bytes-error": "",
         "much-data": "A consulta está a tentar aceder a demasiados dados. Tente um ou mais dos seguintes procedimentos:"
       },
       "maximum-pinned-logs": "Máximo de registos {{PINNED_LOGS_LIMIT}} fixados atingidos. Retire um registo para adicionar outro.",
@@ -7267,12 +7274,15 @@
       "tooltip-select-query-visualize-table": "Selecione uma consulta para visualizar na tabela"
     },
     "logs-volume-panel": {
-      "content-streaming": "Transmissão"
+      "content-streaming": "Transmissão",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Recarregar volume de registo",
       "label-reload-log-volume": "Recarregar volume de registo",
       "loading": "A carregar...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Falha ao carregar o volume de registos para esta consulta",
       "title-no-logs-volume-available": "Nenhum volume de registos disponível",
       "title-showing-partial-data": "A mostrar dados parciais",
@@ -9973,11 +9983,7 @@
       "wrap-lines": "Quebra de linhas"
     },
     "logs-navigation": {
-      "newer-logs": "Registos mais recentes",
-      "older-logs": "Registos mais antigos",
-      "scroll-bottom": "Rolar para baixo",
-      "scroll-top": "Rolar para o topo",
-      "start-of-range": "Início do intervalo"
+      "scroll-top": "Rolar para o topo"
     },
     "logs-panel": {
       "render-common-labels": {
