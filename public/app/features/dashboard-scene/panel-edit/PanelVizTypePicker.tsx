@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
-import { useLocalStorage } from 'react-use';
+import { useCallback, useMemo, useState } from 'react';
+import { useSessionStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -25,8 +25,25 @@ export interface Props {
   onClose: () => void;
 }
 
+const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> => {
+  const suggestionsTab = {
+    label: t('dashboard-scene.panel-viz-type-picker.radio-options.label.suggestions', 'Suggestions'),
+    value: VisualizationSelectPaneTab.Suggestions,
+  };
+  const allVisualizationsTab = {
+    label: t('dashboard-scene.panel-viz-type-picker.radio-options.label.all-visualizations', 'All visualizations'),
+    value: VisualizationSelectPaneTab.Visualizations,
+  };
+  return config.featureToggles.newVizSuggestions
+    ? [suggestionsTab, allVisualizationsTab]
+    : [allVisualizationsTab, suggestionsTab];
+};
+
 export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
   const styles = useStyles2(getStyles);
+  const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
+
+  /** SEARCH */
   const [searchQuery, setSearchQuery] = useState('');
   const trackSearch = useMemo(
     () =>
@@ -43,37 +60,27 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
       }, 300),
     []
   );
-
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
   };
 
-  const tabKey = LS_VISUALIZATION_SELECT_TAB_KEY;
-  const defaultTab = config.featureToggles.newVizSuggestions
-    ? VisualizationSelectPaneTab.Suggestions
-    : VisualizationSelectPaneTab.Visualizations;
-  const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
+  /** TABS */
+  const tabs = useMemo(getTabs, []);
+  const defaultTab = tabs[0].value;
+  const [listMode, setListMode] = useSessionStorage(LS_VISUALIZATION_SELECT_TAB_KEY, defaultTab);
 
-  const supportedListModes = useMemo(
-    () => new Set([VisualizationSelectPaneTab.Visualizations, VisualizationSelectPaneTab.Suggestions]),
-    []
+  const handleListModeChange = useCallback(
+    (value: VisualizationSelectPaneTab) => {
+      reportInteraction(INTERACTION_EVENT_NAME, {
+        item: INTERACTION_ITEM.CHANGE_TAB,
+        tab: VisualizationSelectPaneTab[value],
+        creator_team: 'grafana_plugins_catalog',
+        schema_version: '1.0.0',
+      });
+      setListMode(value);
+    },
+    [setListMode]
   );
-  const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
-  const handleListModeChange = (value: VisualizationSelectPaneTab) => {
-    reportInteraction(INTERACTION_EVENT_NAME, {
-      item: INTERACTION_ITEM.CHANGE_TAB,
-      tab: VisualizationSelectPaneTab[value],
-      creator_team: 'grafana_plugins_catalog',
-      schema_version: '1.0.0',
-    });
-    setListMode(value);
-  };
-
-  useEffect(() => {
-    if (listMode && !supportedListModes.has(listMode)) {
-      setListMode(defaultTab);
-    }
-  }, [defaultTab, listMode, setListMode, supportedListModes]);
 
   return (
     <div className={styles.wrapper}>
@@ -86,24 +93,16 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
       {/*  data-testid={selectors.components.PanelEditor.toggleVizPicker}*/}
       {/*  onClick={onClose}*/}
       {/*/>*/}
-      <TabsBar hideBorder={true}>
-        <Tab
-          label={t('dashboard-scene.panel-viz-type-picker.radio-options.label.suggestions', 'Suggestions')}
-          active={listMode === VisualizationSelectPaneTab.Suggestions}
-          onChangeTab={() => {
-            handleListModeChange(VisualizationSelectPaneTab.Suggestions);
-          }}
-        />
-        <Tab
-          label={t(
-            'dashboard-scene.panel-viz-type-picker.radio-options.label.all-visualizations',
-            'All visualizations'
-          )}
-          active={listMode === VisualizationSelectPaneTab.Visualizations}
-          onChangeTab={() => {
-            handleListModeChange(VisualizationSelectPaneTab.Visualizations);
-          }}
-        />
+      <TabsBar className={styles.tabs} hideBorder={true}>
+        {tabs.map((tab) => (
+          <Tab
+            className={styles.tab}
+            key={tab.value}
+            label={tab.label}
+            active={listMode === tab.value}
+            onChangeTab={() => handleListModeChange(tab.value)}
+          />
+        ))}
       </TabsBar>
       <ScrollContainer>
         <TabContent>
@@ -146,6 +145,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   searchRow: css({
     display: 'flex',
     marginBottom: theme.spacing(2),
+  }),
+  tabs: css({
+    width: '100%',
+  }),
+  tab: css({
+    flexGrow: 1,
+    justifyContent: 'center',
+    textAlign: 'center',
   }),
   closeButton: css({
     marginLeft: 'auto',
