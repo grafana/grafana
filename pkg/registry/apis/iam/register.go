@@ -29,6 +29,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
@@ -394,7 +395,15 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 		return err
 	}
 
-	storage[iamv0.ResourcePermissionInfo.StoragePath()] = dw
+	// Not ideal, the alternative is to wrap both stores that dualwrite uses
+	regStoreDW, ok := dw.(*registry.Store)
+	if !ok {
+		return fmt.Errorf("expected RegistryStoreDualWrite, got %T", dw)
+	}
+
+	authzWrapper := storewrapper.New(regStoreDW, b.accessClient)
+
+	storage[iamv0.ResourcePermissionInfo.StoragePath()] = authzWrapper
 	return nil
 }
 
