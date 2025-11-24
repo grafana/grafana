@@ -675,13 +675,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:        "onPremToCloudMigrations",
-			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "secretsManagementAppPlatform",
 			Description: "Enable the secrets management API and services under app platform",
 			Stage:       FeatureStageExperimental,

@@ -2395,8 +2395,9 @@
     {
       "metadata": {
         "name": "onPremToCloudMigrations",
-        "resourceVersion": "1763988995593",
-        "creationTimestamp": "2024-01-22T16:09:08Z"
+        "resourceVersion": "1763734583253",
+        "creationTimestamp": "2024-01-22T16:09:08Z",
+        "deletionTimestamp": "2025-11-20T09:59:41Z"
       },
       "spec": {
         "description": "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
