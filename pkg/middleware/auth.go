@@ -313,7 +313,7 @@ func shouldForceLogin(c *contextmodel.ReqContext) bool {
 // It returns false if the feature flag is set and set to false.
 // The feature flag key format is: "plugin-page-visible.<path>"
 func PageIsFeatureToggleEnabled(ctx context.Context, path string) bool {
-	flagKey := pluginPageFeatureFlagPrefix + path
+	flagKey := pluginPageFeatureFlagPrefix + filepath.Clean(path)
 	enabled := openfeatureClient.Boolean(
 		ctx,
 		flagKey,

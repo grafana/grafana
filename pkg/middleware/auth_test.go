@@ -455,6 +455,14 @@ func TestPageIsFeatureToggleEnabled(t *testing.T) {
 			expectedResult: false,
 		},
 		{
+			desc: "returns false when feature flag is disabled with trailing slash",
+			path: "/a/my-plugin/settings/",
+			flags: map[string]bool{
+				pluginPageFeatureFlagPrefix + "/a/my-plugin/settings": false,
+			},
+			expectedResult: false,
+		},
+		{
 			desc:           "returns true when feature flag does not exist",
 			path:           "/a/my-plugin/settings",
 			flags:          map[string]bool{},
