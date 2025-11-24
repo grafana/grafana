@@ -197,7 +197,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
   const [dedupStrategy, setDedupStrategy] = useState<LogsDedupStrategy>(LogsDedupStrategy.none);
   const [logsSortOrder, setLogsSortOrder] = useState<LogsSortOrder>(
-    store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending
+    panelState?.logs?.sortOrder ?? store.get(SETTINGS_KEYS.logsSortOrder) ?? LogsSortOrder.Descending
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
   const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
@@ -287,12 +287,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   useUnmount(() => {
     // If we're unmounting logs (e.g. switching to another datasource), we need to remove the logs specific panel state, otherwise it will persist in the explore url
-    if (
-      panelState?.logs?.columns ||
-      panelState?.logs?.refId ||
-      panelState?.logs?.labelFieldName ||
-      panelState?.logs?.displayedFields
-    ) {
+    if (panelState?.logs) {
       dispatch(
         changePanelState(exploreId, 'logs', {
           ...panelState?.logs,
@@ -301,6 +296,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           labelFieldName: undefined,
           refId: undefined,
           displayedFields: undefined,
+          sortOrder: undefined,
         })
       );
     }
@@ -398,8 +394,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         dispatch(changeQueries({ exploreId, queries: newQueries }));
         dispatch(runQueries({ exploreId }));
       }
+      if (panelState?.logs) {
+        dispatch(
+          changePanelState(exploreId, 'logs', {
+            ...panelState?.logs,
+            sortOrder: newSortOrder,
+          })
+        );
+      }
     },
-    [dispatch, exploreId, logsQueries]
+    [dispatch, exploreId, logsQueries, panelState?.logs]
   );
 
   const onChangeLogsSortOrder = useCallback(
