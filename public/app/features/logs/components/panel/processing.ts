@@ -128,6 +128,7 @@ export class LogListModel implements LogRowModel {
     clone._wrapLogMessage = true;
     clone._body = undefined;
     clone._highlightTokens = undefined;
+    clone.collapsed = false;
     return clone;
   }
 

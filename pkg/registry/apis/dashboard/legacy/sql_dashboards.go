@@ -109,13 +109,14 @@ func ProvideMigratorDashboardAccessor(
 	features featuremgmt.FeatureToggles,
 ) MigrationDashboardAccessor {
 	return &dashboardSqlAccess{
-		sql:                                  sql,
-		namespacer:                           claims.OrgNamespaceFormatter,
-		dashStore:                            nil, // not needed for migration
-		provisioning:                         provisioning,
-		dashboardPermissionSvc:               nil, // not needed for migration
-		libraryPanelSvc:                      nil, // not needed for migration
-		accessControl:                        accessControl,
+		sql:                    sql,
+		namespacer:             claims.OrgNamespaceFormatter,
+		dashStore:              nil, // not needed for migration
+		provisioning:           provisioning,
+		dashboardPermissionSvc: nil, // not needed for migration
+		libraryPanelSvc:        nil, // not needed for migration
+		accessControl:          accessControl,
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		invalidDashboardParseFallbackEnabled: features.IsEnabled(context.Background(), featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled),
 	}
 }
@@ -132,14 +133,15 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 ) *dashboardSqlAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
-		sql:                                  sql,
-		namespacer:                           namespacer,
-		dashStore:                            dashStore,
-		provisioning:                         provisioning,
-		dashboardSearchClient:                *dashboardSearchClient,
-		dashboardPermissionSvc:               dashboardPermissionSvc,
-		libraryPanelSvc:                      libraryPanelSvc,
-		accessControl:                        accessControl,
+		sql:                    sql,
+		namespacer:             namespacer,
+		dashStore:              dashStore,
+		provisioning:           provisioning,
+		dashboardSearchClient:  *dashboardSearchClient,
+		dashboardPermissionSvc: dashboardPermissionSvc,
+		libraryPanelSvc:        libraryPanelSvc,
+		accessControl:          accessControl,
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		invalidDashboardParseFallbackEnabled: features.IsEnabled(context.Background(), featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled),
 	}
 }
@@ -1045,4 +1047,8 @@ func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
 	}
 
 	return item, nil
+}
+
+func (b *dashboardSqlAccess) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("not implemented")
 }

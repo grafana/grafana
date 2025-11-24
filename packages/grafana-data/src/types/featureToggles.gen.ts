@@ -329,6 +329,10 @@ export interface FeatureToggles {
   */
   alertingUIUseBackendFilters?: boolean;
   /**
+  * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
+  */
+  alertingUIUseFullyCompatBackendFilters?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
@@ -364,6 +368,10 @@ export interface FeatureToggles {
   * Enables unlimited dashboard panel grouping
   */
   unlimitedLayoutsNesting?: boolean;
+  /**
+  * Enables viewing non-applicable drilldowns on a panel level
+  */
+  perPanelNonApplicableDrilldowns?: boolean;
   /**
   * Enabled a group by action per panel
   */
@@ -921,10 +929,6 @@ export interface FeatureToggles {
   * @default true
   */
   grafanaAssistantInProfilesDrilldown?: boolean;
-  /**
-  * Enables using PGX instead of libpq for PostgreSQL datasource
-  */
-  postgresDSUsePGX?: boolean;
   /**
   * Enables creating alerts from Tempo data source
   */
