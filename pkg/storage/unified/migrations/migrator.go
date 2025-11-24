@@ -144,7 +144,6 @@ func newUnifiedMigrator(
 	}
 }
 
-// migrate function -- works for a single kind
 type migratorFunc = func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*legacy.BlobStoreInfo, error)
 
 func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error) {

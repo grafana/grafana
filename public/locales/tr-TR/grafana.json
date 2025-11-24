@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Uyarı yöneticisi:",
-      "disabled-tooltip": "",
       "error": "{{alertmanager}} için yönlendirme ön izlemesi yüklenemedi",
       "initialized": "Eklenen etiketlere bağlı olarak uyarı örnekleri aşağıdaki bildirim politikalarına yönlendirilir. Daha fazla ayrıntı görmek için her bir bildirim politikasını genişletin.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Yönlendirmeyi ön izle",
       "select-folder-tooltip": "",
       "text-loading-preview": "Ön izleme yükleniyor...",
@@ -5098,8 +5100,12 @@
     "new-panel": {
       "configure-button": "Yapılandır",
       "configure-button-menu": "Menüyü aç/kapat",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Yapılandır",
-      "menu-use-library-panel": "Kütüphane panelini kullan"
+      "menu-use-library-panel": "Kütüphane panelini kullan",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Yeni panel",
     "on-create-new-row": {
@@ -7218,6 +7224,7 @@
       "logs-volume": {
         "add-filters": "Sorgunuzu daraltmak için sorgunuza daha fazla etiket ekleyin.",
         "decrease-timerange": "Sorgunuzun zaman aralığını kısaltın.",
+        "max-bytes-error": "",
         "much-data": "Sorgu çok fazla veriye erişmeye çalışıyor. Aşağıdakilerden biri veya daha fazlasını yerine getirin:"
       },
       "maximum-pinned-logs": "Maksimum {{PINNED_LOGS_LIMIT}} sabitlenmiş günlük ulaşıldı. Başka bir tane eklemek için bir günlüğün sabitlemesini kaldırın.",
@@ -7267,12 +7274,15 @@
       "tooltip-select-query-visualize-table": "Tabloda görselleştirmek için bir sorgu seçin"
     },
     "logs-volume-panel": {
-      "content-streaming": "Akış"
+      "content-streaming": "Akış",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "",
       "label-reload-log-volume": "Günlük kaydı hacmini yeniden yükle",
       "loading": "Yükleniyor...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Bu sorgu için günlük kaydı birimi yüklenemedi",
       "title-no-logs-volume-available": "Günlük kaydı birimi yok",
       "title-showing-partial-data": "Kısmi veriler gösteriliyor",
@@ -9973,11 +9983,7 @@
       "wrap-lines": "Satırları kaydır"
     },
     "logs-navigation": {
-      "newer-logs": "Yeni günlükler",
-      "older-logs": "Eski günlükler",
-      "scroll-bottom": "En alta kaydır",
-      "scroll-top": "En üste kaydır",
-      "start-of-range": "Aralık başlangıcı"
+      "scroll-top": "En üste kaydır"
     },
     "logs-panel": {
       "render-common-labels": {

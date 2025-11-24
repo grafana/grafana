@@ -774,6 +774,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         <PanelChrome
           title={t('explore.unthemed-logs.title-logs-volume', 'Logs volume')}
           collapsible
+          loadingState={logsVolumeData?.state}
           collapsed={!logsVolumeEnabled}
           onToggleCollapse={onToggleLogsVolumeCollapse}
         >
@@ -1234,7 +1235,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     visualisationType: css({
       display: 'flex',
       flex: '1',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-end',
     }),
     visualisationTypeRadio: css({
       margin: `0 0 0 ${theme.spacing(1)}`,

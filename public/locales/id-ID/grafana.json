@@ -1976,9 +1976,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
-      "disabled-tooltip": "",
       "error": "Tidak dapat memuat pratinjau perutean untuk {{alertmanager}}",
       "initialized": "Berdasarkan label yang ditambahkan, instans peringatan dirutekan ke kebijakan pemberitahuan berikut. Perluas setiap kebijakan pemberitahuan di bawah ini untuk melihat detail selengkapnya.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Pratinjau perutean",
       "select-folder-tooltip": "",
       "text-loading-preview": "Memuat pratinjau...",
@@ -5078,8 +5080,12 @@
     "new-panel": {
       "configure-button": "Konfigurasikan",
       "configure-button-menu": "Alihkan tombol menu",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Konfigurasikan",
-      "menu-use-library-panel": "Gunakan panel pustaka"
+      "menu-use-library-panel": "Gunakan panel pustaka",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Panel baru",
     "on-create-new-row": {
@@ -7194,6 +7200,7 @@
       "logs-volume": {
         "add-filters": "Tambahkan lebih banyak label ke kueri Anda untuk mempersempit pencarian Anda.",
         "decrease-timerange": "Kurangi rentang waktu kueri Anda.",
+        "max-bytes-error": "",
         "much-data": "Kueri mencoba mengakses terlalu banyak data. Coba salah satu atau beberapa hal berikut:"
       },
       "maximum-pinned-logs": "Maksimum {{PINNED_LOGS_LIMIT}} log yang disematkan tercapai. Buka sematan log untuk menambahkan log lain.",
@@ -7243,12 +7250,15 @@
       "tooltip-select-query-visualize-table": "Pilih kueri untuk divisualisasikan pada tabel"
     },
     "logs-volume-panel": {
-      "content-streaming": "Streaming"
+      "content-streaming": "Streaming",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Muat ulang volume log",
       "label-reload-log-volume": "Muat ulang volume log",
       "loading": "Memuat...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Gagal memuat volume log untuk kueri ini",
       "title-no-logs-volume-available": "Tidak ada volume log yang tersedia",
       "title-showing-partial-data": "Menampilkan data parsial",
@@ -9929,11 +9939,7 @@
       "wrap-lines": "Terapkan wrap pada baris"
     },
     "logs-navigation": {
-      "newer-logs": "Log baru",
-      "older-logs": "Log lama",
-      "scroll-bottom": "Gulir ke bawah",
-      "scroll-top": "Gulir ke atas",
-      "start-of-range": "Awal rentang"
+      "scroll-top": "Gulir ke atas"
     },
     "logs-panel": {
       "render-common-labels": {

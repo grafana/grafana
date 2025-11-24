@@ -400,7 +400,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	prometheusService := prometheus.ProvideService(httpclientProvider)
 	tempoService := tempo.ProvideService(httpclientProvider, tracer)
 	testdatasourceService := testdatasource.ProvideService()
-	postgresService := postgres.ProvideService(cfg)
+	postgresService := postgres.ProvideService()
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService(cfg)
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
@@ -534,7 +534,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl, featureToggles)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(migrationDashboardAccessor, resourceClient)
-	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore)
+	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService)
 	if err != nil {
 		return nil, err
@@ -1047,7 +1047,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	prometheusService := prometheus.ProvideService(httpclientProvider)
 	tempoService := tempo.ProvideService(httpclientProvider, tracer)
 	testdatasourceService := testdatasource.ProvideService()
-	postgresService := postgres.ProvideService(cfg)
+	postgresService := postgres.ProvideService()
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService(cfg)
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
@@ -1181,7 +1181,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl, featureToggles)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(migrationDashboardAccessor, resourceClient)
-	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore)
+	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService)
 	if err != nil {
 		return nil, err
