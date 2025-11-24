@@ -46,7 +46,7 @@ interface DashboardOutlineNodeProps {
 
 function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }: DashboardOutlineNodeProps) {
   const styles = useStyles2(getStyles);
-  const { key } = sceneObject.useState();
+  const key = sceneObject.state.key;
   const [isCollapsed, setIsCollapsed] = useState(depth > 0);
   const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);

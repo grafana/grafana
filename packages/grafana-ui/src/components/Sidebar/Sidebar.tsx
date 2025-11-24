@@ -61,6 +61,7 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
           icon={'web-section-alt'}
           onClick={context.onToggleDock}
           title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
+          data-testid="sidebar-dock-toggle"
         />
       )}
     </div>
