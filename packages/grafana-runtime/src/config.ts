@@ -241,6 +241,7 @@ export class GrafanaBootConfig {
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
   localFileSystemAvailable?: boolean;
+  cloudMigrationEnabled?: boolean;
   cloudMigrationIsTarget?: boolean;
   cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;
