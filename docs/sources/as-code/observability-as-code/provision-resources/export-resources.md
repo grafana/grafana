@@ -27,7 +27,9 @@ Git Sync and local file provisioning are [experimental features](https://grafana
 
 {{< /admonition >}}
 
-Git Sync is under development, and traditional operations like `import`, `copy`, `move`, or `save` are not yet supported for dashboards already existing in Grafana. 
+Git Sync is under development, and traditional operations like `import`, `copy`, `move`, or `save` are not yet supported for dashboards already existing in Grafana. If you want to use Git Sync with those dashboards, they must be exported to the repository first. Currently, Git Sync doesn't offer any built-in functionality to easily export those from Grafana in bulk, but if you really want to use Git Sync, the following options are available for you in the meantime: 
+- Copy as JSON and committing them into the repository. 
+- Export them with [grafanactl]() and commit. (recommended)
 
 You have two options for creating new dashboards or folders in Git Sync:
 
