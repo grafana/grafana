@@ -30,10 +30,7 @@ function registerRuleViewTab(builder: RuleViewTabBuilder) {
   });
 }
 
-export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModelItem[] {
-  const { rule } = useAlertRule();
-  const isGrafanaAlertRule = rulerRuleType.grafana.alertingRule(rule.rulerRule);
-
+export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs, isGrafanaAlertRule: boolean): NavModelItem[] {
   return ruleViewTabBuilders
     .filter((config) => {
       // Check if rule type matches requirement
@@ -44,6 +41,13 @@ export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModel
     })
     .map((config) => config.ruleViewTabBuilder(args))
     .filter((item): item is NavModelItem => item !== null);
+}
+
+export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModelItem[] {
+  const { rule } = useAlertRule();
+  const isGrafanaAlertRule = rulerRuleType.grafana.alertingRule(rule.rulerRule);
+
+  return getRuleViewExtensionTabs(args, isGrafanaAlertRule);
 }
 
 export function addEnrichmentSection() {
@@ -68,20 +72,6 @@ export function addEnrichmentSection() {
 // ONLY FOR TESTS: resets the registered tabs between tests
 export function __clearRuleViewTabsForTests() {
   ruleViewTabBuilders.splice(0, ruleViewTabBuilders.length);
-}
-
-// ONLY FOR TESTS: non-hook version for testing
-export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs, isGrafanaAlertRule: boolean): NavModelItem[] {
-  return ruleViewTabBuilders
-    .filter((config) => {
-      // Check if rule type matches requirement
-      if (config.filterOnlyGrafanaAlertRules && !isGrafanaAlertRule) {
-        return false;
-      }
-      return true;
-    })
-    .map((config) => config.ruleViewTabBuilder(args))
-    .filter((item): item is NavModelItem => item !== null);
 }
 
 function getStyles() {

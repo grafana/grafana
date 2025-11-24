@@ -13,6 +13,7 @@ import { AlertmanagerProvider } from '../state/AlertmanagerContext';
 import { grantPermissionsHelper } from '../test/test-utils';
 import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import * as misc from '../utils/misc';
 
 import {
   AlertRuleAction,
@@ -222,7 +223,7 @@ describe('enrichment abilities', () => {
 
   it('should grant read and write permissions to admin users', () => {
     grantPermissionsHelper([]);
-    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(true);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
 
@@ -236,7 +237,7 @@ describe('enrichment abilities', () => {
   });
 
   it('should grant read permission when user has enrichments:read permission', () => {
-    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead]);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
@@ -251,7 +252,7 @@ describe('enrichment abilities', () => {
   });
 
   it('should grant write permission when user has enrichments:write permission', () => {
-    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsWrite]);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
@@ -266,7 +267,7 @@ describe('enrichment abilities', () => {
   });
 
   it('should grant both read and write permissions when user has both permissions', () => {
-    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead, AccessControlAction.AlertingEnrichmentsWrite]);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
@@ -281,7 +282,7 @@ describe('enrichment abilities', () => {
   });
 
   it('should deny all permissions when user is not admin and has no permissions', () => {
-    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([]);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
@@ -296,7 +297,7 @@ describe('enrichment abilities', () => {
   });
 
   it('should return correct ability for specific action using useEnrichmentAbility', () => {
-    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead]);
 
     const { result } = renderHook(() => useEnrichmentAbility(EnrichmentAction.Read), { wrapper: wrapper() });
