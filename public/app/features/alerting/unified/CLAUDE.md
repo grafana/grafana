@@ -95,7 +95,7 @@ This file provides context for Claude Code when working on the Grafana Alerting 
 
 ### RTK Query (Primary - Preferred)
 
-**IMPORTANT**: Our direction is to use RTK Query for data fetching, NOT Redux.
+**IMPORTANT**: Our direction is to use RTK Query for data fetching, NOT Redux. Do not create new RTKQ endpoints, those should be created manually.
 
 - API slices in `api/` directory
 - Custom base query in `api/alertingApi.ts`
@@ -120,9 +120,9 @@ const { data, isLoading, error } = useGetAlertRulesQuery(params);
 
 ### Context Providers
 
-- `AlertmanagerContext` - Alertmanager selection state
-- `SettingsContext` - Settings state
-- `WorkbenchContext` - Workbench state
+- `AlertmanagerContext` - Alertmanager selection state, for managing Alertmanager entities for a specific Alertmanager data source.
+- `SettingsContext` - Settings state – used in `public/app/features/alerting/unified/components/settings`
+- `WorkbenchContext` - Workbench state used in the alert triage feature `public/app/features/alerting/unified/triage`
 
 ### Forms
 
@@ -135,7 +135,7 @@ See [./TESTING.md](./TESTING.md) for comprehensive testing guide. Key points:
 
 ### API Mocking with MSW
 
-**REQUIRED**: Use MSW for all API mocking (not `jest.fn()`)
+**REQUIRED**: Use MSW for all API mocking (not `jest.fn()`) – though it's fine to use this function for unit testing.
 
 ```typescript
 import { mockApi } from '../mockApi';
@@ -178,7 +178,14 @@ Located in `testSetup/datasources.ts` for data source mocking patterns
 
 **Use factories for creating test data** - Don't manually create objects.
 
-Alerting uses **`alertingFactory`** from `mocks/server/db` for building test data:
+For Kubernetes APIs and new schemas – use the `@grafana/alerting` package.
+
+Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/v0alpha1/mocks/fakes`
+MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/v0alpha1/mocks/handlers`
+
+And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.test.scenario.ts` and is used for integration tests.
+
+Additionally alerting uses **`alertingFactory`** from `mocks/server/db` for building test data:
 
 ```typescript
 import { alertingFactory } from './mocks/server/db';
@@ -235,7 +242,9 @@ mockFolder();
 
 ## Alerting-Specific Patterns
 
-### Feature Toggles
+### Feature Toggles & settings
+
+A full list of features can be found in `pkg/services/featuremgmt/toggles_gen.csv` – focus on feature toggles owned by `@grafana/alerting-squad`.
 
 ```typescript
 import { config } from '@grafana/runtime';
@@ -245,7 +254,7 @@ if (config.featureToggles.alertingTriage) {
 }
 ```
 
-**Common toggles**: `unifiedAlertingEnabled`, `alertingTriage`, `alertingListViewV2`
+A common configuration setting would be `unifiedAlertingEnabled` which allows a user to configure Grafana without any alerting UI or backend enabled at all.
 
 ### Data Source Abstractions
 
@@ -289,7 +298,7 @@ Defined in `routes.tsx`:
 useCombinedRuleNamespaces(); // Combines Prometheus + Ruler rules
 useAlertmanagerConfig(); // Fetch alertmanager config
 useFolder(); // Folder operations
-useUnifiedAlertingSelector(); // Redux state
+useUnifiedAlertingSelector(); // Redux state – avoid using
 useAbilities(); // Permission checking
 ```
 
@@ -358,6 +367,7 @@ import { TextLink } from '@grafana/ui';
 - `@grafana/runtime` - Runtime services (config, backendSrv, locationService)
 - `@grafana/scenes` - Scene framework (Insights/Triage views)
 - `@grafana/e2e-selectors` - Test selectors
+- `@grafana/alerting` - Grafana managed alerting specific package (utility functions, API endpoints, mocks, React components, etc)
 
 ### External
 
@@ -395,6 +405,8 @@ import { TextLink } from '@grafana/ui';
 5. ✅ Test user interactions with `userEvent`
 
 ### Writing Tests
+
+Check https://testing-library.com/docs/queries/about/ for what selectors to prefer when using React Testing Library
 
 - [ ] RBAC enabled by default
 - [ ] MSW for API mocking (not `jest.fn()`)
