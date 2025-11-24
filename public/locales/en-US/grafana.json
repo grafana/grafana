@@ -5360,10 +5360,6 @@
       },
       "export": {
         "title": "Export",
-        "tooltip": {
-          "as-code": "Export as code",
-          "json": "Export as JSON"
-        },
         "unsaved-modal": {
           "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
           "title": "Save changes to dashboard?"
