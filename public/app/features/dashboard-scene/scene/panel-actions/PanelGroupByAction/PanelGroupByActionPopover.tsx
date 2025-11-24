@@ -63,6 +63,14 @@ export function PanelGroupByActionPopover({
     onCancel();
   }, [groupByVariable, onCancel, values]);
 
+  const isAnyOptionChecked = () => {
+    if (!values.length) {
+      return false;
+    }
+
+    return values.some((value) => options.find((option) => option.value === value));
+  };
+
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
@@ -101,7 +109,7 @@ export function PanelGroupByActionPopover({
           </div>
 
           <Stack justifyContent="end" direction="row-reverse">
-            <Button size="sm" onClick={handleApply} disabled={!values.length}>
+            <Button size="sm" onClick={handleApply} disabled={!isAnyOptionChecked()}>
               <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
             </Button>
             <Button size="sm" variant="secondary" onClick={onCancel}>
@@ -125,6 +133,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(2),
   }),
   searchContainer: css({
+    width: '100%',
     padding: theme.spacing(1),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),

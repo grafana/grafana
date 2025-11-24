@@ -108,9 +108,6 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
         panel.setState({ showMenuAlways: !this.state.hideGroupByAction && this.state.supportsApplicability });
       }
     });
-
-    // add groupBy subscription to update the action
-    this._subs.add(this._groupBySub);
   }
 
   public getQueryRunner() {
@@ -129,15 +126,9 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
 export function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHeaderActions>) {
   const { hideGroupByAction, supportsApplicability } = model.useState();
   const variables = sceneGraph.getVariables(model);
+  const groupByVariable = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
   const queries = queryRunner?.state.data?.request?.targets ?? [];
-
-  const groupByVariable = useMemo(
-    () => variables.state.variables.find((variable) => variable instanceof GroupByVariable),
-    [variables]
-  );
-
-  console.log(hideGroupByAction, supportsApplicability);
 
   return (
     <>
