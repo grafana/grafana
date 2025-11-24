@@ -191,8 +191,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
           >
             <p>
               <Trans i18nKey="dashboard-scene.json-model-edit-view.render-save-button-and-error.body-plugin-dashboard">
-                Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom
-                version.
+              This dashboard is provided by a plugin. Any changes you make here will be overwritten when the plugin is updated. To keep your modifications permanently, use <strong>Save as</strong> to create a custom copy instead.
               </Trans>
             </p>
             <Box paddingTop={2}>
