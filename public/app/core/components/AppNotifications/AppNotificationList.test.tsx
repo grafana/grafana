@@ -1,7 +1,7 @@
 import { act, getWrapper, render, screen } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { KioskMode } from 'app/types/dashboard';
 
 import { AppChromeService } from '../AppChrome/AppChromeService';

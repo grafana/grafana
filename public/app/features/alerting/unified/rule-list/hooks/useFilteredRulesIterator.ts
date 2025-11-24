@@ -24,7 +24,8 @@ import {
 } from '../../utils/datasource';
 import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
-import { groupFilter, ruleFilter } from './filters';
+import { getDatasourceFilter } from './datasourceFilter';
+import { getGrafanaFilter } from './grafanaFilter';
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
 export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
@@ -77,22 +78,19 @@ export function useFilteredRulesIteratorProvider() {
     /* this is the abort controller that allows us to stop an AsyncIterable */
     const abortController = new AbortController();
 
-    const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
+    const { backendFilter, frontendFilter } = getGrafanaFilter(filterState);
+
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
-      grafanaGroupsGenerator(groupLimit, {
-        contactPoint: filterState.contactPoint ?? undefined,
-        health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
-        state: filterState.ruleState ? [filterState.ruleState] : [],
-      })
+      grafanaGroupsGenerator(groupLimit, backendFilter)
     ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>
         groups
-          .filter((group) => groupFilter(group, normalizedFilterState))
+          .filter((group) => frontendFilter.groupMatches(group))
           .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-          .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+          .filter(({ rule }) => frontendFilter.ruleMatches(rule))
           .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
       catchError(() => empty())
@@ -107,6 +105,8 @@ export function useFilteredRulesIteratorProvider() {
       return { iterable: grafanaRulesGenerator, abortController };
     }
 
+    const { groupMatches, ruleMatches } = getDatasourceFilter(filterState);
+
     const dataSourceGenerators: Array<AsyncIterableX<RuleWithOrigin>> = externalRulesSourcesToFetchFrom.map(
       (dataSourceIdentifier) => {
         const promGroupsGenerator: AsyncIterableX<RuleWithOrigin> = from(
@@ -115,9 +115,9 @@ export function useFilteredRulesIteratorProvider() {
           withAbort(abortController.signal),
           concatMap((groups) =>
             groups
-              .filter((group) => groupFilter(group, normalizedFilterState))
+              .filter((group) => groupMatches(group))
               .flatMap((group) => group.rules.map((rule, index) => ({ group, rule, index })))
-              .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+              .filter(({ rule }) => ruleMatches(rule))
               .map(({ group, rule, index }) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule, index))
           ),
           catchError(() => empty())
@@ -212,18 +212,5 @@ function mapGrafanaRuleToRuleWithOrigin(
     },
     namespaceName: group.file,
     origin: 'grafana',
-  };
-}
-
-/**
- * Lowercase free form words, rule name, group name and namespace
- */
-function normalizeFilterState(filterState: RulesFilter): RulesFilter {
-  return {
-    ...filterState,
-    freeFormWords: filterState.freeFormWords.map((word) => word.toLowerCase()),
-    ruleName: filterState.ruleName?.toLowerCase(),
-    groupName: filterState.groupName?.toLowerCase(),
-    namespace: filterState.namespace?.toLowerCase(),
   };
 }

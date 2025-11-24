@@ -70,14 +70,15 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
 					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
-				}})
+				},
+				UnifiedStorageEnableSearch: true,
+			})
 
 			t.Cleanup(func() {
 				helper.Shutdown()
@@ -105,9 +106,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
-				},
 				DisableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards,
 				},
@@ -115,7 +113,9 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
-				}})
+				},
+				UnifiedStorageEnableSearch: true,
+			})
 
 			t.Cleanup(func() {
 				helper.Shutdown()
@@ -139,9 +139,6 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
-				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
@@ -149,7 +146,9 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 					"folders.folder.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
-				}})
+				},
+				UnifiedStorageEnableSearch: true,
+			})
 
 			t.Cleanup(func() {
 				helper.Shutdown()
@@ -188,7 +187,6 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
 					featuremgmt.FlagKubernetesDashboards,
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -198,7 +196,9 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 					"folders.folder.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
-				}})
+				},
+				UnifiedStorageEnableSearch: true,
+			})
 
 			t.Cleanup(func() {
 				helper.Shutdown()
