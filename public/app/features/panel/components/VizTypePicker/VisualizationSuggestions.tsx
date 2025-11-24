@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAsync } from 'react-use';
+import { useAsync, useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, PanelData, PanelModel } from '@grafana/data';
@@ -21,10 +21,13 @@ export interface Props {
   panel?: PanelModel;
 }
 
+const MIN_COLUMN_SIZE = 260;
+
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
   const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
 
   const filteredSuggestions = useMemo(() => suggestions || [], [suggestions]);
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
@@ -77,55 +80,44 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     // This div is needed in some places to make AutoSizer work
     <div>
       <AutoSizer disableHeight style={{ width: '100%', height: '100%' }}>
-        {({ width }) => {
-          if (!width) {
-            return null;
-          }
+        {() => (
+          <div>
+            <div className={styles.grid}>
+              {filteredSuggestions.map((suggestion, index) => {
+                const isCardSelected = isNewVizSuggestionsEnabled && selectedIndex === index;
+                const cardSelectHandler = isNewVizSuggestionsEnabled ? () => handleCardSelect(index) : undefined;
 
-          width = width - 1;
-          const columnCount = Math.floor(Math.min(width / 260, 2));
-          const spaceBetween = 8 * (columnCount! - 1);
-          const previewWidth = Math.floor((width - spaceBetween) / columnCount!);
-
-          return (
-            <div>
-              <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth}px)` }}>
-                {filteredSuggestions.map((suggestion, index) => {
-                  const isCardSelected = isNewVizSuggestionsEnabled && selectedIndex === index;
-                  const cardSelectHandler = isNewVizSuggestionsEnabled ? () => handleCardSelect(index) : undefined;
-
-                  return (
-                    <div key={index} className={styles.cardContainer}>
-                      {isCardSelected && (
-                        <Button
-                          variant="primary"
-                          size={'md'}
-                          onClick={handleApplySuggestion}
-                          className={styles.applySuggestionButton}
-                          aria-label={t(
-                            'panel.visualization-suggestions.apply-suggestion-aria-label',
-                            'Apply {{suggestionName}} visualization',
-                            { suggestionName: suggestion.name }
-                          )}
-                        >
-                          {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
-                        </Button>
-                      )}
-                      <VisualizationSuggestionCard
-                        data={data}
-                        suggestion={suggestion}
-                        onChange={onChange}
-                        width={previewWidth - 1}
-                        isSelected={isCardSelected}
-                        onSelect={cardSelectHandler}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
+                return (
+                  <div key={index} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
+                    {isCardSelected && (
+                      <Button
+                        variant="primary"
+                        size={'md'}
+                        onClick={handleApplySuggestion}
+                        className={styles.applySuggestionButton}
+                        aria-label={t(
+                          'panel.visualization-suggestions.apply-suggestion-aria-label',
+                          'Apply {{suggestionName}} visualization',
+                          { suggestionName: suggestion.name }
+                        )}
+                      >
+                        {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
+                      </Button>
+                    )}
+                    <VisualizationSuggestionCard
+                      data={data}
+                      suggestion={suggestion}
+                      onChange={onChange}
+                      width={width}
+                      isSelected={isCardSelected}
+                      onSelect={cardSelectHandler}
+                    />
+                  </div>
+                );
+              })}
             </div>
-          );
-        }}
+          </div>
+        )}
       </AutoSizer>
     </div>
   );
@@ -148,6 +140,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     grid: css({
       display: 'grid',
       gridGap: theme.spacing(1),
+      gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_COLUMN_SIZE}px, 1fr))`,
       marginBottom: theme.spacing(1),
       justifyContent: 'space-evenly',
     }),
