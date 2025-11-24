@@ -27,12 +27,12 @@ Git Sync and local file provisioning are [experimental features](https://grafana
 
 {{< /admonition >}}
 
-Git Sync is under development, and traditional operations like `import`, `copy`, `move`, or `save` are not yet supported for dashboards already existing in Grafana. To use Git Sync with existing dashboards you must export them to the repository first. 
+Git Sync is under development, and traditional operations like `import`, `copy`, `move`, or `save` are not yet supported for dashboards already existing in Grafana. To use Git Sync with existing dashboards you must export them to the repository first.
 
-Currently, Git Sync doesn't offer any built-in functionality to easily export resources from Grafana in bulk. However, the following options are available: 
+Currently, Git Sync doesn't offer any built-in functionality to easily export resources from Grafana in bulk. However, the following options are available:
 
 - Export the dashboard with [grafanactl](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) and commit (recommended)
-- Copy the dashboard as JSON and commit to the repository 
+- Copy the dashboard as JSON and commit to the repository
 
 ## Add an existing Grafana dashboard to Git Sync
 
@@ -48,14 +48,10 @@ To export a dashboard as a JSON file it must follow this CRD structure:
 
 ```yaml
 {
-  "apiVersion": "dashboard.grafana.app/v1beta1",
-  "kind": "Dashboard",
-  "metadata": {
-    "name": "dcf2lve9akj8xsd"
-  },
-  "spec": {
-    /* Original dashboard JSON goes here */
-  }
+  'apiVersion': 'dashboard.grafana.app/v1beta1',
+  'kind': 'Dashboard',
+  'metadata': { 'name': 'dcf2lve9akj8xsd' },
+  'spec': { /* Original dashboard JSON goes here */ },
 }
 ```
 
@@ -69,10 +65,3 @@ The structure includes:
 ## Edit Git-managed dashboards
 
 After you've saved a dashboard in Git, it'll be synchronized automatically, and you'll be able to work with it as any other provisioned resource. Refer to [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/) for more information.
-
-
-
-
-
-
-
