@@ -23,8 +23,11 @@ export function ShareExportDashboardButton({ dashboard }: Props) {
         icon="download-alt"
         data-testid={newExportButtonSelector.Menu.container}
         title={t('dashboard.sidebar.export.title', 'Export')}
-        onClick={(evt) => {
+        onPointerDown={(evt) => {
           if (dashboard.state.isEditing && dashboard.state.isDirty) {
+            evt.preventDefault();
+            evt.stopPropagation();
+
             appEvents.publish(
               new ShowConfirmModalEvent({
                 title: t('dashboard.sidebar.export.unsaved-modal.title', 'Save changes to dashboard?'),

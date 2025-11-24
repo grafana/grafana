@@ -48,6 +48,7 @@ export const flows = {
   },
   async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+    await dashboardPage.getByGrafanaSelector('dashboard-outline-button').click();
     await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
