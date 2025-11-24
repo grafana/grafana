@@ -203,10 +203,18 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 }
 
 type DashboardDocumentBuilder struct {
-	Namespace        string
-	Stats            map[string]map[string]int64
+	// Scoped to a single tenant
+	Namespace string
+
+	// Cached stats for this namespace
+	// maps dashboard UID to stats
+	Stats map[string]map[string]int64
+
+	// data source lookup
 	DatasourceLookup dashboard.DatasourceLookup
-	Blob             resource.BlobSupport
+
+	// For large dashboards we will need to load them from blob store
+	Blob resource.BlobSupport
 }
 
 type DashboardStats interface {
@@ -252,7 +260,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	if err != nil {
 		return nil, err
 	}
-
+	// metadata name is the dashboard uid
 	summary.UID = obj.GetName()
 	summary.ID = obj.GetDeprecatedInternalID() // nolint:staticcheck
 
