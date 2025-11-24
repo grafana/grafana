@@ -10,9 +10,9 @@ package v0alpha1
 	labels: #LogsDefaultColumnsLabels
 }]
 
-#LogsDefaultColumnsDatasource: [...{
+#LogsDefaultColumnsDatasource: {
 	records: #LogsDefaultColumnsRecords
-}]
+}
 
 LogsDefaultColumns: {
 	datasource: #LogsDefaultColumnsDatasource
