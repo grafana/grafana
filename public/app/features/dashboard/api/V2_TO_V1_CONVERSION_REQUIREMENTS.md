@@ -207,17 +207,15 @@ All panels must have valid `gridPos` with:
 
 ### Manual Testing
 
-1. Enable feature toggles:
+1. Enable dynamic dashboard feature toggle:
 
    ```ini
    [feature_toggles]
-   kubernetesDashboards = true
-   dashboardScene = true
    dashboardNewLayouts = true
    ```
 
 2. Create/load a V2 dashboard with various layouts
-3. Request V1 format: `?responseFormat=v1`
+3. Set the dashboardNewLayouts feature toggle to false, either by editing custom.ini or setting it in local storage.
 4. Verify conversion in JSON Model (Edit → Settings → JSON Model)
 5. Check that all panels are present and correctly positioned
 
