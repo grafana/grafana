@@ -7,33 +7,33 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type PluginClient struct {
-	client *resource.TypedClient[*Plugin, *PluginList]
+type PluginMetaClient struct {
+	client *resource.TypedClient[*PluginMeta, *PluginMetaList]
 }
 
-func NewPluginClient(client resource.Client) *PluginClient {
-	return &PluginClient{
-		client: resource.NewTypedClient[*Plugin, *PluginList](client, PluginKind()),
+func NewPluginMetaClient(client resource.Client) *PluginMetaClient {
+	return &PluginMetaClient{
+		client: resource.NewTypedClient[*PluginMeta, *PluginMetaList](client, PluginMetaKind()),
 	}
 }
 
-func NewPluginClientFromGenerator(generator resource.ClientGenerator) (*PluginClient, error) {
-	c, err := generator.ClientFor(PluginKind())
+func NewPluginMetaClientFromGenerator(generator resource.ClientGenerator) (*PluginMetaClient, error) {
+	c, err := generator.ClientFor(PluginMetaKind())
 	if err != nil {
 		return nil, err
 	}
-	return NewPluginClient(c), nil
+	return NewPluginMetaClient(c), nil
 }
 
-func (c *PluginClient) Get(ctx context.Context, identifier resource.Identifier) (*Plugin, error) {
+func (c *PluginMetaClient) Get(ctx context.Context, identifier resource.Identifier) (*PluginMeta, error) {
 	return c.client.Get(ctx, identifier)
 }
 
-func (c *PluginClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (*PluginList, error) {
+func (c *PluginMetaClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (*PluginMetaList, error) {
 	return c.client.List(ctx, namespace, opts)
 }
 
-func (c *PluginClient) ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*PluginList, error) {
+func (c *PluginMetaClient) ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*PluginMetaList, error) {
 	resp, err := c.client.List(ctx, namespace, resource.ListOptions{
 		ResourceVersion: opts.ResourceVersion,
 		Limit:           opts.Limit,
@@ -61,25 +61,25 @@ func (c *PluginClient) ListAll(ctx context.Context, namespace string, opts resou
 	return resp, nil
 }
 
-func (c *PluginClient) Create(ctx context.Context, obj *Plugin, opts resource.CreateOptions) (*Plugin, error) {
+func (c *PluginMetaClient) Create(ctx context.Context, obj *PluginMeta, opts resource.CreateOptions) (*PluginMeta, error) {
 	// Make sure apiVersion and kind are set
 	obj.APIVersion = GroupVersion.Identifier()
-	obj.Kind = PluginKind().Kind()
+	obj.Kind = PluginMetaKind().Kind()
 	return c.client.Create(ctx, obj, opts)
 }
 
-func (c *PluginClient) Update(ctx context.Context, obj *Plugin, opts resource.UpdateOptions) (*Plugin, error) {
+func (c *PluginMetaClient) Update(ctx context.Context, obj *PluginMeta, opts resource.UpdateOptions) (*PluginMeta, error) {
 	return c.client.Update(ctx, obj, opts)
 }
 
-func (c *PluginClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*Plugin, error) {
+func (c *PluginMetaClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*PluginMeta, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *PluginClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus PluginStatus, opts resource.UpdateOptions) (*Plugin, error) {
-	return c.client.Update(ctx, &Plugin{
+func (c *PluginMetaClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus PluginMetaStatus, opts resource.UpdateOptions) (*PluginMeta, error) {
+	return c.client.Update(ctx, &PluginMeta{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       PluginKind().Kind(),
+			Kind:       PluginMetaKind().Kind(),
 			APIVersion: GroupVersion.Identifier(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -94,6 +94,6 @@ func (c *PluginClient) UpdateStatus(ctx context.Context, identifier resource.Ide
 	})
 }
 
-func (c *PluginClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
+func (c *PluginMetaClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
 }

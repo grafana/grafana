@@ -2,27 +2,23 @@ package app
 
 import (
 	"context"
-	"net/http"
+	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/k8s"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 
-	pluginsapi "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 )
 
 func New(cfg app.Config) (app.App, error) {
 	cfg.KubeConfig.APIPath = "apis"
-	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
-	client, err := pluginsv0alpha1.NewPluginClientFromGenerator(clientGenerator)
-	if err != nil {
-		return nil, err
+
+	specificConfig, ok := cfg.SpecificConfig.(*PluginAppConfig)
+	if !ok {
+		return nil, fmt.Errorf("invalid config type")
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -38,27 +34,9 @@ func New(cfg app.Config) (app.App, error) {
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: pluginsv0alpha1.PluginKind(),
-				CustomRoutes: simple.AppCustomRouteHandlers{
-					simple.AppCustomRoute{
-						Method: http.MethodGet,
-						Path:   "meta",
-					}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
-						plugin, err := client.Get(ctx, resource.Identifier{
-							Namespace: req.ResourceIdentifier.Namespace,
-							Name:      req.ResourceIdentifier.Name,
-						})
-						if err != nil {
-							return err
-						}
-						logging.DefaultLogger.Debug("fetched plugin", "plugin", plugin)
-						// TODO: Implement this in future PR
-						w.WriteHeader(http.StatusNotImplemented)
-						if _, err := w.Write([]byte("Not implemented")); err != nil {
-							return err
-						}
-						return nil
-					},
-				},
+			},
+			{
+				Kind: pluginsv0alpha1.PluginMetaKind(),
 			},
 		},
 	}
@@ -73,23 +51,12 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
+	// Register MetaProviderManager as a runnable so its cleanup goroutine is managed by the app lifecycle
+	a.AddRunnable(specificConfig.MetaProviderManager)
+
 	return a, nil
 }
 
-func GetKinds() map[schema.GroupVersion][]resource.Kind {
-	kinds := make(map[schema.GroupVersion][]resource.Kind)
-	manifest := pluginsapi.LocalManifest()
-	for _, v := range manifest.ManifestData.Versions {
-		gv := schema.GroupVersion{
-			Group:   manifest.ManifestData.Group,
-			Version: v.Name,
-		}
-		for _, k := range v.Kinds {
-			kind, ok := pluginsapi.ManifestGoTypeAssociator(k.Kind, v.Name)
-			if ok {
-				kinds[gv] = append(kinds[gv], kind)
-			}
-		}
-	}
-	return kinds
+type PluginAppConfig struct {
+	MetaProviderManager *meta.ProviderManager
 }

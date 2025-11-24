@@ -18,7 +18,7 @@ import (
 
 func TestProvideAppInstallers_Table(t *testing.T) {
 	playlistInstaller := &playlist.PlaylistAppInstaller{}
-	pluginsInstaller := &plugins.PluginsAppInstaller{}
+	pluginsInstaller := &plugins.AppInstaller{}
 	rulesInstaller := &rules.AlertingRulesAppInstaller{}
 	correlationsAppInstaller := &correlations.AppInstaller{}
 	notificationsAppInstaller := &notifications.AlertingNotificationsAppInstaller{}
