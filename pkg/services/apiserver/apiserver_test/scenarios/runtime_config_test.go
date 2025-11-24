@@ -114,7 +114,7 @@ func TestRuntimeConfig(t *testing.T) {
 			})
 			resp, err := httpCli.GetRequest("/apis")
 			require.NoError(t, err, "failed to query /apis endpoint")
-			defer resp.Body.Close()
+			defer resp.Body.Close() //nolint:errcheck
 
 			require.Equal(t, http.StatusOK, resp.StatusCode, "expected 200 OK from /apis")
 
