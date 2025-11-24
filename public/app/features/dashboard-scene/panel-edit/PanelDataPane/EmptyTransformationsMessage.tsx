@@ -69,11 +69,6 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
   }, []);
 
   const handleSqlTransformationClick = () => {
-    reportInteraction('dashboards_expression_interaction', {
-      action: 'add_expression',
-      expression_type: 'sql',
-      context: 'empty_transformations_placeholder',
-    });
     props.onGoToQueries?.();
   };
 

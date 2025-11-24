@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -102,6 +103,14 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
     const queries = queriesTab.getQueries();
     const existingSqlQuery = findSqlExpression(queries);
+
+    // Track the interaction with context about whether SQL expression already existed
+    reportInteraction('dashboards_expression_interaction', {
+      action: 'add_expression',
+      expression_type: 'sql',
+      context: 'empty_transformations_placeholder',
+      expression_exists: !!existingSqlQuery,
+    });
 
     if (!existingSqlQuery) {
       // Create new SQL expression
