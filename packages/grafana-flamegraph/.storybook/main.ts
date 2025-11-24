@@ -46,15 +46,6 @@ const config: StorybookConfig = {
       })
     );
 
-    // expose jquery as a global so jquery plugins don't break at runtime.
-    config.module?.rules?.push({
-      test: require.resolve('jquery'),
-      loader: 'expose-loader',
-      options: {
-        exposes: ['$', 'jQuery'],
-      },
-    });
-
     return config;
   },
 };

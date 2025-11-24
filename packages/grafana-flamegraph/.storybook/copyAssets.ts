@@ -5,15 +5,13 @@
 // Note: Storybook has a static copying feature but it copies entire directories which can contain thousands of icons.
 
 import fs from 'fs-extra';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
 // avoid importing from @grafana/data to prevent error: window is not defined
 import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon.ts';
 import { getIconSubDir } from '../../grafana-ui/src/components/Icon/utils.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = import.meta.dirname;
 
 // doesn't require uploading 1000s of unused assets.
 const iconPaths = Object.keys(availableIconsIndex)

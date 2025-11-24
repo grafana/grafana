@@ -3270,7 +3270,6 @@ __metadata:
     "@types/d3": "npm:^7"
     "@types/fs-extra": "npm:^11"
     "@types/jest": "npm:^29.5.4"
-    "@types/jquery": "npm:^3"
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
@@ -3282,7 +3281,6 @@ __metadata:
     fs-extra: "npm:^11.3.2"
     jest: "npm:^29.6.4"
     jest-canvas-mock: "npm:2.5.2"
-    jquery: "npm:^3.7.1"
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
     react-use: "npm:17.6.0"
@@ -10474,7 +10472,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jquery@npm:3.5.33, @types/jquery@npm:^3":
+"@types/jquery@npm:3.5.33":
   version: 3.5.33
   resolution: "@types/jquery@npm:3.5.33"
   dependencies:
@@ -22552,7 +22550,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jquery@npm:3.7.1, jquery@npm:^3.7.1":
+"jquery@npm:3.7.1":
   version: 3.7.1
   resolution: "jquery@npm:3.7.1"
   checksum: 10/17be9929f5fa37697d9848284f0d108c543318ef79ec794e130cd0c49f6c050d60c803a69e8cfa16fa19f5ff7cdb814a6905cceab0831186560c65ed113cd579
