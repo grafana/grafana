@@ -112,7 +112,6 @@ This example matches spans with team A **or** team B. This single example is fas
 
 #### Multiple rules
 
-
 Two rules combined to give user access to spans from `prod` environment or the `billing` team.
 
 ```
