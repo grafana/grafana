@@ -31,7 +31,7 @@ Git Sync is under development, and traditional operations like `import`, `copy`,
 
 Currently, Git Sync doesn't offer any built-in functionality to easily export resources from Grafana in bulk. However, the following options are available:
 
-- Export the dashboard with [grafanactl](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) and commit (recommended)
+- Export the dashboard with [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) and commit (recommended). See how at [Manage resources with Grafana CLI](https://grafana.github.io/grafanactl/guides/manage-resources/) 
 - Copy the dashboard as JSON and commit to the repository
 
 ## Add an existing Grafana dashboard to Git Sync
