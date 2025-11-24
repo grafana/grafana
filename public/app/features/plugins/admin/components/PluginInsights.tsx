@@ -1,50 +1,13 @@
 import { css } from '@emotion/css';
+import { capitalize } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import {
-  Stack,
-  Text,
-  TextLink,
-  CollapsableSection,
-  Tooltip,
-  Icon,
-  ColorPicker,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { Stack, Text, TextLink, CollapsableSection, Tooltip, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { CatalogPluginInsights, ScoreLevel, InsightLevel, SCORE_LEVELS } from '../types';
+import { CatalogPluginInsights } from '../types';
 
 type Props = { pluginInsights: CatalogPluginInsights | undefined };
-
-const getColor = (level: ScoreLevel, theme: GrafanaTheme2) => {
-  switch (level) {
-    case SCORE_LEVELS.EXCELLENT:
-      return theme.colors.success.main;
-    case SCORE_LEVELS.GOOD:
-    case SCORE_LEVELS.FAIR:
-      return theme.colors.warning.main;
-    case SCORE_LEVELS.POOR:
-    case SCORE_LEVELS.CRITICAL:
-      return theme.colors.error.main;
-    default:
-      return theme.colors.border.weak;
-  }
-};
-
-const getInsightItemColor = (level: InsightLevel) => {
-  switch (level) {
-    case 'ok':
-    case 'good':
-    case 'info':
-      return 'secondary';
-    case 'warning':
-      return 'warning';
-    case 'danger':
-      return 'error';
-  }
-};
 
 export function PluginInsights(props: Props): React.ReactElement | null {
   const { pluginInsights } = props;
@@ -52,37 +15,24 @@ export function PluginInsights(props: Props): React.ReactElement | null {
   const theme = useTheme2();
 
   const tooltipInfo = (
-    <Stack direction="column">
+    <Stack direction="column" gap={0.5}>
       <Stack direction="row" alignItems="center">
-        <ColorPicker color={getColor(SCORE_LEVELS.EXCELLENT, theme)} onChange={() => {}} />
-        <Text color="secondary" variant="body">
+        <Icon name="check-circle" size="md" color={theme.colors.success.main} />
+        <Text color="primary" variant="body">
           <Trans i18nKey="plugins.details.labels.pluginInsightsSuccessTooltip">
             All relevant signals are present and verified
           </Trans>
         </Text>
       </Stack>
       <Stack direction="row" alignItems="center">
-        <ColorPicker color={getColor(SCORE_LEVELS.FAIR, theme)} onChange={() => {}} />
-        <Text color="secondary" variant="body">
+        <Icon name="exclamation-triangle" size="md" />
+        <Text color="primary" variant="body">
           <Trans i18nKey="plugins.details.labels.pluginInsightsWarningTooltip">
             One or more signals are missing or need attention
           </Trans>
         </Text>
       </Stack>
-      <Stack direction="row" alignItems="center">
-        <ColorPicker color={getColor(SCORE_LEVELS.POOR, theme)} onChange={() => {}} />
-        <Text color="secondary" variant="body">
-          <Trans i18nKey="plugins.details.labels.pluginInsightsErrorTooltip">Poor or critical data quality</Trans>
-        </Text>
-      </Stack>
-      <Stack direction="row" alignItems="center">
-        <ColorPicker color={theme.colors.border.weak} onChange={() => {}} />
-        <Text color="secondary" variant="body">
-          <Trans i18nKey="plugins.details.labels.pluginInsightsNodataTooltip">
-            No available data to determine the status yet
-          </Trans>
-        </Text>
-      </Stack>
+      <hr className={styles.pluginInsightsTooltipSeparator} />
       <Text color="secondary" variant="body">
         <Trans i18nKey="plugins.details.labels.moreDetails">
           Plese find more information{' '}
@@ -99,11 +49,11 @@ export function PluginInsights(props: Props): React.ReactElement | null {
     <>
       <Stack direction="column" gap={0.5} shrink={0} grow={0} data-testid="plugin-insights-container">
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Text color="secondary" variant="body" data-testid="plugin-insights-header">
+          <Text color="secondary" variant="h6" data-testid="plugin-insights-header">
             <Trans i18nKey="plugins.details.labels.pluginInsights.header">Plugin insights</Trans>
           </Text>
           <Tooltip content={tooltipInfo} placement="right-end" interactive>
-            <Icon name="info-circle" size="xs" />
+            <Icon name="info-circle" size="md" />
           </Tooltip>
         </Stack>
         {pluginInsights?.insights.map((insightItem, index) => {
@@ -114,33 +64,43 @@ export function PluginInsights(props: Props): React.ReactElement | null {
                 label={
                   <Stack
                     direction="row"
-                    justifyContent="space-between"
+                    gap={1}
                     alignItems="center"
                     data-testid={`plugin-insight-${insightItem.name.toLowerCase()}`}
                   >
-                    <ColorPicker
-                      color={getColor(insightItem.scoreLevel, theme)}
-                      onChange={() => {}}
+                    {insightItem.scoreLevel === 'Excellent' ? (
+                      <Icon name="check-circle" size="md" color={theme.colors.success.main} />
+                    ) : (
+                      <Icon name="exclamation-triangle" size="md" />
+                    )}
+                    <Text
+                      color="primary"
+                      variant="body"
                       data-testid={`plugin-insight-color-${insightItem.name.toLowerCase()}`}
-                    />
-                    <Text color="primary" variant="body">
-                      {insightItem.name}
+                    >
+                      {capitalize(insightItem.name)}
                     </Text>
                   </Stack>
                 }
                 contentClassName={styles.pluginInsightsItems}
               >
-                <Stack direction="column" gap={0.5}>
+                <Stack direction="column" gap={1}>
                   {insightItem.items.map((item, idx) => (
-                    <Text
-                      color={getInsightItemColor(item.level)}
-                      variant="body"
-                      key={idx}
-                      element="li"
-                      data-testid={`plugin-insight-item-${item.id}`}
-                    >
-                      {item.name}
-                    </Text>
+                    <div key={idx}>
+                      {item.level === 'good' ? (
+                        <Icon
+                          name="check-circle"
+                          size="sm"
+                          color={theme.colors.success.main}
+                          className={styles.pluginInsightsItemIcon}
+                        />
+                      ) : (
+                        <Icon name="exclamation-triangle" size="sm" className={styles.pluginInsightsItemIcon} />
+                      )}
+                      <Text color="secondary" variant="body" data-testid={`plugin-insight-item-${item.id}`}>
+                        {item.name}
+                      </Text>
+                    </div>
                   ))}
                 </Stack>
               </CollapsableSection>
@@ -155,6 +115,12 @@ export function PluginInsights(props: Props): React.ReactElement | null {
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     pluginVersionDetails: css({ wordBreak: 'break-word' }),
-    pluginInsightsItems: css({ paddingLeft: theme.spacing(2) }),
+    pluginInsightsItems: css({ marginLeft: '26px' }),
+    pluginInsightsItemIcon: css({ marginRight: '8px' }),
+    pluginInsightsTooltipSeparator: css({
+      border: 'none',
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+      margin: `${theme.spacing(1)} 0`,
+    }),
   };
 };
