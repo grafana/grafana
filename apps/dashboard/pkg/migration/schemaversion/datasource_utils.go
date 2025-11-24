@@ -216,3 +216,60 @@ func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, 
 
 	return nil
 }
+
+// cachedLibraryElementProvider wraps a LibraryElementIndexProvider with time-based caching.
+// This prevents multiple DB queries during operations that may call GetLibraryElementInfo()
+// multiple times (e.g., dashboard conversions with many library panel lookups).
+// The cache expires after 10 seconds, allowing it to be used as a long-lived singleton
+// while still refreshing periodically.
+//
+// Thread-safe: Uses sync.RWMutex to guarantee safe concurrent access.
+type cachedLibraryElementProvider struct {
+	provider LibraryElementIndexProvider
+	mu       sync.RWMutex
+	elements []LibraryElementInfo
+	cachedAt time.Time
+	cacheTTL time.Duration
+}
+
+// GetLibraryElementInfo returns the cached library elements if they're still valid (< 10s old), otherwise rebuilds the cache.
+// Uses RWMutex for efficient concurrent reads when cache is valid.
+func (p *cachedLibraryElementProvider) GetLibraryElementInfo(ctx context.Context) []LibraryElementInfo {
+	// Fast path: check if cache is still valid using read lock
+	p.mu.RLock()
+	if p.elements != nil && time.Since(p.cachedAt) < p.cacheTTL {
+		elements := p.elements
+		p.mu.RUnlock()
+		return elements
+	}
+	p.mu.RUnlock()
+
+	// Slow path: cache expired or not yet built, acquire write lock
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	// Double-check: another goroutine might have refreshed the cache
+	// while we were waiting for the write lock
+	if p.elements != nil && time.Since(p.cachedAt) < p.cacheTTL {
+		return p.elements
+	}
+
+	// Rebuild the cache
+	p.elements = p.provider.GetLibraryElementInfo(ctx)
+	p.cachedAt = time.Now()
+	return p.elements
+}
+
+// WrapLibraryElementProviderWithCache wraps a provider to cache library elements with a 10-second TTL.
+// Useful for conversions or migrations that may call GetLibraryElementInfo() multiple times.
+// The cache expires after 10 seconds, making it suitable for use as a long-lived singleton
+// at the top level of dependency injection while still refreshing periodically.
+func WrapLibraryElementProviderWithCache(provider LibraryElementIndexProvider) LibraryElementIndexProvider {
+	if provider == nil {
+		return nil
+	}
+	return &cachedLibraryElementProvider{
+		provider: provider,
+		cacheTTL: 10 * time.Second,
+	}
+}
