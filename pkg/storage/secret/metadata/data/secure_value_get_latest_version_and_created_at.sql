@@ -1,5 +1,7 @@
 SELECT
-  {{ .Ident "version" }}
+  {{ .Ident "created" }},
+  {{ .Ident "version" }},
+  {{ .Ident "active" }}
 FROM
   {{ .Ident "secret_secure_value" }}
 WHERE 

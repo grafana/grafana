@@ -73,6 +73,7 @@ cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-e
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
 alertingUIUseBackendFilters,experimental,@grafana/alerting-squad,false,false,false
+alertingUIUseFullyCompatBackendFilters,experimental,@grafana/alerting-squad,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
@@ -81,17 +82,16 @@ dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,false
 dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
+perPanelNonApplicableDrilldowns,experimental,@grafana/dashboards-squad,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 timeComparison,experimental,@grafana/dataviz-squad,false,false,true
-logsInfiniteScrolling,GA,@grafana/observability-logs,false,false,true
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
-onPremToCloudMigrations,GA,@grafana/grafana-operator-experience-squad,false,false,false
 secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 secretsManagementAppPlatformUI,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
@@ -115,6 +115,7 @@ grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,fa
 queryLibrary,preview,@grafana/sharing-squad,false,false,false
 dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
 suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
+dashboardTemplates,preview,@grafana/sharing-squad,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
@@ -151,6 +152,7 @@ pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 timeRangePan,experimental,@grafana/dataviz-squad,false,false,true
+newTimeRangeZoomShortcuts,experimental,@grafana/dataviz-squad,false,false,true
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
@@ -206,7 +208,6 @@ unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
 grafanaAssistantInProfilesDrilldown,GA,@grafana/observability-traces-and-profiling,false,false,true
-postgresDSUsePGX,experimental,@grafana/oss-big-tent,false,false,false
 tempoAlerting,experimental,@grafana/observability-traces-and-profiling,false,false,false
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
@@ -258,9 +259,9 @@ pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,f
 newPanelPadding,experimental,@grafana/dashboards-squad,false,false,false
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
-dashboardTemplates,experimental,@grafana/sharing-squad,false,false,false
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false
 awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false
 transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 ttlPluginInstanceManager,experimental,@grafana/plugins-platform-backend,false,false,true
+lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true

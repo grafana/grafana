@@ -243,6 +243,10 @@ const (
 	// Enables the UI to use certain backend-side filters
 	FlagAlertingUIUseBackendFilters = "alertingUIUseBackendFilters"
 
+	// FlagAlertingUIUseFullyCompatBackendFilters
+	// Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
+	FlagAlertingUIUseFullyCompatBackendFilters = "alertingUIUseFullyCompatBackendFilters"
+
 	// FlagAlertmanagerRemotePrimary
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
@@ -270,10 +274,6 @@ const (
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
-
-	// FlagOnPremToCloudMigrations
-	// Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
-	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
 	// FlagSecretsManagementAppPlatform
 	// Enable the secrets management API and services under app platform
@@ -348,12 +348,16 @@ const (
 	FlagQueryLibrary = "queryLibrary"
 
 	// FlagDashboardLibrary
-	// Enable dashboard library experiments that are production ready
+	// Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagDashboardLibrary = "dashboardLibrary"
 
 	// FlagSuggestedDashboards
-	// Enable suggested dashboards when creating new dashboards
+	// Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagSuggestedDashboards = "suggestedDashboards"
+
+	// FlagDashboardTemplates
+	// Enables a flow to get started with a new dashboard from a template
+	FlagDashboardTemplates = "dashboardTemplates"
 
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
@@ -602,10 +606,6 @@ const (
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
 
-	// FlagPostgresDSUsePGX
-	// Enables using PGX instead of libpq for PostgreSQL datasource
-	FlagPostgresDSUsePGX = "postgresDSUsePGX"
-
 	// FlagTempoAlerting
 	// Enables creating alerts from Tempo data source
 	FlagTempoAlerting = "tempoAlerting"
@@ -749,10 +749,6 @@ const (
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
-
-	// FlagDashboardTemplates
-	// Enable template dashboards
-	FlagDashboardTemplates = "dashboardTemplates"
 
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
