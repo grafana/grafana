@@ -46,7 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/external"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -2654,7 +2654,7 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 		return len(req.Options.Fields) == 1 &&
-			req.Options.Fields[0].Key == external.DASHBOARD_LIBRARY_PANEL_REFERENCE &&
+			req.Options.Fields[0].Key == builders.DASHBOARD_LIBRARY_PANEL_REFERENCE &&
 			req.Options.Fields[0].Values[0] == "test-library-panel"
 	})).Return(searchResponse, nil).Once()
 

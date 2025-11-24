@@ -1,4 +1,4 @@
-package external
+package builders
 
 import (
 	"context"
@@ -11,25 +11,16 @@ import (
 )
 
 /*
-StandardDocumentBuilders provides the default list of document builders for open source Grafana.
-This includes builders for dashboards and users which have external dependencies on Grafana apps.
+All returns all document builders from this package.
+These builders have dependencies on Grafana apps (dashboard and user).
 */
-type StandardDocumentBuilders struct {
-	sql       db.DB
-	sprinkles DashboardStats
-}
-
-func ProvideDocumentBuilders(sql db.DB, sprinkles DashboardStats) resource.DocumentBuilderSupplier {
-	return &StandardDocumentBuilders{sql, sprinkles}
-}
-
-func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBuilderInfo, error) {
+func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, error) {
 	dashboards, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 		logger := log.New("dashboard_builder", "namespace", namespace)
 		dsinfo := []*dashboard.DatasourceQueryResult{{}}
 		ns, err := claims.ParseNamespace(namespace)
-		if err != nil && s.sql != nil {
-			rows, err := s.sql.GetSqlxSession().Query(ctx, "SELECT uid,type,name,is_default FROM data_source WHERE org_id=?", ns.OrgID)
+		if err != nil && sql != nil {
+			rows, err := sql.GetSqlxSession().Query(ctx, "SELECT uid,type,name,is_default FROM data_source WHERE org_id=?", ns.OrgID)
 			if err != nil {
 				return nil, err
 			}
@@ -49,8 +40,8 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 		}
 
 		var stats map[string]map[string]int64
-		if s.sprinkles != nil {
-			stats, err = s.sprinkles.GetStats(ctx, namespace)
+		if sprinkles != nil {
+			stats, err = sprinkles.GetStats(ctx, namespace)
 			if err != nil {
 				logger.Warn("Failed to get sprinkles", "error", err)
 			}
@@ -73,11 +64,5 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 		return nil, err
 	}
 
-	return []resource.DocumentBuilderInfo{
-		{
-			Builder: resource.StandardDocumentBuilder(),
-		},
-		dashboards,
-		users,
-	}, err
+	return []resource.DocumentBuilderInfo{dashboards, users}, nil
 }

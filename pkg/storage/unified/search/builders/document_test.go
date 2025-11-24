@@ -1,4 +1,4 @@
-package external_test
+package builders
 
 import (
 	"context"
@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/external"
 )
 
 func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string, key *resourcepb.ResourceKey, names []string) {
@@ -46,6 +45,19 @@ func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string
 	}
 }
 
+func TestUserDocumentBuilder(t *testing.T) {
+	info, err := GetUserBuilder()
+	require.NoError(t, err)
+	doSnapshotTests(t, info.Builder, "user", &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "iam.grafana.app",
+		Resource:  "users",
+	}, []string{
+		"user-with-login-and-email",
+		"user-with-login-only",
+	})
+}
+
 func TestDashboardDocumentBuilder(t *testing.T) {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -53,14 +65,14 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 		Resource:  "dashboards",
 	}
 
-	info, err := external.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &external.DashboardDocumentBuilder{
+	info, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &DashboardDocumentBuilder{
 			Namespace: namespace,
 			Blob:      blob,
 			Stats: map[string]map[string]int64{
 				"aaa": {
-					external.DASHBOARD_ERRORS_LAST_1_DAYS: 1,
-					external.DASHBOARD_ERRORS_LAST_7_DAYS: 1,
+					DASHBOARD_ERRORS_LAST_1_DAYS: 1,
+					DASHBOARD_ERRORS_LAST_7_DAYS: 1,
 				},
 			},
 			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{

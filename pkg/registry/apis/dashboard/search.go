@@ -32,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/external"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -406,7 +406,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	// Add sorting
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
-			if slices.Contains(external.DashboardFields(), sort) {
+			if slices.Contains(builders.DashboardFields(), sort) {
 				sort = resource.SEARCH_FIELD_PREFIX + sort
 			}
 			s := &resourcepb.ResourceSearchRequest_Sort{Field: sort}
@@ -441,7 +441,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	// The libraryPanel filter
 	if libraryPanel, ok := queryParams["libraryPanel"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			Key:      external.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 			Operator: "=",
 			Values:   libraryPanel,
 		})
