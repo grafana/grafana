@@ -83,7 +83,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		legacysql.NewDatabaseProvider(sqlStore),
 		provisioning,
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
-		featureToggles,
 	)
 
 	if c.Bool("non-interactive") {
