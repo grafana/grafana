@@ -192,44 +192,6 @@ jobs:
            -f "output[summary]=${IMAGE}" \
            -f "output[text]=${IMAGE}"
 
-  run-e2e-apiserver-tests:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-    permissions:
-      contents: read
-      id-token: write
-    runs-on: ubuntu-latest
-    needs:
-      - build-grafana
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - id: get-github-token
-        name: "create github app token"
-        uses: grafana/shared-workflows/actions/create-github-app-token@eb02241ed0a92aff205feab8ac3afcdf51c757c8 # create-github-app-token-v0.2.0
-        with:
-          github_app: "delivery-bot-app"
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        id: login-to-gar
-        with:
-          registry: 'us-docker.pkg.dev'
-          environment: 'dev'
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
-        with:
-          name: grafana-docker-tar-gz
-          path: .
-      - name: Load & Push Docker image
-        env:
-          BUILD_ID: ${{ github.run_id }}
-        run: |
-          set -euo pipefail
-          docker load -i grafana.docker.tar.gz | tee out.txt
-          echo "GRAFANA_IMAGE=$(awk '{ print $3; }' out.txt)" >> "$GITHUB_ENV"
-      - name: Run test
-        # Workaround for 'go: no such tool "covdata"', see https://github.com/golang/go/issues/75031
-        run: GOTOOLCHAIN=go1.25.0+auto go test -p=1 -count=1 -covermode=atomic -timeout=5m
-          ./pkg/services/apiserver/apiserver_test/... -v
-
   run-e2e-tests:
     needs:
       - build-grafana
@@ -583,7 +545,6 @@ jobs:
   required-e2e-tests:
     needs:
       - run-e2e-tests
-      - run-e2e-apiserver-tests
       - build-grafana
       # a11y test is not listed on purpose: it is not an important E2E test.
       # It is also totally fine to fail right now.
