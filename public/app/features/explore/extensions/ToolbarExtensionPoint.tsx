@@ -2,7 +2,7 @@ import { ReactElement, useMemo, useState } from 'react';
 
 import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZone } from '@grafana/data';
 import { reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { DataQuery, LogsSortOrder, TimeZone } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ExplorePanelData } from 'app/types/explore';
@@ -89,13 +89,14 @@ export type PluginExtensionExploreContext = {
   timeRange: RawTimeRange;
   timeZone: TimeZone;
   shouldShowAddCorrelation: boolean;
+  sortOrder?: LogsSortOrder;
 };
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
   const { exploreId, timeZone } = props;
   const isCorrelationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = isCorrelationDetails?.editorMode || false;
-  const { queries, queryResponse, range } = useSelector(getExploreItemSelector(exploreId))!;
+  const { queries, queryResponse, range, panelsState } = useSelector(getExploreItemSelector(exploreId))!;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
 
   const datasourceUids = queries.map((query) => query?.datasource?.uid).filter((uid) => uid !== undefined);
@@ -110,16 +111,18 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
       timeRange: range.raw,
       timeZone: getTimeZone({ timeZone }),
       shouldShowAddCorrelation: canWriteCorrelations && !isCorrelationsEditorMode && isLeftPane && numUniqueIds === 1,
+      sortOrder: panelsState?.logs?.sortOrder,
     };
   }, [
+    canWriteCorrelations,
     exploreId,
+    isCorrelationsEditorMode,
+    isLeftPane,
+    numUniqueIds,
+    panelsState?.logs?.sortOrder,
     queries,
     queryResponse,
     range.raw,
     timeZone,
-    canWriteCorrelations,
-    isCorrelationsEditorMode,
-    isLeftPane,
-    numUniqueIds,
   ]);
 }
