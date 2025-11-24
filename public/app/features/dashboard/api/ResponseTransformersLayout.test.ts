@@ -668,6 +668,191 @@ describe('ResponseTransformers Layout Conversion', () => {
       expect(regularPanels[0].gridPos?.h).toBeGreaterThanOrEqual(7);
       expect(regularPanels[0].gridPos?.h).toBeLessThanOrEqual(8);
     });
+
+    it('should ensure panels maintain Y position ordering (each panel Y >= previous panel Y)', () => {
+      const elements: DashboardV2Spec['elements'] = {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'Panel 1',
+            description: '',
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '',
+              spec: {
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+              },
+            },
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [],
+                transformations: [],
+                queryOptions: {},
+              },
+            },
+            links: [],
+          },
+        },
+        'panel-2': {
+          kind: 'Panel',
+          spec: {
+            id: 2,
+            title: 'Panel 2',
+            description: '',
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '',
+              spec: {
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+              },
+            },
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [],
+                transformations: [],
+                queryOptions: {},
+              },
+            },
+            links: [],
+          },
+        },
+        'panel-3': {
+          kind: 'Panel',
+          spec: {
+            id: 3,
+            title: 'Panel 3',
+            description: '',
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '',
+              spec: {
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+              },
+            },
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [],
+                transformations: [],
+                queryOptions: {},
+              },
+            },
+            links: [],
+          },
+        },
+      };
+
+      const layout: DashboardV2Spec['layout'] = {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Row 1',
+                layout: {
+                  kind: 'GridLayout',
+                  spec: {
+                    items: [
+                      {
+                        kind: 'GridLayoutItem',
+                        spec: {
+                          x: 0,
+                          y: 0,
+                          width: 12,
+                          height: 8,
+                          element: {
+                            kind: 'ElementReference',
+                            name: 'panel-1',
+                          },
+                        },
+                      },
+                      {
+                        kind: 'GridLayoutItem',
+                        spec: {
+                          x: 12,
+                          y: 0,
+                          width: 12,
+                          height: 8,
+                          element: {
+                            kind: 'ElementReference',
+                            name: 'panel-2',
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Row 2',
+                layout: {
+                  kind: 'GridLayout',
+                  spec: {
+                    items: [
+                      {
+                        kind: 'GridLayoutItem',
+                        spec: {
+                          x: 0,
+                          y: 0,
+                          width: 12,
+                          height: 8,
+                          element: {
+                            kind: 'ElementReference',
+                            name: 'panel-3',
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      const v2Dashboard = createV2Dashboard(elements, layout);
+      const v1Result = ResponseTransformers.ensureV1Response(v2Dashboard);
+
+      expect(v1Result.dashboard.panels).toBeDefined();
+      const panels = v1Result.dashboard.panels || [];
+
+      // Filter out row panels to get only regular panels
+      const regularPanels = panels.filter((p) => p.type !== 'row' && 'gridPos' in p) as Panel[];
+
+      // Verify that each panel's Y position is >= the previous panel's Y position
+      for (let i = 1; i < regularPanels.length; i++) {
+        const prevPanel = regularPanels[i - 1];
+        const currentPanel = regularPanels[i];
+        const prevY = prevPanel.gridPos?.y ?? 0;
+        const currentY = currentPanel.gridPos?.y ?? 0;
+
+        expect(currentY).toBeGreaterThanOrEqual(prevY);
+      }
+
+      // Also verify all panels (including rows) maintain ordering
+      for (let i = 1; i < panels.length; i++) {
+        const prevPanel = panels[i - 1];
+        const currentPanel = panels[i];
+        const prevY = prevPanel.gridPos?.y ?? 0;
+        const currentY = currentPanel.gridPos?.y ?? 0;
+
+        expect(currentY).toBeGreaterThanOrEqual(prevY);
+      }
+    });
   });
 
   describe('Round-trip conversion: v1 -> v2 -> v1', () => {

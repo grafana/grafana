@@ -118,6 +118,7 @@ All panels must have valid `gridPos` with:
 - Panel order must be preserved exactly (no sorting or normalization)
 - Structure must match the original V1 dashboard after round-trip conversion
 - Compare panels index-by-index to verify order
+- Panels that follow other panels must have a Y position equal to or greater than the previous panel's Y position
 
 ### Nested Structure Flattening
 
