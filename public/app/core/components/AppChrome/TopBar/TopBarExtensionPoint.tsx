@@ -15,14 +15,10 @@ export function TopBarExtensionPoint() {
     return null;
   }
 
-  return (
-    <>
-      {renderLimitedComponents({
-        props: {},
-        components: components,
-        limit: 1,
-        pluginId: 'grafana-setupguide-app',
-      })}
-    </>
-  );
+  return renderLimitedComponents({
+    props: {},
+    components: components,
+    limit: 1,
+    pluginId: 'grafana-setupguide-app',
+  });
 }
