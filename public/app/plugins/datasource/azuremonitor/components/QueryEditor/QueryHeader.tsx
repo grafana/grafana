@@ -6,9 +6,9 @@ import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 
-import { LogsEditorMode } from '../../dataquery.gen';
+import { AzureQueryType, LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
+import { AzureMonitorQuery } from '../../types/query';
 
 interface QueryTypeFieldProps {
   query: AzureMonitorQuery;
