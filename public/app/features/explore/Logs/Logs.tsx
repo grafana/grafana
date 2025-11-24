@@ -592,7 +592,12 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
       urlState.panelsState = {
         ...panelState,
-        logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType(), displayedFields },
+        logs: {
+          id: row.uid,
+          visualisationType: visualisationType ?? getDefaultVisualisationType(),
+          displayedFields,
+          sortOrder: logsSortOrder,
+        },
       };
       urlState.range = getLogsPermalinkRange(row, logRows, absoluteRange);
 
@@ -608,7 +613,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         logRowLevel: row.logLevel,
       });
     },
-    [absoluteRange, displayedFields, exploreId, logRows, panelState, visualisationType]
+    [absoluteRange, displayedFields, exploreId, logRows, logsSortOrder, panelState, visualisationType]
   );
 
   const scrollToTopLogs = useCallback(() => {
