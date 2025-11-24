@@ -201,6 +201,9 @@ jobs:
     needs:
       - build-grafana
     steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - id: get-github-token
         name: "create github app token"
         uses: grafana/shared-workflows/actions/create-github-app-token@eb02241ed0a92aff205feab8ac3afcdf51c757c8 # create-github-app-token-v0.2.0
@@ -225,7 +228,7 @@ jobs:
       - name: Run test
         # Workaround for 'go: no such tool "covdata"', see https://github.com/golang/go/issues/75031
         run: GOTOOLCHAIN=go1.25.0+auto go test -p=1 -count=1 -covermode=atomic -timeout=5m
-          ./pkg/services/apiserver/apiserver_test/scenarios/... -v
+          ./pkg/services/apiserver/apiserver_test/... -v
 
   run-e2e-tests:
     needs:
