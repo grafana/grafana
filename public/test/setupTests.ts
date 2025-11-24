@@ -34,6 +34,18 @@ i18next.use(initReactI18next).init({
 // the factory uses import.meta.url so we can't use it in CommonJS modules.
 jest.mock('app/features/dashboard-scene/saving/createDetectChangesWorker.ts');
 
+// Mock useLoadAppPlugins to prevent async state updates in tests
+jest.mock('app/features/plugins/extensions/useLoadAppPlugins', () => ({
+  useLoadAppPlugins: jest.fn().mockReturnValue({ isLoading: false }),
+}));
+
+// Mock usePluginComponents to return empty components for all tests by default
+// Tests that need to test plugin components can override this mock
+jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
+  ...jest.requireActual('app/features/plugins/extensions/usePluginComponents'),
+  usePluginComponents: jest.fn().mockReturnValue({ components: [], isLoading: false }),
+}));
+
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness
 configure({ asyncUtilTimeout: 2000 });

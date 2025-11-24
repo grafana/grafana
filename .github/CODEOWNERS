@@ -721,9 +721,9 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/RadialGauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/PluginSignatureBadge/ @grafana/plugins-platform-frontend
-/packages/grafana-ui/src/components/Sparkline/ @grafana/grafana-frontend-platform @grafana/app-o11y-visualizations
+/packages/grafana-ui/src/components/Sparkline/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Table/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/Table/Cells/SparklineCell.tsx @grafana/dataviz-squad @grafana/app-o11y-visualizations
+/packages/grafana-ui/src/components/Table/Cells/SparklineCell.tsx @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/ValuePicker/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizLayout/ @grafana/dataviz-squad
@@ -992,7 +992,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/state-timeline/ @grafana/dataviz-squad
 /public/app/plugins/panel/status-history/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/ @grafana/dataviz-squad
-/public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx @grafana/dataviz-squad @grafana/app-o11y-visualizations
+/public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx @grafana/dataviz-squad
 /public/app/plugins/panel/timeseries/ @grafana/dataviz-squad
 /public/app/plugins/panel/trend/ @grafana/dataviz-squad
 /public/app/plugins/panel/geomap/ @grafana/dataviz-squad
