@@ -1,4 +1,4 @@
-import { shouldUseBackendFilters } from '../featureToggles';
+import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../featureToggles';
 import { RulesFilter } from '../search/rulesSearchParser';
 
 import { hasDatasourceFilters } from './hooks/datasourceFilter';
@@ -23,22 +23,26 @@ export function getSearchApiGroupPageSize(hasFrontendFilters: boolean) {
   return hasFrontendFilters ? FILTERED_GROUPS_LARGE_API_PAGE_SIZE : FILTERED_GROUPS_SMALL_API_PAGE_SIZE;
 }
 
-export function getGrafanaFilterLimits(filterState: RulesFilter) {
-  const hasCompatibleBackendFilters = shouldUseBackendFilters();
+export function getFilteredRulesLimits(filterState: RulesFilter): FetchGroupsLimitOptions {
+  return {
+    gmaLimit: getGrafanaFilterLimits(filterState),
+    dmaLimit: {
+      groupLimit: hasDatasourceFilters(filterState)
+        ? FILTERED_GROUPS_LARGE_API_PAGE_SIZE
+        : FILTERED_GROUPS_SMALL_API_PAGE_SIZE,
+    },
+  };
+}
+
+function getGrafanaFilterLimits(filterState: RulesFilter) {
+  const backendFiltersEnabled = shouldUseFullyCompatibleBackendFilters() || shouldUseBackendFilters();
 
   const frontendFiltersInUse = hasClientSideFilters(filterState);
   const onlyBackendFiltersInUse = frontendFiltersInUse === false;
 
-  if (hasCompatibleBackendFilters && onlyBackendFiltersInUse) {
+  if (backendFiltersEnabled && onlyBackendFiltersInUse) {
     return { ruleLimit: RULE_LIMIT_WITH_BACKEND_FILTERS };
   }
 
   return { groupLimit: getSearchApiGroupPageSize(frontendFiltersInUse) };
-}
-
-export function getFilteredRulesLimits(filterState: RulesFilter): FetchGroupsLimitOptions {
-  return {
-    gmaLimit: getGrafanaFilterLimits(filterState),
-    dmaLimit: { groupLimit: getApiGroupPageSize(hasDatasourceFilters(filterState)) },
-  };
 }
