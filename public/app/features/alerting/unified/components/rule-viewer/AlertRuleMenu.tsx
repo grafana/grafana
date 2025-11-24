@@ -143,7 +143,6 @@ const AlertRuleMenu = ({
     ruleUid &&
     handleManageEnrichments &&
     config.featureToggles.alertingEnrichmentPerRule &&
-    config.featureToggles.alertEnrichment &&
     enrichmentReadSupported &&
     enrichmentReadAllowed;
 

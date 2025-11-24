@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { config } from '@grafana/runtime';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { PERMISSIONS_CONTACT_POINTS_READ } from 'app/features/alerting/unified/components/contact-points/permissions';
 import {
@@ -203,9 +204,12 @@ export const useEnrichmentAbilities = (): Abilities<EnrichmentAction> => {
   const hasReadPermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsRead);
   const hasWritePermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsWrite);
 
+  // Enrichments are only available when the feature toggle is enabled
+  const enrichmentsSupported = Boolean(config.featureToggles.alertEnrichment);
+
   return {
-    [EnrichmentAction.Read]: [AlwaysSupported, userIsAdmin || hasReadPermission],
-    [EnrichmentAction.Write]: [AlwaysSupported, userIsAdmin || hasWritePermission],
+    [EnrichmentAction.Read]: [enrichmentsSupported, userIsAdmin || hasReadPermission],
+    [EnrichmentAction.Write]: [enrichmentsSupported, userIsAdmin || hasWritePermission],
   };
 };
 
