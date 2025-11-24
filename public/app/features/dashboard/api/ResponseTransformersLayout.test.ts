@@ -1687,5 +1687,159 @@ describe('ResponseTransformers Layout Conversion', () => {
       expect(tab2Panel).toBeDefined();
       expect(tab2Panel?.title).toBe('Panel in Tab 2');
     });
+
+    it('should place tab rows immediately after the parent row that contains the TabsLayout', () => {
+      // Create a v2 dashboard with a row containing tabs, followed by another row
+      const elements: DashboardV2Spec['elements'] = {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'Panel in Tab',
+            description: '',
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '',
+              spec: {
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+              },
+            },
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [],
+                transformations: [],
+                queryOptions: {},
+              },
+            },
+            links: [],
+          },
+        },
+        'panel-2': {
+          kind: 'Panel',
+          spec: {
+            id: 2,
+            title: 'Panel in Row 2',
+            description: '',
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '',
+              spec: {
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+              },
+            },
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [],
+                transformations: [],
+                queryOptions: {},
+              },
+            },
+            links: [],
+          },
+        },
+      };
+
+      const layout: DashboardV2Spec['layout'] = {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Row with Tabs',
+                collapse: false,
+                layout: {
+                  kind: 'TabsLayout',
+                  spec: {
+                    tabs: [
+                      {
+                        kind: 'TabsLayoutTab',
+                        spec: {
+                          title: 'Tab 1',
+                          layout: {
+                            kind: 'GridLayout',
+                            spec: {
+                              items: [
+                                {
+                                  kind: 'GridLayoutItem',
+                                  spec: {
+                                    x: 0,
+                                    y: 0,
+                                    width: 12,
+                                    height: 8,
+                                    element: {
+                                      kind: 'ElementReference',
+                                      name: 'panel-1',
+                                    },
+                                  },
+                                },
+                              ],
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Row 2',
+                collapse: false,
+                layout: {
+                  kind: 'GridLayout',
+                  spec: {
+                    items: [
+                      {
+                        kind: 'GridLayoutItem',
+                        spec: {
+                          x: 0,
+                          y: 0,
+                          width: 12,
+                          height: 8,
+                          element: {
+                            kind: 'ElementReference',
+                            name: 'panel-2',
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      const v2Dashboard = createV2Dashboard(elements, layout);
+      const v1Result = ResponseTransformers.ensureV1Response(v2Dashboard);
+
+      const panels = v1Result.dashboard.panels || [];
+      const rowPanels = panels.filter((p) => p.type === 'row') as RowPanel[];
+
+      // Find indices of rows
+      const parentRowIndex = panels.findIndex((p) => p.type === 'row' && (p as RowPanel).title === 'Row with Tabs');
+      const tabRowIndex = panels.findIndex((p) => p.type === 'row' && (p as RowPanel).title === 'Tab 1');
+      const row2Index = panels.findIndex((p) => p.type === 'row' && (p as RowPanel).title === 'Row 2');
+
+      // Tab row should come immediately after parent row, and before Row 2
+      expect(parentRowIndex).toBeGreaterThanOrEqual(0);
+      expect(tabRowIndex).toBeGreaterThanOrEqual(0);
+      expect(row2Index).toBeGreaterThanOrEqual(0);
+
+      // Tab row should be after parent row
+      expect(tabRowIndex).toBeGreaterThan(parentRowIndex);
+      // Tab row should be before Row 2
+      expect(tabRowIndex).toBeLessThan(row2Index);
+    });
   });
 });
