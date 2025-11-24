@@ -300,9 +300,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
-    // Mask should cover the entire viewport, but be invisible over the top nav bar
-    // We use a pseudo-element that starts below the top nav bar for the visible overlay
-    // Extension sidebar has z-index modal (1060), same as drawer, so clicks on sidebar won't hit mask
+    // we want the mask itself to span the whole page including the top bar
+    // this ensures trying to click something in the top bar will close the drawer correctly
+    // but we don't want the backdrop styling to apply over the top bar as it looks weird
+    // instead have a child pseudo element to apply the backdrop styling below the top bar
     mask: css({
       // The !important here is to override the default .rc-drawer-mask styles
       backgroundColor: 'transparent !important',
@@ -310,9 +311,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'fixed !important' as 'fixed',
       zIndex: theme.zIndex.modal - 1, // Below drawer (modal = 1060) and sidebar (modal = 1060)
 
-      // Create a visible overlay that starts below the top nav bar
-      // Top nav bar height can be 40px (1 level) or 80px (2 levels)
-      // We'll use a CSS variable or calculate dynamically, but for now estimate at 80px max
       '&:before': {
         backgroundColor: `${theme.components.overlay.background} !important`,
         bottom: 0,
