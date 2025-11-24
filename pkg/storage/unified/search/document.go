@@ -6,10 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-/*
-StandardDocumentBuilders provides the default list of document builders for open source Grafana.
-It combines the standard document builder with external builders for dashboards and users.
-*/
+// StandardDocumentBuilders provides the default list of document builders for open source Grafana.
+// It combines the standard document builder with external builders for dashboards and users.
 type StandardDocumentBuilders struct {
 	sql       db.DB
 	sprinkles builders.DashboardStats
