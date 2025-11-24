@@ -542,6 +542,35 @@
     },
     {
       "metadata": {
+        "name": "alertingUIUseCompatibleBackendFilters",
+        "resourceVersion": "1763478911684",
+        "creationTimestamp": "2025-11-18T15:15:11Z",
+        "deletionTimestamp": "2025-11-18T15:17:12Z"
+      },
+      "spec": {
+        "description": "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingUIUseFullyCompatBackendFilters",
+        "resourceVersion": "1763479032988",
+        "creationTimestamp": "2025-11-18T15:17:12Z"
+      },
+      "spec": {
+        "description": "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingUseNewSimplifiedRoutingHashAlgorithm",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2025-08-29T14:46:39Z",

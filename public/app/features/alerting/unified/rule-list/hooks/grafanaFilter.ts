@@ -1,7 +1,7 @@
 import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { GrafanaPromRulesOptions } from '../../api/prometheusApi';
-import { shouldUseBackendFilters } from '../../featureToggles';
+import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../../featureToggles';
 import { RulesFilter } from '../../search/rulesSearchParser';
 
 import { buildTitleSearch, normalizeFilterState } from './filterNormalization';
@@ -57,7 +57,8 @@ export function hasClientSideFilters(filterState: RulesFilter): boolean {
  */
 export function getGrafanaFilter(filterState: RulesFilter) {
   const normalizedFilterState = normalizeFilterState(filterState);
-  const useBackendFilters = shouldUseBackendFilters();
+
+  const { ruleFilterConfig, groupFilterConfig } = buildGrafanaFilterConfigs();
 
   // Build title search for backend filtering
   const titleSearch = buildTitleSearch(normalizedFilterState);
@@ -66,20 +67,18 @@ export function getGrafanaFilter(filterState: RulesFilter) {
     state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
     health: normalizedFilterState.ruleHealth ? [normalizedFilterState.ruleHealth] : [],
     contactPoint: normalizedFilterState.contactPoint ?? undefined,
-    title: useBackendFilters ? titleSearch : undefined,
-    type: useBackendFilters ? normalizedFilterState.ruleType : undefined,
-    dashboardUid: useBackendFilters ? normalizedFilterState.dashboardUid : undefined,
-    searchGroupName: useBackendFilters ? normalizedFilterState.groupName : undefined,
+    // If FE filter is defined, don't include the backend filter
+    title: ruleFilterConfig.ruleName ? undefined : titleSearch,
+    type: ruleFilterConfig.ruleType ? undefined : normalizedFilterState.ruleType,
+    dashboardUid: ruleFilterConfig.dashboardUid ? undefined : normalizedFilterState.dashboardUid,
+    searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
   };
-
-  const { ruleFilterConfig: grafanaFilterProcessingConfig, groupFilterConfig: grafanaGroupFilterConfig } =
-    buildGrafanaFilterConfigs();
 
   return {
     backendFilter,
     frontendFilter: {
-      groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, normalizedFilterState, grafanaGroupFilterConfig),
-      ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, normalizedFilterState, grafanaFilterProcessingConfig),
+      groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, normalizedFilterState, groupFilterConfig),
+      ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, normalizedFilterState, ruleFilterConfig),
     },
   };
 }
@@ -93,17 +92,18 @@ export function getGrafanaFilter(filterState: RulesFilter) {
  */
 function buildGrafanaFilterConfigs() {
   const useBackendFilters = shouldUseBackendFilters();
+  const useFullyCompatibleBackendFilters = shouldUseFullyCompatibleBackendFilters();
 
   const ruleFilterConfig: RuleFilterConfig = {
     // When backend filtering is enabled, these filters are handled by the backend
     freeFormWords: useBackendFilters ? null : freeFormFilter,
     ruleName: useBackendFilters ? null : ruleNameFilter,
     ruleState: null,
-    ruleType: useBackendFilters ? null : ruleTypeFilter,
+    ruleType: useBackendFilters || useFullyCompatibleBackendFilters ? null : ruleTypeFilter,
     dataSourceNames: dataSourceNamesFilter,
     labels: labelsFilter,
     ruleHealth: null,
-    dashboardUid: useBackendFilters ? null : dashboardUidFilter,
+    dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,
     plugins: pluginsFilter,
     contactPoint: null,
   };
