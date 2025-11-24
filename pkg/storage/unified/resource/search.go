@@ -600,6 +600,12 @@ func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) 
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
+	importTimes, err := s.getLastImportTimes(ctx)
+	if err != nil {
+		s.log.Error("failed to get import times", "error", err)
+	}
+	s.findIndexesToRebuild(importTimes, time.Now())
+
 	for {
 		select {
 		case <-ctx.Done():
