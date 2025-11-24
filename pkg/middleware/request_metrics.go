@@ -114,6 +114,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 					handler = "notfound"
 				} else {
 					// log requests where we could not identify handler so we can register them.
+					//nolint:staticcheck // not yet migrated to OpenFeature
 					if features.IsEnabled(r.Context(), featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
 						log.Warn("request instrumented as unknown", "path", r.URL.Path, "status_code", status)
 					}
