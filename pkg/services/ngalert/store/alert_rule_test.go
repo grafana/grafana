@@ -1516,11 +1516,9 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 		}
 
 		// Verify case-sensitive alphabetical ordering
-		// different databases may sort uppercase before lowercase or vice versa depending on character set, the important part is that the order is consistent and case-sensitive
-		expectedOrder := []string{"test", "Test", "TEST"}
-		alternateExpectedOrder := []string{"TEST", "Test", "test"}
-		if !slices.Equal(groupOrder, expectedOrder) && !slices.Equal(groupOrder, alternateExpectedOrder) {
-			t.Fatalf("groups are not ordered case-sensitively as expected. got: %v, want: %v or %v", groupOrder, expectedOrder, alternateExpectedOrder)
+		expectedOrder := []string{"TEST", "Test", "test"}
+		if !slices.Equal(groupOrder, expectedOrder) {
+			t.Fatalf("groups are not ordered case-sensitively as expected. got: %v, want: %v", groupOrder, expectedOrder)
 		}
 
 		// Verify each group contains the correct rules
