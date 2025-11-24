@@ -1976,9 +1976,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
-      "disabled-tooltip": "",
       "error": "{{alertmanager}}의 라우팅 미리보기를 로딩하지 못했습니다.",
       "initialized": "추가된 라벨을 토대로 경고 인스턴스가 다음 알림 정책으로 라우팅됩니다. 자세한 내용을 보려면 아래의 각 알림 정책을 펼치세요.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "라우팅 미리보기",
       "select-folder-tooltip": "",
       "text-loading-preview": "미리 보기 로딩 중...",
@@ -2586,8 +2588,7 @@
         "firing": "발생 중",
         "normal": "정상",
         "pending": "보류 중",
-        "recovering": "복구 중",
-        "unknown": "알 수 없음"
+        "recovering": "복구 중"
       },
       "type": {
         "alert": "경고 규칙",
@@ -2611,12 +2612,14 @@
         "placeholder-search-input": "이름으로 검색하거나 필터 쿼리를 입력하세요..."
       },
       "grafana-folder": "Grafana 폴더",
+      "group-autocomplete-unavailable": "",
       "health": "상태",
       "label": {
         "hide": "숨기기",
         "show": "표시"
       },
       "manage-alerts": "이러한 데이터 소스에서 경고 UI를 통해 '경고 관리'를 선택하면 Grafana UI와 경고 규칙이 구성된 데이터 소스에서 이러한 경고 규칙을 관리할 수 있습니다.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "모든 데이터 소스",
       "placeholder-contact-point": "연락처 선택",
       "placeholder-data-sources": "데이터 소스 선택",
@@ -3528,6 +3531,7 @@
       "delete-modal-invalid-title": "폴더를 삭제할 수 없음",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "이 작업을 수행하면 다음 콘텐츠가 삭제됩니다.",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "삭제",
       "delete-provisioned-folder": "프로비저닝된 폴더 삭제",
       "deleting": "삭제 중…",
@@ -3536,6 +3540,7 @@
       "move-modal-alert": "이 항목을 이동하면 권한이 변경될 수 있습니다.",
       "move-modal-field-label": "폴더 이름",
       "move-modal-text": "이 작업을 수행하면 다음 콘텐츠가 이동됩니다.",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "이동",
       "move-provisioned-folder": "",
       "moving": "이동 중...",
@@ -3618,11 +3623,11 @@
       "title-folder": "이 폴더에는 아직 대시보드가 없습니다."
     },
     "folder-actions-button": {
-      "delete": "삭제",
+      "delete": "",
       "delete-folder-error": "폴더 삭제 도중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
       "folder-actions": "폴더 작업",
       "manage-permissions": "권한 관리",
-      "move": "이동"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "폴더 선택: 현재 {{ label }} 선택함",
@@ -5075,8 +5080,12 @@
     "new-panel": {
       "configure-button": "구성",
       "configure-button-menu": "토글 메뉴",
+      "empty-state-message": "",
       "menu-open-panel-editor": "구성",
-      "menu-use-library-panel": "라이브러리 패널 사용"
+      "menu-use-library-panel": "라이브러리 패널 사용",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "새 패널",
     "on-create-new-row": {
@@ -7191,6 +7200,7 @@
       "logs-volume": {
         "add-filters": "검색 결과를 좁히려면 쿼리에 라벨을 추가하세요.",
         "decrease-timerange": "쿼리의 시간 범위를 줄입니다.",
+        "max-bytes-error": "",
         "much-data": "쿼리가 너무 많은 데이터에 액세스하려고 합니다. 다음 중 하나 이상의 방법을 시도해 보세요."
       },
       "maximum-pinned-logs": "고정할 수 있는 최대 로그 수({{PINNED_LOGS_LIMIT}})에 도달했습니다. 다른 로그를 추가하려면 기존 로그의 고정을 해제하세요.",
@@ -7240,12 +7250,15 @@
       "tooltip-select-query-visualize-table": "표에서 시각화할 쿼리 선택"
     },
     "logs-volume-panel": {
-      "content-streaming": "스트리밍"
+      "content-streaming": "스트리밍",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "로그 볼륨 다시 로딩",
       "label-reload-log-volume": "로그 볼륨 다시 로딩",
       "loading": "로딩 중...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "이 쿼리에 대한 로그 볼륨 로딩 실패",
       "title-no-logs-volume-available": "사용 가능한 로그 볼륨 없음",
       "title-showing-partial-data": "부분 데이터 표시 중",
@@ -8550,7 +8563,13 @@
       "saving": "<1></1> 저장 중"
     },
     "axis-builder": {
-      "linear-threshold": "선형 임계값",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "로그 베이스"
     },
     "builder": {
@@ -8956,6 +8975,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "오른쪽 y축 사용"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9247,6 +9271,7 @@
       "toggle-panel-edit": "패널 편집 보기 토글",
       "toggle-panel-fullscreen": "패널 전체 화면 보기 토글",
       "toggle-panel-legend": "패널 범례 토글",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "시간 범위 확대"
     },
     "title": "단축키"
@@ -9914,11 +9939,7 @@
       "wrap-lines": "줄 바꿈"
     },
     "logs-navigation": {
-      "newer-logs": "최근 로그",
-      "older-logs": "이전 로그",
-      "scroll-bottom": "맨 아래로 스크롤",
-      "scroll-top": "맨 위로 스크롤",
-      "start-of-range": "범위의 시작"
+      "scroll-top": "맨 위로 스크롤"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12480,11 +12501,14 @@
       "copy-clipboard": "클립보드로 복사",
       "copy-to-clipboard-and-close": "클립보드로 복사하고 닫기",
       "description-name-to-easily-identify-the-token": "토큰을 쉽게 식별할 수 있는 이름",
+      "description-no-expiration-disabled": "",
       "description-token": "토큰이 다시 표시되지 않으므로 지금 복사해 두세요. 토큰을 분실하면 새 토큰을 생성해야 합니다.",
       "generate-token": "토큰 생성",
       "label-display-name": "표시 이름",
       "label-expiration": "만료",
       "label-expiration-date": "만료일",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "토큰"
     },
     "get-actions-cell": {

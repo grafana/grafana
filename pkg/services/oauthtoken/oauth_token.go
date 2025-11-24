@@ -473,6 +473,10 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 			)
 		}
 
+		if token.RefreshToken == "" {
+			ctxLogger.Warn("Refresh token is missing after token refresh", "authmodule", tokenRefreshMetadata.AuthModule)
+		}
+
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			updateAuthCommand := &login.UpdateAuthInfoCommand{

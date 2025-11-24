@@ -65,7 +65,13 @@ export const useDashboardSave = (isCopy = false) => {
         if (isCopy) {
           DashboardInteractions.dashboardCopied({ name: dashboard.title || '', url: result.url });
         } else {
-          trackDashboardCreatedOrSaved(!!dashboard.id, { name: dashboard.title, url: result.url });
+          trackDashboardCreatedOrSaved(!!dashboard.id, {
+            name: dashboard.title,
+            url: result.url,
+            uid: result.uid,
+            numPanels: dashboard.panels.filter((p) => p.type !== 'row').length,
+            numRows: dashboard.panels.filter((p) => p.type === 'row').length,
+          });
         }
 
         const currentPath = locationService.getLocation().pathname;
