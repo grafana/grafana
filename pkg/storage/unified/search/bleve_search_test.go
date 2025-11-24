@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/external"
 )
 
 const threshold = 9999
@@ -265,8 +266,8 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 
-	info, err := search.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &search.DashboardDocumentBuilder{
+	info, err := external.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &external.DashboardDocumentBuilder{
 			Namespace:        namespace,
 			Blob:             blob,
 			Stats:            make(map[string]map[string]int64), // empty stats

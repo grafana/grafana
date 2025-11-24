@@ -1,4 +1,4 @@
-package search_test
+package external_test
 
 import (
 	"context"
@@ -17,10 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/external"
 )
 
 func TestUserDocumentBuilder(t *testing.T) {
-	info, err := search.GetUserBuilder()
+	info, err := external.GetUserBuilder()
 	require.NoError(t, err)
 	doSnapshotTests(t, info.Builder, "user", &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -68,11 +69,9 @@ func TestUserSearch(t *testing.T) {
 	}
 	indexUserDocuments(t, index, key, users)
 
-	// Sanity check - title search
 	checkUserSearchQuery(t, index, newTestsUserQueryWithTitle(key, "user2"), []string{"user2"})
 
 	t.Run("can search users by login", func(t *testing.T) {
-		// Search by login
 		checkUserSearchQuery(t, index, newTestUserQueryWithReqs(key, []*resourcepb.Requirement{
 			{
 				Key:      "fields.login",
@@ -100,7 +99,6 @@ func TestUserSearch(t *testing.T) {
 	})
 
 	t.Run("can search users by email", func(t *testing.T) {
-		// Search by email
 		checkUserSearchQuery(t, index, newTestUserQueryWithReqs(key, []*resourcepb.Requirement{
 			{
 				Key:      "fields.email",
@@ -129,7 +127,7 @@ func newTestUsersIndex(t testing.TB, threshold int64, size int64, writer resourc
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
-		FileThreshold: threshold, // use in-memory for tests
+		FileThreshold: threshold,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 
@@ -137,7 +135,7 @@ func newTestUsersIndex(t testing.TB, threshold int64, size int64, writer resourc
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 
-	info, err := search.GetUserBuilder()
+	info, err := external.GetUserBuilder()
 	require.NoError(t, err)
 
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
@@ -166,7 +164,7 @@ func indexUserDocuments(t *testing.T, index resource.ResourceIndex, key resource
 					Resource:  key.Resource,
 				},
 				Title:  user.Name,
-				Fields: map[string]any{search.USER_LOGIN: user.Spec.Login, search.USER_EMAIL: user.Spec.Email},
+				Fields: map[string]any{external.USER_LOGIN: user.Spec.Login, external.USER_EMAIL: user.Spec.Email},
 			},
 		})
 	}

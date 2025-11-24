@@ -1,4 +1,4 @@
-package search
+package external
 
 import (
 	"bytes"
@@ -54,7 +54,6 @@ var _ resource.DocumentBuilder = new(userDocumentBuilder)
 
 type userDocumentBuilder struct{}
 
-// BuildDocument implements resource.DocumentBuilder.
 func (u *userDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	user := &iamv0.User{}
 	err := json.NewDecoder(bytes.NewReader(value)).Decode(user)

@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/external"
 )
 
 // regression test - parsing int32 values from search results was causing a panic
@@ -25,11 +25,11 @@ func TestParseResults(t *testing.T) {
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
-						Name: search.DASHBOARD_ERRORS_LAST_1_DAYS,
+						Name: external.DASHBOARD_ERRORS_LAST_1_DAYS,
 						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 					{
-						Name: search.DASHBOARD_LINK_COUNT,
+						Name: external.DASHBOARD_LINK_COUNT,
 						Type: resourcepb.ResourceTableColumnDefinition_INT32,
 					},
 					{
@@ -75,11 +75,11 @@ func TestParseResults(t *testing.T) {
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
-						Name: search.DASHBOARD_ERRORS_LAST_1_DAYS,
+						Name: external.DASHBOARD_ERRORS_LAST_1_DAYS,
 						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 					{
-						Name: search.DASHBOARD_LINK_COUNT,
+						Name: external.DASHBOARD_LINK_COUNT,
 						Type: resourcepb.ResourceTableColumnDefinition_INT32,
 					},
 					{

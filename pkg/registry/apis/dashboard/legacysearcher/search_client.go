@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
+	unisearch "github.com/grafana/grafana/pkg/storage/unified/search/external"
 )
 
 type DashboardSearchClient struct {

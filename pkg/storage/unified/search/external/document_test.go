@@ -1,4 +1,4 @@
-package search_test
+package external_test
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/external"
 )
 
 func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string, key *resourcepb.ResourceKey, names []string) {
@@ -36,7 +36,6 @@ func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string
 
 			outpath := filepath.Join("testdata", "doc", prefix+"-out.json")
 
-			// test path
 			// nolint:gosec
 			expect, _ := os.ReadFile(outpath)
 			if !assert.JSONEq(t, string(expect), string(out)) {
@@ -54,18 +53,18 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 		Resource:  "dashboards",
 	}
 
-	info, err := search.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &search.DashboardDocumentBuilder{
+	info, err := external.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &external.DashboardDocumentBuilder{
 			Namespace: namespace,
 			Blob:      blob,
 			Stats: map[string]map[string]int64{
 				"aaa": {
-					search.DASHBOARD_ERRORS_LAST_1_DAYS: 1,
-					search.DASHBOARD_ERRORS_LAST_7_DAYS: 1,
+					external.DASHBOARD_ERRORS_LAST_1_DAYS: 1,
+					external.DASHBOARD_ERRORS_LAST_7_DAYS: 1,
 				},
 			},
 			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{
-				Name: "TheDisplayName", // used to be the unique ID!
+				Name: "TheDisplayName",
 				Type: "my-custom-plugin",
 				UID:  "DSUID",
 			}}),
@@ -76,12 +75,10 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 	builder, err := info.Namespaced(context.Background(), key.Namespace, nil)
 	require.NoError(t, err)
 
-	// Dashboards (custom)
 	doSnapshotTests(t, builder, "dashboard", key, []string{
 		"aaa",
 	})
 
-	// Standard
 	builder = resource.StandardDocumentBuilder()
 	doSnapshotTests(t, builder, "folder", &resourcepb.ResourceKey{
 		Namespace: "default",

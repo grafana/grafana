@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
+	unisearch "github.com/grafana/grafana/pkg/storage/unified/search/external"
 )
 
 func TestDashboardSearchClient_Search(t *testing.T) {
