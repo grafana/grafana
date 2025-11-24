@@ -1994,9 +1994,11 @@
     },
     "notification-preview": {
       "alertmanager": "Správce výstrah:",
-      "disabled-tooltip": "",
       "error": "Nelze načíst náhled směrování pro {{alertmanager}}",
       "initialized": "Na základě přidaného štítku jsou instance výstrahy přesměrovány do následujících zásad oznamování. Další podrobnosti zobrazíte rozbalením jednotlivých zásad oznamování níže.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Zobrazit náhled směrování",
       "select-folder-tooltip": "",
       "text-loading-preview": "Načítání náhledu…",
@@ -5138,8 +5140,12 @@
     "new-panel": {
       "configure-button": "Konfigurovat",
       "configure-button-menu": "Přepnout nabídku",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Konfigurovat",
-      "menu-use-library-panel": "Použít panel knihovny"
+      "menu-use-library-panel": "Použít panel knihovny",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Nový panel",
     "on-create-new-row": {
@@ -7266,6 +7272,7 @@
       "logs-volume": {
         "add-filters": "Chcete-li zúžit vyhledávání, přidejte do dotazu další štítky.",
         "decrease-timerange": "Zkraťte časový rozsah dotazu.",
+        "max-bytes-error": "",
         "much-data": "Dotaz se pokouší získat přístup k příliš velkému množství dat. Zkuste jeden nebo více následujících kroků:"
       },
       "maximum-pinned-logs": "Bylo dosaženo maximálního počtu připnutých protokolů: {{PINNED_LOGS_LIMIT}}. Odepněte protokol pro přidání dalšího protokolu.",
@@ -7315,12 +7322,15 @@
       "tooltip-select-query-visualize-table": "Vyberte dotaz, který chcete vizualizovat v tabulce"
     },
     "logs-volume-panel": {
-      "content-streaming": "Streamování"
+      "content-streaming": "Streamování",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Znovu načíst objem protokolu",
       "label-reload-log-volume": "Znovu načíst objem protokolu",
       "loading": "Načítání…",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Objem protokolu pro tento dotaz se nepodařilo načíst",
       "title-no-logs-volume-available": "Není k dispozici žádný objem protokolů",
       "title-showing-partial-data": "Zobrazují se částečná data",
@@ -8661,7 +8671,13 @@
       "saving": "Ukládání <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineární práh",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Základ protokolu"
     },
     "builder": {
@@ -9067,6 +9083,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Použít pravou osu y"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9358,6 +9379,7 @@
       "toggle-panel-edit": "Přepnout zobrazení úprav panelu",
       "toggle-panel-fullscreen": "Přepnout zobrazení panelu na celou obrazovku",
       "toggle-panel-legend": "Přepnout legendu panelu",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Oddálit časový rozsah"
     },
     "title": "Zkratky"
@@ -10049,11 +10071,7 @@
       "wrap-lines": "Zalomit řádky"
     },
     "logs-navigation": {
-      "newer-logs": "Novější protokoly",
-      "older-logs": "Starší protokoly",
-      "scroll-bottom": "Posunout dolů",
-      "scroll-top": "Posunout nahoru",
-      "start-of-range": "Začátek rozsahu"
+      "scroll-top": "Posunout nahoru"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12648,11 +12666,14 @@
       "copy-clipboard": "Kopírovat do schránky",
       "copy-to-clipboard-and-close": "Kopírovat do schránky a zavřít",
       "description-name-to-easily-identify-the-token": "Název pro snadnou identifikaci tokenu",
+      "description-no-expiration-disabled": "",
       "description-token": "Zkopírujte token teď, protože ho znovu neuvidíte. Ztráta tokenu vyžaduje vytvoření nového tokenu.",
       "generate-token": "Generování tokenu",
       "label-display-name": "Zobrazované jméno",
       "label-expiration": "Expirace",
       "label-expiration-date": "Datum vypršení platnosti",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {

@@ -536,7 +536,7 @@ func TestCheckResourceOwnership(t *testing.T) {
 						"name": "test-resource",
 						"annotations": map[string]interface{}{
 							utils.AnnoKeyManagerKind:     "terraform",
-							utils.AnnoKeyManagerIdentity: "tf-stack-1",
+							utils.AnnoKeyManagerIdentity: "tf-stacks-1",
 						},
 					},
 				},
@@ -546,7 +546,7 @@ func TestCheckResourceOwnership(t *testing.T) {
 				Identity: "repo-1",
 			},
 			expectError:     true,
-			expectedMessage: "resource 'test-resource' is managed by terraform 'tf-stack-1' and cannot be modified by repo 'repo-1'",
+			expectedMessage: "resource 'test-resource' is managed by terraform 'tf-stacks-1' and cannot be modified by repo 'repo-1'",
 		},
 	}
 

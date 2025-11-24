@@ -99,6 +99,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if (s.cfg.Env == setting.Dev) || s.features.IsEnabled(ctx, featuremgmt.FlagEnableExtensionsAdminPage) && hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Extensions",
@@ -147,6 +148,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.license.FeatureEnabled("groupsync") &&
 		s.features.IsEnabled(ctx, featuremgmt.FlagGroupAttributeSync) &&
 		hasAccess(ac.EvalAny(

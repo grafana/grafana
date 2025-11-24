@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager :",
-      "disabled-tooltip": "",
       "error": "Impossible de charger l'aperçu de l'acheminement pour {{alertmanager}}",
       "initialized": "En fonction des étiquettes ajoutées, les instances d'alerte sont acheminées vers les politiques de notification suivantes. Développez chaque politique de notification ci-dessous pour afficher plus de détails.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Aperçu de l'acheminement",
       "select-folder-tooltip": "",
       "text-loading-preview": "Chargement de l’aperçu...",
@@ -5098,8 +5100,12 @@
     "new-panel": {
       "configure-button": "Configurer",
       "configure-button-menu": "Afficher/Masquer le menu",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Configurer",
-      "menu-use-library-panel": "Utiliser le panneau de bibliothèque"
+      "menu-use-library-panel": "Utiliser le panneau de bibliothèque",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Nouveau panneau",
     "on-create-new-row": {
@@ -7218,6 +7224,7 @@
       "logs-volume": {
         "add-filters": "Ajoutez d'autres étiquettes à votre requête pour affiner votre recherche.",
         "decrease-timerange": "Réduisez la plage de temps de votre requête.",
+        "max-bytes-error": "",
         "much-data": "La requête tente d'accéder à trop de données. Essayez une ou plusieurs des opérations suivantes :"
       },
       "maximum-pinned-logs": "Nombre maximum de {{PINNED_LOGS_LIMIT}} journaux épinglés atteint. Désépinglez un journal pour en ajouter un autre.",
@@ -7267,12 +7274,15 @@
       "tooltip-select-query-visualize-table": "Sélectionner une requête à visualiser dans le tableau"
     },
     "logs-volume-panel": {
-      "content-streaming": "Diffusion"
+      "content-streaming": "Diffusion",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Recharger le volume de journaux",
       "label-reload-log-volume": "Recharger le volume de journal",
       "loading": "Chargement en cours...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Échec du chargement du volume de journal pour cette requête",
       "title-no-logs-volume-available": "Aucun volume de journaux disponible",
       "title-showing-partial-data": "Affichage de données partielles",
@@ -8589,7 +8599,13 @@
       "saving": "Enregistrement en cours <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Seuil linéaire",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Base du journal"
     },
     "builder": {
@@ -8995,6 +9011,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Utiliser l'axe y droit"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9286,6 +9307,7 @@
       "toggle-panel-edit": "Activer/Désactiver la vue Édition du panneau",
       "toggle-panel-fullscreen": "Activer/Désactiver la vue Plein écran",
       "toggle-panel-legend": "Activer/désactiver la légende du panneau",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Dézoomer la plage de temps"
     },
     "title": "Raccourcis"
@@ -9961,11 +9983,7 @@
       "wrap-lines": "Enrouler les lignes"
     },
     "logs-navigation": {
-      "newer-logs": "Journaux plus récents",
-      "older-logs": "Journaux plus anciens",
-      "scroll-bottom": "Faire défiler vers le bas",
-      "scroll-top": "Retour en haut de page",
-      "start-of-range": "Jour de début de la plage"
+      "scroll-top": "Retour en haut de page"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12538,11 +12556,14 @@
       "copy-clipboard": "Copier dans le presse-papiers",
       "copy-to-clipboard-and-close": "Copier dans le presse-papiers et fermer",
       "description-name-to-easily-identify-the-token": "Nom pour identifier facilement le jeton",
+      "description-no-expiration-disabled": "",
       "description-token": "Copiez le jeton maintenant, car vous ne pourrez plus le revoir. Si vous perdez un jeton, vous devrez 'en créer un nouveau.",
       "generate-token": "Générer un jeton",
       "label-display-name": "Pseudo",
       "label-expiration": "Expiration",
       "label-expiration-date": "Date d’expiration",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Jeton"
     },
     "get-actions-cell": {

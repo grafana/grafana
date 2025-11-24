@@ -276,6 +276,12 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 			}
 
 			for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
+				// Skip all null values silently.
+				if iter.WhatIsNext() == jsoniter.NilValue {
+					iter.Skip()
+					continue
+				}
+
 				if sub == "list" {
 					templatingListPath := templatingPath + ".list"
 					if !checkAndSkipUnexpectedElement(iter, templatingListPath, lc, jsoniter.ArrayValue) {
@@ -283,6 +289,12 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 					}
 
 					for ix := 0; iter.ReadArray(); ix++ {
+						// Skip all null elements silently.
+						if iter.WhatIsNext() == jsoniter.NilValue {
+							iter.Skip()
+							continue
+						}
+
 						tv := templateVariable{}
 
 						templatingListElementPath := fmt.Sprintf("%s[%d]", templatingListPath, ix)
@@ -308,7 +320,12 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 							case "query":
 								tv.query = iter.Read()
 							case "current":
-								if !checkAndSkipUnexpectedElement(iter, templatingListElementPath+".current", lc, jsoniter.ObjectValue) {
+								if !checkAndSkipUnexpectedElement(iter, templatingListElementPath+".current", lc, jsoniter.ObjectValue, jsoniter.ArrayValue) {
+									continue
+								}
+
+								if iter.WhatIsNext() == jsoniter.ArrayValue {
+									iter.Skip()
 									continue
 								}
 
@@ -527,10 +544,18 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath st
 
 		switch field {
 		case "id":
-			if !checkAndSkipUnexpectedElement(iter, jsonPath+".id", lc, jsoniter.NumberValue) {
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".id", lc, jsoniter.NumberValue, jsoniter.StringValue) {
 				continue
 			}
-			panel.ID = iter.ReadInt64()
+
+			if iter.WhatIsNext() == jsoniter.StringValue {
+				id, err := strconv.ParseInt(iter.ReadString(), 10, 64)
+				if err == nil {
+					panel.ID = id
+				}
+			} else {
+				panel.ID = iter.ReadInt64()
+			}
 
 		case "type":
 			if !checkAndSkipUnexpectedElement(iter, jsonPath+".type", lc, jsoniter.StringValue) {
