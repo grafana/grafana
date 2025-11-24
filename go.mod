@@ -197,7 +197,6 @@ require (
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	go.uber.org/mock v0.6.0 // @grafana/grafana-operator-experience-squad
 	go.uber.org/zap v1.27.0 // @grafana/identity-access-team
-	go.yaml.in/yaml/v2 v2.4.3 // @grafana/alerting-backend
 	go.yaml.in/yaml/v3 v3.0.4 // @grafana/alerting-backend
 	gocloud.dev v0.43.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.43.0 // @grafana/grafana-operator-experience-squad
@@ -628,6 +627,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.38.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/telemetry v0.0.0-20251111182119-bc8e575c7b54 // indirect
