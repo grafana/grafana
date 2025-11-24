@@ -1277,7 +1277,6 @@ export type LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords = {
   labels: LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels;
 }[];
 export type LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource = {
-  dsUID: string;
   records: LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords;
 }[];
 export type LogsDrilldownDefaultColumnsSpec = {

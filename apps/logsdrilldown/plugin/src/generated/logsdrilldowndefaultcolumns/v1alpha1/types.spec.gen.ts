@@ -1,7 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
 export type LogsDefaultColumnsDatasource = {
-	dsUID: string;
 	records: LogsDefaultColumnsRecords;
 }[];
 

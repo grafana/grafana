@@ -11,7 +11,6 @@ package v0alpha1
 }]
 
 #LogsDefaultColumnsDatasource: [...{
-	dsUID: string
 	records: #LogsDefaultColumnsRecords
 }]
 

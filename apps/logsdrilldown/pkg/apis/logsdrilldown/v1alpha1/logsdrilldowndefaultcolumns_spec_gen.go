@@ -23,7 +23,6 @@ func NewLogsDrilldownDefaultColumnsSpec() *LogsDrilldownDefaultColumnsSpec {
 
 // +k8s:openapi-gen=true
 type LogsDrilldownDefaultColumnsV1alpha1LogsDefaultColumnsDatasource struct {
-	DsUID   string                                               `json:"dsUID"`
 	Records LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords `json:"records"`
 }
 

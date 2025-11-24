@@ -3526,13 +3526,9 @@
         "items": {
           "type": "object",
           "required": [
-            "dsUID",
             "records"
           ],
           "properties": {
-            "dsUID": {
-              "type": "string"
-            },
             "records": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords"
             }
