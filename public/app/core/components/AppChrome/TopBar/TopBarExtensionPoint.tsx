@@ -1,3 +1,4 @@
+import { PluginExtensionPoints } from '@grafana/data';
 import { renderLimitedComponents } from '@grafana/runtime';
 import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
@@ -7,7 +8,7 @@ import { usePluginComponents } from 'app/features/plugins/extensions/usePluginCo
  */
 export function TopBarExtensionPoint() {
   const { components } = usePluginComponents({
-    extensionPointId: 'grafana/singletopbar/action',
+    extensionPointId: PluginExtensionPoints.SingleTopBarAction,
   });
 
   // Return null if no components are registered
