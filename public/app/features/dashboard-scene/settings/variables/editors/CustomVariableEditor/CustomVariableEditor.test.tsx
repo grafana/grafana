@@ -52,7 +52,13 @@ function renderEditor(ui: React.ReactNode) {
       },
       changeValuesFormat(newFormat: 'csv' | 'json') {
         const targetLabel = newFormat === 'json' ? 'Object values in a JSON array' : 'Values separated by comma';
-        fireEvent.click(elements.formatButton(targetLabel));
+
+        const formatButton = elements.formatButton(targetLabel);
+        if (formatButton === null) {
+          throw new Error(`Unable to fire a "click" event - button with label "${targetLabel}" not found in DOM`);
+        }
+
+        fireEvent.click(formatButton);
       },
     },
   };
@@ -139,7 +145,7 @@ describe('CustomVariableEditor', () => {
   });
 
   describe('JSON values format', () => {
-    const initialQuery = `[
+    const initialJsonQuery = `[
       {"value":1,"text":"Development","aws":"dev","azure":"development"},
       {"value":2,"text":"Production","aws":"prod","azure":"production"}
     ]`;
@@ -147,14 +153,14 @@ describe('CustomVariableEditor', () => {
     it('should render CustomVariableForm with the correct initial values', () => {
       const { variable, onRunQuery } = setup({
         valuesFormat: 'json',
-        query: initialQuery,
+        query: initialJsonQuery,
         isMulti: true,
         includeAll: true,
       });
 
       const { elements } = renderEditor(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
 
-      expect(elements.queryInput().value).toBe(initialQuery);
+      expect(elements.queryInput().value).toBe(initialJsonQuery);
       expect(elements.multiValueCheckbox().checked).toBe(true);
       expect(elements.allowCustomValueCheckbox()).not.toBeInTheDocument();
       expect(elements.includeAllCheckbox().checked).toBe(true);
@@ -164,7 +170,7 @@ describe('CustomVariableEditor', () => {
     describe('when the values textarea loses focus after its value has changed', () => {
       describe('if the value is valid JSON', () => {
         it('should update the query in the variable state and call the onRunQuery callback', async () => {
-          const { variable, onRunQuery } = setup({ valuesFormat: 'json', query: initialQuery });
+          const { variable, onRunQuery } = setup({ valuesFormat: 'json', query: initialJsonQuery });
 
           const { actions } = renderEditor(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
 
@@ -177,7 +183,7 @@ describe('CustomVariableEditor', () => {
 
       describe('if the value is NOT valid JSON', () => {
         it('should display a validation error message and neither update the query in the variable state nor call the onRunQuery callback', async () => {
-          const { variable, onRunQuery } = setup({ valuesFormat: 'json', query: initialQuery });
+          const { variable, onRunQuery } = setup({ valuesFormat: 'json', query: initialJsonQuery });
 
           const { actions, getByRole } = renderEditor(
             <CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />
@@ -186,7 +192,7 @@ describe('CustomVariableEditor', () => {
           actions.updateValuesInput('[x]');
 
           expect(getByRole('alert')).toHaveTextContent(`Unexpected token 'x', "[x]" is not valid JSON`);
-          expect(variable.state.query).toBe(initialQuery);
+          expect(variable.state.query).toBe(initialJsonQuery);
           expect(onRunQuery).not.toHaveBeenCalled();
         });
       });
