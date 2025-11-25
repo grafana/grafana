@@ -26,6 +26,12 @@ jobs:
           cd ../
 
       - name: Build Grafana
+        continue-on-error: true
         run: |
           make build-go
+
+      - name: Log toolexec
+        run: |
+          cat toolexec.log
+
 
