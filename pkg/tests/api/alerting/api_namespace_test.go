@@ -451,6 +451,7 @@ func createTestAlertRule(title, folderUID string) apimodels.PostableExtendedRule
 					},
 					DatasourceUID: "-100",
 					Model: json.RawMessage(`{
+						"refId": "A",
 						"type": "math",
 						"expression": "2 + 3 > 1"
 					}`),
