@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { CSSProperties, HTMLAttributes } from 'react';
+import { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 
-import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
@@ -30,29 +30,27 @@ export function VisualizationSuggestionCard({ data, suggestion, width, isSelecte
     onClick,
   };
 
+  let content: ReactNode;
+
   if (cardOptions.imgSrc) {
-    return (
-      <Tooltip content={suggestion.description ?? suggestion.name}>
-        <button
-          {...commonButtonProps}
-          className={cx(styles.vizBox, styles.imgBox, isNewVizSuggestionsEnabled && isSelected && styles.selectedBox)}
-        >
-          <div className={styles.name}>{suggestion.name}</div>
-          <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
-        </button>
-      </Tooltip>
+    content = (
+      <button
+        {...commonButtonProps}
+        className={cx(styles.vizBox, styles.imgBox, isNewVizSuggestionsEnabled && isSelected && styles.selectedBox)}
+      >
+        <div className={styles.name}>{suggestion.name}</div>
+        <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
+      </button>
     );
-  }
+  } else {
+    let preview = suggestion;
+    if (suggestion.cardOptions?.previewModifier) {
+      preview = cloneDeep(suggestion);
+      suggestion.cardOptions.previewModifier(preview);
+    }
 
-  let preview = suggestion;
-  if (suggestion.cardOptions?.previewModifier) {
-    preview = cloneDeep(suggestion);
-    suggestion.cardOptions.previewModifier(preview);
-  }
-
-  return (
-    <button {...commonButtonProps}>
-      <Tooltip content={suggestion.name}>
+    content = (
+      <button {...commonButtonProps}>
         <div style={innerStyles} className={styles.renderContainer}>
           <PanelRenderer
             title=""
@@ -63,11 +61,18 @@ export function VisualizationSuggestionCard({ data, suggestion, width, isSelecte
             options={preview.options}
             fieldConfig={preview.fieldConfig}
           />
+          {/* this prevents interaction with the underlying panel. */}
           <div className={styles.hoverPane} />
         </div>
-      </Tooltip>
-    </button>
-  );
+      </button>
+    );
+  }
+
+  if (!isNewVizSuggestionsEnabled) {
+    return <Tooltip content={suggestion.description ?? suggestion.name}>{content}</Tooltip>;
+  }
+
+  return content;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -77,7 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0,
       right: 0,
       left: 0,
-      borderRadius: theme.spacing(2),
+      borderRadius: theme.shape.radius.default,
       bottom: 0,
     }),
     vizBox: css({
@@ -98,8 +103,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     selectedBox: css({
-      border: `2px solid ${theme.colors.primary.main}`,
-      boxShadow: `0 0 0 1px ${theme.colors.primary.main}`,
+      boxShadow: `0 0 0 1px ${theme.colors.primary.main}, inset 0 0 2px 2px ${theme.colors.primary.main}`,
+      '&, &:hover': {
+        background: colorManipulator.alpha(theme.colors.text.primary, 0.5),
+      },
     }),
     imgBox: css({
       display: 'flex',
