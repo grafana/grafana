@@ -89,13 +89,13 @@ export function QueryVariableEditorForm({
       onQueryChange(query);
     }
 
-    if (!datasourceRef) {
-      const instanceSettings = getDataSourceSrv().getInstanceSettings({ type: datasource.type, uid: datasource.uid });
+    // if (!datasourceRef) {
+    //   const instanceSettings = getDataSourceSrv().getInstanceSettings({ type: datasource.type, uid: datasource.uid });
 
-      if (instanceSettings) {
-        onDataSourceChange(instanceSettings);
-      }
-    }
+    //   if (instanceSettings) {
+    //     onDataSourceChange(instanceSettings);
+    //   }
+    // }
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
