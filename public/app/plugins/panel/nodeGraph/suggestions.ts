@@ -50,11 +50,9 @@ export const nodeGraphSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
   }
 
   const hasCorrectFields = frameHasCorrectFields(dataSummary.rawFrames);
-  const nodeGraphFrames = dataSummary.rawFrames.filter(
-    (df) => df.meta && df.meta.preferredVisualisationType === 'nodeGraph'
-  );
+  const nodeGraphFrames = dataSummary.hasPreferredVisualisationType('nodeGraph');
 
-  if (!hasCorrectFields && nodeGraphFrames.length < 2) {
+  if (!hasCorrectFields && !nodeGraphFrames) {
     return;
   }
 

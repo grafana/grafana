@@ -157,7 +157,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
     if (ds.rawFrames && ds.hasData && buildHistogram(ds.rawFrames)) {
       return [
         {
-          score: ds.dataFrameTypes.some((ft) => ft === DataFrameType.Histogram)
+          score: ds.hasDataFrameType(DataFrameType.Histogram)
             ? VisualizationSuggestionScore.Best
             : VisualizationSuggestionScore.OK,
         },

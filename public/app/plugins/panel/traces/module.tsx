@@ -44,4 +44,4 @@ export const plugin = new PanelPlugin(TracesPanel)
         category,
       });
   })
-  .setSuggestionsSupplier(showDefaultSuggestion((ds) => ds.preferredVisualisationType === 'trace'));
+  .setSuggestionsSupplier(showDefaultSuggestion((ds) => ds.hasPreferredVisualisationType('trace')));

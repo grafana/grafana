@@ -14,8 +14,7 @@ import { Options, defaultOptions } from './types';
 
 function determineScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore {
   // look to see if the data has an explicity marker for heatmap data on it.
-  const definedFrameType = dataSummary.rawFrames![0].meta?.type;
-  if (definedFrameType && [DataFrameType.HeatmapRows, DataFrameType.HeatmapCells].includes(definedFrameType)) {
+  if ([DataFrameType.HeatmapRows, DataFrameType.HeatmapCells].some((t) => dataSummary.hasDataFrameType(t))) {
     return VisualizationSuggestionScore.Best;
   }
 

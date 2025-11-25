@@ -136,7 +136,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
     }
 
     // Probably better ways to filter out this by inspecting the types of string values so view this as temporary
-    if (ds.preferredVisualisationType === 'logs') {
+    if (ds.hasPreferredVisualisationType('logs')) {
       return;
     }
 

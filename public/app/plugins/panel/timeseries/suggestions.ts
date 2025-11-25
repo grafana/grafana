@@ -94,12 +94,12 @@ export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplierFn<O
     return;
   }
 
-  const score: VisualizationSuggestionScore = dataSummary.dataFrameTypes.some(
-    (t) =>
-      t === DataFrameType.TimeSeriesLong || t === DataFrameType.TimeSeriesWide || t === DataFrameType.TimeSeriesMulti
-  )
-    ? VisualizationSuggestionScore.Good
-    : VisualizationSuggestionScore.OK;
+  const score: VisualizationSuggestionScore =
+    dataSummary.hasDataFrameType(DataFrameType.TimeSeriesLong) ||
+    dataSummary.hasDataFrameType(DataFrameType.TimeSeriesWide) ||
+    dataSummary.hasDataFrameType(DataFrameType.TimeSeriesMulti)
+      ? VisualizationSuggestionScore.Good
+      : VisualizationSuggestionScore.OK;
 
   const suggestions: Array<VisualizationSuggestion<Options, GraphFieldConfig>> = [
     {
