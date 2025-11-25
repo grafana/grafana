@@ -5,6 +5,7 @@ import { Trans } from '@grafana/i18n';
 import { Box, FeatureBadge, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { RepositoryTypeCards } from '../Shared/RepositoryTypeCards';
+import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 import { isOnPrem } from '../utils/isOnPrem';
 
 interface FeaturesListProps {
@@ -34,15 +35,20 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
             Store dashboards in version-controlled storage for better organization and history tracking
           </Trans>
         </li>
+        {isFreeTierLicense() && (
+          <li>
+            <Trans i18nKey="provisioning.free-tier-limit.message">
+              Free-tier accounts are capped to 1 connection, and 20 resources per folder
+            </Trans>
+          </li>
+        )}
       </ul>
       <Text>
         <Trans i18nKey="provisioning.features-list.learn-more-documentation">
           Want to learn more? See our{' '}
           <TextLink
             external
-            href={
-              'https://grafana.com/docs/grafana-cloud/developer-resources/observability-as-code/provision-resources'
-            }
+            href={'https://grafana.com/docs/grafana-cloud/as-code/observability-as-code/provision-resources/'}
           >
             documentation
           </TextLink>

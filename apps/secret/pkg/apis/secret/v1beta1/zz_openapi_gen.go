@@ -587,15 +587,6 @@ func schema_pkg_apis_secret_v1beta1_SecureValueSpec(ref common.ReferenceCallback
 							Format:      "",
 						},
 					},
-					"keeper": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name of the keeper, being the actual storage of the secure value. If not specified, the default keeper for the namespace will be used.",
-							MinLength:   ptr.To[int64](1),
-							MaxLength:   ptr.To[int64](253),
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"decrypters": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -639,6 +630,14 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 							Format:      "int64",
 						},
 					},
+					"externalID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "External ID where the secret is stored. Cannot be set.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
 							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -654,9 +653,9 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 							},
 						},
 					},
-					"externalID": {
+					"keeper": {
 						SchemaProps: spec.SchemaProps{
-							Description: "External ID where the secret is stored. Cannot be set.",
+							Description: "The name of the keeper used to create the secure value. Cannot be set.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -678,6 +677,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 						},
 					},
 				},
+				Required: []string{"keeper"},
 			},
 		},
 		Dependencies: []string{

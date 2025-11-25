@@ -15,7 +15,7 @@ import {
   SceneObjectUrlValues,
   CancelActivationHandler,
 } from '@grafana/scenes';
-import { Box, Stack, useStyles2 } from '@grafana/ui';
+import { Box, useStyles2 } from '@grafana/ui';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -163,12 +163,15 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       data-testid={selectors.pages.Dashboard.Controls}
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
-      {!hideTimeControls && (
-        <div className={cx(styles.timeControls, editPanel && styles.timeControlsWrap)}>
-          <timePicker.Component model={timePicker} />
-          <refreshPicker.Component model={refreshPicker} />
-        </div>
-      )}
+      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+        {!hideTimeControls && (
+          <div className={styles.timeControls}>
+            <timePicker.Component model={timePicker} />
+            <refreshPicker.Component model={refreshPicker} />
+          </div>
+        )}
+        {!hideDashboardControls && model.hasDashboardControls() && <DashboardControlsButton dashboard={dashboard} />}
+      </div>
       {!hideVariableControls && (
         <>
           <VariableControls dashboard={dashboard} />
@@ -177,11 +180,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
-      {!hideDashboardControls && model.hasDashboardControls() && (
-        <Stack>
-          <DashboardControlsButton dashboard={dashboard} />
-        </Stack>
-      )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
   );
@@ -230,14 +228,21 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'unset',
       position: 'unset',
     }),
-    timeControls: css({
+    rightControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
       float: 'right',
+      alignItems: 'center',
     }),
-    timeControlsWrap: css({
+    timeControls: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+    }),
+    rightControlsWrap: css({
       flexWrap: 'wrap',
       marginLeft: 'auto',
     }),

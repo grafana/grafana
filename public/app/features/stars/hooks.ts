@@ -8,9 +8,9 @@ import {
 } from '@grafana/api-clients/rtkq/legacy/user';
 import { locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/preferences/v1alpha1';
-import { contextSrv } from 'app/core/core';
+import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { setStarred } from 'app/core/reducers/navBarTree';
+import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';
 
 type StarItemArgs = {
@@ -61,26 +61,45 @@ export const useStarredItems = (group: string, kind: string) => {
   const name = `user-${contextSrv.user.uid}`;
   const appPlatform = config.featureToggles.starsFromAPIServer;
   const legacyResponse = useLegacyGetStarsQuery(appPlatform ? skipToken : undefined);
-  const appPlatformResponse = useListStarsQuery(!appPlatform ? skipToken : { fieldSelector: `metadata.name=${name}` });
+  const queryArgs = !appPlatform ? skipToken : { fieldSelector: `metadata.name=${name}` };
+  const appPlatformResponse = useListStarsQuery(queryArgs);
 
   const appPlatformStarredItems = useMemo(() => {
-    const { data } = appPlatformResponse;
-    if (data) {
-      const starredItems = appPlatformResponse.data?.items || [];
-      if (!starredItems.length) {
-        return [];
-      }
-      return starredItems[0]?.spec.resource.find((info) => info.group === group && info.kind === kind)?.names || [];
+    const { data, isLoading, isUninitialized } = appPlatformResponse;
+
+    // If query hasn't been initiated yet or is still loading, return undefined to show loading state
+    if (isUninitialized || isLoading) {
+      return undefined;
     }
-    return undefined;
+
+    // If query completed but no data, return empty array
+    if (!data) {
+      return [];
+    }
+
+    const starredItems = appPlatformResponse.data?.items || [];
+    if (!starredItems.length) {
+      return [];
+    }
+
+    return starredItems[0]?.spec.resource.find((info) => info.group === group && info.kind === kind)?.names || [];
   }, [appPlatformResponse, group, kind]);
 
-  return appPlatform
-    ? {
-        ...appPlatformResponse,
-        data: appPlatformStarredItems,
-      }
-    : legacyResponse;
+  if (appPlatform) {
+    return {
+      ...appPlatformResponse,
+      data: appPlatformStarredItems,
+      // Ensure isLoading is true when data is undefined (still loading or uninitialized)
+      isLoading: appPlatformStarredItems === undefined ? true : appPlatformResponse.isLoading,
+    };
+  }
+
+  // For legacy response, ensure isLoading is true when query is uninitialized
+  // RTK Query sets isLoading: false when uninitialized, but we need it to be true
+  return {
+    ...legacyResponse,
+    isLoading: legacyResponse.isUninitialized || legacyResponse.isLoading,
+  };
 };
 
 /**

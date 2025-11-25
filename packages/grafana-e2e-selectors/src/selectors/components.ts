@@ -426,6 +426,9 @@ export const versionedComponents = {
       loadingBar: {
         '10.0.0': () => `Panel loading bar`,
       },
+      PanelNonApplicableDrilldownsSubHeader: {
+        '12.4.0': 'Panel non-applicable drilldowns subheader',
+      },
       HoverWidget: {
         container: {
           '10.1.0': 'data-testid hover-header-container',
@@ -683,6 +686,11 @@ export const versionedComponents = {
           '12.2.0': 'data-testid tab title input',
         },
       },
+      RowsLayout: {
+        titleInput: {
+          '12.3.0': 'data-testid row title input',
+        },
+      },
     },
   },
   PanelInspector: {
@@ -914,6 +922,10 @@ export const versionedComponents = {
     addTransformationButton: {
       '10.1.0': 'data-testid add transformation button',
       [MIN_GRAFANA_VERSION]: 'add transformation button',
+    },
+    goToQueriesButton: {
+      '10.4.0': 'data-testid go to queries button',
+      [MIN_GRAFANA_VERSION]: 'go to queries button',
     },
     removeAllTransformationsButton: {
       '10.4.0': 'data-testid remove all transformations button',

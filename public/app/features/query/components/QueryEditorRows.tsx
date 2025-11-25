@@ -73,7 +73,7 @@ export class QueryEditorRows extends PureComponent<Props, { focusedQueryRefId: s
   }
 
   onReplaceQuery(query: DataQuery, index: number) {
-    const { queries, onQueriesChange, onUpdateDatasources, dsSettings } = this.props;
+    const { queries, onQueriesChange, onUpdateDatasources, dsSettings, onRunQueries } = this.props;
 
     // Replace old query with new query, preserving the original refId
     const newQueries = queries.map((item, itemIndex) => {
@@ -96,6 +96,8 @@ export class QueryEditorRows extends PureComponent<Props, { focusedQueryRefId: s
         onUpdateDatasources?.(newDatasourceRef);
       }
     }
+
+    onRunQueries();
   }
 
   onDataSourceChange(dataSource: DataSourceInstanceSettings, index: number) {

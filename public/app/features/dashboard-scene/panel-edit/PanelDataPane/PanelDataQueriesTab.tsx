@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
+import { useCallback } from 'react';
 
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -345,6 +346,18 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const styles = useStyles2(getStyles);
 
+  const handleAddExpression = useCallback(
+    (type: ExpressionQueryType) => {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'add_expression',
+        expression_type: type,
+        context: 'panel_query_section',
+      });
+      model.onAddExpressionOfType(type);
+    },
+    [model]
+  );
+
   if (!datasource || !dsSettings || !data) {
     return null;
   }
@@ -439,7 +452,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             </>
           )}
           {canAddExpressions && (
-            <ExpressionTypeDropdown handleOnSelect={model.onAddExpressionOfType}>
+            <ExpressionTypeDropdown handleOnSelect={handleAddExpression}>
               <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
                 <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
               </Button>

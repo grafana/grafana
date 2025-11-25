@@ -39,7 +39,7 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
     onStarChange?.(id, !isStarred);
   };
 
-  const iconProps = (() => {
+  const iconProps = useMemo(() => {
     if (isLoading) {
       return { name: 'spinner', type: 'default' } as const;
     }
@@ -47,18 +47,15 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
       return { name: 'favorite', type: 'mono' } as const;
     }
     return { name: 'star', type: 'default' } as const;
-  })();
+  }, [isLoading, isStarred]);
 
   const tooltipAndLabel = (() => {
-    if (isLoading) {
-      return {};
-    }
     return isStarred
-      ? { tooltip: tooltips.unstar, label: tooltips.unstarWithTitle }
-      : { tooltip: tooltips.star, label: tooltips.starWithTitle };
+      ? { tooltip: tooltips.unstar, label: isLoading ? undefined : tooltips.unstarWithTitle }
+      : { tooltip: tooltips.star, label: isLoading ? undefined : tooltips.starWithTitle };
   })();
 
-  const icon = <Icon {...iconProps} size="lg" />;
+  const icon = <Icon {...iconProps} size="lg" key={`${isLoading}-${isStarred}`} />;
   return (
     <ToolbarButton
       disabled={isLoading}

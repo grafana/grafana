@@ -83,6 +83,7 @@ func ProvideRegistration(
 		}
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabled(context.Background(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
 		hasEnabledProviders := authnSvc.IsClientEnabled(authn.ClientSAML) || authnSvc.IsClientEnabled(authn.ClientLDAP)
 		if !hasEnabledProviders {

@@ -1978,7 +1978,11 @@
       "alertmanager": "Alertmanager：",
       "error": "无法加载 {{alertmanager}} 的路由预览",
       "initialized": "根据添加的标签，提醒实例会被路由到以下通知策略。展开下面的每个通知策略以查看更多详细信息。",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "预览路由",
+      "select-folder-tooltip": "",
       "text-loading-preview": "正在加载预览...",
       "title": "提醒实例路由预览",
       "uninitialized": "选择文件夹并对查询和标签进行配置后，点击“预览路由”以在此处查看结果。"
@@ -2071,7 +2075,7 @@
         "warning-1": "删除此通知策略将永久移除它。",
         "warning-2": "您确定要删除此策略吗？"
       },
-      "filter-description": "",
+      "filter-description": "使用半角逗号分隔的匹配器列表来筛选通知策略，例如：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自动生成的策略",
       "matchers": "匹配器",
       "metadata": {
@@ -2584,8 +2588,7 @@
         "firing": "触发中",
         "normal": "正常",
         "pending": "待处理",
-        "recovering": "恢复中",
-        "unknown": "未知"
+        "recovering": "恢复中"
       },
       "type": {
         "alert": "警报规则",
@@ -2609,12 +2612,14 @@
         "placeholder-search-input": "按名称搜索或输入筛选条件查询……"
       },
       "grafana-folder": "Grafana 文件夹",
+      "group-autocomplete-unavailable": "",
       "health": "健康",
       "label": {
         "hide": "隐藏",
         "show": "显示"
       },
       "manage-alerts": "在这些数据源中，您可以选择通过警报用户界面管理警报，以便能够在 Grafana 用户界面以及在其配置所在的数据源中管理这些警报规则。",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "所有数据源",
       "placeholder-contact-point": "选择联络点",
       "placeholder-data-sources": "选择数据源",
@@ -2791,7 +2796,7 @@
     "template-data-docs": {
       "alert-template-data-table": {
         "alert-template-data": "警报模板数据",
-        "only-in-alert": "仅在警报上下文中可用（例如在警报循环中）"
+        "only-in-alert": ""
       },
       "available-context-notification": "在通知上下文中可用。",
       "notification-template-data": "通知模板数据"
@@ -2933,6 +2938,7 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
+      "firing-instances-count": "",
       "instance-details-drawer": {
         "instance-details": ""
       },
@@ -2942,6 +2948,7 @@
       "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
+      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -2949,7 +2956,9 @@
       "rule-not-found": {
         "description": "",
         "title": ""
-      }
+      },
+      "rules-with-firing-instances": "",
+      "rules-with-pending-instances": ""
     },
     "type-selector-button": {
       "add-expression": "添加表达式"
@@ -3224,7 +3233,7 @@
       "auth-settings": "身份验证设置"
     },
     "auth-drawer-unconneced": {
-      "subtitle": ""
+      "subtitle": "配置身份验证设置。不妨在我们的<2>文档</2>中了解更多信息。"
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "高级身份验证",
@@ -3258,7 +3267,7 @@
       "allowed-organizations-description": "以逗号或空格分隔的组织列表。用户应至少是一个\n组织的成员才能登录。",
       "allowed-organizations-label": "允许的组织",
       "allowed-organizations-placeholder": "输入组织（my-team、myteam...）并按 Enter 键添加",
-      "api-url-description": "",
+      "api-url-description": "OAuth2 提供商的用户信息端点。此端点返回的信息必须与 <2>OpenID UserInfo</2> 兼容。",
       "api-url-required": "如果设置，此字段必须是有效的网址。",
       "auth-style-description": "它决定了如何将“{{ clientIDLabel }}”和“{{ clientSecretLabel }}”发送到 Oauth2 提供程序。默认值为 AutoDetect。",
       "auth-style-label": "身份验证样式",
@@ -3403,7 +3412,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": ""
+    "subtitle": "管理身份验证设置并配置单点登录。不妨在我们的<2>文档</2>中了解更多信息。"
   },
   "bar-chart": {
     "warn": {
@@ -3522,6 +3531,7 @@
       "delete-modal-invalid-title": "无法删除文件夹",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "此操作将删除以下内容：",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "删除",
       "delete-provisioned-folder": "删除已预置的文件夹",
       "deleting": "正在删除...",
@@ -3530,6 +3540,7 @@
       "move-modal-alert": "移动此项目可能会改变其权限。",
       "move-modal-field-label": "文件夹名称",
       "move-modal-text": "此操作将移动以下内容：",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "移动",
       "move-provisioned-folder": "",
       "moving": "正在移动...",
@@ -3612,11 +3623,11 @@
       "title-folder": "此文件夹尚无任何数据面板"
     },
     "folder-actions-button": {
-      "delete": "删除",
+      "delete": "",
       "delete-folder-error": "删除文件夹时出错。请稍后重试。",
       "folder-actions": "文件夹操作",
       "manage-permissions": "管理权限",
-      "move": "移动"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "选择文件夹：{{ label }} 当前已选择",
@@ -4106,6 +4117,7 @@
     "action": {
       "change-theme": "更改主题",
       "dark-theme": "深色",
+      "dashboard-from-template": "",
       "light-theme": "浅色",
       "scopes": "范围"
     },
@@ -4358,8 +4370,6 @@
       "next-button": "下一步",
       "save-button": "保存"
     },
-    "page-content": "要启用 Correlations，请将其在 Grafana 配置中添加：",
-    "page-heading": "Correlations 已禁用",
     "query-editor": {
       "control-rules": "选定的目标数据源必须导出查询编辑器。",
       "data-source-text": "请首先选择目标数据源。",
@@ -4814,7 +4824,7 @@
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
-      "import-a-dashboard-body": "",
+      "import-a-dashboard-body": "从文件或 <2>grafana.com</2> 导入数据面板。",
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板",
       "show-less-dashboards": "",
@@ -5070,8 +5080,12 @@
     "new-panel": {
       "configure-button": "配置",
       "configure-button-menu": "切换菜单",
+      "empty-state-message": "",
       "menu-open-panel-editor": "配置",
-      "menu-use-library-panel": "使用库面板"
+      "menu-use-library-panel": "使用库面板",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "新面板",
     "on-create-new-row": {
@@ -5692,6 +5706,10 @@
     "suggested-dashboards-subtitle": "",
     "suggested-dashboards-title": "",
     "suggested-dashboards-title-with-datasource": "",
+    "template-dashboard-modal": {
+      "description": "",
+      "title": ""
+    },
     "view-all": ""
   },
   "dashboard-links": {
@@ -5899,7 +5917,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "添加转换"
+      "add-transformation": "添加转换",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -6578,7 +6599,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "点击<2>此处</2>了解有关此错误的更多信息。",
-    "success-more-details-links": ""
+    "success-more-details-links": "接下来，您可以通过<2>构建数据面板</2>或在<5>Explore 视图</5>中查询数据来开始可视化数据。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6674,7 +6695,7 @@
       "test": "测试"
     },
     "cloud-info-box": {
-      "body-alert": "",
+      "body-alert": "您也可以省去这些步骤，通过<6>永久免费的 Grafana Cloud 计划</6>，从 Grafana Labs 获取完全托管、可扩展和托管式数据源 {{mainDS}}（和 {{extraDS}}）。",
       "title-alert": "在下方配置您的 {{mainDS}} 数据源"
     },
     "dashboards-table": {
@@ -7019,7 +7040,6 @@
         "new-panel": "新面板"
       }
     },
-    "clear": "清除",
     "confirm-navigation-modal": {
       "cancel": "取消",
       "new-tab": "您想在当前选项卡中继续，还是打开新的选项卡？",
@@ -7180,6 +7200,7 @@
       "logs-volume": {
         "add-filters": "向您的查询添加更多标签以缩小搜索范围。",
         "decrease-timerange": "缩小查询的时间范围。",
+        "max-bytes-error": "",
         "much-data": "该查询正在尝试访问过多的数据。请尝试以下一种或多种方法："
       },
       "maximum-pinned-logs": "已达到固定日志的最大数量限制 {{PINNED_LOGS_LIMIT}}。取消固定某个日志，以添加另一个日志。",
@@ -7229,12 +7250,15 @@
       "tooltip-select-query-visualize-table": "选择要在表中可视化的查询"
     },
     "logs-volume-panel": {
-      "content-streaming": "流媒体传输"
+      "content-streaming": "流媒体传输",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "重新加载日志卷",
       "label-reload-log-volume": "重新加载日志卷",
       "loading": "加载中...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "加载此查询的日志卷失败",
       "title-no-logs-volume-available": "没有可用的日志卷",
       "title-showing-partial-data": "显示部分数据",
@@ -7243,7 +7267,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "没有可用于当前查询和时间范围的卷信息。"
     },
-    "next": "下一步",
     "next-prev-result": {
       "aria-label-next": "下一个结果按钮",
       "aria-label-prev": "上一个结果按钮",
@@ -7264,7 +7287,6 @@
     "pane": {
       "loading-placeholder": "正在加载…"
     },
-    "prev": "上一步",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "转为无查询"
     },
@@ -7411,8 +7433,7 @@
       "query-inspector-button": "查询检查器",
       "query-inspector-button-aria-label": "查询检查器"
     },
-    "show-critical-path-only": "仅显示关键路径",
-    "show-matches-only": "仅显示匹配项",
+    "show-all-spans": "",
     "span-bar": {
       "tooltip-critical-path": "整个跟踪/请求/工作流的<1>关键路径</1>上的一个区段。"
     },
@@ -7441,6 +7462,7 @@
       "label-resource-attributes": "资源属性",
       "label-span-attributes": "跨度属性",
       "label-stack-trace": "堆栈跟踪",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "子级计数：",
@@ -7449,8 +7471,7 @@
           "start-time": "开始时间："
         }
       },
-      "share-span": "共享",
-      "warnings": "警告"
+      "share-span": "共享"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "选择最大跨度运算符",
@@ -7532,10 +7553,18 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "打开共享跟踪选项菜单",
+      "critical-path": "",
+      "critical-path-tooltip": "",
       "duration": "时长",
+      "errors": "",
+      "errors-tooltip": "",
       "export-started": "导出已开始",
+      "filters": "",
       "give-feedback": "反馈",
+      "high-latency": "",
+      "high-latency-tooltip": "",
       "link-copied": "链接已复制到剪贴板",
+      "overview": "",
       "path": "路径",
       "route": "路由",
       "services": "服务",
@@ -7549,11 +7578,6 @@
       "tooltip-url": "{{route}} 或 {{url}} 或 {{target}} 或 {{path}}",
       "trace-id": "跟踪 ID",
       "url": "URL"
-    },
-    "trace-page-search-bar": {
-      "aria-label-clear-filters": "清除筛选按钮",
-      "label-show-matches": "“仅显示匹配项”开关",
-      "label-show-paths": "“仅显示关键路径”开关"
     },
     "trace-view": {
       "aria-label-copy": "复制到剪贴板",
@@ -7654,7 +7678,7 @@
     "math": {
       "available-math-functions": "可用的数学函数",
       "run-math-operations": "",
-      "tooltip-footer": "",
+      "tooltip-footer": "请参阅我们关于<2>数学表达式</2>的其他文档。",
       "tooltip-title": "数学运算符",
       "tooltip-trigger": "表达式"
     },
@@ -7680,10 +7704,23 @@
       "label-upsample": "升高采样",
       "tooltip-s-m-h": "10 秒、1 分钟、30 分钟、1 小时"
     },
+    "schema-inspector-panel": {
+      "aria-label-close-schema-inspector": ""
+    },
     "sql-expr": {
       "button-run-query": "运行查询",
       "modal-title": "SQL 编辑器",
       "tooltip-experimental": "SQL 表达式 LLM 集成是实验性的。若有任何问题，请向 Grafana 团队报告。"
+    },
+    "sql-schema": {
+      "close-schema-inspector": "",
+      "error-title": "",
+      "inspect-button": "",
+      "loading": "",
+      "no-data-title": "",
+      "no-fields-desc": "",
+      "no-fields-title": "",
+      "query-error-title": ""
     },
     "threshold": {
       "label-input": "输入"
@@ -7755,6 +7792,14 @@
     "name-show-threshold-labels": "显示阈值标签",
     "name-show-threshold-markers": "显示阈值标记",
     "placeholder-neutral": "自动",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8531,7 +8576,13 @@
       "saving": "正在保存<1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "线性阈值",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "记录基础"
     },
     "builder": {
@@ -8937,6 +8988,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "使用右侧 Y 轴"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -8955,6 +9011,13 @@
       "copy": "复制到剪贴板",
       "csv-counts": "",
       "csv-placeholder": "在此处输入 CSV...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "筛选值",
       "filter-popup-apply": "好",
       "filter-popup-aria-label-match-case": "区分大小写",
@@ -9106,6 +9169,9 @@
     "category-legend": "图例",
     "category-tooltip": "工具提示",
     "category-y-axis": "Y 轴",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "不透明度",
       "label-scheme": "方案"
@@ -9218,6 +9284,7 @@
       "toggle-panel-edit": "切换面板编辑视图",
       "toggle-panel-fullscreen": "切换面板全屏视图",
       "toggle-panel-legend": "切换面板图例",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "缩放时间范围"
     },
     "title": "快捷键"
@@ -9885,11 +9952,7 @@
       "wrap-lines": "多行显示"
     },
     "logs-navigation": {
-      "newer-logs": "新日志",
-      "older-logs": "旧日志",
-      "scroll-bottom": "滚动到底部",
-      "scroll-top": "滚动到顶部",
-      "start-of-range": "范围的开始"
+      "scroll-top": "滚动到顶部"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -10481,6 +10544,7 @@
       "title": "新建"
     },
     "new-dashboard": {
+      "empty-title": "",
       "title": "新建仪表板"
     },
     "new-folder": {
@@ -10646,7 +10710,8 @@
       "aria-label": "个人资料"
     },
     "quick-add": {
-      "aria-label": "新建"
+      "aria-label": "新建",
+      "new-template-dashboard-button": ""
     },
     "rss-button": "最新博客"
   },
@@ -10829,10 +10894,10 @@
       "placeholder-optional": "（可选）",
       "role": "角色",
       "submit": "提交",
-      "tooltip": ""
+      "tooltip": "您现在可以选择“无基本角色”选项，并根据自定义需求添加权限。您可以在<1>我们的文档</1>中找到更多信息。"
     },
     "user-invite-page": {
-      "sub-title": "",
+      "sub-title": "发送邀请或将现有 Grafana 用户添加到组织。<1>{{orgName}}</1>",
       "text": {
         "invite-user": "邀请用户"
       }
@@ -11438,6 +11503,9 @@
       "label-display-name": "显示名称",
       "placeholder-my-repository-connection": "我的存储库连接",
       "text-loading-resource-information": "正在加载资源信息...",
+      "unavailable-options": {
+        "title": ""
+      },
       "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}} 个数据面板",
       "files-count_other": "{{count}} 个文件",
@@ -11483,8 +11551,8 @@
     },
     "connect-repository-button": {
       "configure": "配置",
-      "instance-fully-managed-tooltip": "",
-      "repository-limit-reached-tooltip_other": ""
+      "free-tier-limit-tooltip": "",
+      "instance-fully-managed-tooltip": ""
     },
     "delete-repository-button": {
       "button-delete": "删除",
@@ -11574,6 +11642,13 @@
       "placeholder-search": "搜索",
       "all-resources-managed_other": "",
       "unmanaged-resources_other": ""
+    },
+    "free-tier-limit": {
+      "message": "",
+      "message-connection": "",
+      "message-resource": "",
+      "note": "",
+      "upgrade-link": ""
     },
     "get-default-values": {
       "title": {
@@ -11713,10 +11788,16 @@
       "truncated": ""
     },
     "mode-options": {
+      "disabled": {
+        "folder-connected": "",
+        "legacy-storage": "",
+        "not-allowed": "",
+        "not-supported": ""
+      },
       "folder": {
         "description": "设置后，将创建一个新的 Grafana 文件夹，并与外部存储同步。如果外部存储中存在任何资源，它们将被预配到此新文件夹中。在此文件夹中创建的所有新资源都将存储在外部存储中并进行版本控制。",
         "label": "将外部存储同步到新的 Grafana 文件夹",
-        "subtitle": "使用此选项可将外部资源同步到新文件夹中，而不会影响实例的其余部分。您最多可以对 10 个文件夹重复此过程。"
+        "subtitle": ""
       },
       "instance": {
         "description": "资源将与外部存储同步，并预配到此实例中。现有的 Grafana 资源将被迁移并在需要时合并。设置完成后，所有新资源和更改都将保存到外部存储中，并自动预配回实例。",
@@ -12260,7 +12341,7 @@
     },
     "menu": {
       "clear-button": "全部清除",
-      "tooltip": ""
+      "tooltip": "您现在可以选择“无基本角色”选项，并根据自定义需求添加权限。您可以在<1>我们的文档</1>中找到更多信息。"
     },
     "menu-aria-label": "角色选择器菜单",
     "menu-group-option-aria-label": "角色选择器选项",
@@ -12300,6 +12381,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "收起",
+      "exchange": "",
       "expand": "展开",
       "loading": "正在加载数据面板",
       "noResultsForFilter": "未找到与您的查询相关的结果",
@@ -12318,8 +12400,10 @@
       "cancel": "取消",
       "error-title": "",
       "input": {
-        "placeholder": "选择范围…",
-        "removeAll": "移除所有范围"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "移除所有范围",
+        "tooltip": ""
       },
       "title": "选择范围"
     },
@@ -12353,10 +12437,12 @@
       }
     },
     "dashboard-actions": {
+      "empty-dashboard": "",
       "import": "导入",
       "new": "新建",
       "new-dashboard": "新建仪表板",
-      "new-folder": "新建文件夹"
+      "new-folder": "新建文件夹",
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "分数"
@@ -12428,11 +12514,14 @@
       "copy-clipboard": "复制到剪贴板",
       "copy-to-clipboard-and-close": "复制到剪贴板并关闭",
       "description-name-to-easily-identify-the-token": "用于轻松识别令牌的名称",
+      "description-no-expiration-disabled": "",
       "description-token": "现在就复制令牌，因为您将无法再次看到它。丢失令牌后需要创建一个新令牌。",
       "generate-token": "生成令牌",
       "label-display-name": "显示名称",
       "label-expiration": "到期",
       "label-expiration-date": "到期日期",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "令牌"
     },
     "get-actions-cell": {
@@ -12577,7 +12666,7 @@
       "info-text": "创建指向此仪表板或面板的直接链接，通过以下选项自定义。",
       "link-url": "链接网址",
       "render-alert": "未安装图像渲染器插件",
-      "render-instructions": "",
+      "render-instructions": "要渲染图像，您必须安装 <2>Grafana 图像渲染器插件</2>。请与您的 Grafana 管理员联系以安装插件。",
       "rendered-image": "直接链接至渲染后的图像",
       "save-alert": "仪表板未保存",
       "save-dashboard": "要渲染面板图像，需要先保存仪表板。",
@@ -13330,17 +13419,20 @@
     }
   },
   "traces": {
+    "adhocFilters": {
+      "customValue": "",
+      "duration1h": "",
+      "duration1m": "",
+      "duration1ms": "",
+      "duration1s": "",
+      "durationLabel": "",
+      "textSearchDescription": "",
+      "textSearchLabel": ""
+    },
     "category-span-filters": "跨度筛选条件",
-    "name-critical-path-only": "仅显示关键路径",
-    "name-find-in-trace": "在追踪中查找",
-    "name-max-duration": "最大持续时间",
-    "name-min-duration": "最小持续时间",
-    "name-service-name": "服务名称",
-    "name-service-name-operator": "服务名称操作符",
+    "name-critical-path-only": "",
+    "name-filters": "",
     "name-show-matches-only": "仅显示匹配项",
-    "name-span-name": "跨度名称",
-    "name-span-name-operator": "跨度名称操作符",
-    "name-tags": "标记",
     "traces-panel": {
       "no-data-found-in-response": "回复中未找到数据"
     }
@@ -13614,7 +13706,7 @@
       "label-format": "格式",
       "label-set-timezone": "设置时区",
       "label-time-field": "时间字段",
-      "tooltip-format": "",
+      "tooltip-format": "指定为 <2>Moment.js 格式字符串</2>的字段的输出格式。",
       "tooltip-timezone-manually": "手动设置日期的时区"
     },
     "format-time-transformer-editor": {
