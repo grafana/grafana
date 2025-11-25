@@ -833,6 +833,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 						},
 						DatasourceUID: expr.DatasourceUID,
 						Model: json.RawMessage(`{
+						"refId":"A",
 						"type": "math",
 						"expression": "2 + 3 > 1"
 						}`),
@@ -1102,6 +1103,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId":"A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -1122,6 +1124,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId":"A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -1163,6 +1166,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					},
 					"datasourceUid": "__expr__",
 					"model": {
+						"refId":"A",
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
@@ -1206,6 +1210,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					},
 					"datasourceUid": "__expr__",
 					"model": {
+						"refId":"A",
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
@@ -1261,6 +1266,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					},
 					"datasourceUid": "__expr__",
 					"model": {
+						"refId": "A",
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
@@ -1576,7 +1582,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 									To:   apimodels.Duration(15 * time.Minute),
 								},
 								DatasourceUID: expr.DatasourceUID,
-								Model:         json.RawMessage(`{"type": "math","expression": "1"}`),
+								Model:         json.RawMessage(`{"refId": "A","type": "math","expression": "1"}`),
 							},
 						},
 					},
@@ -1610,7 +1616,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 									To:   apimodels.Duration(15 * time.Minute),
 								},
 								DatasourceUID: expr.DatasourceUID,
-								Model:         json.RawMessage(`{"expression":"1","intervalMs":1000,"maxDataPoints":43200,"type":"math"}`),
+								Model:         json.RawMessage(`{"refId":"A",expression":"1","intervalMs":1000,"maxDataPoints":43200,"type":"math"}`),
 							},
 						},
 						UpdatedBy: &apimodels.UserInfo{
@@ -2059,6 +2065,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId": "A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -2198,6 +2205,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 									},
 									DatasourceUID: expr.DatasourceUID,
 									Model: json.RawMessage(`{
+								"refId": "A",
 								"type": "math",
 								"expression": "2 + 3 > 1"
 								}`),
@@ -2264,6 +2272,7 @@ func TestIntegrationEval(t *testing.T) {
 							},
 							"datasourceUid": "__expr__",
 							"model": {
+								"refId":"A",
 								"type":"math",
 								"expression":"1 < 2"
 							}
@@ -2326,6 +2335,7 @@ func TestIntegrationEval(t *testing.T) {
 							},
 							"datasourceUid": "__expr__",
 							"model": {
+								"refId":"A",
 								"type":"math",
 								"expression":"1 > 2"
 							}
@@ -2388,6 +2398,7 @@ func TestIntegrationEval(t *testing.T) {
 							},
 							"datasourceUid": "unknown",
 							"model": {
+								"refId":"A",
 							}
 						}
 					],
@@ -2422,6 +2433,7 @@ func TestIntegrationEval(t *testing.T) {
 							},
 							"datasourceUid": "__expr__",
 							"model": {
+								"refId":"A",
 								"type":"math",
 								"expression":"1 > 2"
 							}
@@ -2585,6 +2597,7 @@ func TestIntegrationQuota(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId":"A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -2620,6 +2633,7 @@ func TestIntegrationQuota(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId":"A",
 									"type": "math",
 									"expression": "2 + 4 > 1"
 									}`),
@@ -2678,6 +2692,7 @@ func TestIntegrationQuota(t *testing.T) {
 							},
 							"datasourceUid":"__expr__",
 										"model":{
+							   "refId": "A",
 							   "expression":"2 + 4 \u003E 1",
 							   "intervalMs":1000,
 							   "maxDataPoints":43200,
@@ -2795,6 +2810,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 											},
 											"datasourceUid": "__expr__",
 											"model": {
+												"refId": "A",
 												"expression": "2 + 3 > 1",
 												"intervalMs": 1000,
 												"maxDataPoints": 43200,
@@ -2964,6 +2980,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId": "A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -2994,6 +3011,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId": "A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -3024,6 +3042,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId": "A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -3055,6 +3074,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId": "A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -3085,6 +3105,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								},
 								DatasourceUID: "unknown",
 								Model: json.RawMessage(`{
+									"refId": "A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -3126,6 +3147,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId": "A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
