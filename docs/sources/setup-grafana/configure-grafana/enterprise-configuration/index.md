@@ -266,6 +266,14 @@ If true, it establishes a secure connection to Loki. Defaults to true.
 
 Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
 
+### retries
+
+The amount of times the HTTP or gRPC client will retry a failed request to Loki. The default is `10`.
+
+### timeout
+
+The timeout duration of an HTTP request or gRPC call to Loki. The default is `3s`.
+
 ## [auth.saml]
 
 ### enabled
