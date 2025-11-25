@@ -80,7 +80,7 @@ func validRule() apimodels.PostableExtendedRuleNode {
 						To:   0,
 					},
 					DatasourceUID: "DATASOURCE_TEST",
-					Model:         nil,
+					Model:         []byte(`{"refId":"A"}`),
 				},
 			},
 			UID:          uid,
