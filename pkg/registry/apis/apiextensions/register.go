@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -93,6 +95,11 @@ func RegisterAPIService(
 	return b, nil
 }
 
+// The default authorizer is fine because authorization happens in storage where we know the parent folder
+func (b *APIExtensionsBuilder) GetAuthorizer() authorizer.Authorizer {
+	return grafanaauthorizer.NewServiceAuthorizer()
+}
+
 // loadAndRegisterCRDsWithDynamicHandler loads CRDs from storage and registers their handlers
 // This is called during UpdateAPIGroupInfo when storage IS ready
 func (b *APIExtensionsBuilder) loadAndRegisterCRDsWithDynamicHandler(
@@ -100,17 +107,12 @@ func (b *APIExtensionsBuilder) loadAndRegisterCRDsWithDynamicHandler(
 	crdStore *genericregistry.Store,
 	opts builder.APIGroupOptions,
 ) error {
-	// Create a system context with fallback auth
-	systemCtx := resource.WithFallback(ctx)
-	systemCtx = authlib.WithAuthInfo(systemCtx, &identity.StaticRequester{
-		Type:           authlib.TypeServiceAccount,
-		Login:          "system:apiextensions",
-		UserID:         0,
-		UserUID:        "system:apiextensions",
-		OrgID:          1,
-		OrgRole:        identity.RoleAdmin,
-		IsGrafanaAdmin: true,
-	})
+	// TODO(@konsalex): Have a conditional check here for MT
+	// For ST we can use the identity.WithServiceIdentityContext
+	// for MT we can use implicitly use a service token:
+	// https://github.com/grafana/kube-manifests/blob/9f5e409c72fef4f831b173480131121e9cb348a3/flux/dev-us-east-0/grafana-iam/Deployment-iam-grafana-app-main.yaml#L114C9-L114C59
+	// SO we can skip systemCtx creation
+	systemCtx := identity.WithServiceIdentityContext(context.WithoutCancel(ctx), 1)
 
 	// List all CRDs using the initialized storage
 	listObj, err := crdStore.List(systemCtx, &metainternalversion.ListOptions{})
@@ -172,62 +174,6 @@ func (b *APIExtensionsBuilder) loadAndRegisterCRDsWithDynamicHandler(
 
 		fmt.Printf("    ✓ Registered with dynamic handler: %s/%s/%s\n",
 			crd.Spec.Group, version.Name, crd.Spec.Names.Plural)
-	}
-
-	return nil
-}
-
-// loadAndRegisterCRDs loads existing CRDs from storage and registers their API group builders
-// This is called during UpdateAPIGroupInfo when storage is ready
-func (b *APIExtensionsBuilder) loadAndRegisterCRDs(ctx context.Context, crdStore *genericregistry.Store, opts builder.APIGroupOptions) error {
-	if b.apiregistrar == nil {
-		return fmt.Errorf("apiregistrar is nil")
-	}
-
-	// Create a system context with fallback auth for initialization
-	// This allows us to list CRDs without a user session during server startup
-	// TODO(@konsalex): Does this cause any security issue? Not 100% how to authenticate
-	// a service call like this
-	// Use well-know constants, and co-ord with IAM and SnStorage to ensure this is secure.
-	systemCtx := resource.WithFallback(ctx)
-	systemCtx = authlib.WithAuthInfo(systemCtx, &identity.StaticRequester{
-		Type:           authlib.TypeServiceAccount,
-		Login:          "system:apiextensions",
-		UserID:         0,
-		UserUID:        "system:apiextensions",
-		OrgID:          1,
-		OrgRole:        identity.RoleAdmin,
-		IsGrafanaAdmin: true,
-	})
-
-	// List all CRDs using the initialized storage with system context
-	listObj, err := crdStore.List(systemCtx, &metainternalversion.ListOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to list CRDs: %w", err)
-	}
-
-	crdList, ok := listObj.(*apiextensionsv1.CustomResourceDefinitionList)
-	if !ok {
-		return fmt.Errorf("unexpected list type: %T", listObj)
-	}
-
-	if len(crdList.Items) == 0 {
-		return nil
-	}
-
-	// Register a builder for each CRD
-	for i := range crdList.Items {
-		crd := &crdList.Items[i]
-
-		// Register with the dynamic registry for API group installation
-		if err := b.dynamicReg.RegisterCRD(crd); err != nil {
-			// TODO(@konsalex): Add logger in the context and use it
-			fmt.Printf("    Warning: failed to register CRD %s in dynamic registry: %v\n", crd.Name, err)
-			continue
-		}
-		// DEBUG
-		fmt.Printf("Registered custom resource API group: %s/%s (resource: %s)\n",
-			crd.Spec.Group, crd.Spec.Versions[0].Name, crd.Spec.Names.Plural)
 	}
 
 	return nil

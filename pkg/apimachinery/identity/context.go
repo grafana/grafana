@@ -159,6 +159,7 @@ var serviceIdentityTokenPermissions = []string{
 	"query.grafana.app:*",
 	"iam.grafana.app:*",
 	"preferences.grafana.app:*",
+	"apiextensions.grafana.app:*",
 
 	// Secrets Manager uses a custom verb for secret decryption, and its authorizer does not allow wildcard permissions.
 	"secret.grafana.app/securevalues:decrypt",
