@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	quotasv0alpha1 "github.com/grafana/grafana/apps/quotas/pkg/apis/quotas/v0alpha1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -23,7 +24,9 @@ func New(cfg app.Config) (app.App, error) {
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{
-			//Kind: correlationv0alpha1.CorrelationKind(),
+			{
+				Kind: quotasv0alpha1.QuotaKind(),
+			},
 		},
 	}
 
@@ -41,11 +44,11 @@ func New(cfg app.Config) (app.App, error) {
 }
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
-	//gv := schema.GroupVersion{
-	//Group:   correlationv0alpha1.CorrelationKind().Group(),
-	//Version: correlationv0alpha1.CorrelationKind().Version(),
-	//}
+	gv := schema.GroupVersion{
+		Group:   quotasv0alpha1.QuotaKind().Group(),
+		Version: quotasv0alpha1.QuotaKind().Version(),
+	}
 	return map[schema.GroupVersion][]resource.Kind{
-		//gv: {correlationv0alpha1.CorrelationKind()},
+		gv: {quotasv0alpha1.QuotaKind()},
 	}
 }

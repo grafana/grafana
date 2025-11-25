@@ -8,13 +8,13 @@ manifest: {
 	// By default, an app's API group is LOWER(REPLACE(appName, '-', '')).ext.grafana.com,
 	// but there are cases where this needs to be changed.
 	// Keep in mind that changing this after an app is deployed can cause problems with clients and/or kind data.
-	// groupOverride: foo.ext.grafana.app
+	 groupOverride: quotav0alpha1.grafana.app
 
 	// versions is a map of versions supported by your app. Version names should follow the format "v<integer>" or
 	// "v<integer>(alpha|beta)<integer>". Each version contains the kinds your app manages for that version.
 	// If your app needs access to kinds managed by another app, use permissions.accessKinds to allow your app access.
 	versions: {
-	    "v1alpha1": v1alpha1
+	    "v0alpha1": v0alpha1
 	}
 	// extraPermissions contains any additional permissions your app may require to function.
 	// Your app will always have all permissions for each kind it manages (the items defined in 'kinds').
@@ -33,9 +33,9 @@ manifest: {
 
 // v1alpha1 is the v1alpha1 version of the app's API.
 // It includes kinds which the v1alpha1 API serves, and (future) custom routes served globally from the v1alpha1 version.
-v1alpha1: {
+v0alpha1: {
     // kinds is the list of kinds served by this version
-    kinds: []
+    kinds: [quotav0alpha1]
     // [OPTIONAL]
     // served indicates whether this particular version is served by the API server.
     // served should be set to false before a version is removed from the manifest entirely.
