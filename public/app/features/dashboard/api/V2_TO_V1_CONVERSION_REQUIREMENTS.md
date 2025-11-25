@@ -111,6 +111,161 @@ All panels must have valid `gridPos` with:
 - `w`: Width (1-24)
 - `h`: Height (minimum 1)
 
+## Datasource Conversion
+
+### V2 to V1 Datasource Structure
+
+In V2beta1, datasource information is stored per-query:
+
+- Datasource UID: `q.spec.query.datasource?.name`
+- Datasource type: `q.spec.query.group`
+
+In V1, datasources follow a hierarchical model:
+
+- Panel-level datasource: `panel.datasource` (optional)
+- Query-level datasource: `target.datasource` (optional, only if different from panel)
+
+### Conversion Rules
+
+#### 1. Extract Datasources from Queries
+
+For each query in the panel:
+
+- Extract UID from `q.spec.query.datasource?.name`
+- Extract type from `q.spec.query.group`
+
+#### 2. Determine Panel-Level Datasource
+
+**All queries share the same datasource:**
+
+- Set `panel.datasource` to the shared datasource
+- Do NOT include `datasource` on individual queries (they inherit from panel)
+
+**Queries have different datasources:**
+
+- Set `panel.datasource` to `{ uid: '-- Mixed --' }`
+- Include `datasource` on each query with its specific datasource
+
+**No datasources found:**
+
+- Use default datasource (typically Grafana default datasource)
+
+**Comparison Logic:**
+
+- Compare datasources by UID first (primary identifier)
+- If UID is missing, compare by type
+- Empty string or undefined values are treated as "no datasource"
+
+#### 3. Build Query Targets
+
+For each query:
+
+- If panel datasource is `"-- Mixed --"`: Always include query datasource
+- If query datasource differs from panel datasource: Include query datasource
+- If query datasource matches panel datasource: Omit query datasource (inherit from panel)
+
+### Examples
+
+#### Example 1: All Queries Share Same Datasource
+
+**V2:**
+
+```typescript
+queries: [
+  { query: { group: 'prometheus', datasource: { name: 'prom-uid' } } },
+  { query: { group: 'prometheus', datasource: { name: 'prom-uid' } } },
+];
+```
+
+**V1:**
+
+```typescript
+{
+  datasource: { uid: 'prom-uid', type: 'prometheus' },
+  targets: [
+    { refId: 'A', expr: '...' },  // No datasource (inherits from panel)
+    { refId: 'B', expr: '...' }   // No datasource (inherits from panel)
+  ]
+}
+```
+
+#### Example 2: Mixed Datasources
+
+**V2:**
+
+```typescript
+queries: [
+  { query: { group: 'prometheus', datasource: { name: 'prom-uid' } } },
+  { query: { group: 'loki', datasource: { name: 'loki-uid' } } },
+];
+```
+
+**V1:**
+
+```typescript
+{
+  datasource: { uid: '-- Mixed --' },
+  targets: [
+    { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' }, expr: '...' },
+    { refId: 'B', datasource: { uid: 'loki-uid', type: 'loki' }, expr: '...' }
+  ]
+}
+```
+
+#### Example 3: Query Override
+
+**V2:**
+
+```typescript
+queries: [
+  { query: { group: 'prometheus', datasource: { name: 'prom-uid' } } },
+  { query: { group: 'prometheus', datasource: { name: 'prom-uid' } } },
+  { query: { group: 'loki', datasource: { name: 'loki-uid' } } },
+];
+```
+
+**V1:**
+
+```typescript
+{
+  datasource: { uid: '-- Mixed --' },
+  targets: [
+    { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' }, expr: '...' },
+    { refId: 'B', datasource: { uid: 'prom-uid', type: 'prometheus' }, expr: '...' },
+    { refId: 'C', datasource: { uid: 'loki-uid', type: 'loki' }, expr: '...' }
+  ]
+}
+```
+
+### Round-Trip Preservation
+
+The conversion must ensure that:
+
+- V1 → V2 → V1 roundtrip preserves datasource structure exactly
+- Panel datasource is correctly reconstructed from query datasources
+- Query datasources are only included when they differ from panel datasource
+- Mixed datasource panels are correctly identified and converted
+
+### Edge Cases
+
+**Query with only type (no UID):**
+
+- If `q.spec.query.group` has a value but `q.spec.query.datasource?.name` is missing
+- Use type as panel datasource type
+- Query should not have individual datasource if it matches panel
+
+**Query with only UID (no type):**
+
+- If `q.spec.query.datasource?.name` has a value but `q.spec.query.group` is empty
+- UID is primary identifier, type can be empty
+- Still compare by UID for uniqueness
+
+**Empty datasource:**
+
+- If both UID and type are missing/empty
+- Use default datasource for panel
+- Queries inherit from panel (no individual datasource)
+
 ## Panel Order and Structure Preservation
 
 ### Order Preservation
@@ -155,7 +310,11 @@ All panels must have valid `gridPos` with:
 - `convertAutoGridLayoutToV1Panels()`: Handles `AutoGridLayout` conversion with calculated panel sizes
 - `convertRowsLayoutRowToV1()`: Converts a single row, handles collapsed/expanded state
 - `convertTabToV1()`: Converts a tab to a row panel, preserves tab structure
-- `transformV2PanelToV1Panel()`: Converts individual panel elements
+- `transformV2PanelToV1Panel()`: Converts individual panel elements, including:
+  - Extracting datasources from queries (`q.spec.query.datasource?.name` and `q.spec.query.group`)
+  - Reconstructing panel-level datasource from query datasources
+  - Determining when to use mixed datasource (`"-- Mixed --"`)
+  - Building query targets with appropriate datasource inheritance
 
 ## Edge Cases
 
@@ -189,6 +348,7 @@ All panels must have valid `gridPos` with:
 - Structure and order must be preserved exactly
 - No normalization or sorting should be applied
 - Panel properties must match exactly (except for IDs which may be reassigned)
+- **Datasources must be preserved correctly**: Panel datasource and query datasources must match the original V1 structure after round-trip
 
 ### Verification
 
@@ -196,6 +356,7 @@ All panels must have valid `gridPos` with:
 - Verify panel order index-by-index
 - Check that collapsed/expanded state is preserved
 - Ensure panels are in correct locations (row.panels vs top level)
+- **Verify datasource structure**: Panel datasource should match original, queries should only have datasource when they differ from panel
 
 ## Testing Requirements
 
@@ -209,6 +370,12 @@ All panels must have valid `gridPos` with:
 6. **Expanded Rows**: Verify panels are at top level, `row.panels` is empty
 7. **Tabs in Rows**: Verify panels inside tabs are preserved
 8. **Round-Trip**: Verify V1 → V2 → V1 preserves structure exactly
+9. **Datasource Conversion**:
+   - All queries share same datasource → panel datasource set, queries inherit
+   - Queries have different datasources → panel datasource is `"-- Mixed --"`, queries have individual datasources
+   - Queries with no datasource → default datasource used
+   - Query with only type (no UID) → handled correctly
+   - Round-trip datasource preservation → V1 → V2 → V1 preserves datasource structure
 
 ### Manual Testing
 

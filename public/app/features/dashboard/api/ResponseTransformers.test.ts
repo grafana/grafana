@@ -1173,4 +1173,789 @@ describe('ResponseTransformers', () => {
       expect(v2.spec.options).toEqual(v1.options);
     }
   }
+
+  describe('v2 -> v1 datasource conversion', () => {
+    describe('transformV2PanelToV1Panel datasource handling', () => {
+      it('should set panel datasource when all queries share the same datasource', () => {
+        const v2Panel: PanelKind = {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'Test Panel',
+            description: '',
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '1.0.0',
+              spec: {
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+              },
+            },
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      refId: 'A',
+                      hidden: false,
+                      query: {
+                        kind: 'DataQuery',
+                        version: 'v0',
+                        group: 'prometheus',
+                        datasource: {
+                          name: 'prometheus-uid',
+                        },
+                        spec: { expr: 'up' },
+                      },
+                    },
+                  },
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      refId: 'B',
+                      hidden: false,
+                      query: {
+                        kind: 'DataQuery',
+                        version: 'v0',
+                        group: 'prometheus',
+                        datasource: {
+                          name: 'prometheus-uid',
+                        },
+                        spec: { expr: 'down' },
+                      },
+                    },
+                  },
+                ],
+                transformations: [],
+                queryOptions: {},
+              },
+            },
+            links: [],
+          },
+        };
+
+        const layoutItem: GridLayoutItemKind = {
+          kind: 'GridLayoutItem',
+          spec: {
+            x: 0,
+            y: 0,
+            width: 12,
+            height: 8,
+            element: {
+              kind: 'ElementReference',
+              name: 'panel-1',
+            },
+          },
+        };
+
+        const v1Panel = ResponseTransformers.ensureV1Response({
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'test',
+            resourceVersion: '1',
+            creationTimestamp: '',
+            annotations: {},
+            labels: {},
+          },
+          spec: {
+            title: 'Test',
+            description: '',
+            tags: [],
+            cursorSync: 'Off',
+            preload: false,
+            liveNow: false,
+            editable: true,
+            timeSettings: {
+              from: 'now-6h',
+              to: 'now',
+              timezone: 'browser',
+              autoRefresh: '',
+              autoRefreshIntervals: [],
+              hideTimepicker: false,
+              fiscalYearStartMonth: 0,
+              weekStart: 'monday',
+            },
+            links: [],
+            annotations: [],
+            variables: [],
+            elements: {
+              'panel-1': v2Panel,
+            },
+            layout: {
+              kind: 'GridLayout',
+              spec: {
+                items: [layoutItem],
+              },
+            },
+          },
+          access: {
+            url: '/d/test',
+            canAdmin: true,
+            canDelete: true,
+            canEdit: true,
+            canSave: true,
+            canShare: true,
+            canStar: true,
+            annotationsPermissions: {
+              dashboard: { canAdd: true, canEdit: true, canDelete: true },
+              organization: { canAdd: true, canEdit: true, canDelete: true },
+            },
+          },
+        });
+
+        const panel = v1Panel.dashboard.panels?.[0];
+        expect(panel).toBeDefined();
+        expect(panel?.datasource).toEqual({
+          uid: 'prometheus-uid',
+          type: 'prometheus',
+        });
+        // Queries should not have datasource since it matches panel datasource
+        expect(panel?.targets?.[0].datasource).toBeUndefined();
+        expect(panel?.targets?.[1].datasource).toBeUndefined();
+      });
+
+      it('should set panel datasource to mixed when queries have different datasources', () => {
+        const v2Panel: PanelKind = {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'Test Panel',
+            description: '',
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '1.0.0',
+              spec: {
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+              },
+            },
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      refId: 'A',
+                      hidden: false,
+                      query: {
+                        kind: 'DataQuery',
+                        version: 'v0',
+                        group: 'prometheus',
+                        datasource: {
+                          name: 'prometheus-uid',
+                        },
+                        spec: { expr: 'up' },
+                      },
+                    },
+                  },
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      refId: 'B',
+                      hidden: false,
+                      query: {
+                        kind: 'DataQuery',
+                        version: 'v0',
+                        group: 'loki',
+                        datasource: {
+                          name: 'loki-uid',
+                        },
+                        spec: { expr: 'count_over_time({job="test"}[5m])' },
+                      },
+                    },
+                  },
+                ],
+                transformations: [],
+                queryOptions: {},
+              },
+            },
+            links: [],
+          },
+        };
+
+        const layoutItem: GridLayoutItemKind = {
+          kind: 'GridLayoutItem',
+          spec: {
+            x: 0,
+            y: 0,
+            width: 12,
+            height: 8,
+            element: {
+              kind: 'ElementReference',
+              name: 'panel-1',
+            },
+          },
+        };
+
+        const v1Panel = ResponseTransformers.ensureV1Response({
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'test',
+            resourceVersion: '1',
+            creationTimestamp: '',
+            annotations: {},
+            labels: {},
+          },
+          spec: {
+            title: 'Test',
+            description: '',
+            tags: [],
+            cursorSync: 'Off',
+            preload: false,
+            liveNow: false,
+            editable: true,
+            timeSettings: {
+              from: 'now-6h',
+              to: 'now',
+              timezone: 'browser',
+              autoRefresh: '',
+              autoRefreshIntervals: [],
+              hideTimepicker: false,
+              fiscalYearStartMonth: 0,
+              weekStart: 'monday',
+            },
+            links: [],
+            annotations: [],
+            variables: [],
+            elements: {
+              'panel-1': v2Panel,
+            },
+            layout: {
+              kind: 'GridLayout',
+              spec: {
+                items: [layoutItem],
+              },
+            },
+          },
+          access: {
+            url: '/d/test',
+            canAdmin: true,
+            canDelete: true,
+            canEdit: true,
+            canSave: true,
+            canShare: true,
+            canStar: true,
+            annotationsPermissions: {
+              dashboard: { canAdd: true, canEdit: true, canDelete: true },
+              organization: { canAdd: true, canEdit: true, canDelete: true },
+            },
+          },
+        });
+
+        const panel = v1Panel.dashboard.panels?.[0];
+        expect(panel).toBeDefined();
+        expect(panel?.datasource).toEqual({
+          uid: '-- Mixed --',
+        });
+        // Queries should have their own datasources when panel is mixed
+        expect(panel?.targets?.[0].datasource).toEqual({
+          uid: 'prometheus-uid',
+          type: 'prometheus',
+        });
+        expect(panel?.targets?.[1].datasource).toEqual({
+          uid: 'loki-uid',
+          type: 'loki',
+        });
+      });
+
+      it('should use default datasource when queries have no datasource', () => {
+        const v2Panel: PanelKind = {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'Test Panel',
+            description: '',
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '1.0.0',
+              spec: {
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+              },
+            },
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      refId: 'A',
+                      hidden: false,
+                      query: {
+                        kind: 'DataQuery',
+                        version: 'v0',
+                        group: '',
+                        spec: { expr: 'up' },
+                      },
+                    },
+                  },
+                ],
+                transformations: [],
+                queryOptions: {},
+              },
+            },
+            links: [],
+          },
+        };
+
+        const layoutItem: GridLayoutItemKind = {
+          kind: 'GridLayoutItem',
+          spec: {
+            x: 0,
+            y: 0,
+            width: 12,
+            height: 8,
+            element: {
+              kind: 'ElementReference',
+              name: 'panel-1',
+            },
+          },
+        };
+
+        const v1Panel = ResponseTransformers.ensureV1Response({
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'test',
+            resourceVersion: '1',
+            creationTimestamp: '',
+            annotations: {},
+            labels: {},
+          },
+          spec: {
+            title: 'Test',
+            description: '',
+            tags: [],
+            cursorSync: 'Off',
+            preload: false,
+            liveNow: false,
+            editable: true,
+            timeSettings: {
+              from: 'now-6h',
+              to: 'now',
+              timezone: 'browser',
+              autoRefresh: '',
+              autoRefreshIntervals: [],
+              hideTimepicker: false,
+              fiscalYearStartMonth: 0,
+              weekStart: 'monday',
+            },
+            links: [],
+            annotations: [],
+            variables: [],
+            elements: {
+              'panel-1': v2Panel,
+            },
+            layout: {
+              kind: 'GridLayout',
+              spec: {
+                items: [layoutItem],
+              },
+            },
+          },
+          access: {
+            url: '/d/test',
+            canAdmin: true,
+            canDelete: true,
+            canEdit: true,
+            canSave: true,
+            canShare: true,
+            canStar: true,
+            annotationsPermissions: {
+              dashboard: { canAdd: true, canEdit: true, canDelete: true },
+              organization: { canAdd: true, canEdit: true, canDelete: true },
+            },
+          },
+        });
+
+        const panel = v1Panel.dashboard.panels?.[0];
+        expect(panel).toBeDefined();
+        // Should use default datasource
+        expect(panel?.datasource).toEqual({
+          uid: 'xyz-abc',
+          type: 'prometheus',
+        });
+      });
+
+      it('should handle query with datasource that differs from panel datasource', () => {
+        const v2Panel: PanelKind = {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'Test Panel',
+            description: '',
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '1.0.0',
+              spec: {
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+              },
+            },
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      refId: 'A',
+                      hidden: false,
+                      query: {
+                        kind: 'DataQuery',
+                        version: 'v0',
+                        group: 'prometheus',
+                        datasource: {
+                          name: 'prometheus-uid',
+                        },
+                        spec: { expr: 'up' },
+                      },
+                    },
+                  },
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      refId: 'B',
+                      hidden: false,
+                      query: {
+                        kind: 'DataQuery',
+                        version: 'v0',
+                        group: 'prometheus',
+                        datasource: {
+                          name: 'prometheus-uid',
+                        },
+                        spec: { expr: 'down' },
+                      },
+                    },
+                  },
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      refId: 'C',
+                      hidden: false,
+                      query: {
+                        kind: 'DataQuery',
+                        version: 'v0',
+                        group: 'loki',
+                        datasource: {
+                          name: 'loki-uid',
+                        },
+                        spec: { expr: 'count_over_time({job="test"}[5m])' },
+                      },
+                    },
+                  },
+                ],
+                transformations: [],
+                queryOptions: {},
+              },
+            },
+            links: [],
+          },
+        };
+
+        const layoutItem: GridLayoutItemKind = {
+          kind: 'GridLayoutItem',
+          spec: {
+            x: 0,
+            y: 0,
+            width: 12,
+            height: 8,
+            element: {
+              kind: 'ElementReference',
+              name: 'panel-1',
+            },
+          },
+        };
+
+        const v1Panel = ResponseTransformers.ensureV1Response({
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'test',
+            resourceVersion: '1',
+            creationTimestamp: '',
+            annotations: {},
+            labels: {},
+          },
+          spec: {
+            title: 'Test',
+            description: '',
+            tags: [],
+            cursorSync: 'Off',
+            preload: false,
+            liveNow: false,
+            editable: true,
+            timeSettings: {
+              from: 'now-6h',
+              to: 'now',
+              timezone: 'browser',
+              autoRefresh: '',
+              autoRefreshIntervals: [],
+              hideTimepicker: false,
+              fiscalYearStartMonth: 0,
+              weekStart: 'monday',
+            },
+            links: [],
+            annotations: [],
+            variables: [],
+            elements: {
+              'panel-1': v2Panel,
+            },
+            layout: {
+              kind: 'GridLayout',
+              spec: {
+                items: [layoutItem],
+              },
+            },
+          },
+          access: {
+            url: '/d/test',
+            canAdmin: true,
+            canDelete: true,
+            canEdit: true,
+            canSave: true,
+            canShare: true,
+            canStar: true,
+            annotationsPermissions: {
+              dashboard: { canAdd: true, canEdit: true, canDelete: true },
+              organization: { canAdd: true, canEdit: true, canDelete: true },
+            },
+          },
+        });
+
+        const panel = v1Panel.dashboard.panels?.[0];
+        expect(panel).toBeDefined();
+        // Should be mixed since queries have different datasources
+        expect(panel?.datasource).toEqual({
+          uid: '-- Mixed --',
+        });
+        // All queries should have their datasources
+        expect(panel?.targets?.[0].datasource).toEqual({
+          uid: 'prometheus-uid',
+          type: 'prometheus',
+        });
+        expect(panel?.targets?.[1].datasource).toEqual({
+          uid: 'prometheus-uid',
+          type: 'prometheus',
+        });
+        expect(panel?.targets?.[2].datasource).toEqual({
+          uid: 'loki-uid',
+          type: 'loki',
+        });
+      });
+
+      it('should handle queries with only type (no UID)', () => {
+        const v2Panel: PanelKind = {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'Test Panel',
+            description: '',
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '1.0.0',
+              spec: {
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+              },
+            },
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      refId: 'A',
+                      hidden: false,
+                      query: {
+                        kind: 'DataQuery',
+                        version: 'v0',
+                        group: 'prometheus',
+                        // No datasource.name (no UID), only type in group
+                        spec: { expr: 'up' },
+                      },
+                    },
+                  },
+                ],
+                transformations: [],
+                queryOptions: {},
+              },
+            },
+            links: [],
+          },
+        };
+
+        const layoutItem: GridLayoutItemKind = {
+          kind: 'GridLayoutItem',
+          spec: {
+            x: 0,
+            y: 0,
+            width: 12,
+            height: 8,
+            element: {
+              kind: 'ElementReference',
+              name: 'panel-1',
+            },
+          },
+        };
+
+        const v1Panel = ResponseTransformers.ensureV1Response({
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'test',
+            resourceVersion: '1',
+            creationTimestamp: '',
+            annotations: {},
+            labels: {},
+          },
+          spec: {
+            title: 'Test',
+            description: '',
+            tags: [],
+            cursorSync: 'Off',
+            preload: false,
+            liveNow: false,
+            editable: true,
+            timeSettings: {
+              from: 'now-6h',
+              to: 'now',
+              timezone: 'browser',
+              autoRefresh: '',
+              autoRefreshIntervals: [],
+              hideTimepicker: false,
+              fiscalYearStartMonth: 0,
+              weekStart: 'monday',
+            },
+            links: [],
+            annotations: [],
+            variables: [],
+            elements: {
+              'panel-1': v2Panel,
+            },
+            layout: {
+              kind: 'GridLayout',
+              spec: {
+                items: [layoutItem],
+              },
+            },
+          },
+          access: {
+            url: '/d/test',
+            canAdmin: true,
+            canDelete: true,
+            canEdit: true,
+            canSave: true,
+            canShare: true,
+            canStar: true,
+            annotationsPermissions: {
+              dashboard: { canAdd: true, canEdit: true, canDelete: true },
+              organization: { canAdd: true, canEdit: true, canDelete: true },
+            },
+          },
+        });
+
+        const panel = v1Panel.dashboard.panels?.[0];
+        expect(panel).toBeDefined();
+        // Should use type from group as panel datasource type
+        expect(panel?.datasource).toEqual({
+          type: 'prometheus',
+        });
+        // Query should not have datasource since it matches panel (by type)
+        expect(panel?.targets?.[0].datasource).toBeUndefined();
+      });
+
+      it('should preserve datasources correctly in roundtrip v1->v2->v1', () => {
+        // Start with v1 panel
+        const v1Input: Panel = {
+          id: 1,
+          type: 'timeseries',
+          title: 'Test Panel',
+          gridPos: { x: 0, y: 0, w: 12, h: 8 },
+          targets: [
+            {
+              refId: 'A',
+              expr: 'up',
+              datasource: {
+                uid: 'prometheus-uid',
+                type: 'prometheus',
+              },
+            },
+            {
+              refId: 'B',
+              expr: 'down',
+              // No datasource - should inherit from panel
+            },
+          ],
+          datasource: {
+            uid: 'prometheus-uid',
+            type: 'prometheus',
+          },
+          fieldConfig: { defaults: {}, overrides: [] },
+          options: {},
+          links: [],
+          transformations: [],
+        };
+
+        // Convert v1 -> v2
+        const v2Dashboard = ResponseTransformers.ensureV2Response({
+          dashboard: {
+            uid: 'test',
+            title: 'Test',
+            panels: [v1Input],
+            tags: [],
+            schemaVersion: 40,
+            time: { from: 'now-6h', to: 'now' },
+            annotations: { list: [] },
+            templating: { list: [] },
+            links: [],
+          },
+          meta: {
+            url: '/d/test',
+            slug: 'test',
+            canSave: true,
+            canEdit: true,
+            canDelete: true,
+            canShare: true,
+            canStar: true,
+            canAdmin: true,
+            annotationsPermissions: {
+              dashboard: { canAdd: true, canEdit: true, canDelete: true },
+              organization: { canAdd: true, canEdit: true, canDelete: true },
+            },
+          },
+        });
+
+        // Convert v2 -> v1
+        const v1Output = ResponseTransformers.ensureV1Response(v2Dashboard);
+
+        const outputPanel = v1Output.dashboard.panels?.[0];
+        expect(outputPanel).toBeDefined();
+        // Panel datasource should be preserved
+        expect(outputPanel?.datasource).toEqual({
+          uid: 'prometheus-uid',
+          type: 'prometheus',
+        });
+        // First query should not have datasource (matches panel)
+        expect(outputPanel?.targets?.[0].datasource).toBeUndefined();
+        // Second query should not have datasource (matches panel)
+        expect(outputPanel?.targets?.[1].datasource).toBeUndefined();
+        // Query content should be preserved
+        expect(outputPanel?.targets?.[0].expr).toBe('up');
+        expect(outputPanel?.targets?.[1].expr).toBe('down');
+      });
+    });
+  });
 });

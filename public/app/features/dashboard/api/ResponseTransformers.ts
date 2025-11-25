@@ -1401,6 +1401,78 @@ function transformV2PanelToV1Panel(
   const gridPos = { x, y: yOverride ?? y, w: width, h: height };
   if (p.kind === 'Panel') {
     const panel = p.spec;
+
+    // Extract datasources from queries and reconstruct panel-level datasource
+    // In v2beta1: datasource UID is at q.spec.query.datasource?.name, type is at q.spec.query.group
+    const queryDatasources = panel.data.spec.queries.map((q) => {
+      const dsUid = q.spec.query.datasource?.name;
+      const dsType = q.spec.query.group || '';
+      return { uid: dsUid, type: dsType };
+    });
+
+    // Determine panel-level datasource
+    // If all queries share the same datasource, use it as panel datasource
+    // If queries have different datasources, use mixed datasource
+    // Compare by UID first (UID is the primary identifier), then by type if UID is missing
+    const uniqueDatasources = new Set(
+      queryDatasources.map((ds) => {
+        // Use UID as primary identifier, fallback to type if UID is missing
+        return ds.uid || ds.type || '';
+      })
+    );
+
+    let panelDatasource: DataSourceRef | undefined;
+    if (uniqueDatasources.size === 1 && uniqueDatasources.has('')) {
+      // All queries have no datasource - use default
+      panelDatasource = getDefaultDatasource();
+    } else if (uniqueDatasources.size === 1) {
+      // All queries share the same datasource - use it as panel datasource
+      const firstDs = queryDatasources[0];
+      if (firstDs.uid || firstDs.type) {
+        panelDatasource = {
+          uid: firstDs.uid || undefined,
+          type: firstDs.type || undefined,
+        };
+      }
+    } else if (uniqueDatasources.size > 1) {
+      // Multiple different datasources - use mixed datasource
+      panelDatasource = {
+        uid: '-- Mixed --',
+        type: undefined,
+      };
+    } else {
+      // No datasources found - use default
+      panelDatasource = getDefaultDatasource();
+    }
+
+    // Build targets with proper datasource handling
+    // Only include datasource on query if it differs from panel datasource
+    const targets = panel.data.spec.queries.map((q, index) => {
+      const queryDs = queryDatasources[index];
+
+      // Determine if this query's datasource differs from panel datasource
+      // For mixed datasources, always include query datasource
+      // Otherwise, compare by UID (primary) or type (if UID missing)
+      const queryDiffers =
+        panelDatasource?.uid === '-- Mixed --' ||
+        (queryDs.uid && queryDs.uid !== panelDatasource?.uid) ||
+        (!queryDs.uid && queryDs.type && queryDs.type !== panelDatasource?.type);
+
+      const queryDsRef: DataSourceRef | undefined = queryDiffers
+        ? {
+            uid: queryDs.uid || undefined,
+            type: queryDs.type || undefined,
+          }
+        : undefined;
+
+      return {
+        refId: q.spec.refId,
+        hide: q.spec.hidden,
+        ...(queryDsRef && { datasource: queryDsRef }),
+        ...q.spec.query.spec,
+      };
+    });
+
     return {
       id: panel.id,
       type: panel.vizConfig.group,
@@ -1409,6 +1481,7 @@ function transformV2PanelToV1Panel(
       fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
       options: panel.vizConfig.spec.options,
       pluginVersion: panel.vizConfig.version,
+      ...(panelDatasource && { datasource: panelDatasource }),
       links:
         // @ts-expect-error - Panel link is wrongly typed as DashboardLink
         panel.links?.map<DashboardLink>((l) => ({
@@ -1416,17 +1489,7 @@ function transformV2PanelToV1Panel(
           url: l.url,
           ...(l.targetBlank !== undefined && { targetBlank: l.targetBlank }),
         })) || [],
-      targets: panel.data.spec.queries.map((q) => {
-        return {
-          refId: q.spec.refId,
-          hide: q.spec.hidden,
-          datasource: {
-            uid: q.spec.query.spec.datasource?.uid,
-            type: q.spec.query.spec.group,
-          },
-          ...q.spec.query.spec,
-        };
-      }),
+      targets,
       transformations: panel.data.spec.transformations.map((t) => t.spec),
       gridPos,
       ...(panel.data.spec.queryOptions.cacheTimeout !== undefined && {
