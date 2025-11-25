@@ -266,6 +266,7 @@ import (
 	migrations2 "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
@@ -456,7 +457,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	ossDashboardStats := search.ProvideDashboardStats()
+	ossDashboardStats := builders.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
 	databaseDatabase := database4.ProvideDatabase(sqlStore, tracer)
 	clockClock := clock.ProvideClock()
@@ -1104,7 +1105,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	ossDashboardStats := search.ProvideDashboardStats()
+	ossDashboardStats := builders.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
 	databaseDatabase := database4.ProvideDatabase(sqlStore, tracer)
 	clockClock := clock.ProvideClock()
@@ -1760,7 +1761,7 @@ func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSuppl
 	if err != nil {
 		return nil, err
 	}
-	ossDashboardStats := search.ProvideDashboardStats()
+	ossDashboardStats := builders.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
 	return documentBuilderSupplier, nil
 }

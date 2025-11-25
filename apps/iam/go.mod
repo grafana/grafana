@@ -14,11 +14,15 @@ replace github.com/grafana/grafana/apps/provisioning => ../provisioning
 
 replace github.com/grafana/grafana/apps/advisor => ../advisor
 
+replace github.com/grafana/grafana/apps/annotation => ../annotation
+
 replace github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
 
 replace github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
 
 replace github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
+
+replace github.com/grafana/grafana/apps/collections => ../collections
 
 replace github.com/grafana/grafana/apps/correlations => ../correlations
 
@@ -413,7 +417,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	gocloud.dev v0.43.0 // indirect
-	golang.org/x/crypto v0.44.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9 // indirect
 	golang.org/x/mod v0.30.0 // indirect
 	golang.org/x/net v0.47.0 // indirect

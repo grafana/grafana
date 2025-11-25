@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const (
@@ -131,9 +131,9 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	for _, field := range fields {
 		switch field {
 		case "email":
-			columns = append(columns, search.UserTableColumnDefinitions[search.USER_EMAIL])
+			columns = append(columns, builders.UserTableColumnDefinitions[builders.USER_EMAIL])
 		case "login":
-			columns = append(columns, search.UserTableColumnDefinitions[search.USER_LOGIN])
+			columns = append(columns, builders.UserTableColumnDefinitions[builders.USER_LOGIN])
 		}
 	}
 	return columns
