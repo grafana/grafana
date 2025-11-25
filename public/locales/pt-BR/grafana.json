@@ -2081,7 +2081,7 @@
         "warning-1": "A exclusão desta política de notificação irá removê-la permanentemente.",
         "warning-2": "Tem certeza de que deseja excluir esta política?"
       },
-      "filter-description": "",
+      "filter-description": "Filtre as políticas de notificação usando uma lista de correspondências separadas por vírgulas, por exemplo:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Políticas geradas automaticamente",
       "matchers": "Correspondências",
       "metadata": {
@@ -2808,7 +2808,7 @@
     "template-data-docs": {
       "alert-template-data-table": {
         "alert-template-data": "Dados do modelo de alerta",
-        "only-in-alert": "Disponível apenas quando estiver no contexto de um Alerta (por exemplo, dentro do .Loop de alertas)"
+        "only-in-alert": ""
       },
       "available-context-notification": "Disponível no contexto de uma notificação.",
       "notification-template-data": "Dados do modelo de notificação"
@@ -3245,7 +3245,7 @@
       "auth-settings": "Configurações de autenticação"
     },
     "auth-drawer-unconneced": {
-      "subtitle": ""
+      "subtitle": "Defina as configurações de autenticação. Saiba mais na nossa <2>documentação</2>."
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Autenticação avançada",
@@ -3279,7 +3279,7 @@
       "allowed-organizations-description": "Lista de organizações separadas por vírgulas ou espaços. O usuário deve ser membro \nde pelo menos uma organização para fazer login.",
       "allowed-organizations-label": "Organizações permitidas",
       "allowed-organizations-placeholder": "Insira as organizações (minha-equipe, minhaequipe...) e pressione Enter para adicioná-las",
-      "api-url-description": "",
+      "api-url-description": "O endpoint de informações do usuário do seu provedor OAuth2. As informações que retornaram com este endpoint devem ser compatíveis com <2>OpenID UserInfo</2>.",
       "api-url-required": "Este campo deve ser uma URL válida, se definido.",
       "auth-style-description": "Ele determina como \"{{ clientIDLabel }}\" e \"{{ clientSecretLabel }}\" são enviados para o provedor Oauth2. O padrão é AutoDetect.",
       "auth-style-label": "Estilo de autenticação",
@@ -3424,7 +3424,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": ""
+    "subtitle": "Gerencie suas configurações de autenticação e configure a autenticação única. Saiba mais na nossa <2>documentação</2>."
   },
   "bar-chart": {
     "warn": {
@@ -4844,7 +4844,7 @@
       "add-visualization-body": "Selecione uma fonte de dados e consulte e visualize seus dados com gráficos, estatísticas e tabelas ou crie listas, markdowns e outros widgets.",
       "add-visualization-button": "Adicionar visualização",
       "add-visualization-header": "Comece seu novo painel de controle adicionando uma visualização",
-      "import-a-dashboard-body": "",
+      "import-a-dashboard-body": "Importe painéis por meio de arquivos ou do <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle",
       "show-less-dashboards": "",
@@ -6623,7 +6623,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Clique <2>aqui</2> para saber mais sobre esse erro.",
-    "success-more-details-links": ""
+    "success-more-details-links": "Em seguida, você pode começar a visualizar os dados <2>criando um painel de controle</2> ou consultando os dados na <5>Visualização de exploração</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6719,7 +6719,7 @@
       "test": "Teste"
     },
     "cloud-info-box": {
-      "body-alert": "",
+      "body-alert": "Ou evite essa tarefa e obtenha {{mainDS}} (e {{extraDS}}) como fontes de dados totalmente gerenciadas, escaláveis e hospedadas da Grafana Labs com o <6>plano gratuito vitalício da Grafana Cloud</6>.",
       "title-alert": "Configure sua fonte de {{mainDS}} dados abaixo"
     },
     "dashboards-table": {
@@ -7704,7 +7704,7 @@
     "math": {
       "available-math-functions": "Funções matemáticas disponíveis",
       "run-math-operations": "",
-      "tooltip-footer": "",
+      "tooltip-footer": "Consulte nossa documentação adicional sobre <2>expressões matemáticas</2>.",
       "tooltip-title": "Operador matemático",
       "tooltip-trigger": "Expressão"
     },
@@ -7730,10 +7730,23 @@
       "label-upsample": "Aumentar taxa de amostragem",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
+    "schema-inspector-panel": {
+      "aria-label-close-schema-inspector": ""
+    },
     "sql-expr": {
       "button-run-query": "Executar consulta",
       "modal-title": "Editor de SQL",
       "tooltip-experimental": "A integração do LLM de expressões SQL está em fase de testes. Informe à equipe do Grafana se surgir algum problema."
+    },
+    "sql-schema": {
+      "close-schema-inspector": "",
+      "error-title": "",
+      "inspect-button": "",
+      "loading": "",
+      "no-data-title": "",
+      "no-fields-desc": "",
+      "no-fields-title": "",
+      "query-error-title": ""
     },
     "threshold": {
       "label-input": "Entrada"
@@ -10928,10 +10941,10 @@
       "placeholder-optional": "(opcional)",
       "role": "Função",
       "submit": "Enviar",
-      "tooltip": ""
+      "tooltip": "Agora você pode selecionar a opção \"Sem função básica\" e adicionar permissões personalizadas com base nas suas necessidades. Você pode encontrar mais informações em <1>nossa documentação</1>."
     },
     "user-invite-page": {
-      "sub-title": "",
+      "sub-title": "Envie um convite ou adicione um usuário que já possui conta na Grafana à organização.<1> {{orgName}}</1>",
       "text": {
         "invite-user": "Convidar usuário"
       }
@@ -12383,7 +12396,7 @@
     },
     "menu": {
       "clear-button": "Limpar tudo",
-      "tooltip": ""
+      "tooltip": "Agora você pode selecionar a opção \"Sem função básica\" e adicionar permissões personalizadas com base nas suas necessidades. Você pode encontrar mais informações em <1>nossa documentação</1>."
     },
     "menu-aria-label": "Menu do seletor de função",
     "menu-group-option-aria-label": "Opção do seletor de função",
@@ -12709,7 +12722,7 @@
       "info-text": "Crie um link direto para este painel de controle ou painel, personalizado com as opções abaixo.",
       "link-url": "URL do link",
       "render-alert": "Plug-in renderizador de imagem não instalado",
-      "render-instructions": "",
+      "render-instructions": "Para renderizar uma imagem, você precisa instalar o <2>plug-in renderizador de imagens do Grafana</2>. Entre em contato com o administrador do Grafana para instalar o plug-in.",
       "rendered-image": "Link direto de imagem renderizada",
       "save-alert": "O painel de controle não está salvo",
       "save-dashboard": "Para renderizar uma imagem do painel, você deve salvar o painel de controle primeiro.",
@@ -13750,7 +13763,7 @@
       "label-format": "Formato",
       "label-set-timezone": "Definir fuso horário",
       "label-time-field": "Campo de hora",
-      "tooltip-format": "",
+      "tooltip-format": "O formato de saída para o campo especificado como uma <2>sequência de caracteres de formato Moment.js</2>.",
       "tooltip-timezone-manually": "Defina o fuso horário da data manualmente"
     },
     "format-time-transformer-editor": {

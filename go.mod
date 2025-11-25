@@ -200,7 +200,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // @grafana/alerting-backend
 	gocloud.dev v0.43.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.43.0 // @grafana/grafana-operator-experience-squad
-	golang.org/x/crypto v0.44.0 // @grafana/grafana-backend-group
+	golang.org/x/crypto v0.45.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9 // @grafana/alerting-backend
 	golang.org/x/mod v0.30.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.47.0 // @grafana/oss-big-tent @grafana/partner-datasources

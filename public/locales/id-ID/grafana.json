@@ -2075,7 +2075,7 @@
         "warning-1": "Menghapus kebijakan pemberitahuan ini akan menghapusnya secara permanen.",
         "warning-2": "Apa Anda yakin ingin menghapus kebijakan ini?"
       },
-      "filter-description": "",
+      "filter-description": "Filter kebijakan pemberitahuan menggunakan daftar pencocok yang dipisahkan koma, misalnya:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Kebijakan yang dibuat otomatis",
       "matchers": "Pencocok",
       "metadata": {
@@ -2796,7 +2796,7 @@
     "template-data-docs": {
       "alert-template-data-table": {
         "alert-template-data": "Data templat peringatan",
-        "only-in-alert": "Hanya tersedia ketika dalam konteks Peringatan (misalnya di dalam .loop Peringatan)"
+        "only-in-alert": ""
       },
       "available-context-notification": "Tersedia dalam konteks pemberitahuan.",
       "notification-template-data": "Data templat pemberitahuan"
@@ -3233,7 +3233,7 @@
       "auth-settings": "Pengaturan autentikasi"
     },
     "auth-drawer-unconneced": {
-      "subtitle": ""
+      "subtitle": "Konfigurasikan pengaturan autentikasi. Cari tahu selengkapnya di <2>dokumentasi</2> kami."
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Autentikasi Lanjutan",
@@ -3267,7 +3267,7 @@
       "allowed-organizations-description": "Daftar organisasi yang dipisahkan koma atau spasi. Pengguna harus menjadi anggota\ndari setidaknya satu organisasi untuk masuk.",
       "allowed-organizations-label": "Organisasi yang diizinkan",
       "allowed-organizations-placeholder": "Masukkan organisasi (my-team, myteam...) dan tekan Enter untuk menambahkan",
-      "api-url-description": "",
+      "api-url-description": "Endpoint informasi pengguna penyedia OAuth2 Anda. Informasi yang dikembalikan oleh endpoint ini harus kompatibel dengan <2>OpenID UserInfo</2>.",
       "api-url-required": "Bidang ini harus berupa URL yang valid jika ditetapkan.",
       "auth-style-description": "Ini menentukan cara \"{{ clientIDLabel }}\" dan \"{{ clientSecretLabel }}\" dikirim ke penyedia Oauth2. Default adalah AutoDetect.",
       "auth-style-label": "Metode autentikasi",
@@ -3412,7 +3412,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": ""
+    "subtitle": "Kelola pengaturan autentikasi Anda dan konfigurasikan single sign-on. Cari tahu selengkapnya di <2>dokumentasi</2> kami."
   },
   "bar-chart": {
     "warn": {
@@ -4824,7 +4824,7 @@
       "add-visualization-body": "Pilih sumber data, kemudian kueri dan visualisasikan data Anda dengan bagan, statistik, dan tabel atau buat daftar, markdown, dan widget lainnya.",
       "add-visualization-button": "Tambahkan visualisasi",
       "add-visualization-header": "Mulai dasbor baru Anda dengan menambahkan visualisasi",
-      "import-a-dashboard-body": "",
+      "import-a-dashboard-body": "Impor dasbor dari file atau <2>grafana.com</2>.",
       "import-a-dashboard-header": "Impor dasbor",
       "import-dashboard-button": "Impor dasbor",
       "show-less-dashboards": "",
@@ -6599,7 +6599,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klik <2>di sini</2> untuk mempelajari selengkapnya tentang kesalahan ini.",
-    "success-more-details-links": ""
+    "success-more-details-links": "Selanjutnya, Anda dapat mulai memvisualisasikan data dengan <2>membuat dasbor</2>, atau dengan melakukan kueri data di <5>tampilan Explore</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6695,7 +6695,7 @@
       "test": "Tes"
     },
     "cloud-info-box": {
-      "body-alert": "",
+      "body-alert": "Atau lewati proses dan dapatkan {{mainDS}} (dan {{extraDS}}) sebagai sumber data yang dikelola sepenuhnya, dapat diskalakan, dan di-host dari Grafana Labs dengan <6>paket Grafana Cloud gratis selamanya</6>.",
       "title-alert": "Konfigurasikan sumber data {{mainDS}} Anda di bawah ini"
     },
     "dashboards-table": {
@@ -7678,7 +7678,7 @@
     "math": {
       "available-math-functions": "Fungsi matematika yang tersedia",
       "run-math-operations": "",
-      "tooltip-footer": "",
+      "tooltip-footer": "Lihat dokumentasi tambahan kami di <2>Pola matematika</2>.",
       "tooltip-title": "Operator matematika",
       "tooltip-trigger": "Ekspresi"
     },
@@ -7704,10 +7704,23 @@
       "label-upsample": "Tingkatkan sample",
       "tooltip-s-m-h": "10 dtk, 1 mnt, 30 mnt, 1 jm"
     },
+    "schema-inspector-panel": {
+      "aria-label-close-schema-inspector": ""
+    },
     "sql-expr": {
       "button-run-query": "Jalankan kueri",
       "modal-title": "Editor SQL",
       "tooltip-experimental": "Integrasi LLM Ekspresi SQL bersifat eksperimental. Harap laporkan masalah apa pun kepada tim Grafana."
+    },
+    "sql-schema": {
+      "close-schema-inspector": "",
+      "error-title": "",
+      "inspect-button": "",
+      "loading": "",
+      "no-data-title": "",
+      "no-fields-desc": "",
+      "no-fields-title": "",
+      "query-error-title": ""
     },
     "threshold": {
       "label-input": "Input"
@@ -10881,10 +10894,10 @@
       "placeholder-optional": "(opsional)",
       "role": "Peran",
       "submit": "Kirim",
-      "tooltip": ""
+      "tooltip": "Anda sekarang dapat memilih opsi \"Tidak ada peran dasar\" dan menambahkan izin ke kebutuhan kustom Anda. Anda dapat menemukan informasi lebih lanjut di <1> dokumentasi kami </1>."
     },
     "user-invite-page": {
-      "sub-title": "",
+      "sub-title": "Kirim undangan atau tambahkan pengguna Grafana yang ada ke organisasi.<1> {{orgName}}</1>",
       "text": {
         "invite-user": "Undang pengguna"
       }
@@ -12328,7 +12341,7 @@
     },
     "menu": {
       "clear-button": "Hapus semua",
-      "tooltip": ""
+      "tooltip": "Anda sekarang dapat memilih opsi \"Tidak ada peran dasar\" dan menambahkan izin ke kebutuhan kustom Anda. Anda dapat menemukan informasi lebih lanjut di <1> dokumentasi kami </1>."
     },
     "menu-aria-label": "Menu pemilih peran",
     "menu-group-option-aria-label": "Opsi pemilih peran",
@@ -12653,7 +12666,7 @@
       "info-text": "Buat tautan langsung ke dasbor atau panel ini, disesuaikan dengan opsi di bawah ini.",
       "link-url": "Tautkan URL",
       "render-alert": "Plugin perender gambar belum diinstal",
-      "render-instructions": "",
+      "render-instructions": "Untuk merender gambar, Anda harus menginstal <2>plugin perender gambar Grafana</2>. Hubungi administrator Grafana Anda untuk menginstal plugin.",
       "rendered-image": "Tautan langsung gambar yang dirender",
       "save-alert": "Dasbor tidak disimpan",
       "save-dashboard": "Untuk merender gambar panel, Anda harus menyimpan dasbor terlebih dahulu.",
@@ -13693,7 +13706,7 @@
       "label-format": "Format",
       "label-set-timezone": "Atur zona waktu",
       "label-time-field": "Bidang waktu",
-      "tooltip-format": "",
+      "tooltip-format": "Format output untuk bidang yang ditentukan sebagai <2>string format Moment.js</2>.",
       "tooltip-timezone-manually": "Atur zona waktu tanggal secara manual"
     },
     "format-time-transformer-editor": {
