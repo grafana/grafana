@@ -32,6 +32,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -1178,10 +1179,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
 	}
 
-	// Convert resource-specific fields to bleve fields (just considers dashboard fields for now)
+	// Convert resource-specific fields to bleve fields.
+	// TODO: use b.fields.Field(f) instead of builders.DashboardFields() to avoid dashboard-specific code in search server.
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
-		if slices.Contains(DashboardFields(), f) {
+		if slices.Contains(builders.DashboardFields(), f) {
 			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
@@ -1534,7 +1536,8 @@ func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
 			input = field
 		}
 
-		if slices.Contains(DashboardFields(), input) {
+		// TODO: pass fields parameter and use fields.Field(input) instead of builders.DashboardFields() to avoid dashboard-specific code.
+		if slices.Contains(builders.DashboardFields(), input) {
 			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 
