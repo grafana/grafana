@@ -439,13 +439,7 @@ function GroupField({
   groupPlaceholder: string;
   portalContainer?: HTMLElement;
 }) {
-  const { control, setValue } = useFormContext<AdvancedFilters>();
-
-  const wrappedOptions = useCallback(
-    (inputValue: string) =>
-      createThresholdAwareOptions(groupOptions, (value) => setValue('groupName', value), 'groupName')(inputValue),
-    [groupOptions, setValue]
-  );
+  const { control } = useFormContext<AdvancedFilters>();
 
   return (
     <>
@@ -458,7 +452,7 @@ function GroupField({
         render={({ field }) => (
           <Combobox<string>
             placeholder={groupPlaceholder}
-            options={wrappedOptions}
+            options={groupOptions}
             onChange={(option) => {
               if (!option?.infoOption) {
                 field.onChange(option?.value || null);
