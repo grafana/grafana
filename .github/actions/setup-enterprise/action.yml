@@ -2,6 +2,10 @@ name: 'Setup Grafana Enterprise'
 description: 'Clones and sets up Grafana Enterprise repository for testing'
 
 inputs:
+  retires:
+    description: 'Number of times to retry'
+    required: false
+    default: '5'
   github-app-name:
     description: 'Name of the GitHub App in Vault'
     required: false
@@ -33,16 +37,36 @@ runs:
       env:
         GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       run: |
-        git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise;
+        RETRIES="${{ inputs.retries }}"
 
-        cd ../grafana-enterprise
+        for i in $(seq 1 $RETRIES); do
+          echo "Attempt $i to clone..."
 
-        if git checkout ${GITHUB_HEAD_REF}; then
-          echo "checked out ${GITHUB_HEAD_REF}"
-        elif git checkout ${GITHUB_BASE_REF}; then
-          echo "checked out ${GITHUB_BASE_REF}"
-        else
-          git checkout main
-        fi
+          if git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise;; then
+            echo "Clone succeeded on attempt $i"
+            break
+          fi
+
+          sleep 1
+        done
+
+        for i in $(seq 1 $RETRIES); do
+          echo "Attempt $i to checkout..."
+
+          if git checkout ${GITHUB_HEAD_REF}; then
+            echo "checked out ${GITHUB_HEAD_REF}"
+          elif git checkout ${GITHUB_BASE_REF}; then
+            echo "checked out ${GITHUB_BASE_REF}"
+          else
+            git checkout main
+          fi
+
+          if [ $? -eq 0 ]; then
+            echo "Checkout succeeded, breaking retry loop"
+            break
+          fi
+
+          sleep 1
+        done
 
         QUIET=1 ./build.sh
