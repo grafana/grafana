@@ -2,7 +2,7 @@ name: 'Setup Grafana Enterprise'
 description: 'Clones and sets up Grafana Enterprise repository for testing'
 
 inputs:
-  retires:
+  retries:
     description: 'Number of times to retry'
     required: false
     default: '5'
