@@ -149,10 +149,10 @@ export interface Props {
 // We pass the default empty UI through to the extension point so that the extension can conditionally render it if needed.
 // For example, an extension might want to render custom UI for a specific experiment cohort, and the default UI for everyone else.
 const DashboardEmpty = (props: Props) => {
-  const { isReadOnlyRepo, isFolderProvisioned } = useRepositoryStatus(props);
-  const onAddVisualization = useOnAddVisualization({ ...props, isReadOnlyRepo });
-  const onAddLibraryPanel = useOnAddLibraryPanel({ ...props, isReadOnlyRepo, isFolderProvisioned });
-  const onImportDashboard = useOnImportDashboard({ ...props, isReadOnlyRepo, isFolderProvisioned });
+  const { isReadOnlyRepo, isProvisioned } = useRepositoryStatus(props);
+  const onAddVisualization = useOnAddVisualization({ ...props, isReadOnlyRepo, isProvisioned });
+  const onAddLibraryPanel = useOnAddLibraryPanel({ ...props, isReadOnlyRepo, isProvisioned });
+  const onImportDashboard = useOnImportDashboard({ ...props, isReadOnlyRepo, isProvisioned });
 
   return (
     <DashboardEmptyExtensionPoint

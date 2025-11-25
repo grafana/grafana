@@ -21,15 +21,18 @@ export const useRepositoryStatus = ({ dashboard }: Props) => {
     folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
   });
 
+  const isFolderProvisioned = Boolean(repository);
+  const isProvisioned = isFolderProvisioned || (dashboard instanceof DashboardScene && dashboard.isManagedRepository());
+
   return {
     isReadOnlyRepo,
-    isFolderProvisioned: Boolean(repository),
+    isProvisioned,
   };
 };
 
 interface HookProps extends Props {
   isReadOnlyRepo: boolean;
-  isFolderProvisioned?: boolean;
+  isProvisioned: boolean;
 }
 
 export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: HookProps) => {
@@ -57,9 +60,7 @@ export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: 
   }, [canCreate, isReadOnlyRepo, dashboard, dispatch, initialDatasource]);
 };
 
-export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo, isFolderProvisioned }: HookProps) => {
-  const isProvisioned = isFolderProvisioned || (dashboard instanceof DashboardScene && dashboard.isManagedRepository());
-
+export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo, isProvisioned }: HookProps) => {
   return useMemo(() => {
     if (!canCreate || isProvisioned || isReadOnlyRepo) {
       return undefined;
@@ -76,9 +77,7 @@ export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo, isF
   }, [canCreate, isProvisioned, isReadOnlyRepo, dashboard]);
 };
 
-export const useOnImportDashboard = ({ dashboard, canCreate, isReadOnlyRepo, isFolderProvisioned }: HookProps) => {
-  const isProvisioned = isFolderProvisioned || (dashboard instanceof DashboardScene && dashboard.isManagedRepository());
-
+export const useOnImportDashboard = ({ canCreate, isReadOnlyRepo, isProvisioned }: HookProps) => {
   return useMemo(() => {
     if (!canCreate || isProvisioned || isReadOnlyRepo) {
       return undefined;
