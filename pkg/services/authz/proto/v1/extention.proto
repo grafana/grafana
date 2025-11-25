@@ -34,6 +34,8 @@ message MutateOperation {
     UpdateUserOrgRoleOperation update_user_org_role = 5;
     DeleteUserOrgRoleOperation delete_user_org_role = 6;
     AddUserOrgRoleOperation add_user_org_role = 7;
+    CreateRoleBindingOperation create_role_binding = 8;
+    DeleteRoleBindingOperation delete_role_binding = 9;
   }
 }
 
@@ -85,6 +87,28 @@ message DeleteUserOrgRoleOperation {
   string user = 1;
   // Role name (e.g: "Admin", "Editor", "Viewer")
   string role = 2;
+}
+
+message CreateRoleBindingOperation {
+  // kind of the identity getting the permission (User/Team/ServiceAccount/BasicRole)
+  string subject_kind = 1;
+  // uid of the identity
+  string subject_name = 2;
+  // kind of the role (Role/CoreRole/GlobalRole)
+  string role_kind = 3;
+  // uid of the role
+  string role_name = 4;
+}
+
+message DeleteRoleBindingOperation {
+  // kind of the identity getting the permission (User/Team/ServiceAccount/BasicRole)
+  string subject_kind = 1;
+  // uid of the identity
+  string subject_name = 2;
+  // kind of the role (Role/CoreRole/GlobalRole)
+  string role_kind = 3;
+  // uid of the role
+  string role_name = 4;
 }
 
 message Resource {
