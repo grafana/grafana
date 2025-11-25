@@ -17,7 +17,7 @@
       "label-subscription": "Abonnement",
       "placeholder-resource-name": "naam",
       "tooltip-region": "Het codegebied van de bron. Optioneel voor één bron, maar verplicht bij het selecteren van meerdere bronnen.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Bewerk de <2>bron-uri</2> handmatig. Ondersteunt het gebruik van meerdere sjabloonvariabelen (bijv.: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Totaal van de functie",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Basislogs",
-      "description-basic-logs": "",
+      "description-basic-logs": "Als je deze functie inschakelt, worden Azure Monitor-kosten per query gemaakt op dashboardpanelen die tabellen opvragen die zijn geconfigureerd voor <2>Basislogboeken</2>.",
       "label-enable-basic-logs": "Basislogboeken inschakelen"
     },
     "config-editor": {

@@ -426,6 +426,9 @@ export const versionedComponents = {
       loadingBar: {
         '10.0.0': () => `Panel loading bar`,
       },
+      PanelNonApplicableDrilldownsSubHeader: {
+        '12.4.0': 'Panel non-applicable drilldowns subheader',
+      },
       HoverWidget: {
         container: {
           '10.1.0': 'data-testid hover-header-container',
@@ -681,6 +684,11 @@ export const versionedComponents = {
       TabsLayout: {
         titleInput: {
           '12.2.0': 'data-testid tab title input',
+        },
+      },
+      RowsLayout: {
+        titleInput: {
+          '12.3.0': 'data-testid row title input',
         },
       },
     },
