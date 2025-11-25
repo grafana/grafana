@@ -29,6 +29,8 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
       ).toBeVisible();
 
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+
       // Clicking a panel should scroll that panel in view
       await expect(page.getByText('Dashboard panel 48')).toBeHidden();
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Panel #48')).click();

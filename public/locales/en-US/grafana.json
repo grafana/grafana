@@ -8145,9 +8145,6 @@
       }
     }
   },
-  "grafana": {
-    "select-group": "Select group"
-  },
   "grafana-data": {
     "datetime": {
       "rangeutils": {

@@ -2,6 +2,7 @@ import { act, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils, config } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
@@ -53,7 +54,7 @@ describe('DashboardEditPaneRenderer', () => {
 
     render(<DashboardEditPaneSplitter dashboard={scene} />);
 
-    expect(await screen.findByTestId('dashboard-outline-button')).toBeInTheDocument();
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
 
   it('Should sync sidebar docked state with edit pane state', async () => {

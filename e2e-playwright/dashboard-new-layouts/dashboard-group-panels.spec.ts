@@ -761,7 +761,7 @@ test.describe(
       await page.getByLabel('Expand Group layout category').click();
 
       // Select rows layout
-      await page.getByLabel('Rows').click();
+      await page.getByLabel('layout-selection-option-Rows').click();
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 1'))
