@@ -26,6 +26,7 @@ export const panelsToCheckFirst = [
   'nodeGraph',
   'heatmap',
   'histogram',
+  'geomap',
 ];
 
 /**

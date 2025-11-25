@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode } from '@grafana/ui';
-import { defaultReduceOptions } from 'app/features/panel/suggestions/utils';
+import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -56,5 +56,5 @@ export const barGaugeSugggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
     dataSummary.frameCount === 1 &&
     dataSummary.rowCountTotal <= BAR_LIMIT;
 
-  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldUseRawValues));
+  return suggestions.map((s) => defaultNumericVizOptions(withDefaults(s), dataSummary, shouldUseRawValues));
 };

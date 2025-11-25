@@ -1,9 +1,14 @@
 import { defaultsDeep } from 'lodash';
 
-import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplierFn } from '@grafana/data';
+import {
+  FieldType,
+  VisualizationSuggestion,
+  VisualizationSuggestionScore,
+  VisualizationSuggestionsSupplierFn,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode } from '@grafana/schema';
-import { defaultReduceOptions } from 'app/features/panel/suggestions/utils';
+import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
 import { PieChartLabels, Options, PieChartType } from './panelcfg.gen';
 
@@ -58,5 +63,16 @@ export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opt
     return;
   }
 
-  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldUseRawValues));
+  return suggestions.map((s) => {
+    const result = defaultNumericVizOptions(withDefaults(s), dataSummary, shouldUseRawValues);
+    // bump the score up to best if we have exactly one numeric and one string field
+    if (
+      dataSummary.fieldCount === 2 &&
+      dataSummary.fieldCountByType(FieldType.string) === 1 &&
+      dataSummary.fieldCountByType(FieldType.number) === 1
+    ) {
+      result.score = VisualizationSuggestionScore.Best;
+    }
+    return result;
+  });
 };

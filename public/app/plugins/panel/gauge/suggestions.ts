@@ -2,7 +2,7 @@ import { defaultsDeep } from 'lodash';
 
 import { ThresholdsMode, FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplierFn } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { defaultReduceOptions } from 'app/features/panel/suggestions/utils';
+import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -59,5 +59,5 @@ export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Option
     dataSummary.frameCount === 1 &&
     dataSummary.rowCountTotal <= GAUGE_LIMIT;
 
-  return suggestions.map((s) => defaultReduceOptions(withDefaults(s), shouldUseRawValues));
+  return suggestions.map((s) => defaultNumericVizOptions(withDefaults(s), dataSummary, shouldUseRawValues));
 };

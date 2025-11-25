@@ -27,6 +27,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options, FieldConfig>)
     cardOptions: {
       previewModifier: (s) => {
         s.options!.barWidth = 0.8;
+        s.fieldConfig!.defaults!.custom!.hideFrom = { tooltip: false, legend: true, viz: false }; // hide legend in preview
       },
     },
   } satisfies VisualizationSuggestion<Options, FieldConfig>);

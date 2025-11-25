@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphFieldConfig } from '@grafana/ui';
-import { defaultReduceOptions } from 'app/features/panel/suggestions/utils';
+import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -70,7 +70,7 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
     dataSummary.rowCountTotal <= MAX_GAUGES;
 
   return suggestions.map((s) => {
-    const suggestion = defaultReduceOptions(withDefaults(s), shouldUseRawValues);
+    const suggestion = defaultNumericVizOptions(withDefaults(s), dataSummary, shouldUseRawValues);
 
     if (shouldUseRawValues) {
       suggestion.fieldConfig = suggestion.fieldConfig ?? {

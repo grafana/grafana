@@ -1,4 +1,10 @@
-import { PanelData, PanelDataSummary, VisualizationSuggestion } from '@grafana/data';
+import {
+  DataFrameType,
+  PanelData,
+  PanelDataSummary,
+  VisualizationSuggestion,
+  VisualizationSuggestionScore,
+} from '@grafana/data';
 import { ReduceDataOptions } from '@grafana/schema';
 
 /**
@@ -15,13 +21,23 @@ export function showDefaultSuggestion(fn: (panelDataSummary: PanelDataSummary) =
  * @internal
  * for panel plugins which render "scalar" data (stat, gauge, etc), this helper provides default reduce options
  * depending on whether deaggregation is likely needed.
+ * @param suggestion the suggestion to modify
+ * @param panelDataSummary the panel data summary to use for scoring
  * @param shouldUseRawValues if true, reduceOptions will be set to use raw values,
  *   otherwise a calcs will be used with the default value of `lastNotNull`.
  */
-export function defaultReduceOptions(
+export function defaultNumericVizOptions(
   suggestion: VisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }>,
+  panelDataSummary: PanelDataSummary,
   shouldUseRawValues: boolean
 ): VisualizationSuggestion {
+  suggestion.score =
+    (suggestion.score ??
+    (panelDataSummary.hasDataFrameType(DataFrameType.NumericLong) ||
+      panelDataSummary.hasDataFrameType(DataFrameType.NumericWide) ||
+      panelDataSummary.hasDataFrameType(DataFrameType.NumericMulti)))
+      ? VisualizationSuggestionScore.Good
+      : VisualizationSuggestionScore.OK;
   suggestion.options = suggestion.options ?? {};
   suggestion.options.reduceOptions =
     suggestion.options.reduceOptions ??
