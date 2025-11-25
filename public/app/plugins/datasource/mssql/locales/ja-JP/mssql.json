@@ -69,7 +69,7 @@
       "description-encrypt-false": "",
       "description-encrypt-older-version": "2008や2008R2などの古いバージョンのMicrosoft SQL Serverを使用している場合、接続できるようにするためには、暗号化を無効にする必要がある場合があります。",
       "description-encrypt-true": "",
-      "description-min-interval": "",
+      "description-min-interval": "時間間隔による自動グループ化の下限。データが毎分書き込まれる場合は、書き込み頻度に合わせて<1>{{exampleInterval}}</1>のようにに設定することをお勧めします。",
       "description-tls-cert": "SQL Server証明書に署名したCAの公開鍵証明書を含むファイルへのパス。サーバー証明書が自己署名されている場合に必要です。",
       "label-auth-settings": "Azure認証設定",
       "label-auth-type": "認証タイプ",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "DNS「SRV」レコードを使用して、レルムのKDCやその他のサーバーを特定するかどうかを示します。デフォルトは<1>{{default}}</1>です。",
-      "description-krb5-config-file-path": "",
+      "description-krb5-config-file-path": "<2>MIT krb5パッケージ</2>の設定ファイルへのパス。デフォルトは<4>{{default}}</4>です。",
       "description-udp-preference-limit": "デフォルトは<1>{{default}}</1>で、常にTCPを使用することを意味します。オプションです。",
       "label-dns-lookup-kdc": "DNS検索KDC",
       "label-krb5-config-file-path": "krb5設定ファイルパス",

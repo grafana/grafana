@@ -1,6 +1,6 @@
-import { render, waitFor, fireEvent, act } from 'test/test-utils';
+import { render, waitFor, fireEvent, act, testWithFeatureToggles } from 'test/test-utils';
 
-import { ExpressionQuery, ExpressionQueryType } from '../types';
+import { ExpressionQuery, ExpressionQueryType } from '../../types';
 
 import { SqlExpr, SqlExprProps } from './SqlExpr';
 
@@ -48,6 +48,20 @@ jest.mock('./GenAI/hooks/useSQLExplanations', () => ({
     updatePrevExpression: jest.fn(),
     prevExpression: currentExpression,
   })),
+}));
+
+// Mock the backend API
+const mockBackendSrv = {
+  post: jest.fn().mockResolvedValue({
+    kind: 'SQLSchemaResponse',
+    apiVersion: 'query.grafana.app/v0alpha1',
+    sqlSchemas: {},
+  }),
+};
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => mockBackendSrv,
 }));
 
 // Note: Add more mocks if needed for other lazy components
@@ -202,5 +216,92 @@ describe('SqlExpr with GenAI features', () => {
 
     const { findByTestId } = render(<SqlExpr {...defaultProps} />);
     expect(await findByTestId('explanation-drawer')).toBeInTheDocument();
+  });
+});
+
+describe('Schema Inspector feature toggle', () => {
+  const defaultProps: SqlExprProps = {
+    onChange: jest.fn(),
+    refIds: [{ value: 'A' }],
+    query: { refId: 'expression_1', type: ExpressionQueryType.sql, expression: `SELECT * FROM A LIMIT 10` },
+    queries: [],
+  };
+
+  describe('when feature enabled', () => {
+    testWithFeatureToggles({ enable: ['queryService', 'grafanaAPIServerWithExperimentalAPIs'] });
+
+    afterEach(() => {
+      mockBackendSrv.post.mockResolvedValue({
+        kind: 'SQLSchemaResponse',
+        apiVersion: 'query.grafana.app/v0alpha1',
+        sqlSchemas: {},
+      });
+    });
+
+    it('renders panel open by default', () => {
+      const { getByText } = render(<SqlExpr {...defaultProps} />);
+
+      expect(getByText('No schema information available')).toBeInTheDocument();
+    });
+
+    it('closes panel and shows reopen button when close button clicked', async () => {
+      const { queryByText, getByLabelText, findByText } = render(<SqlExpr {...defaultProps} />);
+
+      expect(queryByText('No schema information available')).toBeInTheDocument();
+
+      const closeButton = getByLabelText('Close schema inspector');
+      await act(async () => fireEvent.click(closeButton));
+
+      expect(queryByText('No schema information available')).not.toBeInTheDocument();
+      expect(await findByText('Inspect schema')).toBeInTheDocument();
+    });
+
+    it('reopens panel when inspect schema button clicked after closing', async () => {
+      const { queryByText, getByLabelText, getByText } = render(<SqlExpr {...defaultProps} />);
+
+      const closeButton = getByLabelText('Close schema inspector');
+      await act(async () => fireEvent.click(closeButton));
+
+      expect(queryByText('No schema information available')).not.toBeInTheDocument();
+
+      const reopenButton = getByText('Inspect schema');
+      await act(async () => fireEvent.click(reopenButton));
+
+      expect(queryByText('No schema information available')).toBeInTheDocument();
+    });
+
+    it('renders tabs for multiple query refIds', async () => {
+      mockBackendSrv.post.mockResolvedValue({
+        kind: 'SQLSchemaResponse',
+        apiVersion: 'query.grafana.app/v0alpha1',
+        sqlSchemas: {
+          A: { columns: [], sampleRows: [] },
+          B: { columns: [], sampleRows: [] },
+          C: { columns: [], sampleRows: [] },
+        },
+      });
+
+      const propsWithQueries = {
+        ...defaultProps,
+        queries: [{ refId: 'A' }, { refId: 'B' }, { refId: 'C' }],
+      };
+
+      const { findByRole } = render(<SqlExpr {...propsWithQueries} />);
+
+      expect(await findByRole('tab', { name: 'A' })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: 'B' })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: 'C' })).toBeInTheDocument();
+    });
+  });
+
+  describe('when feature disabled', () => {
+    testWithFeatureToggles({ enable: [] });
+
+    it('does not render panel or button', () => {
+      const { queryByText } = render(<SqlExpr {...defaultProps} />);
+
+      expect(queryByText('Inspect schema')).not.toBeInTheDocument();
+      expect(queryByText('No schema information available')).not.toBeInTheDocument();
+    });
   });
 });
