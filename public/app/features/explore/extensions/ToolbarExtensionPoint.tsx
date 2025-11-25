@@ -1,8 +1,14 @@
 import { ReactElement, useMemo, useState } from 'react';
 
-import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZone } from '@grafana/data';
+import {
+  type ExplorePanelsState,
+  type PluginExtensionLink,
+  PluginExtensionPoints,
+  RawTimeRange,
+  getTimeZone,
+} from '@grafana/data';
 import { reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { DataQuery, LogsSortOrder, TimeZone } from '@grafana/schema';
+import { DataQuery, TimeZone } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ExplorePanelData } from 'app/types/explore';
@@ -89,7 +95,7 @@ export type PluginExtensionExploreContext = {
   timeRange: RawTimeRange;
   timeZone: TimeZone;
   shouldShowAddCorrelation: boolean;
-  sortOrder?: LogsSortOrder;
+  panelsSate?: ExplorePanelsState;
 };
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
@@ -111,7 +117,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
       timeRange: range.raw,
       timeZone: getTimeZone({ timeZone }),
       shouldShowAddCorrelation: canWriteCorrelations && !isCorrelationsEditorMode && isLeftPane && numUniqueIds === 1,
-      sortOrder: panelsState?.logs?.sortOrder,
+      panelsState,
     };
   }, [
     canWriteCorrelations,
@@ -119,7 +125,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
     isCorrelationsEditorMode,
     isLeftPane,
     numUniqueIds,
-    panelsState?.logs?.sortOrder,
+    panelsState,
     queries,
     queryResponse,
     range.raw,
