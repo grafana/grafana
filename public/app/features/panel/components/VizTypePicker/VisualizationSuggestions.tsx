@@ -28,7 +28,7 @@ export interface Props {
   panel?: PanelModel;
 }
 
-const MIN_COLUMN_SIZE = 260;
+const MIN_COLUMN_SIZE = 220;
 const IMAGE_SIZE = 22;
 
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
@@ -230,6 +230,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     vizTypeLogo: css({
+      filter: 'grayscale(100%)',
       maxHeight: IMAGE_SIZE,
       width: IMAGE_SIZE,
       alignItems: 'center',
@@ -242,7 +243,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: '50%',
       transform: 'translate(-50%, -50%)',
       zIndex: 10,
-      padding: '0 16px',
+      padding: `0 ${theme.spacing(2)}`,
     }),
   };
 };
