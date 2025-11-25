@@ -2637,7 +2637,7 @@
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
-      "placeholder-group-search": "Search group (min 3 characters)",
+      "placeholder-group-search": "Search group",
       "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
       "rule-source": {

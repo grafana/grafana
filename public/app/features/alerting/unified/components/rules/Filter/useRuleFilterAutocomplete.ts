@@ -173,7 +173,7 @@ export function useNamespaceAndGroupOptions(): {
   );
 
   const namespacePlaceholder = t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
-  const groupPlaceholder = t('alerting.rules-filter.placeholder-group-search', 'Search group (min 3 characters)');
+  const groupPlaceholder = t('alerting.rules-filter.placeholder-group-search', 'Search group');
 
   return { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder };
 }
