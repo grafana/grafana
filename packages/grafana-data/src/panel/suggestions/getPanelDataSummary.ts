@@ -24,6 +24,7 @@ export interface PanelDataSummary {
   rawFrames?: DataFrame[];
 
   /* --- DEPRECATED FIELDS BELOW --- */
+  /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.number) */
   numberFieldCount: number;
   /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.time) */
   timeFieldCount: number;
@@ -44,13 +45,13 @@ class PanelDataSummaryImpl implements PanelDataSummary {
   public rowCountTotal = 0;
   /** max number of rows in any single dataframe in the panel data */
   public rowCountMax = 0;
-  public fieldCountTotal = 0;
+  public fieldCount = 0;
   /** max number of fields in any single dataframe in the panel data */
   public fieldCountMax = 0;
 
   private countByType: Partial<Record<FieldType, number>> = {};
   private preferredVisualisationTypes: Set<PreferredVisualisationType> = new Set<PreferredVisualisationType>();
-  private _dataFrameTypes: Set<DataFrameType> = new Set<DataFrameType>();
+  private dataFrameTypes: Set<DataFrameType> = new Set<DataFrameType>();
 
   public get hasData(): boolean {
     return this.rowCountTotal > 0;
@@ -72,11 +73,11 @@ class PanelDataSummaryImpl implements PanelDataSummary {
         this.preferredVisualisationTypes.add(frame.meta.preferredVisualisationType);
       }
       if (frame.meta?.type) {
-        this._dataFrameTypes.add(frame.meta.type);
+        this.dataFrameTypes.add(frame.meta.type);
       }
 
       for (const field of frame.fields) {
-        this.fieldCountTotal++;
+        this.fieldCount++;
         this.countByType[field.type] = (this.countByType[field.type] || 0) + 1;
       }
 
@@ -102,7 +103,7 @@ class PanelDataSummaryImpl implements PanelDataSummary {
   }
 
   public hasDataFrameType(type: DataFrameType): boolean {
-    return this._dataFrameTypes.has(type);
+    return this.dataFrameTypes.has(type);
   }
 
   /**** DEPRECATED ****/
@@ -129,14 +130,6 @@ class PanelDataSummaryImpl implements PanelDataSummary {
   /** @deprecated use PanelDataSummary.hasFieldType(FieldType.string) */
   public get hasStringField() {
     return this.fieldCountByType(FieldType.string) > 0;
-  }
-  /** @deprecated use hasPreferredVisualizationType */
-  public get preferredVisualisationType(): PreferredVisualisationType | undefined {
-    return this.preferredVisualisationTypes.values().next().value;
-  }
-  /** @deprecated use fieldCountTotal */
-  public get fieldCount(): number {
-    return this.fieldCountTotal;
   }
 }
 
