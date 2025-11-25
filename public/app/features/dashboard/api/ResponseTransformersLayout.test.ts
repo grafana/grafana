@@ -1,7 +1,13 @@
 import { Panel, RowPanel } from '@grafana/schema';
 import { Spec as DashboardV2Spec, RowsLayoutKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-import { ResponseTransformers } from './ResponseTransformers';
+import {
+  flattenGridLayoutToV1Panels,
+  flattenRowsLayoutToV1Panels,
+  flattenTabsLayoutToV1Panels,
+  flattenAutoGridLayoutToV1Panels,
+  ResponseTransformers,
+} from './ResponseTransformers';
 import { DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -82,778 +88,6 @@ describe('ResponseTransformers Layout Conversion', () => {
       },
     };
   }
-
-  describe('v2 -> v1: Nested layouts flattening', () => {
-    it('should flatten nested RowsLayout to flat v1 panels', () => {
-      // Create a v2 dashboard with nested rows
-      const elements: DashboardV2Spec['elements'] = {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            id: 1,
-            title: 'Panel 1',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-        'panel-2': {
-          kind: 'Panel',
-          spec: {
-            id: 2,
-            title: 'Panel 2',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-        'panel-3': {
-          kind: 'Panel',
-          spec: {
-            id: 3,
-            title: 'Panel 3',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-      };
-
-      const layout: DashboardV2Spec['layout'] = {
-        kind: 'RowsLayout',
-        spec: {
-          rows: [
-            {
-              kind: 'RowsLayoutRow',
-              spec: {
-                title: 'Outer Row',
-                collapse: false,
-                layout: {
-                  kind: 'RowsLayout',
-                  spec: {
-                    rows: [
-                      {
-                        kind: 'RowsLayoutRow',
-                        spec: {
-                          title: 'Inner Row',
-                          collapse: false,
-                          layout: {
-                            kind: 'GridLayout',
-                            spec: {
-                              items: [
-                                {
-                                  kind: 'GridLayoutItem',
-                                  spec: {
-                                    x: 0,
-                                    y: 0,
-                                    width: 12,
-                                    height: 8,
-                                    element: {
-                                      kind: 'ElementReference',
-                                      name: 'panel-1',
-                                    },
-                                  },
-                                },
-                              ],
-                            },
-                          },
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-            {
-              kind: 'RowsLayoutRow',
-              spec: {
-                title: 'Second Row',
-                collapse: false,
-                layout: {
-                  kind: 'GridLayout',
-                  spec: {
-                    items: [
-                      {
-                        kind: 'GridLayoutItem',
-                        spec: {
-                          x: 0,
-                          y: 0,
-                          width: 12,
-                          height: 8,
-                          element: {
-                            kind: 'ElementReference',
-                            name: 'panel-2',
-                          },
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-          ],
-        },
-      };
-
-      const v2Dashboard = createV2Dashboard(elements, layout);
-
-      const v1Result = ResponseTransformers.ensureV1Response(v2Dashboard);
-
-      // Should have flattened structure: outer row, inner row, second row, and panels
-      expect(v1Result.dashboard.panels).toBeDefined();
-      const panels = v1Result.dashboard.panels || [];
-
-      // Should have row panels for "Outer Row", "Inner Row", and "Second Row"
-      const rowPanels = panels.filter((p) => p.type === 'row') as RowPanel[];
-      expect(rowPanels.length).toBeGreaterThanOrEqual(2);
-
-      // Find the inner row panel (expanded row)
-      const innerRow = rowPanels.find((r) => r.title === 'Inner Row');
-      expect(innerRow).toBeDefined();
-      expect(innerRow?.collapsed).toBe(false);
-      // For expanded rows, panels should be at top level, not in row.panels array
-      expect(innerRow?.panels?.length).toBe(0);
-
-      // Find the second row panel (expanded row)
-      const secondRow = rowPanels.find((r) => r.title === 'Second Row');
-      expect(secondRow).toBeDefined();
-      expect(secondRow?.collapsed).toBe(false);
-      // For expanded rows, panels should be at top level, not in row.panels array
-      expect(secondRow?.panels?.length).toBe(0);
-
-      // Panels should be at the top level for expanded rows
-      const panelsOutsideRows = panels.filter((p) => p.type !== 'row');
-      expect(panelsOutsideRows.length).toBe(2);
-      expect(panelsOutsideRows.find((p) => p.id === 1)).toBeDefined();
-      expect(panelsOutsideRows.find((p) => p.id === 2)).toBeDefined();
-    });
-
-    it('should convert TabsLayout to RowPanels in v1', () => {
-      const elements: DashboardV2Spec['elements'] = {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            id: 1,
-            title: 'Panel 1',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-      };
-
-      const layout: DashboardV2Spec['layout'] = {
-        kind: 'TabsLayout',
-        spec: {
-          tabs: [
-            {
-              kind: 'TabsLayoutTab',
-              spec: {
-                title: 'Tab 1',
-                layout: {
-                  kind: 'GridLayout',
-                  spec: {
-                    items: [
-                      {
-                        kind: 'GridLayoutItem',
-                        spec: {
-                          x: 0,
-                          y: 0,
-                          width: 12,
-                          height: 8,
-                          element: {
-                            kind: 'ElementReference',
-                            name: 'panel-1',
-                          },
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-          ],
-        },
-      };
-
-      const v2Dashboard = createV2Dashboard(elements, layout);
-
-      const v1Result = ResponseTransformers.ensureV1Response(v2Dashboard);
-
-      expect(v1Result.dashboard.panels).toBeDefined();
-      const panels = v1Result.dashboard.panels || [];
-      const rowPanels = panels.filter((p) => p.type === 'row') as RowPanel[];
-
-      // Tab should be converted to an expanded row panel
-      expect(rowPanels.length).toBe(1);
-      const tabRow = rowPanels[0];
-      expect(tabRow.title).toBe('Tab 1');
-      expect(tabRow.collapsed).toBe(false);
-      // Tab rows are expanded, so panels array should be empty
-      expect(tabRow.panels?.length).toBe(0);
-
-      // Verify the row panel is in the dashboard panels array
-      expect(panels).toContain(tabRow);
-
-      // Verify gridPos ordering: row should have a gridPos
-      expect(tabRow.gridPos).toBeDefined();
-      const rowY = tabRow.gridPos?.y ?? 0;
-      expect(tabRow.gridPos?.x).toBe(0);
-      expect(tabRow.gridPos?.w).toBe(24);
-      expect(tabRow.gridPos?.h).toBe(1);
-
-      // Verify the panel is at the top level (not in row.panels)
-      const allPanels = panels.filter((p) => p.type !== 'row') as Panel[];
-      const panelFromTab = allPanels.find((p) => p.id === 1);
-      expect(panelFromTab).toBeDefined();
-      expect(panelFromTab?.gridPos).toBeDefined();
-      // Panel Y position should be absolute: rowY + rowHeaderHeight (1) + relativeY (0) = rowY + 1
-      expect(panelFromTab?.gridPos?.y).toBe(rowY + 1);
-      expect(panelFromTab?.gridPos?.x).toBe(0);
-      expect(panelFromTab?.gridPos?.w).toBe(12);
-      expect(panelFromTab?.gridPos?.h).toBe(8);
-    });
-
-    it('should convert AutoGridLayout with default panel sizes', () => {
-      const elements: DashboardV2Spec['elements'] = {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            id: 1,
-            title: 'Panel 1',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-        'panel-2': {
-          kind: 'Panel',
-          spec: {
-            id: 2,
-            title: 'Panel 2',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-      };
-
-      const layout: DashboardV2Spec['layout'] = {
-        kind: 'AutoGridLayout',
-        spec: {
-          maxColumnCount: 3,
-          columnWidthMode: 'standard',
-          rowHeightMode: 'standard',
-          items: [
-            {
-              kind: 'AutoGridLayoutItem',
-              spec: {
-                element: {
-                  kind: 'ElementReference',
-                  name: 'panel-1',
-                },
-              },
-            },
-            {
-              kind: 'AutoGridLayoutItem',
-              spec: {
-                element: {
-                  kind: 'ElementReference',
-                  name: 'panel-2',
-                },
-              },
-            },
-          ],
-        },
-      };
-
-      const v2Dashboard = createV2Dashboard(elements, layout);
-
-      const v1Result = ResponseTransformers.ensureV1Response(v2Dashboard);
-
-      expect(v1Result.dashboard.panels).toBeDefined();
-      const panels = v1Result.dashboard.panels || [];
-      const regularPanels = panels.filter((p) => p.type !== 'row') as Panel[];
-
-      // Should have 2 panels with default sizes
-      expect(regularPanels.length).toBe(2);
-      expect(regularPanels[0].id).toBe(1);
-      expect(regularPanels[1].id).toBe(2);
-
-      // Check default sizes: width should be 24/3 = 8, height should be 9 for 'standard' rowHeight (320px)
-      expect(regularPanels[0].gridPos?.w).toBe(8);
-      expect(regularPanels[0].gridPos?.h).toBe(9);
-      expect(regularPanels[1].gridPos?.w).toBe(8);
-      expect(regularPanels[1].gridPos?.h).toBe(9);
-    });
-
-    it('should convert AutoGridLayout with short rowHeight', () => {
-      const elements: DashboardV2Spec['elements'] = {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            id: 1,
-            title: 'Panel 1',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-      };
-
-      const layout: DashboardV2Spec['layout'] = {
-        kind: 'AutoGridLayout',
-        spec: {
-          maxColumnCount: 3,
-          columnWidthMode: 'standard',
-          rowHeightMode: 'short',
-          items: [
-            {
-              kind: 'AutoGridLayoutItem',
-              spec: {
-                element: {
-                  kind: 'ElementReference',
-                  name: 'panel-1',
-                },
-              },
-            },
-          ],
-        },
-      };
-
-      const v2Dashboard = createV2Dashboard(elements, layout);
-      const v1Result = ResponseTransformers.ensureV1Response(v2Dashboard);
-
-      const panels = v1Result.dashboard.panels || [];
-      const regularPanels = panels.filter((p) => p.type !== 'row') as Panel[];
-
-      expect(regularPanels.length).toBe(1);
-      // Short rowHeight (168px) should convert to ~5 grid units
-      expect(regularPanels[0].gridPos?.h).toBe(5);
-    });
-
-    it('should convert AutoGridLayout with tall rowHeight', () => {
-      const elements: DashboardV2Spec['elements'] = {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            id: 1,
-            title: 'Panel 1',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-      };
-
-      const layout: DashboardV2Spec['layout'] = {
-        kind: 'AutoGridLayout',
-        spec: {
-          maxColumnCount: 3,
-          columnWidthMode: 'standard',
-          rowHeightMode: 'tall',
-          items: [
-            {
-              kind: 'AutoGridLayoutItem',
-              spec: {
-                element: {
-                  kind: 'ElementReference',
-                  name: 'panel-1',
-                },
-              },
-            },
-          ],
-        },
-      };
-
-      const v2Dashboard = createV2Dashboard(elements, layout);
-      const v1Result = ResponseTransformers.ensureV1Response(v2Dashboard);
-
-      const panels = v1Result.dashboard.panels || [];
-      const regularPanels = panels.filter((p) => p.type !== 'row') as Panel[];
-
-      expect(regularPanels.length).toBe(1);
-      // Tall rowHeight (512px) should convert to ~14 grid units
-      expect(regularPanels[0].gridPos?.h).toBe(14);
-    });
-
-    it('should convert AutoGridLayout with custom rowHeight', () => {
-      const elements: DashboardV2Spec['elements'] = {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            id: 1,
-            title: 'Panel 1',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-      };
-
-      const layout: DashboardV2Spec['layout'] = {
-        kind: 'AutoGridLayout',
-        spec: {
-          maxColumnCount: 3,
-          columnWidthMode: 'standard',
-          rowHeightMode: 'custom',
-          rowHeight: 250,
-          items: [
-            {
-              kind: 'AutoGridLayoutItem',
-              spec: {
-                element: {
-                  kind: 'ElementReference',
-                  name: 'panel-1',
-                },
-              },
-            },
-          ],
-        },
-      };
-
-      const v2Dashboard = createV2Dashboard(elements, layout);
-      const v1Result = ResponseTransformers.ensureV1Response(v2Dashboard);
-
-      const panels = v1Result.dashboard.panels || [];
-      const regularPanels = panels.filter((p) => p.type !== 'row') as Panel[];
-
-      expect(regularPanels.length).toBe(1);
-      // Custom rowHeight (250px) should convert to appropriate grid units
-      // 250 / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) ≈ 7-8
-      expect(regularPanels[0].gridPos?.h).toBeGreaterThanOrEqual(7);
-      expect(regularPanels[0].gridPos?.h).toBeLessThanOrEqual(8);
-    });
-
-    it('should ensure panels maintain Y position ordering (each panel Y >= previous panel Y)', () => {
-      const elements: DashboardV2Spec['elements'] = {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            id: 1,
-            title: 'Panel 1',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-        'panel-2': {
-          kind: 'Panel',
-          spec: {
-            id: 2,
-            title: 'Panel 2',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-        'panel-3': {
-          kind: 'Panel',
-          spec: {
-            id: 3,
-            title: 'Panel 3',
-            description: '',
-            vizConfig: {
-              kind: 'VizConfig',
-              group: 'timeseries',
-              version: '',
-              spec: {
-                fieldConfig: { defaults: {}, overrides: [] },
-                options: {},
-              },
-            },
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [],
-                transformations: [],
-                queryOptions: {},
-              },
-            },
-            links: [],
-          },
-        },
-      };
-
-      const layout: DashboardV2Spec['layout'] = {
-        kind: 'RowsLayout',
-        spec: {
-          rows: [
-            {
-              kind: 'RowsLayoutRow',
-              spec: {
-                title: 'Row 1',
-                layout: {
-                  kind: 'GridLayout',
-                  spec: {
-                    items: [
-                      {
-                        kind: 'GridLayoutItem',
-                        spec: {
-                          x: 0,
-                          y: 0,
-                          width: 12,
-                          height: 8,
-                          element: {
-                            kind: 'ElementReference',
-                            name: 'panel-1',
-                          },
-                        },
-                      },
-                      {
-                        kind: 'GridLayoutItem',
-                        spec: {
-                          x: 12,
-                          y: 0,
-                          width: 12,
-                          height: 8,
-                          element: {
-                            kind: 'ElementReference',
-                            name: 'panel-2',
-                          },
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-            {
-              kind: 'RowsLayoutRow',
-              spec: {
-                title: 'Row 2',
-                layout: {
-                  kind: 'GridLayout',
-                  spec: {
-                    items: [
-                      {
-                        kind: 'GridLayoutItem',
-                        spec: {
-                          x: 0,
-                          y: 0,
-                          width: 12,
-                          height: 8,
-                          element: {
-                            kind: 'ElementReference',
-                            name: 'panel-3',
-                          },
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-          ],
-        },
-      };
-
-      const v2Dashboard = createV2Dashboard(elements, layout);
-      const v1Result = ResponseTransformers.ensureV1Response(v2Dashboard);
-
-      expect(v1Result.dashboard.panels).toBeDefined();
-      const panels = v1Result.dashboard.panels || [];
-
-      // Filter out row panels to get only regular panels
-      const regularPanels = panels.filter((p) => p.type !== 'row' && 'gridPos' in p) as Panel[];
-
-      // Verify that each panel's Y position is >= the previous panel's Y position
-      for (let i = 1; i < regularPanels.length; i++) {
-        const prevPanel = regularPanels[i - 1];
-        const currentPanel = regularPanels[i];
-        const prevY = prevPanel.gridPos?.y ?? 0;
-        const currentY = currentPanel.gridPos?.y ?? 0;
-
-        expect(currentY).toBeGreaterThanOrEqual(prevY);
-      }
-
-      // Also verify all panels (including rows) maintain ordering
-      for (let i = 1; i < panels.length; i++) {
-        const prevPanel = panels[i - 1];
-        const currentPanel = panels[i];
-        const prevY = prevPanel.gridPos?.y ?? 0;
-        const currentY = currentPanel.gridPos?.y ?? 0;
-
-        expect(currentY).toBeGreaterThanOrEqual(prevY);
-      }
-    });
-  });
 
   describe('Round-trip conversion: v1 -> v2 -> v1', () => {
     it('should preserve dashboard structure through round-trip conversion', () => {
@@ -1824,7 +1058,6 @@ describe('ResponseTransformers Layout Conversion', () => {
       const v1Result = ResponseTransformers.ensureV1Response(v2Dashboard);
 
       const panels = v1Result.dashboard.panels || [];
-      const rowPanels = panels.filter((p) => p.type === 'row') as RowPanel[];
 
       // Find indices of rows
       const parentRowIndex = panels.findIndex((p) => p.type === 'row' && (p as RowPanel).title === 'Row with Tabs');
@@ -1840,6 +1073,627 @@ describe('ResponseTransformers Layout Conversion', () => {
       expect(tabRowIndex).toBeGreaterThan(parentRowIndex);
       // Tab row should be before Row 2
       expect(tabRowIndex).toBeLessThan(row2Index);
+    });
+  });
+
+  describe('Individual layout handler functions', () => {
+    // Helper to create a simple panel element
+    function createPanelElement(id: number, name: string): DashboardV2Spec['elements'][string] {
+      return {
+        kind: 'Panel',
+        spec: {
+          id,
+          title: `Panel ${id}`,
+          description: '',
+          vizConfig: {
+            kind: 'VizConfig',
+            group: 'timeseries',
+            version: '',
+            spec: {
+              fieldConfig: { defaults: {}, overrides: [] },
+              options: {},
+            },
+          },
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [],
+              transformations: [],
+              queryOptions: {},
+            },
+          },
+          links: [],
+        },
+      };
+    }
+
+    describe('flattenGridLayoutToV1Panels', () => {
+      it('should convert GridLayout items to V1 panels', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+          'panel-2': createPanelElement(2, 'panel-2'),
+        };
+
+        const layout = {
+          kind: 'GridLayout' as const,
+          spec: {
+            items: [
+              {
+                kind: 'GridLayoutItem' as const,
+                spec: {
+                  x: 0,
+                  y: 0,
+                  width: 12,
+                  height: 8,
+                  element: {
+                    kind: 'ElementReference' as const,
+                    name: 'panel-1',
+                  },
+                },
+              },
+              {
+                kind: 'GridLayoutItem' as const,
+                spec: {
+                  x: 12,
+                  y: 0,
+                  width: 12,
+                  height: 8,
+                  element: {
+                    kind: 'ElementReference' as const,
+                    name: 'panel-2',
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        const baseY = 0;
+        const result = flattenGridLayoutToV1Panels(elements, layout, baseY);
+
+        expect(result).toHaveLength(2);
+        expect(result[0]).toHaveProperty('id', 1);
+        expect(result[0]).toHaveProperty('title', 'Panel 1');
+        expect(result[0]).toHaveProperty('gridPos');
+        expect(result[0].gridPos).toEqual({ x: 0, y: 0, w: 12, h: 8 });
+
+        expect(result[1]).toHaveProperty('id', 2);
+        expect(result[1]).toHaveProperty('title', 'Panel 2');
+        expect(result[1].gridPos).toEqual({ x: 12, y: 0, w: 12, h: 8 });
+      });
+
+      it('should handle missing elements gracefully', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+        };
+
+        const layout = {
+          kind: 'GridLayout' as const,
+          spec: {
+            items: [
+              {
+                kind: 'GridLayoutItem' as const,
+                spec: {
+                  x: 0,
+                  y: 0,
+                  width: 12,
+                  height: 8,
+                  element: {
+                    kind: 'ElementReference' as const,
+                    name: 'panel-1',
+                  },
+                },
+              },
+              {
+                kind: 'GridLayoutItem' as const,
+                spec: {
+                  x: 12,
+                  y: 0,
+                  width: 12,
+                  height: 8,
+                  element: {
+                    kind: 'ElementReference' as const,
+                    name: 'missing-panel',
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        const baseY = 0;
+        const result = flattenGridLayoutToV1Panels(elements, layout, baseY);
+
+        expect(result).toHaveLength(1);
+        expect(result[0]).toHaveProperty('id', 1);
+      });
+
+      it('should apply baseY offset to panel positions', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+        };
+
+        const layout = {
+          kind: 'GridLayout' as const,
+          spec: {
+            items: [
+              {
+                kind: 'GridLayoutItem' as const,
+                spec: {
+                  x: 0,
+                  y: 0,
+                  width: 12,
+                  height: 8,
+                  element: {
+                    kind: 'ElementReference' as const,
+                    name: 'panel-1',
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        const baseY = 10;
+        const result = flattenGridLayoutToV1Panels(elements, layout, baseY);
+
+        expect(result[0].gridPos?.y).toBe(10);
+      });
+    });
+
+    describe('flattenRowsLayoutToV1Panels', () => {
+      it('should convert RowsLayout to row panels and extracted panels', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+          'panel-2': createPanelElement(2, 'panel-2'),
+        };
+
+        const layout = {
+          kind: 'RowsLayout' as const,
+          spec: {
+            rows: [
+              {
+                kind: 'RowsLayoutRow' as const,
+                spec: {
+                  title: 'Row 1',
+                  collapse: false,
+                  layout: {
+                    kind: 'GridLayout' as const,
+                    spec: {
+                      items: [
+                        {
+                          kind: 'GridLayoutItem' as const,
+                          spec: {
+                            x: 0,
+                            y: 0,
+                            width: 12,
+                            height: 8,
+                            element: {
+                              kind: 'ElementReference' as const,
+                              name: 'panel-1',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        const baseY = 0;
+        const { panels } = flattenRowsLayoutToV1Panels(elements, layout, baseY);
+
+        expect(panels.length).toBeGreaterThan(0);
+        const rowPanel = panels.find((p) => p.type === 'row') as RowPanel;
+        expect(rowPanel).toBeDefined();
+        expect(rowPanel.title).toBe('Row 1');
+        expect(rowPanel.collapsed).toBe(false);
+
+        const extractedPanels = panels.filter((p) => p.type !== 'row');
+        expect(extractedPanels.length).toBeGreaterThan(0);
+      });
+
+      it('should handle collapsed rows correctly', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+        };
+
+        const layout = {
+          kind: 'RowsLayout' as const,
+          spec: {
+            rows: [
+              {
+                kind: 'RowsLayoutRow' as const,
+                spec: {
+                  title: 'Collapsed Row',
+                  collapse: true,
+                  layout: {
+                    kind: 'GridLayout' as const,
+                    spec: {
+                      items: [
+                        {
+                          kind: 'GridLayoutItem' as const,
+                          spec: {
+                            x: 0,
+                            y: 0,
+                            width: 12,
+                            height: 8,
+                            element: {
+                              kind: 'ElementReference' as const,
+                              name: 'panel-1',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        const baseY = 0;
+        const { panels, nextBaseY } = flattenRowsLayoutToV1Panels(elements, layout, baseY);
+
+        const rowPanel = panels.find((p) => p.type === 'row') as RowPanel;
+        expect(rowPanel).toBeDefined();
+        expect(rowPanel.collapsed).toBe(true);
+        expect(rowPanel.panels).toBeDefined();
+        expect(rowPanel.panels?.length).toBeGreaterThan(0);
+        expect(nextBaseY).toBe(baseY + 1);
+      });
+
+      it('should handle hidden header row (first row with hideHeader and empty title)', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+        };
+
+        const layout = {
+          kind: 'RowsLayout' as const,
+          spec: {
+            rows: [
+              {
+                kind: 'RowsLayoutRow' as const,
+                spec: {
+                  title: '',
+                  hideHeader: true,
+                  collapse: false,
+                  layout: {
+                    kind: 'GridLayout' as const,
+                    spec: {
+                      items: [
+                        {
+                          kind: 'GridLayoutItem' as const,
+                          spec: {
+                            x: 0,
+                            y: 0,
+                            width: 12,
+                            height: 8,
+                            element: {
+                              kind: 'ElementReference' as const,
+                              name: 'panel-1',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        const baseY = 0;
+        const { panels } = flattenRowsLayoutToV1Panels(elements, layout, baseY);
+
+        // Should not create a row panel for hidden header row
+        const rowPanels = panels.filter((p) => p.type === 'row');
+        expect(rowPanels.length).toBe(0);
+
+        // Should extract panels directly
+        const extractedPanels = panels.filter((p) => p.type !== 'row');
+        expect(extractedPanels.length).toBe(1);
+        expect(extractedPanels[0]).toHaveProperty('id', 1);
+      });
+    });
+
+    describe('flattenTabsLayoutToV1Panels', () => {
+      it('should convert TabsLayout tabs to row panels', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+          'panel-2': createPanelElement(2, 'panel-2'),
+        };
+
+        const layout = {
+          kind: 'TabsLayout' as const,
+          spec: {
+            tabs: [
+              {
+                kind: 'TabsLayoutTab' as const,
+                spec: {
+                  title: 'Tab 1',
+                  layout: {
+                    kind: 'GridLayout' as const,
+                    spec: {
+                      items: [
+                        {
+                          kind: 'GridLayoutItem' as const,
+                          spec: {
+                            x: 0,
+                            y: 0,
+                            width: 12,
+                            height: 8,
+                            element: {
+                              kind: 'ElementReference' as const,
+                              name: 'panel-1',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+              {
+                kind: 'TabsLayoutTab' as const,
+                spec: {
+                  title: 'Tab 2',
+                  layout: {
+                    kind: 'GridLayout' as const,
+                    spec: {
+                      items: [
+                        {
+                          kind: 'GridLayoutItem' as const,
+                          spec: {
+                            x: 0,
+                            y: 0,
+                            width: 12,
+                            height: 8,
+                            element: {
+                              kind: 'ElementReference' as const,
+                              name: 'panel-2',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        const baseY = 0;
+        const { panels, nextBaseY } = flattenTabsLayoutToV1Panels(elements, layout, baseY);
+
+        expect(panels.length).toBeGreaterThan(0);
+        const rowPanels = panels.filter((p) => p.type === 'row') as RowPanel[];
+        expect(rowPanels.length).toBe(2);
+        expect(rowPanels[0].title).toBe('Tab 1');
+        expect(rowPanels[1].title).toBe('Tab 2');
+        expect(rowPanels[0].collapsed).toBe(false);
+        expect(rowPanels[1].collapsed).toBe(false);
+
+        // Tabs are expanded rows, so panels should be at top level
+        const extractedPanels = panels.filter((p) => p.type !== 'row');
+        expect(extractedPanels.length).toBe(2);
+        expect(nextBaseY).toBeGreaterThan(baseY);
+      });
+
+      it('should handle empty tabs', () => {
+        const elements: DashboardV2Spec['elements'] = {};
+
+        const layout = {
+          kind: 'TabsLayout' as const,
+          spec: {
+            tabs: [
+              {
+                kind: 'TabsLayoutTab' as const,
+                spec: {
+                  title: 'Empty Tab',
+                  layout: {
+                    kind: 'GridLayout' as const,
+                    spec: {
+                      items: [],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        const baseY = 0;
+        const { panels, nextBaseY } = flattenTabsLayoutToV1Panels(elements, layout, baseY);
+
+        const rowPanels = panels.filter((p) => p.type === 'row') as RowPanel[];
+        expect(rowPanels.length).toBe(1);
+        expect(rowPanels[0].title).toBe('Empty Tab');
+        expect(nextBaseY).toBe(baseY + 1);
+      });
+    });
+
+    describe('flattenAutoGridLayoutToV1Panels', () => {
+      it('should convert AutoGridLayout with default settings', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+          'panel-2': createPanelElement(2, 'panel-2'),
+          'panel-3': createPanelElement(3, 'panel-3'),
+        };
+
+        const layout = {
+          kind: 'AutoGridLayout' as const,
+          spec: {
+            maxColumnCount: 3,
+            columnWidthMode: 'standard' as const,
+            rowHeightMode: 'standard' as const,
+            items: [
+              {
+                kind: 'AutoGridLayoutItem' as const,
+                spec: {
+                  element: {
+                    kind: 'ElementReference' as const,
+                    name: 'panel-1',
+                  },
+                },
+              },
+              {
+                kind: 'AutoGridLayoutItem' as const,
+                spec: {
+                  element: {
+                    kind: 'ElementReference' as const,
+                    name: 'panel-2',
+                  },
+                },
+              },
+              {
+                kind: 'AutoGridLayoutItem' as const,
+                spec: {
+                  element: {
+                    kind: 'ElementReference' as const,
+                    name: 'panel-3',
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        const baseY = 0;
+        const result = flattenAutoGridLayoutToV1Panels(elements, layout, baseY);
+
+        expect(result).toHaveLength(3);
+        // With maxColumnCount=3, panel width should be 24/3 = 8
+        expect(result[0].gridPos?.w).toBe(8);
+        expect(result[0].gridPos?.x).toBe(0);
+        expect(result[0].gridPos?.y).toBe(baseY);
+
+        expect(result[1].gridPos?.w).toBe(8);
+        expect(result[1].gridPos?.x).toBe(8);
+        expect(result[1].gridPos?.y).toBe(baseY);
+
+        // Third panel should still be on the same row (x=16, since 3 panels fit: 0, 8, 16)
+        expect(result[2].gridPos?.w).toBe(8);
+        expect(result[2].gridPos?.x).toBe(16);
+        expect(result[2].gridPos?.y).toBe(baseY);
+      });
+
+      it('should handle different rowHeightMode values', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+        };
+
+        const testCases = [
+          { mode: 'short' as const, expectedHeight: 5 },
+          { mode: 'standard' as const, expectedHeight: 9 },
+          { mode: 'tall' as const, expectedHeight: 14 },
+        ];
+
+        testCases.forEach(({ mode, expectedHeight }) => {
+          const layout = {
+            kind: 'AutoGridLayout' as const,
+            spec: {
+              maxColumnCount: 3,
+              columnWidthMode: 'standard' as const,
+              rowHeightMode: mode,
+              items: [
+                {
+                  kind: 'AutoGridLayoutItem' as const,
+                  spec: {
+                    element: {
+                      kind: 'ElementReference' as const,
+                      name: 'panel-1',
+                    },
+                  },
+                },
+              ],
+            },
+          };
+
+          const baseY = 0;
+          const result = flattenAutoGridLayoutToV1Panels(elements, layout, baseY);
+
+          expect(result[0].gridPos?.h).toBe(expectedHeight);
+        });
+      });
+
+      it('should handle custom rowHeight', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+        };
+
+        const layout = {
+          kind: 'AutoGridLayout' as const,
+          spec: {
+            maxColumnCount: 3,
+            columnWidthMode: 'standard' as const,
+            rowHeightMode: 'custom' as const,
+            rowHeight: 200, // 200px
+            items: [
+              {
+                kind: 'AutoGridLayoutItem' as const,
+                spec: {
+                  element: {
+                    kind: 'ElementReference' as const,
+                    name: 'panel-1',
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        const baseY = 0;
+        const result = flattenAutoGridLayoutToV1Panels(elements, layout, baseY);
+
+        // 200px / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) = 200 / 36 ≈ 5.56 → 6
+        expect(result[0].gridPos?.h).toBeGreaterThan(0);
+      });
+
+      it('should handle different maxColumnCount values', () => {
+        const elements: DashboardV2Spec['elements'] = {
+          'panel-1': createPanelElement(1, 'panel-1'),
+        };
+
+        const testCases = [
+          { maxColumnCount: 1, expectedWidth: 24 },
+          { maxColumnCount: 2, expectedWidth: 12 },
+          { maxColumnCount: 4, expectedWidth: 6 },
+        ];
+
+        testCases.forEach(({ maxColumnCount, expectedWidth }) => {
+          const layout = {
+            kind: 'AutoGridLayout' as const,
+            spec: {
+              maxColumnCount,
+              columnWidthMode: 'standard' as const,
+              rowHeightMode: 'standard' as const,
+              items: [
+                {
+                  kind: 'AutoGridLayoutItem' as const,
+                  spec: {
+                    element: {
+                      kind: 'ElementReference' as const,
+                      name: 'panel-1',
+                    },
+                  },
+                },
+              ],
+            },
+          };
+
+          const baseY = 0;
+          const result = flattenAutoGridLayoutToV1Panels(elements, layout, baseY);
+
+          expect(result[0].gridPos?.w).toBe(expectedWidth);
+        });
+      });
     });
   });
 });
