@@ -1516,11 +1516,9 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 		}
 
 		// Verify case-sensitive alphabetical ordering
-		// different databases may sort uppercase before lowercase or vice versa depending on character set, the important part is that the order is consistent and case-sensitive
-		expectedOrder := []string{"test", "Test", "TEST"}
-		alternateExpectedOrder := []string{"TEST", "Test", "test"}
-		if !slices.Equal(groupOrder, expectedOrder) && !slices.Equal(groupOrder, alternateExpectedOrder) {
-			t.Fatalf("groups are not ordered case-sensitively as expected. got: %v, want: %v or %v", groupOrder, expectedOrder, alternateExpectedOrder)
+		expectedOrder := []string{"TEST", "Test", "test"}
+		if !slices.Equal(groupOrder, expectedOrder) {
+			t.Fatalf("groups are not ordered case-sensitively as expected. got: %v, want: %v", groupOrder, expectedOrder)
 		}
 
 		// Verify each group contains the correct rules
@@ -1682,7 +1680,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, versions, 2)
 		assert.IsDecreasing(t, versions[0].ID, versions[1].ID)
-		diff := versions[1].Diff(versions[0], AlertRuleFieldsToIgnoreInDiff[:]...)
+		diff := versions[1].Diff(&versions[0].AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
 		assert.ElementsMatch(t, []string{"Title", "RuleGroupIndex"}, diff.Paths())
 	})
 
@@ -1712,7 +1710,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV3.OrgID, ruleV3.GUID)
 		require.NoError(t, err)
 		assert.Len(t, versions, 3)
-		diff := versions[0].Diff(versions[1], AlertRuleFieldsToIgnoreInDiff[:]...)
+		diff := versions[0].Diff(&versions[1].AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
 		assert.ElementsMatch(t, []string{"RuleGroup", "NamespaceUID"}, diff.Paths())
 	})
 }

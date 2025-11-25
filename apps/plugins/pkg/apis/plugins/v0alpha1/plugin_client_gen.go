@@ -2,9 +2,6 @@ package v0alpha1
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -99,25 +96,4 @@ func (c *PluginClient) UpdateStatus(ctx context.Context, identifier resource.Ide
 
 func (c *PluginClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
-}
-
-type GetMetaRequest struct {
-	Headers http.Header
-}
-
-func (c *PluginClient) GetMeta(ctx context.Context, identifier resource.Identifier, request GetMetaRequest) (*GetMeta, error) {
-	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
-		Path:    "/meta",
-		Verb:    "GET",
-		Headers: request.Headers,
-	})
-	if err != nil {
-		return nil, err
-	}
-	cast := GetMeta{}
-	err = json.Unmarshal(resp, &cast)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetMeta: %w", err)
-	}
-	return &cast, nil
 }

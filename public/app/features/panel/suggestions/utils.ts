@@ -1,4 +1,4 @@
-import { PanelDataSummary, VisualizationSuggestion } from '@grafana/data';
+import { PanelData, PanelDataSummary, VisualizationSuggestion } from '@grafana/data';
 import { ReduceDataOptions } from '@grafana/schema';
 
 /**
@@ -12,6 +12,7 @@ export function showDefaultSuggestion(fn: (panelDataSummary: PanelDataSummary) =
 }
 
 /**
+ * @internal
  * for panel plugins which render "scalar" data (stat, gauge, etc), this helper provides default reduce options
  * depending on whether deaggregation is likely needed.
  * @param shouldUseRawValues if true, reduceOptions will be set to use raw values,
@@ -34,4 +35,14 @@ export function defaultReduceOptions(
           calcs: ['lastNotNull'],
         });
   return suggestion;
+}
+
+/**
+ * @internal
+ * Checks if the panel has data
+ * @param data - PanelData
+ * @returns true if data exists and has at least one non-empty series
+ */
+export function hasData(data?: PanelData): boolean {
+  return Boolean(data && data.series && data.series.length > 0 && data.series.some((frame) => frame.length > 0));
 }
