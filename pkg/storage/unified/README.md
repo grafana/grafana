@@ -11,6 +11,34 @@ By default it runs in-process within Grafana, but it can also be run as a standa
 
 There are 2 main tables, the `resource` table stores a "current" view of the objects, and the `resource_history` table stores a record of each revision of a given object.
 
+## Migrations
+
+Unified storage includes an automated migration system to move legacy resources (folders, dashboards, library panels) from traditional SQL storage to unified storage. Migrations run automatically on Grafana startup when enabled.
+
+### Key Features
+
+- **Automatic Migration**: Runs on startup when `disable_data_migrations = false`
+- **Validation**: Built-in validators ensure data integrity
+  - `CountValidator`: Verifies resource counts match
+  - `FolderTreeValidator`: Validates folder parent-child relationships
+- **Multi-Database Support**: PostgreSQL, MySQL, SQLite
+
+### Quick Start
+
+Enable migrations in `grafana.ini`:
+
+```ini
+[unified_storage]
+disable_data_migrations = false
+
+[grafana-apiserver]
+storage_type = unified
+```
+
+### Documentation
+
+- **Migration Architecture**: See [`migrations/README.md`](./migrations/README.md) for detailed information about migration implementation, validators, and troubleshooting
+
 ## Running Unified Storage
 
 ### Playlists: baseline configuration
