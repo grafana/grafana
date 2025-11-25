@@ -2016,6 +2016,26 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		_, err := service.searchDashboardsThroughK8s(ctx, query)
 		require.NoError(t, err)
 	})
+
+	t.Run("search will request legacy dashboard ID", func(t *testing.T) {
+		ctx := context.Background()
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		query := &dashboards.FindPersistedDashboardsQuery{
+			ManagedBy: utils.ManagerKindClassicFP, //nolint:staticcheck
+			OrgId:     1,
+		}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			return slices.Contains(req.Fields, "grafana.app/deprecatedInternalID") &&
+				slices.Contains(req.Fields, "labels.grafana.app/deprecatedInternalID")
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
+			TotalHits: 0,
+		}, nil)
+		_, err := service.searchDashboardsThroughK8s(ctx, query)
+		require.NoError(t, err)
+	})
 }
 
 func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
