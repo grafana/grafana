@@ -20,6 +20,7 @@
               },
               "datasourceUid": "__expr__",
               "model": {
+                "refId": "A",
                 "expression": "0/0",
                 "intervalMs": 1000,
                 "maxDataPoints": 43200,
