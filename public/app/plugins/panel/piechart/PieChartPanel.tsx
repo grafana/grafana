@@ -69,6 +69,7 @@ export function PieChartPanel(props: Props) {
             pieType={options.pieType}
             sort={options.sort}
             displayLabels={options.displayLabels}
+            centerValue={options.centerValue}
           />
         );
       }}

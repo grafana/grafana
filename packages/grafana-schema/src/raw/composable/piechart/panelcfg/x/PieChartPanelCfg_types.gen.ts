@@ -42,6 +42,16 @@ export enum PieChartLegendValues {
   Value = 'value',
 }
 
+/**
+ * Select what to display in the center of a donut chart.
+ *  - None: Do not display anything in the center.
+ *  - Total: Display the total sum of all values.
+ */
+export enum PieChartCenterValue {
+  None = 'none',
+  Total = 'total',
+}
+
 export interface PieChartLegendOptions extends common.VizLegendOptions {
   values: Array<PieChartLegendValues>;
 }
@@ -51,6 +61,7 @@ export const defaultPieChartLegendOptions: Partial<PieChartLegendOptions> = {
 };
 
 export interface Options extends common.OptionsWithTooltip, common.SingleStatBaseOptions {
+  centerValue?: PieChartCenterValue;
   displayLabels: Array<PieChartLabels>;
   legend: PieChartLegendOptions;
   pieType: PieChartType;

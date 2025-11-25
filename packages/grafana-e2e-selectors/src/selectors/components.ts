@@ -475,6 +475,9 @@ export const versionedComponents = {
         svgSlice: {
           '10.3.0': 'data testid Pie Chart Slice',
         },
+        svgCenterValue: {
+          '12.4.0': 'data-testid Pie Chart Center Value',
+        },
       },
       Text: {
         container: { [MIN_GRAFANA_VERSION]: () => '.markdown-html' },
