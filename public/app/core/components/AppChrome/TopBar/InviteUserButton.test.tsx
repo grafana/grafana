@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
+import { getExternalUserMngLinkUrl, getUpgradeUrl } from 'app/features/users/utils';
 
 import { InviteUserButton } from './InviteUserButton';
 
@@ -12,6 +12,12 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     externalUserMngLinkUrl: 'https://example.com/invite',
+    namespace: 'default', // on-prem by default
+    bootData: {
+      user: {
+        orgName: 'test-org',
+      },
+    },
   },
   reportInteraction: jest.fn(),
 }));
@@ -24,12 +30,18 @@ jest.mock('app/core/services/context_srv', () => ({
 
 jest.mock('app/features/users/utils', () => ({
   getExternalUserMngLinkUrl: jest.fn(),
+  getUpgradeUrl: jest.fn(),
+}));
+
+jest.mock('app/api/clients/legacy', () => ({
+  useGetCurrentOrgQuotaQuery: jest.fn(),
 }));
 
 const mockContextSrv = jest.mocked(contextSrv);
 const mockConfig = jest.mocked(config);
 const mockReportInteraction = jest.mocked(reportInteraction);
 const mockGetExternalUserMngLinkUrl = jest.mocked(getExternalUserMngLinkUrl);
+const mockGetUpgradeUrl = jest.mocked(getUpgradeUrl);
 
 // Mock window.open
 const mockWindowOpen = jest.fn();
@@ -52,10 +64,27 @@ const mockMatchMedia = (matches: boolean) => {
 
 describe('InviteUserButton', () => {
   const mockInviteUrl = 'https://example.com/invite?cnt=invite-user-top-bar';
+  const mockUpgradeUrl = 'https://grafana.com/orgs/test-org/my-account/manage-plan?cnt=upgrade-user-top-bar';
+
+  // Import the mocked hook
+  const { useGetCurrentOrgQuotaQuery } = require('app/api/clients/legacy');
+  const mockUseGetCurrentOrgQuotaQuery = jest.mocked(useGetCurrentOrgQuotaQuery);
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetExternalUserMngLinkUrl.mockReturnValue(mockInviteUrl);
+    mockGetUpgradeUrl.mockReturnValue(mockUpgradeUrl);
+
+    // Default mock: no quotas, no error (on-prem scenario)
+    mockUseGetCurrentOrgQuotaQuery.mockReturnValue({
+      data: undefined,
+      error: undefined,
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    // Default to on-prem
+    mockConfig.namespace = 'default';
   });
 
   describe('Business Logic - When button should appear', () => {
@@ -128,45 +157,111 @@ describe('InviteUserButton', () => {
     });
   });
 
+  describe('Upgrade functionality - Grafana Cloud', () => {
+    beforeEach(() => {
+      mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      mockMatchMedia(true);
+      // Simulate Grafana Cloud
+      mockConfig.namespace = 'stacks-12345';
+    });
+
+    it('should show invite button when quota is not reached', () => {
+      mockUseGetCurrentOrgQuotaQuery.mockReturnValue({
+        data: [{ target: 'org_user', limit: 5, used: 2, org_id: 1 }],
+        error: undefined,
+        isLoading: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      render(<InviteUserButton />);
+
+      const button = screen.getByRole('button', { name: /invite user/i });
+      expect(button).toHaveTextContent('Invite');
+    });
+
+    it('should show upgrade button when quota is reached', () => {
+      mockUseGetCurrentOrgQuotaQuery.mockReturnValue({
+        data: [{ target: 'org_user', limit: 5, used: 5, org_id: 1 }],
+        error: undefined,
+        isLoading: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      render(<InviteUserButton />);
+
+      const button = screen.getByRole('button', { name: /upgrade to invite more users/i });
+      expect(button).toHaveTextContent('Upgrade');
+    });
+
+    it('should open upgrade URL when upgrade button is clicked', async () => {
+      mockUseGetCurrentOrgQuotaQuery.mockReturnValue({
+        data: [{ target: 'org_user', limit: 5, used: 5, org_id: 1 }],
+        error: undefined,
+        isLoading: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      const user = userEvent.setup();
+
+      render(<InviteUserButton />);
+
+      await user.click(screen.getByRole('button', { name: /upgrade to invite more users/i }));
+
+      expect(mockReportInteraction).toHaveBeenCalledWith('upgrade_user_button_clicked', {
+        placement: 'top_bar_right',
+      });
+      expect(mockGetUpgradeUrl).toHaveBeenCalledWith('upgrade-user-top-bar');
+      expect(mockWindowOpen).toHaveBeenCalledWith(mockUpgradeUrl, '_blank');
+    });
+
+    it('should not fetch quotas on on-prem instances', () => {
+      mockConfig.namespace = 'default'; // on-prem
+
+      render(<InviteUserButton />);
+
+      // Should skip the query
+      expect(mockUseGetCurrentOrgQuotaQuery).toHaveBeenCalledWith(undefined, {
+        skip: true,
+      });
+    });
+
+    it('should fetch quotas on cloud instances when button will render', () => {
+      mockConfig.namespace = 'stacks-12345'; // cloud
+
+      render(<InviteUserButton />);
+
+      // Should not skip the query
+      expect(mockUseGetCurrentOrgQuotaQuery).toHaveBeenCalledWith(undefined, {
+        skip: false,
+      });
+    });
+  });
+
   describe('Error Handling - Preventing crashes', () => {
     beforeEach(() => {
       mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
       mockContextSrv.hasPermission.mockReturnValue(true);
       mockMatchMedia(true);
+      mockConfig.namespace = 'default'; // on-prem
     });
 
-    it('should handle URL generation errors gracefully', async () => {
-      mockGetExternalUserMngLinkUrl.mockImplementation(() => {
-        throw new Error('URL generation failed');
-      });
+    it('should handle quota API errors gracefully', () => {
+      mockConfig.namespace = 'stacks-12345';
+      mockUseGetCurrentOrgQuotaQuery.mockReturnValue({
+        data: undefined,
+        error: { message: 'API Error' },
+        isLoading: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      const user = userEvent.setup();
 
       render(<InviteUserButton />);
 
-      // Should not crash when URL generation fails
-      await user.click(screen.getByRole('button', { name: /invite user/i }));
-
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite user click:', expect.any(Error));
-
-      consoleSpy.mockRestore();
-    });
-
-    it('should handle popup blocking gracefully', async () => {
-      mockWindowOpen.mockImplementation(() => {
-        throw new Error('Popup blocked');
-      });
-
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      const user = userEvent.setup();
-
-      render(<InviteUserButton />);
-
-      // Should not crash when popup is blocked
-      await user.click(screen.getByRole('button', { name: /invite user/i }));
-
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite user click:', expect.any(Error));
+      // Should still render the invite button (no quota check)
+      expect(screen.getByRole('button', { name: /invite user/i })).toBeInTheDocument();
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch org quotas:', { message: 'API Error' });
 
       consoleSpy.mockRestore();
     });
