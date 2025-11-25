@@ -139,7 +139,6 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
 	github.com/microsoft/go-mssqldb v1.9.2 // @grafana/partner-datasources
 	github.com/migueleliasweb/go-github-mock v1.1.0 // @grafana/grafana-git-ui-sync-team
-	github.com/mitchellh/copystructure v1.2.0 // @grafana/grafana-operator-experience-squad
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c //@grafana/identity-access-team
 	github.com/mocktools/go-smtp-mock/v2 v2.5.1 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
@@ -198,7 +197,6 @@ require (
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	go.uber.org/mock v0.6.0 // @grafana/grafana-operator-experience-squad
 	go.uber.org/zap v1.27.0 // @grafana/identity-access-team
-	go.yaml.in/yaml/v2 v2.4.3 // @grafana/alerting-backend
 	go.yaml.in/yaml/v3 v3.0.4 // @grafana/alerting-backend
 	gocloud.dev v0.43.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.43.0 // @grafana/grafana-operator-experience-squad
@@ -515,6 +513,7 @@ require (
 	github.com/miekg/dns v1.1.63 // indirect
 	github.com/minio/asm2plan9s v0.0.0-20200509001527-cdd76441f9d8 // indirect
 	github.com/minio/c2goasm v0.0.0-20190812172519-36a3d3bbc4f3 // indirect
+	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -628,6 +627,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.38.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/telemetry v0.0.0-20251111182119-bc8e575c7b54 // indirect

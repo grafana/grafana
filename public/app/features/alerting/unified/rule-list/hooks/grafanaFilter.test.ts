@@ -484,6 +484,190 @@ describe('grafana-managed rules', () => {
         expect(frontendFilter2.groupMatches(group)).toBe(false);
       });
     });
+
+    describe('when alertingUIUseFullyCompatBackendFilters is enabled', () => {
+      testWithFeatureToggles({ enable: ['alertingUIUseFullyCompatBackendFilters'] });
+
+      it('should populate backend filters correctly (ruleType, dashboardUid)', () => {
+        // Fully compatible filters should be in backend
+        const { backendFilter } = getGrafanaFilter(
+          getFilter({
+            ruleType: PromRuleType.Alerting,
+            dashboardUid: 'dashboard-123',
+            freeFormWords: ['cpu'],
+            groupName: 'my-group',
+          })
+        );
+
+        expect(backendFilter.type).toBe(PromRuleType.Alerting);
+        expect(backendFilter.dashboardUid).toBe('dashboard-123');
+
+        // Non-compatible filters should NOT be in backend
+        expect(backendFilter.title).toBeUndefined();
+        expect(backendFilter.searchGroupName).toBeUndefined();
+
+        // Empty state
+        const { backendFilter: emptyFilter } = getGrafanaFilter(getFilter({}));
+        expect(emptyFilter.type).toBeUndefined();
+        expect(emptyFilter.dashboardUid).toBeUndefined();
+      });
+
+      it('should apply frontend filters correctly', () => {
+        const alertingRule = mockGrafanaPromAlertingRule({
+          name: 'High CPU Usage',
+          labels: { severity: 'critical' },
+          queriedDatasourceUIDs: ['datasource-uid-1'],
+          annotations: { [Annotation.dashboardUID]: 'dashboard-a' },
+          alerts: [],
+        });
+        const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
+
+        // Backend-handled filters (ruleType, dashboardUid) should skip frontend filtering
+        const { frontendFilter: backendHandledFilter } = getGrafanaFilter(
+          getFilter({ ruleType: PromRuleType.Recording, dashboardUid: 'dashboard-b' })
+        );
+        expect(backendHandledFilter.ruleMatches(alertingRule)).toBe(true);
+        expect(backendHandledFilter.ruleMatches(recordingRule)).toBe(true);
+
+        // Frontend-handled filters (freeFormWords, ruleName) should work
+        const { frontendFilter: freeFormMatch } = getGrafanaFilter(getFilter({ freeFormWords: ['cpu'] }));
+        expect(freeFormMatch.ruleMatches(alertingRule)).toBe(true);
+
+        const { frontendFilter: freeFormNoMatch } = getGrafanaFilter(getFilter({ freeFormWords: ['memory'] }));
+        expect(freeFormNoMatch.ruleMatches(alertingRule)).toBe(false);
+
+        const { frontendFilter: ruleNameMatch } = getGrafanaFilter(getFilter({ ruleName: 'cpu' }));
+        expect(ruleNameMatch.ruleMatches(alertingRule)).toBe(true);
+
+        const { frontendFilter: ruleNameNoMatch } = getGrafanaFilter(getFilter({ ruleName: 'memory' }));
+        expect(ruleNameNoMatch.ruleMatches(alertingRule)).toBe(false);
+
+        // Group name filtering
+        const group: PromRuleGroupDTO = {
+          name: 'CPU Usage Alerts',
+          file: 'production/alerts',
+          rules: [],
+          interval: 60,
+        };
+
+        const { frontendFilter: groupMatch } = getGrafanaFilter(getFilter({ groupName: 'cpu' }));
+        expect(groupMatch.groupMatches(group)).toBe(true);
+
+        const { frontendFilter: groupNoMatch } = getGrafanaFilter(getFilter({ groupName: 'memory' }));
+        expect(groupNoMatch.groupMatches(group)).toBe(false);
+
+        // Always-frontend filters (labels, dataSourceNames, namespace) should work
+        const { frontendFilter: labelsMatch } = getGrafanaFilter(getFilter({ labels: ['severity=critical'] }));
+        expect(labelsMatch.ruleMatches(alertingRule)).toBe(true);
+
+        const { frontendFilter: labelsNoMatch } = getGrafanaFilter(getFilter({ labels: ['severity=warning'] }));
+        expect(labelsNoMatch.ruleMatches(alertingRule)).toBe(false);
+
+        const { frontendFilter: dsMatch } = getGrafanaFilter(getFilter({ dataSourceNames: ['prometheus'] }));
+        expect(dsMatch.ruleMatches(alertingRule)).toBe(true);
+
+        const { frontendFilter: dsNoMatch } = getGrafanaFilter(getFilter({ dataSourceNames: ['loki'] }));
+        expect(dsNoMatch.ruleMatches(alertingRule)).toBe(false);
+
+        const { frontendFilter: nsMatch } = getGrafanaFilter(getFilter({ namespace: 'production' }));
+        expect(nsMatch.groupMatches(group)).toBe(true);
+
+        const { frontendFilter: nsNoMatch } = getGrafanaFilter(getFilter({ namespace: 'staging' }));
+        expect(nsNoMatch.groupMatches(group)).toBe(false);
+      });
+    });
+
+    describe('when both alertingUIUseBackendFilters and alertingUIUseFullyCompatBackendFilters are enabled', () => {
+      testWithFeatureToggles({ enable: ['alertingUIUseBackendFilters', 'alertingUIUseFullyCompatBackendFilters'] });
+
+      it('should include all backend filters (title, ruleType, dashboardUid, searchGroupName)', () => {
+        const { backendFilter } = getGrafanaFilter(
+          getFilter({
+            freeFormWords: ['cpu'],
+            ruleName: 'alert',
+            ruleType: PromRuleType.Alerting,
+            dashboardUid: 'dashboard-123',
+            groupName: 'my-group',
+          })
+        );
+
+        expect(backendFilter.title).toBe('alert cpu');
+        expect(backendFilter.type).toBe(PromRuleType.Alerting);
+        expect(backendFilter.dashboardUid).toBe('dashboard-123');
+        expect(backendFilter.searchGroupName).toBe('my-group');
+      });
+
+      it('should skip all backend-handled filters on frontend', () => {
+        const alertingRule = mockGrafanaPromAlertingRule({
+          name: 'High CPU Usage',
+          annotations: { [Annotation.dashboardUID]: 'dashboard-a' },
+        });
+        const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
+
+        const { frontendFilter } = getGrafanaFilter(
+          getFilter({
+            freeFormWords: ['memory'],
+            ruleName: 'memory',
+            ruleType: PromRuleType.Recording,
+            dashboardUid: 'dashboard-b',
+          })
+        );
+
+        // All these filters are handled by backend, so frontend should return true
+        expect(frontendFilter.ruleMatches(alertingRule)).toBe(true);
+        expect(frontendFilter.ruleMatches(recordingRule)).toBe(true);
+      });
+
+      it('should skip groupName filtering on frontend', () => {
+        const group: PromRuleGroupDTO = {
+          name: 'CPU Usage Alerts',
+          file: 'production/alerts',
+          rules: [],
+          interval: 60,
+        };
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ groupName: 'memory' }));
+        // Should return true because groupName filter is null (handled by backend)
+        expect(frontendFilter.groupMatches(group)).toBe(true);
+      });
+
+      it('should still apply always-frontend filters (labels, dataSourceNames, namespace)', () => {
+        const rule = mockGrafanaPromAlertingRule({
+          name: 'High CPU Usage',
+          labels: { severity: 'critical' },
+          queriedDatasourceUIDs: ['datasource-uid-1'],
+          alerts: [],
+        });
+
+        // Labels filter should still work
+        const { frontendFilter: labelFilter } = getGrafanaFilter(getFilter({ labels: ['severity=warning'] }));
+        expect(labelFilter.ruleMatches(rule)).toBe(false);
+
+        const { frontendFilter: labelFilter2 } = getGrafanaFilter(getFilter({ labels: ['severity=critical'] }));
+        expect(labelFilter2.ruleMatches(rule)).toBe(true);
+
+        // DataSourceNames filter should still work
+        const { frontendFilter: dsFilter } = getGrafanaFilter(getFilter({ dataSourceNames: ['prometheus'] }));
+        expect(dsFilter.ruleMatches(rule)).toBe(true);
+
+        const { frontendFilter: dsFilter2 } = getGrafanaFilter(getFilter({ dataSourceNames: ['loki'] }));
+        expect(dsFilter2.ruleMatches(rule)).toBe(false);
+
+        // Namespace filter should still work
+        const group: PromRuleGroupDTO = {
+          name: 'Test Group',
+          file: 'production/alerts',
+          rules: [],
+          interval: 60,
+        };
+
+        const { frontendFilter: nsFilter } = getGrafanaFilter(getFilter({ namespace: 'production' }));
+        expect(nsFilter.groupMatches(group)).toBe(true);
+
+        const { frontendFilter: nsFilter2 } = getGrafanaFilter(getFilter({ namespace: 'staging' }));
+        expect(nsFilter2.groupMatches(group)).toBe(false);
+      });
+    });
   });
 
   describe('hasClientSideFilters', () => {
@@ -558,6 +742,50 @@ describe('grafana-managed rules', () => {
         expect(hasClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
         expect(hasClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
         expect(hasClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
+      });
+    });
+
+    describe('when alertingUIUseFullyCompatBackendFilters is enabled', () => {
+      testWithFeatureToggles({ enable: ['alertingUIUseFullyCompatBackendFilters'] });
+
+      it('should return correct values for all filter types', () => {
+        // Should return false for: empty, backend-handled (ruleType, dashboardUid), and backend-only filters
+        expect(hasClientSideFilters(getFilter({}))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
+
+        // Should return true for: frontend-handled filters
+        expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
+        expect(hasClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(true);
+        expect(hasClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(true);
+        expect(hasClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
+        expect(hasClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
+        expect(hasClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
+      });
+    });
+
+    describe('when both alertingUIUseBackendFilters and alertingUIUseFullyCompatBackendFilters are enabled', () => {
+      testWithFeatureToggles({ enable: ['alertingUIUseBackendFilters', 'alertingUIUseFullyCompatBackendFilters'] });
+
+      it('should return correct values for all filter types', () => {
+        // Should return false for: empty, all backend-handled filters, and backend-only filters
+        expect(hasClientSideFilters(getFilter({}))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
+        expect(hasClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
+
+        // Should return true for: always-frontend filters only
+        expect(hasClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
+        expect(hasClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
+        expect(hasClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
       });
     });
   });

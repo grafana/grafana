@@ -1541,3 +1541,11 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 		return queueCtx.Err() // Timed out or canceled while waiting for execution.
 	}
 }
+
+func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
+	return s.search.RebuildIndexes(ctx, req)
+}
