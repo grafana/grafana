@@ -51,10 +51,11 @@ export default function CreateNewButton({
   const isProvisionedInstance = useIsProvisionedInstance();
 
   const handleVisibleChange = () => {
-    !isOpen &&
+    if (!isOpen) {
       reportInteraction('grafana_create_new_button_menu_opened', {
         from: location.pathname,
       });
+    }
     setIsOpen(!isOpen);
   };
 

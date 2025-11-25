@@ -48,10 +48,11 @@ export const QuickAdd = ({}: Props) => {
     return null;
   }
   const handleVisibleChange = () => {
-    !isOpen &&
+    if (!isOpen) {
       reportInteraction('grafana_create_new_button_menu_opened', {
         from: 'quickadd',
       });
+    }
     setIsOpen(!isOpen);
   };
 
