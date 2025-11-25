@@ -1,4 +1,4 @@
-package search
+package builders
 
 import (
 	"bytes"
@@ -15,20 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-//------------------------------------------------------------
-// Standard dashboard fields
-//------------------------------------------------------------
-
 const DASHBOARD_SCHEMA_VERSION = "schema_version"
 const DASHBOARD_LINK_COUNT = "link_count"
 const DASHBOARD_PANEL_TYPES = "panel_types"
 const DASHBOARD_DS_TYPES = "ds_types"
 const DASHBOARD_TRANSFORMATIONS = "transformation"
 const DASHBOARD_LIBRARY_PANEL_REFERENCE = "reference.LibraryPanel"
-
-//------------------------------------------------------------
-// The following fields are added in enterprise
-//------------------------------------------------------------
 
 const DASHBOARD_VIEWS_LAST_1_DAYS = "views_last_1_days"
 const DASHBOARD_VIEWS_LAST_7_DAYS = "views_last_7_days"
@@ -268,7 +260,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	if err != nil {
 		return nil, err
 	}
-
 	// metadata name is the dashboard uid
 	summary.UID = obj.GetName()
 	summary.ID = obj.GetDeprecatedInternalID() // nolint:staticcheck
@@ -331,7 +322,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		doc.Fields[DASHBOARD_TRANSFORMATIONS] = transformations
 	}
 
-	// Add the stats fields
 	for k, v := range s.Stats[summary.UID] {
 		doc.Fields[k] = v
 	}

@@ -278,6 +278,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
+      marginBottom: theme.spacing(1),
     }),
     rightControlsWrap: css({
       flexWrap: 'wrap',
