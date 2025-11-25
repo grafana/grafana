@@ -7,8 +7,7 @@ import (
 )
 
 type ContinueToken struct {
-	StartKey        string `json:"k"`
-	EndKey          string `json:"e"`
+	StartKeyOffset  string `json:"k"`
 	ResourceVersion int64  `json:"v"`
 	SortAscending   bool   `json:"s"`
 }
