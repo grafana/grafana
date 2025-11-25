@@ -121,8 +121,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/provisioning", reqOrgAdmin, hs.Index)
 	r.Get("/admin/provisioning/*", reqOrgAdmin, hs.Index)
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
+	if hs.Cfg.CloudMigration.Enabled {
 		r.Get("/admin/migrate-to-cloud", authorize(cloudmigration.MigrationAssistantAccess), hs.Index)
 	}
 
@@ -164,6 +163,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)
 	r.Get("/dashboard/new", reqSignedIn, hs.Index)
+	if featuremgmt.AnyEnabled(hs.Features, featuremgmt.FlagDashboardLibrary, featuremgmt.FlagSuggestedDashboards, featuremgmt.FlagDashboardTemplates) {
+		r.Get("/dashboard/template", reqSignedIn, hs.Index)
+	}
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
 	r.Get("/dashboard/provisioning/*", reqSignedIn, hs.Index)
 	r.Get("/d-solo/:uid/:slug", reqSignedIn, hs.Index)

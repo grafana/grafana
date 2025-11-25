@@ -190,6 +190,10 @@ Name of the TrueType font file with bold style.
 
 Name of the TrueType font file with italic style. Default is `DejaVuSansCondensed-Oblique.ttf`.
 
+### font_min_text_size
+
+The minimum pixel size that Grafana uses when rendering fonts. Default is `4`.
+
 ### max_retries_per_panel
 
 Maximum number of times the following reporting rendering requests are retried before returning an error: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle. Default is `3`.
@@ -261,6 +265,14 @@ If true, it establishes a secure connection to Loki. Defaults to true.
 ### tenant_id
 
 Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
+
+### retries
+
+The amount of times the HTTP or gRPC client will retry a failed request to Loki. The default is `10`.
+
+### timeout
+
+The timeout duration of an HTTP request or gRPC call to Loki. The default is `3s`.
 
 ## [auth.saml]
 
