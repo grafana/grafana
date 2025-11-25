@@ -67,6 +67,9 @@ func ValidateDashboardSpec(obj *Dashboard, forceValidation bool) (field.ErrorLis
 }
 
 func formatErrorPath(path []string) string {
+	if len(path) <= 4 {
+		return strings.Join(path, ".")
+	}
 	// omitting the "lineage.schemas[0].schema.spec" prefix here.
 	return strings.Join(path[4:], ".")
 }
