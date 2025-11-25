@@ -1,5 +1,6 @@
 import { PropsOf } from '@emotion/react';
 
+import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -27,6 +28,7 @@ import {
   rulerRuleType,
 } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
+import { AnalyzeRuleButton } from '../assistant/TriggerInvestigationButton';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
@@ -122,6 +124,12 @@ const AlertRuleMenu = ({
     prometheusRuleType.alertingRule(promRule) &&
     promRule.state === PromAlertingRuleState.Firing;
 
+  const { isAvailable: isAssistantAvailable } = useAssistant();
+  const shouldShowTriggerInvestigationButton =
+    isAssistantAvailable &&
+    prometheusRuleType.alertingRule(promRule) &&
+    promRule.state === PromAlertingRuleState.Firing;
+  
   const shareUrl = createShareLink(identifier);
 
   const showDivider =
@@ -167,6 +175,7 @@ const AlertRuleMenu = ({
       )}
       {/* TODO Migrate Declare Incident to plugin links extensions */}
       {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={promRule.name} url={''} />}
+      {shouldShowTriggerInvestigationButton && prometheusRuleType.alertingRule(promRule) && <AnalyzeRuleButton alertRule={promRule } />}
       {canDuplicate && (
         <Menu.Item
           label={t('alerting.alert-menu.duplicate', 'Duplicate')}
