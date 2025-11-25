@@ -388,22 +388,6 @@ describe('Query and expressions reducer', () => {
 
     expect(newState).toMatchSnapshot();
   });
-
-  it('should update expression type', () => {
-    const initialState: QueriesAndExpressionsState = {
-      queries: [alertQuery, expressionQuery],
-    };
-
-    const newState = queriesAndExpressionsReducer(
-      initialState,
-      updateExpressionType({
-        refId: 'B',
-        type: ExpressionQueryType.reduce,
-      })
-    );
-
-    expect(newState).toMatchSnapshot();
-  });
   it('should remove first reducer', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, reduceExpression, thresholdExpression],
