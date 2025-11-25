@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	claims "github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -246,4 +247,9 @@ func parseAnnotationID(name string) (int64, error) {
 		return 0, fmt.Errorf("invalid annotation name format: %s", name)
 	}
 	return strconv.ParseInt(name[2:], 10, 64)
+}
+
+func namespaceToOrgID(ctx context.Context, namespace string) (int64, error) {
+	info, err := claims.ParseNamespace(namespace)
+	return info.OrgID, err
 }

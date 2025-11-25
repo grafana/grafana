@@ -40,7 +40,8 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	var result []annotationV0.Annotation
+	//nolint:prealloc
+	var result []annotationV0.Annotation // no, we can't pre-alloc it, we don't know the size yet
 
 	for _, anno := range m.data {
 		if anno.Namespace != namespace {
