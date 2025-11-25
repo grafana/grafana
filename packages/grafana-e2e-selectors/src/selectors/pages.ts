@@ -183,6 +183,11 @@ export const versionedPages = {
     url: {
       [MIN_GRAFANA_VERSION]: (uid: string) => `/d/${uid}`,
     },
+    Sidebar: {
+      optionsButton: {
+        '12.4.0': 'data-testid Dashboard Sidebar options button',
+      },
+    },
     DashNav: {
       nav: {
         [MIN_GRAFANA_VERSION]: 'Dashboard navigation',

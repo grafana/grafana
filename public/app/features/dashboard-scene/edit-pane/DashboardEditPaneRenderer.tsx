@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
@@ -72,6 +73,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
               onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
+              data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
             <Sidebar.Button
