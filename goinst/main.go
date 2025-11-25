@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"time"
@@ -24,8 +25,15 @@ func main() {
 
 	err := cmd.Run()
 	elapsed := time.Since(start)
-
-	fmt.Fprintf(os.Stderr, "tool=%s elapsed=%s\n", tool, elapsed)
+	log.Println("======================")
+	log.Printf("%v", args)
+	log.Println("")
+	log.Printf("   tool: %s", tool)
+	log.Printf("   package: %s", args[len(args)-1])
+	log.Printf("   args: %v", args)
+	log.Printf("   elapsed: %s", elapsed)
+	log.Println("======================")
+	log.Println("")
 
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
