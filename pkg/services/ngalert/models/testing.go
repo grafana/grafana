@@ -652,18 +652,20 @@ func GenerateAlertQuery() AlertQuery {
 func (g *AlertRuleGenerator) GenerateQuery() AlertQuery {
 	f := rand.Intn(10) + 5
 	t := rand.Intn(f)
+	refId := util.GenerateShortUID()
 
 	return AlertQuery{
 		DatasourceUID: util.GenerateShortUID(),
 		Model: json.RawMessage(fmt.Sprintf(`{
 			"%s": "%s",
-			"%s":"%d"
-		}`, util.GenerateShortUID(), util.GenerateShortUID(), util.GenerateShortUID(), rand.Int())),
+			"%s":"%d",
+			"refId":"%s"
+		}`, util.GenerateShortUID(), util.GenerateShortUID(), util.GenerateShortUID(), rand.Int(), refId)),
 		RelativeTimeRange: RelativeTimeRange{
 			From: Duration(time.Duration(f) * time.Minute),
 			To:   Duration(time.Duration(t) * time.Minute),
 		},
-		RefID:     util.GenerateShortUID(),
+		RefID:     refId,
 		QueryType: util.GenerateShortUID(),
 	}
 }
