@@ -38,7 +38,6 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
   }
 
   private _onActivate = () => {
-    console.log(this.parent);
     if (!this.parent || !(this.parent instanceof VizPanel)) {
       throw new Error('VizPanelHeaderActions must be a child of a VizPanel');
     }
