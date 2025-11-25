@@ -51,6 +51,8 @@ runs:
           sleep 1
         done
 
+        cd ../grafana-enterprise
+
         for i in $(seq 1 $RETRIES); do
           echo "Attempt $i to checkout..."
 
