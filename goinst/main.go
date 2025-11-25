@@ -19,7 +19,6 @@ var logger *log.Logger
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: toolexec <tool> [args...]")
-		os.Exit(1)
 	}
 
 	f, err := os.OpenFile("toolexec.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -30,16 +29,18 @@ func main() {
 
 	logger = log.New(f, "", log.LstdFlags)
 
+	tool := os.Args[1]
+	args := os.Args[2:]
 	start := time.Now()
 
-	cmd := exec.Command(os.Args[1], os.Args[2:]...)
+	cmd := exec.Command(tool, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	err = cmd.Run()
+
 	elapsed := time.Since(start)
 
-	switch getTool(os.Args[1]) {
+	switch getTool(tool) {
 	case Asm:
 		printAsm(elapsed)
 	case Compile:
@@ -57,7 +58,7 @@ func main() {
 	}
 }
 
-func printAsm(elapsed interface{}) {
+func printAsm(elapsed time.Duration) {
 	logger.Println("==========Asm=========")
 	logger.Printf("   tool: %s", Asm)
 	logger.Printf("   package: %s", os.Args[len(os.Args)-1])
@@ -66,7 +67,7 @@ func printAsm(elapsed interface{}) {
 	logger.Println("")
 }
 
-func printCompile(elapsed interface{}) {
+func printCompile(elapsed time.Duration) {
 	logger.Println("========Compile=======")
 	logger.Printf("   tool: %s", Compile)
 	logger.Printf("   package: %s", getPackage(os.Args))
@@ -75,7 +76,7 @@ func printCompile(elapsed interface{}) {
 	logger.Println("")
 }
 
-func printLink(elapsed interface{}) {
+func printLink(elapsed time.Duration) {
 	logger.Println("========LINK========")
 	logger.Printf("   tool: %s", Link)
 	logger.Printf("   package: %s", os.Args[len(os.Args)-1])
