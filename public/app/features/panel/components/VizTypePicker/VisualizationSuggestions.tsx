@@ -114,56 +114,70 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     return null;
   }
 
+  let content: React.ReactNode;
+  if (isNewVizSuggestionsEnabled) {
+    content = suggestionsByVizType.map(([vizType, vizTypeSuggestions]) => (
+      <>
+        <div className={styles.vizTypeHeader} key={vizType?.id || 'unknown-viz-type'}>
+          <Text variant="body" weight="medium">
+            {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
+            {vizType?.name || t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
+          </Text>
+        </div>
+        {vizTypeSuggestions?.map((suggestion, index) => {
+          const isCardSelected = suggestionHash === suggestion.hash;
+          return (
+            <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
+              {isCardSelected && (
+                <Button
+                  variant="primary"
+                  size={'md'}
+                  onClick={() => applySuggestion(suggestion)}
+                  className={styles.applySuggestionButton}
+                  aria-label={t(
+                    'panel.visualization-suggestions.apply-suggestion-aria-label',
+                    'Apply {{suggestionName}} visualization',
+                    { suggestionName: suggestion.name }
+                  )}
+                >
+                  {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
+                </Button>
+              )}
+              <VisualizationSuggestionCard
+                data={data}
+                suggestion={suggestion}
+                width={width}
+                isSelected={isCardSelected}
+                tabIndex={index}
+                onClick={() => applySuggestion(suggestion, true)}
+              />
+            </div>
+          );
+        })}
+      </>
+    ));
+  } else {
+    content = suggestions?.map((suggestion, index) => (
+      <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
+        <VisualizationSuggestionCard
+          key={index}
+          data={data}
+          suggestion={suggestion}
+          width={width}
+          tabIndex={index}
+          onClick={() => applySuggestion(suggestion)}
+        />
+      </div>
+    ));
+  }
+
   return (
     // This div is needed in some places to make AutoSizer work
     <div>
       <AutoSizer disableHeight style={{ width: '100%', height: '100%' }}>
         {() => (
           <div>
-            <div className={styles.grid}>
-              {suggestionsByVizType.map(([vizType, vizTypeSuggestions]) => (
-                <>
-                  <div className={styles.vizTypeHeader} key={vizType?.id || 'unknown-viz-type'}>
-                    <Text variant="body" weight="medium">
-                      {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
-                      {vizType?.name ||
-                        t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
-                    </Text>
-                  </div>
-                  {vizTypeSuggestions?.map((suggestion, index) => {
-                    const isCardSelected = isNewVizSuggestionsEnabled && suggestionHash === suggestion.hash;
-
-                    return (
-                      <div key={index} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
-                        {isCardSelected && (
-                          <Button
-                            variant="primary"
-                            size={'md'}
-                            onClick={() => applySuggestion(suggestion)}
-                            className={styles.applySuggestionButton}
-                            aria-label={t(
-                              'panel.visualization-suggestions.apply-suggestion-aria-label',
-                              'Apply {{suggestionName}} visualization',
-                              { suggestionName: suggestion.name }
-                            )}
-                          >
-                            {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
-                          </Button>
-                        )}
-                        <VisualizationSuggestionCard
-                          data={data}
-                          suggestion={suggestion}
-                          width={width}
-                          isSelected={isCardSelected}
-                          tabIndex={index}
-                          onClick={() => applySuggestion(suggestion, isNewVizSuggestionsEnabled)}
-                        />
-                      </div>
-                    );
-                  })}
-                </>
-              ))}
-            </div>
+            <div className={styles.grid}>{content}</div>
           </div>
         )}
       </AutoSizer>
