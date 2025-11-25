@@ -2,10 +2,6 @@ name: 'Setup Grafana Enterprise'
 description: 'Clones and sets up Grafana Enterprise repository for testing'
 
 inputs:
-  retries:
-    description: 'Number of times to retry'
-    required: false
-    default: '5'
   github-app-name:
     description: 'Name of the GitHub App in Vault'
     required: false
@@ -37,7 +33,7 @@ runs:
       env:
         GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       run: |
-        RETRIES="${{ inputs.retries }}"
+        RETRIES="5"
 
         for i in $(seq 1 $RETRIES); do
           echo "Attempt $i to clone..."
