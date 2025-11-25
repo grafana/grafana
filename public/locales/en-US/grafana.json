@@ -11051,6 +11051,7 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "Apply {{suggestionName}} visualization",
+      "unknown-viz-type": "Unknown visualization type",
       "use-this-suggestion": "Use this suggestion"
     },
     "viz-type-picker": {

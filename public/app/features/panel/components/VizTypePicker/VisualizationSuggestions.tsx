@@ -7,7 +7,6 @@ import {
   GrafanaTheme2,
   PanelData,
   PanelModel,
-  PanelPlugin,
   PanelPluginMeta,
   PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
