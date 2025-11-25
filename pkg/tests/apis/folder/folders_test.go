@@ -288,7 +288,7 @@ func TestIntegrationFolderDeletionBlockedByAlertRules(t *testing.T) {
 							From: apimodels.Duration(600 * time.Second),
 							To:   0,
 						},
-						Model: json.RawMessage(`{"type":"math","expression":"2 + 3 > 1"}`),
+						Model: json.RawMessage(`{"refId":"A","type":"math","expression":"2 + 3 > 1"}`),
 					},
 				},
 			},
