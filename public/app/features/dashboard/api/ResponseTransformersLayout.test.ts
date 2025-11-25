@@ -2,10 +2,10 @@ import { Panel, RowPanel } from '@grafana/schema';
 import { Spec as DashboardV2Spec, RowsLayoutKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import {
-  flattenGridLayoutToV1Panels,
+  convertGridLayoutToV1Panels,
   flattenRowsLayoutToV1Panels,
   flattenTabsLayoutToV1Panels,
-  flattenAutoGridLayoutToV1Panels,
+  convertAutoGridLayoutToV1Panels,
   ResponseTransformers,
 } from './ResponseTransformers';
 import { DashboardWithAccessInfo } from './types';
@@ -1107,7 +1107,7 @@ describe('ResponseTransformers Layout Conversion', () => {
       };
     }
 
-    describe('flattenGridLayoutToV1Panels', () => {
+    describe('convertGridLayoutToV1Panels', () => {
       it('should convert GridLayout items to V1 panels', () => {
         const elements: DashboardV2Spec['elements'] = {
           'panel-1': createPanelElement(1, 'panel-1'),
@@ -1149,7 +1149,7 @@ describe('ResponseTransformers Layout Conversion', () => {
         };
 
         const baseY = 0;
-        const result = flattenGridLayoutToV1Panels(elements, layout, baseY);
+        const result = convertGridLayoutToV1Panels(elements, layout, baseY);
 
         expect(result).toHaveLength(2);
         expect(result[0]).toHaveProperty('id', 1);
@@ -1202,7 +1202,7 @@ describe('ResponseTransformers Layout Conversion', () => {
         };
 
         const baseY = 0;
-        const result = flattenGridLayoutToV1Panels(elements, layout, baseY);
+        const result = convertGridLayoutToV1Panels(elements, layout, baseY);
 
         expect(result).toHaveLength(1);
         expect(result[0]).toHaveProperty('id', 1);
@@ -1235,7 +1235,7 @@ describe('ResponseTransformers Layout Conversion', () => {
         };
 
         const baseY = 10;
-        const result = flattenGridLayoutToV1Panels(elements, layout, baseY);
+        const result = convertGridLayoutToV1Panels(elements, layout, baseY);
 
         expect(result[0].gridPos?.y).toBe(10);
       });
@@ -1519,7 +1519,7 @@ describe('ResponseTransformers Layout Conversion', () => {
       });
     });
 
-    describe('flattenAutoGridLayoutToV1Panels', () => {
+    describe('convertAutoGridLayoutToV1Panels', () => {
       it('should convert AutoGridLayout with default settings', () => {
         const elements: DashboardV2Spec['elements'] = {
           'panel-1': createPanelElement(1, 'panel-1'),
@@ -1566,7 +1566,7 @@ describe('ResponseTransformers Layout Conversion', () => {
         };
 
         const baseY = 0;
-        const result = flattenAutoGridLayoutToV1Panels(elements, layout, baseY);
+        const result = convertAutoGridLayoutToV1Panels(elements, layout, baseY);
 
         expect(result).toHaveLength(3);
         // With maxColumnCount=3, panel width should be 24/3 = 8
@@ -1617,7 +1617,7 @@ describe('ResponseTransformers Layout Conversion', () => {
           };
 
           const baseY = 0;
-          const result = flattenAutoGridLayoutToV1Panels(elements, layout, baseY);
+          const result = convertAutoGridLayoutToV1Panels(elements, layout, baseY);
 
           expect(result[0].gridPos?.h).toBe(expectedHeight);
         });
@@ -1650,7 +1650,7 @@ describe('ResponseTransformers Layout Conversion', () => {
         };
 
         const baseY = 0;
-        const result = flattenAutoGridLayoutToV1Panels(elements, layout, baseY);
+        const result = convertAutoGridLayoutToV1Panels(elements, layout, baseY);
 
         // 200px / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) = 200 / 36 ≈ 5.56 → 6
         expect(result[0].gridPos?.h).toBeGreaterThan(0);
@@ -1689,7 +1689,7 @@ describe('ResponseTransformers Layout Conversion', () => {
           };
 
           const baseY = 0;
-          const result = flattenAutoGridLayoutToV1Panels(elements, layout, baseY);
+          const result = convertAutoGridLayoutToV1Panels(elements, layout, baseY);
 
           expect(result[0].gridPos?.w).toBe(expectedWidth);
         });

@@ -1066,7 +1066,7 @@ function convertPixelsToGridHeight(pixels: number): number {
 /**
  * Flattens a GridLayout to V1 panels
  */
-export function flattenGridLayoutToV1Panels(
+export function convertGridLayoutToV1Panels(
   elements: DashboardV2Spec['elements'],
   layout: GridLayoutKind,
   baseY: number
@@ -1193,9 +1193,9 @@ export function flattenTabsLayoutToV1Panels(
 }
 
 /**
- * Flattens an AutoGridLayout to V1 panels
+ * Converts an AutoGridLayout to V1 panels
  */
-export function flattenAutoGridLayoutToV1Panels(
+export function convertAutoGridLayoutToV1Panels(
   elements: DashboardV2Spec['elements'],
   layout: Extract<DashboardV2Spec['layout'], { kind: 'AutoGridLayout' }>,
   baseY: number
@@ -1248,7 +1248,7 @@ function flattenLayoutToV1Panels(
 ): Array<Panel | LibraryPanelDTO | RowPanel> {
   switch (layout.kind) {
     case 'GridLayout':
-      return flattenGridLayoutToV1Panels(elements, layout, baseY);
+      return convertGridLayoutToV1Panels(elements, layout, baseY);
 
     case 'RowsLayout': {
       const { panels } = flattenRowsLayoutToV1Panels(elements, layout, baseY);
@@ -1261,7 +1261,7 @@ function flattenLayoutToV1Panels(
     }
 
     case 'AutoGridLayout':
-      return flattenAutoGridLayoutToV1Panels(elements, layout, baseY);
+      return convertAutoGridLayoutToV1Panels(elements, layout, baseY);
   }
 }
 

@@ -149,10 +149,10 @@ All panels must have valid `gridPos` with:
 
 - `getPanelsV1()`: Main entry point, orchestrates the conversion
 - `flattenLayoutToV1Panels()`: Recursively processes layouts and flattens nested structures, delegates to layout-specific handlers
-- `flattenGridLayoutToV1Panels()`: Handles `GridLayout` conversion to flat panel array
+- `convertGridLayoutToV1Panels()`: Handles `GridLayout` conversion to flat panel array
 - `flattenRowsLayoutToV1Panels()`: Handles `RowsLayout` conversion, including hidden header rows and collapsed/expanded state
 - `flattenTabsLayoutToV1Panels()`: Handles `TabsLayout` conversion to row panels
-- `flattenAutoGridLayoutToV1Panels()`: Handles `AutoGridLayout` conversion with calculated panel sizes
+- `convertAutoGridLayoutToV1Panels()`: Handles `AutoGridLayout` conversion with calculated panel sizes
 - `convertRowsLayoutRowToV1()`: Converts a single row, handles collapsed/expanded state
 - `convertTabToV1()`: Converts a tab to a row panel, preserves tab structure
 - `transformV2PanelToV1Panel()`: Converts individual panel elements
