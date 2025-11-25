@@ -1,6 +1,6 @@
 import {
-  generatedAPI as correlationAPIv0alpha1,
   Correlation as CorrelationK8s,
+  useListCorrelationQuery,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { CorrelationData, CorrelationExternal, CorrelationQuery } from '@grafana/runtime';
 
@@ -61,7 +61,8 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
 };
 
 export const useCorrelationsK8s = () => {
-  const { data, isLoading, error } = correlationAPIv0alpha1.endpoints.listCorrelation.useQuery({});
+  //const { data, isLoading, error } = correlationAPIv0alpha1.endpoints.listCorrelation.useQuery({ limit: 10 });
+  const { data, isLoading, error } = useListCorrelationQuery({ limit: 10 });
   const enrichedCorrelations =
     data !== undefined
       ? data.items.map((item) => toEnrichedCorrelationDataK8s(item)).filter((i) => i !== undefined)

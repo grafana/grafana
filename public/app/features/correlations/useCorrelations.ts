@@ -95,7 +95,7 @@ export const useCorrelations = () => {
       return lastValueFrom(
         backend.fetch<CorrelationsResponse>({
           url: '/api/datasources/correlations',
-          params: { page: params.page },
+          params: { page: params.page, limit: 10 }, // todo this is to force pagination for testing, remove
           method: 'GET',
           showErrorAlert: false,
         })
