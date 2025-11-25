@@ -270,6 +270,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [dispatch, exploreId, loading, panelState, previousLoading]);
 
   useEffect(() => {
+    // Initialize URL sort order
+    if (!panelState?.logs?.sortOrder) {
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState,
+          sortOrder: logsSortOrder,
+        })
+      );
+    }
+  }, [dispatch, exploreId, logsSortOrder, panelState]);
+
+  useEffect(() => {
     const visualisationType = panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
     setVisualisationType(visualisationType);
 
@@ -392,14 +404,12 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         dispatch(changeQueries({ exploreId, queries: newQueries }));
         dispatch(runQueries({ exploreId }));
       }
-      if (panelState?.logs) {
-        dispatch(
-          changePanelState(exploreId, 'logs', {
-            ...panelState?.logs,
-            sortOrder: newSortOrder,
-          })
-        );
-      }
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState?.logs,
+          sortOrder: newSortOrder,
+        })
+      );
     },
     [dispatch, exploreId, logsQueries, panelState?.logs]
   );
