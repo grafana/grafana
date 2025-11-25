@@ -48,10 +48,13 @@ Use `grafanactl` to download the resources you want to sync from Grafana, and th
 
 1. Set up the `grafanactl` context to point to your instance as documented in [Defining contexts](https://grafana.github.io/grafanactl/configuration/#defining-contexts).
 1. Pull the resources you want to sync from the instance to your local repository:
+
 ```
 grafanactl resources pull dashboards --path <REPO_PATH>
 ```
-1. Commit and push the resources to your Git repository:
+
+Next, commit and push the resources to your Git repository:
+
 ```
 git add <DASHBOARDS_PATH>
 git commit -m "Add dashboards from Grafana"
