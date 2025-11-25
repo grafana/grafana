@@ -1,0 +1,77 @@
+
+# version_settings() enforces a minimum Tilt version
+# https://docs.tilt.dev/api.html#api.version_settings
+version_settings(constraint='>=0.22.2')
+
+def name(c):
+  return c['metadata']['name']
+
+def namespace(c):
+  if 'namespace' in c['metadata']:
+    return c['metadata']['namespace']
+  return ''
+
+def decode(yaml):
+  resources = decode_yaml_stream(yaml)
+
+  # workaround a bug in decode_yaml_stream where it returns duplicates
+  # This bug has been fixed in Tilt v0.17.3+
+  filtered = []
+  names = {}
+  for r in resources:
+    if r == None:
+      continue
+
+    n = '%s:%s:%s' % (name(r), r['kind'], namespace(r))
+    if n in names:
+      continue
+
+    names[n] = True
+    filtered.append(r)
+
+  return filtered
+
+def get_label(o, lbl):
+  if 'labels' in o['metadata'] and lbl in o['metadata']['labels']:
+    return o['metadata']['labels'][lbl]
+  return ''
+
+def find_overlapping(o, yamls):
+  for elem in yamls:
+    if name(o) == name(elem) and o['kind'] == elem['kind'] and namespace(o) == namespace(elem):
+      return elem
+  return None
+
+# Parse all YAML files in our "generated" directory
+yaml_objects = []
+for filename in listdir('generated'):
+  if filename.lower().endswith(('.yaml', '.yml')):
+    decoded = decode(read_file(filename))
+    yaml_objects += decoded
+# Next, allow for additional yamls which can optionally override the generated yamls
+for filename in listdir('additional'):
+  if filename.lower().endswith(('.yaml', '.yml')):
+    decoded = decode(read_file(filename))
+    for o in decoded:
+      present = find_overlapping(o, yaml_objects)
+      if present != None:
+        yaml_objects.remove(present)
+    yaml_objects += decoded
+
+bundle = encode_yaml_stream(yaml_objects)
+
+# k8s_yaml automatically creates resources in Tilt for the entities
+# and will inject any images referenced in the Tiltfile when deploying
+# https://docs.tilt.dev/api.html#api.k8s_yaml
+k8s_yaml(bundle)
+
+# Group CRD's together
+crds = [r for r in yaml_objects if (r['kind'] == 'CustomResourceDefinition')]
+if len(crds) > 0:
+  k8s_resource(new_name='CustomResourceDefinitions', objects=[('%s' % name(r)) for r in yaml_objects if (r['kind'] == 'CustomResourceDefinition')], resource_deps=['uncategorized'])
+
+# Make webhooks dependent on all services starting
+services = [('%s' % name(r)) for r in yaml_objects if r['kind'] == 'Service']
+webhooks = [r for r in yaml_objects if (r['kind'] == 'ValidatingWebhookConfiguration' or r['kind'] == 'MutatingWebhookConfiguration')]
+if len(webhooks) > 0:
+  k8s_resource(new_name='Webhooks', objects=[('%s' % name(r)) for r in webhooks], resource_deps=services)
