@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -37,13 +38,13 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
   }
 
   private _onActivate = () => {
-    const panel = this.parent;
-    if (!panel || !(panel instanceof VizPanel)) {
+    console.log(this.parent);
+    if (!this.parent || !(this.parent instanceof VizPanel)) {
       throw new Error('VizPanelHeaderActions must be a child of a VizPanel');
     }
 
     if (!this.state.hideGroupByAction) {
-      this.subscribeToGroupByChanges(panel);
+      this.subscribeToGroupByChanges();
     }
 
     return () => {
@@ -62,7 +63,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
     });
   }
 
-  private subscribeToGroupByChanges(panel: VizPanel) {
+  private subscribeToGroupByChanges() {
     const vars = sceneGraph.getVariables(this);
     const queryRunner = this.getQueryRunner();
 
@@ -70,7 +71,6 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
     this._queryRunnerDatasource = queryRunner?.state.datasource;
 
     this.setAplicabilitySupport();
-    panel.setState({ showMenuAlways: !this.state.hideGroupByAction && this.state.supportsApplicability });
 
     // check when var set updates and search for groupBy var
     this._subs.add(
@@ -82,7 +82,6 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
           this._groupBySub = this._groupByVar?.subscribeToState((n, p) => {
             if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
               this.setAplicabilitySupport(n.datasource, n.applicabilityEnabled);
-              panel.setState({ showMenuAlways: !this.state.hideGroupByAction && this.state.supportsApplicability });
             }
           });
         }
@@ -96,7 +95,6 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
           this._queryRunnerDatasource = n.datasource;
 
           this.setAplicabilitySupport();
-          panel.setState({ showMenuAlways: !this.state.hideGroupByAction && this.state.supportsApplicability });
         }
       })
     );
@@ -104,7 +102,6 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
     this._groupBySub = this._groupByVar?.subscribeToState((n, p) => {
       if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
         this.setAplicabilitySupport(n.datasource, n.applicabilityEnabled);
-        panel.setState({ showMenuAlways: !this.state.hideGroupByAction && this.state.supportsApplicability });
       }
     });
   }
@@ -127,13 +124,28 @@ export function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<Viz
   const variables = sceneGraph.getVariables(model);
   const groupByVariable = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
+  const styles = getStyles();
   const queries = queryRunner?.state.data?.request?.targets ?? [];
 
   return (
     <>
       {!hideGroupByAction && supportsApplicability && (
-        <PanelGroupByAction groupByVariable={groupByVariable!} queries={queries} />
+        <div className={styles.alwaysShowMenu}>
+          <PanelGroupByAction groupByVariable={groupByVariable!} queries={queries} />
+        </div>
       )}
     </>
   );
+}
+
+function getStyles() {
+  return {
+    alwaysShowMenu: css({
+      '& + button': {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        visibility: 'visible !important' as 'visible',
+        opacity: '1 !important',
+      },
+    }),
+  };
 }

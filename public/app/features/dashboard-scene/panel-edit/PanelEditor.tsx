@@ -104,14 +104,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     const deactivateParents = activateSceneObjectAndParentTree(panel);
 
-    const actionDeactivationHandlers: CancelActivationHandler[] = [];
-
     // Ensure headerActions are activated
     const headerActions = panel.state.headerActions;
     if (headerActions) {
       (Array.isArray(headerActions) ? headerActions : [headerActions]).forEach((action) => {
         if (isSceneObject(action)) {
-          actionDeactivationHandlers.push(action.activate());
+          action.activate();
         }
       });
     }
@@ -123,8 +121,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
       if (deactivateParents) {
         deactivateParents();
-
-        actionDeactivationHandlers.forEach((handler) => handler());
       }
     };
   }
