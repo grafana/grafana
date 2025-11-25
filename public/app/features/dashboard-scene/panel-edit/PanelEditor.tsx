@@ -17,7 +17,6 @@ import {
   sceneUtils,
   VizPanel,
   isSceneObject,
-  CancelActivationHandler,
 } from '@grafana/scenes';
 import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
