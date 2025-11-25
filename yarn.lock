@@ -9436,6 +9436,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
+    "@grafana/i18n": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
@@ -9448,6 +9449,7 @@ __metadata:
     "@types/semver": "npm:7.5.8"
     "@types/uuid": "npm:9.0.8"
     glob: "npm:10.5.0"
+    i18next-cli: "npm:^1.24.22"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-router-dom: "npm:^6.22.0"
@@ -9468,6 +9470,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
+    "@grafana/i18n": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
@@ -9480,6 +9483,41 @@ __metadata:
     "@types/semver": "npm:7.5.8"
     "@types/uuid": "npm:9.0.8"
     glob: "npm:10.4.1"
+    i18next-cli: "npm:^1.24.22"
+    react: "npm:18.3.1"
+    react-dom: "npm:18.3.1"
+    react-router-dom: "npm:^6.22.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.6.3"
+    typescript: "npm:5.5.4"
+    webpack: "npm:5.95.0"
+    webpack-merge: "npm:5.10.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
+"@test-plugins/grafana-e2etest-panel@workspace:e2e-playwright/test-plugins/grafana-test-panel":
+  version: 0.0.0-use.local
+  resolution: "@test-plugins/grafana-e2etest-panel@workspace:e2e-playwright/test-plugins/grafana-test-panel"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "workspace:*"
+    "@grafana/i18n": "workspace:*"
+    "@grafana/plugin-configs": "workspace:*"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/schema": "workspace:*"
+    "@grafana/ui": "workspace:*"
+    "@types/lodash": "npm:4.17.7"
+    "@types/node": "npm:24.9.2"
+    "@types/prismjs": "npm:1.26.4"
+    "@types/react": "npm:18.3.18"
+    "@types/react-dom": "npm:18.3.5"
+    "@types/semver": "npm:7.5.8"
+    "@types/uuid": "npm:9.0.8"
+    glob: "npm:10.4.1"
+    i18next-cli: "npm:^1.24.22"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-router-dom: "npm:^6.22.0"
