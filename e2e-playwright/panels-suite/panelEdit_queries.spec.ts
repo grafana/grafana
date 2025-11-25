@@ -40,10 +40,13 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.QueryEditorRows.rows)).toHaveCount(1);
 
       // Duplicate refId B
+      // Open the actions menu
       await dashboardPage
-        .getByGrafanaSelector(selectors.components.QueryEditorRow.actionButton('Duplicate query'))
+        .getByGrafanaSelector(selectors.components.QueryEditorRow.actionButton('Query actions menu'))
         .first()
         .click();
+      // Click duplicate query in the menu
+      await page.getByText('Duplicate query').click();
 
       // We expect row with refId B and A to exist and be visible
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.QueryEditorRows.rows)).toHaveCount(2);
