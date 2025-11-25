@@ -100,7 +100,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 
 	rsp, err := s.service.GetCorrelations(ctx, correlations.GetCorrelationsQuery{
 		OrgId:      orgID,
-		Limit:      limit + 1,
+		Limit:      limit + 1, // the plus one indicates we have reached the limit
 		Page:       page,
 		SourceUIDs: uids,
 	})
