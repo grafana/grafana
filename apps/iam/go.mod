@@ -14,15 +14,11 @@ replace github.com/grafana/grafana/apps/provisioning => ../provisioning
 
 replace github.com/grafana/grafana/apps/advisor => ../advisor
 
-replace github.com/grafana/grafana/apps/annotation => ../annotation
-
 replace github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
 
 replace github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
 
 replace github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
-
-replace github.com/grafana/grafana/apps/collections => ../collections
 
 replace github.com/grafana/grafana/apps/correlations => ../correlations
 
@@ -45,6 +41,10 @@ replace github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 replace github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 
 replace github.com/grafana/grafana/pkg/aggregator => ../../pkg/aggregator
+
+replace github.com/grafana/grafana/apps/annotation => ../annotation
+
+replace github.com/grafana/grafana/apps/collections => ../collections
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
 
