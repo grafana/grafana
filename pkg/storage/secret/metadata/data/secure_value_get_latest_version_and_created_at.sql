@@ -1,7 +1,9 @@
 SELECT
   {{ .Ident "created" }},
   {{ .Ident "version" }},
-  {{ .Ident "active" }}
+  {{ .Ident "active" }},
+  {{ .Ident "namespace" }},
+  {{ .Ident "name" }}
 FROM
   {{ .Ident "secret_secure_value" }}
 WHERE 

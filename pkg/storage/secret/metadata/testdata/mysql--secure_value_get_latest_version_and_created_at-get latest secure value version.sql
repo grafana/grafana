@@ -1,7 +1,9 @@
 SELECT
   `created`,
   `version`,
-  `active`
+  `active`,
+  `namespace`,
+  `name`
 FROM
   `secret_secure_value`
 WHERE 

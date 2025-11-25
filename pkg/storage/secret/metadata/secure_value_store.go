@@ -199,12 +199,19 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreatedAt(ctx context.Co
 	}
 
 	var (
-		createdAt int64
-		version   int64
-		active    bool
+		createdAt       int64
+		version         int64
+		active          bool
+		namespaceFromDB string
+		nameFromDB      string
 	)
-	if err := rows.Scan(&createdAt, &version, &active); err != nil {
+	if err := rows.Scan(&createdAt, &version, &active, &namespaceFromDB, &nameFromDB); err != nil {
 		return versionAndCreatedAt{}, fmt.Errorf("scanning version from returned rows: %w", err)
+	}
+
+	if namespaceFromDB != namespace.String() || nameFromDB != name {
+		return versionAndCreatedAt{}, fmt.Errorf("bug: expected to find latest version for namespace=%+v name=%+v but got version for namespace=%+v name=%+v",
+			namespace, name, namespaceFromDB, nameFromDB)
 	}
 
 	if !active {
@@ -255,6 +262,11 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 	if err := res.Err(); err != nil {
 		return secureValueDB{}, fmt.Errorf("read rows error: %w", err)
 	}
+
+	if secureValue.Namespace != namespace.String() || secureValue.Name != name {
+		return secureValueDB{}, fmt.Errorf("bug: expected to read secure value %+v from namespace %+v, but got a different row", name, namespace)
+	}
+
 	return secureValue, nil
 }
 
@@ -362,6 +374,10 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 
 		if !row.Active {
 			return nil, fmt.Errorf("bug: read an inactive version: row=%+v", row)
+		}
+
+		if row.Namespace != namespace.String() {
+			return nil, fmt.Errorf("bug: expected to list secure values from namespace %+v but got one from namespace %+v", namespace.String(), row.Namespace)
 		}
 
 		secureValue, err := row.toKubernetes()
@@ -644,6 +660,7 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 	secureValues := make([]secretv1beta1.SecureValue, 0)
 	for rows.Next() {
 		row := secureValueDB{}
+		var leaseTokenDB string
 
 		err = rows.Scan(&row.GUID,
 			&row.Name, &row.Namespace, &row.Annotations,
@@ -653,10 +670,15 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 			&row.Description, &row.Keeper, &row.Decrypters,
 			&row.Ref, &row.ExternalID, &row.Version, &row.Active,
 			&row.OwnerReferenceAPIGroup, &row.OwnerReferenceAPIVersion, &row.OwnerReferenceKind, &row.OwnerReferenceName,
+			&leaseTokenDB,
 		)
 
 		if err != nil {
 			return nil, fmt.Errorf("error reading secure value row: %w", err)
+		}
+
+		if leaseTokenDB != leaseToken {
+			return nil, fmt.Errorf("bug: expected to list secure values with lease token %+v but got a secure value with another lease token %+v", leaseToken, leaseToken)
 		}
 
 		secureValue, err := row.toKubernetes()
