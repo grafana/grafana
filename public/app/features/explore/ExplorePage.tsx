@@ -12,7 +12,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ExploreQueryParams } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
 
-import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
+import { CorrelationEditorModeBar } from './CorrelationEditor/CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';

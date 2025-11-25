@@ -40,7 +40,7 @@ import { getTimeZone } from '../profile/state/selectors';
 import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
-import { CorrelationHelper } from './CorrelationHelper';
+import { CorrelationHelper } from './CorrelationEditor/CorrelationHelper/CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
@@ -626,7 +626,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           exploreId={exploreId}
           onChangeTime={this.onChangeTime}
           onContentOutlineToogle={this.onContentOutlineToogle}
-          isContentOutlineOpen={contentOutlineVisible}
+          isContentOutlineOpen={contentOutlineVisible && !showCorrelationHelper}
         />
         <div
           style={{
@@ -637,7 +637,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
         >
           <div className={styles.wrapper}>
             {contentOutlineVisible && !compact && (
-              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
+              <ContentOutline
+                scroller={this.scrollElement}
+                panelId={`content-outline-container-${exploreId}`}
+                defaultCollapsed={showCorrelationHelper}
+              />
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}

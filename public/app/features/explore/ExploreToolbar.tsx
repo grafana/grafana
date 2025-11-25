@@ -249,7 +249,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           <Tooltip
             content={t('explore.toolbar.build-correlation-query', 'Build and test your correlation target query here')}
           >
-            <Badge color="orange" icon="crosshair" text={t('explore.toolbar.target-query-builder', 'Target query')} />
+            <Badge color="orange" icon="crosshair" text={t('explore.toolbar.target-query-builder', 'Correlation')} />
           </Tooltip>
         </div>
       )}

@@ -3,25 +3,28 @@ import { useBeforeUnload, useUnmount } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Alert, Badge, Button, Stack, Text } from '@grafana/ui';
+import { Alert, Badge, Button, Icon, Stack, Text } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState } from 'app/types/explore';
 import { useDispatch, useSelector } from 'app/types/store';
 
+import { saveCurrentCorrelation } from '../state/correlations';
+import { changeDatasource } from '../state/datasource';
+import { changeCorrelationHelperData } from '../state/explorePane';
+import { changeCorrelationEditorDetails, splitClose } from '../state/main';
+import { runQueries } from '../state/query';
+import { selectCorrelationDetails, selectIsHelperShowing } from '../state/selectors';
+
+import { CorrelationEditorTour, useCorrelationEditorTour } from './CorrelationEditorTour';
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
 import { showModalMessage } from './correlationEditLogic';
-import { saveCurrentCorrelation } from './state/correlations';
-import { changeDatasource } from './state/datasource';
-import { changeCorrelationHelperData } from './state/explorePane';
-import { changeCorrelationEditorDetails, splitClose } from './state/main';
-import { runQueries } from './state/query';
-import { selectCorrelationDetails, selectIsHelperShowing } from './state/selectors';
 
 export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, ExploreItemState]> }) => {
   const dispatch = useDispatch();
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isHelperShowing = useSelector(selectIsHelperShowing);
   const [saveMessage, setSaveMessage] = useState<string | undefined>(undefined); // undefined means do not show
+  const { shouldShowTour, dismissTour } = useCorrelationEditorTour();
 
   // handle refreshing and closing the tab
   useBeforeUnload(correlationDetails?.correlationDirty || false, 'Save correlation?');
@@ -189,6 +192,9 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
         }}
       />
 
+      {/* Show tour for first-time users */}
+      {shouldShowTour && <CorrelationEditorTour onDismiss={dismissTour} />}
+
       {saveMessage !== undefined && (
         <CorrelationUnsavedChangesModal
           onDiscard={() => {
@@ -246,13 +252,13 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
             <Stack gap={0} direction="column">
               <Text variant="bodySmall">
                 <Trans i18nKey="explore.correlation-editor-mode-bar.instructions">
-                  Step 1: In the left pane, run a query and click a table cell link or a &quot;🔗 Correlate with&quot;
-                  button.
+                  Step 1: Run a query and click a table cell link or a <Icon name="link" size="sm" />{' '}
+                  <strong>Correlate with</strong> button.
                 </Trans>
               </Text>
               <Text variant="bodySmall">
                 <Trans i18nKey="explore.correlation-editor-mode-bar.instructions-2">
-                  Step 2: In the right pane (Target Query Builder), build and test your correlation query.
+                  Step 2: In the right pane (Correlation), build and test your correlation query.
                 </Trans>
               </Text>
               <Text variant="bodySmall">

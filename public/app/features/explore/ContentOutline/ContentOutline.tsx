@@ -40,11 +40,20 @@ export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
   expanded: 'grafana.explore.contentOutline.expanded',
 };
 
-export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
+export function ContentOutline({
+  scroller,
+  panelId,
+  defaultCollapsed = false,
+}: {
+  scroller: HTMLElement | undefined;
+  panelId: string;
+  defaultCollapsed?: boolean;
+}) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
   );
-  const styles = useStyles2(getStyles, contentOutlineExpanded);
+  const isExpanded = contentOutlineExpanded && !defaultCollapsed;
+  const styles = useStyles2(getStyles, isExpanded);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
@@ -102,6 +111,9 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   };
 
   const toggle = () => {
+    if (defaultCollapsed && !contentOutlineExpanded) {
+      return;
+    }
     store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, !contentOutlineExpanded);
     toggleContentOutlineExpanded();
     reportInteraction('explore_toolbar_contentoutline_clicked', {
@@ -160,16 +172,16 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
             tooltip={
-              contentOutlineExpanded
+              isExpanded
                 ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
                 : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
             }
-            tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
+            tooltipPlacement={isExpanded ? 'right' : 'bottom'}
             onClick={toggle}
             className={cx(styles.toggleContentOutlineButton, {
-              [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
+              [styles.justifyCenter]: !isExpanded && !outlineItemsShouldIndent,
             })}
-            aria-expanded={contentOutlineExpanded}
+            aria-expanded={isExpanded}
           />
 
           {outlineItems.map((item) => {
@@ -177,16 +189,16 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
               <Fragment key={item.id}>
                 <ContentOutlineItemButton
                   key={item.id}
-                  title={contentOutlineExpanded ? item.title : undefined}
-                  contentOutlineExpanded={contentOutlineExpanded}
+                  title={isExpanded ? item.title : undefined}
+                  contentOutlineExpanded={isExpanded}
                   className={cx(styles.buttonStyles, {
-                    [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
-                    [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
+                    [styles.justifyCenter]: !isExpanded && !outlineItemsHaveDeleteButton,
+                    [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !isExpanded,
                   })}
                   indentStyle={cx({
                     [styles.indentRoot]: !isCollapsible(item) && outlineItemsShouldIndent,
                     [styles.sectionHighlighter]:
-                      isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
+                      isChildActive(item, activeSectionChildId) && !isExpanded && sectionsExpanded[item.id],
                   })}
                   icon={item.icon}
                   onClick={() => handleItemClicked(item)}
@@ -204,7 +216,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                     sectionsExpanded[item.id] &&
                     item.children.map((child, i) => (
                       <div key={child.id} className={styles.itemWrapper}>
-                        {contentOutlineExpanded && (
+                        {isExpanded && (
                           <div
                             className={cx(styles.itemConnector, {
                               [styles.firstItemConnector]: i === 0,
@@ -214,13 +226,12 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                         )}
                         <ContentOutlineItemButton
                           key={child.id}
-                          title={contentOutlineExpanded ? child.title : undefined}
-                          contentOutlineExpanded={contentOutlineExpanded}
-                          icon={contentOutlineExpanded ? undefined : item.icon}
+                          title={isExpanded ? child.title : undefined}
+                          contentOutlineExpanded={isExpanded}
+                          icon={isExpanded ? undefined : item.icon}
                           className={cx(styles.buttonStyles, {
-                            [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
-                            [styles.sectionHighlighter]:
-                              isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
+                            [styles.justifyCenter]: !isExpanded && !outlineItemsHaveDeleteButton,
+                            [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !isExpanded,
                           })}
                           indentStyle={styles.indentChild}
                           onClick={(e) => {
