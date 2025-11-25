@@ -13,6 +13,10 @@
 - Hiding the "General" folder
 - Allow unsigned nested plugins if parent is allowed
 
+See the NI-specific contribution docs in [`CONTRIBUTING_NI.md`](./CONTRIBUTING_NI.md).
+
+See an overview of the SystemLink Grafana integration in the [Dashboard Host Service runbook](https://dev.azure.com/ni/DevCentral/_wiki/wikis/Stratus/91033/Dashboard-Host-Service-runbook).
+
 ---
 
 ![Grafana Logo (Light)](docs/logo-horizontal.png#gh-light-mode-only)

@@ -1,3 +1,9 @@
+**Attention: This is a fork of [Grafana](https://github.com/grafana/grafana) for use in the NI SystemLink™ platform.**
+
+See the NI-specific contribution docs in [`CONTRIBUTING_NI.md`](./CONTRIBUTING_NI.md).
+
+---
+
 # Contributing to Grafana
 
 Thank you for your interest in contributing to Grafana! We welcome all people who want to contribute in a healthy and constructive manner within our community. To help us create a safe and positive community experience for all, we require all participants to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
