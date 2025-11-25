@@ -18,6 +18,7 @@ import (
 // ValidationFunc is a function that validates migration results.
 
 type Validator interface {
+	Name() string
 	Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
 }
 
@@ -27,7 +28,7 @@ type ResourceMigration struct {
 	migrator    UnifiedMigrator
 	resources   []schema.GroupResource
 	migrationID string
-	validator   Validator // Optional: custom validation logic for this migration
+	validators  []Validator // Optional: custom validation logic for this migration
 	log         log.Logger
 }
 
@@ -36,13 +37,13 @@ func NewResourceMigration(
 	migrator UnifiedMigrator,
 	resources []schema.GroupResource,
 	migrationID string,
-	validator Validator,
+	validators []Validator,
 ) *ResourceMigration {
 	return &ResourceMigration{
 		migrator:    migrator,
 		resources:   resources,
 		migrationID: migrationID,
-		validator:   validator,
+		validators:  validators,
 		log:         log.New("storage.unified.resource_migration." + migrationID),
 	}
 }
@@ -123,20 +124,22 @@ func (m *ResourceMigration) migrateOrg(ctx context.Context, sess *xorm.Session, 
 	return nil
 }
 
-// validateMigration calls the custom validation function if provided
+// validateMigration runs all validators in sequence
 func (m *ResourceMigration) validateMigration(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse) error {
-	if m.validator == nil {
-		m.log.Debug("No validation function provided, skipping validation")
+	if len(m.validators) == 0 {
+		m.log.Debug("No validators provided, skipping validation")
 		return nil
 	}
 
-	return m.validator.Validate(ctx, sess, response, m.log)
-}
+	for _, validator := range m.validators {
+		m.log.Debug("Running validator", "name", validator.Name(), "total", len(m.validators))
+		if err := validator.Validate(ctx, sess, response, m.log); err != nil {
+			return fmt.Errorf("validator %s failed: %w", validator.Name(), err)
+		}
+	}
 
-// LegacyTableInfo defines how to map a unified storage resource to its legacy table
-type LegacyTableInfo struct {
-	Table       string // Legacy table name (e.g., "dashboard", "playlist")
-	WhereClause string // WHERE clause template with org_id parameter (e.g., "org_id = ? and is_folder = false")
+	m.log.Debug("All validators passed", "count", len(m.validators))
+	return nil
 }
 
 func ParseOrgIDFromNamespace(namespace string) (int64, error) {

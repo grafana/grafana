@@ -542,6 +542,35 @@
     },
     {
       "metadata": {
+        "name": "alertingUIUseCompatibleBackendFilters",
+        "resourceVersion": "1763478911684",
+        "creationTimestamp": "2025-11-18T15:15:11Z",
+        "deletionTimestamp": "2025-11-18T15:17:12Z"
+      },
+      "spec": {
+        "description": "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingUIUseFullyCompatBackendFilters",
+        "resourceVersion": "1763479032988",
+        "creationTimestamp": "2025-11-18T15:17:12Z"
+      },
+      "spec": {
+        "description": "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingUseNewSimplifiedRoutingHashAlgorithm",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2025-08-29T14:46:39Z",
@@ -1883,6 +1912,22 @@
     },
     {
       "metadata": {
+        "name": "kubernetesExternalGroupMapping",
+        "resourceVersion": "1764062806326",
+        "creationTimestamp": "2025-11-25T09:17:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-25 09:26:46.326986 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Routes external group mapping requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesFeatureToggles",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2024-01-18T05:32:44Z"
@@ -2383,7 +2428,8 @@
       "metadata": {
         "name": "onPremToCloudMigrations",
         "resourceVersion": "1763734583253",
-        "creationTimestamp": "2024-01-22T16:09:08Z"
+        "creationTimestamp": "2024-01-22T16:09:08Z",
+        "deletionTimestamp": "2025-11-20T09:59:41Z"
       },
       "spec": {
         "description": "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
