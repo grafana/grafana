@@ -197,54 +197,44 @@
             "plural": "LogsDrilldownDefaultColumns",
             "scope": "Namespaced",
             "schemas": {
-              "LogsDefaultColumnsDatasource": {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "dsUID": {
-                      "type": "string"
-                    },
-                    "records": {
-                      "$ref": "#/components/schemas/LogsDefaultColumnsRecords"
-                    }
+              "LogsDefaultColumnsLabel": {
+                "additionalProperties": false,
+                "properties": {
+                  "key": {
+                    "type": "string"
                   },
-                  "required": ["dsUID", "records"],
-                  "type": "object"
+                  "value": {
+                    "type": "string"
+                  }
                 },
-                "type": "array"
+                "required": ["key", "value"],
+                "type": "object"
               },
               "LogsDefaultColumnsLabels": {
                 "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "key": {
-                      "type": "string"
-                    },
-                    "value": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["key", "value"],
-                  "type": "object"
+                  "$ref": "#/components/schemas/LogsDefaultColumnsLabel"
                 },
                 "type": "array"
               },
+              "LogsDefaultColumnsRecord": {
+                "additionalProperties": false,
+                "properties": {
+                  "columns": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "labels": {
+                    "$ref": "#/components/schemas/LogsDefaultColumnsLabels"
+                  }
+                },
+                "required": ["columns", "labels"],
+                "type": "object"
+              },
               "LogsDefaultColumnsRecords": {
                 "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "columns": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "labels": {
-                      "$ref": "#/components/schemas/LogsDefaultColumnsLabels"
-                    }
-                  },
-                  "required": ["columns", "labels"],
-                  "type": "object"
+                  "$ref": "#/components/schemas/LogsDefaultColumnsRecord"
                 },
                 "type": "array"
               },
@@ -290,11 +280,11 @@
               "spec": {
                 "additionalProperties": false,
                 "properties": {
-                  "datasource": {
-                    "$ref": "#/components/schemas/LogsDefaultColumnsDatasource"
+                  "records": {
+                    "$ref": "#/components/schemas/LogsDefaultColumnsRecords"
                   }
                 },
-                "required": ["datasource"],
+                "required": ["records"],
                 "type": "object"
               },
               "status": {

@@ -16,50 +16,38 @@
             "properties": {
               "spec": {
                 "properties": {
-                  "datasource": {
+                  "records": {
                     "items": {
                       "properties": {
-                        "dsUID": {
-                          "type": "string"
+                        "columns": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
                         },
-                        "records": {
+                        "labels": {
                           "items": {
                             "properties": {
-                              "columns": {
-                                "items": {
-                                  "type": "string"
-                                },
-                                "type": "array"
+                              "key": {
+                                "type": "string"
                               },
-                              "labels": {
-                                "items": {
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": ["key", "value"],
-                                  "type": "object"
-                                },
-                                "type": "array"
+                              "value": {
+                                "type": "string"
                               }
                             },
-                            "required": ["columns", "labels"],
+                            "required": ["key", "value"],
                             "type": "object"
                           },
                           "type": "array"
                         }
                       },
-                      "required": ["dsUID", "records"],
+                      "required": ["columns", "labels"],
                       "type": "object"
                     },
                     "type": "array"
                   }
                 },
-                "required": ["datasource"],
+                "required": ["records"],
                 "type": "object"
               },
               "status": {
