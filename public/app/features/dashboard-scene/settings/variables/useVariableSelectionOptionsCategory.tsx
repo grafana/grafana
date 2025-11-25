@@ -46,8 +46,10 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
           ),
           useShowIf: () => {
             const state = variable.useState();
-            const hasJsonValuesFormat = 'valuesFormat' in state && state.valuesFormat === 'json';
-            return hasJsonValuesFormat ? false : (state.includeAll ?? false);
+            const hasMultiProps =
+              ('valuesFormat' in state && state.valuesFormat === 'json') ||
+              state.options.every((o) => Boolean(o.properties));
+            return hasMultiProps ? false : (state.includeAll ?? false);
           },
           render: (descriptor) => <CustomAllValueInput id={descriptor.props.id} variable={variable} />,
         })
@@ -62,8 +64,10 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
           ),
           useShowIf: () => {
             const state = variable.useState();
-            const hasJsonValuesFormat = 'valuesFormat' in state && state.valuesFormat === 'json';
-            return !hasJsonValuesFormat;
+            const hasMultiProps =
+              ('valuesFormat' in state && state.valuesFormat === 'json') ||
+              state.options.every((o) => Boolean(o.properties));
+            return !hasMultiProps;
           },
           render: (descriptor) => <AllowCustomSwitch id={descriptor.props.id} variable={variable} />,
         })
