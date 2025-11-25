@@ -12,5 +12,5 @@ func TestContinueToken(t *testing.T) {
 		StartKeyOffset:  "apps/resources/default/test-resource",
 		SortAscending:   false,
 	}
-	assert.Equal(t, "eyJrIjoiYXBwcy9yZXNvdXJjZXMvZGVmYXVsdC90ZXN0LXJlc291cmNlIiwiZSI6ImFwcHMvcmVzb3VyY2VzL2RlZmF1bHQwIiwidiI6MTAwLCJzIjpmYWxzZX0=", token.String())
+	assert.Equal(t, "eyJrIjoiYXBwcy9yZXNvdXJjZXMvZGVmYXVsdC90ZXN0LXJlc291cmNlIiwidiI6MTAwLCJzIjpmYWxzZX0=", token.String())
 }
