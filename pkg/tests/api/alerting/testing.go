@@ -132,6 +132,7 @@ func alertRuleGen(mutators ...ruleMutator) func() apimodels.PostableExtendedRule
 						},
 						DatasourceUID: expr.DatasourceUID,
 						Model: json.RawMessage(`{
+								"refId": "A",
 								"type": "math",
 								"expression": "2 + 3 > 1"
 								}`),
