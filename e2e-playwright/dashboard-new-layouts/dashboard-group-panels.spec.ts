@@ -414,13 +414,13 @@ test.describe(
       ).toBeVisible();
 
       // Go back to dashboard options
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click({ force: true });
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       // Expand layouts section
       await page.getByLabel('Expand Group layout category').click();
 
       // Select tabs layout
-      await page.getByLabel('Tabs').click();
+      await page.getByLabel('layout-selection-option-Tabs').click();
 
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New row'))).toBeVisible();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New row 1'))).toBeVisible();
@@ -755,7 +755,7 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab 2'))).toBeVisible();
 
       // Go back to dashboard options
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click({ force: true });
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       // Expand layouts section
       await page.getByLabel('Expand Group layout category').click();

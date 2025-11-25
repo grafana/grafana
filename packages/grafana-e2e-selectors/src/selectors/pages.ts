@@ -187,6 +187,9 @@ export const versionedPages = {
       optionsButton: {
         '12.4.0': 'data-testid Dashboard Sidebar options button',
       },
+      outlineButton: {
+        '12.4.0': 'data-testid Dashboard Sidebar outline button',
+      },
     },
     DashNav: {
       nav: {

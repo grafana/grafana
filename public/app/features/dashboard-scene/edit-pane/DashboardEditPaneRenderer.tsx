@@ -91,7 +91,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
           onClick={() => editPane.openPane('outline')}
           title={t('dashboard.sidebar.outline.title', 'Outline')}
           tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
-          data-testid="dashboard-outline-button"
+          data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
           active={openPane === 'outline'}
         ></Sidebar.Button>
         {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
