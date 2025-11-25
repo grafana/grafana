@@ -20,6 +20,8 @@ const (
 	UserResourceGroup = "iam.grafana.com"
 )
 
+var _ resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
+
 // UserLegacySearchClient is a client for searching for users in the legacy search engine.
 type UserLegacySearchClient struct {
 	resourcepb.ResourceIndexClient
@@ -129,9 +131,9 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	for _, field := range fields {
 		switch field {
 		case "email":
-			columns = append(columns, builders.TableColumnDefinitions[builders.USER_EMAIL])
+			columns = append(columns, builders.UserTableColumnDefinitions[builders.USER_EMAIL])
 		case "login":
-			columns = append(columns, builders.TableColumnDefinitions[builders.USER_LOGIN])
+			columns = append(columns, builders.UserTableColumnDefinitions[builders.USER_LOGIN])
 		}
 	}
 	return columns
