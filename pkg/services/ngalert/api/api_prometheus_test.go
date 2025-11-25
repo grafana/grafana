@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
 	"testing"
 	"time"
@@ -2789,6 +2790,101 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, 3, len(res.Data.RuleGroups))
 			require.NotEmpty(t, res.Data.NextToken)
 		})
+	})
+
+	t.Run("with search.folder filter", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+
+		// Create folders with different paths
+		folder1 := &folder.Folder{UID: "prod-uid", Title: "Production", Fullpath: "Production", OrgID: orgID}
+		folder2 := &folder.Folder{UID: "prod-alerts-uid", Title: "Alerts", Fullpath: "Production/Alerts", OrgID: orgID}
+		folder3 := &folder.Folder{UID: "dev-uid", Title: "Monitoring", Fullpath: "Development/Monitoring", OrgID: orgID}
+		folder4 := &folder.Folder{UID: "prod-crit-uid", Title: "Critical", Fullpath: "Production/Critical", OrgID: orgID}
+		fakeStore.Folders[orgID] = []*folder.Folder{folder1, folder2, folder3, folder4}
+
+		// Create rules in different folders
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithNamespaceUID("prod-uid"), gen.WithUID("rule1"), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithNamespaceUID("prod-alerts-uid"), gen.WithUID("rule2"), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithNamespaceUID("dev-uid"), gen.WithUID("rule3"), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithNamespaceUID("prod-crit-uid"), gen.WithUID("rule4"), gen.WithNoNotificationSettings())
+
+		testCases := []struct {
+			name         string
+			searchFolder string
+			expectedUIDs []string
+		}{
+			{
+				name:         "search 'production' matches Production folders",
+				searchFolder: "production",
+				expectedUIDs: []string{"rule1", "rule2", "rule4"},
+			},
+			{
+				name:         "search 'prod alerts' matches Production/Alerts",
+				searchFolder: "prod alerts",
+				expectedUIDs: []string{"rule2"},
+			},
+			{
+				name:         "search 'dev' matches Development",
+				searchFolder: "dev",
+				expectedUIDs: []string{"rule3"},
+			},
+			{
+				name:         "search 'critical' matches Critical folder",
+				searchFolder: "critical",
+				expectedUIDs: []string{"rule4"},
+			},
+			{
+				name:         "case insensitive search",
+				searchFolder: "PRODUCTION",
+				expectedUIDs: []string{"rule1", "rule2", "rule4"},
+			},
+			{
+				name:         "empty search returns all rules",
+				searchFolder: "",
+				expectedUIDs: []string{"rule1", "rule2", "rule3", "rule4"},
+			},
+			{
+				name:         "non-matching search returns no rules",
+				searchFolder: "nonexistent",
+				expectedUIDs: []string{},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				reqURL := "/api/v1/rules"
+				if tc.searchFolder != "" {
+					reqURL += "?search.folder=" + url.QueryEscape(tc.searchFolder)
+				}
+				req, err := http.NewRequest("GET", reqURL, nil)
+				require.NoError(t, err)
+				ctx := &contextmodel.ReqContext{
+					Context:      &web.Context{Req: req},
+					SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions},
+				}
+
+				resp := api.RouteGetRuleStatuses(ctx)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				var res apimodels.RuleResponse
+				require.NoError(t, json.Unmarshal(resp.Body(), &res))
+				require.Equal(t, "success", res.Status)
+
+				// Collect rule UIDs from response
+				actualUIDs := []string{}
+				for _, group := range res.Data.RuleGroups {
+					for _, rule := range group.Rules {
+						actualUIDs = append(actualUIDs, rule.UID)
+					}
+				}
+
+				require.ElementsMatch(t, tc.expectedUIDs, actualUIDs)
+			})
+		}
 	})
 }
 
