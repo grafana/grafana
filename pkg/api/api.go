@@ -121,8 +121,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/provisioning", reqOrgAdmin, hs.Index)
 	r.Get("/admin/provisioning/*", reqOrgAdmin, hs.Index)
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
+	if hs.Cfg.CloudMigration.Enabled {
 		r.Get("/admin/migrate-to-cloud", authorize(cloudmigration.MigrationAssistantAccess), hs.Index)
 	}
 

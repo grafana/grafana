@@ -13,6 +13,7 @@ import {
   SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
+  sceneGraph,
   sceneUtils,
   VizPanel,
   isSceneObject,
@@ -21,6 +22,8 @@ import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
+import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
+import { hasData } from 'app/features/panel/suggestions/utils';
 
 import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -29,6 +32,7 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { PanelModelCompatibilityWrapper } from '../utils/PanelModelCompatibilityWrapper';
 import {
   activateSceneObjectAndParentTree,
   getDashboardSceneFor,
@@ -84,7 +88,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panel = this.state.panelRef.resolve();
 
     if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-      panel.changePluginType('timeseries');
+      if (config.featureToggles.newVizSuggestions) {
+        this._autoSelectVisualization(panel);
+      } else {
+        panel.changePluginType('timeseries');
+      }
     }
 
     this._subs.add(
@@ -115,6 +123,29 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         deactivateParents();
       }
     };
+  }
+
+  private async _autoSelectVisualization(panel: VizPanel) {
+    const dataObject = sceneGraph.getData(panel);
+
+    this._subs.add(
+      dataObject.subscribeToState(async () => {
+        const { data } = dataObject.state;
+        if (hasData(data) && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
+          const panelModel = new PanelModelCompatibilityWrapper(panel);
+          const suggestions = await getAllSuggestions(data, panelModel);
+
+          if (suggestions.length > 0) {
+            const defaultFirstSuggestion = suggestions[0];
+            await panel.changePluginType(
+              defaultFirstSuggestion.pluginId,
+              defaultFirstSuggestion.options,
+              defaultFirstSuggestion.fieldConfig
+            );
+          }
+        }
+      })
+    );
   }
 
   private commitChanges() {
@@ -228,12 +259,17 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         })
       );
 
+      const isUnconfigured = Boolean(
+        config.featureToggles.newVizSuggestions && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID
+      );
+
       // Setup options pane
       this.setState({
         optionsPane: new PanelOptionsPane({
           panelRef: this.state.panelRef,
           searchQuery: '',
           listMode: OptionFilter.All,
+          isVizPickerOpen: isUnconfigured,
         }),
         isInitializing: false,
       });

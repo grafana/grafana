@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Uyarı yöneticisi:",
-      "disabled-tooltip": "",
       "error": "{{alertmanager}} için yönlendirme ön izlemesi yüklenemedi",
       "initialized": "Eklenen etiketlere bağlı olarak uyarı örnekleri aşağıdaki bildirim politikalarına yönlendirilir. Daha fazla ayrıntı görmek için her bir bildirim politikasını genişletin.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Yönlendirmeyi ön izle",
       "select-folder-tooltip": "",
       "text-loading-preview": "Ön izleme yükleniyor...",
@@ -2079,7 +2081,7 @@
         "warning-1": "Bu bildirim politikası silindiğinde kalıcı olarak kaldırılacaktır.",
         "warning-2": "Bu politikayı silmek istediğinizden emin misiniz?"
       },
-      "filter-description": "",
+      "filter-description": "Bildirim politikalarını, virgülle ayrılmış eşleşenler listesi kullanarak filtreleyin, örneğin: <1>severity=critical, region=EMEA</1>",
       "generated-policies": "Otomatik olarak oluşturulan politikalar",
       "matchers": "Eşleşenler",
       "metadata": {
@@ -2598,8 +2600,7 @@
         "firing": "",
         "normal": "",
         "pending": "",
-        "recovering": "",
-        "unknown": ""
+        "recovering": ""
       },
       "type": {
         "alert": "",
@@ -2623,12 +2624,14 @@
         "placeholder-search-input": ""
       },
       "grafana-folder": "",
+      "group-autocomplete-unavailable": "",
       "health": "Sağlık",
       "label": {
         "hide": "Gizle",
         "show": "Göster"
       },
       "manage-alerts": "Bu veri kaynaklarında hem Grafana arayüzünde hem de yapılandırıldıkları veri kaynağında bu uyarı kurallarını yönetebilmek için \"Uyarı Yönetimi\" arayüzü üzerinden yönetimi seçebilirsiniz.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Tüm veri kaynakları",
       "placeholder-contact-point": "",
       "placeholder-data-sources": "",
@@ -2805,7 +2808,7 @@
     "template-data-docs": {
       "alert-template-data-table": {
         "alert-template-data": "Uyarı şablonu verileri",
-        "only-in-alert": "Yalnızca bir Uyarı bağlamında kullanılabilir (örn.Alerts döngüsü içinde)"
+        "only-in-alert": ""
       },
       "available-context-notification": "Bir bildirim bağlamında kullanılabilir.",
       "notification-template-data": "Bildirim şablonu verileri"
@@ -3242,7 +3245,7 @@
       "auth-settings": "Kimlik doğrulaması ayarları"
     },
     "auth-drawer-unconneced": {
-      "subtitle": ""
+      "subtitle": "Kimlik doğrulama ayarlarını yapılandırın. Daha fazla bilgi için <2>belgelerimize</2> bakın."
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Gelişmiş Kimlik Doğrulaması",
@@ -3276,7 +3279,7 @@
       "allowed-organizations-description": "Virgül veya boşlukla ayrılmış kuruluş listesi. Kullanıcının giriş yapabilmesi için en az bir\ngrubun üyesi olması gerekir.",
       "allowed-organizations-label": "İzin verilen kuruluşlar",
       "allowed-organizations-placeholder": "Kuruluşları girin (benim-ekibim, benimekibim...) ve eklemek için Enter tuşuna basın",
-      "api-url-description": "",
+      "api-url-description": "OAuth2 sağlayıcınızın kullanıcı bilgisi uç noktası. Bu uç noktadan dönen bilgiler <2>OpenID UserInfo</2> ile uyumlu olmalıdır.",
       "api-url-required": "Bu alan ayarlanmışsa geçerli bir URL olmalıdır",
       "auth-style-description": "\"{{ clientIDLabel }}\" ve \"{{ clientSecretLabel }}\" bilgilerinin OAuth2 sağlayıcısına nasıl gönderileceğini belirler. Varsayılan Otomatik Algıla'dır.",
       "auth-style-label": "Kimlik doğrulama stili",
@@ -3421,7 +3424,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": ""
+    "subtitle": "Kimlik doğrulama ayarlarınızı yönetin ve çoklu oturum açmayı yapılandırın. Daha fazla bilgi için <2>belgelerimize</2> bakın."
   },
   "bar-chart": {
     "warn": {
@@ -3540,6 +3543,7 @@
       "delete-modal-invalid-title": "Klasör silinemiyor",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Bu işlem aşağıdaki içerikleri silecektir:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Sil",
       "delete-provisioned-folder": "Sağlanan klasörü sil",
       "deleting": "Siliniyor...",
@@ -3548,6 +3552,7 @@
       "move-modal-alert": "Bu ögenin taşınması izinlerini değiştirebilir.",
       "move-modal-field-label": "Klasör adı",
       "move-modal-text": "Bu işlem aşağıdaki içerikleri taşıyacaktır:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Taşı",
       "move-provisioned-folder": "",
       "moving": "Taşınıyor...",
@@ -3635,11 +3640,11 @@
       "title-folder": "Bu klasörde henüz bir pano yok"
     },
     "folder-actions-button": {
-      "delete": "Sil",
+      "delete": "",
       "delete-folder-error": "",
       "folder-actions": "Klasör işlemleri",
       "manage-permissions": "İzinleri yönet",
-      "move": "Taşı"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Klasör seçin: {{ label }} şu anda seçili",
@@ -4839,7 +4844,7 @@
       "add-visualization-body": "Bir veri kaynağı seçin ve ardından grafikler, istatistikler ve tablolarla verilerinizi sorgulayın ve görselleştirin veya listeler, markdown'lar ve diğer widget'lar oluşturun.",
       "add-visualization-button": "Görselleştirme ekle",
       "add-visualization-header": "Bir görselleştirme ekleyerek yeni panonuzu başlatın",
-      "import-a-dashboard-body": "",
+      "import-a-dashboard-body": "Panoları dosyalardan veya <2>grafana.com</2>'dan içe aktarın.",
       "import-a-dashboard-header": "Bir panoyu içe aktar",
       "import-dashboard-button": "Panoyu içe aktar",
       "show-less-dashboards": "",
@@ -5095,8 +5100,12 @@
     "new-panel": {
       "configure-button": "Yapılandır",
       "configure-button-menu": "Menüyü aç/kapat",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Yapılandır",
-      "menu-use-library-panel": "Kütüphane panelini kullan"
+      "menu-use-library-panel": "Kütüphane panelini kullan",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Yeni panel",
     "on-create-new-row": {
@@ -6614,7 +6623,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Bu hata hakkında daha fazla bilgi edinmek için <2>buraya</2> tıklayın.",
-    "success-more-details-links": ""
+    "success-more-details-links": "Ardından, bir <2>pano oluşturarak</2> veya <5>Keşfet görünümünde</5> verileri sorgulayarak verileri görselleştirmeye başlayabilirsiniz."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6710,7 +6719,7 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "",
+      "body-alert": "Veya uğraşmadan {{mainDS}} (ve {{extraDS}}) veri kaynaklarını Grafana Labs'tan tamamen yönetilen, ölçeklenebilir ve barındırılan <6>daima ücretsiz Grafana Cloud planıyla</6> edinin.",
       "title-alert": "Aşağıdan {{mainDS}} veri kaynağınızı yapılandırın"
     },
     "dashboards-table": {
@@ -7215,6 +7224,7 @@
       "logs-volume": {
         "add-filters": "Sorgunuzu daraltmak için sorgunuza daha fazla etiket ekleyin.",
         "decrease-timerange": "Sorgunuzun zaman aralığını kısaltın.",
+        "max-bytes-error": "",
         "much-data": "Sorgu çok fazla veriye erişmeye çalışıyor. Aşağıdakilerden biri veya daha fazlasını yerine getirin:"
       },
       "maximum-pinned-logs": "Maksimum {{PINNED_LOGS_LIMIT}} sabitlenmiş günlük ulaşıldı. Başka bir tane eklemek için bir günlüğün sabitlemesini kaldırın.",
@@ -7264,12 +7274,15 @@
       "tooltip-select-query-visualize-table": "Tabloda görselleştirmek için bir sorgu seçin"
     },
     "logs-volume-panel": {
-      "content-streaming": "Akış"
+      "content-streaming": "Akış",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "",
       "label-reload-log-volume": "Günlük kaydı hacmini yeniden yükle",
       "loading": "Yükleniyor...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Bu sorgu için günlük kaydı birimi yüklenemedi",
       "title-no-logs-volume-available": "Günlük kaydı birimi yok",
       "title-showing-partial-data": "Kısmi veriler gösteriliyor",
@@ -7691,7 +7704,7 @@
     "math": {
       "available-math-functions": "Kullanılabilir matematiksel işlevler",
       "run-math-operations": "",
-      "tooltip-footer": "",
+      "tooltip-footer": " <2>Matematiksel ifadeler</2> hakkında ek belgelerimize bakın.",
       "tooltip-title": "Matematik işleci",
       "tooltip-trigger": "İfade"
     },
@@ -7717,10 +7730,23 @@
       "label-upsample": "Örneklemeyi artır",
       "tooltip-s-m-h": "10 sn, 1 dk, 30 dk, 1 sa"
     },
+    "schema-inspector-panel": {
+      "aria-label-close-schema-inspector": ""
+    },
     "sql-expr": {
       "button-run-query": "",
       "modal-title": "",
       "tooltip-experimental": ""
+    },
+    "sql-schema": {
+      "close-schema-inspector": "",
+      "error-title": "",
+      "inspect-button": "",
+      "loading": "",
+      "no-data-title": "",
+      "no-fields-desc": "",
+      "no-fields-title": "",
+      "query-error-title": ""
     },
     "threshold": {
       "label-input": "Girdi"
@@ -7792,6 +7818,14 @@
     "name-show-threshold-labels": "Eşik etiketlerini göster",
     "name-show-threshold-markers": "Eşik işaretçilerini göster",
     "placeholder-neutral": "otomatik",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8578,7 +8612,13 @@
       "saving": "<1></1> kaydediliyor"
     },
     "axis-builder": {
-      "linear-threshold": "Doğrusal eşik",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Günlük tabanı"
     },
     "builder": {
@@ -8984,6 +9024,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Sağ Y eksenini kullan"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9002,6 +9047,13 @@
       "copy": "Panoya kopyala",
       "csv-counts": "",
       "csv-placeholder": "Buraya CSV girin...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Değerleri filtrele",
       "filter-popup-apply": "Tamam",
       "filter-popup-aria-label-match-case": "",
@@ -9268,6 +9320,7 @@
       "toggle-panel-edit": "Panel düzenleme görünümünü aç/kapat",
       "toggle-panel-fullscreen": "Panel tam ekran görünümünü aç/kapat",
       "toggle-panel-legend": "Panel açıklamasını aç/kapat",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Zaman aralığını büyüt"
     },
     "title": "Kısayollar"
@@ -9943,11 +9996,7 @@
       "wrap-lines": "Satırları kaydır"
     },
     "logs-navigation": {
-      "newer-logs": "Yeni günlükler",
-      "older-logs": "Eski günlükler",
-      "scroll-bottom": "En alta kaydır",
-      "scroll-top": "En üste kaydır",
-      "start-of-range": "Aralık başlangıcı"
+      "scroll-top": "En üste kaydır"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -10892,10 +10941,10 @@
       "placeholder-optional": "(isteğe bağlı)",
       "role": "Rol",
       "submit": "Gönder",
-      "tooltip": ""
+      "tooltip": "Artık \"Temel rol yok\" seçeneğini seçebilir ve izinleri özel ihtiyaçlarınıza göre ekleyebilirsiniz. Daha fazla bilgi için <1>belgelerimize</1> göz atabilirsiniz."
     },
     "user-invite-page": {
-      "sub-title": "",
+      "sub-title": "Davet gönderin veya mevcut bir Grafana kullanıcısını <1> {{orgName}}</1> kuruluşuna ekleyin.",
       "text": {
         "invite-user": "Kullanıcı davet et"
       }
@@ -12347,7 +12396,7 @@
     },
     "menu": {
       "clear-button": "Tümünü temizle",
-      "tooltip": ""
+      "tooltip": "Artık \"Temel rol yok\" seçeneğini seçebilir ve izinleri özel ihtiyaçlarınıza göre ekleyebilirsiniz. Daha fazla bilgi için <1>belgelerimize</1> göz atabilirsiniz."
     },
     "menu-aria-label": "Rol seçici menüsü",
     "menu-group-option-aria-label": "Rol seçme opsiyonu",
@@ -12406,8 +12455,10 @@
       "cancel": "İptal",
       "error-title": "",
       "input": {
-        "placeholder": "Kapsam seçin...",
-        "removeAll": "Tüm kapsamları kaldır"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Tüm kapsamları kaldır",
+        "tooltip": ""
       },
       "title": "Kapsam seçin"
     },
@@ -12518,11 +12569,14 @@
       "copy-clipboard": "Panoya kopyala",
       "copy-to-clipboard-and-close": "Panoya kopyala ve kapat",
       "description-name-to-easily-identify-the-token": "Belirteci kolayca tanımlamak için ad",
+      "description-no-expiration-disabled": "",
       "description-token": "Bu noktada belirteci kopyalayın çünkü tekrar göremeyeceksiniz. Belirtecin kaybedilmesi yeni bir belirteç oluşturulmasını gerektirir.",
       "generate-token": "Belirteç oluştur",
       "label-display-name": "Görünen ad",
       "label-expiration": "Son",
       "label-expiration-date": "Son kullanma tarihi",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Belirteç"
     },
     "get-actions-cell": {
@@ -12668,7 +12722,7 @@
       "info-text": "Aşağıdaki seçeneklerle özelleştirilen bu panoya veya panele doğrudan bir bağlantı oluşturun.",
       "link-url": "Bağlantı URL'si",
       "render-alert": "Görüntü işleme eklentisi yüklü değil",
-      "render-instructions": "",
+      "render-instructions": "Bir görsel oluşturmak için <2>Grafana görüntü işleme eklentisini</2> yüklemeniz gerekir. Lütfen eklentiyi yüklemek için Grafana yöneticinizle iletişime geçin.",
       "rendered-image": "Doğrudan bağlantılı oluşturulmuş görüntü",
       "save-alert": "Pano kaydedilmedi",
       "save-dashboard": "Panel görüntüsü oluşturmak için önce panoyu kaydetmelisiniz.",
@@ -13709,7 +13763,7 @@
       "label-format": "Biçim",
       "label-set-timezone": "Zaman dilimini ayarla",
       "label-time-field": "Zaman alanı",
-      "tooltip-format": "",
+      "tooltip-format": "Alan için çıktı biçimi, <2>Moment.js biçimlendirme dizesi</2> olarak belirtilir.",
       "tooltip-timezone-manually": "Tarih için saat dilimini manuel olarak ayarlayın"
     },
     "format-time-transformer-editor": {

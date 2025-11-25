@@ -29,6 +29,7 @@ var DashboardEditActions = append(DashboardViewActions, []string{dashboards.Acti
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
 func getDashboardViewActions(features featuremgmt.FeatureToggles) []string {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		return append(DashboardViewActions, accesscontrol.ActionAnnotationsRead)
 	}
@@ -36,6 +37,7 @@ func getDashboardViewActions(features featuremgmt.FeatureToggles) []string {
 }
 
 func getDashboardEditActions(features featuremgmt.FeatureToggles) []string {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		return append(DashboardEditActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
 	}
@@ -43,6 +45,7 @@ func getDashboardEditActions(features featuremgmt.FeatureToggles) []string {
 }
 
 func getDashboardAdminActions(features featuremgmt.FeatureToggles) []string {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		return append(DashboardAdminActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
 	}
