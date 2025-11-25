@@ -3,7 +3,9 @@ package datasource
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 )
 
 var (
@@ -26,8 +29,9 @@ var (
 )
 
 type legacyStorage struct {
-	datasources  PluginDatasourceProvider
-	resourceInfo *utils.ResourceInfo
+	datasources                     PluginDatasourceProvider
+	resourceInfo                    *utils.ResourceInfo
+	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -57,11 +61,21 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Get"), time.Since(start).Seconds())
+	}()
+
 	return s.datasources.GetDataSource(ctx, name)
 }
 
 // Create implements rest.Creater.
 func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Create"), time.Since(start).Seconds())
+	}()
+
 	ds, ok := obj.(*v0alpha1.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("expected a datasource object")
@@ -71,6 +85,11 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 
 // Update implements rest.Updater.
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Create"), time.Since(start).Seconds())
+	}()
+
 	old, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -107,6 +126,11 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 
 // Delete implements rest.GracefulDeleter.
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Create"), time.Since(start).Seconds())
+	}()
+
 	err := s.datasources.DeleteDataSource(ctx, name)
 	return nil, false, err
 }
