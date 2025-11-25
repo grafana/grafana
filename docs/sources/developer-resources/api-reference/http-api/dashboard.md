@@ -772,7 +772,7 @@ Deletes a dashboard via the dashboard uid.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#new-dashboard-apis) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
