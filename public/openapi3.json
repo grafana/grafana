@@ -11609,6 +11609,9 @@
           "teamId": {
             "format": "int64",
             "type": "integer"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"

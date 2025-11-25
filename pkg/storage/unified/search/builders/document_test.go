@@ -58,6 +58,18 @@ func TestUserDocumentBuilder(t *testing.T) {
 	})
 }
 
+func TestExternalGroupMappingDocumentBuilder(t *testing.T) {
+	info, err := GetExternalGroupMappingBuilder()
+	require.NoError(t, err)
+	doSnapshotTests(t, info.Builder, "external_group_mapping", &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "iam.grafana.app",
+		Resource:  "externalgroupmappings",
+	}, []string{
+		"mapping-with-team-and-group",
+	})
+}
+
 func TestDashboardDocumentBuilder(t *testing.T) {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
