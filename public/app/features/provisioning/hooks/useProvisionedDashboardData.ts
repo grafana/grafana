@@ -18,9 +18,16 @@ interface UseDefaultValuesParams {
   defaultTitle: string;
   defaultDescription?: string;
   loadedFromRef?: string;
+  saveAsCopy?: boolean;
 }
 
-export function useDefaultValues({ meta, defaultTitle, defaultDescription, loadedFromRef }: UseDefaultValuesParams) {
+export function useDefaultValues({
+  meta,
+  defaultTitle,
+  defaultDescription,
+  loadedFromRef,
+  saveAsCopy,
+}: UseDefaultValuesParams) {
   const annotations = meta.k8s?.annotations;
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
@@ -35,8 +42,8 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
 
   const dashboardPath = generatePath({
     timestamp,
-    pathFromAnnotation: sourcePath,
-    slug: meta.slug,
+    pathFromAnnotation: saveAsCopy ? undefined : sourcePath,
+    slug: saveAsCopy ? undefined : meta.slug,
     folderPath,
   });
 
@@ -82,7 +89,7 @@ export interface ProvisionedDashboardData {
  * It retrieves default values, repository information, and workflow options based on the current dashboard state.
  */
 
-export function useProvisionedDashboardData(dashboard: DashboardScene): ProvisionedDashboardData {
+export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCopy?: boolean): ProvisionedDashboardData {
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const [params] = useUrlParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -93,6 +100,7 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
     defaultTitle,
     defaultDescription,
     loadedFromRef,
+    saveAsCopy,
   });
 
   if (!defaultValuesResult) {
