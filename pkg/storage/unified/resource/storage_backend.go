@@ -473,24 +473,22 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	// Parse continue token if provided
 	listOptions := ListRequestOptions{
+		StartKey: ListRequestKey{
+			Group:     req.Options.Key.Group,
+			Resource:  req.Options.Key.Resource,
+			Namespace: namespace,
+			Name:      req.Options.Key.Name,
+		},
 		ResourceVersion: req.ResourceVersion,
 	}
+
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("invalid continue token: %w", err)
 		}
-		listOptions.StartKeyPrefix = token.StartKey
-		listOptions.EndKeyPrefix = token.EndKey
+		listOptions.StartKeyOffset = token.StartKeyOffset
 		listOptions.ResourceVersion = token.ResourceVersion
-	} else {
-		listOptions.StartKey = ListRequestKey{
-			Group:     req.Options.Key.Group,
-			Resource:  req.Options.Key.Resource,
-			Namespace: namespace,
-			Name:      req.Options.Key.Name,
-		}
-		listOptions.EndKeyPrefix = PrefixRangeEnd(listOptions.StartKey.Prefix())
 	}
 
 	// We set the listRV to the last event resource version.
@@ -525,7 +523,6 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	iter := kvListIterator{
 		listRV: listRV,
-		endKey: listOptions.EndKeyPrefix,
 		next:   next,
 	}
 	err := cb(&iter)
@@ -540,7 +537,6 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 type kvListIterator struct {
 	listRV         int64
 	startKeyOffset string
-	endKey         string
 
 	// pull-style iterator
 	next func() (DataObj, error, bool)
@@ -593,8 +589,7 @@ func (i *kvListIterator) Error() error {
 
 func (i *kvListIterator) ContinueToken() string {
 	return ContinueToken{
-		StartKey:        i.startKeyOffset,
-		EndKey:          i.endKey,
+		StartKeyOffset:  i.startKeyOffset,
 		ResourceVersion: i.listRV,
 	}.String()
 }

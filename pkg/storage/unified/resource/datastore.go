@@ -112,7 +112,7 @@ type ListRequestKey struct {
 	Group     string
 	Resource  string
 	Namespace string
-	Name      string
+	Name      string // optional for listing multiple resources
 }
 
 func (k ListRequestKey) Validate() error {
@@ -315,10 +315,8 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 
 type ListRequestOptions struct {
 	StartKey        ListRequestKey
+	StartKeyOffset  string
 	ResourceVersion int64
-
-	StartKeyPrefix string
-	EndKeyPrefix   string
 }
 
 // ListLatestResourceKeys returns an iterator over the data keys for the latest versions of resources.
@@ -332,26 +330,23 @@ func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestK
 // ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.
 // If rv is 0, it returns the latest versions. Only returns keys for resources that are not deleted at the given revision.
 func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options ListRequestOptions) iter.Seq2[DataKey, error] {
+	if err := options.StartKey.Validate(); err != nil {
+		return func(yield func(DataKey, error) bool) {
+			yield(DataKey{}, fmt.Errorf("invalid list request key: %w", err))
+		}
+	}
+
 	rv := options.ResourceVersion
+	startKey := options.StartKey.Prefix()
 
 	listOptions := ListOptions{
-		StartKey: options.StartKeyPrefix,
-		EndKey:   options.EndKeyPrefix,
+		StartKey: options.StartKeyOffset,
+		EndKey:   PrefixRangeEnd(startKey),
 		Sort:     SortOrderAsc,
 	}
 
 	if listOptions.StartKey == "" {
-		if err := options.StartKey.Validate(); err != nil {
-			return func(yield func(DataKey, error) bool) {
-				yield(DataKey{}, fmt.Errorf("invalid list request key: %w", err))
-			}
-		}
-
-		listOptions.StartKey = options.StartKey.Prefix()
-	}
-
-	if listOptions.EndKey == "" {
-		listOptions.EndKey = PrefixRangeEnd(listOptions.StartKey)
+		listOptions.StartKey = startKey
 	}
 
 	if rv == 0 {
