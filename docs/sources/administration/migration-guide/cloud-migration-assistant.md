@@ -14,10 +14,10 @@ weight: 400
 The Grafana Cloud Migration Assistant, generally available from Grafana v12.0, automatically migrates resources from your Grafana OSS/Enterprise instance to Grafana Cloud. It provides the following functionality:
 
 - Securely connect your self-managed instance to a Grafana Cloud instance.
-- Seamlessly migrate resources such as dashboards, data sources, and folders to your cloud instance in a few easy steps.
+- Migrate resources such as dashboards, data sources, and folders to your cloud instance in a few easy steps.
 - View the migration status of your resources in real-time.
 
-Some of the benefits of the migration assistant are:
+Some benefits of the migration assistant are:
 
 Ease of use
 : Follow the steps provided by the UI to easily migrate all your resources to Grafana Cloud without using Grafana APIs or scripts.
@@ -44,7 +44,7 @@ The following resources are supported by the migration assistant:
 
 To use the Grafana migration assistant, you need:
 
-- Grafana v11.2 or above with the `onPremToCloudMigrations` feature toggle enabled. In Grafana 11.5, this is enabled by default. For more information on how to enable a feature toggle, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#configure-feature-toggles).
+- A self-manage Grafana instance version v11.2 or above with the `onPremToCloudMigrations` feature toggle enabled. In Grafana 11.5, this is enabled by default. For more information on how to enable a feature toggle, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#configure-feature-toggles).
 - A [Grafana Cloud Stack](https://grafana.com/docs/grafana-cloud/get-started/) you intend to migrate your resources to.
 - [`Admin`](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/) access to the Grafana Cloud Stack. To check your access level, go to `https://grafana.com/orgs/<YOUR-ORG-NAME>/members`.
 - [Grafana server administrator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) access to your existing Grafana OSS/Enterprise instance. To check your access level, go to `https://<GRAFANA-ONPREM-URL>/admin/users`.
@@ -136,6 +136,7 @@ After a snapshot is created, a list of resources appears with resource Type and 
 1. Use the assistant's real-time progress tracking to monitor the migration. The status changes to 'Uploaded to cloud' for resources successfully copied to the cloud.
 
    From Grafana v12.0, you can group and sort resources during and after the migration:
+
    - Click **Name** to sort resources alphabetically.
    - Click **Type** to group and sort by resource type.
    - Click **Status** to group and sort by upload status (pending upload, uploaded successfully, or experienced errors).
