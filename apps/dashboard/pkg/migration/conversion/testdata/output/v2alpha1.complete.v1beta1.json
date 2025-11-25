@@ -139,7 +139,7 @@
               }
             }
           ],
-          "type": "Panel"
+          "type": "stat"
         }
       ],
       "preload": true,
@@ -346,10 +346,12 @@
             },
             "defaultKeys": [
               {
+                "expandable": true,
                 "text": "job",
                 "value": "job"
               },
               {
+                "expandable": true,
                 "text": "instance",
                 "value": "instance"
               }

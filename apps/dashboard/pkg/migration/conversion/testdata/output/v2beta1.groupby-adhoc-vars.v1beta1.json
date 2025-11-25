@@ -50,6 +50,8 @@
             },
             "defaultKeys": [
               {
+                "expandable": true,
+                "group": "defaultGroup1",
                 "text": "defaultKey1",
                 "value": "defaultKey1"
               }

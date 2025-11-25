@@ -38,7 +38,8 @@ export function transformV1ToV2AnnotationQuery(
   const result: AnnotationQueryKind = {
     kind: 'AnnotationQuery',
     spec: {
-      builtIn: Boolean(annotation.builtIn),
+      // Only set builtIn if it's explicitly set (1 or truthy), not if it's undefined or false
+      ...(annotation.builtIn === 1 || (annotation.builtIn !== undefined && Boolean(annotation.builtIn)) ? { builtIn: true } : {}),
       name: annotation.name ?? defaultAnnotationQuerySpec().name,
       enable: Boolean(override?.enable) || Boolean(annotation.enable),
       hide: Boolean(override?.hide) || Boolean(annotation.hide),

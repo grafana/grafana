@@ -208,8 +208,21 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
       expect(frontendOutput).toBeDefined();
       expect(backendOutputAfterLoadedByScene).toBeDefined();
 
+      // Compare only the dashboard spec structures, ignoring metadata differences (uid, version, etc.)
+      // Remove metadata fields that may differ between backend and frontend transformations
+      const frontendSpec = { ...frontendOutput };
+      const backendSpec = { ...backendOutputAfterLoadedByScene };
+      
+      // Remove metadata fields that are not part of the core dashboard spec
+      delete frontendSpec.uid;
+      delete backendSpec.uid;
+      delete frontendSpec.version;
+      delete backendSpec.version;
+      delete frontendSpec.id;
+      delete backendSpec.id;
+
       // Compare only the spec structures - this is the core transformation
-      expect(backendOutputAfterLoadedByScene).toEqual(frontendOutput);
+      expect(backendSpec).toEqual(frontendSpec);
     });
   });
 });

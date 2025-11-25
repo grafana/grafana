@@ -23,15 +23,7 @@ import (
 // TestV2alpha1ToV1beta1RoundTrip tests round-trip conversion: v2alpha1 → v1beta1 → v2alpha1
 // This ensures no data loss during conversion between v2alpha1 and v1beta1
 func TestV2alpha1ToV1beta1RoundTrip(t *testing.T) {
-	// Initialize the migrator with test data source and library element providers
-	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
-
-	// Set up conversion scheme
-	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider, leProvider)
-	require.NoError(t, err)
+	scheme := setupTestConversionScheme(t)
 
 	// Read all v2alpha1 input files
 	inputDir := filepath.Join("testdata", "input")
@@ -51,15 +43,8 @@ func TestV2alpha1ToV1beta1RoundTrip(t *testing.T) {
 		t.Run(fmt.Sprintf("RoundTrip_%s", file.Name()), func(t *testing.T) {
 			// Read v2alpha1 dashboard file
 			inputFile := filepath.Join(inputDir, file.Name())
-			// ignore gosec G304 as this function is only used in the test process
-			//nolint:gosec
-			inputData, err := os.ReadFile(inputFile)
-			require.NoError(t, err, "Failed to read input file")
-
-			// Parse v2alpha1 dashboard
 			var originalV2alpha1 dashv2alpha1.Dashboard
-			err = json.Unmarshal(inputData, &originalV2alpha1)
-			require.NoError(t, err, "Failed to unmarshal v2alpha1 dashboard")
+			readInputFile(t, inputFile, &originalV2alpha1)
 
 			// Collect original statistics
 			originalStats := collectStatsV2alpha1(originalV2alpha1.Spec)
@@ -94,27 +79,14 @@ func TestV2alpha1ToV1beta1RoundTrip(t *testing.T) {
 // TestV2alpha1ToV1beta1WriteOutputFiles writes output files from v2alpha1 input files
 // This test reads v2alpha1 input files, converts them to v1beta1, and writes the output files
 func TestV2alpha1ToV1beta1WriteOutputFiles(t *testing.T) {
-	// Initialize the migrator with test data source and library element providers
-	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
-
-	// Set up conversion scheme
-	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider, leProvider)
-	require.NoError(t, err)
+	scheme := setupTestConversionScheme(t)
 
 	// Read all v2alpha1 input files
 	inputDir := filepath.Join("testdata", "input")
 	files, err := os.ReadDir(inputDir)
 	require.NoError(t, err, "Failed to read input directory")
 
-	// Ensure output directory exists
 	outputDir := filepath.Join("testdata", "output")
-	// ignore gosec G301 as this function is only used in the test process
-	//nolint:gosec
-	err = os.MkdirAll(outputDir, 0755)
-	require.NoError(t, err, "Failed to create output directory")
 
 	for _, file := range files {
 		if file.IsDir() {
@@ -134,15 +106,8 @@ func TestV2alpha1ToV1beta1WriteOutputFiles(t *testing.T) {
 		t.Run(fmt.Sprintf("WriteOutput_%s", file.Name()), func(t *testing.T) {
 			// Read the v2alpha1 input file
 			inputFile := filepath.Join(inputDir, file.Name())
-			// ignore gosec G304 as this function is only used in the test process
-			//nolint:gosec
-			inputData, err := os.ReadFile(inputFile)
-			require.NoError(t, err, "Failed to read input file")
-
-			// Parse v2alpha1 dashboard
 			var v2alpha1 dashv2alpha1.Dashboard
-			err = json.Unmarshal(inputData, &v2alpha1)
-			require.NoError(t, err, "Failed to unmarshal v2alpha1 dashboard")
+			readInputFile(t, inputFile, &v2alpha1)
 
 			// Convert v2alpha1 → v1beta1
 			var convertedV1beta1 dashv1.Dashboard
@@ -160,25 +125,14 @@ func TestV2alpha1ToV1beta1WriteOutputFiles(t *testing.T) {
 // converts them to v2beta1, and writes the output to testdata/output.
 // These outputs are used by the frontend test to verify consistency.
 func TestV2alpha1ToV2beta1WriteOutputFiles(t *testing.T) {
-	// Initialize the migrator with test data source and library element providers
-	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
-
-	// Set up conversion scheme
-	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider, leProvider)
-	require.NoError(t, err)
+	scheme := setupTestConversionScheme(t)
 
 	// Read all v2alpha1 input files
 	inputDir := filepath.Join("testdata", "input")
 	files, err := os.ReadDir(inputDir)
 	require.NoError(t, err, "Failed to read input directory")
 
-	// Ensure output directory exists
 	outputDir := filepath.Join("testdata", "output")
-	err = os.MkdirAll(outputDir, 0755)
-	require.NoError(t, err, "Failed to create output directory")
 
 	for _, file := range files {
 		if file.IsDir() {
@@ -193,13 +147,8 @@ func TestV2alpha1ToV2beta1WriteOutputFiles(t *testing.T) {
 		t.Run(file.Name(), func(t *testing.T) {
 			// Read input file
 			inputPath := filepath.Join(inputDir, file.Name())
-			inputData, err := os.ReadFile(inputPath)
-			require.NoError(t, err, "Failed to read input file")
-
-			// Parse v2alpha1 dashboard
 			var v2alpha1 dashv2alpha1.Dashboard
-			err = json.Unmarshal(inputData, &v2alpha1)
-			require.NoError(t, err, "Failed to unmarshal v2alpha1 dashboard")
+			readInputFile(t, inputPath, &v2alpha1)
 
 			// Convert v2alpha1 → v2beta1
 			var v2beta1 dashv2beta1.Dashboard
@@ -212,14 +161,8 @@ func TestV2alpha1ToV2beta1WriteOutputFiles(t *testing.T) {
 			outputFileName := fmt.Sprintf("v2alpha1.%s.v2beta1.json", baseName)
 			outputPath := filepath.Join(outputDir, outputFileName)
 
-			// Write output file
-			outputData, err := json.MarshalIndent(v2beta1, "", "  ")
-			require.NoError(t, err, "Failed to marshal v2beta1 dashboard")
-
-			err = os.WriteFile(outputPath, outputData, 0644)
-			require.NoError(t, err, "Failed to write output file")
-
-			t.Logf("Generated %s", outputFileName)
+			// Write or compare output file
+			writeOrCompareOutputFile(t, v2beta1, outputPath, outputFileName)
 		})
 	}
 }
@@ -227,20 +170,14 @@ func TestV2alpha1ToV2beta1WriteOutputFiles(t *testing.T) {
 // TestV2alpha1ToV1beta1FromInputFiles tests conversion from v2alpha1 input files to v1beta1
 // and compares with expected v1beta1 output files
 func TestV2alpha1ToV1beta1FromInputFiles(t *testing.T) {
-	// Initialize the migrator with test data source and library element providers
-	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	leProvider := migrationtestutil.NewLibraryElementProvider()
-	migration.Initialize(dsProvider, leProvider)
-
-	// Set up conversion scheme
-	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider, leProvider)
-	require.NoError(t, err)
+	scheme := setupTestConversionScheme(t)
 
 	// Read all v2alpha1 input files
 	inputDir := filepath.Join("testdata", "input")
 	files, err := os.ReadDir(inputDir)
 	require.NoError(t, err, "Failed to read input directory")
+
+	outputDir := filepath.Join("testdata", "output")
 
 	for _, file := range files {
 		if file.IsDir() {
@@ -260,24 +197,23 @@ func TestV2alpha1ToV1beta1FromInputFiles(t *testing.T) {
 		t.Run(fmt.Sprintf("Convert_%s", file.Name()), func(t *testing.T) {
 			// Read the v2alpha1 input file
 			inputFile := filepath.Join(inputDir, file.Name())
-			// ignore gosec G304 as this function is only used in the test process
-			//nolint:gosec
-			inputData, err := os.ReadFile(inputFile)
-			require.NoError(t, err, "Failed to read input file")
-
-			// Parse v2alpha1 dashboard
 			var v2alpha1 dashv2alpha1.Dashboard
-			err = json.Unmarshal(inputData, &v2alpha1)
-			require.NoError(t, err, "Failed to unmarshal v2alpha1 dashboard")
+			readInputFile(t, inputFile, &v2alpha1)
 
 			// Convert v2alpha1 → v1beta1
 			var convertedV1beta1 dashv1.Dashboard
 			err = scheme.Convert(&v2alpha1, &convertedV1beta1, nil)
 			require.NoError(t, err, "Failed to convert v2alpha1 to v1beta1")
 
-			// Read the expected v1beta1 output file
-			outputDir := filepath.Join("testdata", "output")
 			expectedOutputPath := filepath.Join(outputDir, expectedOutputFile)
+
+			// If OUTPUT_OVERRIDE is set, write the file instead of comparing
+			if shouldOverrideOutput() {
+				writeOrCompareOutputFile(t, convertedV1beta1, expectedOutputPath, expectedOutputFile)
+				return
+			}
+
+			// Read the expected v1beta1 output file
 			// ignore gosec G304 as this function is only used in the test process
 			//nolint:gosec
 			expectedOutputData, err := os.ReadFile(expectedOutputPath)
@@ -608,5 +544,50 @@ func TestV2alpha1ToV1beta1BasicFields(t *testing.T) {
 		assert.Equal(t, float64(1), revFloat)
 	} else {
 		t.Fatalf("Unexpected revision type: %T", dashboard["revision"])
+	}
+}
+
+// TestV2beta1ToV1beta1WriteOutputFiles writes output files from v2beta1 input files
+// This test reads v2beta1 input files, converts them to v1beta1, and writes the output files
+func TestV2beta1ToV1beta1WriteOutputFiles(t *testing.T) {
+	scheme := setupTestConversionScheme(t)
+
+	// Read all v2beta1 input files
+	inputDir := filepath.Join("testdata", "input")
+	files, err := os.ReadDir(inputDir)
+	require.NoError(t, err, "Failed to read input directory")
+
+	outputDir := filepath.Join("testdata", "output")
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+
+		// Only process v2beta1 input files
+		if !strings.HasPrefix(file.Name(), "v2beta1.") || !strings.HasSuffix(file.Name(), ".json") {
+			continue
+		}
+
+		// Extract the base name (e.g., "v2beta1.complete" from "v2beta1.complete.json")
+		baseName := strings.TrimSuffix(file.Name(), ".json")
+		// The output file should be "v2beta1.complete.v1beta1.json"
+		outputFileName := baseName + ".v1beta1.json"
+
+		t.Run(fmt.Sprintf("WriteOutput_%s", file.Name()), func(t *testing.T) {
+			// Read the v2beta1 input file
+			inputFile := filepath.Join(inputDir, file.Name())
+			var v2beta1 dashv2beta1.Dashboard
+			readInputFile(t, inputFile, &v2beta1)
+
+			// Convert v2beta1 → v1beta1
+			var convertedV1beta1 dashv1.Dashboard
+			err = scheme.Convert(&v2beta1, &convertedV1beta1, nil)
+			require.NoError(t, err, "Failed to convert v2beta1 to v1beta1")
+
+			// Write output file using the shared testConversion helper
+			// dashv1.Dashboard implements metav1.Object, so we can use testConversion directly
+			testConversion(t, &convertedV1beta1, outputFileName, outputDir)
+		})
 	}
 }

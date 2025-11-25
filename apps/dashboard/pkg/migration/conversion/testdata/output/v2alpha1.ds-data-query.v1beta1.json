@@ -238,7 +238,7 @@
             }
           ],
           "title": "Panel with NO REF to gdev-prometheus",
-          "type": "Panel"
+          "type": "timeseries"
         },
         {
           "fieldConfig": {
@@ -334,7 +334,7 @@
             }
           ],
           "title": "Panel with ref to gdev-prometheus",
-          "type": "Panel"
+          "type": "timeseries"
         },
         {
           "fieldConfig": {
@@ -390,7 +390,7 @@
             }
           ],
           "title": "Simple stat (NO DS REF)",
-          "type": "Panel"
+          "type": "stat"
         },
         {
           "fieldConfig": {
@@ -479,7 +479,7 @@
             }
           ],
           "title": "Simple timeseries (WITH DS REF)",
-          "type": "Panel"
+          "type": "timeseries"
         },
         {
           "fieldConfig": {
@@ -581,7 +581,7 @@
             }
           ],
           "title": "Mixed DS WITH REFS",
-          "type": "Panel"
+          "type": "timeseries"
         },
         {
           "fieldConfig": {
@@ -675,7 +675,7 @@
             }
           ],
           "title": "Mixed DS WITHOUT REFS",
-          "type": "Panel"
+          "type": "timeseries"
         }
       ],
       "preload": false,

@@ -96,7 +96,7 @@
             }
           ],
           "title": "Simple timeseries (WITH DS REF)",
-          "type": "Panel"
+          "type": "timeseries"
         }
       ],
       "preload": false,

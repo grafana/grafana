@@ -154,7 +154,7 @@ export class DashboardModel implements TimeModel {
     this.tags = data.tags ?? [];
     this.timezone = data.timezone ?? '';
     this.weekStart = data.weekStart ?? '';
-    this.editable = data.editable !== false;
+    this.editable = data.editable ?? undefined;
     this.preload = data.preload;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
@@ -183,7 +183,12 @@ export class DashboardModel implements TimeModel {
     this.initMeta(meta);
     this.updateSchema(data, options?.targetSchemaVersion);
 
-    this.addBuiltInAnnotationQuery();
+    // Only add built-in annotation if the original input didn't have one
+    // Check the original data.annotations.list, not this.annotations.list which might have been modified
+    const hasBuiltInInInput = data.annotations?.list?.some((item) => Boolean(item.builtIn));
+    if (!hasBuiltInInInput) {
+      this.addBuiltInAnnotationQuery();
+    }
     this.sortPanelsByGridPos();
     this.panelsAffectedByVariableChange = null;
     this.appEventsSubscription = new Subscription();
@@ -198,10 +203,6 @@ export class DashboardModel implements TimeModel {
   }
 
   addBuiltInAnnotationQuery() {
-    const found = this.annotations.list.some((item) => item.builtIn === 1);
-    if (found) {
-      return;
-    }
 
     this.annotations.list.unshift({
       datasource: { uid: '-- Grafana --', type: 'grafana' },

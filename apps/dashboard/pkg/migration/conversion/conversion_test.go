@@ -355,6 +355,73 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 	}
 }
 
+// shouldOverrideOutput checks if OUTPUT_OVERRIDE environment variable is set to "true"
+func shouldOverrideOutput() bool {
+	return os.Getenv("OUTPUT_OVERRIDE") == "true"
+}
+
+// setupTestConversionScheme initializes the migration system and sets up the conversion scheme
+// with test data source and library element providers. Returns the configured scheme.
+func setupTestConversionScheme(t *testing.T) *runtime.Scheme {
+	t.Helper()
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err, "Failed to register conversions")
+	return scheme
+}
+
+// writeOrCompareOutputFile writes or compares an output file based on OUTPUT_OVERRIDE environment variable.
+// If OUTPUT_OVERRIDE is true, it writes/overrides the file. Otherwise, it compares with existing file.
+// obj should be JSON-marshalable (typically a Dashboard or similar struct).
+func writeOrCompareOutputFile(t *testing.T, obj interface{}, outputPath string, filename string) {
+	t.Helper()
+
+	outputData, err := json.MarshalIndent(obj, "", "  ")
+	require.NoError(t, err, "Failed to marshal output data")
+
+	outputOverride := shouldOverrideOutput()
+
+	// If file exists and OUTPUT_OVERRIDE is not set, compare instead of writing
+	if _, err := os.Stat(outputPath); err == nil && !outputOverride {
+		// ignore gosec G304 as this function is only used in the test process
+		//nolint:gosec
+		existingData, err := os.ReadFile(outputPath)
+		require.NoError(t, err, "Failed to read existing output file")
+		require.JSONEq(t, string(existingData), string(outputData), "%s did not match", outputPath)
+		t.Logf("✓ Conversion to %s matches existing file", filename)
+	} else {
+		// Ensure output directory exists
+		outputDir := filepath.Dir(outputPath)
+		err = os.MkdirAll(outputDir, 0755)
+		require.NoError(t, err, "Failed to create output directory")
+
+		err = os.WriteFile(outputPath, outputData, 0644)
+		require.NoError(t, err, "Failed to write output file")
+		if outputOverride {
+			t.Logf("✓ Overrode output file: %s", filename)
+		} else {
+			t.Logf("✓ Generated %s", filename)
+		}
+	}
+}
+
+// readInputFile reads and unmarshals a JSON input file into the provided target.
+// target should be a pointer to the struct type to unmarshal into.
+func readInputFile(t *testing.T, inputPath string, target interface{}) {
+	t.Helper()
+	// ignore gosec G304 as this function is only used in the test process
+	//nolint:gosec
+	inputData, err := os.ReadFile(inputPath)
+	require.NoError(t, err, "Failed to read input file %s", inputPath)
+
+	err = json.Unmarshal(inputData, target)
+	require.NoError(t, err, "Failed to unmarshal input file %s", inputPath)
+}
+
 func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputDir string) {
 	t.Helper()
 
@@ -362,10 +429,17 @@ func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputD
 	outBytes, err := json.MarshalIndent(convertedDash, "", "  ")
 	require.NoError(t, err, "failed to marshal converted dashboard")
 
-	if _, err := os.Stat(outPath); os.IsNotExist(err) {
+	// Check if OUTPUT_OVERRIDE environment variable is set to override existing files
+	outputOverride := shouldOverrideOutput()
+
+	if _, err := os.Stat(outPath); os.IsNotExist(err) || outputOverride {
 		err = os.WriteFile(outPath, outBytes, 0644)
-		require.NoError(t, err, "failed to write new output file %s", outPath)
-		t.Logf("✓ Created new output file: %s", filename)
+		require.NoError(t, err, "failed to write output file %s", outPath)
+		if outputOverride {
+			t.Logf("✓ Overrode output file: %s", filename)
+		} else {
+			t.Logf("✓ Created new output file: %s", filename)
+		}
 		return
 	}
 

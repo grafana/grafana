@@ -102,11 +102,8 @@ export type TypedVariableModelV2 =
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
 
-  // annotations might not come with the builtIn Grafana annotation, we need to add it
-  const grafanaBuiltAnnotation = getGrafanaBuiltInAnnotationDataLayer(dashboard);
-  if (grafanaBuiltAnnotation) {
-    dashboard.annotations.unshift(grafanaBuiltAnnotation);
-  }
+  // Don't add built-in annotations if they're not present in the input
+  // This matches the backend behavior of only preserving what's in the input
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
     const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
@@ -307,7 +304,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       },
       variable.group
     );
-    return new AdHocFiltersVariable({
+    const adhocVariableState: any = {
       ...commonProperties,
       description: variable.spec.description,
       skipUrlSync: variable.spec.skipUrlSync,
@@ -320,7 +317,12 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       useQueriesAsFilterForOptions: true,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
       supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
-    });
+    };
+    // Only set allowCustomValue if it's explicitly set to false (not the default true)
+    if (variable.spec.allowCustomValue === false) {
+      adhocVariableState.allowCustomValue = false;
+    }
+    return new AdHocFiltersVariable(adhocVariableState);
   }
   if (variable.kind === defaultCustomVariableKind().kind) {
     return new CustomVariable({

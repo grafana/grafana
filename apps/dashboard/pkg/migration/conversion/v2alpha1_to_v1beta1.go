@@ -14,6 +14,8 @@ import (
 // that represents the v1 dashboard JSON format.
 func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv1.APIVERSION
+	out.Kind = in.Kind // Preserve the Kind from input (should be "Dashboard")
 
 	// Convert the spec to v1beta1 unstructured format
 	dashboardJSON, err := convertDashboardSpec_V2alpha1_to_V1beta1(&in.Spec)
@@ -227,12 +229,12 @@ func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 	for _, item := range gridLayout.Spec.Items {
 		element, ok := elements[item.Spec.Element.Name]
 		if !ok {
-			continue // Skip missing elements
+			return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
 		}
 
 		panel, err := convertPanelFromElement(&element, &item)
 		if err != nil {
-			continue // Skip invalid panels
+			return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
 		}
 		panels = append(panels, panel)
 	}
@@ -282,11 +284,11 @@ func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 					for _, item := range row.Spec.Layout.GridLayoutKind.Spec.Items {
 						element, ok := elements[item.Spec.Element.Name]
 						if !ok {
-							continue
+							return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
 						}
 						panel, err := convertPanelFromElement(&element, &item)
 						if err != nil {
-							continue
+							return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
 						}
 						collapsedPanels = append(collapsedPanels, panel)
 					}
@@ -304,7 +306,7 @@ func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 			for _, item := range row.Spec.Layout.GridLayoutKind.Spec.Items {
 				element, ok := elements[item.Spec.Element.Name]
 				if !ok {
-					continue
+					return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
 				}
 
 				// Calculate absolute Y position for panels in rows
@@ -317,7 +319,7 @@ func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 
 				panel, err := convertPanelFromElement(&element, &adjustedItem)
 				if err != nil {
-					continue
+					return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
 				}
 				panels = append(panels, panel)
 			}
@@ -357,7 +359,7 @@ func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardEle
 	for _, item := range autoGridLayout.Spec.Items {
 		element, ok := elements[item.Spec.Element.Name]
 		if !ok {
-			continue // Skip missing elements
+			return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
 		}
 
 		// Create a GridLayoutItem from the AutoGridLayoutItem for conversion
@@ -380,7 +382,7 @@ func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardEle
 
 		panel, err := convertPanelFromElement(&element, &gridItem)
 		if err != nil {
-			continue // Skip invalid panels
+			return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
 		}
 		panels = append(panels, panel)
 
@@ -503,8 +505,8 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 		panel["description"] = spec.Description
 	}
 
-	// Convert vizConfig
-	panel["type"] = panelKind.Kind // panel type from vizConfig kind
+	// Convert vizConfig - use the plugin ID from VizConfig.Kind, not PanelKind.Kind
+	panel["type"] = spec.VizConfig.Kind // panel type from vizConfig kind (plugin ID)
 	if spec.VizConfig.Spec.PluginVersion != "" {
 		panel["pluginVersion"] = spec.VizConfig.Spec.PluginVersion
 	}
@@ -1021,6 +1023,13 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 				} else if key.Value.Float64 != nil {
 					keyMap["value"] = *key.Value.Float64
 				}
+			}
+			// Preserve optional fields if present in input
+			if key.Group != nil {
+				keyMap["group"] = *key.Group
+			}
+			if key.Expandable != nil {
+				keyMap["expandable"] = *key.Expandable
 			}
 			defaultKeys = append(defaultKeys, keyMap)
 		}

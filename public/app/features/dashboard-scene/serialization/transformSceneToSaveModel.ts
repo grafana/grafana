@@ -119,7 +119,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     description: state.description || undefined,
     uid: state.uid,
     id: state.id,
-    editable: state.editable,
     preload: state.preload,
     time: {
       from: timeRange.from,
@@ -134,7 +133,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       list: variables,
     },
     version: state.version,
-    timezone: timeRange.timeZone,
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart,
     tags: state.tags,
@@ -146,6 +144,14 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     // @ts-expect-error not in dashboard schema because it's experimental
     scopeMeta: state.scopeMeta,
   };
+
+  // Only add optional fields if they are explicitly set (not default values)
+  if (state.editable !== undefined) {
+    dashboard.editable = state.editable;
+  }
+  if (timeRange.timeZone !== undefined && timeRange.timeZone !== '') {
+    dashboard.timezone = timeRange.timeZone;
+  }
 
   return sortedDeepCloneWithoutNulls(dashboard, true);
 }
@@ -198,7 +204,7 @@ export function vizPanelToPanel(
         uid: libPanel!.state.uid,
       },
       type: 'library-panel-ref',
-    } as Panel;
+    };
 
     return panel;
   } else {
