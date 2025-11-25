@@ -8,6 +8,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
+import { serializeFolderPath } from './ScopesDashboardsService';
 import { isCurrentPath, normalizePath } from './scopeNavgiationUtils';
 
 export interface ScopesNavigationTreeLinkProps {
@@ -15,9 +16,10 @@ export interface ScopesNavigationTreeLinkProps {
   to: string;
   title: string;
   id: string;
+  folderPath: string[];
 }
 
-export function ScopesNavigationTreeLink({ subScope, to, title, id }: ScopesNavigationTreeLinkProps) {
+export function ScopesNavigationTreeLink({ subScope, to, title, id, folderPath }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
   const locPathname = useLocation().pathname;
@@ -26,6 +28,9 @@ export function ScopesNavigationTreeLink({ subScope, to, title, id }: ScopesNavi
   const isCurrent = isCurrentPath(locPathname, to);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Set the expanded folder path in the URL
+    const pathString = serializeFolderPath(folderPath);
+
     if (subScope) {
       e.preventDefault(); // Prevent default Link navigation
 
@@ -47,6 +52,8 @@ export function ScopesNavigationTreeLink({ subScope, to, title, id }: ScopesNavi
       // Remove scope_node and scope_parent since we're changing to a subScope
       searchParams.delete('scope_node');
       searchParams.delete('scope_parent');
+      // Set the expanded folder path
+      searchParams.set('nav_scope_path', pathString);
 
       // Convert URLSearchParams to query map object for urlUtil.renderUrl
       const queryMap: UrlQueryMap = {};
@@ -62,6 +69,9 @@ export function ScopesNavigationTreeLink({ subScope, to, title, id }: ScopesNavi
 
       // Then navigate to the URL with updated query params
       locationService.push(newUrl);
+    } else {
+      // For regular navigation (no subScope), set the folder path in the URL
+      locationService.partial({ nav_scope_path: pathString });
     }
   };
 

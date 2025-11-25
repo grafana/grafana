@@ -1,5 +1,4 @@
 import { isEqual } from 'lodash';
-import { Subscription } from 'rxjs';
 
 import { ScopeDashboardBinding } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
@@ -7,7 +6,6 @@ import { config, locationService } from '@grafana/runtime';
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
-import { isCurrentPath } from './scopeNavgiationUtils';
 import { ScopeNavigation, SuggestedNavigationsFoldersMap, SuggestedNavigationsMap } from './types';
 
 interface ScopesDashboardsServiceState {
@@ -24,11 +22,15 @@ interface ScopesDashboardsServiceState {
   loading: boolean;
   searchQuery: string;
   navigationScope?: string;
+  // The path to the currently expanded folder (breadcrumb trail to active item)
+  expandedFolderPath: string[];
 }
 
 export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsServiceState> {
-  private locationSubscription: Subscription | undefined;
-  constructor(private apiClient: ScopesApiClient) {
+  constructor(
+    private apiClient: ScopesApiClient,
+    initialExpandedPath: string[] = []
+  ) {
     super({
       drawerOpened: false,
       dashboards: [],
@@ -38,22 +40,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       forScopeNames: [],
       loading: false,
       searchQuery: '',
-    });
-
-    // Add/ remove location subscribtion based on the drawer opened state
-    this.subscribeToState((state, prevState) => {
-      if (state.drawerOpened === prevState.drawerOpened) {
-        return;
-      }
-      if (state.drawerOpened && !prevState.drawerOpened) {
-        // Before creating a new subscription, ensure any existing subscription is disposed to avoid multiple active subscriptions and potential memory leaks.
-        this.locationSubscription?.unsubscribe();
-        this.locationSubscription = locationService.getLocationObservable().subscribe((location) => {
-          this.onLocationChange(location.pathname);
-        });
-      } else if (!state.drawerOpened && prevState.drawerOpened) {
-        this.locationSubscription?.unsubscribe();
-      }
+      expandedFolderPath: initialExpandedPath,
     });
   }
 
@@ -67,38 +54,6 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     const forScopeNames = navigationScope ? [navigationScope] : (fallbackScopeNames ?? []);
     this.updateState({ navigationScope, drawerOpened: forScopeNames.length > 0 });
     await this.fetchDashboards(forScopeNames);
-  };
-
-  // Expand the group that matches the current path, if it is not already expanded
-  private onLocationChange = (pathname: string) => {
-    if (!this.state.drawerOpened) {
-      return;
-    }
-    const currentPath = pathname;
-    const activeScopeNavigation = this.state.scopeNavigations.find((s) => {
-      if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
-        return false;
-      }
-      return isCurrentPath(currentPath, s.spec.url);
-    });
-
-    if (!activeScopeNavigation) {
-      return;
-    }
-
-    // Check if the activeScopeNavigation is in a folder that is already expanded
-    if (activeScopeNavigation.status.groups) {
-      for (const group of activeScopeNavigation.status.groups) {
-        if (this.state.folders[''].folders[group].expanded) {
-          return;
-        }
-      }
-    }
-
-    // Expand the first group, as we don't know which one to prioritize
-    if (activeScopeNavigation.status.groups) {
-      this.updateFolder(['', activeScopeNavigation.status.groups[0]], true);
-    }
   };
 
   public updateFolder = (path: string[], expanded: boolean) => {
@@ -203,6 +158,13 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         ...currentFilteredFolder.suggestedNavigations,
         ...rootSubScopeFolder.suggestedNavigations,
       };
+
+      // Re-apply the expanded path to handle any nested folders within this subScope
+      // This is important when loading from URL with nested subScope folders
+      if (this.state.expandedFolderPath.length > path.length) {
+        this.applyExpandedPath(folders, this.state.expandedFolderPath);
+        this.applyExpandedPath(filteredFolders, this.state.expandedFolderPath);
+      }
     }
 
     this.updateState({ folders, filteredFolders });
@@ -248,7 +210,14 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
     if (isEqual(this.state.forScopeNames, forScopeNames)) {
       const folders = this.groupSuggestedItems(res);
+
+      // Apply the expanded folder path from state (e.g., from URL on initial load)
+      // This will also trigger fetches for any subScope folders in the path
+      this.applyExpandedPath(folders, this.state.expandedFolderPath);
+
       const filteredFolders = this.filterFolders(folders, this.state.searchQuery);
+      // Also apply the expanded path to filtered folders to keep them in sync
+      this.applyExpandedPath(filteredFolders, this.state.expandedFolderPath);
 
       this.updateState({
         scopeNavigations: res,
@@ -376,6 +345,42 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     return folders;
   };
 
+  private applyExpandedPath = (folders: SuggestedNavigationsFoldersMap, path: string[]) => {
+    if (path.length === 0) {
+      return;
+    }
+
+    let currentLevelFolders: SuggestedNavigationsFoldersMap = folders;
+    const pathSoFar: string[] = [];
+
+    // Traverse the path and expand folders along the way
+    for (const folderKey of path) {
+      pathSoFar.push(folderKey);
+      const folder = currentLevelFolders[folderKey];
+
+      if (folder) {
+        folder.expanded = true;
+
+        // If this is a subScope folder and it's empty, trigger fetch
+        if (folder.subScopeName) {
+          const isEmpty =
+            Object.keys(folder.folders).length === 0 && Object.keys(folder.suggestedNavigations).length === 0;
+
+          if (isEmpty) {
+            // Trigger fetch for this subScope folder
+            folder.loading = true;
+            this.fetchSubScopeItems([...pathSoFar], folder.subScopeName);
+          }
+        }
+
+        currentLevelFolders = folder.folders;
+      } else {
+        // If folder doesn't exist in the path, stop traversing
+        break;
+      }
+    }
+  };
+
   public filterFolders = (folders: SuggestedNavigationsFoldersMap, query: string): SuggestedNavigationsFoldersMap => {
     query = (query ?? '').toLowerCase();
 
@@ -410,6 +415,34 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   };
 
   public toggleDrawer = () => this.updateState({ drawerOpened: !this.state.drawerOpened });
+}
+
+/**
+ * Serializes a folder path array into a URL-safe string.
+ * Excludes the root folder ('') from the serialized path.
+ * @param path - The folder path array
+ * @returns Comma-separated, URL-encoded path string
+ */
+export function serializeFolderPath(path: string[]): string {
+  // Filter out empty strings (root folder) before serializing
+  return path
+    .filter((segment) => segment !== '')
+    .map((segment) => encodeURIComponent(segment))
+    .join(',');
+}
+
+/**
+ * Deserializes a URL path string back into a folder path array.
+ * Always prepends the root folder ('') to the path.
+ * @param pathString - The URL-encoded path string
+ * @returns Decoded folder path array with root prepended
+ */
+export function deserializeFolderPath(pathString: string | null): string[] {
+  if (!pathString || pathString === '') {
+    return [];
+  }
+  // Always prepend root folder to the decoded path
+  return ['', ...pathString.split(',').map((segment) => decodeURIComponent(segment))];
 }
 
 /**
