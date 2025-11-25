@@ -555,7 +555,7 @@ const injectedRtkApi = api
             'x-grafana-alerting-alert-rules-paused': queryArg['x-grafana-alerting-alert-rules-paused'],
             'x-grafana-alerting-target-datasource-uid': queryArg['x-grafana-alerting-target-datasource-uid'],
             'x-grafana-alerting-folder-uid': queryArg['x-grafana-alerting-folder-uid'],
-            'x-grafana-alerting-notification-receiver': queryArg['x-grafana-alerting-notification-receiver'],
+            'x-grafana-alerting-notification-settings': queryArg['x-grafana-alerting-notification-settings'],
           },
         }),
         invalidatesTags: ['convert_prometheus'],
@@ -622,7 +622,7 @@ const injectedRtkApi = api
             'x-grafana-alerting-alert-rules-paused': queryArg['x-grafana-alerting-alert-rules-paused'],
             'x-grafana-alerting-target-datasource-uid': queryArg['x-grafana-alerting-target-datasource-uid'],
             'x-grafana-alerting-folder-uid': queryArg['x-grafana-alerting-folder-uid'],
-            'x-grafana-alerting-notification-receiver': queryArg['x-grafana-alerting-notification-receiver'],
+            'x-grafana-alerting-notification-settings': queryArg['x-grafana-alerting-notification-settings'],
           },
         }),
         invalidatesTags: ['convert_prometheus'],
@@ -2498,7 +2498,7 @@ export type RouteConvertPrometheusCortexPostRuleGroupApiArg = {
   'x-grafana-alerting-alert-rules-paused'?: boolean;
   'x-grafana-alerting-target-datasource-uid'?: string;
   'x-grafana-alerting-folder-uid'?: string;
-  'x-grafana-alerting-notification-receiver'?: string;
+  'x-grafana-alerting-notification-settings'?: string;
   prometheusRuleGroup: PrometheusRuleGroup;
 };
 export type RouteConvertPrometheusCortexDeleteRuleGroupApiResponse =
@@ -2535,7 +2535,7 @@ export type RouteConvertPrometheusPostRuleGroupApiArg = {
   'x-grafana-alerting-alert-rules-paused'?: boolean;
   'x-grafana-alerting-target-datasource-uid'?: string;
   'x-grafana-alerting-folder-uid'?: string;
-  'x-grafana-alerting-notification-receiver'?: string;
+  'x-grafana-alerting-notification-settings'?: string;
   prometheusRuleGroup: PrometheusRuleGroup;
 };
 export type RouteConvertPrometheusDeleteRuleGroupApiResponse =
