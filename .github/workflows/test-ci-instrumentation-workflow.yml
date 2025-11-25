@@ -1,0 +1,31 @@
+name: test-ci-instrumentation-workflow.yml
+on:
+  push:
+    branches:
+      - grambbledook/test-toolexec-instrumentation
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v6.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build foo
+        run: |
+          cd ./goinst
+          GOWORK=off go build -o foo
+          mv ./foo ../foo
+          cd ../
+
+      - name: Build Grafana
+        run: |
+          make build-go
+
