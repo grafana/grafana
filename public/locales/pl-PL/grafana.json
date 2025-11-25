@@ -2093,7 +2093,7 @@
         "warning-1": "Usunięcie tego zbioru zasad dot. powiadomień jest nieodwracalne.",
         "warning-2": "Na pewno chcesz usunąć te zasady?"
       },
-      "filter-description": "",
+      "filter-description": "Filtruj zasady powiadomień, używając oddzielonej przecinkami listy dopasowań, np.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Zasady generowane automatycznie",
       "matchers": "Dopasowania",
       "metadata": {
@@ -2832,7 +2832,7 @@
     "template-data-docs": {
       "alert-template-data-table": {
         "alert-template-data": "Dane szablonu alertu",
-        "only-in-alert": "Dostępne tylko w kontekście alertu (np. wewnątrz pętli .Alerts)"
+        "only-in-alert": ""
       },
       "available-context-notification": "Dostępne w kontekście powiadomienia.",
       "notification-template-data": "Dane szablonu powiadomienia"
@@ -3269,7 +3269,7 @@
       "auth-settings": "Ustawienia uwierzytelniania"
     },
     "auth-drawer-unconneced": {
-      "subtitle": ""
+      "subtitle": "Skonfiguruj ustawienia uwierzytelniania. Więcej informacji znajdziesz w <2>dokumentacji</2>."
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Zaawansowane uwierzytelnianie",
@@ -3303,7 +3303,7 @@
       "allowed-organizations-description": "Lista organizacji rozdzielona przecinkami lub spacjami. Użytkownik musi należeć do co najmniej \njednej organizacji, aby się zalogować.",
       "allowed-organizations-label": "Dozwolone organizacje",
       "allowed-organizations-placeholder": "Wprowadź organizacje (mój-zespół, mój_zespół itp.) i naciśnij klawisz Enter, aby je dodać",
-      "api-url-description": "",
+      "api-url-description": "Punkt końcowy dostawcy OAuth2 udostępniający informacje o użytkownikach. Informacje zwracane przez ten punkt końcowy muszą być zgodne z formatem <2>OpenID UserInfo</2>.",
       "api-url-required": "To pole musi zawierać prawidłowy adres URL, jeśli jest ustawiony.",
       "auth-style-description": "Określa, w jaki sposób „{{ clientIDLabel }}” i „{{ clientSecretLabel }}” są wysyłane do dostawcy OAuth2. Domyślnie jest to tryb automatycznego wykrywania.",
       "auth-style-label": "Styl uwierzytelniania",
@@ -3448,7 +3448,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": ""
+    "subtitle": "Zarządzaj ustawieniami uwierzytelniania i skonfiguruj logowanie jednokrotne. Więcej informacji znajdziesz w <2>dokumentacji</2>."
   },
   "bar-chart": {
     "warn": {
@@ -4884,7 +4884,7 @@
       "add-visualization-body": "Wybierz źródło danych, a następnie wyszukaj i zwizualizuj dane na wykresach, w statystykach i tabelach lub utwórz listy, korzystaj ze znaczników markdown i innych widżetów.",
       "add-visualization-button": "Dodaj wizualizację",
       "add-visualization-header": "Dodaj wizualizację, aby rozpocząć tworzenie nowego pulpitu",
-      "import-a-dashboard-body": "",
+      "import-a-dashboard-body": "Zaimportuj pulpity z plików lub witryny <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importuj pulpit",
       "import-dashboard-button": "Importuj pulpit",
       "show-less-dashboards": "",
@@ -6671,7 +6671,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Kliknij <2>tutaj</2>, aby dowiedzieć się więcej o tym błędzie.",
-    "success-more-details-links": ""
+    "success-more-details-links": "Następnie możesz rozpocząć wizualizację danych, <2>tworząc pulpit</2> lub tworząc zapytanie dotyczące danych w widoku <5>Eksploruj</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6767,7 +6767,7 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "",
+      "body-alert": "Możesz ułatwić sobie życie i wybrać {{mainDS}} (oraz {{extraDS}}) jako w pełni zarządzane, skalowalne źródła danych hostowane przez Grafana Labs w ramach <6>planu Grafana Cloud, który będzie zawsze bezpłatny</6>.",
       "title-alert": "Skonfiguruj źródło danych {{mainDS}} poniżej"
     },
     "dashboards-table": {
@@ -7756,7 +7756,7 @@
     "math": {
       "available-math-functions": "Dostępne funkcje matematyczne",
       "run-math-operations": "",
-      "tooltip-footer": "",
+      "tooltip-footer": "Zapoznaj się z naszą dodatkową dokumentacją na temat <2>wyrażeń matematycznych</2>.",
       "tooltip-title": "Operator matematyczny",
       "tooltip-trigger": "Wyrażenie"
     },
@@ -7782,10 +7782,23 @@
       "label-upsample": "Zwiększ próbkowanie",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
+    "schema-inspector-panel": {
+      "aria-label-close-schema-inspector": ""
+    },
     "sql-expr": {
       "button-run-query": "Uruchom zapytanie",
       "modal-title": "Edytor SQL",
       "tooltip-experimental": "Integracja LLM z wyrażeniami SQL jest eksperymentalna. Wszelkie problemy zgłaszaj zespołowi Grafana."
+    },
+    "sql-schema": {
+      "close-schema-inspector": "",
+      "error-title": "",
+      "inspect-button": "",
+      "loading": "",
+      "no-data-title": "",
+      "no-fields-desc": "",
+      "no-fields-title": "",
+      "query-error-title": ""
     },
     "threshold": {
       "label-input": "Wejście"
@@ -11022,10 +11035,10 @@
       "placeholder-optional": "(opcjonalnie)",
       "role": "Rola",
       "submit": "Prześlij",
-      "tooltip": ""
+      "tooltip": "Możesz teraz wybrać opcję „Brak podstawowej roli” i dodać uprawnienia zgodnie z własnymi potrzebami. Więcej informacji znajdziesz w <1>dokumentacji</1>."
     },
     "user-invite-page": {
-      "sub-title": "",
+      "sub-title": "Wyślij zaproszenie lub dodaj istniejącego użytkownika Grafany do organizacji.<1> {{orgName}}</1>",
       "text": {
         "invite-user": "Zaproś użytkownika"
       }
@@ -12493,7 +12506,7 @@
     },
     "menu": {
       "clear-button": "Wyczyść wszystko",
-      "tooltip": ""
+      "tooltip": "Możesz teraz wybrać opcję „Brak podstawowej roli” i dodać uprawnienia zgodnie z własnymi potrzebami. Więcej informacji znajdziesz w <1>dokumentacji</1>."
     },
     "menu-aria-label": "Menu selektora ról",
     "menu-group-option-aria-label": "Opcja selektora ról",
@@ -12821,7 +12834,7 @@
       "info-text": "Utwórz bezpośredni link do tego pulpitu lub panelu, dostosowany za pomocą poniższych opcji.",
       "link-url": "Link URL",
       "render-alert": "Nie zainstalowano wtyczki renderowania obrazów",
-      "render-instructions": "",
+      "render-instructions": "Aby wyrenderować obraz, musisz zainstalować <2>wtyczkę do renderowania obrazów w Grafanie</2>. Skontaktuj się z administratorem usługi Grafana, aby zainstalować wtyczkę.",
       "rendered-image": "Obraz renderowany z bezpośredniego linku",
       "save-alert": "Nie zapisano pulpitu",
       "save-dashboard": "Aby wyrenderować obraz panelu, musisz najpierw zapisać pulpit.",
@@ -13864,7 +13877,7 @@
       "label-format": "Format",
       "label-set-timezone": "Ustaw strefę czasową",
       "label-time-field": "Pole czasu",
-      "tooltip-format": "",
+      "tooltip-format": "Format wyjściowy pola określonego jako <2>Ciąg formatowania Moment.js</2>.",
       "tooltip-timezone-manually": "Ręcznie ustaw strefę czasową daty"
     },
     "format-time-transformer-editor": {

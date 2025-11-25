@@ -69,7 +69,7 @@
       "description-encrypt-false": "",
       "description-encrypt-older-version": "Если вы используете более старую версию Microsoft SQL Server, например 2008 или 2008R2, для подключения может требоваться отключение шифрования.",
       "description-encrypt-true": "",
-      "description-min-interval": "",
+      "description-min-interval": "Нижний предел для автоматической группировки по временному интервалу. Рекомендуется установить частоту записи, например <1>{{exampleInterval}}</1>, если ваши данные записываются каждую минуту.",
       "description-tls-cert": "Путь к файлу, содержащему сертификат открытого ключа центра сертификации, который подписал сертификат SQL Server. Требуется, когда сертификат сервера является самозаверяющим.",
       "label-auth-settings": "Параметры аутентификации Azure",
       "label-auth-type": "Тип аутентификации",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "Укажите, следует ли использовать служебные записи DNS для поиска KDC и других серверов для области. Значение по умолчанию — <1>{{default}}</1>.",
-      "description-krb5-config-file-path": "",
+      "description-krb5-config-file-path": "Путь к файлу конфигурации для <2>пакета MIT krb5</2>. Значение по умолчанию — <4>{{default}}</4>.",
       "description-udp-preference-limit": "Значение по умолчанию — <1>{{default}}</1>, что означает всегда использовать TCP (необязательно).",
       "label-dns-lookup-kdc": "DNS-поиск KDC",
       "label-krb5-config-file-path": "Путь к файлу конфигурации krb5",

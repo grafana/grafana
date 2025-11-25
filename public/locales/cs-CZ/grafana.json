@@ -2093,7 +2093,7 @@
         "warning-1": "Odstraněním těchto zásad oznamování dojde k jejich trvalému odebrání.",
         "warning-2": "Určitě chcete zásady odstranit?"
       },
-      "filter-description": "",
+      "filter-description": "Filtrujte zásady oznamování pomocí seznamu odpovídajících osob oddělených čárkami, např.:<1>závažnost = kritická, region = EMEA</1>",
       "generated-policies": "Automaticky generované zásady",
       "matchers": "Srovnávače",
       "metadata": {
@@ -2832,7 +2832,7 @@
     "template-data-docs": {
       "alert-template-data-table": {
         "alert-template-data": "Data šablony výstrah",
-        "only-in-alert": "K dispozici pouze v kontextu výstrahy (např. v rámcismyčky výstrahy)"
+        "only-in-alert": ""
       },
       "available-context-notification": "K dispozici v kontextu oznámení.",
       "notification-template-data": "Data šablony oznámení"
@@ -3269,7 +3269,7 @@
       "auth-settings": "Nastavení ověření"
     },
     "auth-drawer-unconneced": {
-      "subtitle": ""
+      "subtitle": "Konfigurovat nastavení ověření. Další informace najdete v naší <2>dokumentaci</2>."
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Pokročilé ověření",
@@ -3303,7 +3303,7 @@
       "allowed-organizations-description": "Seznam organizací oddělených čárkou nebo mezerou. Uživatel musí být členem alespoň\njedné organizace, aby se mohl přihlásit.",
       "allowed-organizations-label": "Povolené organizace",
       "allowed-organizations-placeholder": "Zadejte organizace (my-team, myteam…) a stiskněte klávesu Enter pro přidání",
-      "api-url-description": "",
+      "api-url-description": "Koncový bod uživatelských informací vašeho poskytovatele OAuth2. Informace vrácené tímto koncovým bodem musí být kompatibilní s <2>OpenID UserInfo</2>.",
       "api-url-required": "Toto pole musí být platná adresa URL, pokud je nastavena.",
       "auth-style-description": "Určuje způsob odesílání „{{ clientIDLabel }}“ a „{{ clientSecretLabel }}“ poskytovateli Oauth2. Výchozí hodnota je AutoDetect.",
       "auth-style-label": "Styl autorizace",
@@ -3448,7 +3448,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": ""
+    "subtitle": "Spravujte nastavení ověření a konfigurujte jednotné přihlašování. Další informace najdete v naší <2>dokumentaci</2>."
   },
   "bar-chart": {
     "warn": {
@@ -4884,7 +4884,7 @@
       "add-visualization-body": "Vyberte zdroj dat a poté se dotazujte a vizualizujte data pomocí grafů, statistik a tabulek nebo vytvářejte seznamy, přehledy a další widgety.",
       "add-visualization-button": "Přidat vizualizaci",
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
-      "import-a-dashboard-body": "",
+      "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku",
       "show-less-dashboards": "",
@@ -6671,7 +6671,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klikněte <2>tady</2> a zjistěte víc o této chybě.",
-    "success-more-details-links": ""
+    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6767,7 +6767,7 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "",
+      "body-alert": "Nebo si to zjednodušte a získejte {{mainDS}} (a {{extraDS}}) – plně spravované, škálovatelné a hostované zdroje dat od Grafana Labs s <6>celoživotním bezplatným plánem Grafana Cloud</6>.",
       "title-alert": "Nakonfigurujte zdroje dat {{mainDS}} níže"
     },
     "dashboards-table": {
@@ -7756,7 +7756,7 @@
     "math": {
       "available-math-functions": "Dostupné matematické funkce",
       "run-math-operations": "",
-      "tooltip-footer": "",
+      "tooltip-footer": "Podívejte se na naši další dokumentaci o <2>matematických výrazech</2>.",
       "tooltip-title": "Matematický operátor",
       "tooltip-trigger": "Výraz"
     },
@@ -7782,10 +7782,23 @@
       "label-upsample": "Zvýšit vzorkovací frekvenci",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
+    "schema-inspector-panel": {
+      "aria-label-close-schema-inspector": ""
+    },
     "sql-expr": {
       "button-run-query": "Spustit dotaz",
       "modal-title": "Editor SQL",
       "tooltip-experimental": "Integrace LLM pro výrazy jazyka SQL je experimentální. Jakékoli problémy nahlaste týmu Grafana."
+    },
+    "sql-schema": {
+      "close-schema-inspector": "",
+      "error-title": "",
+      "inspect-button": "",
+      "loading": "",
+      "no-data-title": "",
+      "no-fields-desc": "",
+      "no-fields-title": "",
+      "query-error-title": ""
     },
     "threshold": {
       "label-input": "Vstup"
@@ -11022,10 +11035,10 @@
       "placeholder-optional": "(volitelné)",
       "role": "Role",
       "submit": "Odeslat",
-      "tooltip": ""
+      "tooltip": "Teď můžete vybrat možnost „Žádná základní role“ a přidat oprávnění k vlastním potřebám. Více informací najdete v <1>naší dokumentaci</1>."
     },
     "user-invite-page": {
-      "sub-title": "",
+      "sub-title": "Pošlete pozvánku nebo přidejte stávajícího uživatele Grafany do organizace.<1> {{orgName}}</1>",
       "text": {
         "invite-user": "Pozvat uživatele"
       }
@@ -12493,7 +12506,7 @@
     },
     "menu": {
       "clear-button": "Vymazat vše",
-      "tooltip": ""
+      "tooltip": "Teď můžete vybrat možnost „Žádná základní role“ a přidat oprávnění k vlastním potřebám. Více informací najdete v <1>naší dokumentaci</1>."
     },
     "menu-aria-label": "Nabídka voliče role",
     "menu-group-option-aria-label": "Možnost voliče role",
@@ -12821,7 +12834,7 @@
       "info-text": "Vytvořte přímý odkaz na tuto nástěnku nebo panel přizpůsobený možnostmi dole.",
       "link-url": "Odkaz adresy URL",
       "render-alert": "Plugin pro renderování obrázků není nainstalován",
-      "render-instructions": "",
+      "render-instructions": "Chcete-li vyrenderovat obrázek, musíte si nainstalovat <2>plugin Grafana pro renderování obrázků</2>. Chcete-li nainstalovat plugin, obraťte se na správce Grafany.",
       "rendered-image": "Přímý odkaz na vyrenderovaný obrázek",
       "save-alert": "Nástěnka není uložena",
       "save-dashboard": "Chcete-li vyrenderovat obrázek panelu, musíte nejprve uložit nástěnku.",
@@ -13864,7 +13877,7 @@
       "label-format": "Formát",
       "label-set-timezone": "Nastavit časové pásmo",
       "label-time-field": "Pole času",
-      "tooltip-format": "",
+      "tooltip-format": "Výstupní formát pro pole zadané jako <2>řetězec formátu Moment.js</2>.",
       "tooltip-timezone-manually": "Nastavit časové pásmo data manuálně"
     },
     "format-time-transformer-editor": {

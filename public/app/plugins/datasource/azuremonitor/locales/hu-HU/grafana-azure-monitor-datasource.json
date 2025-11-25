@@ -17,7 +17,7 @@
       "label-subscription": "Előfizetés",
       "placeholder-resource-name": "név",
       "tooltip-region": "Az erőforrás kódterülete. Egy erőforrás esetén nem kötelező, de több erőforrás kiválasztásakor kötelező.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Az <2>erőforrás-uri</2> manuálisan szerkesztendő. Több sablonváltozó használatát támogatja (pl.: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Összesítési függvény",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Alapvető naplók",
-      "description-basic-logs": "",
+      "description-basic-logs": "A funkció engedélyezése esetén lekérdezésenkénti Azure Monitor-költségek merülnek fel azon irányítópult-paneleken, amelyek lekérdezik az <2>Alapvető naplókhoz</2> konfigurált táblákat.",
       "label-enable-basic-logs": "Alapvető naplók engedélyezése"
     },
     "config-editor": {
