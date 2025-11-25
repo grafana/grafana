@@ -287,19 +287,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   useUnmount(() => {
     // If we're unmounting logs (e.g. switching to another datasource), we need to remove the logs specific panel state, otherwise it will persist in the explore url
-    if (panelState?.logs) {
-      dispatch(
-        changePanelState(exploreId, 'logs', {
-          ...panelState?.logs,
-          columns: undefined,
-          visualisationType: visualisationType,
-          labelFieldName: undefined,
-          refId: undefined,
-          displayedFields: undefined,
-          sortOrder: undefined,
-        })
-      );
-    }
+    dispatch(
+      changePanelState(exploreId, 'logs', {
+        ...panelState?.logs,
+        columns: undefined,
+        visualisationType: visualisationType,
+        labelFieldName: undefined,
+        refId: undefined,
+        displayedFields: undefined,
+        sortOrder: undefined,
+      })
+    );
   });
 
   const updatePanelState = useCallback(
