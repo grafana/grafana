@@ -41,7 +41,27 @@ v1alpha1: {
     // served should be set to false before a version is removed from the manifest entirely.
     // served defaults to true if not present.
     served: true
-    
+
+		routes: {
+				// namespaced contains namespace-scoped resource routes for the version,
+				// which are exposed as HTTP handlers on '<version>/namespaces/<namespace>/<route>'.
+				namespaced: {
+						"/quotas": {
+								"GET": {
+										response: {
+												namespace: string
+												message: string
+										}
+										request: {
+												query: {
+														message?: string
+												}
+										}
+								}
+						}
+				}
+    }
+
     // [OPTIONAL]
     // Codegen is a trait that tells the grafana-app-sdk, or other code generation tooling, how to process this kind.
     // If not present, default values within the codegen trait are used.

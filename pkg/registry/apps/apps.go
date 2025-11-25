@@ -3,6 +3,7 @@ package appregistry
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -42,11 +43,13 @@ func ProvideAppInstallers(
 	annotationAppInstaller *annotation.AnnotationAppInstaller,
 	exampleAppInstaller *example.ExampleAppInstaller,
 	advisorAppInstaller *advisor.AdvisorAppInstaller,
+	quotasAppInstaller *quotas.QuotasAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
 		pluginsApplInstaller,
 		exampleAppInstaller,
+		quotasAppInstaller, // TODO add feature flag?
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
