@@ -47,6 +47,11 @@ runs:
             break
           fi
 
+          if [ $i -eq $RETRIES ]; then
+            echo "Clone failed after $RETRIES attempts, failing pipeline."
+            exit 1
+          fi
+
           sleep 1
         done
 
@@ -64,6 +69,11 @@ runs:
           if [ $? -eq 0 ]; then
             echo "Checkout succeeded, breaking retry loop"
             break
+          fi
+
+          if [ $i -eq $RETRIES ]; then
+            echo "Chekout failed after $RETRIES attempts, failing pipeline."
+            exit 1
           fi
 
           sleep 1
