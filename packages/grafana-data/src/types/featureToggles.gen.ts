@@ -963,6 +963,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthnMutation?: boolean;
   /**
+  * Routes external group mapping requests from /api to the /apis endpoint
+  */
+  kubernetesExternalGroupMapping?: boolean;
+  /**
   * Enables restore deleted dashboards feature
   * @default false
   */

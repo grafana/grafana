@@ -638,6 +638,10 @@ const (
 	// Enables create, delete, and update mutations for resources owned by IAM identity
 	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
 
+	// FlagKubernetesExternalGroupMapping
+	// Routes external group mapping requests from /api to the /apis endpoint
+	FlagKubernetesExternalGroupMapping = "kubernetesExternalGroupMapping"
+
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"

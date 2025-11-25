@@ -1590,6 +1590,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "kubernetesExternalGroupMapping",
+			Description:  "Routes external group mapping requests from /api to the /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,

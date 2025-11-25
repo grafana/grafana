@@ -1912,6 +1912,22 @@
     },
     {
       "metadata": {
+        "name": "kubernetesExternalGroupMapping",
+        "resourceVersion": "1764062806326",
+        "creationTimestamp": "2025-11-25T09:17:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-25 09:26:46.326986 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Routes external group mapping requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesFeatureToggles",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2024-01-18T05:32:44Z"
