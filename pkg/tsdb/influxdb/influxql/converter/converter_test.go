@@ -39,7 +39,7 @@ func TestMaybeFixValueFieldType(t *testing.T) {
 		{
 			name:         "should return nullableJson if both are nullableJson",
 			valueFields:  data.Fields{data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)}, //nolint:staticcheck
-			inputType:    data.FieldTypeNullableJSON, //nolint:staticcheck
+			inputType:    data.FieldTypeNullableJSON,                                             //nolint:staticcheck
 			colIdx:       0,
 			expectedType: data.FieldTypeNullableJSON, //nolint:staticcheck
 		},
