@@ -35,7 +35,7 @@ func GetSomethingHandler(ctx context.Context, writer app.CustomRouteResponseWrit
 
 func New(cfg app.Config) (app.App, error) {
 	simpleConfig := simple.AppConfig{
-		Name:       "correlation",
+		Name:       "quotas",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
 			InformerOptions: operator.InformerOptions{
