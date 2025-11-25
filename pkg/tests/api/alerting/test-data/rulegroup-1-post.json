@@ -18,6 +18,7 @@
             "refId": "A",
             "datasourceUid": "__expr__",
             "model": {
+              "refId": "A",
               "expression": "0 > 0",
               "type": "math"
             }
@@ -44,6 +45,7 @@
             "refId": "A",
             "datasourceUid": "__expr__",
             "model": {
+              "refId": "A",
               "expression": "0 == 0",
               "type": "math"
             }
