@@ -13,15 +13,40 @@ import { PanelData } from './panel';
  * generates a hash for a suggestion based for use by the UI.
  */
 export function getSuggestionHash(suggestion: Omit<PanelPluginVisualizationSuggestion, 'hash'>): string {
-  const baseString = `${suggestion.pluginId}|${JSON.stringify(suggestion.options || {})}|${JSON.stringify(suggestion.fieldConfig || {})}`;
-  let hash = 0;
-  for (let i = 0; i < baseString.length; i++) {
-    const char = baseString.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
+  return deterministicObjectHash(suggestion);
+}
 
+function strHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
   return hash.toString(36);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function deterministicObjectHash<T extends Record<string, any>>(obj: T): string {
+  let result = '';
+  for (const key of Object.keys(obj).sort()) {
+    const value = obj[key];
+    if (value === undefined) {
+      continue;
+    }
+    result += key + ':';
+    if (typeof value === 'object' && value !== null) {
+      result += deterministicObjectHash(value);
+    } else if (Array.isArray(value)) {
+      result += value
+        .map((v) => (typeof value === 'object' && value !== null ? deterministicObjectHash(v) : String(v)))
+        .join(',');
+    } else {
+      result += String(value);
+    }
+    result += ';';
+  }
+  return strHash(result);
 }
 
 /**
@@ -150,15 +175,9 @@ export class VisualizationSuggestionsListAppender<TOptions extends unknown, TFie
 
   appendAll(suggestions: Array<VisualizationSuggestion<TOptions, TFieldConfig>>) {
     this.list.push(
-      ...suggestions.map((s) => {
-        const s2: Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfig>, 'hash'> = defaultsDeep(
-          s,
-          this.defaults
-        );
-        const s3: PanelPluginVisualizationSuggestion<TOptions, TFieldConfig> = Object.assign(s2, {
-          hash: getSuggestionHash(s2),
-        });
-        return s3;
+      ...suggestions.map((s): PanelPluginVisualizationSuggestion<TOptions, TFieldConfig> => {
+        const suggestionWithDefaults = defaultsDeep(s, this.defaults);
+        return Object.assign(suggestionWithDefaults, { hash: getSuggestionHash(suggestionWithDefaults) });
       })
     );
   }
