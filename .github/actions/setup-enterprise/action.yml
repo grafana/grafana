@@ -48,7 +48,7 @@ runs:
             exit 1
           fi
 
-          sleep 1
+          sleep "$i"
         done
 
         cd ../grafana-enterprise
@@ -74,7 +74,7 @@ runs:
             exit 1
           fi
 
-          sleep 1
+          sleep "$i"
         done
 
         QUIET=1 ./build.sh
