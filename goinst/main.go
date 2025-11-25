@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -15,11 +14,21 @@ var (
 	Link    = "link"
 )
 
+var logger *log.Logger
+
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Usage: toolexec <tool> [args...]")
+		log.Fatal("Usage: toolexec <tool> [args...]")
 		os.Exit(1)
 	}
+
+	f, err := os.OpenFile("toolexec.logger", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	logger = log.New(f, "", log.LstdFlags)
 
 	start := time.Now()
 
@@ -27,7 +36,7 @@ func main() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 	elapsed := time.Since(start)
 
 	switch getTool(os.Args[1]) {
@@ -43,37 +52,36 @@ func main() {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			os.Exit(exitErr.ExitCode())
 		} else {
-			fmt.Fprintln(os.Stderr, "Error:", err)
-			os.Exit(1)
+			logger.Fatal("Error:", err)
 		}
 	}
 }
 
 func printAsm(elapsed interface{}) {
-	log.Println("==========Asm=========")
-	log.Printf("   tool: %s", Asm)
-	log.Printf("   package: %s", os.Args[len(os.Args)-1])
-	log.Printf("   elapsed: %s", elapsed)
-	log.Println("======================")
-	log.Println("")
+	logger.Println("==========Asm=========")
+	logger.Printf("   tool: %s", Asm)
+	logger.Printf("   package: %s", os.Args[len(os.Args)-1])
+	logger.Printf("   elapsed: %s", elapsed)
+	logger.Println("======================")
+	logger.Println("")
 }
 
 func printCompile(elapsed interface{}) {
-	log.Println("========Compile=======")
-	log.Printf("   tool: %s", Compile)
-	log.Printf("   package: %s", getPackage(os.Args))
-	log.Printf("   elapsed: %s", elapsed)
-	log.Println("======================")
-	log.Println("")
+	logger.Println("========Compile=======")
+	logger.Printf("   tool: %s", Compile)
+	logger.Printf("   package: %s", getPackage(os.Args))
+	logger.Printf("   elapsed: %s", elapsed)
+	logger.Println("======================")
+	logger.Println("")
 }
 
 func printLink(elapsed interface{}) {
-	log.Println("========LINK========")
-	log.Printf("   tool: %s", Link)
-	log.Printf("   package: %s", os.Args[len(os.Args)-1])
-	log.Printf("   elapsed: %s", elapsed)
-	log.Println("======================")
-	log.Println("")
+	logger.Println("========LINK========")
+	logger.Printf("   tool: %s", Link)
+	logger.Printf("   package: %s", os.Args[len(os.Args)-1])
+	logger.Printf("   elapsed: %s", elapsed)
+	logger.Println("======================")
+	logger.Println("")
 }
 
 func getTool(tool string) string {
