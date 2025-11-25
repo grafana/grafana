@@ -576,9 +576,9 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 		}
 
 		if len(finalChanges.New) > 0 {
-			inserts := make([]ngmodels.AlertRule, 0, len(finalChanges.New))
+			inserts := make([]ngmodels.InsertRule, 0, len(finalChanges.New))
 			for _, rule := range finalChanges.New {
-				inserts = append(inserts, *rule)
+				inserts = append(inserts, ngmodels.InsertRule{AlertRule: *rule})
 			}
 			added, err := srv.store.InsertAlertRules(tranCtx, ngmodels.NewUserUID(c.SignedInUser), inserts)
 			if err != nil {

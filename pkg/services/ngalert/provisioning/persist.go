@@ -34,7 +34,7 @@ type RuleStore interface {
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
 	ListAlertRulesPaginated(ctx context.Context, query *models.ListAlertRulesExtendedQuery) (models.RulesGroup, string, error)
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
-	InsertAlertRules(ctx context.Context, user *models.UserUID, rule []models.AlertRule) ([]models.AlertRuleKeyWithId, error)
+	InsertAlertRules(ctx context.Context, user *models.UserUID, rule []models.InsertRule) ([]models.AlertRuleKeyWithId, error)
 	UpdateAlertRules(ctx context.Context, user *models.UserUID, rule []models.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *models.UserUID, permanently bool, ruleUID ...string) error
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)

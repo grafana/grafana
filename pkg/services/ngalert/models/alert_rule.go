@@ -1036,9 +1036,15 @@ type ListNamespaceAlertRulesQuery struct {
 	NamespaceUID string
 }
 
+type InsertRule struct {
+	AlertRule
+	Message string
+}
+
 type UpdateRule struct {
 	Existing *AlertRule
 	New      AlertRule
+	Message  string
 }
 
 // Condition contains backend expressions and queries and the RefID

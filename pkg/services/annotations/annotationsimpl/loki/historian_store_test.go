@@ -687,7 +687,7 @@ func createAlertRule(t *testing.T, sql *sqlstore.SQLStore, title string, generat
 	rule.PanelID = nil
 
 	ruleStore := store.SetupStoreForTesting(t, sql)
-	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.AlertRule{rule})
+	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.InsertRule{{AlertRule: rule}})
 	require.NoError(t, err)
 	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
 	require.NoError(t, err)
@@ -719,7 +719,7 @@ func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.SQLStore, title st
 		rule.PanelID = panelID
 	}
 	ruleStore := store.SetupStoreForTesting(t, sql)
-	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.AlertRule{rule})
+	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.InsertRule{{AlertRule: rule}})
 	require.NoError(t, err)
 	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
 	require.NoError(t, err)

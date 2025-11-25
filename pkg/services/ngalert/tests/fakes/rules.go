@@ -464,7 +464,7 @@ func (f *RuleStore) UpdateAlertRules(_ context.Context, _ *models.UserUID, q []m
 	return nil
 }
 
-func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []models.AlertRule) ([]models.AlertRuleKeyWithId, error) {
+func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []models.InsertRule) ([]models.AlertRuleKeyWithId, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
@@ -475,7 +475,7 @@ func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []m
 			AlertRuleKey: rule.GetKey(),
 			ID:           rand.Int63(),
 		})
-		rulesPerOrg[rule.OrgID] = append(rulesPerOrg[rule.OrgID], rule)
+		rulesPerOrg[rule.OrgID] = append(rulesPerOrg[rule.OrgID], rule.AlertRule)
 	}
 
 	for orgID, rules := range rulesPerOrg {

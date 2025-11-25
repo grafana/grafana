@@ -304,8 +304,10 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		}
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		ids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), []models.AlertRule{
-			rule,
+		ids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), []models.InsertRule{
+			{
+				AlertRule: rule,
+			},
 		})
 		if err != nil {
 			return err
@@ -464,7 +466,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 	})
 }
 
-func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user identity.Requester, group models.AlertRuleGroup, provenance models.Provenance) error {
+func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user identity.Requester, group models.AlertRuleGroup, provenance models.Provenance, versionMessage string) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
 		return err
 	}
@@ -518,13 +520,13 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 		}
 	}
 
-	return service.persistDelta(ctx, user, delta, provenance)
+	return service.persistDelta(ctx, user, delta, provenance, versionMessage)
 }
 
-func (service *AlertRuleService) ReplaceRuleGroups(ctx context.Context, user identity.Requester, groups []*models.AlertRuleGroup, provenance models.Provenance) error {
+func (service *AlertRuleService) ReplaceRuleGroups(ctx context.Context, user identity.Requester, groups []*models.AlertRuleGroup, provenance models.Provenance, versionMessage string) error {
 	err := service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		for _, group := range groups {
-			err := service.ReplaceRuleGroup(ctx, user, *group, provenance)
+			err := service.ReplaceRuleGroup(ctx, user, *group, provenance, versionMessage)
 			if err != nil {
 				return err
 			}
@@ -565,7 +567,7 @@ func (service *AlertRuleService) DeleteRuleGroups(ctx context.Context, user iden
 					return err
 				}
 			}
-			err = service.persistDelta(ctx, user, delta, provenance)
+			err = service.persistDelta(ctx, user, delta, provenance, "") // Message not used for deletes.
 			if err != nil {
 				return err
 			}
@@ -621,7 +623,7 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 	return store.UpdateCalculatedRuleFields(delta), nil
 }
 
-func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *store.GroupDelta, provenance models.Provenance) error {
+func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *store.GroupDelta, provenance models.Provenance, versionMessage string) error {
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// Delete first as this could prevent future unique constraint violations.
 		if len(delta.Delete) > 0 {
@@ -669,6 +671,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 				updates = append(updates, models.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,
+					Message:  versionMessage,
 				})
 			}
 			if err := service.ruleStore.UpdateAlertRules(ctx, userUidOrFallback(user), updates); err != nil {
@@ -682,7 +685,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 		}
 
 		if len(delta.New) > 0 {
-			uids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), withoutNilAlertRules(delta.New))
+			uids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), makeInsertRules(delta.New, versionMessage))
 			if err != nil {
 				return fmt.Errorf("failed to insert alert rules: %w", err)
 			}
@@ -994,11 +997,15 @@ func syncGroupRuleFields(group *models.AlertRuleGroup, orgID int64) *models.Aler
 	return group
 }
 
-func withoutNilAlertRules(ptrs []*models.AlertRule) []models.AlertRule {
-	result := make([]models.AlertRule, 0, len(ptrs))
+// makeInsertRules converts a slice of AlertRule pointers to InsertRule, removing nils and adding version message.
+func makeInsertRules(ptrs []*models.AlertRule, versionMessage string) []models.InsertRule {
+	result := make([]models.InsertRule, 0, len(ptrs))
 	for _, ptr := range ptrs {
 		if ptr != nil {
-			result = append(result, *ptr)
+			result = append(result, models.InsertRule{
+				AlertRule: *ptr,
+				Message:   versionMessage,
+			})
 		}
 	}
 	return result

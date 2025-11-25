@@ -457,7 +457,7 @@ func createAlertRuleGroup(t *testing.T, ctx context.Context, service *Service, u
 		Rules:     rules,
 	}
 
-	err := service.ngAlert.Api.AlertRules.ReplaceRuleGroup(ctx, user, group, "")
+	err := service.ngAlert.Api.AlertRules.ReplaceRuleGroup(ctx, user, group, "", "")
 	require.NoError(t, err)
 
 	return group
