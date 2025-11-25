@@ -63,6 +63,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 		KvStore:                      kv,
 		WithExperimentalClusterScope: true,
+		WatchPollInterval:            5 * time.Minute,
 	})
 	if err != nil {
 		return nil, err
