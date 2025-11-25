@@ -10,7 +10,7 @@ import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItem
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
 import { EditableRuleIdentifier, Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
   AlertRuleAction,
@@ -28,7 +28,7 @@ import {
   rulerRuleType,
 } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
-import { AnalyzeRuleButton } from '../assistant/TriggerInvestigationButton';
+import { AnalyzeRuleButton } from '../assistant/AnalizeRuleButton';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
@@ -120,16 +120,11 @@ const AlertRuleMenu = ({
    */
   // @TODO Migrate "declare incident button" to plugin links extensions
   const shouldShowDeclareIncidentButton =
-    (!isOpenSourceEdition() || isLocalDevEnv()) &&
-    prometheusRuleType.alertingRule(promRule) &&
-    promRule.state === PromAlertingRuleState.Firing;
+    (!isOpenSourceEdition() || isLocalDevEnv()) && prometheusRuleType.alertingRule(promRule);
 
   const { isAvailable: isAssistantAvailable } = useAssistant();
-  const shouldShowTriggerInvestigationButton =
-    isAssistantAvailable &&
-    prometheusRuleType.alertingRule(promRule) &&
-    promRule.state === PromAlertingRuleState.Firing;
-  
+  const shouldShowAnalyzeRuleButton = isAssistantAvailable && prometheusRuleType.alertingRule(promRule);
+
   const shareUrl = createShareLink(identifier);
 
   const showDivider =
@@ -175,7 +170,9 @@ const AlertRuleMenu = ({
       )}
       {/* TODO Migrate Declare Incident to plugin links extensions */}
       {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={promRule.name} url={''} />}
-      {shouldShowTriggerInvestigationButton && prometheusRuleType.alertingRule(promRule) && <AnalyzeRuleButton alertRule={promRule } />}
+      {shouldShowAnalyzeRuleButton && prometheusRuleType.alertingRule(promRule) && (
+        <AnalyzeRuleButton alertRule={promRule} />
+      )}
       {canDuplicate && (
         <Menu.Item
           label={t('alerting.alert-menu.duplicate', 'Duplicate')}

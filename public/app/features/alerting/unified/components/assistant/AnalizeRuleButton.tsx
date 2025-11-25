@@ -1,12 +1,13 @@
-import {useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { OpenAssistantProps, createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
 import { AlertingRule } from 'app/types/unified-alerting';
 
 export interface AnalyzeRuleButtonProps {
-  /** Alert data to investigate */
+  /** Alert rule to analyze */
   alertRule: AlertingRule;
 }
 
@@ -30,7 +31,7 @@ function AnalyzeRuleButtonView({
 }: AnalyzeRuleButtonProps & {
   openAssistant: (props: OpenAssistantProps) => void;
 }) {
-  // Create alert context from alert data
+  // Create alert rule context from alert rule data
   const alertContext = useMemo(() => {
     return createAssistantContextItem('structured', {
       title: `Alert: ${alertRule.name}`,
@@ -51,11 +52,9 @@ function AnalyzeRuleButtonView({
   }, [alertRule]);
 
   // Generate default prompt
-  const investigationPrompt = useMemo(() => {
+  const analyzeRulePrompt = useMemo(() => {
     const state = alertRule.state || 'firing';
-    const timeInfo = alertRule.activeAt
-      ? ` starting at ${new Date(alertRule.activeAt).toISOString()}`
-      : '';
+    const timeInfo = alertRule.activeAt ? ` starting at ${new Date(alertRule.activeAt).toISOString()}` : '';
 
     const description = alertRule.annotations?.description || alertRule.annotations?.summary || '';
     const labelsStr = alertRule.labels
@@ -77,9 +76,8 @@ function AnalyzeRuleButtonView({
     return defaultPrompt;
   }, [alertRule]);
 
-
   const handleClick = () => {
-    reportInteraction('grafana_assistant_app_trigger_investigation_button_clicked', {
+    reportInteraction('grafana_assistant_app_analyze_rule_button_clicked', {
       origin: 'alerting',
       alertName: alertRule.name,
       alertState: alertRule.state,
@@ -88,7 +86,7 @@ function AnalyzeRuleButtonView({
     openAssistant({
       origin: 'alerting',
       mode: 'assistant',
-      prompt: investigationPrompt,
+      prompt: analyzeRulePrompt,
       context: [alertContext],
       autoSend: true,
     });
@@ -96,10 +94,10 @@ function AnalyzeRuleButtonView({
 
   return (
     <Menu.Item
-      label="Analyze alert"
+      label={t('alerting.alert-menu.analyze-rule', 'Analyze rule')}
       icon="search"
       onClick={handleClick}
-      data-testid="trigger-investigation-menu-item"
+      data-testid="analyze-rule-menu-item"
     />
   );
 }
