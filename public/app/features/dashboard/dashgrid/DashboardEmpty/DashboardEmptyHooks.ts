@@ -16,16 +16,20 @@ import {
 
 import type { Props } from './DashboardEmpty';
 
-export const useIsReadOnlyRepo = ({ dashboard }: Props) => {
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
+export const useRepositoryStatus = ({ dashboard }: Props) => {
+  const { isReadOnlyRepo, repository } = useGetResourceRepositoryView({
     folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
   });
 
-  return isReadOnlyRepo;
+  return {
+    isReadOnlyRepo,
+    isFolderProvisioned: Boolean(repository),
+  };
 };
 
 interface HookProps extends Props {
   isReadOnlyRepo: boolean;
+  isFolderProvisioned?: boolean;
 }
 
 export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: HookProps) => {
@@ -53,8 +57,8 @@ export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: 
   }, [canCreate, isReadOnlyRepo, dashboard, dispatch, initialDatasource]);
 };
 
-export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo }: HookProps) => {
-  const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
+export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo, isFolderProvisioned }: HookProps) => {
+  const isProvisioned = isFolderProvisioned || (dashboard instanceof DashboardScene && dashboard.isManagedRepository());
 
   return useMemo(() => {
     if (!canCreate || isProvisioned || isReadOnlyRepo) {
@@ -72,8 +76,9 @@ export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo }: H
   }, [canCreate, isProvisioned, isReadOnlyRepo, dashboard]);
 };
 
-export const useOnImportDashboard = ({ dashboard, canCreate, isReadOnlyRepo }: HookProps) => {
-  const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
+export const useOnImportDashboard = ({ dashboard, canCreate, isReadOnlyRepo, isFolderProvisioned }: HookProps) => {
+  const isProvisioned = isFolderProvisioned || (dashboard instanceof DashboardScene && dashboard.isManagedRepository());
+
   return useMemo(() => {
     if (!canCreate || isProvisioned || isReadOnlyRepo) {
       return undefined;
