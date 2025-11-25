@@ -144,6 +144,7 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
     // Add current call to the stack
     callStack.push(label);
   }
+
   return filteredTable;
 }
 
