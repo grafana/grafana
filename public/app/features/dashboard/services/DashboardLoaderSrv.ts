@@ -152,10 +152,6 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
               .getDashboardDTO(uid, params)
               .then((v2Result) => {
                 return ResponseTransformers.ensureV1Response(v2Result);
-              })
-              .catch((v2Error) => {
-                // If v2 load also fails, throw original error
-                throw e;
               });
           }
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
