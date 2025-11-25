@@ -6182,8 +6182,8 @@
       "placeholder-search-for": "Search for...",
       "radio-options": {
         "label": {
-          "suggestions": "Suggestions",
-          "visualizations": "Visualizations"
+          "all-visualizations": "All visualizations",
+          "suggestions": "Suggestions"
         }
       },
       "title-close": "Close"
@@ -11050,8 +11050,8 @@
       "tooltip-delete": "Delete"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "Based on current data",
-      "no-results-matched-your-query": "No results matched your query"
+      "apply-suggestion-aria-label": "Apply {{suggestionName}} visualization",
+      "use-this-suggestion": "Use this suggestion"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"

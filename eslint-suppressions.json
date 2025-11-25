@@ -1955,11 +1955,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
     "no-restricted-syntax": {
       "count": 1

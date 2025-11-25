@@ -1,4 +1,4 @@
-import { PanelDataSummary } from '@grafana/data';
+import { PanelData, PanelDataSummary } from '@grafana/data';
 
 /**
  * @internal
@@ -8,4 +8,14 @@ import { PanelDataSummary } from '@grafana/data';
  */
 export function showDefaultSuggestion(fn: (panelDataSummary: PanelDataSummary) => boolean | void) {
   return (panelDataSummary: PanelDataSummary) => (fn(panelDataSummary) ? [{}] : undefined);
+}
+
+/**
+ * @internal
+ * Checks if the panel has data
+ * @param data - PanelData
+ * @returns true if data exists and has at least one non-empty series
+ */
+export function hasData(data?: PanelData): boolean {
+  return Boolean(data && data.series && data.series.length > 0 && data.series.some((frame) => frame.length > 0));
 }

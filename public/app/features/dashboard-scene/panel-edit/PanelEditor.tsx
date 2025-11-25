@@ -23,6 +23,7 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
+import { hasData } from 'app/features/panel/suggestions/utils';
 
 import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -130,9 +131,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._subs.add(
       dataObject.subscribeToState(async () => {
         const { data } = dataObject.state;
-        const hasData = data && data.series && data.series.length > 0 && data.series.some((frame) => frame.length > 0);
-
-        if (hasData && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
+        if (hasData(data) && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
           const panelModel = new PanelModelCompatibilityWrapper(panel);
           const suggestions = await getAllSuggestions(data, panelModel);
 

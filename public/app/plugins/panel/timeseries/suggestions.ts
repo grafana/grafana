@@ -231,6 +231,7 @@ export function getPrepareTimeseriesSuggestion(panelId: number): PanelPluginVisu
 
     return {
       name: 'Transform to wide time series format',
+      hash: 'timeseries-transform-prepare-wide',
       pluginId: 'timeseries',
       transformations,
     };

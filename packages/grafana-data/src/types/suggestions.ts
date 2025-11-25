@@ -9,6 +9,47 @@ import { FieldConfigSource } from './fieldOverrides';
 import { PanelData } from './panel';
 
 /**
+ * @internal
+ * generates a hash for a suggestion based for use by the UI.
+ */
+export function getSuggestionHash(suggestion: Omit<PanelPluginVisualizationSuggestion, 'hash'>): string {
+  return deterministicObjectHash(suggestion);
+}
+
+function strHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash.toString(36);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function deterministicObjectHash<T extends Record<string, any>>(obj: T): string {
+  let result = '';
+  for (const key of Object.keys(obj).sort()) {
+    const value = obj[key];
+    if (value === undefined) {
+      continue;
+    }
+    result += key + ':';
+    if (typeof value === 'object' && value !== null) {
+      result += deterministicObjectHash(value);
+    } else if (Array.isArray(value)) {
+      result += value
+        .map((v) => (typeof value === 'object' && value !== null ? deterministicObjectHash(v) : String(v)))
+        .join(',');
+    } else {
+      result += String(value);
+    }
+    result += ';';
+  }
+  return strHash(result);
+}
+
+/**
  * @alpha
  * A suggestion for a visualization given some data. This represents the shape of the panel (including options and field config)
  * that will be used to show a small preview in the Grafana UI when suggesting visualizations in the Panel Editor.
@@ -49,6 +90,8 @@ export interface PanelPluginVisualizationSuggestion<TOptions extends unknown = {
   name: string;
   /** Panel plugin id */
   pluginId: string;
+  /** unique hash assigned by Grafana for use by the UI. */
+  hash: string;
 }
 
 /**
@@ -82,7 +125,7 @@ export class VisualizationSuggestionsBuilder {
   }
 
   getListAppender<TOptions extends unknown, TFieldConfig extends {} = {}>(
-    defaults: PanelPluginVisualizationSuggestion<TOptions, TFieldConfig>
+    defaults: Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfig>, 'hash'>
   ) {
     return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
   }
@@ -127,10 +170,15 @@ export class VisualizationSuggestionsListAppender<TOptions extends unknown, TFie
   ) {}
 
   append(suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) {
-    this.list.push(defaultsDeep(suggestion, this.defaults));
+    this.appendAll([suggestion]);
   }
 
   appendAll(suggestions: Array<VisualizationSuggestion<TOptions, TFieldConfig>>) {
-    this.list.push(...suggestions.map((o) => defaultsDeep(o, this.defaults)));
+    this.list.push(
+      ...suggestions.map((s): PanelPluginVisualizationSuggestion<TOptions, TFieldConfig> => {
+        const suggestionWithDefaults = defaultsDeep(s, this.defaults);
+        return Object.assign(suggestionWithDefaults, { hash: getSuggestionHash(suggestionWithDefaults) });
+      })
+    );
   }
 }
