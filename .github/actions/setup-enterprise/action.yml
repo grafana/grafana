@@ -42,7 +42,7 @@ runs:
         for i in $(seq 1 $RETRIES); do
           echo "Attempt $i to clone..."
 
-          if git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise;; then
+          if git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
             echo "Clone succeeded on attempt $i"
             break
           fi
@@ -72,7 +72,7 @@ runs:
           fi
 
           if [ $i -eq $RETRIES ]; then
-            echo "Chekout failed after $RETRIES attempts, failing pipeline."
+            echo "Checkout failed after $RETRIES attempts, failing pipeline."
             exit 1
           fi
 
