@@ -164,14 +164,18 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
-        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
         {!hideTimeControls && (
           <div className={styles.timeControls}>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {!hideDashboardControls && model.hasDashboardControls() && <DashboardControlsButton dashboard={dashboard} />}
+        {!hideDashboardControls && model.hasDashboardControls() && (
+          <div className={styles.dashboardControlsButton}>
+            <DashboardControlsButton dashboard={dashboard} />
+          </div>
+        )}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
       {!hideVariableControls && (
         <>
@@ -230,17 +234,26 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rightControls: css({
       display: 'flex',
-      justifyContent: 'flex-end',
       gap: theme.spacing(1),
-      marginBottom: theme.spacing(1),
       float: 'right',
       alignItems: 'center',
+      flexWrap: 'wrap',
+      maxWidth: '100%',
+      minWidth: 0,
     }),
     timeControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
+      order: 2,
+      marginLeft: 'auto',
+      flexShrink: 0,
+      alignSelf: 'flex-start',
+    }),
+    dashboardControlsButton: css({
+      order: 2,
+      marginLeft: 'auto',
     }),
     rightControlsWrap: css({
       flexWrap: 'wrap',
