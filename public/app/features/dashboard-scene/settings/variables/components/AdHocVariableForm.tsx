@@ -98,9 +98,9 @@ export function AdHocVariableForm({
           >
             <Switch
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle}
-              value={defaultKeys !== undefined}
+              value={defaultKeys != null}
               onChange={(e) => {
-                if (defaultKeys === undefined) {
+                if (defaultKeys == null) {
                   onDefaultKeysChange([]);
                 } else {
                   onDefaultKeysChange(undefined);
@@ -109,7 +109,7 @@ export function AdHocVariableForm({
             />
           </Field>
 
-          {defaultKeys !== undefined && (
+          {defaultKeys != null && (
             <CodeEditor
               height={300}
               language="csv"
