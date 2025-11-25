@@ -1,7 +1,8 @@
 package dualwrite
 
 import (
-	"golang.org/x/net/context"
+	"context"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
