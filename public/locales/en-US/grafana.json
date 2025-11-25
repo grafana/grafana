@@ -10729,7 +10729,9 @@
     "invite-user": {
       "invite-button": "Invite",
       "invite-new-user-button": "Invite new user",
-      "invite-tooltip": "Invite user"
+      "invite-tooltip": "Invite user",
+      "upgrade-button": "Upgrade",
+      "upgrade-tooltip": "Upgrade to invite more users"
     },
     "item": {
       "add-bookmark": "Add to Bookmarks",
