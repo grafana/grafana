@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -337,22 +339,23 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   const { data, queries } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
+  const handleAddExpression = useCallback(
+    (type: ExpressionQueryType) => {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'add_expression',
+        expression_type: type,
+        context: 'panel_query_section',
+      });
+      model.onAddExpressionOfType(type);
+    },
+    [model]
+  );
+
   if (!datasource || !dsSettings || !data) {
     return null;
   }
 
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
-
-  // Wrapper for adding expressions that tracks the interaction
-  const handleAddExpression = (type: ExpressionQueryType) => {
-    // Track when user adds a new expression from the dropdown
-    reportInteraction('dashboards_expression_interaction', {
-      action: 'add_expression',
-      expression_type: type,
-      context: 'panel_query_section',
-    });
-    model.onAddExpressionOfType(type);
-  };
 
   const onSelectQueryFromLibrary = async (query: DataQuery) => {
     // ensure all queries explicitly define a datasource
