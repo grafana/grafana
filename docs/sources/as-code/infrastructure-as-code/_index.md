@@ -110,39 +110,6 @@ The Grafana Operator is particularly fitting for:
 
 While the Grafana Operator simplifies many aspects of operating Grafana and its resources on Kubernetes, its current support is mainly focused on managing dashboards, folders, and data sources. Advanced features like alerting and plugins (only works for OSS) are not supported yet.
 
-## Grizzly
-
-[Grizzly](https://grafana.github.io/grizzly/) is a command line tool that allows you to manage your observability resources with code. Grizzly supports Kubernetes-inspired YAML representation for the Grafana resource, which makes it easier to learn. With Grizzly, you can move dashboards within Grafana instances and also retrieve information about already provisioned Grafana resources. Grizzly currently supports:
-
-- Grafana dashboards and dashboard folders
-- Grafana data sources
-- Prometheus recording rules and alerts in Grafana Cloud
-- Grafana Cloud Synthetic Monitoring checks
-
-Grizzly can also deploy dashboards built in Jsonnet using Grafonnet. (Learn more in the [Grafonnet documentation](https://grafana.github.io/grafonnet-lib/api-docs/).)
-
-The following example shows a Kubernetes-style Grizzly configuration for creating a dashboard:
-
-```yaml
-apiVersion: grizzly.grafana.com/v1alpha1
-kind: Dashboard
-metadata:
-  name: as-code-dashboard
-spec:
-  title: as-code dashboard
-  uid: ascode
-```
-
-To get started, see the [Grizzly guides](grizzly/dashboards-folders-datasources/) or refer to the [Grizzly’s documentation](https://grafana.github.io/grizzly/).
-
-### Who is this recommended for?
-
-Grizzly is best suited for users who are either using Jsonnet to manage Grafana resources or those who prefer a Kubernetes-style YAML definition of their Grafana resources.
-
-### Known limitations
-
-Grizzly currently doesn’t support Grafana OnCall and Grafana Alerting resources.
-
 ## Grafana Crossplane provider
 
 [Grafana Crossplane provider](https://github.com/grafana/crossplane-provider-grafana) is built using Terrajet and provides support for all resources supported by the Grafana Terraform provider. It enables users to define Grafana resources as Kubernetes manifests and it also help users who build their GitOps pipelines around Kubernetes manifests using tools like ArgoCD.
