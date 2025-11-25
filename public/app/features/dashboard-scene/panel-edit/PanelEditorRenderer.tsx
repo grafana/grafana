@@ -32,7 +32,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       initialSize: 330,
       usePixels: true,
       collapsed: isInitiallyCollapsed,
-      collapseBelowPixels: 250,
+      collapseBelowPixels: 292, // 260px min width for suggestion, plus 16px on either side for padding.
       disabled: isScrollingLayout,
     });
 

@@ -105,7 +105,7 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
         ))}
       </TabsBar>
       <ScrollContainer>
-        <TabContent>
+        <TabContent className={styles.tabContent}>
           {listMode === VisualizationSelectPaneTab.Suggestions && (
             <VisualizationSuggestions onChange={onChange} panel={panelModel} data={data} />
           )}
@@ -138,7 +138,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1,
-    padding: theme.spacing(2, 1),
     height: '100%',
     gap: theme.spacing(2),
   }),
@@ -153,6 +152,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexGrow: 1,
     justifyContent: 'center',
     textAlign: 'center',
+  }),
+  tabContent: css({
+    paddingInline: theme.spacing(2),
   }),
   closeButton: css({
     marginLeft: 'auto',
