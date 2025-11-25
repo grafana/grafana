@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { getAllPanelPluginMeta } from '../../state/util';
@@ -33,13 +33,11 @@ const IMAGE_SIZE = 22;
 
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
-  const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
+  const { value: suggestions, loading, error } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
-
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
-
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
 
   const suggestionsByVizType = useMemo(() => {
@@ -94,98 +92,113 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     }
   }, [suggestions, suggestionHash, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel, applySuggestion]);
 
-  const renderEmptyState = () => (
-    <div className={styles.emptyStateWrapper}>
-      <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
-      <Text element="p" textAlignment="center" color="secondary">
-        <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
-          Run a query to start seeing suggested visualizations
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <Spinner size="xxl" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert title={t('panel.visualization-suggestions.error-loading-suggestions.title', 'Error')} severity="error">
+        <Trans i18nKey="panel.visualization-suggestions.error-loading-suggestions.message">
+          An error occurred when loading visualization suggestions.
         </Trans>
-      </Text>
-    </div>
-  );
+      </Alert>
+    );
+  }
 
   if (isNewVizSuggestionsEnabled && (!data || !hasData(data))) {
-    return renderEmptyState();
+    return (
+      <div className={styles.emptyStateWrapper}>
+        <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
+        <Text element="p" textAlignment="center" color="secondary">
+          <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
+            Run a query to start seeing suggested visualizations
+          </Trans>
+        </Text>
+      </div>
+    );
   }
 
   if (!data) {
     return null;
   }
 
-  let content: React.ReactNode;
-  if (isNewVizSuggestionsEnabled) {
-    content = suggestionsByVizType.map(([vizType, vizTypeSuggestions]) => (
-      <>
-        <div className={styles.vizTypeHeader} key={vizType?.id || 'unknown-viz-type'}>
-          <Text variant="body" weight="medium">
-            {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
-            {vizType?.name || t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
-          </Text>
-        </div>
-        {vizTypeSuggestions?.map((suggestion, index) => {
-          const isCardSelected = suggestionHash === suggestion.hash;
-          return (
+  return (
+    <div className={styles.grid}>
+      {isNewVizSuggestionsEnabled
+        ? suggestionsByVizType.map(([vizType, vizTypeSuggestions]) => (
+            <>
+              <div className={styles.vizTypeHeader} key={vizType?.id || 'unknown-viz-type'}>
+                <Text variant="body" weight="medium">
+                  {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
+                  {vizType?.name || t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
+                </Text>
+              </div>
+              {vizTypeSuggestions?.map((suggestion, index) => {
+                const isCardSelected = suggestionHash === suggestion.hash;
+                return (
+                  <div
+                    key={suggestion.hash}
+                    className={styles.cardContainer}
+                    ref={index === 0 ? firstCardRef : undefined}
+                  >
+                    {isCardSelected && (
+                      <Button
+                        variant="primary"
+                        size={'md'}
+                        onClick={() => applySuggestion(suggestion)}
+                        className={styles.applySuggestionButton}
+                        aria-label={t(
+                          'panel.visualization-suggestions.apply-suggestion-aria-label',
+                          'Apply {{suggestionName}} visualization',
+                          { suggestionName: suggestion.name }
+                        )}
+                      >
+                        {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
+                      </Button>
+                    )}
+                    <VisualizationSuggestionCard
+                      data={data}
+                      suggestion={suggestion}
+                      width={width}
+                      isSelected={isCardSelected}
+                      tabIndex={index}
+                      onClick={() => applySuggestion(suggestion, true)}
+                    />
+                  </div>
+                );
+              })}
+            </>
+          ))
+        : suggestions?.map((suggestion, index) => (
             <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
-              {isCardSelected && (
-                <Button
-                  variant="primary"
-                  size={'md'}
-                  onClick={() => applySuggestion(suggestion)}
-                  className={styles.applySuggestionButton}
-                  aria-label={t(
-                    'panel.visualization-suggestions.apply-suggestion-aria-label',
-                    'Apply {{suggestionName}} visualization',
-                    { suggestionName: suggestion.name }
-                  )}
-                >
-                  {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
-                </Button>
-              )}
               <VisualizationSuggestionCard
+                key={index}
                 data={data}
                 suggestion={suggestion}
                 width={width}
-                isSelected={isCardSelected}
                 tabIndex={index}
-                onClick={() => applySuggestion(suggestion, true)}
+                onClick={() => applySuggestion(suggestion)}
               />
             </div>
-          );
-        })}
-      </>
-    ));
-  } else {
-    content = suggestions?.map((suggestion, index) => (
-      <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
-        <VisualizationSuggestionCard
-          key={index}
-          data={data}
-          suggestion={suggestion}
-          width={width}
-          tabIndex={index}
-          onClick={() => applySuggestion(suggestion)}
-        />
-      </div>
-    ));
-  }
-
-  return (
-    // This div is needed in some places to make AutoSizer work
-    <div>
-      <AutoSizer disableHeight style={{ width: '100%', height: '100%' }}>
-        {() => (
-          <div>
-            <div className={styles.grid}>{content}</div>
-          </div>
-        )}
-      </AutoSizer>
+          ))}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    loadingContainer: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+      marginTop: theme.spacing(6),
+    }),
     filterRow: css({
       display: 'flex',
       flexDirection: 'row',
