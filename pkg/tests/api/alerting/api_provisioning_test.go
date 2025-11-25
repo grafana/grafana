@@ -1238,6 +1238,7 @@ func TestIntegrationFullpath(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId": "A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -1291,6 +1292,7 @@ func TestIntegrationFullpath(t *testing.T) {
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
+									"refId": "A",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
