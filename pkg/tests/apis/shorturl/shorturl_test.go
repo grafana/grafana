@@ -123,7 +123,7 @@ func TestIntegrationShortURL(t *testing.T) {
 // Only legacy API should be used, no K8s API interaction
 func doLegacyOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		User: helper.Org1.Editor,
+		User: helper.Org1.None,
 		GVR:  gvr,
 	})
 
@@ -189,7 +189,7 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 
 	t.Run("Legacy API -> K8s API visibility", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
+			User: helper.Org1.None,
 			GVR:  gvr,
 		})
 
@@ -223,7 +223,7 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 
 	t.Run("K8s API -> Legacy API visibility", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
+			User: helper.Org1.None,
 			GVR:  gvr,
 		})
 
@@ -259,7 +259,7 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 	t.Run("Redirect functionality", func(t *testing.T) {
 		t.Skip("Skipping redirect functionality tests for now - flaky test")
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
+			User: helper.Org1.None,
 			GVR:  gvr,
 		})
 
@@ -312,7 +312,7 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("K8s API CRUD (unified storage only)", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
+			User: helper.Org1.None,
 			GVR:  gvr,
 		})
 
@@ -349,7 +349,7 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("K8s API validation - invalid paths", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
+			User: helper.Org1.None,
 			GVR:  gvr,
 		})
 
@@ -402,7 +402,7 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("K8s API validation - valid edge cases", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
+			User: helper.Org1.None,
 			GVR:  gvr,
 		})
 
@@ -441,7 +441,7 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("Redirect functionality (unified only)", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
+			User: helper.Org1.None,
 			GVR:  gvr,
 		})
 
