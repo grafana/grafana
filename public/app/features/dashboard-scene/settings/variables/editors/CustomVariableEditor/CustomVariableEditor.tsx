@@ -23,6 +23,7 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
   const onValuesFormatChange = useCallback(
     (format: CustomVariableModel['valuesFormat']) => {
       variable.setState({ query: prevQuery });
+      variable.setState({ value: isMulti ? [] : undefined });
       variable.setState({ valuesFormat: format });
       variable.setState({ allowCustomValue: false });
       variable.setState({ allValue: undefined });
@@ -33,7 +34,7 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
         setPrevQuery(query);
       }
     },
-    [onRunQuery, prevQuery, query, variable]
+    [isMulti, onRunQuery, prevQuery, query, variable]
   );
 
   const onMultiChange = useCallback(
@@ -52,6 +53,8 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
 
   const onQueryChange = useCallback(
     (event: FormEvent<HTMLTextAreaElement>) => {
+      setPrevQuery('');
+
       if (valuesFormat === 'json') {
         const validationError = validateJsonQuery(event.currentTarget.value);
         setQueryValidationError(validationError);
@@ -113,7 +116,7 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
   ];
 }
 
-const validateJsonQuery = (rawQuery: string): Error | undefined => {
+export const validateJsonQuery = (rawQuery: string): Error | undefined => {
   const query = rawQuery.trim();
   if (!query) {
     return;

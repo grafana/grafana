@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
-import { Box, Button, Field, Modal, TextLink } from '@grafana/ui';
+import { Box, Button, Field, Modal, Switch, TextLink } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -250,6 +250,19 @@ export function Editor({ variable }: { variable: QueryVariable }) {
 
   const isHasVariableOptions = hasVariableOptions(variable);
 
+  // TODO: remove me after finished testing - each DS can/should implement their own UI
+  const [returnsMultiProps, setReturnsMultiProps] = useState(false);
+  const onChangeReturnsMultipleProps = (e: FormEvent<HTMLInputElement>) => {
+    setReturnsMultiProps(e.currentTarget.checked);
+    variable.setState({ allowCustomValue: false });
+    variable.setState({ allValue: '' });
+    variable.setState({ regex: '' });
+    onStaticOptionsChange?.([]);
+  };
+
+  const optionsForSelect = variable.getOptionsForSelect(false);
+  const hasMultiProps = returnsMultiProps || optionsForSelect.every((o) => Boolean(o.properties));
+
   return (
     <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.editor}>
       <Field
@@ -261,43 +274,64 @@ export function Editor({ variable }: { variable: QueryVariable }) {
       </Field>
 
       {selectedDatasource && VariableQueryEditor && (
-        <QueryEditor
-          onQueryChange={onQueryChange}
-          onLegacyQueryChange={onQueryChange}
-          datasource={selectedDatasource}
-          query={query}
-          VariableQueryEditor={VariableQueryEditor}
-          timeRange={timeRange}
-        />
+        <Box marginBottom={2}>
+          <QueryEditor
+            onQueryChange={onQueryChange}
+            onLegacyQueryChange={onQueryChange}
+            datasource={selectedDatasource}
+            query={query}
+            VariableQueryEditor={VariableQueryEditor}
+            timeRange={timeRange}
+          />
+          {/* TODO: remove me after finished testing - each DS can/should implement their own UI */}
+          <Field
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            label="Enable access to all the fields of the query results"
+            description={
+              <Trans i18nKey="">
+                Check{' '}
+                <TextLink href="https://grafana.com/docs/grafana/latest/variables/xxx" external>
+                  our docs
+                </TextLink>{' '}
+                for more information.
+              </Trans>
+            }
+            noMargin
+          >
+            <Switch onChange={onChangeReturnsMultipleProps} />
+          </Field>
+        </Box>
       )}
 
-      <VariableTextAreaField
-        defaultValue={regex ?? ''}
-        name={t('dashboard-scene.query-variable-editor-form.name-regex', 'Regex')}
-        description={
-          <div>
-            <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
-              Optional, if you want to extract part of a series name or metric node segment.
-            </Trans>
-            <br />
-            <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-examples">
-              Named capture groups can be used to separate the display text and value (
-              <TextLink
-                href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
-                external
-              >
-                see examples
-              </TextLink>
-              ).
-            </Trans>
-          </div>
-        }
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
-        onBlur={onRegExChange}
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
-        width={52}
-      />
+      {!returnsMultiProps && (
+        <VariableTextAreaField
+          defaultValue={regex ?? ''}
+          name={t('dashboard-scene.query-variable-editor-form.name-regex', 'Regex')}
+          description={
+            <div>
+              <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
+                Optional, if you want to extract part of a series name or metric node segment.
+              </Trans>
+              <br />
+              <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-examples">
+                Named capture groups can be used to separate the display text and value (
+                <TextLink
+                  href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
+                  external
+                >
+                  see examples
+                </TextLink>
+                ).
+              </Trans>
+            </div>
+          }
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+          placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
+          onBlur={onRegExChange}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
+          width={52}
+        />
+      )}
 
       <QueryVariableSortSelect
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2}
@@ -311,7 +345,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         refresh={refresh}
       />
 
-      {onStaticOptionsChange && onStaticOptionsOrderChange && (
+      {!returnsMultiProps && onStaticOptionsChange && onStaticOptionsOrderChange && (
         <QueryVariableStaticOptions
           staticOptions={staticOptions}
           staticOptionsOrder={staticOptionsOrder}
@@ -320,7 +354,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         />
       )}
 
-      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
+      {isHasVariableOptions && <VariableValuesPreview options={optionsForSelect} hasMultiProps={hasMultiProps} />}
     </div>
   );
 }

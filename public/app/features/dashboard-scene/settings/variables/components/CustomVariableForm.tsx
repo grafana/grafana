@@ -48,27 +48,7 @@ export function CustomVariableForm({
         <Trans i18nKey="dashboard-scene.custom-variable-form.custom-options">Custom options</Trans>
       </VariableLegend>
 
-      <Stack direction="row" gap={1}>
-        <RadioButtonGroup
-          value={valuesFormat}
-          onChange={onValuesFormatChange}
-          options={[
-            {
-              value: 'csv',
-              label: t('dashboard-scene.custom-variable-form.name-values-separated-comma', 'Values separated by comma'),
-            },
-            {
-              value: 'json',
-              label: t('dashboard-scene.custom-variable-form.name-json-values', 'Object values in a JSON array'),
-            },
-          ]}
-        />
-        {valuesFormat === 'json' && (
-          <Tooltip content={TooltipJsonFormat} placement="top" interactive>
-            <Icon name="info-circle" />
-          </Tooltip>
-        )}
-      </Stack>
+      <ValuesFormatSelector valuesFormat={valuesFormat} onValuesFormatChange={onValuesFormatChange} />
 
       <VariableTextAreaField
         // we don't use a controlled component so we make sure the textarea content is cleared when changing format by providing a key
@@ -108,16 +88,47 @@ export function CustomVariableForm({
   );
 }
 
-function TooltipJsonFormat() {
+interface ValuesFormatSelectorProps {
+  valuesFormat?: CustomVariableModel['valuesFormat'];
+  onValuesFormatChange?: (format: CustomVariableModel['valuesFormat']) => void;
+}
+
+export function ValuesFormatSelector({ valuesFormat, onValuesFormatChange }: ValuesFormatSelectorProps) {
   return (
-    <Trans i18nKey="dashboard-scene.custom-variable-form.json-values-tooltip">
-      Provide a JSON representing an array of objects, where each object can have any number of properties.
-      <br />
-      Check{' '}
-      <TextLink href="https://grafana.com/docs/grafana/latest/variables/xxx" external>
-        our docs
-      </TextLink>{' '}
-      for more information.
-    </Trans>
+    <Stack direction="row" gap={1}>
+      <RadioButtonGroup
+        value={valuesFormat}
+        onChange={onValuesFormatChange}
+        options={[
+          {
+            value: 'csv',
+            label: t('dashboard-scene.custom-variable-form.name-values-separated-comma', 'Values separated by comma'),
+          },
+          {
+            value: 'json',
+            label: t('dashboard-scene.custom-variable-form.name-json-values', 'Object values in a JSON array'),
+          },
+        ]}
+      />
+      {valuesFormat === 'json' && (
+        <Tooltip
+          content={
+            <Trans i18nKey="dashboard-scene.custom-variable-form.json-values-tooltip">
+              Provide a JSON representing an array of objects, where each object can have any number of properties.
+              <br />
+              Check{' '}
+              <TextLink href="https://grafana.com/docs/grafana/latest/variables/xxx" external>
+                our docs
+              </TextLink>{' '}
+              for more information.
+            </Trans>
+          }
+          placement="top"
+          interactive
+        >
+          <Icon name="info-circle" />
+        </Tooltip>
+      )}
+    </Stack>
   );
 }

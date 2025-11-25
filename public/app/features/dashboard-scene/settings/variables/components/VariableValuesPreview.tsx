@@ -36,7 +36,13 @@ function VariableValuesWithPropsPreview({ options }: { options: VariableValueOpt
       <Text variant="bodySmall" weight="medium">
         <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
       </Text>
-      <InteractiveTable columns={columns} data={data} getRowId={(r) => String(r.value)} pageSize={10} />
+      <InteractiveTable
+        className={styles.table}
+        columns={columns}
+        data={data}
+        getRowId={(r) => String(r.value)}
+        pageSize={8}
+      />
     </div>
   );
 }
@@ -96,6 +102,11 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       maxWidth: '50vw',
+    }),
+    table: css({
+      td: css({
+        padding: theme.spacing(0.5, 1),
+      }),
     }),
   };
 }
