@@ -201,6 +201,10 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 	if err := res.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
+	if keeper.Namespace != namespace || keeper.Name != name {
+		return nil, fmt.Errorf("bug: expected to find keeper namespace=%+v name=%+v but got keeper namespace=%+v name%+v",
+			namespace, name, keeper.Namespace, keeper.Name)
+	}
 
 	return &keeper, nil
 }
@@ -403,6 +407,10 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error reading keeper row: %w", err)
+		}
+
+		if row.Namespace != namespace.String() {
+			return nil, fmt.Errorf("bug: expected to list keepers for namespace %+v but got one from namespace %+v", namespace, row.Namespace)
 		}
 
 		keeper, err := row.toKubernetes()
@@ -704,6 +712,10 @@ func (s *keeperMetadataStorage) GetActiveKeeper(ctx context.Context, namespace s
 	keeper, readErr = keeperDB.toKubernetes()
 	if readErr != nil {
 		return keeper, fmt.Errorf("converting from keeperDB to kubernetes struct: %w", err)
+	}
+
+	if keeperDB.Namespace != namespace {
+		return nil, fmt.Errorf("bug: expected to find keeper to namespace %+v but got one for namespace %+v", namespace, keeperDB.Namespace)
 	}
 
 	return keeper, nil
