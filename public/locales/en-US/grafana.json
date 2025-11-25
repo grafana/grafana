@@ -11255,12 +11255,10 @@
         "latestReleaseDate": "Latest release date:",
         "latestVersion": "Latest Version",
         "license": "License",
-        "moreDetails": "Plese find more information <2>here</2> .",
+        "moreDetails": "Plese find more information <2>here</2>.",
         "pluginInsights": {
           "header": "Plugin insights"
         },
-        "pluginInsightsErrorTooltip": "Poor or critical data quality",
-        "pluginInsightsNodataTooltip": "No available data to determine the status yet",
         "pluginInsightsSuccessTooltip": "All relevant signals are present and verified",
         "pluginInsightsWarningTooltip": "One or more signals are missing or need attention",
         "raiseAnIssue": "Raise an issue",
