@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAsync, useMeasure } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   GrafanaTheme2,
