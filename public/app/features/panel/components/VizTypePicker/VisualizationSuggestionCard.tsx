@@ -16,7 +16,14 @@ export interface Props extends HTMLAttributes<HTMLButtonElement> {
   isSelected?: boolean;
 }
 
-export function VisualizationSuggestionCard({ data, suggestion, width, isSelected = false, onClick }: Props) {
+export function VisualizationSuggestionCard({
+  data,
+  suggestion,
+  width,
+  isSelected = false,
+  className,
+  ...restProps
+}: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
@@ -24,20 +31,17 @@ export function VisualizationSuggestionCard({ data, suggestion, width, isSelecte
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: cx(styles.vizBox, isNewVizSuggestionsEnabled && isSelected && styles.selectedBox),
+    className: cx(className, styles.vizBox, isSelected && styles.selectedBox),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
-    onClick,
+    ...restProps,
   };
 
   let content: ReactNode;
 
   if (cardOptions.imgSrc) {
     content = (
-      <button
-        {...commonButtonProps}
-        className={cx(styles.vizBox, styles.imgBox, isNewVizSuggestionsEnabled && isSelected && styles.selectedBox)}
-      >
+      <button {...commonButtonProps} className={cx(commonButtonProps.className, styles.imgBox)}>
         <div className={styles.name}>{suggestion.name}</div>
         <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
       </button>
@@ -62,7 +66,7 @@ export function VisualizationSuggestionCard({ data, suggestion, width, isSelecte
             fieldConfig={preview.fieldConfig}
           />
           {/* this prevents interaction with the underlying panel. */}
-          <div className={styles.hoverPane} />
+          <div className={cx(styles.hoverPane, isSelected && styles.hoverPaneSelected)} />
         </div>
       </button>
     );
@@ -79,11 +83,20 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     hoverPane: css({
       position: 'absolute',
-      top: 0,
-      right: 0,
-      left: 0,
-      borderRadius: theme.shape.radius.default,
-      bottom: 0,
+      top: -4,
+      left: -4,
+      right: -2,
+      bottom: -2,
+      borderRadius: theme.spacing(0.5),
+      background: 'transparent',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+    }),
+    hoverPaneSelected: css({
+      background: colorManipulator.alpha(theme.colors.text.primary, 0.3),
     }),
     vizBox: css({
       position: 'relative',
@@ -103,10 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     selectedBox: css({
-      boxShadow: `0 0 0 1px ${theme.colors.primary.main}, inset 0 0 2px 2px ${theme.colors.primary.main}`,
-      '&, &:hover': {
-        background: colorManipulator.alpha(theme.colors.text.primary, 0.5),
-      },
+      boxShadow: `inset 0 0 2px 2px ${theme.colors.primary.main}`,
     }),
     imgBox: css({
       display: 'flex',

@@ -155,6 +155,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                           suggestion={suggestion}
                           width={width}
                           isSelected={isCardSelected}
+                          tabIndex={index}
                           onClick={() => applySuggestion(suggestion, isNewVizSuggestionsEnabled)}
                         />
                       </div>
