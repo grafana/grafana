@@ -5942,6 +5942,7 @@
       "add-transformation": "Add transformation",
       "show-more": "Show more",
       "sql-name": "Transform with SQL",
+      "sql-not-applicable": "SQL expressions require backend data sources",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
     "general-settings-edit-view": {

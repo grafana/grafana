@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -18,6 +19,7 @@ import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui'
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
+import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
@@ -82,6 +84,35 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         )
       : [];
   }, [transformsWrongType]);
+
+  // Check if SQL expressions are applicable (all datasources must be backend datasources)
+  const isSqlApplicable = useMemo(() => {
+    const queryRunner = model.getQueryRunner();
+    const queries = queryRunner.state.queries;
+
+    if (!queries || queries.length === 0) {
+      return true; // If no queries, SQL is theoretically applicable
+    }
+
+    // Check each query's datasource
+    for (const query of queries) {
+      const datasourceRef = query.datasource;
+
+      // Skip expression queries
+      if (datasourceRef && 'uid' in datasourceRef && datasourceRef.uid === ExpressionDatasourceUID) {
+        continue;
+      }
+
+      const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceRef);
+
+      // If we can't get datasource settings or it's not a backend datasource, SQL is not applicable
+      if (!dsSettings || (!dsSettings.meta.backend && !dsSettings.meta.isBackend)) {
+        return false;
+      }
+    }
+
+    return true;
+  }, [model]);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
@@ -154,6 +185,8 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           onShowPicker={openDrawer}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
+          data={sourceData.data.series}
+          isSqlApplicable={isSqlApplicable}
         />
         {transformationsDrawer}
       </>
