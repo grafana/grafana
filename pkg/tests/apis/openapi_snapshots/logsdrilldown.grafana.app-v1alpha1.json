@@ -3521,14 +3521,18 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource": {
+      "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel": {
         "type": "object",
         "required": [
-          "records"
+          "key",
+          "value"
         ],
         "properties": {
-          "records": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords"
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -3536,42 +3540,32 @@
       "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels": {
         "type": "array",
         "items": {
-          "type": "object",
-          "required": [
-            "key",
-            "value"
-          ],
-          "properties": {
-            "key": {
-              "type": "string"
-            },
-            "value": {
+          "$ref": "#/components/schemas/com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel"
+        }
+      },
+      "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord": {
+        "type": "object",
+        "required": [
+          "columns",
+          "labels"
+        ],
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
               "type": "string"
             }
           },
-          "additionalProperties": false
-        }
+          "labels": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels"
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords": {
         "type": "array",
         "items": {
-          "type": "object",
-          "required": [
-            "columns",
-            "labels"
-          ],
-          "properties": {
-            "columns": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "labels": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels"
-            }
-          },
-          "additionalProperties": false
+          "$ref": "#/components/schemas/com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord"
         }
       },
       "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsOperatorState": {
@@ -3612,11 +3606,11 @@
       "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsSpec": {
         "type": "object",
         "required": [
-          "datasource"
+          "records"
         ],
         "properties": {
-          "datasource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource"
+          "records": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords"
           }
         },
         "additionalProperties": false

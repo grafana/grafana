@@ -1268,19 +1268,19 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels = {
+export type LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel = {
   key: string;
   value: string;
-}[];
-export type LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords = {
+};
+export type LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels = LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel[];
+export type LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord = {
   columns: string[];
   labels: LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels;
-}[];
-export type LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource = {
-  records: LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords;
 };
+export type LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords =
+  LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord[];
 export type LogsDrilldownDefaultColumnsSpec = {
-  datasource: LogsDrilldownDefaultColumnsLogsDefaultColumnsDatasource;
+  records: LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords;
 };
 export type LogsDrilldownDefaultColumnsOperatorState = {
   /** descriptiveState is an optional more descriptive state field which has no requirements on format */

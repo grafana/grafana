@@ -1,19 +1,19 @@
 package v0alpha1
 
-#LogsDefaultColumnsLabels: [...{
-	key: string,
+#LogsDefaultColumnsLabel: {
+	key:   string
 	value: string
-}]
-
-#LogsDefaultColumnsRecords: [...{
-	columns: [...string],
-	labels: #LogsDefaultColumnsLabels
-}]
-
-#LogsDefaultColumnsDatasource: {
-	records: #LogsDefaultColumnsRecords
 }
 
+#LogsDefaultColumnsLabels: [...#LogsDefaultColumnsLabel]
+
+#LogsDefaultColumnsRecord: {
+	columns: [...string]
+	labels: #LogsDefaultColumnsLabels
+}
+
+#LogsDefaultColumnsRecords: [...#LogsDefaultColumnsRecord]
+
 LogsDefaultColumns: {
-	datasource: #LogsDefaultColumnsDatasource
+	records: #LogsDefaultColumnsRecords
 }

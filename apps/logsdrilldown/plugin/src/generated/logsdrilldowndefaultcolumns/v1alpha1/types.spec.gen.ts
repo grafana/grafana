@@ -1,32 +1,38 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-export interface LogsDefaultColumnsDatasource {
-	records: LogsDefaultColumnsRecords;
-}
-
-export const defaultLogsDefaultColumnsDatasource = (): LogsDefaultColumnsDatasource => ({
-	records: defaultLogsDefaultColumnsRecords(),
-});
-
-export type LogsDefaultColumnsRecords = {
-	columns: string[];
-	labels: LogsDefaultColumnsLabels;
-}[];
+export type LogsDefaultColumnsRecords = LogsDefaultColumnsRecord[];
 
 export const defaultLogsDefaultColumnsRecords = (): LogsDefaultColumnsRecords => ([]);
 
-export type LogsDefaultColumnsLabels = {
-	key: string;
-	value: string;
-}[];
+export interface LogsDefaultColumnsRecord {
+	columns: string[];
+	labels: LogsDefaultColumnsLabels;
+}
+
+export const defaultLogsDefaultColumnsRecord = (): LogsDefaultColumnsRecord => ({
+	columns: [],
+	labels: defaultLogsDefaultColumnsLabels(),
+});
+
+export type LogsDefaultColumnsLabels = LogsDefaultColumnsLabel[];
 
 export const defaultLogsDefaultColumnsLabels = (): LogsDefaultColumnsLabels => ([]);
 
+export interface LogsDefaultColumnsLabel {
+	key: string;
+	value: string;
+}
+
+export const defaultLogsDefaultColumnsLabel = (): LogsDefaultColumnsLabel => ({
+	key: "",
+	value: "",
+});
+
 export interface Spec {
-	datasource: LogsDefaultColumnsDatasource;
+	records: LogsDefaultColumnsRecords;
 }
 
 export const defaultSpec = (): Spec => ({
-	datasource: defaultLogsDefaultColumnsDatasource(),
+	records: defaultLogsDefaultColumnsRecords(),
 });
 
