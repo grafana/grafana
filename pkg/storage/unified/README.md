@@ -256,7 +256,7 @@ You should also have a MySQL database running. You can create one with our docke
 ```bash
 make devenv sources=mysql
 ```
-The database credentials in the example above will work with the default mysql docker block.
+The database credentials in the example above will work with the default mysql docker block. You'll also need to create a database named `unified-storage`.
 
 Start the storage-server with:
 ```sh
