@@ -40,7 +40,7 @@ You can export an existing dashboard with the [Grafana CLI](https://grafana.com/
 
 To do so:
 
-1. Make changes to dashboards and other resources using the Grafana UI in your development instance.
+1. Set up the context to point to your instance in `grafanactl` as documented in []()
 1. Pull those resources from the development environment to your local machine:
    `grafanactl resources pull dashboards --path <DASHBOARDS_PATH>`
 1. Push the resources to your Git repository:
