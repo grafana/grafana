@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
-      "disabled-tooltip": "",
       "error": "No se ha podido cargar la vista previa del enrutamiento para {{alertmanager}}",
       "initialized": "Según las etiquetas añadidas, las instancias de alerta se enrutan a las siguientes políticas de notificación. Amplía cada política de notificación a continuación para ver más detalles.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Vista previa del enrutamiento",
       "select-folder-tooltip": "",
       "text-loading-preview": "Cargando vista previa...",
@@ -5098,8 +5100,12 @@
     "new-panel": {
       "configure-button": "Configurar",
       "configure-button-menu": "Activar o desactivar menú",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Configurar",
-      "menu-use-library-panel": "Usar panel de la librería"
+      "menu-use-library-panel": "Usar panel de la librería",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Nuevo panel",
     "on-create-new-row": {
@@ -7218,6 +7224,7 @@
       "logs-volume": {
         "add-filters": "Añade más etiquetas a tu consulta para acotar la búsqueda.",
         "decrease-timerange": "Disminuye el intervalo de tiempo de tu consulta.",
+        "max-bytes-error": "",
         "much-data": "La consulta está intentando acceder a demasiados datos. Prueba alguna de las siguientes opciones:"
       },
       "maximum-pinned-logs": "Se ha alcanzado el máximo de {{PINNED_LOGS_LIMIT}} registros anclados. Desancla un registro para añadir otro.",
@@ -7267,12 +7274,15 @@
       "tooltip-select-query-visualize-table": "Selecciona una consulta para visualizar en la tabla"
     },
     "logs-volume-panel": {
-      "content-streaming": "Transmisión"
+      "content-streaming": "Transmisión",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Volver a cargar el volumen de logs",
       "label-reload-log-volume": "Volver a cargar el volumen de logs",
       "loading": "Cargando...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Error al cargar el volumen de logs para esta consulta",
       "title-no-logs-volume-available": "No hay volumen de logs disponible",
       "title-showing-partial-data": "Mostrando datos parciales",
@@ -8590,7 +8600,11 @@
     },
     "axis-builder": {
       "linear-threshold": {
-        "label": "Umbral lineal"
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
       },
       "log-base": "Base de registro"
     },
@@ -8997,6 +9011,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Usar eje y derecho"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9288,6 +9307,7 @@
       "toggle-panel-edit": "Cambiar la vista de edición del panel",
       "toggle-panel-fullscreen": "Cambiar la vista de pantalla completa del panel",
       "toggle-panel-legend": "Cambiar leyenda del panel",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Reducir el intervalo de tiempo"
     },
     "title": "Accesos directos"
@@ -9963,11 +9983,7 @@
       "wrap-lines": "Ajustar líneas"
     },
     "logs-navigation": {
-      "newer-logs": "Registros más recientes",
-      "older-logs": "Registros más antiguos",
-      "scroll-bottom": "Desplazarse al final",
-      "scroll-top": "Desplazarse al inicio",
-      "start-of-range": "Inicio del intervalo"
+      "scroll-top": "Desplazarse al inicio"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12540,11 +12556,14 @@
       "copy-clipboard": "Copiar al portapapeles",
       "copy-to-clipboard-and-close": "Copiar al portapapeles y cerrar",
       "description-name-to-easily-identify-the-token": "Nombre para identificar fácilmente el token",
+      "description-no-expiration-disabled": "",
       "description-token": "Copia el token ahora, ya que no lo volverás a ver. Si lo pierdes, deberás crear uno nuevo.",
       "generate-token": "Generar token",
       "label-display-name": "Nombre para mostrar",
       "label-expiration": "Caducidad",
       "label-expiration-date": "Fecha de vencimiento",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {

@@ -1976,9 +1976,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager：",
-      "disabled-tooltip": "",
       "error": "{{alertmanager}}のルーティングプレビューを読み込めませんでした",
       "initialized": "追加されたラベルに基づいて、アラートインスタンスは次の通知ポリシーにルーティングされます。詳細を表示するには、以下の各通知ポリシーを展開します。",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "ルーティングのプレビュー",
       "select-folder-tooltip": "",
       "text-loading-preview": "プレビュー読み込み中...",
@@ -5078,8 +5080,12 @@
     "new-panel": {
       "configure-button": "構成",
       "configure-button-menu": "メニューの切り替え",
+      "empty-state-message": "",
       "menu-open-panel-editor": "構成",
-      "menu-use-library-panel": "ライブラリパネルを使用"
+      "menu-use-library-panel": "ライブラリパネルを使用",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "新規パネル",
     "on-create-new-row": {
@@ -7194,6 +7200,7 @@
       "logs-volume": {
         "add-filters": "クエリにラベルを追加して、検索範囲を絞り込んでください。",
         "decrease-timerange": "クエリの時間範囲を短縮してください。",
+        "max-bytes-error": "",
         "much-data": "クエリがアクセスしようとしているデータが多すぎます。次の1つ以上："
       },
       "maximum-pinned-logs": "ピン固定されたログが最大数、{{PINNED_LOGS_LIMIT}}に達しました。別のログを追加するには、ログのピン留めを解除してください。",
@@ -7243,12 +7250,15 @@
       "tooltip-select-query-visualize-table": "テーブルで表示するクエリを選択"
     },
     "logs-volume-panel": {
-      "content-streaming": "ストリーミング"
+      "content-streaming": "ストリーミング",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "ログ量を再読み込み",
       "label-reload-log-volume": "ログ量を再読み込み",
       "loading": "読み込み中...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "このクエリのログ量の読み込みに失敗しました",
       "title-no-logs-volume-available": "利用可能なログ量がありません",
       "title-showing-partial-data": "部分的なデータの表示",
@@ -8554,7 +8564,11 @@
     },
     "axis-builder": {
       "linear-threshold": {
-        "label": "線形のしきい値"
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
       },
       "log-base": "ログベース"
     },
@@ -8961,6 +8975,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "右y軸を使用"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9252,6 +9271,7 @@
       "toggle-panel-edit": "パネル編集ビューを切り替え",
       "toggle-panel-fullscreen": "パネルの全画面表示を切り替え",
       "toggle-panel-legend": "パネルの凡例を切り替え",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "時間範囲をズームアウト"
     },
     "title": "ショートカット"
@@ -9919,11 +9939,7 @@
       "wrap-lines": "行を折り返す"
     },
     "logs-navigation": {
-      "newer-logs": "新しいログ",
-      "older-logs": "古いログ",
-      "scroll-bottom": "一番下までスクロール",
-      "scroll-top": "一番上までスクロール",
-      "start-of-range": "範囲の開始日"
+      "scroll-top": "一番上までスクロール"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12485,11 +12501,14 @@
       "copy-clipboard": "クリップボードにコピー",
       "copy-to-clipboard-and-close": "クリップボードにコピーして閉じる",
       "description-name-to-easily-identify-the-token": "トークンを簡単に識別するための名前",
+      "description-no-expiration-disabled": "",
       "description-token": "トークンはもう表示できなくなるため、今すぐコピーしてください。トークンを失うと、新しいトークンを作成する必要があります。",
       "generate-token": "トークンを生成",
       "label-display-name": "表示名",
       "label-expiration": "有効期限",
       "label-expiration-date": "有効期日",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "トークン"
     },
     "get-actions-cell": {

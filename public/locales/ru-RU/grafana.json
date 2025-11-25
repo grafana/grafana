@@ -1994,9 +1994,11 @@
     },
     "notification-preview": {
       "alertmanager": "Обработчик оповещений Alertmanager:",
-      "disabled-tooltip": "",
       "error": "Не удалось загрузить предварительный просмотр маршрутизации для {{alertmanager}}",
       "initialized": "На основе добавленных меток экземпляры оповещений направляются к следующим политикам уведомления. Для просмотра более подробной информации разверните каждую политику уведомления, приведенную ниже.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Предварительный просмотр маршрутизации",
       "select-folder-tooltip": "",
       "text-loading-preview": "Загрузка просмотра...",
@@ -5138,8 +5140,12 @@
     "new-panel": {
       "configure-button": "Настроить",
       "configure-button-menu": "Переключить меню",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Настроить",
-      "menu-use-library-panel": "Использовать панель библиотеки"
+      "menu-use-library-panel": "Использовать панель библиотеки",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Новая панель",
     "on-create-new-row": {
@@ -7266,6 +7272,7 @@
       "logs-volume": {
         "add-filters": "Чтобы сузить область поиска, добавьте больше меток к запросу.",
         "decrease-timerange": "Уменьшите временной диапазон запроса.",
+        "max-bytes-error": "",
         "much-data": "Запрос пытается получить доступ к слишком большому количеству данных. Попробуйте воспользоваться одним из следующих способов."
       },
       "maximum-pinned-logs": "Достигнуто максимальное количество закрепленных журналов ({{PINNED_LOGS_LIMIT}}). Открепите журнал, чтобы добавить другой.",
@@ -7315,12 +7322,15 @@
       "tooltip-select-query-visualize-table": "Выберите запрос для визуализации в таблице"
     },
     "logs-volume-panel": {
-      "content-streaming": "Потоковая передача"
+      "content-streaming": "Потоковая передача",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Перезагрузить объем журналов",
       "label-reload-log-volume": "Перезагрузить объем журналов",
       "loading": "Загрузка…",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Не удалось загрузить объем журналов для этого запроса",
       "title-no-logs-volume-available": "Нет доступного объема журналов",
       "title-showing-partial-data": "Отображение частичных данных",
@@ -8662,7 +8672,11 @@
     },
     "axis-builder": {
       "linear-threshold": {
-        "label": "Линейный порог"
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
       },
       "log-base": "База журналов"
     },
@@ -9069,6 +9083,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Использовать правую ось y"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9360,6 +9379,7 @@
       "toggle-panel-edit": "Включение/выключение представления редактирования панели",
       "toggle-panel-fullscreen": "Включение/выключение полноэкранного представления панели",
       "toggle-panel-legend": "Включение/выключение условных обозначений панели",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Уменьшение масштаба временного диапазона"
     },
     "title": "Сочетания клавиш"
@@ -10051,11 +10071,7 @@
       "wrap-lines": "Переносить строки"
     },
     "logs-navigation": {
-      "newer-logs": "Новые журналы",
-      "older-logs": "Старые журналы",
-      "scroll-bottom": "Прокрутить вниз",
-      "scroll-top": "Прокрутить вверх",
-      "start-of-range": "Начало диапазона"
+      "scroll-top": "Прокрутить вверх"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12650,11 +12666,14 @@
       "copy-clipboard": "Копировать в буфер обмена",
       "copy-to-clipboard-and-close": "Копировать в буфер обмена и закрыть",
       "description-name-to-easily-identify-the-token": "Название для удобной идентификации токена",
+      "description-no-expiration-disabled": "",
       "description-token": "Скопируйте токен сейчас, так как вы не сможете увидеть его снова. При потере токена требуется создать новый.",
       "generate-token": "Создать токен",
       "label-display-name": "Отображаемое имя",
       "label-expiration": "Срок действия",
       "label-expiration-date": "Срок действия",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Токен"
     },
     "get-actions-cell": {

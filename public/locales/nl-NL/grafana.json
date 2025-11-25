@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Waarschuwingsmanager:",
-      "disabled-tooltip": "",
       "error": "Kon routeringsvoorbeeld niet laden voor {{alertmanager}}",
       "initialized": "Op basis van de toegevoegde labels worden waarschuwingsinstanties gerouteerd naar het volgende meldingsbeleid. Vouw elk meldingsbeleid hieronder uit voor meer informatie.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Voorbeeld routering",
       "select-folder-tooltip": "",
       "text-loading-preview": "Voorbeeldweergave laden...",
@@ -5098,8 +5100,12 @@
     "new-panel": {
       "configure-button": "Configureren",
       "configure-button-menu": "Navigatiemenu",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Configureren",
-      "menu-use-library-panel": "Bibliotheekpaneel gebruiken"
+      "menu-use-library-panel": "Bibliotheekpaneel gebruiken",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Nieuw paneel",
     "on-create-new-row": {
@@ -7218,6 +7224,7 @@
       "logs-volume": {
         "add-filters": "Voeg meer labels toe aan je query om je zoekopdracht te verfijnen.",
         "decrease-timerange": "Verkort het tijdsbereik van je query.",
+        "max-bytes-error": "",
         "much-data": "De query probeert toegang te krijgen tot te veel gegevens. Probeer een of meer van de volgende oplossingen:"
       },
       "maximum-pinned-logs": "Maximum aantal van {{PINNED_LOGS_LIMIT}} vastgezette logs bereikt. Maak een logboek los om een ander toe te voegen.",
@@ -7267,12 +7274,15 @@
       "tooltip-select-query-visualize-table": "Selecteer een query om te visualiseren in de tabel"
     },
     "logs-volume-panel": {
-      "content-streaming": "Streamen"
+      "content-streaming": "Streamen",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Logvolume opnieuw laden",
       "label-reload-log-volume": "Logvolume opnieuw laden",
       "loading": "Laden...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Kan het logvolume voor deze query niet laden",
       "title-no-logs-volume-available": "Geen logvolume beschikbaar",
       "title-showing-partial-data": "Gedeeltelijke gegevens weergeven",
@@ -8590,7 +8600,11 @@
     },
     "axis-builder": {
       "linear-threshold": {
-        "label": "Lineaire drempel"
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
       },
       "log-base": "Logboekbase"
     },
@@ -8997,6 +9011,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Rechter y-as gebruiken"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9288,6 +9307,7 @@
       "toggle-panel-edit": "Paneelbewerkingsweergave in-/uitschakelen",
       "toggle-panel-fullscreen": "Paneelweergave volledig scherm in-/uitschakelen",
       "toggle-panel-legend": "Paneellegenda in-/uitschakelen",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Tijdsbereik uitzoomen"
     },
     "title": "Snelkoppelingen"
@@ -9963,11 +9983,7 @@
       "wrap-lines": "Lijnen omsluiten"
     },
     "logs-navigation": {
-      "newer-logs": "Nieuwere logboeken",
-      "older-logs": "Oudere logboeken",
-      "scroll-bottom": "Naar beneden scrollen",
-      "scroll-top": "Naar boven scrollen",
-      "start-of-range": "Begin van het bereik"
+      "scroll-top": "Naar boven scrollen"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12540,11 +12556,14 @@
       "copy-clipboard": "Kopiëren naar klembord",
       "copy-to-clipboard-and-close": "Kopiëren naar klembord en sluiten",
       "description-name-to-easily-identify-the-token": "Naam om het token gemakkelijk te identificeren",
+      "description-no-expiration-disabled": "",
       "description-token": "Kopieer het token nu, want hierna kun je het niet meer zien. Als je een token verliest, moet je een nieuw token maken.",
       "generate-token": "Token genereren",
       "label-display-name": "Weergavenaam",
       "label-expiration": "Vervaldatum",
       "label-expiration-date": "Vervaldatum",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {
