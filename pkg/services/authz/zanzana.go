@@ -118,6 +118,7 @@ type ZanzanaClientConfig struct {
 	Token            string
 	TokenExchangeURL string
 	ServerCertFile   string
+	TokenNamespace   string
 }
 
 // NewRemoteZanzanaClient creates a new Zanzana client that connects to remote Zanzana server.

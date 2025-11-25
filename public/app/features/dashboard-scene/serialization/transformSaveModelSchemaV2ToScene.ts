@@ -64,6 +64,7 @@ import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -119,6 +120,15 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
     return new DashboardAnnotationsDataLayer(layerState);
   });
+
+  // Create alert states data layer if unified alerting is enabled
+  let alertStatesLayer: AlertStatesDataLayer | undefined;
+  if (config.unifiedAlertingEnabled) {
+    alertStatesLayer = new AlertStatesDataLayer({
+      key: 'alert-states',
+      name: 'Alert States',
+    });
+  }
 
   const isDashboardEditable = Boolean(dashboard.editable);
   const canSave = dto.access.canSave !== false;
@@ -229,6 +239,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,
+        alertStatesLayer,
       }),
       controls: new DashboardControls({
         timePicker: new SceneTimePicker({
@@ -304,8 +315,9 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       },
       variable.group
     );
-    const adhocVariableState: any = {
+    const adhocVariableState: AdHocFiltersVariable['state'] = {
       ...commonProperties,
+      type: 'adhoc',
       description: variable.spec.description,
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
@@ -316,7 +328,9 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       defaultKeys: variable.spec.defaultKeys,
       useQueriesAsFilterForOptions: true,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
-      supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
+      supportsMultiValueOperators: Boolean(
+        getDataSourceSrv().getInstanceSettings({ type: ds.type })?.meta.multiValueFilterOperators
+      ),
     };
     // Only set allowCustomValue if it's explicitly set to false (not the default true)
     if (variable.spec.allowCustomValue === false) {
@@ -519,7 +533,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             useQueriesAsFilterForOptions: true,
             layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
             supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators
+              getDataSourceSrv().getInstanceSettings({ type: ds.type })?.meta.multiValueFilterOperators
             ),
           });
         }
