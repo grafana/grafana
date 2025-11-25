@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -229,8 +230,18 @@ func ValidateCondition(condition string, queries []apimodels.AlertQuery, canPatc
 
 	refIDs := make(map[string]int, len(queries))
 	for idx, query := range queries {
-		if query.RefID == "" {
+		var m struct {
+			RefID string `json:"refId"`
+		}
+		if err := json.Unmarshal(query.Model, &m); err != nil {
+			return fmt.Errorf("%w: failed to unmarshal query model at index %d with %s", ngmodels.ErrAlertRuleFailedValidation, idx, err)
+		}
+
+		if query.RefID == "" || m.RefID == "" {
 			return fmt.Errorf("%w: refID is not specified for data query/expression at index %d", ngmodels.ErrAlertRuleFailedValidation, idx)
+		}
+		if query.RefID != m.RefID {
+			return fmt.Errorf("%w: mismatch between query and model refIDs at index %d", ngmodels.ErrAlertRuleFailedValidation, idx)
 		}
 		if usedIdx, ok := refIDs[query.RefID]; ok {
 			return fmt.Errorf("%w: refID '%s' is already used by query/expression at index %d", ngmodels.ErrAlertRuleFailedValidation, query.RefID, usedIdx)

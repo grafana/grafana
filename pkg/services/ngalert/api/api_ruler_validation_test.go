@@ -140,9 +140,11 @@ func TestValidateCondition(t *testing.T) {
 			data: []apimodels.AlertQuery{
 				{
 					RefID: "B",
+					Model: []byte(`{"refId":"B"}`),
 				},
 				{
 					RefID: "C",
+					Model: []byte(`{"refId":"C"}`),
 				},
 			},
 			errorMsg: "condition A does not exist, must be one of [B,C]",
@@ -153,9 +155,11 @@ func TestValidateCondition(t *testing.T) {
 			data: []apimodels.AlertQuery{
 				{
 					RefID: "A",
+					Model: []byte(`{"refId":"A"}`),
 				},
 				{
 					RefID: "A",
+					Model: []byte(`{"refId":"A"}`),
 				},
 			},
 			errorMsg: "refID 'A' is already used by query/expression at index 0",
@@ -166,12 +170,25 @@ func TestValidateCondition(t *testing.T) {
 			data: []apimodels.AlertQuery{
 				{
 					RefID: "",
+					Model: []byte(`{"refId":""}`),
 				},
 				{
 					RefID: "A",
+					Model: []byte(`{"refId":"A"}`),
 				},
 			},
 			errorMsg: "refID is not specified for data query/expression at index 0",
+		},
+		{
+			name:      "error when mismatch between refId and model.refId",
+			condition: "A",
+			data: []apimodels.AlertQuery{
+				{
+					RefID: "A",
+					Model: []byte(`{"refId":"B"}`),
+				},
+			},
+			errorMsg: "mismatch between query and model refIDs at index 0",
 		},
 		{
 			name:      "valid case",
@@ -179,9 +196,11 @@ func TestValidateCondition(t *testing.T) {
 			data: []apimodels.AlertQuery{
 				{
 					RefID: "A",
+					Model: []byte(`{"refId":"A"}`),
 				},
 				{
 					RefID: "B",
+					Model: []byte(`{"refId":"B"}`),
 				},
 			},
 		},
@@ -351,7 +370,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 	orgId := rand.Int63()
 	folder := randFolder()
 	name := util.GenerateShortUID()
-	var cfg = config(t)
+	cfg := config(t)
 	limits := makeLimits(cfg)
 	interval := cfg.BaseInterval * time.Duration(rand.Int63n(10)+1)
 
@@ -753,7 +772,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 	orgId := rand.Int63()
 	folder := randFolder()
 	name := util.GenerateShortUID()
-	var cfg = config(t)
+	cfg := config(t)
 	limits := makeLimits(cfg)
 	interval := cfg.BaseInterval * time.Duration(rand.Int63n(10)+1)
 
