@@ -1,3 +1,4 @@
+import { chain } from 'lodash';
 import { useCallback } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
@@ -140,16 +141,11 @@ export function useNamespaceAndGroupOptions(): {
           groupLimit: GROUP_SEARCH_LIMIT, // Reasonable limit for dropdown results
         }).unwrap();
 
-        // Deduplicate group names efficiently
-        const groupNamesSet = new Set<string>();
-        grafanaResponse.data.groups.forEach((g: GrafanaPromRuleGroupDTO) => {
-          if (g.name) {
-            groupNamesSet.add(g.name);
-          }
-        });
+        // Deduplicate group names
+        const groupNames = chain(grafanaResponse.data.groups).map('name').compact().uniq().value();
 
         // No results found
-        if (groupNamesSet.size === 0) {
+        if (groupNames.length === 0) {
           return [
             createInfoOption(
               t('alerting.rules-filter.group-no-results', 'No groups found matching "{{search}}"', {
@@ -159,7 +155,7 @@ export function useNamespaceAndGroupOptions(): {
           ];
         }
 
-        const options: Array<ComboboxOption<string>> = Array.from(groupNamesSet)
+        const options: Array<ComboboxOption<string>> = groupNames
           .map((name) => ({ label: name, value: name }))
           .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
 
