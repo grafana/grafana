@@ -34,22 +34,34 @@ Currently, Git Sync doesn't offer any built-in functionality to easily export re
 - [Export the dashboard with Grafana CLI](#add-a-dashboard-with-grafana-cli) (recommended)
 - [Copy the dashboard as JSON and commit to the repository](#add-a-dashboard-via-json-export)
 
+{{< admonition type="caution" >}}
+
+Refer to [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/) before using Git Sync.
+
+{{< /admonition >}}
+
 ## Add a dashboard with Grafana CLI
 
-You can export an existing dashboard with the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) and commit it to your Git repository.
+You can export an existing dashboard with the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) and commit it to your Git repository. 
 
-To do so:
+Use `grafanactl` to download the resources you want to sync from Grafana, and then commit and push those files to the repository. Git Sync will then detect the commit, and synchronize with Grafana. To do so, follow these steps:
 
 1. Set up the context to point to your instance in `grafanactl` as documented in []()
 1. Pull those resources from the instance to your local repository:
-   `grafanactl resources pull dashboards --path <REPO_PATH>`
-1. Push the resources to your Git repository:
-   `grafanactl resources push dashboards --path <GIT_REPO>`
+```
+grafanactl resources pull dashboards --path <REPO_PATH>
+```
+1. Commit and push the resources to your Git repository:
+```
+git add <DASHBOARDS_PATH>
+git commit -m "Add dashboards from Grafana"
+git push
+```
 
 Where:
 
-- _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located
 - _<GIT_REPO>_: The path to the repository synced with Git Sync
+- _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located. The dashboards path must be under the repository
 
 See more at [Manage resources with Grafana CLI](https://grafana.github.io/grafanactl/guides/manage-resources/).
 
