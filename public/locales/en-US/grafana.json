@@ -12248,6 +12248,10 @@
     }
   },
   "query": {
+    "query-editor-row": {
+      "focused-message_one": "Query {{refId}} is focused, {{count}} queries are hidden from view.",
+      "focused-message_other": "Query {{refId}} is focused, {{count}} queries are hidden from view."
+    },
     "query-editor-row-header": {
       "hidden": "Hidden",
       "query-name-div-title-edit-query-name": "Edit query name"
@@ -12297,11 +12301,15 @@
   },
   "query-operation": {
     "header": {
+      "actions-menu": "Query actions menu",
+      "collapse": "Show all queries",
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
+      "focus": "Focus query",
+      "hide-datasource-help": "Hide data source help",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
       "show-response": "Show response"

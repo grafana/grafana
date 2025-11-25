@@ -490,6 +490,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           <Button
             icon="ellipsis-v"
             variant="secondary"
+            fill="text"
             size="sm"
             aria-label={t('query-operation.header.actions-menu', 'Query actions menu')}
             data-testid={selectors.components.QueryEditorRow.actionButton('Actions menu')}
