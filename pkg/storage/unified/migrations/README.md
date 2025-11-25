@@ -1,4 +1,4 @@
-# Unified Storage Migrations
+# Unified Storage Data Migrations
 
 Automated migration system for moving legacy resources from traditional SQL storage to Grafana's unified storage backend.
 
