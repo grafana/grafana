@@ -178,7 +178,7 @@ export const CorrelationEditorTour = ({ onDismiss }: CorrelationEditorTourProps)
 
   return (
     <Modal isOpen={true} title={currentTourStep.title} onDismiss={handleComplete}>
-      <Stack direction="column" gap={2}>
+      <div className={styles.modalContent}>
         <div className={isTransitioning ? styles.contentTransitioning : styles.contentVisible}>
           {currentTourStep.content}
         </div>
@@ -186,7 +186,7 @@ export const CorrelationEditorTour = ({ onDismiss }: CorrelationEditorTourProps)
         <div className={styles.progressContainer}>
           <Stack direction="column" gap={1.5}>
             {/* Progress indicator */}
-            <Stack direction="row" gap={0.5} justifyContent="center">
+            <Stack direction="row" gap={0.5} justifyContent="center" alignItems="center">
               {tourSteps.map((_, index) => (
                 <div
                   key={index}
@@ -213,7 +213,7 @@ export const CorrelationEditorTour = ({ onDismiss }: CorrelationEditorTourProps)
             </Text>
           </Stack>
         </div>
-      </Stack>
+      </div>
 
       <Modal.ButtonRow>
         <Button variant="secondary" fill="outline" onClick={handleComplete}>
@@ -264,7 +264,14 @@ export const useCorrelationEditorTour = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  modalContent: css({
+    minHeight: '180px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  }),
   contentVisible: css({
+    minHeight: '180px',
     opacity: 1,
     [theme.transitions.handleMotion('no-preference')]: {
       transform: 'translateY(0)',
@@ -272,6 +279,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   contentTransitioning: css({
+    minHeight: '180px',
     opacity: 0,
     [theme.transitions.handleMotion('no-preference')]: {
       transform: 'translateY(-8px)',
