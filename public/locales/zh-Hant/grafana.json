@@ -1976,9 +1976,11 @@
     },
     "notification-preview": {
       "alertmanager": "警報管理：",
-      "disabled-tooltip": "",
       "error": "無法載入路由預覽：{{alertmanager}}",
       "initialized": "根據新增的標籤，警報執行個體被路由到以下通知策略。展開下方的每個通知政策以檢視更多詳細資訊。",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "預覽路由",
       "select-folder-tooltip": "",
       "text-loading-preview": "正在載入預覽…",
@@ -2073,7 +2075,7 @@
         "warning-1": "刪除此通知政策將永久移除該政策。",
         "warning-2": "您確定要刪除這個政策嗎？"
       },
-      "filter-description": "",
+      "filter-description": "使用以逗號分隔的比對條件清單來篩選通知政策，例如：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自動產生的政策",
       "matchers": "匹配條件",
       "metadata": {
@@ -2794,7 +2796,7 @@
     "template-data-docs": {
       "alert-template-data-table": {
         "alert-template-data": "警報範本資料",
-        "only-in-alert": "僅在警報內容中才可用（例如在警報迴圈中）"
+        "only-in-alert": ""
       },
       "available-context-notification": "可用於通知內容。",
       "notification-template-data": "通知範本資料"
@@ -3231,7 +3233,7 @@
       "auth-settings": "驗證設定"
     },
     "auth-drawer-unconneced": {
-      "subtitle": ""
+      "subtitle": "設定驗證設定。請在我們的<2>文件</2>中閱讀更多資訊。"
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "進階驗證",
@@ -3265,7 +3267,7 @@
       "allowed-organizations-description": "以逗號或空格分隔的組織清單。使用者應至少是\n一個組織的成員才能登入。",
       "allowed-organizations-label": "允許的組織",
       "allowed-organizations-placeholder": "輸入組織 (my-team、myteam...)，然後按 Enter 新增",
-      "api-url-description": "",
+      "api-url-description": "OAuth2 提供者的使用者資訊端點。此端點傳回的資訊必須與 <2>OpenID UserInfo</2> 相容。",
       "api-url-required": "如果設定，則此欄位必須為有效的網址。",
       "auth-style-description": "此設定決定了如何將「{{ clientIDLabel }}」和「{{ clientSecretLabel }}」傳送給 Oauth2 提供者。預設為 AutoDetect。",
       "auth-style-label": "驗證樣式",
@@ -3410,7 +3412,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": ""
+    "subtitle": "管理您的驗證設定並設定單一登入。請在我們的<2>文件</2>中閱讀更多資訊。"
   },
   "bar-chart": {
     "warn": {
@@ -4822,7 +4824,7 @@
       "add-visualization-body": "選取資料來源，然後使用圖表、統計資料及表格查詢並將資料可視化，或建立清單、標記及其他小工具。",
       "add-visualization-button": "新增可視化",
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
-      "import-a-dashboard-body": "",
+      "import-a-dashboard-body": "從檔案或 <2>grafana.com</2> 匯入儀表板。",
       "import-a-dashboard-header": "匯入儀表板",
       "import-dashboard-button": "匯入儀表板",
       "show-less-dashboards": "",
@@ -5078,8 +5080,12 @@
     "new-panel": {
       "configure-button": "設定",
       "configure-button-menu": "切換選單",
+      "empty-state-message": "",
       "menu-open-panel-editor": "設定",
-      "menu-use-library-panel": "使用資料庫面板"
+      "menu-use-library-panel": "使用資料庫面板",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "新的面板",
     "on-create-new-row": {
@@ -6593,7 +6599,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "點選<2>此處</2>，了解更多關於此錯誤的資訊。",
-    "success-more-details-links": ""
+    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6689,7 +6695,7 @@
       "test": "測試"
     },
     "cloud-info-box": {
-      "body-alert": "",
+      "body-alert": "或者，跳過這個步驟，並透過<6>永久免費的 Grafana Cloud 方案</6>，從 Grafana Labs 取得完全受控、可擴展及託管的資料來源 {{mainDS}}（和 {{extraDS}}）。",
       "title-alert": "在下方設定您的 {{mainDS}} 資料來源"
     },
     "dashboards-table": {
@@ -7194,6 +7200,7 @@
       "logs-volume": {
         "add-filters": "在您的查詢中新增更多標籤，以縮小搜尋範圍。",
         "decrease-timerange": "縮小查詢的時間範圍。",
+        "max-bytes-error": "",
         "much-data": "查詢嘗試存取的資料過多。請嘗試以下一個或多個方法："
       },
       "maximum-pinned-logs": "已達到固定日誌的最大值 {{PINNED_LOGS_LIMIT}}。取消固定一個日誌以便新增另一個。",
@@ -7243,12 +7250,15 @@
       "tooltip-select-query-visualize-table": "選擇要在表格中視覺化呈現的查詢項目"
     },
     "logs-volume-panel": {
-      "content-streaming": "串流"
+      "content-streaming": "串流",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "重新載入紀錄容量",
       "label-reload-log-volume": "重新載入紀錄容量",
       "loading": "正在載入…",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "無法載入此查詢的紀錄容量",
       "title-no-logs-volume-available": "沒有可用的紀錄容量",
       "title-showing-partial-data": "顯示部分資料",
@@ -7668,7 +7678,7 @@
     "math": {
       "available-math-functions": "可用的數學函數",
       "run-math-operations": "",
-      "tooltip-footer": "",
+      "tooltip-footer": "請參閱我們關於<2>數學表達式</2>的其他文件。",
       "tooltip-title": "數學運算子",
       "tooltip-trigger": "表達式"
     },
@@ -7694,10 +7704,23 @@
       "label-upsample": "向上取樣",
       "tooltip-s-m-h": "10 秒、1 分鐘、30 分鐘、1 小時"
     },
+    "schema-inspector-panel": {
+      "aria-label-close-schema-inspector": ""
+    },
     "sql-expr": {
       "button-run-query": "執行查詢",
       "modal-title": "SQL 編輯器",
       "tooltip-experimental": "SQL 運算式 LLM 整合為實驗性功能。如有任何問題，請向 Grafana 團隊回報。"
+    },
+    "sql-schema": {
+      "close-schema-inspector": "",
+      "error-title": "",
+      "inspect-button": "",
+      "loading": "",
+      "no-data-title": "",
+      "no-fields-desc": "",
+      "no-fields-title": "",
+      "query-error-title": ""
     },
     "threshold": {
       "label-input": "輸入"
@@ -9929,11 +9952,7 @@
       "wrap-lines": "換行"
     },
     "logs-navigation": {
-      "newer-logs": "較新的日誌",
-      "older-logs": "較舊的日誌",
-      "scroll-bottom": "滾動到底部",
-      "scroll-top": "捲動回頂部",
-      "start-of-range": "範圍開始"
+      "scroll-top": "捲動回頂部"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -10875,10 +10894,10 @@
       "placeholder-optional": "（選填）",
       "role": "角色",
       "submit": "提交",
-      "tooltip": ""
+      "tooltip": "您現在可以選擇「無基本角色」選項，並根據您的自訂需求新增權限。您可以在<1>我們的文件</1>中找到更多資訊。"
     },
     "user-invite-page": {
-      "sub-title": "",
+      "sub-title": "傳送邀請或將現有 Grafana 使用者新增至組織。<1>{{orgName}}</1>",
       "text": {
         "invite-user": "邀請使用者"
       }
@@ -12322,7 +12341,7 @@
     },
     "menu": {
       "clear-button": "全部清除",
-      "tooltip": ""
+      "tooltip": "您現在可以選擇「無基本角色」選項，並根據您的自訂需求新增權限。您可以在<1>我們的文件</1>中找到更多資訊。"
     },
     "menu-aria-label": "角色選擇器選單",
     "menu-group-option-aria-label": "角色選擇器選項",
@@ -12647,7 +12666,7 @@
       "info-text": "建立指向此儀表板或面板的直接連結，並使用以下選項自訂。",
       "link-url": "連結網址",
       "render-alert": "未安裝圖片轉譯器外掛程式",
-      "render-instructions": "",
+      "render-instructions": "若要轉譯圖片，您必須安裝 <2>Grafana 圖片轉譯器外掛程式</2>。請聯絡您的 Grafana 管理員以安裝外掛程式。",
       "rendered-image": "直接連結轉譯的圖片",
       "save-alert": "儀表板未儲存",
       "save-dashboard": "若要呈現面板圖片，您必須先儲存儀表板。",
@@ -13687,7 +13706,7 @@
       "label-format": "格式",
       "label-set-timezone": "設定時區",
       "label-time-field": "時間欄位",
-      "tooltip-format": "",
+      "tooltip-format": "指定為 <2>Moment.js 格式字串</2>的欄位輸出格式。",
       "tooltip-timezone-manually": "手動設定日期的時區"
     },
     "format-time-transformer-editor": {

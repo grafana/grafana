@@ -1976,9 +1976,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager：",
-      "disabled-tooltip": "",
       "error": "{{alertmanager}}のルーティングプレビューを読み込めませんでした",
       "initialized": "追加されたラベルに基づいて、アラートインスタンスは次の通知ポリシーにルーティングされます。詳細を表示するには、以下の各通知ポリシーを展開します。",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "ルーティングのプレビュー",
       "select-folder-tooltip": "",
       "text-loading-preview": "プレビュー読み込み中...",
@@ -2073,7 +2075,7 @@
         "warning-1": "この通知ポリシーを削除すると、完全に削除されます。",
         "warning-2": "本当にこれを削除してもよろしいですか？"
       },
-      "filter-description": "",
+      "filter-description": "通知ポリシーを、カンマで区切られたマッチャーのリストを使用してフィルタリングします。例：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自動生成されたポリシー",
       "matchers": "マッチャー",
       "metadata": {
@@ -2794,7 +2796,7 @@
     "template-data-docs": {
       "alert-template-data-table": {
         "alert-template-data": "アラートテンプレートデータ",
-        "only-in-alert": "アラートのコンテキストでのみ使用できます（アラートループ内など）"
+        "only-in-alert": ""
       },
       "available-context-notification": "通知のコンテキストで利用可能です。",
       "notification-template-data": "通知テンプレートデータ"
@@ -3231,7 +3233,7 @@
       "auth-settings": "認証設定"
     },
     "auth-drawer-unconneced": {
-      "subtitle": ""
+      "subtitle": "認証設定を行ってください。詳細については、<2>ドキュメント</2>をご覧ください。"
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "高度な認証",
@@ -3265,7 +3267,7 @@
       "allowed-organizations-description": "カンマまたはスペースで区切られた組織のリスト。ユーザーがログインするには、少なくとも\n1つの組織のメンバーである必要があります。",
       "allowed-organizations-label": "許可された組織",
       "allowed-organizations-placeholder": "組織（my-team、myteam...）を入力し、Enterキーを押して追加します",
-      "api-url-description": "",
+      "api-url-description": "OAuth2プロバイダーのユーザー情報エンドポイント。このエンドポイントから返される情報は<2>OpenID UserInfo</2>と互換性がある必要があります。",
       "api-url-required": "このフィールドを設定する場合、有効なURLを入力する必要があります。",
       "auth-style-description": "「{{ clientIDLabel }}」と「{{ clientSecretLabel }}」がOAuth2プロバイダーに送信される方法を決定します。デフォルトは自動検出です。",
       "auth-style-label": "認証形式",
@@ -3410,7 +3412,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": ""
+    "subtitle": "認証設定を管理し、シングルサインオンを設定します。詳細については、<2>ドキュメント</2>をご覧ください。"
   },
   "bar-chart": {
     "warn": {
@@ -4822,7 +4824,7 @@
       "add-visualization-body": "データソースを選択し、グラフ、統計、テーブルを使用してデータをクエリおよび視覚化するか、リスト、マークダウン、その他のウィジェットを作成します。",
       "add-visualization-button": "視覚化を追加",
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
-      "import-a-dashboard-body": "",
+      "import-a-dashboard-body": "ファイルまたは<1>grafana.com</1>からダッシュボードをインポートします。",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート",
       "show-less-dashboards": "",
@@ -5078,8 +5080,12 @@
     "new-panel": {
       "configure-button": "構成",
       "configure-button-menu": "メニューの切り替え",
+      "empty-state-message": "",
       "menu-open-panel-editor": "構成",
-      "menu-use-library-panel": "ライブラリパネルを使用"
+      "menu-use-library-panel": "ライブラリパネルを使用",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "新規パネル",
     "on-create-new-row": {
@@ -6593,7 +6599,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "このエラーの詳細については、<2>こちら</2>をクリックしてください。",
-    "success-more-details-links": ""
+    "success-more-details-links": "次に、<2>ダッシュボードを構築</2>するか、<5>Exploreビュー</5>でデータをクエリすることで、データの視覚化を開始できます。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6689,7 +6695,7 @@
       "test": "テスト"
     },
     "cloud-info-box": {
-      "body-alert": "",
+      "body-alert": "または、<6>永久無料のGrafana Cloudプラン</6>で、Grafana Labsからフルマネージドでスケーラブルなホスト済みデータソースの{{mainDS}}（および{{extraDS}}）を入手して、手間を省くことも可能です。",
       "title-alert": "以下で{{mainDS}}データソースを設定します"
     },
     "dashboards-table": {
@@ -7194,6 +7200,7 @@
       "logs-volume": {
         "add-filters": "クエリにラベルを追加して、検索範囲を絞り込んでください。",
         "decrease-timerange": "クエリの時間範囲を短縮してください。",
+        "max-bytes-error": "",
         "much-data": "クエリがアクセスしようとしているデータが多すぎます。次の1つ以上："
       },
       "maximum-pinned-logs": "ピン固定されたログが最大数、{{PINNED_LOGS_LIMIT}}に達しました。別のログを追加するには、ログのピン留めを解除してください。",
@@ -7243,12 +7250,15 @@
       "tooltip-select-query-visualize-table": "テーブルで表示するクエリを選択"
     },
     "logs-volume-panel": {
-      "content-streaming": "ストリーミング"
+      "content-streaming": "ストリーミング",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "ログ量を再読み込み",
       "label-reload-log-volume": "ログ量を再読み込み",
       "loading": "読み込み中...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "このクエリのログ量の読み込みに失敗しました",
       "title-no-logs-volume-available": "利用可能なログ量がありません",
       "title-showing-partial-data": "部分的なデータの表示",
@@ -7668,7 +7678,7 @@
     "math": {
       "available-math-functions": "利用可能な数学関数",
       "run-math-operations": "",
-      "tooltip-footer": "",
+      "tooltip-footer": "<2>数式</2>に関する追加ドキュメントをご覧ください。",
       "tooltip-title": "数学演算子",
       "tooltip-trigger": "式"
     },
@@ -7694,10 +7704,23 @@
       "label-upsample": "アップサンプリング",
       "tooltip-s-m-h": "10秒、1分、30分、1時間"
     },
+    "schema-inspector-panel": {
+      "aria-label-close-schema-inspector": ""
+    },
     "sql-expr": {
       "button-run-query": "クエリを実行",
       "modal-title": "SQLエディター",
       "tooltip-experimental": "SQL Expressions LLMの統合は実験的です。問題が発生した場合は、Grafanaチームに報告してください。"
+    },
+    "sql-schema": {
+      "close-schema-inspector": "",
+      "error-title": "",
+      "inspect-button": "",
+      "loading": "",
+      "no-data-title": "",
+      "no-fields-desc": "",
+      "no-fields-title": "",
+      "query-error-title": ""
     },
     "threshold": {
       "label-input": "入力"
@@ -9929,11 +9952,7 @@
       "wrap-lines": "行を折り返す"
     },
     "logs-navigation": {
-      "newer-logs": "新しいログ",
-      "older-logs": "古いログ",
-      "scroll-bottom": "一番下までスクロール",
-      "scroll-top": "一番上までスクロール",
-      "start-of-range": "範囲の開始日"
+      "scroll-top": "一番上までスクロール"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -10875,10 +10894,10 @@
       "placeholder-optional": "（任意）",
       "role": "ロール",
       "submit": "送信",
-      "tooltip": ""
+      "tooltip": "「基本的な役割なし」オプションを選択し、カスタムニーズに権限を追加できるようになりました。詳細については、<1>ドキュメント</1>をご覧ください。"
     },
     "user-invite-page": {
-      "sub-title": "",
+      "sub-title": "招待状を送信するか、既存のGrafanaユーザーを組織<1>{{orgName}}</1>に追加します。",
       "text": {
         "invite-user": "ユーザーを招待"
       }
@@ -12322,7 +12341,7 @@
     },
     "menu": {
       "clear-button": "すべてをクリア",
-      "tooltip": ""
+      "tooltip": "「基本的な役割なし」オプションを選択し、カスタムニーズに権限を追加できるようになりました。詳細については、<1>ドキュメント</1>をご覧ください。"
     },
     "menu-aria-label": "ロール選択ツールメニュー",
     "menu-group-option-aria-label": "ロール選択オプション",
@@ -12647,7 +12666,7 @@
       "info-text": "以下のオプションでカスタマイズした、このダッシュボードまたはパネルへの直接リンクを作成します。",
       "link-url": "URLをリンク",
       "render-alert": "画像レンダラープラグインがインストールされていません",
-      "render-instructions": "",
+      "render-instructions": "画像をレンダリングするには、<2>Grafana画像レンダラープラグイン</2>をインストールする必要があります。プラグインをインストールするには、Grafana管理者にお問い合わせください。",
       "rendered-image": "レンダリングされた画像への直接リンク",
       "save-alert": "ダッシュボードは保存されていません",
       "save-dashboard": "パネル画像をレンダリングするには、最初にダッシュボードを保存する必要があります。",
@@ -13687,7 +13706,7 @@
       "label-format": "形式",
       "label-set-timezone": "タイムゾーンを設定",
       "label-time-field": "時間フィールド",
-      "tooltip-format": "",
+      "tooltip-format": "<2>Moment.js形式文字列</2>として指定されたフィールドの出力形式。",
       "tooltip-timezone-manually": "日付のタイムゾーンを手動で設定"
     },
     "format-time-transformer-editor": {
