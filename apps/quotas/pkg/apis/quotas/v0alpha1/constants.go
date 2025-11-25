@@ -4,7 +4,7 @@ import "k8s.io/apimachinery/pkg/runtime/schema"
 
 const (
 	// APIGroup is the API group used by all kinds in this package
-	APIGroup = "quotas.ext.grafana.com"
+	APIGroup = "quotas.grafana.app"
 	// APIVersion is the API version used by all kinds in this package
 	APIVersion = "v0alpha1"
 )

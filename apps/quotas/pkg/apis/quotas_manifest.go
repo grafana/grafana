@@ -27,7 +27,7 @@ var (
 
 var appManifestData = app.ManifestData{
 	AppName:          "quotas",
-	Group:            "quotas.ext.grafana.com",
+	Group:            "quotas.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
 		{

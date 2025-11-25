@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaQuota = resource.NewSimpleSchema("quotas.ext.grafana.com", "v0alpha1", &Quota{}, &QuotaList{}, resource.WithKind("Quota"),
+	schemaQuota = resource.NewSimpleSchema("quotas.grafana.app", "v0alpha1", &Quota{}, &QuotaList{}, resource.WithKind("Quota"),
 		resource.WithPlural("quotas"), resource.WithScope(resource.NamespacedScope))
 	kindQuota = resource.Kind{
 		Schema: schemaQuota,
