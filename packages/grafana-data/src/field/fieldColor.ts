@@ -236,14 +236,10 @@ export class FieldColorSchemeMode implements FieldColorMode {
 
   getColors(theme: GrafanaTheme2): string[] {
     if (!this.getNamedColors) {
-      if (this.interpolator) {
-        this.getNamedColors = () =>
-          new Array(9).fill(0).map((_, i) => {
-            return this.getInterpolator()(i / 8);
-          });
+      if (!this.interpolator) {
+        return [];
       }
-
-      return [];
+      this.getNamedColors = () => new Array(9).fill(0).map((_, i) => this.getInterpolator()(i / 8));
     }
 
     if (this.colorCache && this.colorCacheTheme === theme) {
