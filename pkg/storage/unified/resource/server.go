@@ -347,7 +347,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
-		quotaService:     opts.QuotaService,
+		overridesService: opts.QuotaService,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -372,20 +372,20 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	log            log.Logger
-	backend        StorageBackend
-	blob           BlobSupport
-	secure         secrets.InlineSecureValueSupport
-	search         *searchSupport
-	diagnostics    resourcepb.DiagnosticsServer
-	access         claims.AccessClient
-	writeHooks     WriteAccessHooks
-	lifecycle      LifecycleHooks
-	now            func() int64
-	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics *StorageMetrics
-	indexMetrics   *BleveIndexMetrics
-	quotaService   *OverridesService
+	log              log.Logger
+	backend          StorageBackend
+	blob             BlobSupport
+	secure           secrets.InlineSecureValueSupport
+	search           *searchSupport
+	diagnostics      resourcepb.DiagnosticsServer
+	access           claims.AccessClient
+	writeHooks       WriteAccessHooks
+	lifecycle        LifecycleHooks
+	now              func() int64
+	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics   *StorageMetrics
+	indexMetrics     *BleveIndexMetrics
+	overridesService *OverridesService
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -419,8 +419,8 @@ func (s *server) Init(ctx context.Context) error {
 		}
 
 		// initialize custom quotas reloader
-		if s.initErr == nil && s.quotaService != nil {
-			s.initErr = s.quotaService.init(ctx)
+		if s.initErr == nil && s.overridesService != nil {
+			s.initErr = s.overridesService.init(ctx)
 		}
 
 		// initialize the search index
@@ -457,8 +457,8 @@ func (s *server) Stop(ctx context.Context) error {
 	}
 
 	// stop custom quotas reloader
-	if s.quotaService != nil {
-		s.quotaService.stop()
+	if s.overridesService != nil {
+		s.overridesService.stop()
 	}
 
 	// Stops the streaming
@@ -1583,8 +1583,8 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
 	defer span.End()
 
 	// check quotas and log for now
-	if s.quotaService != nil {
-		quota, err := s.quotaService.GetQuota(ctx, nsr)
+	if s.overridesService != nil {
+		quota, err := s.overridesService.GetQuota(ctx, nsr)
 		if err != nil {
 			s.log.Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
 		} else {
