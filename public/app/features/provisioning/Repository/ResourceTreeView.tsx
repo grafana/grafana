@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -21,8 +21,8 @@ import {
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
-import { PROVISIONING_URL } from '../constants';
-import { FlatTreeItem } from '../types';
+import { FlatTreeItem, TreeItem } from '../types';
+import { getRepoFileUrl } from '../utils/git';
 import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
 
 interface ResourceTreeViewProps {
@@ -41,6 +41,19 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
+
+  const getLink = useCallback(
+    (item: TreeItem) => {
+      if (item.type === 'Dashboard' && item.resourceName) {
+        return `/d/${item.resourceName}`;
+      }
+      if (item.type === 'Folder' && item.resourceName) {
+        return `/dashboards/f/${item.resourceName}`;
+      }
+      return getRepoFileUrl(repo.spec, item.path);
+    },
+    [repo.spec]
+  );
 
   // Build tree from merged data
   const flatItems = useMemo(() => {
@@ -66,24 +79,20 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         cell: ({ row: { original } }: TreeCell) => {
           const { item, level } = original;
           const iconName = getIconName(item.type);
+          const link = getLink(item);
 
-          // Determine link based on type
-          const getItemLink = () => {
-            if (item.type === 'Dashboard' && item.resourceName) {
-              return `/d/${item.resourceName}`;
-            }
-            if (item.type === 'Folder' && item.resourceName) {
-              return `/dashboards/f/${item.resourceName}`;
-            }
-            return undefined;
-          };
-
-          const titleLink = getItemLink();
+          const isExternal = link?.startsWith('http');
 
           return (
             <div className={styles.titleCell} style={{ paddingLeft: level * 24 }}>
               <Icon name={iconName} className={styles.icon} />
-              {titleLink ? <Link href={titleLink}>{item.title}</Link> : <span>{item.title}</span>}
+              {link ? (
+                <Link href={link} target={isExternal ? '_blank' : undefined}>
+                  {item.title}
+                </Link>
+              ) : (
+                <span>{item.title}</span>
+              )}
             </div>
           );
         },
@@ -135,37 +144,23 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'actions',
         header: '',
         cell: ({ row: { original } }: TreeCell) => {
-          const { item } = original;
+          const link = getLink(original.item);
 
-          const getViewLink = () => {
-            if (item.type === 'Dashboard' && item.resourceName) {
-              return `/d/${item.resourceName}`;
-            }
-            if (item.type === 'Folder' && item.resourceName) {
-              return `/dashboards/f/${item.resourceName}`;
-            }
-            // For files, link to file view
-            if (item.type === 'File') {
-              return `${PROVISIONING_URL}/${name}/file/${item.path}`;
-            }
-            return undefined;
-          };
-
-          const viewLink = getViewLink();
-
-          if (!viewLink) {
+          if (!link) {
             return null;
           }
 
+          const isExternal = link.startsWith('http');
+
           return (
-            <LinkButton href={viewLink} size="sm" variant="secondary">
+            <LinkButton href={link} size="sm" variant="secondary" target={isExternal ? '_blank' : undefined}>
               <Trans i18nKey="provisioning.resource-tree.view">View</Trans>
             </LinkButton>
           );
         },
       },
     ],
-    [name, styles]
+    [getLink, styles]
   );
 
   if (isLoading) {

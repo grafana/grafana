@@ -71,6 +71,41 @@ export function getHasTokenInstructions(type: RepoType): type is InstructionAvai
   return type === 'github' || type === 'gitlab' || type === 'bitbucket';
 }
 
+export function getRepoFileUrl(spec?: RepositorySpec, filePath?: string) {
+  if (!spec || !spec.type || !filePath) {
+    return undefined;
+  }
+
+  switch (spec.type) {
+    case 'github': {
+      const { url, branch, path } = spec.github ?? {};
+      if (!url) {
+        return undefined;
+      }
+      const fullPath = path ? `${path}${filePath}` : filePath;
+      return `${url}/blob/${branch || 'main'}/${fullPath}`;
+    }
+    case 'gitlab': {
+      const { url, branch, path } = spec.gitlab ?? {};
+      if (!url) {
+        return undefined;
+      }
+      const fullPath = path ? `${path}${filePath}` : filePath;
+      return `${url}/-/blob/${branch || 'main'}/${fullPath}`;
+    }
+    case 'bitbucket': {
+      const { url, branch, path } = spec.bitbucket ?? {};
+      if (!url) {
+        return undefined;
+      }
+      const fullPath = path ? `${path}${filePath}` : filePath;
+      return `${url}/src/${branch || 'main'}/${fullPath}`;
+    }
+    default:
+      return undefined;
+  }
+}
+
 export function getRepoCommitUrl(spec?: RepositorySpec, commit?: string) {
   let url: string | undefined = undefined;
   let hasUrl = false;
