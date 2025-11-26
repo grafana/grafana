@@ -2,6 +2,7 @@ package storewrapper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
@@ -59,20 +60,32 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 
 // Delete implements rest.Storage.
 func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *v1.DeleteOptions) (runtime.Object, bool, error) {
-	// Enforce authorization based on the user permissions before deleting the object
-	err := w.authorizer.BeforeDelete(ctx, nil)
+	// Fetch the object first to authorize
+	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	getOpts := &v1.GetOptions{
+		TypeMeta: options.TypeMeta,
+	}
+	if options.Preconditions != nil {
+		getOpts.ResourceVersion = *options.Preconditions.ResourceVersion
+	}
+	obj, err := w.inner.Get(srvCtx, name, getOpts)
 	if err != nil {
 		return nil, false, err
 	}
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+
+	// Enforce authorization based on the user permissions
+	if err := w.authorizer.BeforeDelete(ctx, obj); err != nil {
+		return nil, false, err
+	}
 
 	return w.inner.Delete(srvCtx, name, deleteValidation, options)
 }
 
 // DeleteCollection implements rest.Storage.
 func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *v1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return w.inner.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	// DeleteCollection is complex to authorize properly
+	// For now, deny it entirely for safety
+	return nil, fmt.Errorf("bulk delete operations are not supported through this API")
 }
 
 // Destroy implements rest.Storage.
