@@ -124,11 +124,6 @@ func (q *QuotaService) GetQuota(ctx context.Context, nsr NamespacedResource) (Re
 		return ResourceQuota{}, fmt.Errorf("failed to get quota overrides from config manager")
 	}
 
-	// should never be nil - but just in case
-	if overrides == nil {
-		return ResourceQuota{Limit: DEFAULT_RESOURCE_LIMIT}, nil
-	}
-
 	tenantId := strings.TrimPrefix(nsr.Namespace, "stacks-")
 	groupResource := nsr.Group + "/" + nsr.Resource
 	if tenantQuotas, ok := overrides.Tenants[tenantId]; ok {
