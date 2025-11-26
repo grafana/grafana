@@ -6215,7 +6215,6 @@
         "classic": "Classic",
         "json": "JSON",
         "v1-resource": "V1 Resource",
-        "v2-resource": "V2 Resource",
         "yaml": "YAML"
       }
     },
