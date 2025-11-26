@@ -65,7 +65,7 @@ The nodes dataset must contain one alphanumeric ID field that gives each element
 | node3 | Mac   | MacOS    | M3       | 16gbRAM       | gray  | apps | false       |
 | node4 | Alone | SoLonely | JustHere | NotConnected  | red   |      | false       |
 
-If the icon field contains a value, it’s displayed instead of the title and subtitle. For a list of of available icons, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview).
+If the icon field contains a value, it’s displayed instead of the title and subtitle. For a list of of available icons, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/docs/iconography-icon--docs).
 
 ### Edges dataset
 
