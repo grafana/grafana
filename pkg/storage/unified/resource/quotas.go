@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/runtimeconfig"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.yaml.in/yaml/v3"
@@ -102,12 +103,7 @@ func NewQuotaService(ctx context.Context, logger log.Logger, reg prometheus.Regi
 
 // once the runtimeconfig manager is in a running state, it will periodically reload the configuration file into the manager if there are changes
 func (q *QuotaService) init(ctx context.Context) error {
-	err := q.manager.StartAsync(ctx)
-	if err != nil {
-		return err
-	}
-	err = q.manager.AwaitRunning(ctx)
-	if err != nil {
+	if err := services.StartAndAwaitRunning(ctx, q.manager); err != nil {
 		return err
 	}
 
