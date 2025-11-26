@@ -289,10 +289,8 @@ scenario('Single frame with string and number field', (ctx) => {
         pluginId: 'stat',
         options: expect.objectContaining({ colorMode: BigValueColorMode.Background }),
       }),
-
       expect.objectContaining({
         pluginId: 'bargauge',
-        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
       }),
       expect.objectContaining({
         pluginId: 'bargauge',
