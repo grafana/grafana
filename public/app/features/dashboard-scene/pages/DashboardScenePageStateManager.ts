@@ -1054,7 +1054,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
   }
   public resetActiveManager() {
-    this.setActiveManager('v1');
+    this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
   }
 }
 
