@@ -35,6 +35,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
@@ -78,6 +79,22 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
         }
 
         gridRowToSaveModel(child, panels, isSnapshot);
+      }
+    }
+  } else if (body instanceof RowsLayoutManager) {
+    // Handle RowsLayoutManager - iterate through rows and extract panels
+    for (const row of body.state.rows) {
+      const rowLayout = row.state.layout;
+      if (rowLayout instanceof DefaultGridLayoutManager) {
+        for (const child of rowLayout.state.grid.state.children) {
+          if (child instanceof DashboardGridItem) {
+            if (child.state.variableName) {
+              panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
+            } else {
+              panels.push(gridItemToPanel(child, isSnapshot));
+            }
+          }
+        }
       }
     }
   }
@@ -212,7 +229,7 @@ export function vizPanelToPanel(
       id: getPanelIdForVizPanel(vizPanel),
       type: vizPanel.state.pluginId,
       title: vizPanel.state.title,
-      description: vizPanel.state.description ?? undefined,
+      description: vizPanel.state.description || undefined,
       gridPos,
       fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
       transformations: [],
@@ -287,7 +304,10 @@ function vizPanelDataToPanel(
   if (queryRunner) {
     panel.targets = queryRunner.state.queries;
     panel.maxDataPoints = queryRunner.state.maxDataPoints;
-    panel.datasource = queryRunner.state.datasource;
+    // Only set panel-level datasource if explicitly specified
+    if (queryRunner.state.datasource) {
+      panel.datasource = queryRunner.state.datasource;
+    }
 
     if (queryRunner.state.cacheTimeout) {
       panel.cacheTimeout = queryRunner.state.cacheTimeout;

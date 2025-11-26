@@ -192,9 +192,134 @@ refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
 
 The `transformVariableRefreshToEnumV1` function defaults to `never` (0) for undefined values.
 
+### ✅ 9. GraphTooltip / CursorSync (Fixed in Backend)
+
+**Problem:** Backend output loaded through DashboardModel was losing graphTooltip value due to missing schemaVersion.
+
+**Root Cause:** Backend output didn't include `schemaVersion`, so when loaded through `DashboardModel`, all migrations ran, including one at schema version 14 that resets `graphTooltip`.
+
+**Fix Applied:** In `v2alpha1_to_v1beta1.go` (line 46):
+
+```go
+dashboard["schemaVersion"] = 42 // Latest schema version to prevent migrations when loaded
+```
+
+### ✅ 10. Constant Variable Type (Fixed in Backend)
+
+**Problem:** Constant variables were being converted to textbox when loaded through DashboardModel.
+
+**Root Cause:** Backend output had `hide: 0` (dontHide) for constant variables. DashboardMigrator at schema version 27 converts visible constant variables to textbox.
+
+**Fix Applied:** In `v2alpha1_to_v1beta1.go` (function `convertConstantVariableToV1`):
+
+```go
+// Constant variables in v1beta1 must always be hidden (hide: 2),
+// otherwise DashboardMigrator will convert them to textbox variables.
+varMap := map[string]interface{}{
+    "hide": 2, // hideVariable - constant variables must always be hidden in v1beta1
+    // ...
+}
+```
+
+### ✅ 11. AllowCustomValue: false for Adhoc Variables (Fixed in Backend)
+
+**Problem:** Backend wasn't outputting `allowCustomValue: false` for adhoc variables.
+
+**Root Cause:** Backend code only added `allowCustomValue` when truthy, missing `false` values.
+
+**Fix Applied:** In `v2alpha1_to_v1beta1.go` (function `convertAdhocVariableToV1`):
+
+```go
+// Always include allowCustomValue for adhoc variables, including false values
+varMap["allowCustomValue"] = spec.AllowCustomValue
+```
+
 ## Issues Not Fully Fixed
 
-### ⚠️ 1. Time Defaults Being Added
+### ⚠️ 1. Backend Panels Returning Empty
+
+**Problem:** Backend path returns `panels: []` while frontend path returns actual panels for some test files.
+
+**Status:** Needs investigation. The backend conversion for panels from elements/layout may have issues.
+
+### ⚠️ 2. graphTooltip / cursorSync Mismatch (RESOLVED)
+
+~~**Problem:** Frontend outputs `graphTooltip: 0` when it should be `2` for `cursorSync: "Tooltip"`.~~
+
+**RESOLVED:** This was fixed by adding `schemaVersion: 42` to the backend output. The issue was that without schemaVersion, DashboardMigrator was running all migrations including one that reset graphTooltip.
+
+**Input/Output Values:**
+
+- v2beta1 Input: `cursorSync: "Tooltip"` (string)
+- v1beta1 Expected: `graphTooltip: 2` (number)
+- v1beta1 Actual: `graphTooltip: 0` (number)
+
+**Type Definitions:**
+
+- v2beta1 `DashboardCursorSync`: String type `"Crosshair" | "Tooltip" | "Off"`
+- v1beta1 `DashboardCursorSync`: Enum `{ Off = 0, Crosshair = 1, Tooltip = 2 }`
+
+**Code Flow Investigation:**
+
+1. **Frontend path (v2beta1 → Scene → v1beta1):**
+
+   ```
+   dashboard.cursorSync ("Tooltip")
+   → transformCursorSyncV2ToV1("Tooltip")
+   → DashboardCursorSyncV1.Tooltip (= 2)
+   → new behaviors.CursorSync({ sync: 2 })
+   → Scene stores in $behaviors
+   → transformSceneToSaveModel extracts from $behaviors
+   → graphTooltip: ???
+   ```
+
+2. **`transformCursorSyncV2ToV1` function (transformToV1TypesUtils.ts:73-87):**
+   - Correctly maps `'Tooltip'` → `DashboardCursorSyncV1.Tooltip` (= 2)
+   - Function signature: `(cursorSync: DashboardCursorSync | undefined): DashboardCursorSyncV1`
+
+3. **CursorSync behavior creation (transformSaveModelSchemaV2ToScene.ts:222-224):**
+
+   ```typescript
+   new behaviors.CursorSync({
+     sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
+   });
+   ```
+
+4. **CursorSync constructor (@grafana/scenes):**
+
+   ```javascript
+   super({
+     ...state,
+     sync: state.sync || DashboardCursorSync.Off,
+   });
+   ```
+
+   - If `state.sync` is `2`, it remains `2` (truthy)
+   - If `state.sync` is `0` (falsy), it becomes `DashboardCursorSync.Off` (= 0)
+
+5. **graphTooltip extraction (transformSceneToSaveModel.ts:109-111):**
+   ```typescript
+   const graphTooltip =
+     state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync)?.state.sync ??
+     defaultDashboard.graphTooltip;
+   ```
+
+**Possible Root Causes:**
+
+1. **`$behaviors` not being passed correctly to DashboardScene** - The behaviors array might not be reaching the Scene state
+2. **CursorSync behavior not being found** - The `instanceof` check might be failing
+3. **`dashboard.cursorSync` is undefined** - The input might not have cursorSync at the expected location
+4. **Type mismatch** - There might be a runtime type issue between v1 enum and v2 string
+
+**Investigation Status:** Needs further debugging with console.log or unit tests to trace the actual value at each step.
+
+**Location:**
+
+- Input transform: `transformSaveModelSchemaV2ToScene.ts:222-224`
+- Output transform: `transformSceneToSaveModel.ts:109-111`
+- Type conversion: `transformToV1TypesUtils.ts:73-87`
+
+### ⚠️ 3. Time Defaults Being Added
 
 **Problem:** Empty time strings (`from: ""`, `to: ""`) are being converted to defaults (`"now-6h"`, `"now"`) by `SceneTimeRange`.
 
@@ -209,7 +334,7 @@ The `transformVariableRefreshToEnumV1` function defaults to `never` (0) for unde
 - `transformSaveModelToScene.ts` (line 374-381) - SceneTimeRange initialization
 - `transformSceneToSaveModel.ts` (lines 123-126) - time serialization
 
-### ⚠️ 2. Default Datasource Being Added to Variables
+### ⚠️ 4. Default Datasource Being Added to Variables
 
 **Problem:** Variables without datasource are getting a default datasource added.
 
@@ -272,20 +397,22 @@ Output files in `apps/dashboard/pkg/migration/conversion/testdata/output/`:
 ### Backend Tests
 
 ```bash
-cd apps/dashboard/pkg/migration/conversion
-go test ./... -v
+go test -count=1 ./apps/dashboard/pkg/migration/conversion -v
 ```
 
-### Override Output Files
+### Regenerate Backend Output Files
+
+**IMPORTANT:** After every backend change, run this command to regenerate the output files:
 
 ```bash
-OUTPUT_OVERRIDE=true go test ./... -v
+OUTPUT_OVERRIDE=true go test -count=1 ./apps/dashboard/pkg/migration/conversion -v
 ```
+
+This ensures the frontend tests compare against the latest backend output.
 
 ### Frontend Tests
 
 ```bash
-cd public/app/features/dashboard-scene/serialization
 yarn test transformSaveModelV2ToV1.test.ts --no-watch
 ```
 
@@ -298,17 +425,277 @@ yarn test transformSaveModelV2ToV1.test.ts --no-watch
 5. **Boolean Handling:** Only set `false` explicitly, don't set `true` as default
 6. **Enum Conversions:** Use utility functions for enum conversions (v2 → v1)
 
+## Issues Fixed (Session 2)
+
+### ✅ 11. RowsLayoutManager Panel Serialization
+
+**Problem:** `transformSceneToSaveModel` only handled `DefaultGridLayoutManager`, so panels from `RowsLayoutManager` weren't serialized.
+
+**Fix Applied:** Added handling for `RowsLayoutManager` in `transformSceneToSaveModel.ts`:
+
+```typescript
+} else if (body instanceof RowsLayoutManager) {
+  // Handle RowsLayoutManager - iterate through rows and extract panels
+  for (const row of body.state.rows) {
+    const rowLayout = row.state.layout;
+    if (rowLayout instanceof DefaultGridLayoutManager) {
+      for (const child of rowLayout.state.grid.state.children) {
+        if (child instanceof DashboardGridItem) {
+          if (child.state.variableName) {
+            panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
+          } else {
+            panels.push(gridItemToPanel(child, isSnapshot));
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### ✅ 12. Input Files Layout Format
+
+**Problem:** Test input files `v2beta1.viz-config.json` and `v2beta1.ds-data-query.json` had incorrect layout formats (AutoGridLayout instead of RowsLayout with GridLayout).
+
+**Fix Applied:** Updated input files to use RowsLayout with GridLayout, matching the v2beta1.complete.json format.
+
+### ✅ 13. Query Target `hide` Field (Fixed in Backend)
+
+**Problem:** Backend wasn't outputting `hide: false` for query targets, but frontend was adding it.
+
+**Root Cause:** Backend code only added `hide` when `Hidden` was true.
+
+**Fix Applied:** In `v2alpha1_to_v1beta1.go` (function `convertPanelQueryToV1Target`):
+
+```go
+// Add refId and hide (always include hide to match frontend behavior)
+target["refId"] = query.Spec.RefId
+target["hide"] = query.Spec.Hidden
+```
+
+### ✅ 14. Empty Panel Description (Fixed in Frontend)
+
+**Problem:** Frontend was outputting `description: ""` for panels with empty descriptions.
+
+**Root Cause:** Used `??` which preserves empty strings.
+
+**Fix Applied:** In `transformSceneToSaveModel.ts`:
+
+```typescript
+description: vizPanel.state.description || undefined,  // Changed from ??
+```
+
+### ✅ 15. Panel-Level Datasource (Fixed in Frontend)
+
+**Problem:** Frontend was outputting panel-level `datasource` even when not needed.
+
+**Root Cause:** Unconditionally set `panel.datasource = queryRunner.state.datasource`.
+
+**Fix Applied:** In `transformSceneToSaveModel.ts`:
+
+```typescript
+// Only set panel-level datasource if explicitly specified
+if (queryRunner.state.datasource) {
+  panel.datasource = queryRunner.state.datasource;
+}
+```
+
+### ✅ 16. Refresh Field (Fixed in Backend)
+
+**Problem:** Backend wasn't outputting `refresh: ""` when autoRefresh was empty, but Scene defaults to `""`.
+
+**Fix Applied:** In `v2alpha1_to_v1beta1.go`:
+
+```go
+// Convert refresh - always include to match Scene's default behavior
+dashboard["refresh"] = timeSettings.AutoRefresh
+```
+
+### ✅ 17. Time Defaults (Fixed in Backend)
+
+**Problem:** Empty time strings (`from: ""`, `to: ""`) weren't matching between paths.
+
+**Fix Applied:** In `v2alpha1_to_v1beta1.go`:
+
+```go
+// Convert time range - use defaults when empty to match DashboardModel behavior
+from := timeSettings.From
+to := timeSettings.To
+if from == "" {
+    from = "now-6h"
+}
+if to == "" {
+    to = "now"
+}
+dashboard["time"] = map[string]interface{}{
+    "from": from,
+    "to":   to,
+}
+```
+
+---
+
+## Issues Not Fully Fixed
+
+### ✅ 18. Built-in Annotation Added When Input Has Empty List (Fixed in Backend)
+
+**Problem:** When v2beta1 input has `annotations: []`, the backend path was adding a built-in annotation.
+
+**Root Cause:** The backend Go code was omitting the `annotations` key entirely when there were no annotations:
+
+```go
+if len(annotations) > 0 {
+    dashboard["annotations"] = map[string]interface{}{...}
+}
+```
+
+When loaded into `DashboardModel`, `data.annotations === undefined` was `true`, triggering `addBuiltInAnnotationQuery()`.
+
+**Fix Applied:** In `v2alpha1_to_v1beta1.go`:
+
+```go
+// Always include annotations even if empty to prevent DashboardModel from adding built-in
+annotations := convertAnnotationsToV1(in.Annotations)
+dashboard["annotations"] = map[string]interface{}{
+    "list": annotations,
+}
+```
+
+### ⚠️ Default Datasource Being Added by Frontend Path (CONFIRMED via Debug Logging)
+
+**Problem:** The frontend path (v2beta1 → Scene → v1beta1) adds default datasource to annotations, panels, and targets that don't have explicit datasource in the input. The backend path correctly does NOT add them.
+
+**Debug Output Confirmed:**
+
+```
+// Backend Path (CORRECT - no datasource added):
+DEBUG [BACKEND INPUT] no-ds-testdata-annos datasource: undefined
+DEBUG [BACKEND OUTPUT] no-ds-testdata-annos datasource: undefined
+DEBUG [BACKEND OUTPUT] Panel datasource: undefined
+DEBUG [BACKEND OUTPUT] Panel target[0] datasource: undefined
+
+// Frontend Path (INCORRECT - adds default datasource):
+DEBUG [transformV2ToV1AnnotationQuery] dataQuery.datasource: undefined
+DEBUG [transformV2ToV1AnnotationQuery] dataQuery.group: prometheus
+DEBUG [transformV2ToV1AnnotationQuery] resolved datasource: { uid: 'default-ds-uid', type: 'prometheus' }
+DEBUG [FRONTEND OUTPUT] no-ds-testdata-annos datasource: { type: 'prometheus', uid: 'default-ds-uid' }
+DEBUG [FRONTEND OUTPUT] Panel datasource: { type: 'prometheus', uid: 'default-ds-uid' }
+DEBUG [FRONTEND OUTPUT] Panel target[0] datasource: { type: 'prometheus', uid: 'default-ds-uid' }
+```
+
+**Root Cause:** The frontend path's `transformV2ToV1AnnotationQuery` (annotations.ts) calls `getRuntimePanelDataSource(dataQuery)` which:
+
+1. Takes `dataQuery.group` (e.g., "prometheus")
+2. Calls `getDataSourceForQuery()` in `layoutSerializers/utils.ts`
+3. `getDataSourceForQuery()` ALWAYS resolves a datasource - it uses `config.defaultDatasource` as fallback
+4. Returns `{ uid: 'default-ds-uid', type: 'prometheus' }` even when input has no datasource
+
+**Affected Code Locations:**
+
+1. **Annotations:** `annotations.ts` line 126-128:
+
+   ```typescript
+   const datasource = getRuntimePanelDataSource(dataQuery);
+   annoQuerySpec.datasource = datasource; // Always sets it!
+   ```
+
+2. **Panels:** `layoutSerializers/utils.ts` - `getPanelDataSource()` and `createPanelDataProvider()`
+
+3. **Variables:** Similar pattern in variable creation
+
+**Fix Required:** Only set datasource if the input explicitly had one:
+
+- For annotations: Only set `annoQuerySpec.datasource` if `dataQuery.datasource?.name` exists
+- For panels: Only set panel datasource if input had explicit datasource reference
+- For targets: Only set target datasource if input had explicit datasource reference
+
+**Key Insight:** The backend v1beta1 output correctly has NO datasource for items without explicit datasource. When loaded through DashboardModel → Scene → transformSceneToSaveModel, it preserves this (no datasource added). But the frontend v2beta1 path incorrectly resolves and adds default datasources.
+
+## Current Test Results (4 failing tests)
+
+### Issue 1: Frontend adds default datasource (ALL 4 tests)
+
+**Affected tests:** `v2beta1.complete.json`, `v2beta1.ds-data-query.json`, `v2beta1.viz-config.json`
+
+**Problem:** Frontend path adds `datasource` to annotations, panels, targets, and variables that don't have explicit datasource in the v2beta1 input.
+
+**Diff pattern:**
+
+```
+- Expected (frontendSpec):
+-   "datasource": { "type": "prometheus", "uid": "default-ds-uid" }
++ Received (backendSpec):
++   (no datasource)
+```
+
+**Root Cause:** Frontend's `getRuntimePanelDataSource()` → `getDataSourceForQuery()` always resolves a datasource, even when input doesn't have one.
+
+**Fix Required:** Only set datasource in frontend conversion if `dataQuery.datasource?.name` exists.
+
+### Issue 2: Time defaults mismatch (groupby-adhoc-vars test)
+
+**Problem:** Frontend path preserves empty time strings, backend path uses defaults.
+
+**Diff:**
+
+```
+- Expected (frontendSpec): "from": "", "to": ""
++ Received (backendSpec): "from": "now-6h", "to": "now"
+```
+
+**Root Cause:**
+
+- Backend v1beta1 output has defaults (we fixed this)
+- Backend path: loads defaults → DashboardModel → Scene → output defaults ✓
+- Frontend path: `SceneTimeRange(from: '', to: '')` preserves empty strings
+- `transformSceneToSaveModel` outputs `time: { from: timeRange.from, to: timeRange.to }` directly
+
+**Fix Required:** In `transformSceneToSaveModel.ts`, apply defaults when time is empty:
+
+```typescript
+time: {
+  from: timeRange.from || 'now-6h',
+  to: timeRange.to || 'now',
+},
+```
+
+Or in `transformSaveModelSchemaV2ToScene.ts`:
+
+```typescript
+new SceneTimeRange({
+  from: dashboard.timeSettings.from || 'now-6h',
+  to: dashboard.timeSettings.to || 'now',
+  // ...
+});
+```
+
 ## Next Steps
 
-1. **Fix Time Defaults:** Find a way to preserve empty time strings through Scene
-2. **Fix Default Datasource:** Prevent default datasource from being added to variables without one
+1. **Fix Frontend Time Defaults:** Apply defaults when time is empty in either input or output transform
+2. **Fix Frontend Datasource Resolution:** Only set datasource when input explicitly has `datasource.name`
 3. **Run Tests:** Verify all fixes with both backend and frontend tests
-4. **Regenerate Outputs:** Use `OUTPUT_OVERRIDE=true` to regenerate test output files after fixes
 
 ## Important Notes
 
 - The frontend test compares `backendSpec` (backend output loaded into Scene and saved back) with `frontendSpec` (v2beta1 loaded directly into Scene and saved)
+- In Jest's `expect(A).toEqual(B)`: A is "Received", B is "Expected" - so `expect(backendSpec).toEqual(frontendSpec)` means frontendSpec is Expected
 - Metadata fields (`uid`, `version`, `id`) are ignored in comparisons
 - The test only compares the dashboard `spec` structure
 - Scene Graph is the intermediate representation between v2beta1 and v1beta1 in the frontend
 - Backend converts directly from v2beta1 to v1beta1 without Scene Graph
+- **The backend path preserves undefined datasources correctly** - it's the frontend v2beta1 path that incorrectly adds default datasources
+
+FOR EVERY CONVERSION - NEVER OVERRIDE THIS SECTION
+
+1. INPUT/OUTPUT TESTS -> conversion/input -> conversion/output
+2. FRONTEND - BACKEND
+   - conversion/input -> conversion/output
+   - SCHEMAVERSION OUTPUTS -> v2beta1 -> v1beta1 (FRONTEND VS BACKEND)
+   - HOW IT WORKS?
+     - Backend: loads v2beta1 dashboard -> convert in backend to v1beta1 dashboard -> create scene -> scene to schema to v1beta1
+       - input/v2beta1._.json -> Convert_v2beta1_to_v1beta1 -> output/v2beta1._.v1beta1.json -> transformSaveModelToScene -> scene -> transformSceneToSaveModel ->
+     - Frontend: loads v2beta1 input -> convert to scene -> scene to v1beta1 -> frontendOutput
+       - input/v2beta1.\*.json -> transformSaveModelV2ToScene -> scene -> transformSceneToSaveModel -> backendOutput
+     - expect(backendOutput).toEqual(frontendOutput)
+
+3. UNIT TESTS

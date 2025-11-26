@@ -9,7 +9,7 @@
       "annotations": {
         "list": [
           {
-            "builtIn": true,
+            "builtIn": 1,
             "datasource": {
               "type": "grafana",
               "uid": "-- Grafana --"
@@ -23,10 +23,10 @@
               "matchAny": false,
               "tags": [],
               "type": "dashboard"
-            }
+            },
+            "type": "dashboard"
           },
           {
-            "builtIn": false,
             "datasource": {
               "type": "grafana-testdata-datasource",
               "uid": "PD8C576611E62080A"
@@ -42,7 +42,6 @@
             }
           },
           {
-            "builtIn": false,
             "enable": true,
             "hide": false,
             "iconColor": "blue",
@@ -54,7 +53,6 @@
             }
           },
           {
-            "builtIn": false,
             "datasource": {
               "type": "prometheus",
               "uid": "gdev-prometheus"
@@ -72,7 +70,6 @@
             }
           },
           {
-            "builtIn": false,
             "enable": true,
             "hide": false,
             "iconColor": "yellow",
@@ -86,7 +83,6 @@
             }
           },
           {
-            "builtIn": false,
             "datasource": {
               "type": "grafana-postgresql-datasource",
               "uid": "PBBCEC2D313BC06C3"
@@ -122,7 +118,6 @@
             }
           },
           {
-            "builtIn": false,
             "datasource": {
               "type": "elasticsearch",
               "uid": "gdev-elasticsearch"
@@ -229,6 +224,7 @@
               "editorMode": "builder",
               "expr": "rate(counters_requests[$__rate_interval])",
               "fullMetaSearch": false,
+              "hide": false,
               "includeNullMetadata": false,
               "instant": false,
               "legendFormat": "__auto",
@@ -325,6 +321,7 @@
               "editorMode": "builder",
               "expr": "rate(counters_requests[$__rate_interval])",
               "fullMetaSearch": false,
+              "hide": false,
               "includeNullMetadata": false,
               "instant": false,
               "legendFormat": "__auto",
@@ -384,6 +381,7 @@
           "pluginVersion": "12.1.0-pre",
           "targets": [
             {
+              "hide": false,
               "refId": "A",
               "scenarioId": "random_walk",
               "seriesCount": 4
@@ -473,6 +471,7 @@
                 "type": "grafana-testdata-datasource",
                 "uid": "gdev-testdata"
               },
+              "hide": false,
               "refId": "A",
               "scenarioId": "random_walk",
               "seriesCount": 3
@@ -566,6 +565,7 @@
               "editorMode": "builder",
               "expr": "rate(counters_requests{server=\"backend-01\"}[$__rate_interval])",
               "fullMetaSearch": false,
+              "hide": false,
               "includeNullMetadata": false,
               "legendFormat": "__auto",
               "range": true,
@@ -577,6 +577,7 @@
                 "type": "grafana-testdata-datasource",
                 "uid": "gdev-testdata"
               },
+              "hide": false,
               "refId": "B"
             }
           ],
@@ -664,6 +665,7 @@
               "editorMode": "builder",
               "expr": "rate(counters_requests{server=\"backend-01\"}[$__rate_interval])",
               "fullMetaSearch": false,
+              "hide": false,
               "includeNullMetadata": false,
               "legendFormat": "__auto",
               "range": true,
@@ -671,6 +673,7 @@
               "useBackend": false
             },
             {
+              "hide": false,
               "refId": "B"
             }
           ],
@@ -679,6 +682,8 @@
         }
       ],
       "preload": false,
+      "refresh": "",
+      "schemaVersion": 42,
       "templating": {
         "list": [
           {

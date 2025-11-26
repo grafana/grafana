@@ -43,6 +43,7 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 		dashboard["tags"] = in.Tags
 	}
 	dashboard["graphTooltip"] = transformCursorSyncFromEnum(in.CursorSync)
+	dashboard["schemaVersion"] = 42 // Latest schema version to prevent migrations when loaded
 	dashboard["preload"] = in.Preload
 	if in.Editable != nil {
 		dashboard["editable"] = *in.Editable
@@ -79,12 +80,10 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 		}
 	}
 
-	// Convert annotations
+	// Convert annotations - always include even if empty to prevent DashboardModel from adding built-in
 	annotations := convertAnnotationsToV1(in.Annotations)
-	if len(annotations) > 0 {
-		dashboard["annotations"] = map[string]interface{}{
-			"list": annotations,
-		}
+	dashboard["annotations"] = map[string]interface{}{
+		"list": annotations,
 	}
 
 	return dashboard, nil
@@ -105,18 +104,18 @@ func transformCursorSyncFromEnum(cursorSync dashv2alpha1.DashboardDashboardCurso
 }
 
 func convertTimeSettingsToV1(timeSettings *dashv2alpha1.DashboardTimeSettingsSpec, dashboard map[string]interface{}) {
-	// Convert time range
-	if timeSettings.From != "" || timeSettings.To != "" {
-		timeRange := make(map[string]interface{})
-		if timeSettings.From != "" {
-			timeRange["from"] = timeSettings.From
-		}
-		if timeSettings.To != "" {
-			timeRange["to"] = timeSettings.To
-		}
-		if len(timeRange) > 0 {
-			dashboard["time"] = timeRange
-		}
+	// Convert time range - use defaults when empty to match DashboardModel behavior
+	from := timeSettings.From
+	to := timeSettings.To
+	if from == "" {
+		from = "now-6h"
+	}
+	if to == "" {
+		to = "now"
+	}
+	dashboard["time"] = map[string]interface{}{
+		"from": from,
+		"to":   to,
 	}
 
 	// Convert timezone
@@ -124,10 +123,8 @@ func convertTimeSettingsToV1(timeSettings *dashv2alpha1.DashboardTimeSettingsSpe
 		dashboard["timezone"] = *timeSettings.Timezone
 	}
 
-	// Convert refresh
-	if timeSettings.AutoRefresh != "" {
-		dashboard["refresh"] = timeSettings.AutoRefresh
-	}
+	// Convert refresh - always include to match Scene's default behavior
+	dashboard["refresh"] = timeSettings.AutoRefresh
 
 	// Convert fiscalYearStartMonth
 	if timeSettings.FiscalYearStartMonth != 0 {
@@ -605,11 +602,9 @@ func convertPanelQueryToV1(query *dashv2alpha1.DashboardPanelQueryKind) map[stri
 		target[key] = value
 	}
 
-	// Add refId and hide
+	// Add refId and hide (always include hide to match frontend behavior)
 	target["refId"] = query.Spec.RefId
-	if query.Spec.Hidden {
-		target["hide"] = query.Spec.Hidden
-	}
+	target["hide"] = query.Spec.Hidden
 
 	// Add datasource
 	if query.Spec.Datasource != nil {
@@ -812,10 +807,12 @@ func convertCustomVariableToV1(variable *dashv2alpha1.DashboardCustomVariableKin
 
 func convertConstantVariableToV1(variable *dashv2alpha1.DashboardConstantVariableKind) (map[string]interface{}, error) {
 	spec := variable.Spec
+	// Constant variables in v1beta1 must always be hidden (hide: 2),
+	// otherwise DashboardMigrator will convert them to textbox variables.
 	varMap := map[string]interface{}{
 		"name":        spec.Name,
 		"type":        "constant",
-		"hide":        transformVariableHideFromEnum(spec.Hide),
+		"hide":        2, // hideVariable - constant variables must always be hidden in v1beta1
 		"skipUrlSync": spec.SkipUrlSync,
 		"query":       spec.Query,
 		"current": map[string]interface{}{
@@ -940,9 +937,8 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 	if spec.Description != nil {
 		varMap["description"] = *spec.Description
 	}
-	if spec.AllowCustomValue {
-		varMap["allowCustomValue"] = spec.AllowCustomValue
-	}
+	// Always include allowCustomValue for adhoc variables, including false values
+	varMap["allowCustomValue"] = spec.AllowCustomValue
 
 	// Convert datasource
 	if spec.Datasource != nil {
@@ -1050,8 +1046,11 @@ func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryK
 			"iconColor": annotation.Spec.IconColor,
 		}
 
-		if annotation.Spec.BuiltIn != nil {
-			annotationMap["builtIn"] = *annotation.Spec.BuiltIn
+		// Convert builtIn boolean to integer (v1beta1 uses 1 for true, and omits for false)
+		// Also add type: "dashboard" for built-in annotations
+		if annotation.Spec.BuiltIn != nil && *annotation.Spec.BuiltIn {
+			annotationMap["builtIn"] = 1
+			annotationMap["type"] = "dashboard"
 		}
 
 		// Convert datasource

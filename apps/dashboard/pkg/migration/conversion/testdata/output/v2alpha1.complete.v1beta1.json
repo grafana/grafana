@@ -15,7 +15,7 @@
       "annotations": {
         "list": [
           {
-            "builtIn": true,
+            "builtIn": 1,
             "datasource": {
               "type": "grafana",
               "uid": "-- Grafana --"
@@ -29,10 +29,10 @@
               "matchAny": false,
               "tags": [],
               "type": "dashboard"
-            }
+            },
+            "type": "dashboard"
           },
           {
-            "builtIn": false,
             "datasource": {
               "type": "prometheus",
               "uid": "gdev-prometheus"
@@ -123,6 +123,7 @@
                 "uid": "gdev-prometheus"
               },
               "expr": "up{job=\"grafana\"}",
+              "hide": false,
               "refId": "A"
             }
           ],
@@ -144,6 +145,7 @@
       ],
       "preload": true,
       "refresh": "10s",
+      "schemaVersion": 42,
       "tags": [
         "test",
         "example",
@@ -198,7 +200,7 @@
               "value": "production"
             },
             "description": "A constant value",
-            "hide": 0,
+            "hide": 2,
             "label": "Constant",
             "name": "constant_var",
             "query": "production",
@@ -332,6 +334,7 @@
             "type": "groupby"
           },
           {
+            "allowCustomValue": false,
             "baseFilters": [
               {
                 "condition": "AND",

@@ -6,6 +6,9 @@
   },
   "spec": {
     "dashboard": {
+      "annotations": {
+        "list": []
+      },
       "graphTooltip": 0,
       "liveNow": false,
       "panels": [
@@ -90,6 +93,7 @@
                 "type": "grafana-testdata-datasource",
                 "uid": "gdev-testdata"
               },
+              "hide": false,
               "refId": "A",
               "scenarioId": "random_walk",
               "seriesCount": 3
@@ -100,6 +104,8 @@
         }
       ],
       "preload": false,
+      "refresh": "",
+      "schemaVersion": 42,
       "time": {
         "from": "now-6h",
         "to": "now"

@@ -163,6 +163,7 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
       // Load the backend v1beta1 output into a scene, then transform it back to v1beta1
       // This is to ensure that the backend output is the same as the frontend output being loaded by the scene
       const backendDashboardSpec = backendOutput.spec?.dashboard || backendOutput.spec;
+
       const sceneBackend = transformSaveModelToScene({
         dashboard: backendDashboardSpec,
         meta: {
@@ -200,7 +201,6 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
         access: {},
         kind: 'DashboardWithAccessInfo',
       });
-
       // Transform Scene to v1beta1 using frontend transformation
       const frontendOutput = transformSceneToSaveModel(scene, false);
 
@@ -212,7 +212,7 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
       // Remove metadata fields that may differ between backend and frontend transformations
       const frontendSpec = { ...frontendOutput };
       const backendSpec = { ...backendOutputAfterLoadedByScene };
-      
+
       // Remove metadata fields that are not part of the core dashboard spec
       delete frontendSpec.uid;
       delete backendSpec.uid;

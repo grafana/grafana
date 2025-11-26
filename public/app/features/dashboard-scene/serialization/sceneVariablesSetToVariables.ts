@@ -139,7 +139,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
-        ...(variable.state.allowCustomValue && { allowCustomValue: variable.state.allowCustomValue }),
+        // Include allowCustomValue if explicitly set (true or false)
+        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
       });
     } else if (sceneUtils.isConstantVariable(variable)) {
       variables.push({
@@ -211,7 +212,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           value: variable.state.value,
         },
         defaultValue: defaultVariableOption,
-        ...(variable.state.allowCustomValue && { allowCustomValue: variable.state.allowCustomValue }),
+        // Include allowCustomValue if explicitly set (true or false)
+        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
       });
     } else if (sceneUtils.isAdHocVariable(variable)) {
       const adhocVariable: VariableModel = {

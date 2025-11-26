@@ -2,11 +2,14 @@
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v1beta1",
   "metadata": {
-    "name": "test-v2alpha1-viz-config"
+    "name": "test-v2beta1-viz-config"
   },
   "spec": {
     "dashboard": {
-      "graphTooltip": 0,
+      "annotations": {
+        "list": []
+      },
+      "graphTooltip": 2,
       "liveNow": false,
       "panels": [
         {
@@ -90,6 +93,7 @@
                 "type": "grafana-testdata-datasource",
                 "uid": "gdev-testdata"
               },
+              "hide": false,
               "refId": "A",
               "scenarioId": "random_walk",
               "seriesCount": 3
@@ -100,6 +104,8 @@
         }
       ],
       "preload": false,
+      "refresh": "",
+      "schemaVersion": 42,
       "time": {
         "from": "now-6h",
         "to": "now"

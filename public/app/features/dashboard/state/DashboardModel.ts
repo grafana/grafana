@@ -182,13 +182,7 @@ export class DashboardModel implements TimeModel {
 
     this.initMeta(meta);
     this.updateSchema(data, options?.targetSchemaVersion);
-
-    // Only add built-in annotation if the original input didn't have one
-    // Check the original data.annotations.list, not this.annotations.list which might have been modified
-    const hasBuiltInInInput = data.annotations?.list?.some((item) => Boolean(item.builtIn));
-    if (!hasBuiltInInInput) {
-      this.addBuiltInAnnotationQuery();
-    }
+    this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
     this.panelsAffectedByVariableChange = null;
     this.appEventsSubscription = new Subscription();
@@ -203,6 +197,9 @@ export class DashboardModel implements TimeModel {
   }
 
   addBuiltInAnnotationQuery() {
+    if (this.annotations.list.some((item) => item.name === 'Annotations & Alerts')) {
+      return;
+    }
 
     this.annotations.list.unshift({
       datasource: { uid: '-- Grafana --', type: 'grafana' },

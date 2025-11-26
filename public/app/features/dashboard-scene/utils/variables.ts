@@ -255,6 +255,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
       ...commonProperties,
+      type: 'constant', // Explicitly set to ensure correct type identification
       value: variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,

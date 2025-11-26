@@ -6,8 +6,13 @@
   },
   "spec": {
     "dashboard": {
+      "annotations": {
+        "list": []
+      },
       "graphTooltip": 0,
       "preload": false,
+      "refresh": "",
+      "schemaVersion": 42,
       "templating": {
         "list": [
           {
@@ -72,6 +77,10 @@
             "type": "adhoc"
           }
         ]
+      },
+      "time": {
+        "from": "now-6h",
+        "to": "now"
       },
       "title": "Test: V2alpha1 dashboard with group by and adhoc variables"
     }

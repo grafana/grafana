@@ -21,7 +21,6 @@ import {
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
-  AnnotationQueryKind,
   ConstantVariableKind,
   CustomVariableKind,
   Spec as DashboardV2Spec,
@@ -29,13 +28,13 @@ import {
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
   defaultCustomVariableKind,
-  defaultDataQueryKind,
   defaultDatasourceVariableKind,
   defaultGroupByVariableKind,
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
   defaultSwitchVariableKind,
+  defaultTimeSettingsSpec,
   GroupByVariableKind,
   IntervalVariableKind,
   LibraryPanelKind,
@@ -43,6 +42,8 @@ import {
   QueryVariableKind,
   SwitchVariableKind,
   TextVariableKind,
+  defaultDataQueryKind,
+  AnnotationQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
@@ -103,8 +104,10 @@ export type TypedVariableModelV2 =
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
 
-  // Don't add built-in annotations if they're not present in the input
-  // This matches the backend behavior of only preserving what's in the input
+  const found = dashboard.annotations.some((item) => item.spec.builtIn);
+  if (!found) {
+    dashboard.annotations.unshift(getGrafanaBuiltInAnnotation());
+  }
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
     const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
@@ -213,8 +216,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       version: metadata.generation,
       body: layoutManager,
       $timeRange: new SceneTimeRange({
-        from: dashboard.timeSettings.from,
-        to: dashboard.timeSettings.to,
+        // Use defaults when time is empty to match DashboardModel behavior
+        from: dashboard.timeSettings.from || defaultTimeSettingsSpec().from,
+        to: dashboard.timeSettings.to || defaultTimeSettingsSpec().to,
         fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
         timeZone: dashboard.timeSettings.timezone,
         weekStart: dashboard.timeSettings.weekStart,
@@ -413,6 +417,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
   } else if (variable.kind === defaultConstantVariableKind().kind) {
     return new ConstantVariable({
       ...commonProperties,
+      type: 'constant', // Explicitly set to ensure correct type identification
       value: variable.spec.query,
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
@@ -606,12 +611,8 @@ export function getPanelElement(dashboard: DashboardV2Spec, elementName: string)
 export function getLibraryPanelElement(dashboard: DashboardV2Spec, elementName: string): LibraryPanelKind | undefined {
   return dashboard.elements[elementName].kind === 'LibraryPanel' ? dashboard.elements[elementName] : undefined;
 }
-function getGrafanaBuiltInAnnotationDataLayer(dashboard: DashboardV2Spec) {
-  const found = dashboard.annotations.some((item) => item.spec.builtIn);
-  if (found) {
-    return;
-  }
 
+function getGrafanaBuiltInAnnotation(): AnnotationQueryKind {
   const grafanaBuiltAnnotation: AnnotationQueryKind = {
     kind: 'AnnotationQuery',
     spec: {
