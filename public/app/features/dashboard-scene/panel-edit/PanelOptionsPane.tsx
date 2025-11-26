@@ -12,7 +12,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import {
   DeepPartial,
@@ -23,7 +23,7 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Field } from '@grafana/ui';
+import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, LinkButton, Text } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
@@ -142,34 +142,59 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
   const onlyOverrides = listMode === OptionFilter.Overrides;
   const isScrollingLayout = useScrollReflowLimit();
 
+  const pluginMeta: PanelPluginMeta = useMemo(() => {
+    let meta = getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0];
+    if (!meta) {
+      const notFound = getPanelPluginNotFound(`Panel plugin not found (${pluginId})`, true);
+      meta = notFound.meta;
+    }
+    return meta;
+  }, [pluginId]);
+
   return (
     <>
       {!isVizPickerOpen && (
         <>
           <div className={styles.top}>
-            <Field label={t('dashboard.panel-edit.visualization-button-label', 'Visualization')} noMargin>
-              <Stack gap={1}>
-                <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
-                <Button
-                  icon="search"
-                  variant="secondary"
-                  onClick={setIsSearchingOptions}
-                  tooltip={t('dashboard.panel-edit.visualization-button-tooltip', 'Search options')}
-                />
-                {hasFieldConfig && (
-                  <ToolbarButton
-                    icon="filter"
-                    tooltip={t('dashboard.panel-edit.only-overrides-button-tooltip', 'Show only overrides')}
-                    variant={onlyOverrides ? 'active' : 'canvas'}
-                    onClick={() => {
-                      model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
-                    }}
-                  />
+            <Stack gap={1}>
+              <img alt={pluginMeta.name} src={pluginMeta.info.logos.small} className={styles.pluginIcon} />
+              <Text element="h3" variant="body" weight="medium" truncate>
+                {pluginMeta.name}
+              </Text>
+              <Button
+                size="sm"
+                fill="text"
+                onClick={model.onToggleVizPicker}
+                data-testid={selectors.components.PanelEditor.toggleVizPicker}
+                aria-label={t(
+                  'dashboard-scene.visualization-button.aria-label-change-visualization',
+                  'Change visualization'
                 )}
-              </Stack>
-            </Field>
-
-            {isSearchingOptions && (
+              >
+                <Trans i18nKey="dashboard-scene.visualization-button.text">Change</Trans>
+              </Button>
+            </Stack>
+            <Stack gap={1}>
+              {hasFieldConfig && (
+                <ToolbarButton
+                  icon="sliders-v-alt"
+                  tooltip={t('dashboard.panel-edit.only-overrides-button-tooltip', 'Show only overrides')}
+                  variant={onlyOverrides ? 'active' : 'canvas'}
+                  onClick={() => {
+                    model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
+                  }}
+                />
+              )}
+              <Button
+                icon="search"
+                variant="secondary"
+                onClick={setIsSearchingOptions}
+                tooltip={t('dashboard.panel-edit.visualization-button-tooltip', 'Search options')}
+              />
+            </Stack>
+          </div>
+          {isSearchingOptions && (
+            <div className={styles.searchWrapper}>
               <FilterInput
                 className={styles.searchOptions}
                 value={searchQuery}
@@ -182,8 +207,8 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
                   }
                 }}
               />
-            )}
-          </div>
+            </div>
+          )}
           <ScrollContainer minHeight={isScrollingLayout ? 'max-content' : 0}>
             <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
           </ScrollContainer>
@@ -205,63 +230,24 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     top: css({
       display: 'flex',
-      flexDirection: 'column',
-      padding: theme.spacing(1, 2, 2, 2),
+      flexDirection: 'row',
+      padding: theme.spacing(1, 2),
       gap: theme.spacing(2),
+      justifyContent: 'space-between',
+      alignItems: 'center',
     }),
     searchOptions: css({
       minHeight: theme.spacing(4),
     }),
     searchWrapper: css({
-      padding: theme.spacing(2, 2, 2, 0),
+      padding: theme.spacing(1, 2, 2, 2),
     }),
     rotateIcon: css({
       rotate: '180deg',
     }),
-  };
-}
-
-interface VisualizationButtonProps {
-  pluginId: string;
-  onOpen: () => void;
-}
-
-export function VisualizationButton({ pluginId, onOpen }: VisualizationButtonProps) {
-  const styles = useStyles2(getVizButtonStyles);
-  let pluginMeta: PanelPluginMeta | undefined = useMemo(
-    () => getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0],
-    [pluginId]
-  );
-
-  if (!pluginMeta) {
-    const notFound = getPanelPluginNotFound(`Panel plugin not found (${pluginId})`, true);
-    pluginMeta = notFound.meta;
-  }
-
-  return (
-    <ToolbarButton
-      className={styles.vizButton}
-      tooltip={t(
-        'dashboard-scene.visualization-button.tooltip-click-to-change-visualization',
-        'Click to change visualization'
-      )}
-      imgSrc={pluginMeta.info.logos.small}
-      onClick={onOpen}
-      data-testid={selectors.components.PanelEditor.toggleVizPicker}
-      aria-label={t('dashboard-scene.visualization-button.aria-label-change-visualization', 'Change visualization')}
-      variant="canvas"
-      isOpen={false}
-      fullWidth
-    >
-      {pluginMeta.name}
-    </ToolbarButton>
-  );
-}
-
-function getVizButtonStyles(theme: GrafanaTheme2) {
-  return {
-    vizButton: css({
-      textAlign: 'left',
+    pluginIcon: css({
+      height: '22px',
+      width: '22px',
     }),
   };
 }
