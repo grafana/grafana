@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.yaml.in/yaml/v3"
 )
@@ -107,7 +108,11 @@ func (q *QuotaService) stop() {
 }
 
 func (q *QuotaService) GetQuota(ctx context.Context, nsr NamespacedResource) (ResourceQuota, error) {
-	ctx, span := q.tracer.Start(ctx, "QuotaService.GetQuota")
+	ctx, span := q.tracer.Start(ctx, "QuotaService.GetQuota", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
 	defer span.End()
 
 	if nsr.Namespace == "" || nsr.Resource == "" || nsr.Group == "" {
