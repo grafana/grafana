@@ -551,7 +551,6 @@
         "description": "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -565,7 +564,6 @@
         "description": "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -633,6 +631,19 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "apiExtensions",
+        "resourceVersion": "1764159104213",
+        "creationTimestamp": "2025-11-26T12:11:44Z"
+      },
+      "spec": {
+        "description": "Enable Kubernetes CustomResourceDefinition (CRD) support with dynamic API registration",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
       }
     },
     {

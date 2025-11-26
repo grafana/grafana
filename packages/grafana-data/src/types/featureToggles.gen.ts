@@ -463,6 +463,10 @@ export interface FeatureToggles {
   */
   kubernetesAggregatorCapTokenAuth?: boolean;
   /**
+  * Enable Kubernetes CustomResourceDefinition (CRD) support with dynamic API registration
+  */
+  apiExtensions?: boolean;
+  /**
   * Enable groupBy variable support in scenes dashboards
   */
   groupByVariable?: boolean;
