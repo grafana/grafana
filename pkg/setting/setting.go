@@ -137,21 +137,23 @@ type Cfg struct {
 	// Grafana API Server
 	DisableControllers bool
 	// Provisioning config
-	ProvisioningAllowedTargets               []string
-	ProvisioningAllowImageRendering          bool
-	ProvisioningMinSyncInterval              time.Duration
-	ProvisioningRepositoryTypes              []string
-	ProvisioningLokiURL                      string
-	ProvisioningLokiUser                     string
-	ProvisioningLokiPassword                 string
-	ProvisioningLokiTenantID                 string
-	ProvisioningServerLockMaxIntervalSeconds int64
-	ProvisioningServerLockMinWaitMs          int64
-	ProvisioningServerLockMaxWaitMs          int64
-	DataPath                                 string
-	LogsPath                                 string
-	PluginsPath                              string
-	EnterpriseLicensePath                    string
+	ProvisioningAllowedTargets      []string
+	ProvisioningAllowImageRendering bool
+	ProvisioningMinSyncInterval     time.Duration
+	ProvisioningRepositoryTypes     []string
+	ProvisioningLokiURL             string
+	ProvisioningLokiUser            string
+	ProvisioningLokiPassword        string
+	ProvisioningLokiTenantID        string
+	DataPath                        string
+	LogsPath                        string
+	PluginsPath                     string
+	EnterpriseLicensePath           string
+
+	// Classic Provisioning settings
+	ClassicProvisioningDashboardsServerLockMaxIntervalSeconds int64
+	ClassicProvisioningDashboardsServerLockMinWaitMs          int64
+	ClassicProvisioningDashboardsServerLockMaxWaitMs          int64
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -1224,6 +1226,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	cfg.readClassicProvisioningSettings(iniFile)
+
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
@@ -2110,6 +2114,12 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	return nil
 }
 
+func (cfg *Cfg) readClassicProvisioningSettings(iniFile *ini.File) {
+	cfg.ClassicProvisioningDashboardsServerLockMinWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_min_wait_ms").MustInt64(100)
+	cfg.ClassicProvisioningDashboardsServerLockMaxWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_wait_ms").MustInt64(1000)
+	cfg.ClassicProvisioningDashboardsServerLockMaxIntervalSeconds = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_interval_seconds").MustInt64(15)
+}
+
 func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
@@ -2157,10 +2167,6 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningLokiUser = valueAsString(iniFile.Section("provisioning"), "loki_user", "")
 	cfg.ProvisioningLokiPassword = valueAsString(iniFile.Section("provisioning"), "loki_password", "")
 	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
-
-	cfg.ProvisioningServerLockMinWaitMs = iniFile.Section("provisioning").Key("server_lock_min_wait_ms").MustInt64(100)
-	cfg.ProvisioningServerLockMaxWaitMs = iniFile.Section("provisioning").Key("server_lock_max_wait_ms").MustInt64(1000)
-	cfg.ProvisioningServerLockMaxIntervalSeconds = iniFile.Section("provisioning").Key("server_lock_max_interval_seconds").MustInt64(15)
 
 	return nil
 }

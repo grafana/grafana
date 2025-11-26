@@ -115,11 +115,11 @@ func (provider *Provisioner) Provision(ctx context.Context) error {
 	lockTimeConfig := serverlock.LockTimeConfig{
 		// if a replica crashes while holding the lock, other replicas can obtain the
 		// lock after this duration (15s default value, might be configured via config file)
-		MaxInterval: time.Duration(provider.cfg.ProvisioningServerLockMaxIntervalSeconds) * time.Second,
+		MaxInterval: time.Duration(provider.cfg.ClassicProvisioningDashboardsServerLockMaxIntervalSeconds) * time.Second,
 
 		// wait beetween 100ms and 1s before retrying to obtain the lock (default values, might be configured via config file)
-		MinWait: time.Duration(provider.cfg.ProvisioningServerLockMinWaitMs) * time.Millisecond,
-		MaxWait: time.Duration(provider.cfg.ProvisioningServerLockMaxWaitMs) * time.Millisecond,
+		MinWait: time.Duration(provider.cfg.ClassicProvisioningDashboardsServerLockMinWaitMs) * time.Millisecond,
+		MaxWait: time.Duration(provider.cfg.ClassicProvisioningDashboardsServerLockMaxWaitMs) * time.Millisecond,
 	}
 
 	// this means that if we fail to obtain the lock after ~10 seconds, we return an error
