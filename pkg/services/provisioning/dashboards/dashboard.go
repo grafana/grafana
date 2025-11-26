@@ -104,9 +104,9 @@ func (provider *Provisioner) Provision(ctx context.Context) error {
 
 	var errProvisioning error
 
-	// retry 5 times to obtain the lock
+	// retry 10 times to obtain the lock
 	retryOpt := func(attempts int) error {
-		if attempts < 5 {
+		if attempts < 10 {
 			return nil
 		}
 		return errors.New("retries exhausted")
@@ -114,12 +114,12 @@ func (provider *Provisioner) Provision(ctx context.Context) error {
 
 	// wait beetween 5s and 10s before trying to obtain the lock
 	lockTimeConfig := serverlock.LockTimeConfig{
-		MaxInterval: 300 * time.Second,
+		MaxInterval: 30 * time.Second,
 		MinWait:     time.Duration(provider.cfg.ProvisioningServerLockMinWaitMs) * time.Millisecond,
 		MaxWait:     time.Duration(provider.cfg.ProvisioningServerLockMaxWaitMs) * time.Millisecond,
 	}
 
-	// this means that if we fail to obtain the lock after ~25 seconds, we return the lock error
+	// this means that if we fail to obtain the lock after ~5 seconds, we return an error
 	lockErr := provider.serverLock.LockExecuteAndReleaseWithRetries(ctx, "provisioning_dashboards", lockTimeConfig, func(ctx context.Context) {
 		provider.log.Info("starting to provision dashboards")
 

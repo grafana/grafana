@@ -2157,8 +2157,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningLokiPassword = valueAsString(iniFile.Section("provisioning"), "loki_password", "")
 	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
 
-	cfg.ProvisioningServerLockMinWaitMs = iniFile.Section("provisioning").Key("server_lock_min_wait_ms").MustInt64(5000)
-	cfg.ProvisioningServerLockMaxWaitMs = iniFile.Section("provisioning").Key("server_lock_max_wait_ms").MustInt64(10000)
+	cfg.ProvisioningServerLockMinWaitMs = iniFile.Section("provisioning").Key("server_lock_min_wait_ms").MustInt64(100)
+	cfg.ProvisioningServerLockMaxWaitMs = iniFile.Section("provisioning").Key("server_lock_max_wait_ms").MustInt64(1000)
 
 	return nil
 }
