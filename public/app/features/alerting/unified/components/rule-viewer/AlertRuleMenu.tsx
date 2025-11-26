@@ -10,7 +10,7 @@ import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItem
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
 import { EditableRuleIdentifier, Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
   AlertRuleAction,
@@ -120,7 +120,9 @@ const AlertRuleMenu = ({
    */
   // @TODO Migrate "declare incident button" to plugin links extensions
   const shouldShowDeclareIncidentButton =
-    (!isOpenSourceEdition() || isLocalDevEnv()) && prometheusRuleType.alertingRule(promRule);
+    (!isOpenSourceEdition() || isLocalDevEnv()) &&
+    prometheusRuleType.alertingRule(promRule) &&
+    promRule.state === PromAlertingRuleState.Firing;
 
   const { isAvailable: isAssistantAvailable } = useAssistant();
   const shouldShowAnalyzeRuleButton = isAssistantAvailable && prometheusRuleType.grafana.rule(promRule);
