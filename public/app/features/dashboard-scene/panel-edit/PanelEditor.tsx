@@ -270,6 +270,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
           searchQuery: '',
           listMode: OptionFilter.All,
           isVizPickerOpen: isUnconfigured,
+          isNewPanel: this.state.isNewPanel,
         }),
         isInitializing: false,
       });

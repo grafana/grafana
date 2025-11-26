@@ -5167,7 +5167,6 @@
       },
       "only-overrides-button-tooltip": "Show only overrides",
       "placeholder-search-options": "Search options",
-      "visualization-button-label": "Visualization",
       "visualization-button-tooltip": "Search options"
     },
     "panel-editor-table-view": {
@@ -6490,7 +6489,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Change visualization",
-      "tooltip-click-to-change-visualization": "Click to change visualization"
+      "text": "Change"
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Open query pane",

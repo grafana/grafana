@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import {
   DeepPartial,
   SceneComponentProps,
@@ -23,7 +23,7 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, LinkButton, Text } from '@grafana/ui';
+import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Text } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
@@ -39,6 +39,8 @@ export interface PanelOptionsPaneState extends SceneObjectState {
   searchQuery: string;
   listMode: OptionFilter;
   panelRef: SceneObjectRef<VizPanel>;
+  isNewPanel?: boolean;
+  hasPickedViz?: boolean;
 }
 
 interface PluginOptionsCache {
@@ -50,11 +52,15 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   private _cachedPluginOptions: Record<string, PluginOptionsCache | undefined> = {};
 
   onToggleVizPicker = () => {
+    const newState = !this.state.isVizPickerOpen;
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.TOGGLE_DROPDOWN,
-      open: !this.state.isVizPickerOpen,
+      open: newState,
     });
-    this.setState({ isVizPickerOpen: !this.state.isVizPickerOpen });
+    this.setState({
+      isVizPickerOpen: !this.state.isVizPickerOpen,
+      hasPickedViz: this.state.hasPickedViz || newState === false,
+    });
   };
 
   onChangePanelPlugin = (options: VizTypeChangeDetails) => {
@@ -131,7 +137,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 }
 
 function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPane>) {
-  const { isVizPickerOpen, searchQuery, listMode, panelRef } = model.useState();
+  const { isVizPickerOpen, searchQuery, listMode, panelRef, isNewPanel, hasPickedViz } = model.useState();
   const panel = panelRef.resolve();
   const { pluginId } = panel.useState();
   const { data } = sceneGraph.getData(panel).useState();
@@ -220,6 +226,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
           onChange={model.onChangePanelPlugin}
           onClose={model.onToggleVizPicker}
           data={data}
+          showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
         />
       )}
     </>
