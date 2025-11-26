@@ -46,6 +46,9 @@ export function getItemType(path: string, resource?: ResourceListItem): ItemType
   if (resource?.resource === 'folders') {
     return 'Folder';
   }
+  if (!resource && path.endsWith('.json')) {
+    return 'Dashboard';
+  }
   return 'File';
 }
 
@@ -103,7 +106,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       children: [],
       resourceName: existingItem?.resource?.name,
       hash: existingItem?.file?.hash ?? existingItem?.resource?.hash,
-      status: existingItem ? getStatus(existingItem.file?.hash, existingItem.resource?.hash) : undefined,
+      status: undefined,
     });
   }
 
@@ -114,7 +117,6 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
     }
 
     const type = getItemType(item.path, item.resource);
-    const showStatus = type === 'Dashboard' || type === 'Folder';
     nodeMap.set(item.path, {
       path: item.path,
       title: getDisplayTitle(item.path, item.resource),
@@ -123,7 +125,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       children: [],
       resourceName: item.resource?.name,
       hash: item.file?.hash ?? item.resource?.hash,
-      status: showStatus ? getStatus(item.file?.hash, item.resource?.hash) : undefined,
+      status: type === 'Dashboard' ? getStatus(item.file?.hash, item.resource?.hash) : undefined,
     });
   }
 

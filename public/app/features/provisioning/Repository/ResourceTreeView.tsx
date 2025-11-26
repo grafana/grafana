@@ -105,7 +105,8 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           }
           return (
             <Icon
-              name={status === 'synced' ? 'check' : 'sync'}
+              name={status === 'synced' ? 'check-circle' : 'sync'}
+              className={status === 'synced' ? styles.syncedIcon : undefined}
               title={
                 status === 'synced'
                   ? t('provisioning.resource-tree.status-synced', 'Synced')
@@ -209,5 +210,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontFamily: theme.typography.fontFamilyMonospace,
     fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text.secondary,
+  }),
+  syncedIcon: css({
+    color: theme.colors.success.text,
   }),
 });

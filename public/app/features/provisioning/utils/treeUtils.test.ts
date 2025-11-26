@@ -98,6 +98,17 @@ describe('mergeFilesAndResources', () => {
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('dashboards/my-dashboard.json');
   });
+
+  it('should skip resources with empty path (root)', () => {
+    const files: unknown[] = [];
+    const rootResource = { ...mockResource, path: '' };
+    const resources = [rootResource, mockResource];
+
+    const result = mergeFilesAndResources(files, resources);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('dashboards/my-dashboard.json');
+  });
 });
 
 describe('getItemType', () => {
@@ -113,8 +124,14 @@ describe('getItemType', () => {
     expect(result).toBe('Folder');
   });
 
-  it('should return File for paths without resource', () => {
+  it('should return Dashboard for JSON files without resource', () => {
     const result = getItemType('some/path/file.json', undefined);
+
+    expect(result).toBe('Dashboard');
+  });
+
+  it('should return File for non-JSON paths without resource', () => {
+    const result = getItemType('some/path/file.txt', undefined);
 
     expect(result).toBe('File');
   });
@@ -221,21 +238,21 @@ describe('buildTree', () => {
   });
 
   it('should place files under correct parent folders', () => {
-    const mergedItems = [{ path: 'folder/file.json', file: { path: 'folder/file.json', size: '100', hash: 'h1' } }];
+    const mergedItems = [{ path: 'folder/file.txt', file: { path: 'folder/file.txt', size: '100', hash: 'h1' } }];
 
     const result = buildTree(mergedItems);
 
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('folder');
     expect(result[0].children).toHaveLength(1);
-    expect(result[0].children[0].path).toBe('folder/file.json');
+    expect(result[0].children[0].path).toBe('folder/file.txt');
     expect(result[0].children[0].type).toBe('File');
   });
 
   it('should sort folders before files', () => {
     const mergedItems = [
-      { path: 'file.json', file: { path: 'file.json', size: '100', hash: 'h1' } },
-      { path: 'folder/nested.json', file: { path: 'folder/nested.json', size: '100', hash: 'h2' } },
+      { path: 'file.txt', file: { path: 'file.txt', size: '100', hash: 'h1' } },
+      { path: 'folder/nested.txt', file: { path: 'folder/nested.txt', size: '100', hash: 'h2' } },
     ];
 
     const result = buildTree(mergedItems);
@@ -244,7 +261,7 @@ describe('buildTree', () => {
     expect(result[0].type).toBe('Folder');
     expect(result[0].title).toBe('folder');
     expect(result[1].type).toBe('File');
-    expect(result[1].title).toBe('file.json');
+    expect(result[1].title).toBe('file.txt');
   });
 
   it('should sort alphabetically within same type', () => {
@@ -263,19 +280,17 @@ describe('buildTree', () => {
   });
 
   it('should handle root-level items', () => {
-    const mergedItems = [{ path: 'root-file.json', file: { path: 'root-file.json', size: '100', hash: 'h1' } }];
+    const mergedItems = [{ path: 'root-file.txt', file: { path: 'root-file.txt', size: '100', hash: 'h1' } }];
 
     const result = buildTree(mergedItems);
 
     expect(result).toHaveLength(1);
-    expect(result[0].path).toBe('root-file.json');
+    expect(result[0].path).toBe('root-file.txt');
     expect(result[0].type).toBe('File');
   });
 
   it('should handle deeply nested paths', () => {
-    const mergedItems = [
-      { path: 'a/b/c/d/e/file.json', file: { path: 'a/b/c/d/e/file.json', size: '100', hash: 'h1' } },
-    ];
+    const mergedItems = [{ path: 'a/b/c/d/e/file.txt', file: { path: 'a/b/c/d/e/file.txt', size: '100', hash: 'h1' } }];
 
     const result = buildTree(mergedItems);
 
@@ -296,7 +311,7 @@ describe('buildTree', () => {
     // Check the file is in the last folder
     const lastFolder = current;
     expect(lastFolder.children).toHaveLength(1);
-    expect(lastFolder.children[0].path).toBe('a/b/c/d/e/file.json');
+    expect(lastFolder.children[0].path).toBe('a/b/c/d/e/file.txt');
     expect(lastFolder.children[0].type).toBe('File');
   });
 
@@ -347,12 +362,21 @@ describe('buildTree', () => {
     expect(result[0].status).toBe('pending');
   });
 
-  it('should not set status for plain files', () => {
-    const mergedItems = [{ path: 'file.json', file: { path: 'file.json', size: '100', hash: 'h1' } }];
+  it('should not set status for non-JSON files', () => {
+    const mergedItems = [{ path: 'file.txt', file: { path: 'file.txt', size: '100', hash: 'h1' } }];
 
     const result = buildTree(mergedItems);
 
     expect(result[0].status).toBeUndefined();
+  });
+
+  it('should set pending status for JSON files without resource', () => {
+    const mergedItems = [{ path: 'dashboard.json', file: { path: 'dashboard.json', size: '100', hash: 'h1' } }];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Dashboard');
+    expect(result[0].status).toBe('pending');
   });
 
   it('should set pending status when only resource exists', () => {
