@@ -42,12 +42,10 @@ func New(store *registry.Store, authz ResourceStorageAuthorizer) *Wrapper {
 	return &Wrapper{inner: store, authorizer: authz}
 }
 
-// ConvertToTable implements rest.Storage.
 func (w *Wrapper) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metaV1.Table, error) {
 	return w.inner.ConvertToTable(ctx, object, tableOptions)
 }
 
-// Create implements rest.Storage.
 func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidation k8srest.ValidateObjectFunc, options *metaV1.CreateOptions) (runtime.Object, error) {
 	// Enforce authorization based on the user permissions before creating the object
 	err := w.authorizer.BeforeCreate(ctx, obj)
@@ -60,7 +58,6 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 	return w.inner.Create(srvCtx, obj, createValidation, options)
 }
 
-// Delete implements rest.Storage.
 func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (runtime.Object, bool, error) {
 	// Fetch the object first to authorize
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
@@ -83,19 +80,16 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 	return w.inner.Delete(srvCtx, name, deleteValidation, options)
 }
 
-// DeleteCollection implements rest.Storage.
 func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	// DeleteCollection is complex to authorize properly
 	// For now, deny it entirely for safety
 	return nil, fmt.Errorf("bulk delete operations are not supported through this API")
 }
 
-// Destroy implements rest.Storage.
 func (w *Wrapper) Destroy() {
 	w.inner.Destroy()
 }
 
-// Get implements rest.Storage.
 func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptions) (runtime.Object, error) {
 	// Override the identity to use service identity for the underlying store operation
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
@@ -113,12 +107,10 @@ func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptio
 	return item, nil
 }
 
-// GetSingularName implements rest.Storage.
 func (w *Wrapper) GetSingularName() string {
 	return w.inner.GetSingularName()
 }
 
-// List implements rest.Storage.
 func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	// Override the identity to use service identity for the underlying store operation
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
@@ -132,22 +124,18 @@ func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions
 	return w.authorizer.FilterList(ctx, list)
 }
 
-// NamespaceScoped implements rest.Storage.
 func (w *Wrapper) NamespaceScoped() bool {
 	return w.inner.NamespaceScoped()
 }
 
-// New implements rest.Storage.
 func (w *Wrapper) New() runtime.Object {
 	return w.inner.New()
 }
 
-// NewList implements rest.Storage.
 func (w *Wrapper) NewList() runtime.Object {
 	return w.inner.NewList()
 }
 
-// Update implements rest.Storage.
 func (w *Wrapper) Update(
 	ctx context.Context,
 	name string,
