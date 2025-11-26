@@ -6,7 +6,7 @@ import { shallowEqual } from 'react-redux';
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -225,6 +225,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     <ShortLinkButtonMenu key="share" />,
   ];
 
+  const correlationsExploreEditor = config.featureToggles.correlationsExploreEditor;
   const showBuilderIndicator = isCorrelationsEditorMode && !isLeftPane;
   const showSourceIndicator = isCorrelationsEditorMode && isLeftPane && splitted;
 
@@ -232,26 +233,37 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
       <AppChromeUpdate actions={navBarActions} />
-      {showSourceIndicator && (
-        <div className={styles.badgeWrapper}>
-          <Tooltip
-            content={t(
-              'explore.toolbar.source-correlation-query',
-              'Run a query and click a correlation link to start building your correlation'
-            )}
-          >
-            <Badge color="blue" icon="arrow-from-right" text={t('explore.toolbar.source-query', 'Source query')} />
-          </Tooltip>
-        </div>
-      )}
-      {showBuilderIndicator && (
-        <div className={styles.badgeWrapper}>
-          <Tooltip
-            content={t('explore.toolbar.build-correlation-query', 'Build and test your correlation target query here')}
-          >
-            <Badge color="orange" icon="crosshair" text={t('explore.toolbar.target-query-builder', 'Correlation')} />
-          </Tooltip>
-        </div>
+      {correlationsExploreEditor && (
+        <>
+          {showSourceIndicator && (
+            <div className={styles.badgeWrapper}>
+              <Tooltip
+                content={t(
+                  'explore.toolbar.source-correlation-query',
+                  'Run a query and click a correlation link to start building your correlation'
+                )}
+              >
+                <Badge color="blue" icon="arrow-from-right" text={t('explore.toolbar.source-query', 'Source query')} />
+              </Tooltip>
+            </div>
+          )}
+          {showBuilderIndicator && (
+            <div className={styles.badgeWrapper}>
+              <Tooltip
+                content={t(
+                  'explore.toolbar.build-correlation-query',
+                  'Build and test your correlation target query here'
+                )}
+              >
+                <Badge
+                  color="orange"
+                  icon="crosshair"
+                  text={t('explore.toolbar.target-query-builder', 'Correlation')}
+                />
+              </Tooltip>
+            </div>
+          )}
+        </>
       )}
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}

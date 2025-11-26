@@ -2165,6 +2165,14 @@ var (
 			Owner:       grafanaBackendServicesSquad,
 			Expression:  "false",
 		},
+		{
+			Name:         "correlationsExploreEditor",
+			Description:  "Enables the new correlations editor in Explore",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
 	}
 )
 

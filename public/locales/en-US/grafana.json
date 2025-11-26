@@ -7013,7 +7013,7 @@
       "edit-mode-title": "Correlation Editor Mode",
       "exit-correlation-editor": "Exit correlation editor",
       "experimental": "Experimental",
-      "instructions": "Step 1: Run a query and click a table cell link or a \"🔗 Correlate with\" button.",
+      "instructions": "Step 1: Run a query and click a table cell link or a <1></1> <strong>Correlate with</strong> button.",
       "instructions-2": "Step 2: In the right pane (Correlation), build and test your correlation query.",
       "instructions-3": "Step 3: Click Save to create the correlation.",
       "save": "Save"
@@ -7034,13 +7034,22 @@
     },
     "correlation-helper": {
       "add-custom-variable": "Add custom variable",
+      "add-transformation": "Add transformation",
       "aria-label-delete-transformation": "Delete transformation",
       "aria-label-edit-transformation": "Edit transformation",
+      "body-correlation-details": "The correlation link will appear by the <1>{{resultField}}</1> field. You can use the following variables to set up your correlations:",
       "body-correlation-details-link": "When saved, the <1>{{resultField}}</1> field will have a clickable link that opens the specified URL.",
       "body-correlation-details-query": "When saved, the <1>{{resultField}}</1> field will have a clickable link that runs your target query below.",
       "body-variables": "Use these variables in your target query. When a correlation link is clicked, each variable is filled in with its value from that row.",
+      "expression": "Expression: <1>{{expression}}</1>",
+      "label-description": "Description",
+      "label-description-header": "Label / Description",
+      "label-label": "Label",
+      "title-correlation-details": "Correlation details",
       "title-correlation-info": "Correlation Info",
-      "title-variables": "Variables (optional)"
+      "title-variables": "Variables (optional)",
+      "tooltip-transformations": "A transformation extracts one or more variables out of a single field.",
+      "transformations": "Transformations"
     },
     "correlation-tour": {
       "back": "Back",
@@ -7056,7 +7065,7 @@
       "skip": "Skip tour",
       "step-counter": "Step {{current}} of {{total}}",
       "step-number": "Step {{step}}",
-      "step1-body": "Run a query that returns data. You can then click a link in a table cell, or use the \"🔗 Correlate with [field name]\" button to start creating a correlation.",
+      "step1-body": "Run a query that returns data. You can then click a link in a table cell, or use the <2></2> <strong>Correlate with [field name]</strong> button to start creating a correlation.",
       "step1-tip": "Tip: Look for these correlation links in table cells or log lines",
       "step1-title": "Step 1: Run a Query and Click a Link",
       "step2-body": "After clicking a correlation link, the <strong>right pane</strong> (target) opens with a query editor. Build and test your query here.",
@@ -7074,6 +7083,7 @@
       "added-variables": "This custom variable will add the following variables:",
       "aria-label-field": "Field",
       "aria-label-type": "Type",
+      "body": "A transformation extracts variables out of a single field. These variables will be available along with your field variables.",
       "cancel": "Cancel",
       "description-field": "Select the field from which to extract a value for your variable",
       "edit-transformation": "Edit transformation",
@@ -7084,8 +7094,10 @@
       "label-type": "Type",
       "label-variable-name": "Variable name",
       "label-variable-name-without-tooltip": "Variable name",
-      "title-add": "Add custom variable",
-      "title-edit": "Edit custom variable"
+      "title-add": "Add transformation",
+      "title-add-custom-variable": "Add custom variable",
+      "title-edit": "Edit transformation",
+      "title-edit-custom-variable": "Edit custom variable"
     },
     "correlation-unsaved-changes-modal": {
       "cancel": "Cancel",

@@ -1250,4 +1250,9 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAnnotations?: boolean;
+  /**
+  * Enables the new correlations editor in Explore
+  * @default false
+  */
+  correlationsExploreEditor?: boolean;
 }

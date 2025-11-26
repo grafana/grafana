@@ -1014,6 +1014,20 @@
     },
     {
       "metadata": {
+        "name": "correlationsExploreEditor",
+        "resourceVersion": "1764186796607",
+        "creationTimestamp": "2025-11-26T19:53:16Z"
+      },
+      "spec": {
+        "description": "Enables the new correlations editor in Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "crashDetection",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-11-12T15:07:27Z"

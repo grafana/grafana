@@ -1121,4 +1121,8 @@ const (
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"
+
+	// FlagCorrelationsExploreEditor
+	// Enables the new correlations editor in Explore
+	FlagCorrelationsExploreEditor = "correlationsExploreEditor"
 )

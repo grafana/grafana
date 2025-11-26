@@ -132,8 +132,8 @@ export const CorrelationTransformationAddModal = ({
       isOpen={true}
       title={
         transformationToEdit
-          ? t('explore.correlation-transformation-add-modal.title-edit', 'Edit custom variable')
-          : t('explore.correlation-transformation-add-modal.title-add', 'Add custom variable')
+          ? t('explore.correlation-transformation-add-modal.title-edit-custom-variable', 'Edit custom variable')
+          : t('explore.correlation-transformation-add-modal.title-add-custom-variable', 'Add custom variable')
       }
       onDismiss={onCancel}
       className={css({ width: '700px' })}

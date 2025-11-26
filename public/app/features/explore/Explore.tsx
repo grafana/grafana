@@ -20,7 +20,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   AdHocFilterItem,
@@ -41,6 +41,7 @@ import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOut
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationEditor/CorrelationHelper/CorrelationHelper';
+import { CorrelationHelperLegacy } from './CorrelationEditor/Legacy/CorrelationHelperLegacy';
 import { CustomContainer } from './CustomContainer';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
@@ -597,6 +598,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
       queryLibraryRef,
     } = this.props;
     const { contentOutlineVisible } = this.state;
+    const correlationsExploreEditor = config.featureToggles.correlationsExploreEditor;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
@@ -617,7 +619,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
     const isCorrelationsEditorMode = correlationEditorDetails?.editorMode;
     const showCorrelationHelper = Boolean(isCorrelationsEditorMode || correlationEditorDetails?.correlationDirty);
     if (showCorrelationHelper && correlationEditorHelperData !== undefined) {
-      correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
+      correlationsBox = correlationsExploreEditor ? (
+        <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />
+      ) : (
+        <CorrelationHelperLegacy exploreId={exploreId} correlations={correlationEditorHelperData} />
+      );
     }
 
     return (
