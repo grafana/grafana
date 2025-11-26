@@ -13411,7 +13411,8 @@
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
-      "zoom-out-tooltip": "Time range zoom out <br /> CTRL+Z"
+      "zoom-out-tooltip": "Time range zoom out <br /> CTRL+Z",
+      "zoom-out-tooltip-new": "Time range zoom out <br /> t -"
     },
     "time-range": {
       "apply": "Apply time range",
