@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -86,10 +85,12 @@ func ProvideAppInstaller(
 		return nil, err
 	}
 
-	return &pluginAppInstaller{
+	appInstaller := &pluginAppInstaller{
 		AppInstaller: defaultInstaller,
 		metaManager:  metaProviderManager,
-	}, nil
+		ready:        make(chan struct{}),
+	}
+	return appInstaller, nil
 }
 
 type pluginAppInstaller struct {
@@ -97,17 +98,15 @@ type pluginAppInstaller struct {
 	metaManager *meta.ProviderManager
 
 	// restConfig is set during InitializeApp and used by the client factory
-	restConfig   *restclient.Config
-	restConfigMu sync.RWMutex
+	restConfig *restclient.Config
+	ready      chan struct{}
 }
 
 func (p *pluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
-	// Store the rest config for use in the client factory
-	p.restConfigMu.Lock()
-	p.restConfig = &restConfig
-	p.restConfigMu.Unlock()
-
-	// Call the default installer's InitializeApp
+	if p.restConfig == nil {
+		p.restConfig = &restConfig
+		close(p.ready)
+	}
 	return p.AppInstaller.InitializeApp(restConfig)
 }
 
@@ -118,15 +117,12 @@ func (p *pluginAppInstaller) InstallAPIs(
 	// Create a client factory function that will be called lazily when the client is needed.
 	// This uses the rest config from the app, which is set during InitializeApp.
 	clientFactory := func(ctx context.Context) (*pluginsv0alpha1.PluginClient, error) {
-		p.restConfigMu.RLock()
-		kubeConfig := p.restConfig
-		p.restConfigMu.RUnlock()
-
-		if kubeConfig == nil {
+		<-p.ready
+		if p.restConfig == nil {
 			return nil, fmt.Errorf("rest config not yet initialized, app must be initialized before client can be created")
 		}
 
-		clientGenerator := k8s.NewClientRegistry(*kubeConfig, k8s.DefaultClientConfig())
+		clientGenerator := k8s.NewClientRegistry(*p.restConfig, k8s.DefaultClientConfig())
 		client, err := pluginsv0alpha1.NewPluginClientFromGenerator(clientGenerator)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create plugin client: %w", err)

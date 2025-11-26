@@ -14,10 +14,17 @@ import (
 
 var (
 	defaultPollInterval        = 500 * time.Millisecond
-	defaultAvailabilityTimeout = 10 * time.Second
+	defaultAvailabilityTimeout = 30 * time.Second
 )
 
-type DiscoveryClient = contracts.DiscoveryClient
+type DiscoveryClient interface {
+	discovery.DiscoveryInterface
+	GetResourceForKind(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
+	GetKindForResource(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error)
+	GetPreferredVesion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
+	GetPreferredVersionForKind(gk schema.GroupKind) (schema.GroupVersionResource, schema.GroupVersionKind, error)
+	WaitForAvailability(ctx context.Context, gv schema.GroupVersion) error
+}
 
 type DiscoveryClientImpl struct {
 	restConfig *rest.Config

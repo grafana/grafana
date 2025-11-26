@@ -192,6 +192,7 @@ func createPostStartHook(
 		logger := logging.FromContext(hookContext.Context)
 		logger.Debug("Initializing app", "app", installer.ManifestData().AppName)
 
+		hookContext.LoopbackClientConfig.APIPath = "/apis"
 		if err := installer.InitializeApp(*hookContext.LoopbackClientConfig); err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
 			logger.Error("Failed to initialize app", "app", installer.ManifestData().AppName, "error", err)
 			return fmt.Errorf("failed to initialize app %s: %w", installer.ManifestData().AppName, err)
