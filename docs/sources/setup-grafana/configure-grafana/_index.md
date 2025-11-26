@@ -1938,6 +1938,10 @@ The initial delay before retrying a failed alert evaluation. Default is `1s`.
 
 This value is the starting point for exponential backoff.
 
+#### `initialization_timeout`
+
+Allows the context deadline for the `AlertNG` service to be configurable. The default timeout is 30s.
+
 #### `max_retry_delay`
 
 The maximum delay between retries during exponential backoff. Default is `4s`.
