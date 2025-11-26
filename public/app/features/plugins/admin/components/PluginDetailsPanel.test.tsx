@@ -225,8 +225,8 @@ describe('PluginDetailsPanel', () => {
     render(<PluginDetailsPanel plugin={pluginWithInsights} pluginExtentionsInfo={mockInfo} />);
     expect(screen.getByTestId('plugin-insights-container')).toBeInTheDocument();
     expect(screen.getByText('Plugin insights')).toBeInTheDocument();
-    expect(screen.queryByText('security')).toBeInTheDocument();
-    await userEvent.click(screen.getByText('security'));
+    expect(screen.queryByText('Security')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Security'));
     expect(screen.getByTestId('plugin-insight-item-signature')).toBeInTheDocument();
   });
 

@@ -750,10 +750,6 @@ const (
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
 
-	// FlagPluginInsights
-	// Show insights for plugins in the plugin details page
-	FlagPluginInsights = "pluginInsights"
-
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
