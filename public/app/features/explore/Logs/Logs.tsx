@@ -30,7 +30,6 @@ import {
   serializeStateToUrlParam,
   urlUtil,
   LogLevel,
-  shallowCompare,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -56,6 +55,7 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
+import { DEFAULT_URL_COLUMNS, DETECTED_LEVEL, LEVEL } from 'app/features/logs/logsFrame';
 import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
@@ -208,6 +208,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
+  const previousVisualisationType = usePrevious(visualisationType);
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
   const previousLoading = usePrevious(loading);
@@ -291,7 +292,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       panelState?.logs?.columns ||
       panelState?.logs?.refId ||
       panelState?.logs?.labelFieldName ||
-      panelState?.logs?.displayedFields
+      panelState?.logs?.displayedFields ||
+      panelState?.logs?.tableSortBy ||
+      panelState?.logs?.tableSortDir
     ) {
       dispatch(
         changePanelState(exploreId, 'logs', {
@@ -301,6 +304,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           labelFieldName: undefined,
           refId: undefined,
           displayedFields: undefined,
+          tableSortBy: undefined,
+          tableSortDir: undefined,
         })
       );
     }
@@ -318,6 +323,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
             displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
+            tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
+            tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
           })
         );
       }
@@ -328,18 +335,36 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       panelState?.logs?.columns,
       panelState?.logs?.displayedFields,
       panelState?.logs?.refId,
+      panelState?.logs?.tableSortBy,
+      panelState?.logs?.tableSortDir,
       visualisationType,
     ]
   );
 
+  // Sync between local displayedFields and panelState and show original line button
   useEffect(() => {
-    if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
+    const panelDisplayedFields = panelState?.logs?.displayedFields ?? [];
+
+    // When switching from logs to table mode, always sync panelState with displayedFields
+    if (previousVisualisationType === 'logs' && visualisationType === 'table') {
       updatePanelState({
         ...panelState?.logs,
-        displayedFields,
+        displayedFields: displayedFields,
       });
     }
-  }, [displayedFields, panelState?.logs, updatePanelState]);
+
+    // When switching from table to logs mode, always sync displayedFields with panelState
+    if (previousVisualisationType === 'table' && visualisationType === 'logs') {
+      setDisplayedFields(panelDisplayedFields);
+    }
+  }, [
+    displayedFields,
+    panelState?.logs?.displayedFields,
+    visualisationType,
+    previousVisualisationType,
+    updatePanelState,
+    panelState?.logs,
+  ]);
 
   // actions
   const onLogRowHover = useCallback(
@@ -544,8 +569,31 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
 
   const clearDisplayedFields = useCallback(() => {
+    // Clear local displayedFields state
     setDisplayedFields([]);
-  }, []);
+
+    // Get current columns from panelState
+    const currentColumns = panelState?.logs?.columns;
+
+    if (currentColumns) {
+      // Filter columns to keep only defaults: DEFAULT_URL_COLUMNS + DETECTED_LEVEL + LEVEL
+      const defaultColumnNames = [...DEFAULT_URL_COLUMNS, DETECTED_LEVEL, LEVEL];
+      const resetColumns = Object.values(currentColumns).filter((col) => defaultColumnNames.includes(col));
+
+      // Update panelState with reset columns and empty displayedFields
+      updatePanelState({
+        ...panelState?.logs,
+        columns: resetColumns,
+        displayedFields: [],
+      });
+    } else {
+      // If no columns in panelState, just clear displayedFields
+      updatePanelState({
+        ...panelState?.logs,
+        displayedFields: [],
+      });
+    }
+  }, [panelState?.logs, updatePanelState]);
 
   const onCloseCallbackRef = useRef<() => void>(() => {});
 
@@ -978,6 +1026,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 panelState={panelState?.logs}
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
+                exploreId={props.exploreId}
+                displayedFields={displayedFields}
+                visualisationType={visualisationType}
+                absoluteRange={props.absoluteRange}
+                logRows={props.logRows}
               />
             </div>
           )}
@@ -1032,6 +1085,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onLogOptionsChange={onLogOptionsChange}
                   filterLevels={filterLevels}
                   timeRange={props.range}
+                  exploreId={exploreId}
+                  absoluteRange={absoluteRange}
                 />
               </div>
             )}
