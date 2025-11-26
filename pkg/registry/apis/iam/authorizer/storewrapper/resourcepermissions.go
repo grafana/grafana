@@ -52,10 +52,11 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 		parent := ""
 
 		checkReq := types.CheckRequest{
-			Group:    target.ApiGroup,
-			Resource: target.Resource,
-			Verb:     utils.VerbGetPermissions,
-			Name:     target.Name,
+			Namespace: o.Namespace,
+			Group:     target.ApiGroup,
+			Resource:  target.Resource,
+			Verb:      utils.VerbGetPermissions,
+			Name:      target.Name,
 		}
 		res, err := r.accessClient.Check(ctx, authInfo, checkReq, parent)
 		if err != nil {
@@ -84,10 +85,11 @@ func (r *ResourcePermissionsAuthorizer) BeforeCreate(ctx context.Context, obj ru
 		parent := ""
 
 		checkReq := types.CheckRequest{
-			Group:    target.ApiGroup,
-			Resource: target.Resource,
-			Verb:     utils.VerbSetPermissions,
-			Name:     target.Name,
+			Namespace: o.Namespace,
+			Group:     target.ApiGroup,
+			Resource:  target.Resource,
+			Verb:      utils.VerbSetPermissions,
+			Name:      target.Name,
 		}
 		res, err := r.accessClient.Check(ctx, authInfo, checkReq, parent)
 		if err != nil {
@@ -116,10 +118,11 @@ func (r *ResourcePermissionsAuthorizer) BeforeDelete(ctx context.Context, obj ru
 		parent := ""
 
 		checkReq := types.CheckRequest{
-			Group:    target.ApiGroup,
-			Resource: target.Resource,
-			Verb:     utils.VerbSetPermissions,
-			Name:     target.Name,
+			Namespace: o.Namespace,
+			Group:     target.ApiGroup,
+			Resource:  target.Resource,
+			Verb:      utils.VerbSetPermissions,
+			Name:      target.Name,
 		}
 		res, err := r.accessClient.Check(ctx, authInfo, checkReq, parent)
 		if err != nil {
@@ -148,10 +151,11 @@ func (r *ResourcePermissionsAuthorizer) BeforeUpdate(ctx context.Context, obj ru
 		parent := ""
 
 		checkReq := types.CheckRequest{
-			Group:    target.ApiGroup,
-			Resource: target.Resource,
-			Verb:     utils.VerbSetPermissions,
-			Name:     target.Name,
+			Namespace: o.Namespace,
+			Group:     target.ApiGroup,
+			Resource:  target.Resource,
+			Verb:      utils.VerbSetPermissions,
+			Name:      target.Name,
 		}
 		res, err := r.accessClient.Check(ctx, authInfo, checkReq, parent)
 		if err != nil {
@@ -170,6 +174,7 @@ func (r *ResourcePermissionsAuthorizer) BeforeUpdate(ctx context.Context, obj ru
 func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	switch l := list.(type) {
 	case *iamv0.ResourcePermissionList:
+		// TODO: use compile instead
 		var filteredItems []iamv0.ResourcePermission
 		for _, item := range l.Items {
 			// Reuse AfterGet to check permissions for each item
