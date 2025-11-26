@@ -108,7 +108,7 @@ func (q *QuotaService) stop() {
 }
 
 func (q *QuotaService) GetQuota(ctx context.Context, nsr NamespacedResource) (ResourceQuota, error) {
-	ctx, span := q.tracer.Start(ctx, "QuotaService.GetQuota", trace.WithAttributes(
+	_, span := q.tracer.Start(ctx, "QuotaService.GetQuota", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
 		attribute.String("group", nsr.Group),
 		attribute.String("resource", nsr.Resource),
