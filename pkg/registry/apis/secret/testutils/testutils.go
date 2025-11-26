@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/madflojo/testcerts"
@@ -36,7 +37,9 @@ import (
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
+	kvmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata/kv"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type SetupConfig struct {
@@ -44,15 +47,24 @@ type SetupConfig struct {
 	DataKeyMigrationExecutor contracts.EncryptedValueMigrationExecutor
 	RunSecretsDBMigrations   bool
 	RunDataKeyMigration      bool
+	StorageBackend           contracts.StorageBackendType
 }
 
 func defaultSetupCfg() SetupConfig {
-	return SetupConfig{}
+	return SetupConfig{
+		StorageBackend: contracts.StorageBackendSQL,
+	}
 }
 
 func WithKeeperService(keeperService contracts.KeeperService) func(*SetupConfig) {
 	return func(setupCfg *SetupConfig) {
 		setupCfg.KeeperService = keeperService
+	}
+}
+
+func WithKVStorage() func(*SetupConfig) {
+	return func(setupCfg *SetupConfig) {
+		setupCfg.StorageBackend = contracts.StorageBackendKV
 	}
 }
 
@@ -79,8 +91,29 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	clock := NewFakeClock()
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil)
-	require.NoError(t, err)
+	// As we support more storages in the KV backend, add them here to switch
+	var (
+		secureValueMetadataStorage contracts.SecureValueMetadataStorage
+		// TODO: keepermetadatastorage? system keeper?
+	)
+
+	if setupCfg.StorageBackend == contracts.StorageBackendKV {
+		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLoggingLevel(badger.ERROR))
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			_ = db.Close()
+		})
+
+		kvStore := resource.NewBadgerKV(db) // From Unified Storage
+
+		secureValueMetadataStorage = kvmetadata.NewSecureValueMetadataStorage(kvStore, clock)
+	} else {
+		secureValueMetadata, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil)
+		require.NoError(t, err)
+
+		secureValueMetadataStorage = secureValueMetadata
+	}
 
 	// Initialize access client + access control
 	accessControl := acimpl.ProvideAccessControl(nil)

@@ -304,7 +304,7 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	// TODO: validate key ?
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
-		return b.create(ctx, event)
+		return b.create(ctx, event) // here
 	case resourcepb.WatchEvent_MODIFIED:
 		return b.update(ctx, event)
 	case resourcepb.WatchEvent_DELETED:

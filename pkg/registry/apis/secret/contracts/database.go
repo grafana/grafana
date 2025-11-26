@@ -18,3 +18,10 @@ type Rows interface {
 	Scan(dest ...any) error
 	Err() error
 }
+
+type StorageBackendType string
+
+const (
+	StorageBackendSQL StorageBackendType = "sql"
+	StorageBackendKV  StorageBackendType = "kv"
+)

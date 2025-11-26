@@ -17,12 +17,10 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestBasic(t *testing.T) {
-	t.Parallel()
-
+func testBasic(t *testing.T, opts ...func(*testutils.SetupConfig)) {
 	t.Run("when no secure values exist, there's no work to do", func(t *testing.T) {
 		t.Parallel()
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 		ids, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
 		require.NoError(t, err)
 		require.Empty(t, ids)
@@ -30,7 +28,7 @@ func TestBasic(t *testing.T) {
 
 	t.Run("inactive secure values are not deleted immediately because of the grace period", func(t *testing.T) {
 		t.Parallel()
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 
 		sv1, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
@@ -45,7 +43,7 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("secure values are fetched for deletion and deleted from keeper", func(t *testing.T) {
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 
 		sv, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
@@ -85,7 +83,7 @@ func TestBasic(t *testing.T) {
 	t.Run("cleaning up secure values is idempotent", func(t *testing.T) {
 		t.Parallel()
 
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 
 		sv, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
@@ -96,6 +94,22 @@ func TestBasic(t *testing.T) {
 		// Clean up the same secure value twice and ensure it succeeds
 		require.NoError(t, sut.GarbageCollectionWorker.Cleanup(t.Context(), sv))
 		require.NoError(t, sut.GarbageCollectionWorker.Cleanup(t.Context(), sv))
+	})
+}
+
+func TestBasic(t *testing.T) {
+	t.Parallel()
+
+	t.Run("SQL backend", func(t *testing.T) {
+		t.Parallel()
+
+		testBasic(t)
+	})
+
+	t.Run("KV backend", func(t *testing.T) {
+		t.Parallel()
+
+		testBasic(t, testutils.WithKVStorage())
 	})
 }
 
@@ -119,13 +133,11 @@ var (
 	})
 )
 
-func TestProperty(t *testing.T) {
-	t.Parallel()
-
+func testProperty(t *testing.T, opts ...func(*testutils.SetupConfig)) {
 	tt := t
 
 	rapid.Check(t, func(t *rapid.T) {
-		sut := testutils.Setup(tt)
+		sut := testutils.Setup(tt, opts...)
 		model := newModel()
 
 		t.Repeat(map[string]func(*rapid.T){
@@ -175,6 +187,22 @@ func TestProperty(t *testing.T) {
 	})
 }
 
+func TestProperty(t *testing.T) {
+	t.Parallel()
+
+	t.Run("SQL backend", func(t *testing.T) {
+		t.Parallel()
+
+		testProperty(t)
+	})
+
+	t.Run("KV backend", func(t *testing.T) {
+		t.Parallel()
+
+		testProperty(t, testutils.WithKVStorage())
+	})
+}
+
 type model struct {
 	items []*modelSecureValue
 }
@@ -219,13 +247,21 @@ func (m *model) cleanupInactiveSecureValues(now time.Time, minAge time.Duration,
 	// Using a slice to allow duplicates
 	toDelete := make([]*modelSecureValue, 0)
 
-	// The implementation query sorts by created time ascending
+	// The implementation query sorts by created time ascending, then by GUID for deterministic ordering
 	slices.SortFunc(m.items, func(a, b *modelSecureValue) int {
 		if a.created.Before(b.created) {
 			return -1
 		} else if a.created.After(b.created) {
 			return 1
 		}
+
+		// When created times are equal, sort by UID for deterministic ordering (matching SQL/KV behavior)
+		if string(a.UID) < string(b.UID) {
+			return -1
+		} else if string(a.UID) > string(b.UID) {
+			return 1
+		}
+
 		return 0
 	})
 

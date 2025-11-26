@@ -452,13 +452,11 @@ func TestModel(t *testing.T) {
 	})
 }
 
-func TestStateMachine(t *testing.T) {
-	t.Parallel()
-
+func testStateMachine(t *testing.T, opts ...func(*testutils.SetupConfig)) {
 	tt := t
 
 	rapid.Check(t, func(t *rapid.T) {
-		sut := testutils.Setup(tt)
+		sut := testutils.Setup(tt, opts...)
 		model := newModel()
 
 		t.Repeat(map[string]func(*rapid.T){
@@ -575,13 +573,27 @@ func TestStateMachine(t *testing.T) {
 	})
 }
 
-func TestSecureValueServiceExampleBased(t *testing.T) {
+func TestStateMachine(t *testing.T) {
 	t.Parallel()
 
+	t.Run("SQL backend", func(t *testing.T) {
+		t.Parallel()
+
+		testStateMachine(t)
+	})
+
+	t.Run("KV backend", func(t *testing.T) {
+		t.Parallel()
+
+		testStateMachine(t, testutils.WithKVStorage())
+	})
+}
+
+func testSecureValueServiceExampleBased(t *testing.T, opts ...func(*testutils.SetupConfig)) {
 	t.Run("shouldn't be able to decrypt using deleted secure value", func(t *testing.T) {
 		t.Parallel()
 
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 
 		sv, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
@@ -603,7 +615,7 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 	t.Run("should be able to use secrets that were created with a keeper that's inactive", func(t *testing.T) {
 		t.Parallel()
 
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 
 		// - Create a secret with k1
 		k1, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
@@ -661,5 +673,21 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		require.Equal(t, sv1.Name, updatedSv.Name)
 		require.Equal(t, k1.Name, updatedSv.Status.Keeper)
 		require.Equal(t, newSv1.Spec.Description, updatedSv.Spec.Description)
+	})
+}
+
+func TestSecureValueServiceExampleBased(t *testing.T) {
+	t.Parallel()
+
+	t.Run("SQL backend", func(t *testing.T) {
+		t.Parallel()
+
+		testSecureValueServiceExampleBased(t)
+	})
+
+	t.Run("KV backend", func(t *testing.T) {
+		t.Parallel()
+
+		testSecureValueServiceExampleBased(t, testutils.WithKVStorage())
 	})
 }

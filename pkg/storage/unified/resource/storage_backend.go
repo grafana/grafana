@@ -297,7 +297,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Action:          action,
 		Folder:          obj.GetFolder(),
 	}
-	err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value))
+	err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value)) // here
 	if err != nil {
 		return 0, fmt.Errorf("failed to write data: %w", err)
 	}
