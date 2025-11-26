@@ -85,6 +85,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
       aria-selected={isSelected}
       className={styles.container}
       onClick={onNodeClicked}
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       style={{ '--depth': depth } as React.CSSProperties}
     >
       <div className={cx(styles.row, { [styles.rowSelected]: isSelected })}>
@@ -148,6 +149,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
               role="treeitem"
               aria-selected={isSelected}
               className={styles.container}
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               style={{ '--depth': depth + 1 } as React.CSSProperties}
             >
               <div className={styles.row}>
