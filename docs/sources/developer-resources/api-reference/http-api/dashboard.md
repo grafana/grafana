@@ -634,7 +634,7 @@ Status Codes:
 
 Retrieves a dashboard with additional access information.
 
-The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the request user permissions. 
+The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the dashboard permissions (admin, editor) of the user who made the request. 
 
 ## List Dashboards
 
