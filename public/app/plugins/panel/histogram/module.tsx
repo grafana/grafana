@@ -5,6 +5,9 @@ import {
   identityOverrideProcessor,
   PanelPlugin,
   histogramFieldInfo,
+  buildHistogram,
+  VisualizationSuggestionScore,
+  DataFrameType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { commonOptionsBuilder, getGraphFieldOptions } from '@grafana/ui';
@@ -149,4 +152,16 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
 
       commonOptionsBuilder.addHideFrom(builder);
     },
+  })
+  .setSuggestionsSupplier((ds) => {
+    if (ds.rawFrames && ds.hasData && buildHistogram(ds.rawFrames)) {
+      return [
+        {
+          score: ds.hasDataFrameType(DataFrameType.Histogram)
+            ? VisualizationSuggestionScore.Best
+            : VisualizationSuggestionScore.OK,
+        },
+      ];
+    }
+    return;
   });
