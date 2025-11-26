@@ -93,7 +93,10 @@ export const LogsVolumePanelList = ({
           {
             color: 'rgba(58, 113, 255, 0.3)',
             isRegion: true,
-            text: t('xplore.logs-volume-panel-list.visible-range-description', 'Range from oldest to newest logs in display'),
+            text: t(
+              'explore.logs-volume-panel-list.visible-range-description',
+              'Range from oldest to newest logs in display'
+            ),
             time: start,
             timeEnd: end,
           },
