@@ -21,7 +21,7 @@ type Service struct{}
 // ProvideRegistryServiceSink is an entry point for each service that will force initialization
 // and give each builder the chance to register itself with the main server
 func ProvideRegistryServiceSink(
-	_ *apiextensions.APIExtensionsBuilder,
+	_ *apiextensions.Builder,
 	_ *dashboardinternal.DashboardsAPIBuilder,
 	_ *dashboardsnapshot.SnapshotsAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,

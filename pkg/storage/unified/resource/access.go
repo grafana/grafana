@@ -199,7 +199,7 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 	// access Cluster scoped resources (ex. register CRDs)
 	// We need to make sure it is the correct service account,
 	// not just any service account
-	isServiceAccnt := req.Namespace == "" && claims.IsIdentityType(id.GetIdentityType(), claims.TypeAccessPolicy)
+	isServiceAccnt := req.Namespace == "" && claims.IsIdentityType(id.GetIdentityType(), claims.TypeAccessPolicy, claims.TypeServiceAccount)
 
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) && !isServiceAccnt {
 		span.SetAttributes(attribute.Bool("allowed", false))

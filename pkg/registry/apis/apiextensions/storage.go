@@ -1,176 +1,142 @@
 package apiextensions
 
 import (
-	"context"
-	"fmt"
+	"strings"
 
+	apiextensionsinternal "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
-	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	"k8s.io/client-go/tools/cache"
+
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-var _ rest.StandardStorage = (*crdStorage)(nil)
-var _ rest.Scoper = (*crdStorage)(nil)
-
-// crdStorage wraps the generic registry store and adds CRD-specific validation and dynamic registration
-type crdStorage struct {
-	*genericregistry.Store
-	dynamicReg *DynamicRegistry
+// CRDRESTOptionsGetter wraps the Grafana unified storage RESTOptionsGetter
+// to be compatible with the Kubernetes apiextensions-apiserver requirements.
+type CRDRESTOptionsGetter struct {
+	delegate      *apistore.RESTOptionsGetter
+	unifiedClient resource.ResourceClient
+	scheme        *runtime.Scheme
+	codecs        serializer.CodecFactory
 }
 
-// NamespaceScoped returns false since CRDs are cluster-scoped resources
-func (s *crdStorage) NamespaceScoped() bool {
-	return false
+// NewCRDRESTOptionsGetter creates a new CRDRESTOptionsGetter
+func NewCRDRESTOptionsGetter(
+	delegate *apistore.RESTOptionsGetter,
+	unifiedClient resource.ResourceClient,
+) *CRDRESTOptionsGetter {
+	scheme := runtime.NewScheme()
+	_ = apiextensionsv1.AddToScheme(scheme)
+	_ = apiextensionsinternal.AddToScheme(scheme)
+	codecs := serializer.NewCodecFactory(scheme)
+
+	return &CRDRESTOptionsGetter{
+		delegate:      delegate,
+		unifiedClient: unifiedClient,
+		scheme:        scheme,
+		codecs:        codecs,
+	}
 }
 
-// Create validates and creates a CRD, then triggers dynamic registration of the custom resource
-func (s *crdStorage) Create(
-	ctx context.Context,
-	obj runtime.Object,
-	createValidation rest.ValidateObjectFunc,
-	options *metav1.CreateOptions,
-) (runtime.Object, error) {
-	crd, ok := obj.(*apiextensionsv1.CustomResourceDefinition)
-	if !ok {
-		return nil, apierrors.NewBadRequest("object is not a CustomResourceDefinition")
-	}
+// GetRESTOptions returns REST options for a given resource.
+func (r *CRDRESTOptionsGetter) GetRESTOptions(
+	res schema.GroupResource,
+	example runtime.Object,
+) (genericregistry.RESTOptions, error) {
+	r.delegate.RegisterOptions(res, apistore.StorageOptions{})
 
-	if err := validateCRDForPhase1(crd); err != nil {
-		return nil, err
-	}
-
-	// Create the CRD in storage
-	result, err := s.Store.Create(ctx, obj, createValidation, options)
+	opts, err := r.delegate.GetRESTOptions(res, example)
 	if err != nil {
-		return nil, err
+		return opts, err
 	}
 
-	// Register the custom resource dynamically
-	createdCRD, ok := result.(*apiextensionsv1.CustomResourceDefinition)
-	if ok {
-		if err := s.dynamicReg.RegisterCRD(createdCRD); err != nil {
-			// Log error but don't fail the creation
-			// TODO: Add proper logging
-			fmt.Printf("Warning: failed to register CRD dynamically: %v\n", err)
-		}
+	// CRDs use apiextensions codec, Custom Resources use unstructured
+	if res.Group == apiextensionsv1.SchemeGroupVersion.Group {
+		opts.StorageConfig.Config.Codec = r.codecs.LegacyCodec(apiextensionsv1.SchemeGroupVersion)
+	} else {
+		opts.StorageConfig.Config.Codec = unstructured.UnstructuredJSONScheme
 	}
 
-	return result, nil
-}
+	// CRDs are cluster-scoped, Custom Resources are typically namespace-scoped
+	isClusterScoped := res.Group == apiextensionsv1.SchemeGroupVersion.Group
 
-// Update validates and updates a CRD, then updates the dynamic registration
-func (s *crdStorage) Update(
-	ctx context.Context,
-	name string,
-	objInfo rest.UpdatedObjectInfo,
-	createValidation rest.ValidateObjectFunc,
-	updateValidation rest.ValidateObjectUpdateFunc,
-	forceAllowCreate bool,
-	options *metav1.UpdateOptions,
-) (runtime.Object, bool, error) {
-	result, created, err := s.Store.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if err != nil {
-		return nil, false, err
-	}
+	opts.Decorator = func(
+		config *storagebackend.ConfigForResource,
+		resourcePrefix string,
+		keyFunc func(obj runtime.Object) (string, error),
+		newFunc func() runtime.Object,
+		newListFunc func() runtime.Object,
+		getAttrsFunc storage.AttrFunc,
+		trigger storage.IndexerFuncs,
+		indexers *cache.Indexers,
+	) (storage.Interface, factory.DestroyFunc, error) {
+		// Key parser that handles K8s apiextensions-apiserver key format
+		// Keys are: /group/<group>/resource/<resource>[/<namespace>][/<name>]
+		keyParser := makeKeyParser(config.GroupResource, isClusterScoped)
 
-	// Update dynamic registration
-	updatedCRD, ok := result.(*apiextensionsv1.CustomResourceDefinition)
-	if ok {
-		if err := s.dynamicReg.UpdateCRD(updatedCRD); err != nil {
-			fmt.Printf("Warning: failed to update CRD registration: %v\n", err)
-		}
-	}
-
-	return result, created, nil
-}
-
-// Delete deletes a CRD and unregisters the custom resource
-func (s *crdStorage) Delete(
-	ctx context.Context,
-	name string,
-	deleteValidation rest.ValidateObjectFunc,
-	options *metav1.DeleteOptions,
-) (runtime.Object, bool, error) {
-	// Get the CRD before deletion
-	obj, err := s.Store.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		return nil, false, err
-	}
-
-	crd, ok := obj.(*apiextensionsv1.CustomResourceDefinition)
-	if !ok {
-		return nil, false, apierrors.NewInternalError(fmt.Errorf("object is not a CRD"))
-	}
-
-	// Delete the CRD
-	result, immediate, err := s.Store.Delete(ctx, name, deleteValidation, options)
-	if err != nil {
-		return nil, false, err
-	}
-
-	// Unregister the custom resource
-	if err := s.dynamicReg.UnregisterCRD(crd); err != nil {
-		fmt.Printf("Warning: failed to unregister CRD: %v\n", err)
-	}
-
-	return result, immediate, nil
-}
-
-func validateCRDForPhase1(crd *apiextensionsv1.CustomResourceDefinition) error {
-	// TODO(@konsalex): only support single-version CRDs for now
-	if len(crd.Spec.Versions) != 1 {
-		return apierrors.NewBadRequest(
-			fmt.Sprintf("we only support single-version CRDs, got %d versions", len(crd.Spec.Versions)),
+		return apistore.NewStorage(
+			config,
+			r.unifiedClient,
+			keyFunc,
+			keyParser,
+			newFunc,
+			newListFunc,
+			getAttrsFunc,
+			trigger,
+			indexers,
+			nil,
+			apistore.StorageOptions{},
 		)
 	}
 
-	// TODO(@konsalex): no webhook conversion for now we will need to support this
-	if crd.Spec.Conversion != nil && crd.Spec.Conversion.Strategy == apiextensionsv1.WebhookConverter {
-		return apierrors.NewBadRequest("no support webhook conversion")
-	}
+	return opts, nil
+}
 
-	// Ensure the single version is marked as both served and storage
-	if len(crd.Spec.Versions) > 0 {
-		version := crd.Spec.Versions[0]
-		if !version.Served {
-			return apierrors.NewBadRequest("the single version must be marked as served")
+// makeKeyParser creates a key parser for the given resource.
+// K8s apiextensions-apiserver generates keys in the format:
+//   - Cluster-scoped: /group/<group>/resource/<resource>/<name>
+//   - Namespace-scoped: /group/<group>/resource/<resource>/<namespace>/<name>
+func makeKeyParser(gr schema.GroupResource, isClusterScoped bool) func(key string) (*resourcepb.ResourceKey, error) {
+	return func(key string) (*resourcepb.ResourceKey, error) {
+		// Key format: /group/<group>/resource/<resource>[/<extra1>][/<extra2>]
+		// Strip prefix and parse
+		parts := strings.Split(strings.TrimPrefix(key, "/"), "/")
+
+		result := &resourcepb.ResourceKey{
+			Group:    gr.Group,
+			Resource: gr.Resource,
 		}
-		if !version.Storage {
-			return apierrors.NewBadRequest("the single version must be marked as storage")
+
+		// Expected: ["group", "<group>", "resource", "<resource>", ...]
+		// Skip the known prefix parts and extract namespace/name
+		if len(parts) >= 4 {
+			extra := parts[4:] // Parts after /group/X/resource/Y
+
+			if isClusterScoped {
+				// Cluster-scoped: extra is [name] or []
+				if len(extra) >= 1 && extra[0] != "" {
+					result.Name = extra[0]
+				}
+			} else {
+				// Namespace-scoped: extra is [namespace] or [namespace, name]
+				if len(extra) >= 1 && extra[0] != "" {
+					result.Namespace = extra[0]
+				}
+				if len(extra) >= 2 && extra[1] != "" {
+					result.Name = extra[1]
+				}
+			}
 		}
+
+		return result, nil
 	}
-
-	return nil
-}
-
-// crdStatusStorage handles the status subresource for CRDs
-type crdStatusStorage struct {
-	*genericregistry.Store
-}
-
-func (s *crdStatusStorage) New() runtime.Object {
-	return &apiextensionsv1.CustomResourceDefinition{}
-}
-
-func (s *crdStatusStorage) Get(
-	ctx context.Context,
-	name string,
-	options *metav1.GetOptions,
-) (runtime.Object, error) {
-	return s.Store.Get(ctx, name, options)
-}
-
-func (s *crdStatusStorage) Update(
-	ctx context.Context,
-	name string,
-	objInfo rest.UpdatedObjectInfo,
-	createValidation rest.ValidateObjectFunc,
-	updateValidation rest.ValidateObjectUpdateFunc,
-	forceAllowCreate bool,
-	options *metav1.UpdateOptions,
-) (runtime.Object, bool, error) {
-	return s.Store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }

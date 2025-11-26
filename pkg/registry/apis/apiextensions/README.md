@@ -105,9 +105,10 @@ curl -X PATCH https://localhost:1111/apis/customcrdtest.grafana.app/v1/namespace
 
 - [ ] Support multiple versions of CRDs (example in `discovery.go`)
 - [ ] Watch new CRDs, so we do not require server restart `dynamic_registry.go`. This is needed for horizontal deployments.
+- [ ] Update the storage to handle new CRDs even in the same service (related to above). Currently needs service restart.
 - [ ] Support `/status` subresource
 - [ ] Add tracer and logger and remove `fmt.Print`
 - [ ] Implement MT setup
 - [ ] Figure out how to modify storage checks for Cluster scoped resources (when we create a new CRD)
-- [ ] How to tackle Cluster scoped CRs
-- [ ] Use the feature flag to start the `apiextensions` service on-demand
+- [ ] How to tackle Cluster scoped CRs (Gabriel is helping)
+- [X] Use the feature flag to start the `apiextensions` service on-demand
