@@ -133,9 +133,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       datasource = await this.dataSourceSrv.get();
     }
 
-    if (typeof this.props.onDataSourceLoaded === 'function') {
-      this.props.onDataSourceLoaded(datasource);
-    }
+    this.props.onDataSourceLoaded?.(datasource);
 
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
@@ -245,10 +243,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     onRemoveQuery(query);
-
-    if (onQueryRemoved) {
-      onQueryRemoved();
-    }
+    onQueryRemoved?.();
   };
 
   onCancelQueryLibraryEdit = () => {
@@ -268,20 +263,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const { query, onAddQuery, onQueryCopied } = this.props;
     const copy = cloneDeep(query);
     onAddQuery(copy);
-
-    if (onQueryCopied) {
-      onQueryCopied();
-    }
+    onQueryCopied?.();
   };
 
   onHideQuery = () => {
     const { query, onChange, onRunQuery, onQueryToggled } = this.props;
     onChange({ ...query, hide: !query.hide });
     onRunQuery();
-
-    if (onQueryToggled) {
-      onQueryToggled(query.hide);
-    }
+    onQueryToggled?.(query.hide);
 
     reportInteraction('query_editor_row_hide_query_clicked', {
       hide: !query.hide,
@@ -569,10 +558,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     // Note: We can't use hooks in class components, so we use static styles
     const focusedRowStyle = isFocused ? getFocusedRowStyle() : undefined;
     const focusedWrapperStyle = isFocused ? getFocusedWrapperStyle() : undefined;
-    const rowClasses = classNames('query-editor-row', {
+    const rowClasses = classNames('query-editor-row', focusedRowStyle, {
       'query-editor-row--disabled': isHidden,
       'gf-form-disabled': isHidden,
-      [focusedRowStyle || '']: isFocused,
     });
 
     if (!datasource) {
