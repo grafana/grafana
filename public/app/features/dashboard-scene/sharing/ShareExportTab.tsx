@@ -112,10 +112,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     const metadata = getMetadata(scene, Boolean(isSharingExternally));
 
     if (isDashboardV2Spec(origDashboard) && 'elements' in exportable && exportMode !== ExportMode.V1Resource) {
-      this.setState({
-        exportMode: ExportMode.V2Resource,
-      });
-
       // For automatic V2 path, also process library panels when sharing externally
       let finalSpec = exportable;
       if (isSharingExternally && isDashboardV2Spec(exportable)) {
