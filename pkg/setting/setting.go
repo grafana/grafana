@@ -150,6 +150,11 @@ type Cfg struct {
 	PluginsPath                     string
 	EnterpriseLicensePath           string
 
+	// Classic Provisioning settings
+	ClassicProvisioningDashboardsServerLockMaxIntervalSeconds int64
+	ClassicProvisioningDashboardsServerLockMinWaitMs          int64
+	ClassicProvisioningDashboardsServerLockMaxWaitMs          int64
+
 	// SMTP email settings
 	Smtp SmtpSettings
 
@@ -1221,6 +1226,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	cfg.readClassicProvisioningSettings(iniFile)
+
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
@@ -2105,6 +2112,12 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 
 	cfg.LiveAllowedOrigins = originPatterns
 	return nil
+}
+
+func (cfg *Cfg) readClassicProvisioningSettings(iniFile *ini.File) {
+	cfg.ClassicProvisioningDashboardsServerLockMinWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_min_wait_ms").MustInt64(100)
+	cfg.ClassicProvisioningDashboardsServerLockMaxWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_wait_ms").MustInt64(1000)
+	cfg.ClassicProvisioningDashboardsServerLockMaxIntervalSeconds = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_interval_seconds").MustInt64(15)
 }
 
 func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {

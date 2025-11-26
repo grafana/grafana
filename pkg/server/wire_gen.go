@@ -668,7 +668,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	azurePromMigrationService := promtypemigration.ProvideAzurePromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
 	amazonPromMigrationService := promtypemigration.ProvideAmazonPromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
 	promTypeMigrationProviderImpl := promtypemigration.ProvidePromTypeMigrationProvider(serverLockService, featureToggles, azurePromMigrationService, amazonPromMigrationService)
-	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl)
+	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl, serverLockService)
 	if err != nil {
 		return nil, err
 	}
@@ -1312,7 +1312,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	azurePromMigrationService := promtypemigration.ProvideAzurePromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
 	amazonPromMigrationService := promtypemigration.ProvideAmazonPromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
 	promTypeMigrationProviderImpl := promtypemigration.ProvidePromTypeMigrationProvider(serverLockService, featureToggles, azurePromMigrationService, amazonPromMigrationService)
-	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl)
+	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl, serverLockService)
 	if err != nil {
 		return nil, err
 	}
