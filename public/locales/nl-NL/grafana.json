@@ -2624,7 +2624,9 @@
         "placeholder-search-input": "Zoeken op naam of filterquery invoeren..."
       },
       "grafana-folder": "Grafana-map",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Gezondheid",
       "label": {
         "hide": "Verbergen",
@@ -2635,6 +2637,7 @@
       "placeholder-all-data-sources": "Alle gegevensbronnen",
       "placeholder-contact-point": "Contactpunt selecteren",
       "placeholder-data-sources": "Gegevensbronnen selecteren",
+      "placeholder-group-search": "",
       "placeholder-labels": "Labels selecteren",
       "plugin-rules": "Plug-inregels",
       "rule-source": {
@@ -6182,8 +6185,8 @@
       "placeholder-search-for": "Zoeken naar...",
       "radio-options": {
         "label": {
-          "suggestions": "Suggesties",
-          "visualizations": "Visualisaties"
+          "all-visualizations": "",
+          "suggestions": "Suggesties"
         }
       },
       "title-close": "Sluiten"
@@ -8123,8 +8126,7 @@
       "edit-pane": {
         "go-back": "Ga terug"
       }
-    },
-    "select-group": "Groep selecteren"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11050,8 +11052,8 @@
       "tooltip-delete": "Verwijderen"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "Op basis van huidige gegevens",
-      "no-results-matched-your-query": "Geen resultaten gevonden voor je query"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Kon niets vinden dat overeenkomt met je query"

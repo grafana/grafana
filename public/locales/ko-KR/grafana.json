@@ -2612,7 +2612,9 @@
         "placeholder-search-input": "이름으로 검색하거나 필터 쿼리를 입력하세요..."
       },
       "grafana-folder": "Grafana 폴더",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "상태",
       "label": {
         "hide": "숨기기",
@@ -2623,6 +2625,7 @@
       "placeholder-all-data-sources": "모든 데이터 소스",
       "placeholder-contact-point": "연락처 선택",
       "placeholder-data-sources": "데이터 소스 선택",
+      "placeholder-group-search": "",
       "placeholder-labels": "레이블 선택",
       "plugin-rules": "플러그인 규칙",
       "rule-source": {
@@ -6159,8 +6162,8 @@
       "placeholder-search-for": "검색…",
       "radio-options": {
         "label": {
-          "suggestions": "제안",
-          "visualizations": "시각화"
+          "all-visualizations": "",
+          "suggestions": "제안"
         }
       },
       "title-close": "닫기"
@@ -8097,8 +8100,7 @@
       "edit-pane": {
         "go-back": "뒤로 가기"
       }
-    },
-    "select-group": "그룹 선택"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11003,8 +11005,8 @@
       "tooltip-delete": "삭제"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "현재 데이터 기반",
-      "no-results-matched-your-query": "쿼리와 일치하는 결과가 없습니다"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"

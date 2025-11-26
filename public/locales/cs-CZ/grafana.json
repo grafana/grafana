@@ -2648,7 +2648,9 @@
         "placeholder-search-input": "Hledejte podle názvu nebo zadejte dotaz na filtr…"
       },
       "grafana-folder": "Složka Grafana",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Kondice",
       "label": {
         "hide": "Skrýt",
@@ -2659,6 +2661,7 @@
       "placeholder-all-data-sources": "Všechny zdroje dat",
       "placeholder-contact-point": "Vyberte kontaktní bod",
       "placeholder-data-sources": "Vyberte zdroje dat",
+      "placeholder-group-search": "",
       "placeholder-labels": "Vyberte štítky",
       "plugin-rules": "Pravidla pluginu",
       "rule-source": {
@@ -6228,8 +6231,8 @@
       "placeholder-search-for": "Hledat…",
       "radio-options": {
         "label": {
-          "suggestions": "Návrhy",
-          "visualizations": "Vizualizace"
+          "all-visualizations": "",
+          "suggestions": "Návrhy"
         }
       },
       "title-close": "Zavřít"
@@ -8175,8 +8178,7 @@
       "edit-pane": {
         "go-back": "Přejít zpět"
       }
-    },
-    "select-group": "Vybrat skupinu"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11144,8 +11146,8 @@
       "tooltip-delete": "Odstranit"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "Na základě současných dat",
-      "no-results-matched-your-query": "Vašemu dotazu neodpovídají žádné výsledky"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Nenašly jsme žádnou shodu s vaším dotazem"
