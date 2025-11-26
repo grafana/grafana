@@ -25,7 +25,8 @@ func NewResourcePermissionsAuthorizer(accessClient types.AccessClient) *Resource
 	}
 }
 
-// TODO: Implement this will be needed for checking parent folder permissions
+// TODO: This will be needed for checking parent folder permissions
+//       But this will probably require some configuration files to map groupResource to api urls and versions
 // func (r *ResourcePermissionsAuthorizer) client(ctx context.Context, namespace string, gr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
 // 	restConfig, err := r.configProvider(ctx)
 // 	if err != nil {
