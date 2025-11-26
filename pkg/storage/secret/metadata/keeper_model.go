@@ -280,3 +280,18 @@ func extractSecureValues(kp *secretv1beta1.Keeper) map[string]struct{} {
 
 	return nil
 }
+
+func getKeeperConfig(keeper *secretv1beta1.Keeper) secretv1beta1.KeeperConfig {
+	switch keeper.Spec.GetType() {
+	case secretv1beta1.AWSKeeperType:
+		return keeper.Spec.Aws
+	case secretv1beta1.AzureKeeperType:
+		return keeper.Spec.Azure
+	case secretv1beta1.GCPKeeperType:
+		return keeper.Spec.Gcp
+	case secretv1beta1.HashiCorpKeeperType:
+		return keeper.Spec.HashiCorpVault
+	default:
+		return nil
+	}
+}

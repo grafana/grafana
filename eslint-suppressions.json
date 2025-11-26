@@ -1955,11 +1955,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2076,9 +2071,6 @@
     }
   },
   "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    },
     "react-hooks/rules-of-hooks": {
       "count": 4
     }
@@ -3704,16 +3696,6 @@
   "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.tsx": {
     "no-restricted-syntax": {
       "count": 7
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/types/query.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/types/templateVariables.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/azuremonitor/utils/common.ts": {
