@@ -810,7 +810,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	searchAPIRoutes := b.search.GetAPIRoutes(defs)
-	snapshotAPIRoutes := snapshot.GetDeleteRoutes(b.snapshotService, defs)
+	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, defs)
 
 	return &builder.APIRoutes{
 		Namespace: append(searchAPIRoutes.Namespace, snapshotAPIRoutes.Namespace...),
