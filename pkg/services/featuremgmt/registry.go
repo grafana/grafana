@@ -1927,13 +1927,6 @@ var (
 			HideFromDocs:    false,
 		},
 		{
-			Name:         "dashboardTemplates",
-			Description:  "Enable template dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSharingSquad,
-			FrontendOnly: false,
-		},
-		{
 			Name:        "kubernetesAnnotations",
 			Description: "Enables app platform API for annotations",
 			Stage:       FeatureStageExperimental,
