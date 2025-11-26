@@ -43,10 +43,10 @@ func TestIntegrationPluginMeta(t *testing.T) {
 		}, &pluginsv0alpha1.PluginMeta{})
 
 		require.NotNil(t, response.Result)
-		require.NotNil(t, response.Result.Spec.PluginJSON)
-		require.Equal(t, "grafana-piechart-panel", response.Result.Spec.PluginJSON.Id)
-		require.NotEmpty(t, response.Result.Spec.PluginJSON.Name)
-		require.NotEmpty(t, response.Result.Spec.PluginJSON.Type)
+		require.NotNil(t, response.Result.Spec.PluginJson)
+		require.Equal(t, "grafana-piechart-panel", response.Result.Spec.PluginJson.Id)
+		require.NotEmpty(t, response.Result.Spec.PluginJson.Name)
+		require.NotEmpty(t, response.Result.Spec.PluginJson.Type)
 	})
 
 	t.Run("get plugin meta for non-existent plugin", func(t *testing.T) {

@@ -23,7 +23,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider := NewCoreProvider()
 
 		expectedSpec := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
@@ -61,7 +61,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider := NewCoreProvider()
 
 		expectedSpec := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
@@ -86,7 +86,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider := NewCoreProviderWithTTL(customTTL)
 
 		expectedSpec := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
@@ -232,8 +232,8 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		if loaded {
 			result, err := provider.GetMeta(ctx, "test-datasource", "1.0.0")
 			require.NoError(t, err)
-			assert.Equal(t, "test-datasource", result.Meta.PluginJSON.Id)
-			assert.Equal(t, "Test Datasource", result.Meta.PluginJSON.Name)
+			assert.Equal(t, "test-datasource", result.Meta.PluginJson.Id)
+			assert.Equal(t, "Test Datasource", result.Meta.PluginJson.Name)
 		}
 	})
 }

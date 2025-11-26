@@ -36,7 +36,7 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 	t.Run("returns cached result when available and not expired", func(t *testing.T) {
 		cachedMeta := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
@@ -63,7 +63,7 @@ func TestProviderManager_GetMeta(t *testing.T) {
 		provider.getMetaFunc = func(ctx context.Context, pluginID, version string) (*Result, error) {
 			return &Result{
 				Meta: pluginsv0alpha1.PluginMetaSpec{
-					PluginJSON: pluginsv0alpha1.PluginMetaJSONData{Id: "different"},
+					PluginJson: pluginsv0alpha1.PluginMetaJSONData{Id: "different"},
 				},
 				TTL: time.Hour,
 			}, nil
@@ -78,7 +78,7 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 	t.Run("fetches from provider when not cached", func(t *testing.T) {
 		expectedMeta := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
@@ -115,14 +115,14 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 	t.Run("does not cache result with zero TTL and tries next provider", func(t *testing.T) {
 		zeroTTLMeta := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Zero TTL Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
 			},
 		}
 		expectedMeta := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
@@ -165,7 +165,7 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 	t.Run("tries next provider when first returns ErrMetaNotFound", func(t *testing.T) {
 		expectedMeta := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
@@ -242,14 +242,14 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 	t.Run("skips expired cache entries", func(t *testing.T) {
 		expiredMeta := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Expired Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
 			},
 		}
 		expectedMeta := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Test Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
@@ -289,14 +289,14 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 	t.Run("uses first successful provider", func(t *testing.T) {
 		expectedMeta1 := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Provider 1 Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
 			},
 		}
 		expectedMeta2 := pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
 				Name: "Provider 2 Plugin",
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
@@ -351,9 +351,9 @@ func TestProviderManager_Run(t *testing.T) {
 
 func TestProviderManager_cleanupExpired(t *testing.T) {
 	t.Run("removes expired entries", func(t *testing.T) {
-		validMeta := pluginsv0alpha1.PluginMetaSpec{PluginJSON: pluginsv0alpha1.PluginMetaJSONData{Id: "valid"}}
-		expiredMeta1 := pluginsv0alpha1.PluginMetaSpec{PluginJSON: pluginsv0alpha1.PluginMetaJSONData{Id: "expired1"}}
-		expiredMeta2 := pluginsv0alpha1.PluginMetaSpec{PluginJSON: pluginsv0alpha1.PluginMetaJSONData{Id: "expired2"}}
+		validMeta := pluginsv0alpha1.PluginMetaSpec{PluginJson: pluginsv0alpha1.PluginMetaJSONData{Id: "valid"}}
+		expiredMeta1 := pluginsv0alpha1.PluginMetaSpec{PluginJson: pluginsv0alpha1.PluginMetaJSONData{Id: "expired1"}}
+		expiredMeta2 := pluginsv0alpha1.PluginMetaSpec{PluginJson: pluginsv0alpha1.PluginMetaJSONData{Id: "expired2"}}
 
 		provider := &mockProvider{
 			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
