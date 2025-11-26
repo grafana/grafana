@@ -9,7 +9,7 @@ export interface SelectedScope {
   scopeId: string;
   scopeNodeId?: string;
   // @deprecated Used to display title next to selected scope. scopeNodeId is used to resolve this anyways. Remove if we can confirm it doesn't break anything.
-  parentNodeId?: string;
+  //parentNodeId?: string;
 }
 
 export interface TreeNode {

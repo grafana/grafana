@@ -289,7 +289,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     const selectedScope = {
       scopeId: scopeNode.spec.linkId,
       scopeNodeId: scopeNode.metadata.name,
-      parentNodeId: parentNode?.metadata.name,
     };
 
     // if something is selected we look at parent and see if we are selecting in the same category or not. As we
@@ -342,13 +341,12 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return this.collapseNode(scopeNodeId);
   };
 
-  changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string, redirectOnApply?: boolean) => {
+  changeScopes = (scopeNames: string[], scopeNodeId?: string, redirectOnApply?: boolean) => {
     return this.applyScopes(
       scopeNames.map((id, index) => ({
         scopeId: id,
         // Only the first scope gets the scopeNodeId
         scopeNodeId: index === 0 ? scopeNodeId : undefined,
-        parentNodeId,
       })),
       redirectOnApply
     );
@@ -391,10 +389,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
 
-      // If parentNodeId is provided, use it directly as the parent node
       // If not provided, try to get the parent from the scope node
       // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
-      const parentNodeId = scopes[0]?.parentNodeId || scopeNode?.spec.parentName;
+      const parentNodeId = scopeNode?.spec.parentName;
       const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
 
       this.addRecentScopes(fetchedScopes, parentNode);

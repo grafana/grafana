@@ -237,5 +237,99 @@ describe('scopesTreeUtils', () => {
       expect(newTree.children?.child1.expanded).toBe(false);
       expect(newTree.children?.child1.children?.grandchild1.expanded).toBe(false);
     });
+
+    it('should set childrenLoaded to false for newly inserted nodes', () => {
+      const tree: TreeNode = {
+        expanded: false,
+        scopeNodeId: 'root',
+        query: '',
+        children: {},
+      };
+
+      const path: ScopeNode[] = [
+        {
+          metadata: { name: 'child1' },
+          spec: {
+            parentName: 'root',
+            nodeType: 'container',
+            title: 'Child 1',
+          },
+        },
+        {
+          metadata: { name: 'grandchild1' },
+          spec: {
+            parentName: 'child1',
+            nodeType: 'container',
+            title: 'Grandchild 1',
+          },
+        },
+      ];
+
+      const newTree = insertPathNodesIntoTree(tree, path);
+
+      // Root should have childrenLoaded set to true (at the end of insertPathNodesIntoTree)
+      expect(newTree.childrenLoaded).toBe(true);
+
+      // Newly inserted nodes should have childrenLoaded set to false
+      expect(newTree.children?.child1.childrenLoaded).toBe(false);
+      expect(newTree.children?.child1.children?.grandchild1.childrenLoaded).toBe(false);
+    });
+
+    it('should preserve existing children when inserting path', () => {
+      const tree: TreeNode = {
+        expanded: true,
+        scopeNodeId: 'root',
+        query: '',
+        children: {
+          existingChild: {
+            expanded: false,
+            scopeNodeId: 'existingChild',
+            query: '',
+            childrenLoaded: true,
+          },
+        },
+      };
+
+      const path: ScopeNode[] = [
+        {
+          metadata: { name: 'newChild' },
+          spec: {
+            parentName: 'root',
+            nodeType: 'container',
+            title: 'New Child',
+          },
+        },
+      ];
+
+      const newTree = insertPathNodesIntoTree(tree, path);
+
+      // Existing child should still be there
+      expect(newTree.children?.existingChild).toBeDefined();
+      expect(newTree.children?.existingChild.childrenLoaded).toBe(true);
+
+      // New child should be added
+      expect(newTree.children?.newChild).toBeDefined();
+      expect(newTree.children?.newChild.childrenLoaded).toBe(false);
+
+      // Root should have childrenLoaded set to true
+      expect(newTree.childrenLoaded).toBe(true);
+    });
+
+    it('should handle empty path', () => {
+      const tree: TreeNode = {
+        expanded: false,
+        scopeNodeId: 'root',
+        query: '',
+        children: {},
+      };
+
+      const path: ScopeNode[] = [];
+
+      const newTree = insertPathNodesIntoTree(tree, path);
+
+      // Tree should remain unchanged except for childrenLoaded
+      expect(newTree.scopeNodeId).toBe('root');
+      expect(newTree.childrenLoaded).toBe(true);
+    });
   });
 });
