@@ -223,6 +223,8 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
+    // Clear any initial calls (e.g., from defaultDisplayedFields)
+    onLogOptionsChange.mockClear();
     await userEvent.click(screen.getByLabelText(OLDEST_LOGS_LABEL_REGEX));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('sortOrder', LogsSortOrder.Descending);
@@ -235,6 +237,8 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
+    // Clear any initial calls (e.g., from defaultDisplayedFields)
+    onLogOptionsChange.mockClear();
     await userEvent.click(screen.getByLabelText(DEDUPE_LABEL_COPY));
     await userEvent.click(screen.getByText('Numbers'));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
@@ -286,6 +290,8 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
+    // Clear any initial calls (e.g., from defaultDisplayedFields)
+    onLogOptionsChange.mockClear();
     await userEvent.click(screen.getByLabelText(SHOW_TIMESTAMP_LABEL_COPY));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('showTime', true);
@@ -298,6 +304,8 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
+    // Clear any initial calls (e.g., from defaultDisplayedFields)
+    onLogOptionsChange.mockClear();
     await userEvent.click(screen.getByLabelText(WRAP_LINES_LABEL_COPY));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
@@ -318,6 +326,8 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
+    // Clear any initial calls (e.g., from defaultDisplayedFields)
+    onLogOptionsChange.mockClear();
 
     await userEvent.click(screen.getByLabelText('Wrap disabled'));
     await userEvent.click(screen.getByText('Enable line wrapping'));
@@ -353,6 +363,8 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
+    // Clear any initial calls (e.g., from defaultDisplayedFields)
+    onLogOptionsChange.mockClear();
 
     await userEvent.click(screen.getByLabelText(TIMESTAMP_LABEL_COPY));
     await userEvent.click(screen.getByText('Show millisecond timestamps'));
@@ -381,6 +393,8 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
+    // Clear any initial calls (e.g., from defaultDisplayedFields)
+    onLogOptionsChange.mockClear();
     await userEvent.click(screen.getByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('syntaxHighlighting', true);

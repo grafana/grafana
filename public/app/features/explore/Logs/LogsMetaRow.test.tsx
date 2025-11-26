@@ -48,7 +48,7 @@ describe('LogsMetaRow', () => {
   });
 
   it('renders the show original line button', () => {
-    setup({ displayedFields: ['test'] });
+    setup({ displayedFields: ['test'], defaultDisplayedFields: ['Time', 'detected_level', '___LOG_LINE_BODY___'] });
     expect(
       screen.getByRole('button', {
         name: 'Show original line',
@@ -66,13 +66,20 @@ describe('LogsMetaRow', () => {
   });
 
   it('renders the displayed fields', async () => {
-    setup({ displayedFields: ['testField1234'] });
+    setup({
+      displayedFields: ['testField1234'],
+      defaultDisplayedFields: ['Time', 'detected_level', '___LOG_LINE_BODY___'],
+    });
     expect(await screen.findByText('testField1234')).toBeInTheDocument();
   });
 
   it('renders a button to clear displayedfields', () => {
     const clearSpy = jest.fn();
-    setup({ displayedFields: ['testField1234'], clearDisplayedFields: clearSpy });
+    setup({
+      displayedFields: ['testField1234'],
+      defaultDisplayedFields: ['Time', 'detected_level', '___LOG_LINE_BODY___'],
+      clearDisplayedFields: clearSpy,
+    });
     fireEvent(
       screen.getByRole('button', {
         name: 'Show original line',

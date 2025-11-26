@@ -30,7 +30,6 @@ import {
   serializeStateToUrlParam,
   urlUtil,
   LogLevel,
-  shallowCompare,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -47,10 +46,12 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
+import { LOG_LINE_BODY_FIELD_NAME, TABLE_LINE_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
@@ -74,6 +75,7 @@ import {
 } from '../ContentOutline/ContentOutlineAnalyticEvents';
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
+import { parseURL } from '../hooks/useStateSync/parseURL';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
@@ -200,8 +202,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
-  const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
   const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
+  // Use Redux state as single source of truth
+  const displayedFields = useMemo(() => panelState?.logs?.displayedFields ?? [], [panelState?.logs?.displayedFields]);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
@@ -211,6 +214,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
   const previousLoading = usePrevious(loading);
+  const { location } = useGrafana();
 
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
   const { register, unregister, outlineItems, updateItem } = useContentOutlineContext() ?? {};
@@ -287,16 +291,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   useUnmount(() => {
     // If we're unmounting logs (e.g. switching to another datasource), we need to remove the logs specific panel state, otherwise it will persist in the explore url
-    if (
-      panelState?.logs?.columns ||
-      panelState?.logs?.refId ||
-      panelState?.logs?.labelFieldName ||
-      panelState?.logs?.displayedFields
-    ) {
+    if (panelState?.logs?.refId || panelState?.logs?.labelFieldName || panelState?.logs?.displayedFields) {
       dispatch(
         changePanelState(exploreId, 'logs', {
           ...panelState?.logs,
-          columns: undefined,
           visualisationType: visualisationType,
           labelFieldName: undefined,
           refId: undefined,
@@ -313,7 +311,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         dispatch(
           changePanelState(exploreId, 'logs', {
             ...state.panelsState.logs,
-            columns: logsPanelState.columns ?? panelState?.logs?.columns,
             visualisationType: logsPanelState.visualisationType ?? visualisationType,
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
@@ -322,24 +319,125 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         );
       }
     },
-    [
-      dispatch,
-      exploreId,
-      panelState?.logs?.columns,
-      panelState?.logs?.displayedFields,
-      panelState?.logs?.refId,
-      visualisationType,
-    ]
+    [dispatch, exploreId, panelState?.logs?.refId, visualisationType, panelState?.logs?.displayedFields]
   );
 
+  // Migration: Convert legacy 'columns' parameter from URL to 'displayedFields'
   useEffect(() => {
-    if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
-      updatePanelState({
-        ...panelState?.logs,
-        displayedFields,
-      });
+    // Parse URL to check for legacy columns
+    const urlParams = location.getSearchObject();
+    const [urlState] = parseURL(urlParams);
+    const urlPane = urlState.panes[exploreId];
+
+    if (!urlPane?.panelsState?.logs) {
+      return;
     }
-  }, [displayedFields, panelState?.logs, updatePanelState]);
+
+    // Check for legacy columns in URL panelsState
+    const logsState = urlPane.panelsState.logs;
+    const hasColumns = 'columns' in logsState;
+    if (!hasColumns) {
+      return;
+    }
+
+    // Use Object.getOwnPropertyDescriptor to safely access the property
+    const columnsDescriptor = Object.getOwnPropertyDescriptor(logsState, 'columns');
+    const columnsValue = columnsDescriptor?.value;
+
+    // Type guard to validate columns format
+    let legacyColumns: Record<string, string> | string[] | undefined = undefined;
+    if (Array.isArray(columnsValue)) {
+      legacyColumns = columnsValue;
+    } else if (typeof columnsValue === 'object' && columnsValue !== null && !Array.isArray(columnsValue)) {
+      const values = Object.values(columnsValue);
+      if (values.length > 0 && values.every((v) => typeof v === 'string')) {
+        // Create a new object to avoid type assertion
+        const record: Record<string, string> = {};
+        for (const [key, value] of Object.entries(columnsValue)) {
+          if (typeof value === 'string') {
+            record[key] = value;
+          }
+        }
+        legacyColumns = record;
+      }
+    }
+
+    if (!legacyColumns) {
+      return;
+    }
+
+    // Convert columns to array format
+    let columnsArray: string[] = [];
+    if (Array.isArray(legacyColumns)) {
+      columnsArray = legacyColumns;
+    } else if (typeof legacyColumns === 'object' && legacyColumns !== null) {
+      // Handle object format like {0: 'Time', 1: 'Line'}
+      columnsArray = Object.values(legacyColumns);
+    }
+
+    // Map legacy field names to new field names
+    const mappedColumns = columnsArray.map((column) => {
+      // Map 'Line' to LOG_LINE_BODY_FIELD_NAME
+      if (column === TABLE_LINE_FIELD_NAME) {
+        return LOG_LINE_BODY_FIELD_NAME;
+      }
+      // Other fields like 'Time' stay the same
+      return column;
+    });
+
+    // Merge with defaultDisplayedFields: defaults first, then migrated columns (avoid duplicates)
+    const mergedFields: string[] = [...defaultDisplayedFields];
+    mappedColumns.forEach((column) => {
+      if (!mergedFields.includes(column)) {
+        mergedFields.push(column);
+      }
+    });
+
+    // Update displayedFields in state
+    const state: ExploreItemState | undefined = getState().explore.panes[exploreId];
+    if (state?.panelsState?.logs) {
+      // Create new logs state without columns property
+      // Explicitly exclude 'columns' by copying only the properties we want
+      const logsState = state.panelsState.logs;
+      const newLogsState: ExploreLogsPanelState = {
+        visualisationType: logsState.visualisationType,
+        displayedFields: mergedFields,
+        ...(logsState.labelFieldName && { labelFieldName: logsState.labelFieldName }),
+        ...(logsState.refId && { refId: logsState.refId }),
+        ...(logsState.id && { id: logsState.id }),
+      };
+
+      dispatch(changePanelState(exploreId, 'logs', newLogsState));
+
+      // Remove columns from URL by re-serializing all panes
+      // Use the updated state we just created (without columns) instead of reading from Redux
+      const allPanes = getState().explore.panes;
+      const panesObj = Object.entries(allPanes).reduce((acc, [id, paneState]) => {
+        if (!paneState) {
+          return acc;
+        }
+        // For the current exploreId, use the updated state without columns
+        let stateToSerialize = paneState;
+        if (id === exploreId) {
+          // Create updated pane state with the new logs state (without columns)
+          stateToSerialize = {
+            ...paneState,
+            panelsState: {
+              ...paneState.panelsState,
+              logs: newLogsState,
+            },
+          };
+        }
+        return {
+          ...acc,
+          [id]: getUrlStateFromPaneState(stateToSerialize),
+        };
+      }, {});
+
+      // Update URL - columns will be excluded since it's not in the type definition
+      location.partial({ panes: JSON.stringify(panesObj) }, false);
+    }
+  }, [exploreId, displayedFields, defaultDisplayedFields, dispatch, location]);
 
   // actions
   const onLogRowHover = useCallback(
@@ -522,30 +620,48 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const showField = useCallback(
     (key: string) => {
-      const index = displayedFields.indexOf(key);
+      const currentFields = panelState?.logs?.displayedFields ?? [];
+      const index = currentFields.indexOf(key);
 
       if (index === -1) {
-        const updatedDisplayedFields = displayedFields.concat(key);
-        setDisplayedFields(updatedDisplayedFields);
+        const updatedDisplayedFields = currentFields.concat(key);
+        updatePanelState({
+          displayedFields: updatedDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [panelState?.logs?.displayedFields, updatePanelState]
   );
 
   const hideField = useCallback(
     (key: string) => {
-      const index = displayedFields.indexOf(key);
+      const currentFields = panelState?.logs?.displayedFields ?? [];
+      const index = currentFields.indexOf(key);
       if (index > -1) {
-        const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
-        setDisplayedFields(updatedDisplayedFields);
+        const updatedDisplayedFields = currentFields.filter((k) => key !== k);
+        updatePanelState({
+          displayedFields: updatedDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [panelState?.logs?.displayedFields, updatePanelState]
   );
 
   const clearDisplayedFields = useCallback(() => {
-    setDisplayedFields([]);
-  }, []);
+    updatePanelState({
+      displayedFields: [],
+    });
+  }, [updatePanelState]);
+
+  // Wrapper function for setDisplayedFields prop - updates Redux directly
+  const setDisplayedFields = useCallback(
+    (fields: string[]) => {
+      updatePanelState({
+        displayedFields: fields,
+      });
+    },
+    [updatePanelState]
+  );
 
   const onCloseCallbackRef = useRef<() => void>(() => {});
 

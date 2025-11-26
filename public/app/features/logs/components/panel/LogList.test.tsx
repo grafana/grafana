@@ -15,7 +15,7 @@ import {
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME, TABLE_TIME_FIELD_NAME, TABLE_DETECTED_LEVEL_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine, createLogRow } from '../mocks/logRow';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/formats';
 
@@ -125,12 +125,32 @@ describe('LogList', () => {
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
+      const logsWithDetectedLevel = [
+        createLogRow({ uid: '1', labels: { [TABLE_DETECTED_LEVEL_FIELD_NAME]: 'info' } }),
+        createLogRow({ uid: '2', labels: { [TABLE_DETECTED_LEVEL_FIELD_NAME]: 'debug' } }),
+      ];
+
       render(
-        <LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} setDisplayedFields={setDisplayedFields} />
+        <LogList
+          {...defaultProps}
+          logs={logsWithDetectedLevel}
+          onLogOptionsChange={onLogOptionsChange}
+          setDisplayedFields={setDisplayedFields}
+        />
       );
       expect(screen.getByText('log message 1')).toBeInTheDocument();
-      expect(onLogOptionsChange).not.toHaveBeenCalled();
-      expect(setDisplayedFields).not.toHaveBeenCalled();
+      // Even when OTel is disabled, we still report table defaults
+      expect(onLogOptionsChange).toHaveBeenCalledWith('defaultDisplayedFields', [
+        TABLE_TIME_FIELD_NAME,
+        TABLE_DETECTED_LEVEL_FIELD_NAME,
+        LOG_LINE_BODY_FIELD_NAME,
+      ]);
+      // setDisplayedFields is called with the default fields
+      expect(setDisplayedFields).toHaveBeenCalledWith([
+        TABLE_TIME_FIELD_NAME,
+        TABLE_DETECTED_LEVEL_FIELD_NAME,
+        LOG_LINE_BODY_FIELD_NAME,
+      ]);
 
       config.featureToggles.otelLogsFormatting = originalState;
     });
@@ -140,14 +160,33 @@ describe('LogList', () => {
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
+      const logsWithDetectedLevel = [
+        createLogRow({ uid: '1', labels: { [TABLE_DETECTED_LEVEL_FIELD_NAME]: 'info' } }),
+        createLogRow({ uid: '2', labels: { [TABLE_DETECTED_LEVEL_FIELD_NAME]: 'debug' } }),
+      ];
+
       render(
-        <LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} setDisplayedFields={setDisplayedFields} />
+        <LogList
+          {...defaultProps}
+          logs={logsWithDetectedLevel}
+          onLogOptionsChange={onLogOptionsChange}
+          setDisplayedFields={setDisplayedFields}
+        />
       );
       expect(screen.getByText('log message 1')).toBeInTheDocument();
-      expect(onLogOptionsChange).toHaveBeenCalledWith('defaultDisplayedFields', []);
+      // For non-OTel logs, we report table defaults only (no OTel attributes field)
+      expect(onLogOptionsChange).toHaveBeenCalledWith('defaultDisplayedFields', [
+        TABLE_TIME_FIELD_NAME,
+        TABLE_DETECTED_LEVEL_FIELD_NAME,
+        LOG_LINE_BODY_FIELD_NAME,
+      ]);
 
-      // No fields to display, no call
-      expect(setDisplayedFields).not.toHaveBeenCalled();
+      // setDisplayedFields is called with the default fields
+      expect(setDisplayedFields).toHaveBeenCalledWith([
+        TABLE_TIME_FIELD_NAME,
+        TABLE_DETECTED_LEVEL_FIELD_NAME,
+        LOG_LINE_BODY_FIELD_NAME,
+      ]);
 
       config.featureToggles.otelLogsFormatting = originalState;
     });
@@ -157,7 +196,12 @@ describe('LogList', () => {
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
-      const logs = [createLogRow({ uid: '1', labels: { [OTEL_PROBE_FIELD]: '1' } })];
+      const logs = [
+        createLogRow({
+          uid: '1',
+          labels: { [OTEL_PROBE_FIELD]: '1', [TABLE_DETECTED_LEVEL_FIELD_NAME]: 'info' },
+        }),
+      ];
 
       render(
         <LogList
@@ -168,11 +212,19 @@ describe('LogList', () => {
         />
       );
       expect(screen.getByText('log message 1')).toBeInTheDocument();
+      // For OTel logs, we report table defaults + OTel fields
       expect(onLogOptionsChange).toHaveBeenCalledWith('defaultDisplayedFields', [
+        TABLE_TIME_FIELD_NAME,
+        TABLE_DETECTED_LEVEL_FIELD_NAME,
         LOG_LINE_BODY_FIELD_NAME,
         OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
       ]);
-      expect(setDisplayedFields).toHaveBeenCalledWith([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
+      expect(setDisplayedFields).toHaveBeenCalledWith([
+        TABLE_TIME_FIELD_NAME,
+        TABLE_DETECTED_LEVEL_FIELD_NAME,
+        LOG_LINE_BODY_FIELD_NAME,
+        OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
+      ]);
 
       config.featureToggles.otelLogsFormatting = originalState;
     });
