@@ -5,11 +5,11 @@ import { config } from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
 import * as ui from '@grafana/ui';
 
+import { AzureQueryType, ResultFormat } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 import createMockDatasource from '../../mocks/datasource';
 import { invalidNamespaceError } from '../../mocks/errors';
 import createMockQuery from '../../mocks/query';
-import { AzureQueryType, ResultFormat } from '../../types/query';
 import { selectOptionInTest } from '../../utils/testUtils';
 import { createMockResourcePickerData } from '../LogsQueryEditor/mocks';
 

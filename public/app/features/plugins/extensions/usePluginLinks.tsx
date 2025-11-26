@@ -1,11 +1,10 @@
 import { isString } from 'lodash';
 import { useMemo } from 'react';
-import { useObservable } from 'react-use';
 
 import { PluginExtensionLink, PluginExtensionTypes, usePluginContext } from '@grafana/data';
 import { UsePluginLinksOptions, UsePluginLinksResult } from '@grafana/runtime';
 
-import { useAddedLinksRegistry } from './ExtensionRegistriesContext';
+import { useAddedLinksRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import {
   generateExtensionId,
@@ -23,9 +22,8 @@ export function usePluginLinks({
   extensionPointId,
   context,
 }: UsePluginLinksOptions): UsePluginLinksResult {
-  const registry = useAddedLinksRegistry();
+  const registryItems = useAddedLinksRegistrySlice(extensionPointId);
   const pluginContext = usePluginContext();
-  const registryState = useObservable(registry.asObservable());
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
@@ -46,7 +44,7 @@ export function usePluginLinks({
     const extensions: PluginExtensionLink[] = [];
     const extensionsByPlugin: Record<string, number> = {};
 
-    for (const addedLink of registryState?.[extensionPointId] ?? []) {
+    for (const addedLink of registryItems ?? []) {
       const { pluginId } = addedLink;
       const linkLog = pointLog.child({
         path: addedLink.path ?? '',
@@ -96,5 +94,5 @@ export function usePluginLinks({
       isLoading: false,
       links: extensions,
     };
-  }, [context, extensionPointId, limitPerPlugin, registryState, pluginContext, isLoadingAppPlugins]);
+  }, [context, extensionPointId, limitPerPlugin, registryItems, pluginContext, isLoadingAppPlugins]);
 }

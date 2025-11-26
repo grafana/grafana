@@ -282,5 +282,5 @@ Team membership maintenance:
 ## Next steps
 
 - [Troubleshoot SCIM provisioning](../troubleshooting/)
-- [Configure SCIM with Entra ID](../configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](../configure-scim-with-entraid/)
 - [Configure SCIM with Okta](../configure-scim-with-okta/)
