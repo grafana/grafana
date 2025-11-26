@@ -136,6 +136,10 @@ func TestIntegrationServer(t *testing.T) {
 	t.Run("test query folders", func(t *testing.T) {
 		testQueryFolders(t, srv)
 	})
+
+	t.Run("test mutate role bindings", func(t *testing.T) {
+		testMutateRoleBindings(t, srv)
+	})
 }
 
 func setupOpenFGAServer(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
