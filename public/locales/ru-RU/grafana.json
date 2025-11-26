@@ -2648,7 +2648,9 @@
         "placeholder-search-input": "Выполните поиск по имени или введите запрос фильтра..."
       },
       "grafana-folder": "Папка Grafana",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Работоспособность",
       "label": {
         "hide": "Скрыть",
@@ -2659,6 +2661,7 @@
       "placeholder-all-data-sources": "Все источники данных",
       "placeholder-contact-point": "Выбрать точку контакта",
       "placeholder-data-sources": "Выбрать источники данных",
+      "placeholder-group-search": "",
       "placeholder-labels": "Выбрать метки",
       "plugin-rules": "Правила плагинов",
       "rule-source": {
@@ -6228,8 +6231,8 @@
       "placeholder-search-for": "Поиск...",
       "radio-options": {
         "label": {
-          "suggestions": "Предложения",
-          "visualizations": "Визуализации"
+          "all-visualizations": "",
+          "suggestions": "Предложения"
         }
       },
       "title-close": "Закрыть"
@@ -8175,8 +8178,7 @@
       "edit-pane": {
         "go-back": "Назад"
       }
-    },
-    "select-group": "Выбрать группу"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11144,8 +11146,8 @@
       "tooltip-delete": "Удалить"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "На основе текущих данных",
-      "no-results-matched-your-query": "По вашему запросу ничего не найдено"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Не удалось найти данные, соответствующие вашему запросу"
