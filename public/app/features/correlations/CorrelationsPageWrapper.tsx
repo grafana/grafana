@@ -17,6 +17,8 @@ export default function CorrelationsPageWrapper() {
         : [];
     };
 
+    console.log(currentData?.metadata.remainingItemCount);
+
     // we cant do a straight refetch, we have to pass in new pages if necessary
     const enhRefetch = (params: GetCorrelationsParams): Promise<CorrelationsData> => {
       return new Promise(() => enrichedCorrelations(currentData));
