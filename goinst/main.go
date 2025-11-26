@@ -60,6 +60,9 @@ func main() {
 
 func printAsm(elapsed time.Duration) {
 	logger.Println("==========Asm=========")
+	logger.Println("")
+	logger.Println("   args: %v", os.Args)
+	logger.Println("")
 	logger.Printf("   tool: %s", Asm)
 	logger.Printf("   package: %s", os.Args[len(os.Args)-1])
 	logger.Printf("   elapsed: %s", elapsed)
@@ -69,6 +72,9 @@ func printAsm(elapsed time.Duration) {
 
 func printCompile(elapsed time.Duration) {
 	logger.Println("========Compile=======")
+	logger.Println("")
+	logger.Println("   args: %v", os.Args)
+	logger.Println("")
 	logger.Printf("   tool: %s", Compile)
 	logger.Printf("   package: %s", getPackage(os.Args))
 	logger.Printf("   elapsed: %s", elapsed)
@@ -78,6 +84,9 @@ func printCompile(elapsed time.Duration) {
 
 func printLink(elapsed time.Duration) {
 	logger.Println("========LINK========")
+	logger.Println("")
+	logger.Println("   args: %v", os.Args)
+	logger.Println("")
 	logger.Printf("   tool: %s", Link)
 	logger.Printf("   package: %s", os.Args[len(os.Args)-1])
 	logger.Printf("   elapsed: %s", elapsed)
