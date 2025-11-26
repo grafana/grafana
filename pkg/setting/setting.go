@@ -137,20 +137,21 @@ type Cfg struct {
 	// Grafana API Server
 	DisableControllers bool
 	// Provisioning config
-	ProvisioningAllowedTargets      []string
-	ProvisioningAllowImageRendering bool
-	ProvisioningMinSyncInterval     time.Duration
-	ProvisioningRepositoryTypes     []string
-	ProvisioningLokiURL             string
-	ProvisioningLokiUser            string
-	ProvisioningLokiPassword        string
-	ProvisioningLokiTenantID        string
-	ProvisioningServerLockMinWaitMs int64
-	ProvisioningServerLockMaxWaitMs int64
-	DataPath                        string
-	LogsPath                        string
-	PluginsPath                     string
-	EnterpriseLicensePath           string
+	ProvisioningAllowedTargets               []string
+	ProvisioningAllowImageRendering          bool
+	ProvisioningMinSyncInterval              time.Duration
+	ProvisioningRepositoryTypes              []string
+	ProvisioningLokiURL                      string
+	ProvisioningLokiUser                     string
+	ProvisioningLokiPassword                 string
+	ProvisioningLokiTenantID                 string
+	ProvisioningServerLockMaxIntervalSeconds int64
+	ProvisioningServerLockMinWaitMs          int64
+	ProvisioningServerLockMaxWaitMs          int64
+	DataPath                                 string
+	LogsPath                                 string
+	PluginsPath                              string
+	EnterpriseLicensePath                    string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -2159,6 +2160,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 
 	cfg.ProvisioningServerLockMinWaitMs = iniFile.Section("provisioning").Key("server_lock_min_wait_ms").MustInt64(100)
 	cfg.ProvisioningServerLockMaxWaitMs = iniFile.Section("provisioning").Key("server_lock_max_wait_ms").MustInt64(1000)
+	cfg.ProvisioningServerLockMaxIntervalSeconds = iniFile.Section("provisioning").Key("server_lock_max_interval_seconds").MustInt64(15)
 
 	return nil
 }
