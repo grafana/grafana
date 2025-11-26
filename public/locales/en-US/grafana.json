@@ -7183,7 +7183,7 @@
       "step2-body": "After clicking a correlation link, the <strong>right pane</strong> (target) opens with a query editor. Build and test your query here.",
       "step2-title": "Step 2: Build Your Target Query",
       "step2-variables": "Available variables are shown in the \"Variables\" section below. You can also create custom variables by extracting parts of fields using regular expressions or logfmt.",
-      "step3-body": "Once your query works correctly, click the <strong>Save</strong> button . Give your correlation a name and optionally add a description.",
+      "step3-body": "Once your query works correctly, click the <strong>Save</strong> button. Give your correlation a name and optionally add a description.",
       "step3-result": "After saving, this correlation link will appear for all users in the same field across all queries from your source data source!",
       "step3-title": "Step 3: Save Your Correlation",
       "welcome-body": "The Correlation Editor helps you create clickable links between different data sources in Grafana. This makes it easy to jump from one view to another with context preserved.",
