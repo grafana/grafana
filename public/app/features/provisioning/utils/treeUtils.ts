@@ -25,6 +25,9 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
   }
 
   for (const resource of resources) {
+    if (!resource.path) {
+      continue;
+    }
     const existing = merged.get(resource.path);
     if (existing) {
       existing.resource = resource;
