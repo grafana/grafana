@@ -344,6 +344,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		if err != nil {
 			return err
 		}
+		if enableZanzanaSync {
+			b.logger.Info("Enabling hooks for RoleBinding to sync to Zanzana")
+		}
 		storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
