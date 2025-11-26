@@ -668,13 +668,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:        "onPremToCloudMigrations",
-			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "secretsManagementAppPlatform",
 			Description: "Enable the secrets management API and services under app platform",
 			Stage:       FeatureStageExperimental,
@@ -1592,6 +1585,13 @@ var (
 		{
 			Name:         "kubernetesAuthnMutation",
 			Description:  "Enables create, delete, and update mutations for resources owned by IAM identity",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "kubernetesExternalGroupMapping",
+			Description:  "Routes external group mapping requests from /api to the /apis endpoint",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

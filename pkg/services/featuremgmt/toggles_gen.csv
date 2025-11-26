@@ -92,7 +92,6 @@ kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad
 cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
-onPremToCloudMigrations,GA,@grafana/grafana-operator-experience-squad,false,false,false
 secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 secretsManagementAppPlatformUI,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
@@ -219,6 +218,7 @@ kubernetesAuthZHandlerRedirect,experimental,@grafana/identity-access-team,false,
 kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
+kubernetesExternalGroupMapping,experimental,@grafana/identity-access-team,false,false,false
 restoreDashboards,experimental,@grafana/grafana-search-navigate-organise,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false

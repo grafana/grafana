@@ -8,10 +8,14 @@ export interface OutlineRenameState {
   error?: string;
 }
 
-export function useOutlineRename(editableElement: EditableDashboardElement) {
+export function useOutlineRename(editableElement: EditableDashboardElement, isEditing: boolean | undefined) {
   const [state, setState] = useState<OutlineRenameState>({});
 
   const onNameDoubleClicked = (evt: React.MouseEvent) => {
+    if (!isEditing) {
+      return;
+    }
+
     if (!editableElement.onChangeName) {
       return;
     }

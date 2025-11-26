@@ -410,11 +410,6 @@ export interface FeatureToggles {
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
-  * Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
-  * @default true
-  */
-  onPremToCloudMigrations?: boolean;
-  /**
   * Enable the secrets management API and services under app platform
   */
   secretsManagementAppPlatform?: boolean;
@@ -967,6 +962,10 @@ export interface FeatureToggles {
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
+  /**
+  * Routes external group mapping requests from /api to the /apis endpoint
+  */
+  kubernetesExternalGroupMapping?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false

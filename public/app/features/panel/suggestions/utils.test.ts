@@ -1,6 +1,14 @@
-import { createDataFrame, FieldType, getPanelDataSummary, PanelDataSummary } from '@grafana/data';
+import {
+  createDataFrame,
+  FieldType,
+  getPanelDataSummary,
+  PanelDataSummary,
+  PanelData,
+  LoadingState,
+  getDefaultTimeRange,
+} from '@grafana/data';
 
-import { showDefaultSuggestion } from './utils';
+import { showDefaultSuggestion, hasData } from './utils';
 
 describe('Suggestions utils', () => {
   describe('showDefaultSuggestion', () => {
@@ -28,6 +36,34 @@ describe('Suggestions utils', () => {
         ])
       );
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('hasData', () => {
+    it('should return false when data is undefined', () => {
+      expect(hasData(undefined)).toBe(false);
+    });
+
+    it('should return false when data has no series', () => {
+      const data: PanelData = {
+        series: [],
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+      };
+      expect(hasData(data)).toBe(false);
+    });
+
+    it('should return true when at least one series has data', () => {
+      const data: PanelData = {
+        state: LoadingState.Done,
+        series: [
+          createDataFrame({
+            fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
+          }),
+        ],
+        timeRange: getDefaultTimeRange(),
+      };
+      expect(hasData(data)).toBe(true);
     });
   });
 });
