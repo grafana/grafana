@@ -247,7 +247,7 @@ describe('ScopesSelectorService', () => {
     });
 
     it('should clear navigation scope when removing all scopes', async () => {
-      await service.updateNode('', true, '');
+      await service.filterNode('', '');
       await service.selectScope('test-scope-node');
       await service.apply();
       await service.removeAllScopes();
