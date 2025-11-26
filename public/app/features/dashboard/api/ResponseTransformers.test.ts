@@ -75,7 +75,6 @@ describe('ResponseTransformers', () => {
   describe('getDefaultDataSource', () => {
     it('should return prometheus as default', () => {
       expect(getDefaultDatasource()).toEqual({
-        apiVersion: 'v2',
         uid: 'xyz-abc',
         type: 'prometheus',
       });
@@ -1049,13 +1048,21 @@ describe('ResponseTransformers', () => {
     expect(v1.links).toEqual(v2Spec.links);
     expect(v1.targets).toEqual(
       v2Spec.data.spec.queries.map((q) => {
+        const queryDs = {
+          type: q.spec.query.group,
+          uid: q.spec.query.datasource?.name,
+        };
+        // Only include datasource if it differs from panel datasource
+        // (This test uses handyTestingSchema which may have queries with different datasources)
+        const panelDs = v1.datasource;
+        const queryDiffers =
+          !panelDs ||
+          (queryDs.uid && queryDs.uid !== panelDs.uid) ||
+          (!queryDs.uid && queryDs.type && queryDs.type !== panelDs.type);
         return {
           refId: q.spec.refId,
           hide: q.spec.hidden,
-          datasource: {
-            type: q.spec.query.spec.group,
-            uid: q.spec.query.spec.datasource?.uid,
-          },
+          ...(queryDiffers && { datasource: queryDs }),
           ...q.spec.query.spec,
         };
       })

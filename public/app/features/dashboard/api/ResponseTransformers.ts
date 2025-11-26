@@ -490,8 +490,8 @@ export function getDefaultDatasource(): DataSourceRef {
     defaultDataSourceRef.apiVersion = dsInstance.apiVersion ?? undefined;
   }
 
+  // Return only uid and type for panel datasource (apiVersion is not part of DataSourceRef in v1)
   return {
-    apiVersion: defaultDataSourceRef.apiVersion,
     type: defaultDataSourceRef.type,
     uid: defaultDataSourceRef.uid,
   };
