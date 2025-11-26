@@ -108,7 +108,7 @@ func (s *migrationTestSuite) run(t *testing.T) {
 	if db.IsTestDbSQLite() {
 		// Share the same SQLite DB file between steps
 		tmpDir := t.TempDir()
-		dbPath := tmpDir + "/shared-migration-error-test.db"
+		dbPath := tmpDir + "/shared-migration-test-suite.db"
 
 		oldVal := os.Getenv("SQLITE_TEST_DB")
 		require.NoError(t, os.Setenv("SQLITE_TEST_DB", dbPath))
@@ -122,6 +122,7 @@ func (s *migrationTestSuite) run(t *testing.T) {
 		t.Logf("Using shared database path: %s", dbPath)
 	}
 
+	// reuse org users throughout the tests
 	var org1 *apis.OrgUsers
 	var orgB *apis.OrgUsers
 	t.Run("Step 1: Create data in legacy", func(t *testing.T) {
@@ -161,10 +162,8 @@ func (s *migrationTestSuite) run(t *testing.T) {
 					TestCase:  tc,
 				}
 
-				// Create resources in legacy storage
 				uids := tc.createFn(t, ctx)
 				tc.uids = uids
-
 				verifyResources(t, ctx, tc.uids, true)
 			})
 		}
@@ -230,7 +229,6 @@ func (s *migrationTestSuite) run(t *testing.T) {
 				DisableDataMigrations: false, // Enforces mode 5 for migrated resources and run migrations
 				APIServerStorageType:  "unified",
 			},
-			// Reuse created resources from Step 1
 			Org1Users: org1,
 			OrgBUsers: orgB,
 		})
