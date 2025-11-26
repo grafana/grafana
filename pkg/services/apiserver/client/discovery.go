@@ -10,8 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
-
-	"github.com/grafana/grafana/pkg/services/apiserver/contracts"
 )
 
 var (
@@ -19,8 +17,6 @@ var (
 	defaultAvailabilityTimeout = 10 * time.Second
 )
 
-// DiscoveryClient is now defined in pkg/services/apiserver/contracts to avoid import cycles.
-// This is a type alias for backward compatibility.
 type DiscoveryClient = contracts.DiscoveryClient
 
 type DiscoveryClientImpl struct {

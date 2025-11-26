@@ -8,7 +8,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
-import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
@@ -19,7 +18,7 @@ import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
-import { useDashboardQuery } from './useDashboardQuery';
+import { DashboardResponse, useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
@@ -40,22 +39,22 @@ const AnnotationsStep = () => {
   const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
   const selectedPanelId = Number(annotations.find((annotation) => annotation.key === Annotation.panelID)?.value);
 
-  const [selectedDashboard, setSelectedDashboard] = useState<DashboardModel | undefined>(undefined);
+  const [selectedDashboard, setSelectedDashboard] = useState<DashboardResponse | undefined>(undefined);
   const [selectedPanel, setSelectedPanel] = useState<PanelDTO | undefined>(undefined);
 
-  const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
+  const { dashboard, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
 
   useEffect(() => {
-    if (isDashboardFetching || !dashboardModel) {
+    if (isDashboardFetching || !dashboard) {
       return;
     }
 
-    setSelectedDashboard(dashboardModel);
+    setSelectedDashboard(dashboard);
 
-    const allPanels = getVisualPanels(dashboardModel);
+    const allPanels = getVisualPanels(dashboard);
     const currentPanel = allPanels.find((panel) => panel.id === selectedPanelId);
     setSelectedPanel(currentPanel);
-  }, [selectedPanelId, dashboardModel, isDashboardFetching]);
+  }, [selectedPanelId, dashboard, isDashboardFetching]);
 
   const setSelectedDashboardAndPanelId = (dashboardUid: string, panelId: number) => {
     const updatedAnnotations = produce(annotations, (draft) => {

@@ -27,14 +27,17 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, renderLimitedComponents, usePluginComponents, usePluginLinks } from '@grafana/runtime';
+import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Badge,
   BadgeColor,
   Button,
   ButtonGroup,
+  CollapsableSection,
   Dropdown,
   Icon,
+  Label,
   LinkButton,
   Menu,
   Tooltip,
@@ -45,11 +48,15 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { config } from '../../../../../core/config';
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
+import { ViewRangeTimeUpdate, TUpdateViewRangeTimeFunction, ViewRange } from '../TraceTimelineViewer/types';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace, TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
-import { SpanFilters } from './SpanFilters/SpanFilters';
+import TracePageSearchBar from './SearchBar/TracePageSearchBar';
+import SpanGraph from './SpanGraph';
+import { TraceFilterPills } from './TraceFilterPills';
+import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -66,6 +73,9 @@ export type TracePageHeaderProps = {
   datasourceName: string;
   datasourceUid: string;
   setHeaderHeight: (height: number) => void;
+  updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
+  updateViewRangeTime: TUpdateViewRangeTimeFunction;
+  viewRange: ViewRange;
 };
 
 export const TracePageHeader = memo((props: TracePageHeaderProps) => {
@@ -77,19 +87,26 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     search,
     setSearch,
     showSpanFilters,
-    setShowSpanFilters,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
     datasourceName,
     datasourceUid,
     setHeaderHeight,
+    updateNextViewRangeTime,
+    updateViewRangeTime,
+    viewRange,
   } = props;
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const notifyApp = useAppNotification();
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
+  const [isOverviewOpen, setIsOverviewOpen] = useState(true);
+  const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
+
+  // Create controller for adhoc filters
+  const controller = useTraceAdHocFiltersController(trace, search, setSearch);
 
   useEffect(() => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
@@ -117,6 +134,11 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
   });
 
+  // Memoize service count to avoid recomputing on every render
+  const serviceCount = useMemo(() => {
+    return new Set(trace?.spans.map((span) => span.process?.serviceName)).size;
+  }, [trace?.spans]);
+
   if (!trace) {
     return null;
   }
@@ -126,11 +148,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
 
   // Convert date from micro to milli seconds
   const formattedTimestamp = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
-
-  // Memoize service count to avoid recomputing on every render
-  const serviceCount = useMemo(() => {
-    return new Set(trace.spans.map((span) => span.process?.serviceName)).size;
-  }, [trace.spans]);
 
   let statusColor: BadgeColor = 'green';
   if (status && status.length > 0) {
@@ -351,16 +368,45 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         )}
       </div>
 
-      <SpanFilters
-        trace={trace}
-        showSpanFilters={showSpanFilters}
-        setShowSpanFilters={setShowSpanFilters}
-        search={search}
-        setSearch={setSearch}
-        spanFilterMatches={spanFilterMatches}
-        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-        datasourceType={datasourceType}
-      />
+      <CollapsableSection
+        label={<span className={styles.overviewLabel}>{t('explore.trace-page-header.overview', 'Overview')}</span>}
+        isOpen={isOverviewOpen}
+        onToggle={setIsOverviewOpen}
+        className={styles.overviewCollapsableSection}
+        contentClassName={styles.overviewCollapsableSectionContent}
+      >
+        <SpanGraph
+          trace={trace}
+          viewRange={viewRange}
+          updateNextViewRangeTime={updateNextViewRangeTime}
+          updateViewRangeTime={updateViewRangeTime}
+        />
+      </CollapsableSection>
+
+      <div className={styles.filtersContainer}>
+        <Label>{t('explore.trace-page-header.filters', 'Filters')}</Label>
+        <div className={styles.adhocFiltersRow}>
+          {controller && <AdHocFiltersComboboxRenderer controller={controller} />}
+        </div>
+        {trace && (
+          <div className={styles.searchAndPillsRow}>
+            <TraceFilterPills trace={trace} search={search} setSearch={setSearch} />
+            <TracePageSearchBar
+              trace={trace}
+              search={search}
+              spanFilterMatches={spanFilterMatches}
+              setShowSpanFilterMatchesOnly={(showMatchesOnly: boolean) =>
+                setSearch({ ...search, matchesOnly: showMatchesOnly })
+              }
+              focusedSpanIndexForSearch={focusedSpanIndexForSearch}
+              setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
+              setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+              datasourceType={datasourceType}
+              showSpanFilters={showSpanFilters}
+            />
+          </div>
+        )}
+      </div>
     </header>
   );
 });
@@ -425,7 +471,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       columnGap: theme.spacing(3),
-      marginBottom: theme.spacing(1),
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       flexWrap: 'wrap',
@@ -487,6 +532,39 @@ const getStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       display: 'inline-block',
       color: theme.colors.text.primary,
+    }),
+    overviewLabel: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    overviewCollapsableSection: css({
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      gap: theme.spacing(0.5),
+    }),
+    overviewCollapsableSectionContent: css({
+      padding: theme.spacing(0, 1, 2, 1),
+    }),
+    filtersContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.5),
+    }),
+    adhocFiltersRow: css({
+      display: 'flex',
+      width: '100%',
+    }),
+    searchAndPillsRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(2),
+      width: '100%',
+      marginTop: theme.spacing(0.5),
     }),
   };
 };

@@ -9,8 +9,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	authlib "github.com/grafana/authlib/types"
+	collectionsV1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	preferencesV1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -59,7 +59,7 @@ func (k *k8sClients) GetStars(c *contextmodel.ReqContext) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := dyn.Resource(preferencesV1.StarsResourceInfo.GroupVersionResource()).Namespace(k.namespacer(c.OrgID))
+	client := dyn.Resource(collectionsV1.StarsResourceInfo.GroupVersionResource()).Namespace(k.namespacer(c.OrgID))
 
 	ctx := c.Req.Context()
 	user, err := identity.GetRequester(ctx)
@@ -104,7 +104,7 @@ func (k *k8sClients) AddStar(c *contextmodel.ReqContext, uid string) error {
 
 	client := dyn.RESTClient()
 	rsp := client.Put().AbsPath(
-		"apis", preferencesV1.APIGroup, preferencesV1.APIVersion, "namespaces", ns,
+		"apis", collectionsV1.APIGroup, collectionsV1.APIVersion, "namespaces", ns,
 		"stars", "user-"+user.GetIdentifier(),
 		"update", dashboardsV1.APIGroup, dashboardsV1.DashboardKind().Kind(), uid,
 	).Do(ctx)
@@ -129,7 +129,7 @@ func (k *k8sClients) RemoveStar(c *contextmodel.ReqContext, uid string) error {
 
 	client := dyn.RESTClient()
 	rsp := client.Delete().AbsPath(
-		"apis", preferencesV1.APIGroup, preferencesV1.APIVersion, "namespaces", ns,
+		"apis", collectionsV1.APIGroup, collectionsV1.APIVersion, "namespaces", ns,
 		"stars", "user-"+user.GetIdentifier(),
 		"update", dashboardsV1.APIGroup, dashboardsV1.DashboardKind().Kind(), uid,
 	).Do(ctx)

@@ -1,8 +1,8 @@
 import {
   FieldColorModeId,
   VisualizationSuggestionsBuilder,
-  VisualizationSuggestion,
   DataTransformerID,
+  PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
 import {
   GraphDrawStyle,
@@ -218,7 +218,7 @@ export class TimeSeriesSuggestionsSupplier {
 }
 
 // This will try to get a suggestion that will add a long to wide conversion
-export function getPrepareTimeseriesSuggestion(panelId: number): VisualizationSuggestion | undefined {
+export function getPrepareTimeseriesSuggestion(panelId: number): PanelPluginVisualizationSuggestion | undefined {
   const panel = getDashboardSrv().getCurrent()?.getPanelById(panelId);
   if (panel) {
     const transformations = panel.transformations ? [...panel.transformations] : [];
@@ -231,6 +231,7 @@ export function getPrepareTimeseriesSuggestion(panelId: number): VisualizationSu
 
     return {
       name: 'Transform to wide time series format',
+      hash: 'timeseries-transform-prepare-wide',
       pluginId: 'timeseries',
       transformations,
     };

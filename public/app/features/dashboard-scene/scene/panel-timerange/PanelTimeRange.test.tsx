@@ -152,6 +152,95 @@ describe('PanelTimeRange', () => {
     expect(panelTime.state.from).toBe('now-2h');
     expect(panelTime.state.to).toBe('now');
   });
+
+  describe('onTimeRangeChange', () => {
+    it('should reverse timeShift when updating time range', () => {
+      const oneHourShift = '1h';
+      const panelTime = new PanelTimeRange({ timeShift: oneHourShift });
+      const sceneTimeRange = new SceneTimeRange({ from: 'now-6h', to: 'now' });
+      const panel = new SceneCanvasText({ text: 'Hello', $timeRange: panelTime });
+      const scene = new SceneFlexLayout({
+        $timeRange: sceneTimeRange,
+        children: [new SceneFlexItem({ body: panel })],
+      });
+
+      activateFullSceneTree(scene);
+
+      const panelTimeFrom = dateTime('2019-02-11T12:00:00.000Z');
+      const panelTimeTo = dateTime('2019-02-11T18:00:00.000Z');
+
+      panelTime.onTimeRangeChange({
+        from: panelTimeFrom,
+        to: panelTimeTo,
+        raw: { from: panelTimeFrom, to: panelTimeTo },
+      });
+
+      const expectedDashboardTimeFrom = dateTime('2019-02-11T13:00:00.000Z');
+      const expectedDashboardTimeTo = dateTime('2019-02-11T19:00:00.000Z');
+
+      expect(sceneTimeRange.state.value.from.toISOString()).toBe(expectedDashboardTimeFrom.toISOString());
+      expect(sceneTimeRange.state.value.to.toISOString()).toBe(expectedDashboardTimeTo.toISOString());
+    });
+
+    it('should pass through time range when no timeShift is configured', () => {
+      const panelTime = new PanelTimeRange({});
+      const sceneTimeRange = new SceneTimeRange({ from: 'now-6h', to: 'now' });
+      const panel = new SceneCanvasText({ text: 'Hello', $timeRange: panelTime });
+      const scene = new SceneFlexLayout({
+        $timeRange: sceneTimeRange,
+        children: [new SceneFlexItem({ body: panel })],
+      });
+
+      activateFullSceneTree(scene);
+
+      const userSelectedFrom = dateTime('2019-02-11T12:00:00.000Z');
+      const userSelectedTo = dateTime('2019-02-11T18:00:00.000Z');
+
+      panelTime.onTimeRangeChange({
+        from: userSelectedFrom,
+        to: userSelectedTo,
+        raw: { from: userSelectedFrom, to: userSelectedTo },
+      });
+
+      expect(sceneTimeRange.state.value.from.toISOString()).toBe(userSelectedFrom.toISOString());
+      expect(sceneTimeRange.state.value.to.toISOString()).toBe(userSelectedTo.toISOString());
+    });
+
+    it('should handle variable expressions in timeShift', () => {
+      const twoHourShiftValue = '2h';
+      const customTimeShift = new TestVariable({
+        name: 'testShift',
+        value: twoHourShiftValue,
+      });
+      const panelTime = new PanelTimeRange({ timeShift: '$testShift' });
+      const sceneTimeRange = new SceneTimeRange({ from: 'now-6h', to: 'now' });
+      const panel = new SceneCanvasText({ text: 'Hello', $timeRange: panelTime });
+      const scene = new SceneFlexLayout({
+        $variables: new SceneVariableSet({
+          variables: [customTimeShift],
+        }),
+        $timeRange: sceneTimeRange,
+        children: [new SceneFlexItem({ body: panel })],
+      });
+
+      activateFullSceneTree(scene);
+
+      const panelTimeFrom = dateTime('2019-02-11T11:00:00.000Z');
+      const panelTimeTo = dateTime('2019-02-11T17:00:00.000Z');
+
+      panelTime.onTimeRangeChange({
+        from: panelTimeFrom,
+        to: panelTimeTo,
+        raw: { from: panelTimeFrom, to: panelTimeTo },
+      });
+
+      const expectedDashboardTimeFrom = dateTime('2019-02-11T13:00:00.000Z');
+      const expectedDashboardTimeTo = dateTime('2019-02-11T19:00:00.000Z');
+
+      expect(sceneTimeRange.state.value.from.toISOString()).toBe(expectedDashboardTimeFrom.toISOString());
+      expect(sceneTimeRange.state.value.to.toISOString()).toBe(expectedDashboardTimeTo.toISOString());
+    });
+  });
 });
 
 function buildAndActivateSceneFor(panelTime: PanelTimeRange) {

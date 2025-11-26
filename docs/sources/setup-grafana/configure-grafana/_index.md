@@ -475,6 +475,10 @@ This setting applies to `sqlite` only and controls the number of times the syste
 
 Set to `true` to add metrics and tracing for database queries. The default value is `false`.
 
+#### `skip_dashboard_uid_migration_on_startup`
+
+Set to true to skip dashboard UID migrations on startup. Improves startup performance for instances with large numbers of annotations who do not plan to downgrade Grafana. The default value is `false`.
+
 <hr />
 
 ### `[remote_cache]`
@@ -657,11 +661,15 @@ If you want to track Grafana usage via Azure Application Insights, then specify 
 
 Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
-<hr />
+#### `application_insights_auto_route_tracking`
+
+Optionally, use this to configure `enableAutoRouteTracking` in Azure Application Insights. Defaults to `true`. For more details, refer to the [Azure documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/app/application-insights-faq#is-there-a-way-to-see-fewer-events-per-transaction-when-i-use-the-application-insights-javascript-sdk)
 
 #### `feedback_links_enabled`
 
 Set to `false` to remove all feedback links from the UI. Default is `true`.
+
+<hr />
 
 ### `[security]`
 
@@ -978,15 +986,6 @@ This option is deprecated - assign your viewers as editors, if you are using RBA
 {{< /admonition >}}
 
 Viewers can access and use [Explore](../../explore/) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
-
-#### `editors_can_admin`
-
-{{< admonition type="note" >}}
-This option is deprecated - assign your editors as admins, if you are using RBAC assign the team creator role to your users.
-{{< /admonition >}}
-
-Editors can administrate dashboards, folders and teams they create.
-Default is `false`.
 
 #### `user_invite_max_lifetime_duration`
 
@@ -1933,6 +1932,10 @@ You can customize retry behaviour with `initial_retry_delay`, `max_retry_delay`,
 The initial delay before retrying a failed alert evaluation. Default is `1s`.
 
 This value is the starting point for exponential backoff.
+
+#### `initialization_timeout`
+
+Allows the context deadline for the `AlertNG` service to be configurable. The default timeout is 30s.
 
 #### `max_retry_delay`
 

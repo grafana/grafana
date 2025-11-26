@@ -20,6 +20,7 @@ import {
   QueryVariableKind,
   TabsLayoutTabKind,
   DataQueryKind,
+  defaultPanelQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -30,6 +31,7 @@ import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
+import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
@@ -69,6 +71,9 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     seriesLimit: config.panelSeriesLimit,
     $data: createPanelDataProvider(panel),
     titleItems,
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
   };
@@ -105,6 +110,9 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
     seriesLimit: config.panelSeriesLimit,
     $behaviors: [
       new LibraryPanelBehavior({
@@ -133,7 +141,12 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
 
 export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
   const panel = panelKind.spec;
-  const targets = panel.data?.spec.queries ?? [];
+
+  const targets =
+    // Default to an array with an empty data query with a `refId` already assigned
+    Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
+      ? panel.data?.spec.queries
+      : [defaultPanelQueryKind()];
   // Skip setting query runner for panels without queries
   if (!targets?.length) {
     return undefined;
@@ -207,7 +220,7 @@ export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataS
   return getDataSourceForQuery(ds, variable.spec.query.group);
 }
 
-export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef {
+export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef | undefined {
   const ds: DataSourceRef = {
     uid: query.datasource?.name,
     type: query.group,
@@ -274,8 +287,9 @@ export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | n
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   return {
     refId: query.spec.refId,
-    datasource: getRuntimePanelDataSource(query.spec.query),
     hide: query.spec.hidden,
+    // If the query has no group, it means it's a default empty query, so we don't need to set a datasource
+    ...(!query.spec.query.group ? {} : { datasource: getRuntimePanelDataSource(query.spec.query) }),
     ...query.spec.query.spec,
   };
 }

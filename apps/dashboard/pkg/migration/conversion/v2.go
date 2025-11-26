@@ -27,7 +27,7 @@ func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, s
 	return nil
 }
 
-func Convert_V2alpha1_to_V1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+func Convert_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
 	// TODO: implement V2 to V1 conversion
@@ -89,7 +89,7 @@ func Convert_V2beta1_to_V0(in *dashv2beta1.Dashboard, out *dashv0.Dashboard, sco
 	return nil
 }
 
-func Convert_V2beta1_to_V1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+func Convert_V2beta1_to_V1beta1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
 	// TODO: implement v2beta1 to V1 conversion
@@ -109,14 +109,23 @@ func Convert_V2beta1_to_V1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard, sco
 func Convert_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
-	// TODO: implement v2beta1 to V2alpha1 conversion
+	if err := ConvertDashboard_V2beta1_to_V2alpha1(in, out, scope); err != nil {
+		out.Status = dashv2alpha1.DashboardStatus{
+			Conversion: &dashv2alpha1.DashboardConversionStatus{
+				StoredVersion: ptr.To(dashv2beta1.VERSION),
+				Failed:        true,
+				Error:         ptr.To(err.Error()),
+				Source:        in,
+			},
+		}
+
+		return NewConversionError(err.Error(), "v2beta1", "v2alpha1", "ConvertDashboard_V2beta1_to_V2alpha1")
+	}
 
 	out.Status = dashv2alpha1.DashboardStatus{
 		Conversion: &dashv2alpha1.DashboardConversionStatus{
 			StoredVersion: ptr.To(dashv2beta1.VERSION),
-			Failed:        true,
-			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
+			Failed:        false,
 		},
 	}
 

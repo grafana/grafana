@@ -7,12 +7,10 @@ import { Icon, ToolbarButton } from '@grafana/ui';
 import { useStarItem, useStarredItems } from './hooks';
 
 const getStarTooltips = (title: string) => ({
-  star: t('stars.mark-as-starred', 'Mark "{{title}}" as favorite', {
-    title,
-  }),
-  unstar: t('stars.unmark-as-starred', 'Unmark "{{title}}" as favorite', {
-    title,
-  }),
+  star: t('stars.mark-as-starred', 'Mark as favorite'),
+  starWithTitle: t('stars.mark-as-starred-with-title', 'Mark "{{title}}" as favorite', { title }),
+  unstar: t('stars.unmark-as-starred', 'Unmark as favorite'),
+  unstarWithTitle: t('stars.unmark-as-starred-with-title', 'Unmark "{{title}}" as favorite', { title }),
 });
 
 type Props = {
@@ -41,7 +39,7 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
     onStarChange?.(id, !isStarred);
   };
 
-  const iconProps = (() => {
+  const iconProps = useMemo(() => {
     if (isLoading) {
       return { name: 'spinner', type: 'default' } as const;
     }
@@ -49,20 +47,20 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
       return { name: 'favorite', type: 'mono' } as const;
     }
     return { name: 'star', type: 'default' } as const;
+  }, [isLoading, isStarred]);
+
+  const tooltipAndLabel = (() => {
+    return isStarred
+      ? { tooltip: tooltips.unstar, label: isLoading ? undefined : tooltips.unstarWithTitle }
+      : { tooltip: tooltips.star, label: isLoading ? undefined : tooltips.starWithTitle };
   })();
 
-  const tooltip = (() => {
-    if (isLoading) {
-      return undefined;
-    }
-    return isStarred ? tooltips.unstar : tooltips.star;
-  })();
-
-  const icon = <Icon {...iconProps} size="lg" />;
+  const icon = <Icon {...iconProps} size="lg" key={`${isLoading}-${isStarred}`} />;
   return (
     <ToolbarButton
       disabled={isLoading}
-      tooltip={tooltip}
+      tooltip={tooltipAndLabel.tooltip}
+      aria-label={tooltipAndLabel.label}
       icon={icon}
       data-testid={selectors.components.NavToolbar.markAsFavorite}
       onClick={handleStarToggle}

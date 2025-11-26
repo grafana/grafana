@@ -7,11 +7,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 
-	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/apiserver/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -36,13 +34,12 @@ type ServerLock interface {
 }
 
 type syncer struct {
-	featureToggles          featuremgmt.FeatureToggles
-	clientGenerator         resource.ClientGenerator
-	installRegistrar        *install.InstallRegistrar
-	orgService              org.Service
-	discoveryClientProvider contracts.DiscoveryClientProvider
-	namespaceMapper         request.NamespaceMapper
-	serverLock              ServerLock
+	featureToggles   featuremgmt.FeatureToggles
+	clientGenerator  resource.ClientGenerator
+	installRegistrar *install.InstallRegistrar
+	orgService       org.Service
+	namespaceMapper  request.NamespaceMapper
+	serverLock       ServerLock
 }
 
 // newSyncer creates a new syncer with the provided dependencies.
@@ -51,18 +48,16 @@ func newSyncer(
 	clientGenerator resource.ClientGenerator,
 	installRegistrar *install.InstallRegistrar,
 	orgService org.Service,
-	discoveryClientProvider contracts.DiscoveryClientProvider,
 	namespaceMapper request.NamespaceMapper,
 	serverLock ServerLock,
 ) *syncer {
 	return &syncer{
-		clientGenerator:         clientGenerator,
-		featureToggles:          featureToggles,
-		installRegistrar:        installRegistrar,
-		orgService:              orgService,
-		discoveryClientProvider: discoveryClientProvider,
-		namespaceMapper:         namespaceMapper,
-		serverLock:              serverLock,
+		clientGenerator:  clientGenerator,
+		featureToggles:   featureToggles,
+		installRegistrar: installRegistrar,
+		orgService:       orgService,
+		namespaceMapper:  namespaceMapper,
+		serverLock:       serverLock,
 	}
 }
 
@@ -73,7 +68,6 @@ func ProvideSyncer(
 	orgService org.Service,
 	cfgProvider configprovider.ConfigProvider,
 	serverLock ServerLock,
-	discoveryClientProvider contracts.DiscoveryClientProvider,
 ) (Syncer, error) {
 	cfg, err := cfgProvider.Get(context.Background())
 	if err != nil {
@@ -87,17 +81,18 @@ func ProvideSyncer(
 		clientGenerator,
 		installRegistrar,
 		orgService,
-		discoveryClientProvider,
 		namespaceMapper,
 		serverLock,
 	), nil
 }
 
 func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.featureToggles.IsEnabled(ctx, featuremgmt.FlagPluginInstallAPISync) {
 		return nil
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.featureToggles.IsEnabled(ctx, featuremgmt.FlagPluginStoreServiceLoading) {
 		logging.DefaultLogger.Warn("pluginInstallAPISync is enabled, but pluginStoreServiceLoading is disabled. skipping plugin sync.")
 		return nil
@@ -109,15 +104,6 @@ func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugi
 
 	var syncErr error
 	lockErr := s.serverLock.LockExecuteAndRelease(ctx, syncerLockActionName, lockTimeout, func(ctx context.Context) {
-		discoveryClient, err := s.discoveryClientProvider.GetDiscoveryClient(ctx)
-		if err != nil {
-			syncErr = err
-			return
-		}
-		if err := discoveryClient.WaitForAvailability(ctx, pluginsv0alpha1.GroupVersion); err != nil {
-			syncErr = err
-			return
-		}
 		syncErr = s.syncAllNamespaces(ctx, source, installedPlugins)
 	})
 

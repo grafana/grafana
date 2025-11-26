@@ -2,29 +2,31 @@ package app
 
 import (
 	"context"
-	"net/http"
+	"fmt"
+	"sync"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
-	pluginsapi "github.com/grafana/grafana/apps/plugins/pkg/apis"
+	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 )
 
 func New(cfg app.Config) (app.App, error) {
 	cfg.KubeConfig.APIPath = "apis"
-	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
-	client, err := pluginsv0alpha1.NewPluginClientFromGenerator(clientGenerator)
-	if err != nil {
-		return nil, err
+
+	specificConfig, ok := cfg.SpecificConfig.(*PluginAppConfig)
+	if !ok {
+		return nil, fmt.Errorf("invalid config type")
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -40,27 +42,9 @@ func New(cfg app.Config) (app.App, error) {
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: pluginsv0alpha1.PluginKind(),
-				CustomRoutes: simple.AppCustomRouteHandlers{
-					simple.AppCustomRoute{
-						Method: http.MethodGet,
-						Path:   "meta",
-					}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
-						plugin, err := client.Get(ctx, resource.Identifier{
-							Namespace: req.ResourceIdentifier.Namespace,
-							Name:      req.ResourceIdentifier.Name,
-						})
-						if err != nil {
-							return err
-						}
-						logging.DefaultLogger.Debug("fetched plugin", "plugin", plugin)
-						// TODO: Implement this in future PR
-						w.WriteHeader(http.StatusNotImplemented)
-						if _, err := w.Write([]byte("Not implemented")); err != nil {
-							return err
-						}
-						return nil
-					},
-				},
+			},
+			{
+				Kind: pluginsv0alpha1.PluginMetaKind(),
 			},
 		},
 	}
@@ -75,33 +59,89 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
+	// Register MetaProviderManager as a runnable so its cleanup goroutine is managed by the app lifecycle
+	a.AddRunnable(specificConfig.MetaProviderManager)
+
 	return a, nil
 }
 
-func ProvideAppInstaller(specificConfig any) (appsdkapiserver.AppInstaller, error) {
-	provider := simple.NewAppProvider(pluginsapi.LocalManifest(), specificConfig, New)
-	appConfig := app.Config{
-		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-		ManifestData:   *pluginsapi.LocalManifest().ManifestData,
-		SpecificConfig: specificConfig,
-	}
-	return appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, pluginsapi.NewGoTypeAssociator())
+type PluginAppConfig struct {
+	MetaProviderManager *meta.ProviderManager
 }
 
-func GetKinds() map[schema.GroupVersion][]resource.Kind {
-	kinds := make(map[schema.GroupVersion][]resource.Kind)
-	manifest := pluginsapi.LocalManifest()
-	for _, v := range manifest.ManifestData.Versions {
-		gv := schema.GroupVersion{
-			Group:   manifest.ManifestData.Group,
-			Version: v.Name,
-		}
-		for _, k := range v.Kinds {
-			kind, ok := pluginsapi.ManifestGoTypeAssociator(k.Kind, v.Name)
-			if ok {
-				kinds[gv] = append(kinds[gv], kind)
-			}
-		}
+func ProvideAppInstaller(
+	metaProviderManager *meta.ProviderManager,
+) (appsdkapiserver.AppInstaller, error) {
+	specificConfig := &PluginAppConfig{
+		MetaProviderManager: metaProviderManager,
 	}
-	return kinds
+	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
+	appConfig := app.Config{
+		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData:   *pluginsappapis.LocalManifest().ManifestData,
+		SpecificConfig: specificConfig,
+	}
+	defaultInstaller, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, pluginsappapis.NewGoTypeAssociator())
+	if err != nil {
+		return nil, err
+	}
+
+	return &pluginAppInstaller{
+		AppInstaller: defaultInstaller,
+		metaManager:  metaProviderManager,
+	}, nil
+}
+
+type pluginAppInstaller struct {
+	appsdkapiserver.AppInstaller
+	metaManager *meta.ProviderManager
+
+	// restConfig is set during InitializeApp and used by the client factory
+	restConfig   *restclient.Config
+	restConfigMu sync.RWMutex
+}
+
+func (p *pluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
+	// Store the rest config for use in the client factory
+	p.restConfigMu.Lock()
+	p.restConfig = &restConfig
+	p.restConfigMu.Unlock()
+
+	// Call the default installer's InitializeApp
+	return p.AppInstaller.InitializeApp(restConfig)
+}
+
+func (p *pluginAppInstaller) InstallAPIs(
+	server appsdkapiserver.GenericAPIServer,
+	restOptsGetter generic.RESTOptionsGetter,
+) error {
+	// Create a client factory function that will be called lazily when the client is needed.
+	// This uses the rest config from the app, which is set during InitializeApp.
+	clientFactory := func(ctx context.Context) (*pluginsv0alpha1.PluginClient, error) {
+		p.restConfigMu.RLock()
+		kubeConfig := p.restConfig
+		p.restConfigMu.RUnlock()
+
+		if kubeConfig == nil {
+			return nil, fmt.Errorf("rest config not yet initialized, app must be initialized before client can be created")
+		}
+
+		clientGenerator := k8s.NewClientRegistry(*kubeConfig, k8s.DefaultClientConfig())
+		client, err := pluginsv0alpha1.NewPluginClientFromGenerator(clientGenerator)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create plugin client: %w", err)
+		}
+
+		return client, nil
+	}
+
+	pluginMetaGVR := pluginsv0alpha1.PluginMetaKind().GroupVersionResource()
+	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
+		pluginMetaGVR: NewPluginMetaStorage(p.metaManager, clientFactory),
+	}
+	wrappedServer := &customStorageWrapper{
+		wrapped: server,
+		replace: replacedStorage,
+	}
+	return p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter)
 }

@@ -13,7 +13,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 
 jest.mock('./usePluginConfig');
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermissionInMetadata: jest.fn(() => true),
   },
