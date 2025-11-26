@@ -862,7 +862,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	identitySynchronizer := authnimpl.ProvideIdentitySynchronizer(authnimplService)
 	ldapImpl := service12.ProvideService(cfg, featureToggles, ssosettingsimplService)
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
-	apiExtensionsBuilder, err := apiextensions.RegisterAPIService(cfg, featureToggles, apiserverService, accessClient, registerer, resourceClient)
+	crdStorageProvider := apiextensions.ProvideOSSCRDStorageProvider()
+	apiextensionsBuilder, err := apiextensions.RegisterAPIService(cfg, featureToggles, apiserverService, accessClient, registerer, resourceClient, crdStorageProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1516,7 +1517,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	identitySynchronizer := authnimpl.ProvideIdentitySynchronizer(authnimplService)
 	ldapImpl := service12.ProvideService(cfg, featureToggles, ssosettingsimplService)
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
-	apiExtensionsBuilder, err := apiextensions.RegisterAPIService(cfg, featureToggles, apiserverService, accessClient, registerer, resourceClient)
+	crdStorageProvider := apiextensions.ProvideOSSCRDStorageProvider()
+	apiextensionsBuilder, err := apiextensions.RegisterAPIService(cfg, featureToggles, apiserverService, accessClient, registerer, resourceClient, crdStorageProvider)
 	if err != nil {
 		return nil, err
 	}

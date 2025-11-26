@@ -14,6 +14,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	authlib "github.com/grafana/authlib/types"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -22,6 +23,29 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+// CRDStorageProvider is an interface for creating CRD REST options getters.
+// Enterprise provides the real implementation, OSS returns nil.
+type CRDStorageProvider interface {
+	NewCRDRESTOptionsGetter(
+		delegate *apistore.RESTOptionsGetter,
+		unifiedClient resource.ResourceClient,
+	) genericregistry.RESTOptionsGetter
+}
+
+// OSSCRDStorageProvider is the OSS implementation that returns nil (feature disabled)
+type OSSCRDStorageProvider struct{}
+
+func ProvideOSSCRDStorageProvider() CRDStorageProvider {
+	return &OSSCRDStorageProvider{}
+}
+
+func (p *OSSCRDStorageProvider) NewCRDRESTOptionsGetter(
+	delegate *apistore.RESTOptionsGetter,
+	unifiedClient resource.ResourceClient,
+) genericregistry.RESTOptionsGetter {
+	return nil
+}
 
 var _ builder.APIGroupBuilder = (*Builder)(nil)
 
@@ -39,6 +63,7 @@ type Builder struct {
 	unifiedClient       resource.ResourceClient
 	apiExtensionsServer *apiextensionsapiserver.CustomResourceDefinitions
 	restOptsGetter      *apistore.RESTOptionsGetter
+	storageProvider     CRDStorageProvider
 }
 
 // RegisterAPIService registers the apiextensions API group in single-tenant mode
@@ -49,15 +74,17 @@ func RegisterAPIService(
 	accessClient authlib.AccessClient,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
+	storageProvider CRDStorageProvider,
 ) (*Builder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagApiExtensions) {
 		return nil, nil
 	}
 
 	b := &Builder{
-		features:      features,
-		accessClient:  accessClient,
-		unifiedClient: unified,
+		features:        features,
+		accessClient:    accessClient,
+		unifiedClient:   unified,
+		storageProvider: storageProvider,
 	}
 
 	// Register the builder to install the schema
@@ -145,7 +172,11 @@ func (b *Builder) CreateAPIExtensionsServer(
 	}
 
 	// Create the CRD REST options getter that uses unified storage
-	crdRestOptsGetter := NewCRDRESTOptionsGetter(restOptsGetter, b.unifiedClient)
+	crdRestOptsGetter := b.storageProvider.NewCRDRESTOptionsGetter(restOptsGetter, b.unifiedClient)
+	if crdRestOptsGetter == nil {
+		// Enterprise feature not available
+		return nil, nil
+	}
 
 	// Create a fresh copy of the config for the apiextensions server
 	// We need to clear PostStartHooks to avoid conflicts with hooks

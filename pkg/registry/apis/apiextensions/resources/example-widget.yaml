@@ -1,8 +1,0 @@
-apiVersion: customcrdtest.grafana.app/v1
-kind: Widget
-metadata:
-  name: my-widget
-  namespace: default
-spec:
-  size: medium
-  replicas: 3
