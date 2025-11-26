@@ -78,7 +78,7 @@ describe('LogsVolumePanelList', () => {
     expect(screen.getByText('No logs volume available')).toBeInTheDocument();
   });
 
-  describe.only('Visible range', () => {
+  describe('Visible range', () => {
     it('computes the visible range when logs are passed', async () => {
       const spy = jest.spyOn(logUtils, 'getLogsVisibleRange');
       spy.mockClear();
