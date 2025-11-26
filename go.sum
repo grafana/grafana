@@ -1647,8 +1647,8 @@ github.com/grafana/grafana-google-sdk-go v0.4.2 h1:F44hQF1y6UVJhlJPi+Mz+GCJsioVg
 github.com/grafana/grafana-google-sdk-go v0.4.2/go.mod h1:U73+w9DlbEtUonhQUzERwlXnzWTtfRoyrtKH8d3VY40=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
-github.com/grafana/grafana-plugin-sdk-go v0.283.0 h1:G7IHshAr30rLWV9FtX3iLlFTTlBhuOkfe7xVAoIP5rE=
-github.com/grafana/grafana-plugin-sdk-go v0.283.0/go.mod h1:20qhoYxIgbZRmwCEO1KMP8q2yq/Kge5+xE/99/hLEk0=
+github.com/grafana/grafana-plugin-sdk-go v0.284.0 h1:1bK7eWsnPBLUWDcWJWe218Ik5ad0a5JpEL4mH9ry7Ws=
+github.com/grafana/grafana-plugin-sdk-go v0.284.0/go.mod h1:lHPniaSxq3SL5MxDIPy04TYB1jnTp/ivkYO+xn5Rz3E=
 github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b h1:6Bo65etvjQ4tStkaA5+N3A3ENbO4UAWj53TxF6g2Hdk=
 github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b/go.mod h1:6+wASOCN8LWt6FJ8dc0oODUBIEY5XHaE6ABi8g0mR+k=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
@@ -2784,8 +2784,8 @@ golang.org/x/crypto v0.19.0/go.mod h1:Iy9bg/ha4yyC70EfRS8jz+B6ybOBKMaSxLj6P6oBDf
 golang.org/x/crypto v0.23.0/go.mod h1:CKFgDieR+mRhux2Lsu27y0fO304Db0wZe70UKqHu0v8=
 golang.org/x/crypto v0.24.0/go.mod h1:Z1PMYSOR5nyMcyAVAIQSKCDwalqy85Aqn1x3Ws4L5DM=
 golang.org/x/crypto v0.27.0/go.mod h1:1Xngt8kV6Dvbssa53Ziq6Eqn0HqbZi5Z6R0ZpwQzt70=
-golang.org/x/crypto v0.44.0 h1:A97SsFvM3AIwEEmTBiaxPPTYpDC47w720rdiiUvgoAU=
-golang.org/x/crypto v0.44.0/go.mod h1:013i+Nw79BMiQiMsOPcVCB5ZIJbYkerPrGnOa00tvmc=
+golang.org/x/crypto v0.45.0 h1:jMBrvKuj23MTlT0bQEOBcAE0mjg8mK9RXFhRH6nyF3Q=
+golang.org/x/crypto v0.45.0/go.mod h1:XTGrrkGJve7CYK7J8PEww4aY7gM3qMCElcJQ8n8JdX4=
 golang.org/x/exp v0.0.0-20180321215751-8460e604b9de/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20180807140117-3d87b88a115f/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=

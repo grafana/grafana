@@ -329,6 +329,10 @@ export interface FeatureToggles {
   */
   alertingUIUseBackendFilters?: boolean;
   /**
+  * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
+  */
+  alertingUIUseFullyCompatBackendFilters?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
@@ -365,6 +369,10 @@ export interface FeatureToggles {
   */
   unlimitedLayoutsNesting?: boolean;
   /**
+  * Enables viewing non-applicable drilldowns on a panel level
+  */
+  perPanelNonApplicableDrilldowns?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
   panelFilterVariable?: boolean;
@@ -380,11 +388,6 @@ export interface FeatureToggles {
   * Enables time comparison option in supported panels
   */
   timeComparison?: boolean;
-  /**
-  * Enables infinite scrolling for the Logs panel in Explore and Dashboards
-  * @default true
-  */
-  logsInfiniteScrolling?: boolean;
   /**
   * Enables shared crosshair in table panel
   */
@@ -406,11 +409,6 @@ export interface FeatureToggles {
   * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
-  /**
-  * Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
-  * @default true
-  */
-  onPremToCloudMigrations?: boolean;
   /**
   * Enable the secrets management API and services under app platform
   */
@@ -601,7 +599,7 @@ export interface FeatureToggles {
   */
   alertingPrometheusRulesPrimary?: boolean;
   /**
-  * Used in Logs Drilldown to split queries into multiple queries based on the number of shards
+  * Deprecated. Replace with lokiShardSplitting. Used in Logs Drilldown to split queries into multiple queries based on the number of shards
   */
   exploreLogsShardSplitting?: boolean;
   /**
@@ -668,6 +666,10 @@ export interface FeatureToggles {
   * Enables time range panning functionality
   */
   timeRangePan?: boolean;
+  /**
+  * Enables new keyboard shortcuts for time range zoom operations
+  */
+  newTimeRangeZoomShortcuts?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -919,10 +921,6 @@ export interface FeatureToggles {
   */
   grafanaAssistantInProfilesDrilldown?: boolean;
   /**
-  * Enables using PGX instead of libpq for PostgreSQL datasource
-  */
-  postgresDSUsePGX?: boolean;
-  /**
   * Enables creating alerts from Tempo data source
   */
   tempoAlerting?: boolean;
@@ -964,6 +962,10 @@ export interface FeatureToggles {
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
+  /**
+  * Routes external group mapping requests from /api to the /apis endpoint
+  */
+  kubernetesExternalGroupMapping?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
@@ -1089,7 +1091,7 @@ export interface FeatureToggles {
   graphiteBackendMode?: boolean;
   /**
   * Enables the updated Azure Monitor resource picker
-  * @default false
+  * @default true
   */
   azureResourcePickerUpdates?: boolean;
   /**
@@ -1148,7 +1150,7 @@ export interface FeatureToggles {
   pluginStoreServiceLoading?: boolean;
   /**
   * Increases panel padding globally
-  * @default false
+  * @default true
   */
   newPanelPadding?: boolean;
   /**
@@ -1178,6 +1180,10 @@ export interface FeatureToggles {
   * Enable TTL plugin instance manager
   */
   ttlPluginInstanceManager?: boolean;
+  /**
+  * Send X-Loki-Query-Limits-Context header to Loki on first split request
+  */
+  lokiQueryLimitsContext?: boolean;
   /**
   * Enables the new version of rudderstack
   * @default false

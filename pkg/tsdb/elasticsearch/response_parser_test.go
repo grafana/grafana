@@ -355,7 +355,7 @@ func TestProcessLogsResponse(t *testing.T) {
 		// Correctly detects float64 types
 		require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[7].Type())
 		// Correctly detects json types
-		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[8].Type())
+		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[8].Type()) //nolint:staticcheck
 		// Correctly flattens fields
 		require.Equal(t, "nested.field.double_nested", frame.Fields[13].Name)
 		require.Equal(t, data.FieldTypeNullableString, frame.Fields[13].Type())
@@ -546,7 +546,7 @@ func TestProcessRawDataResponse(t *testing.T) {
 		// Correctly detects float64 types
 		require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[5].Type())
 		// Correctly detects json types
-		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[6].Type())
+		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[6].Type()) //nolint:staticcheck
 		// Correctly flattens fields
 		require.Equal(t, "nested.field.double_nested", frame.Fields[11].Name)
 		require.Equal(t, data.FieldTypeNullableString, frame.Fields[11].Type())
@@ -736,7 +736,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		require.Len(t, fields, 1)
 		f := fields[0]
 
-		require.Equal(t, data.FieldTypeNullableJSON, f.Type())
+		require.Equal(t, data.FieldTypeNullableJSON, f.Type()) //nolint:staticcheck
 		require.Equal(t, 2, f.Len())
 
 		v := f.At(0).(*json.RawMessage)
@@ -829,7 +829,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		//Fields have the correct length
 		require.Equal(t, 2, frame.Fields[0].Len())
 		// The only field is the raw document
-		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[0].Type())
+		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[0].Type()) //nolint:staticcheck
 		require.Equal(t, "A", frame.Fields[0].Name)
 	})
 }

@@ -506,6 +506,68 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		}
 	})
 
+	t.Run("with version message header should pass message to rule store", func(t *testing.T) {
+		provenanceStore := fakes.NewFakeProvisioningStore()
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore), withFolderService(folderService))
+
+		// Create a folder in the root
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		makeGroup := func(alertname string) apimodels.PrometheusRuleGroup {
+			return apimodels.PrometheusRuleGroup{
+				Name:     "Test Group",
+				Interval: prommodel.Duration(1 * time.Minute),
+				Rules: []apimodels.PrometheusRule{
+					{
+						Alert: alertname,
+						Expr:  "up == 0",
+						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+						Labels: map[string]string{
+							"severity": "critical",
+						},
+					},
+				},
+			}
+		}
+
+		// Create a rule with the X-Grafana-Alerting-Version-Message to check it's passed to InsertRule.
+
+		rc1 := createRequestCtx()
+		rc1.Req.Header.Set("X-Grafana-Alerting-Version-Message", "version #1")
+		response1 := srv.RouteConvertPrometheusPostRuleGroup(rc1, fldr.Title, makeGroup("AlertV1"))
+		require.Equal(t, http.StatusAccepted, response1.Status())
+
+		inserts := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			a, ok := cmd.([]models.InsertRule)
+			return a, ok
+		})
+		require.Len(t, inserts, 1)
+		cmd1 := inserts[0].([]models.InsertRule)
+		require.Len(t, cmd1, 1)
+		require.Equal(t, "version #1", cmd1[0].Message)
+
+		// Now update the rule to check it gets passed to UpdateRule.
+
+		rc2 := createRequestCtx()
+		rc2.Req.Header.Set("X-Grafana-Alerting-Version-Message", "version #2")
+		response2 := srv.RouteConvertPrometheusPostRuleGroup(rc2, fldr.Title, makeGroup("AlertV2"))
+		require.Equal(t, http.StatusAccepted, response2.Status())
+
+		updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			a, ok := cmd.([]models.UpdateRule)
+			return a, ok
+		})
+		require.Len(t, updates, 1)
+		cmd2 := updates[0].([]models.UpdateRule)
+		require.Len(t, cmd2, 1)
+		require.Equal(t, "version #2", cmd2[0].Message)
+	})
+
 	t.Run("returns error when target datasource does not exist", func(t *testing.T) {
 		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()

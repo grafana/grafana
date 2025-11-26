@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"log/slog"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -26,6 +25,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -325,7 +325,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		}
 	}
 
-	logger := slog.Default().With("logger", "resource-server")
+	logger := log.New("resource-server")
 
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
@@ -372,7 +372,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	log            *slog.Logger
+	log            log.Logger
 	backend        StorageBackend
 	blob           BlobSupport
 	secure         secrets.InlineSecureValueSupport
@@ -487,14 +487,15 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 
+	l := s.log.FromContext(ctx)
 	if obj.GetUID() == "" {
 		// TODO! once https://github.com/grafana/grafana/pull/96086 is deployed everywhere
 		// return nil, NewBadRequestError("object is missing UID")
-		s.log.Error("object is missing UID", "key", key)
+		l.Error("object is missing UID", "key", key)
 	}
 
 	if obj.GetResourceVersion() != "" {
-		s.log.Error("object must not include a resource version", "key", key)
+		l.Error("object must not include a resource version", "key", key)
 	}
 
 	// Make sure the command labels are not saved
@@ -718,7 +719,7 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
-	s.log.Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
+	s.log.FromContext(ctx).Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
 }
 
@@ -1563,6 +1564,14 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	case <-queueCtx.Done():
 		return queueCtx.Err() // Timed out or canceled while waiting for execution.
 	}
+}
+
+func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
+	return s.search.RebuildIndexes(ctx, req)
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {

@@ -999,7 +999,9 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 		b.lastImportTimeDeletionTime.Store(now)
 	}
 
-	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{SQLTemplate: sqltemplate.New(b.dialect)})
+	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+	})
 	if err != nil {
 		return func(yield func(resource.ResourceLastImportTime, error) bool) {
 			yield(resource.ResourceLastImportTime{}, err)
@@ -1041,4 +1043,8 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 			yield(resource.ResourceLastImportTime{}, err)
 		}
 	}
+}
+
+func (b *backend) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("rebuild indexes not supported by unistore sql backend")
 }
