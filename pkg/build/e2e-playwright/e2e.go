@@ -46,7 +46,7 @@ func RunTest(
 		WithEnvVariable("CI", "true").
 		WithEnvVariable("GRAFANA_URL", fmt.Sprintf("http://%s:%d", grafanaHost, grafanaPort)).
 		WithServiceBinding(grafanaHost, opts.GrafanaService).
-		WithEnvVariable("bustcache", "1").
+		WithEnvVariable("bustcache", "2").
 		WithEnvVariable("PLAYWRIGHT_HTML_OPEN", "never").
 		WithEnvVariable("PLAYWRIGHT_HTML_OUTPUT_DIR", htmlResultsDir).
 		WithEnvVariable("PLAYWRIGHT_BLOB_OUTPUT_DIR", blobResultsDir)
