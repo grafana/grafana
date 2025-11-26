@@ -26,7 +26,7 @@ func NewValidator(authorizer plugins.PluginLoaderAuthorizer) *Validation {
 }
 
 func (s *Validation) ValidateSignature(plugin *plugins.Plugin) error {
-	if true {
+	if plugin.Signature.IsValid() {
 		s.log.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil
 	}
