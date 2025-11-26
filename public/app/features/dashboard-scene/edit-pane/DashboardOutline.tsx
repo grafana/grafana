@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
-import { Box, Icon, Sidebar, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Box, Icon, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -99,7 +99,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
           </button>
         )}
         <button
-          className={cx(styles.nodeName, { [styles.nodeNameClone]: isCloned })}
+          className={cx(styles.nodeButton, { [styles.nodeButtonClone]: isCloned })}
           onDoubleClick={outlineRename.onNameDoubleClicked}
           data-testid={selectors.components.PanelEditor.Outline.item(instanceName)}
         >
@@ -116,10 +116,10 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
             />
           ) : (
             <>
-              <Stack direction="row" gap={0.5} alignItems="center" grow={1}>
-                <span>{instanceName}</span>
+              <div className={styles.nodeName}>
+                <Text truncate>{instanceName}</Text>
                 {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
-              </Stack>
+              </div>
               {isCloned && (
                 <span>
                   <Trans i18nKey="dashboard.outline.repeated-item">Repeat</Trans>
@@ -197,7 +197,7 @@ function getStyles(theme: GrafanaTheme2) {
       color: 'inherit',
       lineHeight: 0,
     }),
-    nodeName: css({
+    nodeButton: css({
       boxShadow: 'none',
       border: 'none',
       background: 'transparent',
@@ -215,11 +215,18 @@ function getStyles(theme: GrafanaTheme2) {
         textOverflow: 'ellipsis',
       },
     }),
+    nodeName: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      flexGrow: 1,
+      alignItems: 'center',
+      overflow: 'hidden',
+    }),
     hiddenIcon: css({
       color: theme.colors.text.secondary,
       marginLeft: theme.spacing(1),
     }),
-    nodeNameClone: css({
+    nodeButtonClone: css({
       color: theme.colors.text.secondary,
       cursor: 'not-allowed',
     }),
