@@ -1,6 +1,6 @@
 import {
   PanelData,
-  VisualizationSuggestion,
+  PanelPluginVisualizationSuggestion,
   VisualizationSuggestionsBuilder,
   PanelModel,
   VisualizationSuggestionScore,
@@ -25,7 +25,10 @@ export const panelsToCheckFirst = [
   'nodeGraph',
 ];
 
-export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): Promise<VisualizationSuggestion[]> {
+export async function getAllSuggestions(
+  data?: PanelData,
+  panel?: PanelModel
+): Promise<PanelPluginVisualizationSuggestion[]> {
   const builder = new VisualizationSuggestionsBuilder(data, panel);
 
   for (const pluginId of panelsToCheckFirst) {
@@ -49,6 +52,7 @@ export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): P
         name: plugin.name,
         pluginId: plugin.id,
         description: plugin.info.description,
+        hash: 'plugin-empty-' + plugin.id,
         cardOptions: {
           imgSrc: plugin.info.logos.small,
         },
