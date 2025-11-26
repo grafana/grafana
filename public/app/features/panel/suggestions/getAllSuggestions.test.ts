@@ -275,6 +275,8 @@ scenario('Single frame with string and number field', (ctx) => {
 
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
+      expect.objectContaining({ pluginId: 'piechart' }),
+      expect.objectContaining({ pluginId: 'piechart', options: expect.objectContaining({ pieType: 'donut' }) }),
       expect.objectContaining({ pluginId: 'barchart' }),
       expect.objectContaining({
         pluginId: 'barchart',
@@ -287,8 +289,7 @@ scenario('Single frame with string and number field', (ctx) => {
         pluginId: 'stat',
         options: expect.objectContaining({ colorMode: BigValueColorMode.Background }),
       }),
-      expect.objectContaining({ pluginId: 'piechart' }),
-      expect.objectContaining({ pluginId: 'piechart', options: expect.objectContaining({ pieType: 'donut' }) }),
+
       expect.objectContaining({
         pluginId: 'bargauge',
         options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
