@@ -44,10 +44,9 @@ export function ResourceExport({
     dashboardJson.value?.json && 'spec' in dashboardJson.value.json && 'elements' in dashboardJson.value.json.spec;
   const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
 
-  const switchExportLabel =
-    exportMode === ExportMode.V2Resource
-      ? t('export.json.export-remove-ds-refs', 'Remove deployment details')
-      : t('share-modal.export.share-externally-label', `Export for sharing externally`);
+  const switchExportLabel = isV2Dashboard
+    ? t('export.json.export-remove-ds-refs', 'Remove deployment details')
+    : t('share-modal.export.share-externally-label', `Export for sharing externally`);
   const switchExportModeLabel = t('export.json.export-mode', 'Model');
   const switchExportFormatLabel = t('export.json.export-format', 'Format');
 
