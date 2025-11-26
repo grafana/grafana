@@ -13,14 +13,7 @@ import (
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 )
 
-// The wrapper aims to authorize access based on a target resource. Hence it needs:
-// - to check the user access before requesting the underlying store
-//   (except for list, which is filtered afterwards)
-//   - extract the target resource from the object being created/updated
-//   - query the resource to get its parent
-//   - check access on the target and parent resources
-// - to switch the identity (since the user will never be allowed by the underlying store)
-
+// ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
 type ResourceStorageAuthorizer interface {
 	BeforeCreate(ctx context.Context, obj runtime.Object) error
 	BeforeUpdate(ctx context.Context, obj runtime.Object) error
@@ -29,6 +22,9 @@ type ResourceStorageAuthorizer interface {
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
 }
 
+// Wrapper is a registry.Store wrapper that enforces authorization based on ResourceStorageAuthorizer.
+// It overrides the identity in the context to use service identity for the underlying store operations.
+// That way, the underlying store authorization is always successful, and the authorization is enforced by the wrapper.
 type Wrapper struct {
 	inner      *registry.Store
 	authorizer ResourceStorageAuthorizer

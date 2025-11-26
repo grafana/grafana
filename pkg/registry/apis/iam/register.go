@@ -401,7 +401,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 		return fmt.Errorf("expected RegistryStoreDualWrite, got %T", dw)
 	}
 
-	authzWrapper := storewrapper.New(regStoreDW, b.accessClient)
+	authzWrapper := storewrapper.New(regStoreDW, storewrapper.NewResourcePermissionsAuthorizer())
 
 	storage[iamv0.ResourcePermissionInfo.StoragePath()] = authzWrapper
 	return nil
