@@ -66,7 +66,7 @@ export function useDefaultValues({
       title: saveAsCopy ? `${defaultTitle} Copy` : defaultTitle,
       description: defaultDescription ?? '',
       workflow: getDefaultWorkflow(repository, loadedFromRef),
-      copyTags: true,
+      copyTags: saveAsCopy ? false : true,
     },
     isNew: !meta.k8s?.name,
     repository,

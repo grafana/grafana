@@ -190,8 +190,6 @@ export function SaveProvisionedDashboardForm({
 
     const message = comment || `Save dashboard: ${dashboard.state.title}`;
 
-    console.log('handle submit form', copyTags);
-
     const body = dashboard.getSaveResource({
       // we want to specifically set isNew to false when saving as copy to avoid DashboardScene always copy tags
       isNew,
