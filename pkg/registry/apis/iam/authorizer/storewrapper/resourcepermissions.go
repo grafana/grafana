@@ -76,7 +76,34 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 
 // BeforeCreate implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
-	panic("unimplemented")
+	authInfo, ok := types.AuthInfoFrom(ctx)
+	if !ok {
+		return errUnauthenticated
+	}
+	switch o := obj.(type) {
+	case *iamv0.ResourcePermission:
+		target := o.Spec.Resource
+
+		// TODO: Fetch the resource to retrieve its parent folder.
+		parent := ""
+
+		checkReq := types.CheckRequest{
+			Group:    target.ApiGroup,
+			Resource: target.Resource,
+			Verb:     utils.VerbSetPermissions,
+			Name:     target.Name,
+		}
+		res, err := r.accessClient.Check(ctx, authInfo, checkReq, parent)
+		if err != nil {
+			return err
+		}
+		if !res.Allowed {
+			return errUnauthorized
+		}
+		return nil
+	default:
+		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, errUnexpectedType)
+	}
 }
 
 // BeforeDelete implements ResourceStorageAuthorizer.
