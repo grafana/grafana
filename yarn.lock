@@ -19459,7 +19459,7 @@ __metadata:
     http-server: "npm:14.1.1"
     i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
-    i18next-cli: "npm:^1.26.0"
+    i18next-cli: "npm:^1.24.22"
     i18next-pseudo: "npm:^2.2.1"
     immer: "npm:10.2.0"
     immutable: "npm:5.1.4"
@@ -20342,29 +20342,6 @@ __metadata:
   bin:
     i18next-cli: dist/esm/cli.js
   checksum: 10/09dc8c551155c0a59fe793ba685d75a4a7810eb047113df3b43234ec5abdd26ffacb9e4f3c78b637f906518053b4aa8ea3e8af9e52fa0bab43e6379a81d44693
-  languageName: node
-  linkType: hard
-
-"i18next-cli@npm:^1.26.0":
-  version: 1.26.0
-  resolution: "i18next-cli@npm:1.26.0"
-  dependencies:
-    "@swc/core": "npm:1.15.2"
-    chalk: "npm:5.6.2"
-    chokidar: "npm:4.0.3"
-    commander: "npm:14.0.2"
-    execa: "npm:9.6.0"
-    glob: "npm:12.0.0"
-    i18next-resources-for-ts: "npm:1.8.0"
-    inquirer: "npm:12.10.0"
-    jiti: "npm:2.6.1"
-    jsonc-parser: "npm:3.3.1"
-    minimatch: "npm:10.1.1"
-    ora: "npm:9.0.0"
-    swc-walk: "npm:1.0.1"
-  bin:
-    i18next-cli: dist/esm/cli.js
-  checksum: 10/067fa2fcd7499080422adc44f49ac0d0a5d247d1c93abc70793282b2064f9d53afb95191a1f90b7169144b32c53318208bf84ca158ff27c8c20915654db7ae4a
   languageName: node
   linkType: hard
 
