@@ -931,6 +931,13 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/geo/ @grafana/dataviz-squad
 /public/app/features/visualization/data-hover/ @grafana/dataviz-squad
 /public/app/features/commandPalette/ @grafana/grafana-search-navigate-organise
+
+# Command palette scopes related files
+/public/app/features/commandPalette/actions/scopeActions.test.tsx @grafana/grafana-operator-experience-squad
+/public/app/features/commandPalette/actions/scopeActions.tsx @grafana/grafana-operator-experience-squad
+/public/app/features/commandPalette/actions/scopesUtils.ts @grafana/grafana-operator-experience-squad
+/public/app/features/commandPalette/ScopesRow.tsx @grafana/grafana-operator-experience-squad
+
 /public/app/features/connections/ @grafana/plugins-platform-frontend
 /public/app/features/correlations/ @grafana/datapro
 /public/app/features/dashboard/ @grafana/dashboards-squad
