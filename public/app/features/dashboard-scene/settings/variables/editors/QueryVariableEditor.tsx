@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useMemo, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
@@ -44,6 +44,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     allowCustomValue,
     staticOptions,
     staticOptionsOrder,
+    options,
   } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
 
@@ -93,6 +94,17 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     variable.setState({ staticOptionsOrder });
   };
 
+  const hasMultiProps = useMemo(() => options.every((o) => Boolean(o.properties)), [options]);
+
+  useEffect(() => {
+    if (hasMultiProps) {
+      variable.setState({ allowCustomValue: false });
+      variable.setState({ allValue: '' });
+      variable.setState({ regex: '' });
+      variable.setState({ staticOptions: [] });
+    }
+  }, [hasMultiProps, variable]);
+
   return (
     <QueryVariableEditorForm
       datasource={datasource ?? undefined}
@@ -103,6 +115,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       timeRange={timeRange}
       regex={regex}
       onRegExChange={onRegExChange}
+      disableRegexEdition={hasMultiProps}
       sort={sort}
       onSortChange={onSortChange}
       refresh={refresh}
@@ -113,12 +126,15 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       onIncludeAllChange={onIncludeAllChange}
       allValue={allValue ?? ''}
       onAllValueChange={onAllValueChange}
+      disableCustomAllValue={hasMultiProps}
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}
+      disableAllowCustomValue={hasMultiProps}
       staticOptions={staticOptions}
       staticOptionsOrder={staticOptionsOrder}
       onStaticOptionsChange={onStaticOptionsChange}
       onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+      disableStaticOptions={hasMultiProps}
     />
   );
 }

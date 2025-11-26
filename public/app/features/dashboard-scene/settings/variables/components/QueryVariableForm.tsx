@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
-import { Box, Field, Switch, TextLink } from '@grafana/ui';
+import { Box, Field, TextLink } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -34,6 +34,7 @@ interface QueryVariableEditorFormProps {
   timeRange: TimeRange;
   regex: string | null;
   onRegExChange: (event: FormEvent<HTMLTextAreaElement>) => void;
+  disableRegexEdition?: boolean;
   sort: VariableSort;
   onSortChange: (option: SelectableValue<VariableSort>) => void;
   refresh: VariableRefresh;
@@ -42,14 +43,17 @@ interface QueryVariableEditorFormProps {
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   allowCustomValue?: boolean;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
+  disableAllowCustomValue?: boolean;
   includeAll: boolean;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   allValue: string;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
+  disableCustomAllValue?: boolean;
   staticOptions?: StaticOptionsType;
   staticOptionsOrder?: StaticOptionsOrderType;
   onStaticOptionsChange?: (staticOptions: StaticOptionsType) => void;
   onStaticOptionsOrderChange?: (staticOptionsOrder: StaticOptionsOrderType) => void;
+  disableStaticOptions?: boolean;
 }
 
 export function QueryVariableEditorForm({
@@ -61,6 +65,7 @@ export function QueryVariableEditorForm({
   timeRange,
   regex,
   onRegExChange,
+  disableRegexEdition,
   sort,
   onSortChange,
   refresh,
@@ -69,14 +74,17 @@ export function QueryVariableEditorForm({
   onMultiChange,
   allowCustomValue,
   onAllowCustomValueChange,
+  disableAllowCustomValue,
   includeAll,
   onIncludeAllChange,
   allValue,
   onAllValueChange,
+  disableCustomAllValue,
   staticOptions,
   staticOptionsOrder,
   onStaticOptionsChange,
   onStaticOptionsOrderChange,
+  disableStaticOptions,
 }: QueryVariableEditorFormProps) {
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
@@ -102,16 +110,6 @@ export function QueryVariableEditorForm({
 
   const { datasource, VariableQueryEditor } = dsConfig ?? {};
 
-  // TODO: remove me after finished testing - each DS can/should implement their own UI
-  const [returnsMultiProps, setReturnsMultiProps] = useState(false);
-  const onChangeReturnsMultipleProps = (e: FormEvent<HTMLInputElement>) => {
-    setReturnsMultiProps(e.currentTarget.checked);
-    onAllowCustomValueChange?.({ currentTarget: { checked: false } });
-    onAllValueChange({ currentTarget: { value: '' } });
-    onRegExChange({ currentTarget: { value: '' } });
-    onStaticOptionsChange?.([]);
-  };
-
   return (
     <>
       <VariableLegend>
@@ -135,27 +133,10 @@ export function QueryVariableEditorForm({
             VariableQueryEditor={VariableQueryEditor}
             timeRange={timeRange}
           />
-          {/* TODO: remove me after finished testing - each DS can/should implement their own UI */}
-          <Field
-            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-            label="Enable access to all the fields of the query results"
-            description={
-              <Trans i18nKey="">
-                Check{' '}
-                <TextLink href="https://grafana.com/docs/grafana/latest/variables/xxx" external>
-                  our docs
-                </TextLink>{' '}
-                for more information.
-              </Trans>
-            }
-            noMargin
-          >
-            <Switch onChange={onChangeReturnsMultipleProps} />
-          </Field>
         </Box>
       )}
 
-      {!returnsMultiProps && (
+      {!disableRegexEdition && (
         <VariableTextAreaField
           defaultValue={regex ?? ''}
           name={t('dashboard-scene.query-variable-editor-form.name-regex', 'Regex')}
@@ -197,7 +178,7 @@ export function QueryVariableEditorForm({
         refresh={refresh}
       />
 
-      {!returnsMultiProps && onStaticOptionsChange && onStaticOptionsOrderChange && (
+      {!disableStaticOptions && onStaticOptionsChange && onStaticOptionsOrderChange && (
         <QueryVariableStaticOptions
           staticOptions={staticOptions}
           staticOptionsOrder={staticOptionsOrder}
@@ -213,8 +194,8 @@ export function QueryVariableEditorForm({
         multi={!!isMulti}
         includeAll={!!includeAll}
         allowCustomValue={allowCustomValue}
-        disableAllowCustomValue={returnsMultiProps}
-        disableCustomAllValue={returnsMultiProps}
+        disableAllowCustomValue={disableAllowCustomValue}
+        disableCustomAllValue={disableCustomAllValue}
         allValue={allValue}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
