@@ -31,10 +31,14 @@ export function InviteUserButton() {
   }
 
   const handleClick = () => {
-    if (shouldShowUpgrade) {
-      performUpgradeClick('top_bar_right', 'upgrade-user-top-bar');
-    } else {
-      performInviteUserClick('top_bar_right', 'invite-user-top-bar');
+    try {
+      if (shouldShowUpgrade) {
+        performUpgradeClick('top_bar_right', 'upgrade-user-top-bar');
+      } else {
+        performInviteUserClick('top_bar_right', 'invite-user-top-bar');
+      }
+    } catch (error) {
+      console.error('Failed to handle button click:', error);
     }
   };
 
