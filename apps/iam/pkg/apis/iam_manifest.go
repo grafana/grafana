@@ -84,23 +84,21 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Routes: map[string]spec3.PathProps{
-						"teams/search": {
+						"/search": {
 							Get: &spec3.Operation{
 								OperationProps: spec3.OperationProps{
 
-									OperationId: "getTeamssearch",
+									OperationId: "getSearch",
 
 									Parameters: []*spec3.Parameter{
 
 										{
 											ParameterProps: spec3.ParameterProps{
-												Name:        "query",
-												In:          "query",
-												Description: "team name query string",
+												Name: "query",
+												In:   "query",
 												Schema: &spec.Schema{
 													SchemaProps: spec.SchemaProps{
-														Type:        []string{"string"},
-														Description: "team name query string",
+														Type: []string{"string"},
 													},
 												},
 											},
@@ -238,7 +236,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1|Team|teams/search|GET": v0alpha1.GetTeamssearch{},
+	"v0alpha1|Team|search|GET": v0alpha1.GetSearch{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -254,7 +252,7 @@ func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (g
 }
 
 var customRouteToGoParamsType = map[string]runtime.Object{
-	"v0alpha1|Team|teams/search|GET": &v0alpha1.GetTeamssearchRequestParamsObject{},
+	"v0alpha1|Team|search|GET": &v0alpha1.GetSearchRequestParamsObject{},
 }
 
 func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goType runtime.Object, exists bool) {

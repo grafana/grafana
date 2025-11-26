@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/teamsearch"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -220,6 +221,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 
 		storage[teamResource.StoragePath()] = teamDW
+		storage[teamResource.StoragePath("search")] = teamsearch.NewTeamSearchREST(b.tracing, b.unified)
 	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo

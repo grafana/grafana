@@ -19,14 +19,14 @@ teamv0alpha1: teamKind & {
 		spec: v0alpha1.TeamSpec
 	}
 	routes: {
-		"teams/search": {
+		"/search": {
 			"GET": {
 				request: {
 					query: { 
-						query?: string // team name query string
+						query?: string
 					}
 				}
-				response: { // response schema
+				response: {
 					#TeamHit: {
 						name: string
 						title: string
@@ -40,7 +40,6 @@ teamv0alpha1: teamKind & {
 					queryCost: float64
 					maxScore: float64
 				}
-				// turn off object metadata in the response schema (both objectMeta and typeMeta default to true, and we want to leave typeMeta on)
 				responseMetadata: objectMeta: false
 			}
 		}

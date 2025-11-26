@@ -22,6 +22,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingList":                                  schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingSpec":                                  schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingTeamRef":                               schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingTeamRef(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearch":                                                 schema_pkg_apis_iam_v0alpha1_GetSearch(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchBody":                                             schema_pkg_apis_iam_v0alpha1_GetSearchBody(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetTeamssearch":                                            schema_pkg_apis_iam_v0alpha1_GetTeamssearch(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetTeamssearchBody":                                        schema_pkg_apis_iam_v0alpha1_GetTeamssearchBody(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRole":                                                schema_pkg_apis_iam_v0alpha1_GlobalRole(ref),
@@ -79,6 +81,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserSpec":                                                  schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserStatus":                                                schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserstatusOperatorState":                                   schema_pkg_apis_iam_v0alpha1_UserstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesSearchGETResponseTeamHit":      schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds7RoutesSearchGETResponseTeamHit(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesTeamsSearchGETResponseTeamHit": schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds7RoutesTeamsSearchGETResponseTeamHit(ref),
 	}
 }
@@ -491,6 +494,132 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingTeamRef(ref common.Referen
 				Required: []string{"name"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetSearch(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"offset": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"totalHits": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"hits": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesSearchGETResponseTeamHit"),
+									},
+								},
+							},
+						},
+					},
+					"queryCost": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
+						},
+					},
+					"maxScore": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
+						},
+					},
+				},
+				Required: []string{"offset", "totalHits", "hits", "queryCost", "maxScore"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesSearchGETResponseTeamHit"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetSearchBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"offset": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"totalHits": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"hits": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesSearchGETResponseTeamHit"),
+									},
+								},
+							},
+						},
+					},
+					"queryCost": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
+						},
+					},
+					"maxScore": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
+						},
+					},
+				},
+				Required: []string{"offset", "totalHits", "hits", "queryCost", "maxScore"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesSearchGETResponseTeamHit"},
 	}
 }
 
@@ -2981,6 +3110,54 @@ func schema_pkg_apis_iam_v0alpha1_UserstatusOperatorState(ref common.ReferenceCa
 					},
 				},
 				Required: []string{"lastEvaluation", "state"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds7RoutesSearchGETResponseTeamHit(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"email": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"provisioned": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"externalUID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"name", "title", "email", "provisioned", "externalUID"},
 			},
 		},
 	}

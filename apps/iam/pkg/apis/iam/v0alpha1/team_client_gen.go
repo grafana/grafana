@@ -83,15 +83,15 @@ func (c *TeamClient) Delete(ctx context.Context, identifier resource.Identifier,
 	return c.client.Delete(ctx, identifier, opts)
 }
 
-type GetTeamssearchRequest struct {
-	Params  GetTeamssearchRequestParams
+type GetSearchRequest struct {
+	Params  GetSearchRequestParams
 	Headers http.Header
 }
 
-func (c *TeamClient) GetTeamssearch(ctx context.Context, identifier resource.Identifier, request GetTeamssearchRequest) (*GetTeamssearch, error) {
+func (c *TeamClient) GetSearch(ctx context.Context, identifier resource.Identifier, request GetSearchRequest) (*GetSearch, error) {
 	params := url.Values{}
 	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
-		Path:    "teams/search",
+		Path:    "/search",
 		Verb:    "GET",
 		Query:   params,
 		Headers: request.Headers,
@@ -99,10 +99,10 @@ func (c *TeamClient) GetTeamssearch(ctx context.Context, identifier resource.Ide
 	if err != nil {
 		return nil, err
 	}
-	cast := GetTeamssearch{}
+	cast := GetSearch{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetTeamssearch: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetSearch: %w", err)
 	}
 	return &cast, nil
 }
