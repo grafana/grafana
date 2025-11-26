@@ -10,7 +10,7 @@ import {
   DataFrameType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { commonOptionsBuilder, getGraphFieldOptions } from '@grafana/ui';
+import { commonOptionsBuilder, getGraphFieldOptions, LegendDisplayMode } from '@grafana/ui';
 import { StackingEditor } from '@grafana/ui/internal';
 
 import { HistogramPanel } from './HistogramPanel';
@@ -160,6 +160,16 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
           score: ds.hasDataFrameType(DataFrameType.Histogram)
             ? VisualizationSuggestionScore.Best
             : VisualizationSuggestionScore.OK,
+          cardOptions: {
+            previewModifier: (s) => {
+              s.options!.legend = {
+                calcs: [],
+                displayMode: LegendDisplayMode.Hidden,
+                placement: 'bottom',
+                showLegend: false,
+              };
+            },
+          },
         },
       ];
     }

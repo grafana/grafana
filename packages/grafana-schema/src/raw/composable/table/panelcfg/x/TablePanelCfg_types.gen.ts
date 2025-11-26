@@ -18,6 +18,10 @@ export interface Options {
    */
   cellHeight?: ui.TableCellHeight;
   /**
+   * If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
+   */
+  disableKeyboardEvents?: boolean;
+  /**
    * Enable pagination on the table
    */
   enablePagination?: boolean;

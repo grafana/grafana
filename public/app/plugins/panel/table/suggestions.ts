@@ -21,6 +21,8 @@ export const tableSuggestionsSupplier: VisualizationSuggestionsSupplier<Options,
     score: getTableSuggestionScore(dataSummary),
     cardOptions: {
       previewModifier: (s) => {
+        s.options!.showHeader = false;
+        s.options!.disableKeyboardEvents = true;
         if (s.fieldConfig && s.fieldConfig.defaults.custom) {
           s.fieldConfig.defaults.custom.minWidth = 50;
         }

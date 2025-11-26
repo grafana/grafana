@@ -34,8 +34,9 @@ export function VisualizationSuggestionCard({
     className: cx(className, styles.vizBox),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
+    tabIndex: -1, // selection is handled by parent container
     ...restProps,
-  };
+  } satisfies HTMLAttributes<HTMLButtonElement> & { 'data-testid': string };
 
   let content: ReactNode;
 
