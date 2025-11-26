@@ -266,3 +266,4 @@ transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 ttlPluginInstanceManager,experimental,@grafana/plugins-platform-backend,false,false,true
 lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
+correlationsExploreEditor,experimental,@grafana/datapro,false,false,true
