@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { AlertErrorPayload, AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { AlertErrorPayload, AlertPayload, AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack } from '@grafana/ui';
 import { notifyApp, hideAppNotification } from 'app/core/actions';
 import { appEvents } from 'app/core/app_events';
@@ -26,25 +26,64 @@ export function AppNotificationList() {
   const { chrome } = useGrafana();
   const location = useLocation();
 
+  // Store location ref to avoid re-registering listeners on route changes
+  const locationRef = useRef(location);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
+
   useEffect(() => {
     // Suppress error notifications in kiosk mode on dashboards.
     // Kiosk mode is typically used for TV displays which are non-interactive.
     // Backend errors like "Failed to fetch" cannot be dismissed and would remain visible,
     // degrading the viewing experience. Other notification types (success, warning, info)
     // are still shown as they indicate successful operations or important information.
-    const handleErrorAlert = (payload: AlertErrorPayload) => {
-      const isKioskDashboard = chrome.state.getValue().kioskMode && location.pathname.startsWith('/d/');
-
-      if (!isKioskDashboard) {
-        dispatch(notifyApp(createErrorNotification(...payload)));
+    const handleErrorAlert = (payload?: AlertErrorPayload) => {
+      const isKioskDashboard = chrome.state.getValue().kioskMode && locationRef.current.pathname.startsWith('/d/');
+      if (isKioskDashboard || !payload) {
+        return;
       }
+      const [title, text, traceId] = payload;
+      dispatch(notifyApp(createErrorNotification(title, text, traceId)));
     };
 
-    appEvents.on(AppEvents.alertWarning, (payload) => dispatch(notifyApp(createWarningNotification(...payload))));
-    appEvents.on(AppEvents.alertSuccess, (payload) => dispatch(notifyApp(createSuccessNotification(...payload))));
+    const handleWarning = (payload?: AlertPayload) => {
+      if (!payload) {
+        return;
+      }
+      const [title, text, traceId] = payload;
+      dispatch(notifyApp(createWarningNotification(title, text, traceId)));
+    };
+
+    const handleSuccess = (payload?: AlertPayload) => {
+      if (!payload) {
+        return;
+      }
+      const [title, text, traceId] = payload;
+      dispatch(notifyApp(createSuccessNotification(title, text, traceId)));
+    };
+
+    const handleInfo = (payload?: AlertPayload) => {
+      if (!payload) {
+        return;
+      }
+      const [title, text, traceId] = payload;
+      dispatch(notifyApp(createInfoNotification(title, text, traceId)));
+    };
+
+    appEvents.on(AppEvents.alertWarning, handleWarning);
+    appEvents.on(AppEvents.alertSuccess, handleSuccess);
     appEvents.on(AppEvents.alertError, handleErrorAlert);
-    appEvents.on(AppEvents.alertInfo, (payload) => dispatch(notifyApp(createInfoNotification(...payload))));
-  }, [dispatch, chrome, location.pathname]);
+    appEvents.on(AppEvents.alertInfo, handleInfo);
+
+    return () => {
+      // Unsubscribe from events on unmount to avoid memory leaks
+      appEvents.off(AppEvents.alertWarning, handleWarning);
+      appEvents.off(AppEvents.alertSuccess, handleSuccess);
+      appEvents.off(AppEvents.alertError, handleErrorAlert);
+      appEvents.off(AppEvents.alertInfo, handleInfo);
+    };
+  }, [dispatch, chrome]);
 
   const onClearAppNotification = (id: string) => {
     dispatch(hideAppNotification(id));
