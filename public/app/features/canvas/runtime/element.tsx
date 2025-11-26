@@ -1090,7 +1090,7 @@ export class ElementState implements LayerElement {
     );
   };
 
-  render() {
+  renderElement() {
     const { item, div } = this;
     const scene = this.getScene();
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);

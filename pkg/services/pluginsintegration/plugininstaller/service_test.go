@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -31,7 +31,6 @@ func TestService_IsDisabled(t *testing.T) {
 		&pluginfakes.FakePluginInstaller{},
 		prometheus.NewRegistry(),
 		&pluginfakes.FakePluginRepo{},
-		featuremgmt.WithFeatures(),
 		&pluginchecker.FakePluginUpdateChecker{},
 	)
 	require.NoError(t, err)
@@ -167,6 +166,7 @@ func TestService_Run(t *testing.T) {
 				&setting.Cfg{
 					PreinstallPluginsAsync: tt.pluginsToInstall,
 					PreinstallPluginsSync:  tt.pluginsToInstallSync,
+					PreinstallAutoUpdate:   true,
 				},
 				store,
 				&pluginfakes.FakePluginInstaller{
@@ -199,7 +199,6 @@ func TestService_Run(t *testing.T) {
 						return tt.latestPlugin, nil
 					},
 				},
-				featuremgmt.WithFeatures(featuremgmt.FlagPreinstallAutoUpdate),
 				pluginchecker.ProvideService(
 					managedplugins.NewNoop(),
 					provisionedplugins.NewNoop(),
@@ -210,7 +209,9 @@ func TestService_Run(t *testing.T) {
 
 			t.Cleanup(func() {
 				s.StopAsync()
-				err := s.AwaitTerminated(context.Background())
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				err := s.AwaitTerminated(ctx)
 				if tt.shouldThrowError {
 					require.ErrorContains(t, err, "Failed to install plugin")
 					return
@@ -226,6 +227,8 @@ func TestService_Run(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+
+			<-s.installComplete
 
 			if tt.shouldInstall {
 				expectedInstalled := 0
@@ -248,7 +251,6 @@ func TestService_Run(t *testing.T) {
 						expectedInstalled++
 					}
 				}
-				<-s.installComplete
 				require.Equal(t, expectedInstalled, installed)
 				require.Equal(t, expectedInstalledFromURL, installedFromURL)
 			}

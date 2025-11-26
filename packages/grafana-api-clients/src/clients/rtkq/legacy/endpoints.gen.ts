@@ -108,13 +108,13 @@ const injectedRtkApi = api
         query: () => ({ url: `/access-control/status` }),
         providesTags: ['access_control', 'enterprise'],
       }),
-      listTeamsRoles: build.mutation<ListTeamsRolesApiResponse, ListTeamsRolesApiArg>({
+      listTeamsRoles: build.query<ListTeamsRolesApiResponse, ListTeamsRolesApiArg>({
         query: (queryArg) => ({
           url: `/access-control/teams/roles/search`,
           method: 'POST',
           body: queryArg.rolesSearchQuery,
         }),
-        invalidatesTags: ['access_control', 'enterprise'],
+        providesTags: ['access_control', 'enterprise'],
       }),
       listTeamRoles: build.query<ListTeamRolesApiResponse, ListTeamRolesApiArg>({
         query: (queryArg) => ({ url: `/access-control/teams/${queryArg.teamId}/roles` }),
@@ -129,7 +129,11 @@ const injectedRtkApi = api
         invalidatesTags: ['access_control', 'enterprise'],
       }),
       setTeamRoles: build.mutation<SetTeamRolesApiResponse, SetTeamRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/teams/${queryArg.teamId}/roles`, method: 'PUT' }),
+        query: (queryArg) => ({
+          url: `/access-control/teams/${queryArg.teamId}/roles`,
+          method: 'PUT',
+          body: queryArg.setTeamRolesCommand,
+        }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
       removeTeamRole: build.mutation<RemoveTeamRoleApiResponse, RemoveTeamRoleApiArg>({
@@ -551,7 +555,7 @@ const injectedRtkApi = api
             'x-grafana-alerting-alert-rules-paused': queryArg['x-grafana-alerting-alert-rules-paused'],
             'x-grafana-alerting-target-datasource-uid': queryArg['x-grafana-alerting-target-datasource-uid'],
             'x-grafana-alerting-folder-uid': queryArg['x-grafana-alerting-folder-uid'],
-            'x-grafana-alerting-notification-receiver': queryArg['x-grafana-alerting-notification-receiver'],
+            'x-grafana-alerting-notification-settings': queryArg['x-grafana-alerting-notification-settings'],
           },
         }),
         invalidatesTags: ['convert_prometheus'],
@@ -618,7 +622,7 @@ const injectedRtkApi = api
             'x-grafana-alerting-alert-rules-paused': queryArg['x-grafana-alerting-alert-rules-paused'],
             'x-grafana-alerting-target-datasource-uid': queryArg['x-grafana-alerting-target-datasource-uid'],
             'x-grafana-alerting-folder-uid': queryArg['x-grafana-alerting-folder-uid'],
-            'x-grafana-alerting-notification-receiver': queryArg['x-grafana-alerting-notification-receiver'],
+            'x-grafana-alerting-notification-settings': queryArg['x-grafana-alerting-notification-settings'],
           },
         }),
         invalidatesTags: ['convert_prometheus'],
@@ -651,10 +655,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['dashboards', 'snapshots'],
-      }),
-      calculateDashboardDiff: build.mutation<CalculateDashboardDiffApiResponse, CalculateDashboardDiffApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/calculate-diff`, method: 'POST', body: queryArg.body }),
-        invalidatesTags: ['dashboards'],
       }),
       postDashboard: build.mutation<PostDashboardApiResponse, PostDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/db`, method: 'POST', body: queryArg.saveDashboardCommand }),
@@ -1599,6 +1599,8 @@ const injectedRtkApi = api
             perpage: queryArg.perpage,
             name: queryArg.name,
             query: queryArg.query,
+            accesscontrol: queryArg.accesscontrol,
+            sort: queryArg.sort,
           },
         }),
         providesTags: ['teams'],
@@ -2142,6 +2144,7 @@ export type SetTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetTeamRolesApiArg = {
   teamId: number;
+  setTeamRolesCommand: SetTeamRolesCommand;
 };
 export type RemoveTeamRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2491,7 +2494,7 @@ export type RouteConvertPrometheusCortexPostRuleGroupApiArg = {
   'x-grafana-alerting-alert-rules-paused'?: boolean;
   'x-grafana-alerting-target-datasource-uid'?: string;
   'x-grafana-alerting-folder-uid'?: string;
-  'x-grafana-alerting-notification-receiver'?: string;
+  'x-grafana-alerting-notification-settings'?: string;
   prometheusRuleGroup: PrometheusRuleGroup;
 };
 export type RouteConvertPrometheusCortexDeleteRuleGroupApiResponse =
@@ -2528,7 +2531,7 @@ export type RouteConvertPrometheusPostRuleGroupApiArg = {
   'x-grafana-alerting-alert-rules-paused'?: boolean;
   'x-grafana-alerting-target-datasource-uid'?: string;
   'x-grafana-alerting-folder-uid'?: string;
-  'x-grafana-alerting-notification-receiver'?: string;
+  'x-grafana-alerting-notification-settings'?: string;
   prometheusRuleGroup: PrometheusRuleGroup;
 };
 export type RouteConvertPrometheusDeleteRuleGroupApiResponse =
@@ -2548,18 +2551,6 @@ export type SearchDashboardSnapshotsApiArg = {
   query?: string;
   /** Limit the number of returned results */
   limit?: number;
-};
-export type CalculateDashboardDiffApiResponse = /** status 200 (empty) */ number[];
-export type CalculateDashboardDiffApiArg = {
-  body: {
-    base?: CalculateDiffTarget;
-    /** The type of diff to return
-        Description:
-        `basic`
-        `json` */
-    diffType?: 'basic' | 'json';
-    new?: CalculateDiffTarget;
-  };
 };
 export type PostDashboardApiResponse = /** status 200 (empty) */ {
   /** FolderUID The unique identifier (uid) of the folder the dashboard belongs to. */
@@ -3445,6 +3436,8 @@ export type SearchTeamsApiArg = {
   name?: string;
   /** If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded. */
   query?: string;
+  accesscontrol?: boolean;
+  sort?: string;
 };
 export type RemoveTeamGroupApiQueryApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -3880,26 +3873,26 @@ export type ErrorResponseBody = {
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
 };
-export type PermissionIsTheModelForAccessControlPermissions = {
+export type Permission = {
   action?: string;
   created?: string;
   scope?: string;
   updated?: string;
 };
 export type RoleDto = {
-  created?: string;
+  created: string;
   delegatable?: boolean;
-  description?: string;
-  displayName?: string;
+  description: string;
+  displayName: string;
   global?: boolean;
-  group?: string;
+  group: string;
   hidden?: boolean;
   mapped?: boolean;
-  name?: string;
-  permissions?: PermissionIsTheModelForAccessControlPermissions[];
-  uid?: string;
-  updated?: string;
-  version?: number;
+  name: string;
+  permissions?: Permission[];
+  uid: string;
+  updated: string;
+  version: number;
 };
 export type CreateRoleForm = {
   description?: string;
@@ -3908,7 +3901,7 @@ export type CreateRoleForm = {
   group?: string;
   hidden?: boolean;
   name?: string;
-  permissions?: PermissionIsTheModelForAccessControlPermissions[];
+  permissions?: Permission[];
   uid?: string;
   version?: number;
 };
@@ -3922,7 +3915,7 @@ export type UpdateRoleCommand = {
   group: string;
   hidden?: boolean;
   name?: string;
-  permissions?: PermissionIsTheModelForAccessControlPermissions[];
+  permissions?: Permission[];
   version?: number;
 };
 export type RoleAssignmentsDto = {
@@ -3945,6 +3938,10 @@ export type RolesSearchQuery = {
 };
 export type AddTeamRoleCommand = {
   roleUid?: string;
+};
+export type SetTeamRolesCommand = {
+  includeHidden?: boolean;
+  roleUids?: string[];
 };
 export type AddUserRoleCommand = {
   global?: boolean;
@@ -4386,11 +4383,6 @@ export type DashboardSnapshotDto = {
   key?: string;
   name?: string;
   updated?: string;
-};
-export type CalculateDiffTarget = {
-  dashboardId?: number;
-  unsavedDashboard?: Json;
-  version?: number;
 };
 export type SaveDashboardCommand = {
   UpdatedAt?: string;
@@ -6019,7 +6011,7 @@ export type CreateDashboardSnapshotCommand = {
 };
 export type CreateTeamCommand = {
   email?: string;
-  name?: string;
+  name: string;
 };
 export type TeamDto = {
   accessControl?: {
@@ -6028,13 +6020,14 @@ export type TeamDto = {
   avatarUrl?: string;
   email?: string;
   externalUID?: string;
-  id?: number;
-  isProvisioned?: boolean;
-  memberCount?: number;
-  name?: string;
-  orgId?: number;
+  /** @deprecated Use UID instead */
+  id: number;
+  isProvisioned: boolean;
+  memberCount: number;
+  name: string;
+  orgId: number;
   permission?: PermissionType;
-  uid?: string;
+  uid: string;
 };
 export type SearchTeamQueryResult = {
   page?: number;
@@ -6046,6 +6039,7 @@ export type TeamGroupDto = {
   groupId?: string;
   orgId?: number;
   teamId?: number;
+  uid?: string;
 };
 export type TeamGroupMapping = {
   groupId?: string;
@@ -6078,7 +6072,7 @@ export type TeamMemberDto = {
   userUID?: string;
 };
 export type AddTeamMemberCommand = {
-  userId?: number;
+  userId: number;
 };
 export type SetTeamMembershipsCommand = {
   admins?: string[];
@@ -6515,7 +6509,8 @@ export const {
   useSetRoleAssignmentsMutation,
   useGetAccessControlStatusQuery,
   useLazyGetAccessControlStatusQuery,
-  useListTeamsRolesMutation,
+  useListTeamsRolesQuery,
+  useLazyListTeamsRolesQuery,
   useListTeamRolesQuery,
   useLazyListTeamRolesQuery,
   useAddTeamRoleMutation,
@@ -6621,7 +6616,6 @@ export const {
   useLazyRouteConvertPrometheusGetRuleGroupQuery,
   useSearchDashboardSnapshotsQuery,
   useLazySearchDashboardSnapshotsQuery,
-  useCalculateDashboardDiffMutation,
   usePostDashboardMutation,
   useGetHomeDashboardQuery,
   useLazyGetHomeDashboardQuery,

@@ -46,7 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -2016,6 +2016,26 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		_, err := service.searchDashboardsThroughK8s(ctx, query)
 		require.NoError(t, err)
 	})
+
+	t.Run("search will request legacy dashboard ID", func(t *testing.T) {
+		ctx := context.Background()
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		query := &dashboards.FindPersistedDashboardsQuery{
+			ManagedBy: utils.ManagerKindClassicFP, //nolint:staticcheck
+			OrgId:     1,
+		}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			return slices.Contains(req.Fields, "grafana.app/deprecatedInternalID") &&
+				slices.Contains(req.Fields, "labels.grafana.app/deprecatedInternalID")
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
+			TotalHits: 0,
+		}, nil)
+		_, err := service.searchDashboardsThroughK8s(ctx, query)
+		require.NoError(t, err)
+	})
 }
 
 func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
@@ -2654,7 +2674,7 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 		return len(req.Options.Fields) == 1 &&
-			req.Options.Fields[0].Key == search.DASHBOARD_LIBRARY_PANEL_REFERENCE &&
+			req.Options.Fields[0].Key == builders.DASHBOARD_LIBRARY_PANEL_REFERENCE &&
 			req.Options.Fields[0].Values[0] == "test-library-panel"
 	})).Return(searchResponse, nil).Once()
 
