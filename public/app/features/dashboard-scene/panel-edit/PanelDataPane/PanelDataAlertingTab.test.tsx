@@ -40,14 +40,15 @@ import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataA
 jest.mock('app/features/alerting/unified/api/prometheus');
 jest.mock('app/features/alerting/unified/api/ruler');
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.spyOn(ruler, 'rulerUrlBuilder');
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
 
-setPluginLinksHook(() => ({
-  links: [],
-  isLoading: false,
-}));
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 const dataSources = {
   prometheus: mockDataSource<PromOptions>(

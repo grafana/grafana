@@ -477,6 +477,7 @@
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
+      "analyze-rule": "Analyze rule",
       "copy-link": "Copy link",
       "duplicate": "Duplicate",
       "export": "Export",
