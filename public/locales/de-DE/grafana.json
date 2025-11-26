@@ -2624,7 +2624,9 @@
         "placeholder-search-input": "Nach Name suchen oder Filterabfrage eingeben …"
       },
       "grafana-folder": "Grafana-Ordner",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Zustand",
       "label": {
         "hide": "Ausblenden",
@@ -2635,6 +2637,7 @@
       "placeholder-all-data-sources": "Alle Datenquellen",
       "placeholder-contact-point": "Kontaktpunkt auswählen",
       "placeholder-data-sources": "Datenquellen auswählen",
+      "placeholder-group-search": "",
       "placeholder-labels": "Labels auswählen",
       "plugin-rules": "Plugin-Regeln",
       "rule-source": {
@@ -6182,8 +6185,8 @@
       "placeholder-search-for": "Suche nach ...",
       "radio-options": {
         "label": {
-          "suggestions": "Vorschläge",
-          "visualizations": "Visualisierungen"
+          "all-visualizations": "",
+          "suggestions": "Vorschläge"
         }
       },
       "title-close": "Schließen"
@@ -8123,8 +8126,7 @@
       "edit-pane": {
         "go-back": "Zurückgehen"
       }
-    },
-    "select-group": "Gruppe auswählen"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11050,8 +11052,8 @@
       "tooltip-delete": "Löschen"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "Basierend auf aktuellen Daten",
-      "no-results-matched-your-query": "Keine passenden Ergebnisse zu Ihrer Abfrage"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Es konnte nichts gefunden werden, was Ihrer Abfrage entspricht"

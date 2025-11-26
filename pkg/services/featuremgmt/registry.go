@@ -1590,6 +1590,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "kubernetesExternalGroupMapping",
+			Description:  "Routes external group mapping requests from /api to the /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,
@@ -1794,10 +1801,10 @@ var (
 		{
 			Name:         "azureResourcePickerUpdates",
 			Description:  "Enables the updated Azure Monitor resource picker",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaPartnerPluginsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:            "prometheusTypeMigration",
@@ -1888,10 +1895,10 @@ var (
 		{
 			Name:         "newPanelPadding",
 			Description:  "Increases panel padding globally",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "onlyStoreActionSets",

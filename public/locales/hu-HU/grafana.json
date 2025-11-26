@@ -2624,7 +2624,9 @@
         "placeholder-search-input": "Keresés név alapján, vagy szűrőlekérdezés megadása..."
       },
       "grafana-folder": "Grafana mappa",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Állapot",
       "label": {
         "hide": "Elrejtés",
@@ -2635,6 +2637,7 @@
       "placeholder-all-data-sources": "Összes adatforrás",
       "placeholder-contact-point": "Kapcsolattartási pont kiválasztása",
       "placeholder-data-sources": "Adatforrások kiválasztása",
+      "placeholder-group-search": "",
       "placeholder-labels": "Címkék kiválasztása",
       "plugin-rules": "Bővítményszabályok",
       "rule-source": {
@@ -6182,8 +6185,8 @@
       "placeholder-search-for": "Keresés a következőre…",
       "radio-options": {
         "label": {
-          "suggestions": "Javaslatok",
-          "visualizations": "Vizualizációk"
+          "all-visualizations": "",
+          "suggestions": "Javaslatok"
         }
       },
       "title-close": "Bezárás"
@@ -8123,8 +8126,7 @@
       "edit-pane": {
         "go-back": "Visszalépés"
       }
-    },
-    "select-group": "Csoport kijelölése"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11050,8 +11052,8 @@
       "tooltip-delete": "Törlés"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "Aktuális adatok alapján",
-      "no-results-matched-your-query": "Nincs találat a lekérdezésre"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Nincs találat a lekérdezésre"

@@ -197,7 +197,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
   const [dedupStrategy, setDedupStrategy] = useState<LogsDedupStrategy>(LogsDedupStrategy.none);
   const [logsSortOrder, setLogsSortOrder] = useState<LogsSortOrder>(
-    store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending
+    panelState?.logs?.sortOrder ?? store.get(SETTINGS_KEYS.logsSortOrder) ?? LogsSortOrder.Descending
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
   const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
@@ -270,6 +270,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [dispatch, exploreId, loading, panelState, previousLoading]);
 
   useEffect(() => {
+    // Initialize URL sort order
+    if (!panelState?.logs?.sortOrder) {
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState,
+          sortOrder: logsSortOrder,
+        })
+      );
+    }
+  }, [dispatch, exploreId, logsSortOrder, panelState]);
+
+  useEffect(() => {
     const visualisationType = panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
     setVisualisationType(visualisationType);
 
@@ -287,23 +299,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   useUnmount(() => {
     // If we're unmounting logs (e.g. switching to another datasource), we need to remove the logs specific panel state, otherwise it will persist in the explore url
-    if (
-      panelState?.logs?.columns ||
-      panelState?.logs?.refId ||
-      panelState?.logs?.labelFieldName ||
-      panelState?.logs?.displayedFields
-    ) {
-      dispatch(
-        changePanelState(exploreId, 'logs', {
-          ...panelState?.logs,
-          columns: undefined,
-          visualisationType: visualisationType,
-          labelFieldName: undefined,
-          refId: undefined,
-          displayedFields: undefined,
-        })
-      );
-    }
+    dispatch(
+      changePanelState(exploreId, 'logs', {
+        ...panelState?.logs,
+        columns: undefined,
+        visualisationType: visualisationType,
+        labelFieldName: undefined,
+        refId: undefined,
+        displayedFields: undefined,
+        sortOrder: undefined,
+      })
+    );
   });
 
   const updatePanelState = useCallback(
@@ -398,8 +404,14 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         dispatch(changeQueries({ exploreId, queries: newQueries }));
         dispatch(runQueries({ exploreId }));
       }
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState?.logs,
+          sortOrder: newSortOrder,
+        })
+      );
     },
-    [dispatch, exploreId, logsQueries]
+    [dispatch, exploreId, logsQueries, panelState?.logs]
   );
 
   const onChangeLogsSortOrder = useCallback(
@@ -588,7 +600,12 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
       urlState.panelsState = {
         ...panelState,
-        logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType(), displayedFields },
+        logs: {
+          id: row.uid,
+          visualisationType: visualisationType ?? getDefaultVisualisationType(),
+          displayedFields,
+          sortOrder: logsSortOrder,
+        },
       };
       urlState.range = getLogsPermalinkRange(row, logRows, absoluteRange);
 
@@ -604,7 +621,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         logRowLevel: row.logLevel,
       });
     },
-    [absoluteRange, displayedFields, exploreId, logRows, panelState, visualisationType]
+    [absoluteRange, displayedFields, exploreId, logRows, logsSortOrder, panelState, visualisationType]
   );
 
   const scrollToTopLogs = useCallback(() => {

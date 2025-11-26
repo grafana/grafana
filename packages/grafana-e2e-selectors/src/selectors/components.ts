@@ -57,6 +57,11 @@ export const versionedComponents = {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
   },
+  Sidebar: {
+    closePane: {
+      '12.4.0': 'data-testid Sidebar close pane',
+    },
+  },
   EditPaneHeader: {
     deleteButton: {
       '12.1.0': 'data-testid EditPaneHeader delete panel',
@@ -69,9 +74,6 @@ export const versionedComponents = {
     },
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
-    },
-    backButton: {
-      '12.1.0': 'data-testid EditPaneHeader back',
     },
   },
   TimePicker: {

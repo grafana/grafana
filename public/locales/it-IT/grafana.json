@@ -2624,7 +2624,9 @@
         "placeholder-search-input": "Cerca per nome o inserisci una query di filtro..."
       },
       "grafana-folder": "Cartella Grafana",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Stato",
       "label": {
         "hide": "Nascondi",
@@ -2635,6 +2637,7 @@
       "placeholder-all-data-sources": "Tutte le fonti dei dati",
       "placeholder-contact-point": "Seleziona punto di contatto",
       "placeholder-data-sources": "Seleziona origini dati",
+      "placeholder-group-search": "",
       "placeholder-labels": "Seleziona etichette",
       "plugin-rules": "Regole dei componenti aggiuntivi",
       "rule-source": {
@@ -6182,8 +6185,8 @@
       "placeholder-search-for": "Cerca...",
       "radio-options": {
         "label": {
-          "suggestions": "Suggerimenti",
-          "visualizations": "Visualizzazioni"
+          "all-visualizations": "",
+          "suggestions": "Suggerimenti"
         }
       },
       "title-close": "Chiudi"
@@ -8123,8 +8126,7 @@
       "edit-pane": {
         "go-back": "Torna indietro"
       }
-    },
-    "select-group": "Seleziona gruppo"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11050,8 +11052,8 @@
       "tooltip-delete": "Elimina"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "In base ai dati attuali",
-      "no-results-matched-your-query": "Nessun risultato corrisponde alla tua query"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
