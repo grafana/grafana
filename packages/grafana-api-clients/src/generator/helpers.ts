@@ -143,8 +143,10 @@ export const updatePackageJsonExports =
       // Create the new export entry
       const newExportKey = `./rtkq/${groupName}/${version}`;
       const newExportValue = {
-        import: `./src/clients/rtkq/${groupName}/${version}/index.ts`,
-        require: `./src/clients/rtkq/${groupName}/${version}/index.ts`,
+        '@grafana-app/source': `./src/clients/rtkq/${groupName}/${version}/index.ts`,
+        types: `./dist/types/clients/rtkq/${groupName}/${version}/index.d.ts`,
+        import: `./dist/esm/clients/rtkq/${groupName}/${version}/index.mjs`,
+        require: `./dist/cjs/clients/rtkq/${groupName}/${version}/index.cjs`,
       };
 
       // Check if export already exists
