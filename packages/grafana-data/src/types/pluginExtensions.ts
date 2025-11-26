@@ -292,6 +292,17 @@ export type PluginExtensionCommandPaletteContext = {
   signal?: AbortSignal;
 };
 
+/**
+ * Context for dynamic command palette search providers.
+ * Unlike the base context, searchQuery and signal are always provided.
+ */
+export type DynamicPluginExtensionCommandPaletteContext = {
+  /** The current search query entered by the user */
+  searchQuery: string;
+  /** Signal for request cancellation */
+  signal: AbortSignal;
+};
+
 export type PluginExtensionResourceAttributesContext = {
   // Key-value pairs of resource attributes, attribute name is the key
   attributes: Record<string, string[]>;
@@ -367,33 +378,35 @@ export type CommandPaletteDynamicResult = {
   section?: string;
   /** Optional custom data to pass through to the action handler */
   data?: Record<string, unknown>;
+  /**
+   * Action handler when this result is selected.
+   * If not provided, will use `path` for navigation.
+   */
+  onSelect?: CommandPaletteDynamicResultAction;
 };
 
 /**
  * Action handler for when a dynamic result is selected
  */
 export type CommandPaletteDynamicResultAction = (
-  result: CommandPaletteDynamicResult,
-  helpers: PluginExtensionEventHelpers<PluginExtensionCommandPaletteContext>
+  result: Omit<CommandPaletteDynamicResult, 'onSelect'>,
+  helpers: PluginExtensionEventHelpers<DynamicPluginExtensionCommandPaletteContext>
 ) => void | Promise<void>;
 
 /**
  * Search provider function that fetches dynamic results
  */
 export type CommandPaletteDynamicSearchProvider = (
-  context: PluginExtensionCommandPaletteContext
+  context: DynamicPluginExtensionCommandPaletteContext
 ) => Promise<CommandPaletteDynamicResult[]>;
 
 /**
  * Configuration for registering a dynamic command palette provider
  */
 export type PluginExtensionCommandPaletteDynamicConfig = {
-  /** Display name for this search provider */
-  title: string;
-
   /**
-   * Category/section name for grouping results
-   * @default Plugin ID
+   * Category/section name for grouping results.
+   * If not provided, results will be grouped under "Dynamic Results".
    */
   category?: string;
 
@@ -404,25 +417,10 @@ export type PluginExtensionCommandPaletteDynamicConfig = {
   minQueryLength?: number;
 
   /**
-   * Debounce delay in milliseconds
-   * @default 300
-   */
-  debounceMs?: number;
-
-  /**
-   * Search provider function that returns results
+   * Search provider function that returns results.
+   * Return an empty array to skip results for the current search.
+   * To conditionally disable the provider, simply return an empty array
+   * based on your own logic instead of using a separate isActive filter.
    */
   searchProvider: CommandPaletteDynamicSearchProvider;
-
-  /**
-   * Action handler when a result is selected
-   * If not provided, will use result.path for navigation
-   */
-  onSelect?: CommandPaletteDynamicResultAction;
-
-  /**
-   * Optional filter to determine when this provider should be active
-   * Return false to disable this provider for the current context
-   */
-  isActive?: (context: PluginExtensionCommandPaletteContext) => boolean;
 };

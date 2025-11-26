@@ -61,7 +61,16 @@ function CommandPaletteContents() {
   // Normally we register actions with kbar, and it knows not to show actions which are under a different parent than is
   // the currentRootActionId. Because these search results are manually added to the list later, they would show every
   // time.
-  const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
+  const { searchResults: dashboardFolderResults, isFetchingSearchResults } = useSearchResults({
+    searchQuery,
+    show: !currentRootActionId,
+  });
+
+  // Combine all search results (dashboard/folder results + dynamic plugin results)
+  const searchResults = useMemo(
+    () => [...dashboardFolderResults, ...dynamicResults],
+    [dashboardFolderResults, dynamicResults]
+  );
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
@@ -95,9 +104,8 @@ function CommandPaletteContents() {
             {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
             <div className={styles.resultsContainer}>
               <RenderResults
-                isFetchingSearchResults={isFetchingSearchResults}
+                isFetchingSearchResults={isFetchingSearchResults || isDynamicLoading}
                 searchResults={searchResults}
-                dynamicResults={dynamicResults}
                 searchQuery={searchQuery}
               />
             </div>
@@ -142,11 +150,10 @@ function AncestorBreadcrumbs() {
 interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
-  dynamicResults: Array<{ section: string; items: ActionImpl[] }>;
   searchQuery: string;
 }
 
-const RenderResults = ({ isFetchingSearchResults, searchResults, dynamicResults, searchQuery }: RenderResultsProps) => {
+const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
   const { query } = useKBar();
   const { isAvailable: isAssistantAvailable } = useAssistant();
@@ -155,52 +162,65 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, dynamicResults,
 
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
-  // because dashboard search results aren't registered as actions, we need to manually
-  // convert them to ActionImpls before passing them as items to KBarResults
-  const dashboardResultItems = useMemo(
-    () =>
-      searchResults
-        .filter((item) => item.id.startsWith('go/dashboard'))
-        .map((dashboard) => new ActionImpl(dashboard, { store: {} })),
-    [searchResults]
-  );
-  const folderResultItems = useMemo(
-    () =>
-      searchResults
-        .filter((item) => item.id.startsWith('go/folder'))
-        .map((folder) => new ActionImpl(folder, { store: {} })),
-    [searchResults]
-  );
+
+  // Group search results by section (dashboard, folder, or dynamic plugin sections)
+  const groupedSearchResults = useMemo(() => {
+    const groups = new Map<string, ActionImpl[]>();
+
+    searchResults.forEach((item) => {
+      let section: string;
+      if (item.id.startsWith('go/dashboard')) {
+        section = dashboardsSectionTitle;
+      } else if (item.id.startsWith('go/folder')) {
+        section = foldersSectionTitle;
+      } else {
+        // Dynamic results have their section set
+        // Section can be a string or { name: string; priority: number; }
+        const itemSection = item.section;
+        section =
+          typeof itemSection === 'string'
+            ? itemSection
+            : typeof itemSection === 'object' && itemSection !== null
+              ? itemSection.name
+              : 'Dynamic Results';
+      }
+
+      if (!groups.has(section)) {
+        groups.set(section, []);
+      }
+      groups.get(section)!.push(new ActionImpl(item, { store: {} }));
+    });
+
+    return groups;
+  }, [searchResults, dashboardsSectionTitle, foldersSectionTitle]);
 
   const items = useMemo(() => {
     const results = [...kbarResults];
 
-    // Add dynamic results from plugins (already filtered by searchProvider)
-    dynamicResults.forEach(({ section, items }) => {
-      if (items.length > 0) {
+    // Add all grouped search results (folders, dashboards, and dynamic results)
+    // Folders first, then dynamic results, then dashboards
+    const folderResults = groupedSearchResults.get(foldersSectionTitle) ?? [];
+    if (folderResults.length > 0) {
+      results.push(foldersSectionTitle);
+      results.push(...folderResults);
+    }
+
+    // Add dynamic plugin results (any section that's not dashboard/folder)
+    groupedSearchResults.forEach((items, section) => {
+      if (section !== dashboardsSectionTitle && section !== foldersSectionTitle && items.length > 0) {
         results.push(section);
         results.push(...items);
       }
     });
 
-    // Add dashboard and folder search results
-    if (folderResultItems.length > 0) {
-      results.push(foldersSectionTitle);
-      results.push(...folderResultItems);
-    }
-    if (dashboardResultItems.length > 0) {
+    const dashboardResults = groupedSearchResults.get(dashboardsSectionTitle) ?? [];
+    if (dashboardResults.length > 0) {
       results.push(dashboardsSectionTitle);
-      results.push(...dashboardResultItems);
+      results.push(...dashboardResults);
     }
+
     return results;
-  }, [
-    kbarResults,
-    dynamicResults,
-    dashboardsSectionTitle,
-    dashboardResultItems,
-    foldersSectionTitle,
-    folderResultItems,
-  ]);
+  }, [kbarResults, groupedSearchResults, dashboardsSectionTitle, foldersSectionTitle]);
 
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
   useEffect(() => {

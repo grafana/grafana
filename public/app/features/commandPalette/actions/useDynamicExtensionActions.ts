@@ -1,12 +1,7 @@
-import { ActionImpl } from 'kbar';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import {
-  CommandPaletteDynamicResult,
-  CommandPaletteDynamicResultAction,
-  PluginExtensionCommandPaletteContext,
-} from '@grafana/data';
+import { CommandPaletteDynamicResult, PluginExtensionCommandPaletteContext } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
@@ -15,26 +10,22 @@ import { commandPaletteDynamicRegistry, CommandPaletteDynamicSearchResult } from
 import { CommandPaletteAction } from '../types';
 import { EXTENSIONS_PRIORITY } from '../values';
 
-interface DynamicResultWithAction extends CommandPaletteDynamicResult {
+interface DynamicResultWithPluginId extends CommandPaletteDynamicResult {
   pluginId: string;
-  onSelect?: CommandPaletteDynamicResultAction;
-}
-
-export interface DynamicExtensionResultGroup {
-  section: string;
-  items: ActionImpl[];
 }
 
 /**
  * Fetches dynamic results from plugin extensions without registering them with kbar.
  * This allows the results to bypass kbar's fuzzy filtering since they're already
  * filtered by the plugin's searchProvider function.
+ *
+ * Returns flat CommandPaletteAction[] that can be concatenated with other search results.
  */
 export function useDynamicExtensionResults(searchQuery: string): {
-  results: DynamicExtensionResultGroup[];
+  results: CommandPaletteAction[];
   isLoading: boolean;
 } {
-  const [dynamicResults, setDynamicResults] = useState<DynamicResultWithAction[]>([]);
+  const [dynamicResults, setDynamicResults] = useState<DynamicResultWithPluginId[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -81,14 +72,14 @@ export function useDynamicExtensionResults(searchQuery: string): {
           return;
         }
 
-        const allResults: DynamicResultWithAction[] = [];
+        const allResults: DynamicResultWithPluginId[] = [];
 
         resultsMap.forEach(({ items, config }: CommandPaletteDynamicSearchResult) => {
           items.forEach((item: CommandPaletteDynamicResult) => {
             allResults.push({
               ...item,
               pluginId: config.pluginId,
-              onSelect: config.config.onSelect,
+              // Use item's section or fall back to config's category
               section: item.section ?? config.config.category,
             });
           });
@@ -111,18 +102,12 @@ export function useDynamicExtensionResults(searchQuery: string): {
     };
   }, [debouncedSearchQuery]);
 
-  // Group results by section and convert to ActionImpl objects
-  const results: DynamicExtensionResultGroup[] = useMemo(() => {
-    const groups = new Map<string, CommandPaletteAction[]>();
-
-    dynamicResults.forEach((result) => {
+  // Convert dynamic results to CommandPaletteAction[]
+  const results: CommandPaletteAction[] = useMemo(() => {
+    return dynamicResults.map((result) => {
       const section = result.section ?? 'Dynamic Results';
 
-      if (!groups.has(section)) {
-        groups.set(section, []);
-      }
-
-      const action: CommandPaletteAction = {
+      return {
         id: `dynamic-${result.pluginId}-${result.id}`,
         name: result.title,
         section,
@@ -133,7 +118,7 @@ export function useDynamicExtensionResults(searchQuery: string): {
           if (result.onSelect) {
             const extensionPointId = 'grafana/commandpalette/action';
             result.onSelect(result, {
-              context: { searchQuery: debouncedSearchQuery },
+              context: { searchQuery: debouncedSearchQuery, signal: new AbortController().signal },
               extensionPointId,
               openModal: createOpenModalFunction({
                 pluginId: result.pluginId,
@@ -169,15 +154,7 @@ export function useDynamicExtensionResults(searchQuery: string): {
         },
         url: result.path,
       };
-
-      groups.get(section)!.push(action);
     });
-
-    // Convert to array of groups with ActionImpl objects
-    return Array.from(groups.entries()).map(([section, actions]) => ({
-      section,
-      items: actions.map((action) => new ActionImpl(action, { store: {} })),
-    }));
   }, [dynamicResults, debouncedSearchQuery]);
 
   return { results, isLoading };

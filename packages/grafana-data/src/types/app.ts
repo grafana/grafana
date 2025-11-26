@@ -156,7 +156,6 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
    * @example
    * ```typescript
    * plugin.addCommandPaletteDynamicProvider({
-   *   title: 'Search Issues',
    *   category: 'My Plugin',
    *   searchProvider: async ({ searchQuery, signal }) => {
    *     const response = await fetch(`/api/issues?q=${searchQuery}`, { signal });
@@ -165,13 +164,14 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
    *       id: issue.id,
    *       title: issue.title,
    *       description: `#${issue.number}`,
+   *       // onSelect is per-result, allowing mixed navigation and custom actions
+   *       onSelect: (result, helpers) => {
+   *         helpers.openModal({
+   *           title: result.title,
+   *           body: IssueDetailsModal,
+   *         });
+   *       },
    *     }));
-   *   },
-   *   onSelect: (result, helpers) => {
-   *     helpers.openModal({
-   *       title: result.title,
-   *       body: IssueDetailsModal,
-   *     });
    *   },
    * });
    * ```

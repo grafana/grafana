@@ -590,6 +590,7 @@ export {
   type PluginExtensionDataSourceConfigActionsContext,
   type PluginExtensionDataSourceConfigStatusContext,
   type PluginExtensionCommandPaletteContext,
+  type DynamicPluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedComponentConfig,

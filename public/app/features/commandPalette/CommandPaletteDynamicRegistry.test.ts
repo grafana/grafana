@@ -23,7 +23,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -31,15 +30,13 @@ describe('CommandPaletteDynamicRegistry', () => {
 
       const state = await registry.getState();
       expect(state).toEqual({
-        [`${pluginId}/Test Provider`]: [
+        [`${pluginId}/0`]: [
           {
             pluginId,
             config: {
-              title: 'Test Provider',
               searchProvider: mockSearchProvider,
-              category: pluginId,
+              category: undefined,
               minQueryLength: 2,
-              debounceMs: 300,
             },
           },
         ],
@@ -54,18 +51,16 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
       });
 
       const state = await registry.getState();
-      const item = state[`${pluginId}/Test Provider`][0];
+      const item = state[`${pluginId}/0`][0];
 
-      expect(item.config.category).toBe(pluginId);
+      expect(item.config.category).toBeUndefined();
       expect(item.config.minQueryLength).toBe(2);
-      expect(item.config.debounceMs).toBe(300);
     });
 
     it('should preserve custom config values when provided', async () => {
@@ -76,21 +71,18 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Custom Provider',
             searchProvider: mockSearchProvider,
             category: 'Custom Category',
             minQueryLength: 5,
-            debounceMs: 500,
           },
         ],
       });
 
       const state = await registry.getState();
-      const item = state[`${pluginId}/Custom Provider`][0];
+      const item = state[`${pluginId}/0`][0];
 
       expect(item.config.category).toBe('Custom Category');
       expect(item.config.minQueryLength).toBe(5);
-      expect(item.config.debounceMs).toBe(500);
     });
 
     it('should register multiple providers from the same plugin', async () => {
@@ -102,11 +94,9 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Provider 1',
             searchProvider: mockSearchProvider1,
           },
           {
-            title: 'Provider 2',
             searchProvider: mockSearchProvider2,
           },
         ],
@@ -114,8 +104,8 @@ describe('CommandPaletteDynamicRegistry', () => {
 
       const state = await registry.getState();
       expect(Object.keys(state)).toHaveLength(2);
-      expect(state[`${pluginId}/Provider 1`]).toBeDefined();
-      expect(state[`${pluginId}/Provider 2`]).toBeDefined();
+      expect(state[`${pluginId}/0`]).toBeDefined();
+      expect(state[`${pluginId}/1`]).toBeDefined();
     });
 
     it('should notify subscribers when the registry changes', async () => {
@@ -129,7 +119,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: jest.fn().mockResolvedValue([]),
           },
         ],
@@ -149,7 +138,6 @@ describe('CommandPaletteDynamicRegistry', () => {
           pluginId,
           configs: [
             {
-              title: 'Test',
               searchProvider: jest.fn(),
             },
           ],
@@ -166,7 +154,6 @@ describe('CommandPaletteDynamicRegistry', () => {
           pluginId,
           configs: [
             {
-              title: 'Test',
               searchProvider: jest.fn(),
             },
           ],
@@ -194,7 +181,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: jest.fn().mockResolvedValue([]),
           },
         ],
@@ -205,7 +191,7 @@ describe('CommandPaletteDynamicRegistry', () => {
       expect(Object.keys(readOnlyState)).toHaveLength(1);
 
       expect(subscribeCallback).toHaveBeenCalledTimes(2); // initial empty + registration
-      expect(Object.keys(subscribeCallback.mock.calls[1][0])).toEqual([`${pluginId}/Test Provider`]);
+      expect(Object.keys(subscribeCallback.mock.calls[1][0])).toEqual([`${pluginId}/0`]);
     });
   });
 
@@ -220,44 +206,6 @@ describe('CommandPaletteDynamicRegistry', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('should not register provider without title', async () => {
-      const registry = new CommandPaletteDynamicRegistry();
-
-      registry.register({
-        pluginId,
-        configs: [
-          {
-            // @ts-ignore - testing invalid config
-            title: '',
-            searchProvider: jest.fn(),
-          },
-        ],
-      });
-
-      const state = await registry.getState();
-      expect(Object.keys(state)).toHaveLength(0);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    });
-
-    it('should not register provider with non-string title', async () => {
-      const registry = new CommandPaletteDynamicRegistry();
-
-      registry.register({
-        pluginId,
-        configs: [
-          {
-            // @ts-ignore - testing invalid config
-            title: 123,
-            searchProvider: jest.fn(),
-          },
-        ],
-      });
-
-      const state = await registry.getState();
-      expect(Object.keys(state)).toHaveLength(0);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    });
-
     it('should not register provider without searchProvider', async () => {
       const registry = new CommandPaletteDynamicRegistry();
 
@@ -265,7 +213,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test',
             // @ts-ignore - testing invalid config
             searchProvider: undefined,
           },
@@ -284,7 +231,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test',
             // @ts-ignore - testing invalid config
             searchProvider: 'not-a-function',
           },
@@ -307,7 +253,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: jest.fn().mockResolvedValue([]),
           },
         ],
@@ -315,7 +260,7 @@ describe('CommandPaletteDynamicRegistry', () => {
 
       await registry.getState();
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Registered provider: test-plugin/Test Provider')
+        expect.stringContaining('Registered provider: test-plugin/0')
       );
 
       consoleLogSpy.mockRestore();
@@ -333,7 +278,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId: 'plugin1',
         configs: [
           {
-            title: 'Provider 1',
             searchProvider: mockSearchProvider1,
           },
         ],
@@ -343,7 +287,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId: 'plugin2',
         configs: [
           {
-            title: 'Provider 2',
             searchProvider: mockSearchProvider2,
           },
         ],
@@ -355,8 +298,19 @@ describe('CommandPaletteDynamicRegistry', () => {
 
       const results = await registry.search(context);
 
-      expect(mockSearchProvider1).toHaveBeenCalledWith(context);
-      expect(mockSearchProvider2).toHaveBeenCalledWith(context);
+      // Search providers receive DynamicPluginExtensionCommandPaletteContext with required fields
+      expect(mockSearchProvider1).toHaveBeenCalledWith(
+        expect.objectContaining({
+          searchQuery: 'test query',
+          signal: expect.any(Object),
+        })
+      );
+      expect(mockSearchProvider2).toHaveBeenCalledWith(
+        expect.objectContaining({
+          searchQuery: 'test query',
+          signal: expect.any(Object),
+        })
+      );
       expect(results.size).toBe(2);
     });
 
@@ -368,7 +322,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -398,7 +351,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
             minQueryLength: 3,
           },
@@ -422,7 +374,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
             minQueryLength: 2,
           },
@@ -435,58 +386,6 @@ describe('CommandPaletteDynamicRegistry', () => {
 
       await registry.search(context);
 
-      expect(mockSearchProvider).toHaveBeenCalled();
-    });
-
-    it('should skip inactive providers', async () => {
-      const registry = new CommandPaletteDynamicRegistry();
-      const mockSearchProvider = jest.fn().mockResolvedValue([]);
-      const isActiveFn = jest.fn().mockReturnValue(false);
-
-      registry.register({
-        pluginId,
-        configs: [
-          {
-            title: 'Inactive Provider',
-            searchProvider: mockSearchProvider,
-            isActive: isActiveFn,
-          },
-        ],
-      });
-
-      const context: PluginExtensionCommandPaletteContext = {
-        searchQuery: 'test',
-      };
-
-      await registry.search(context);
-
-      expect(isActiveFn).toHaveBeenCalledWith(context);
-      expect(mockSearchProvider).not.toHaveBeenCalled();
-    });
-
-    it('should execute search for active providers', async () => {
-      const registry = new CommandPaletteDynamicRegistry();
-      const mockSearchProvider = jest.fn().mockResolvedValue([]);
-      const isActiveFn = jest.fn().mockReturnValue(true);
-
-      registry.register({
-        pluginId,
-        configs: [
-          {
-            title: 'Active Provider',
-            searchProvider: mockSearchProvider,
-            isActive: isActiveFn,
-          },
-        ],
-      });
-
-      const context: PluginExtensionCommandPaletteContext = {
-        searchQuery: 'test',
-      };
-
-      await registry.search(context);
-
-      expect(isActiveFn).toHaveBeenCalledWith(context);
       expect(mockSearchProvider).toHaveBeenCalled();
     });
 
@@ -506,7 +405,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -517,7 +415,7 @@ describe('CommandPaletteDynamicRegistry', () => {
       };
 
       const results = await registry.search(context);
-      const searchResult = results.get(`${pluginId}/Test Provider`);
+      const searchResult = results.get(`${pluginId}/0`);
 
       expect(searchResult?.items).toHaveLength(5);
       expect(searchResult?.items[4].id).toBe('5');
@@ -547,7 +445,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -558,7 +455,7 @@ describe('CommandPaletteDynamicRegistry', () => {
       };
 
       const results = await registry.search(context);
-      const searchResult = results.get(`${pluginId}/Test Provider`);
+      const searchResult = results.get(`${pluginId}/0`);
 
       expect(searchResult?.items).toHaveLength(1);
       expect(searchResult?.items[0].id).toBe('valid');
@@ -577,7 +474,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -588,7 +484,7 @@ describe('CommandPaletteDynamicRegistry', () => {
       };
 
       const results = await registry.search(context);
-      const searchResult = results.get(`${pluginId}/Test Provider`);
+      const searchResult = results.get(`${pluginId}/0`);
 
       expect(searchResult?.items).toHaveLength(1);
       expect(searchResult?.items[0].id).toBe('valid');
@@ -607,7 +503,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -618,7 +513,7 @@ describe('CommandPaletteDynamicRegistry', () => {
       };
 
       const results = await registry.search(context);
-      const searchResult = results.get(`${pluginId}/Test Provider`);
+      const searchResult = results.get(`${pluginId}/0`);
 
       expect(searchResult?.items).toHaveLength(1);
       expect(searchResult?.items[0].id).toBe('valid');
@@ -637,7 +532,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -648,7 +542,7 @@ describe('CommandPaletteDynamicRegistry', () => {
       };
 
       const results = await registry.search(context);
-      const searchResult = results.get(`${pluginId}/Test Provider`);
+      const searchResult = results.get(`${pluginId}/0`);
 
       expect(searchResult?.items).toHaveLength(1);
       expect(searchResult?.items[0].id).toBe('valid');
@@ -666,7 +560,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -690,7 +583,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -726,7 +618,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -757,7 +648,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -781,7 +671,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId: 'failing-plugin',
         configs: [
           {
-            title: 'Failing Provider',
             searchProvider: failingProvider,
           },
         ],
@@ -791,7 +680,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId: 'success-plugin',
         configs: [
           {
-            title: 'Success Provider',
             searchProvider: successProvider,
           },
         ],
@@ -804,7 +692,7 @@ describe('CommandPaletteDynamicRegistry', () => {
       const results = await registry.search(context);
 
       expect(results.size).toBe(1);
-      expect(results.get('success-plugin/Success Provider')).toBeDefined();
+      expect(results.get('success-plugin/0')).toBeDefined();
     });
   });
 
@@ -817,7 +705,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
             minQueryLength: 0,
           },
@@ -841,7 +728,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
             minQueryLength: 0,
           },
@@ -875,7 +761,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
           },
         ],
@@ -886,7 +771,7 @@ describe('CommandPaletteDynamicRegistry', () => {
       };
 
       const results = await registry.search(context);
-      const searchResult = results.get(`${pluginId}/Test Provider`);
+      const searchResult = results.get(`${pluginId}/0`);
 
       expect(searchResult?.items[0]).toEqual({
         id: 'test-id',
@@ -907,7 +792,6 @@ describe('CommandPaletteDynamicRegistry', () => {
         pluginId,
         configs: [
           {
-            title: 'Test Provider',
             searchProvider: mockSearchProvider,
             category: 'Test Category',
           },
@@ -919,10 +803,9 @@ describe('CommandPaletteDynamicRegistry', () => {
       };
 
       const results = await registry.search(context);
-      const searchResult = results.get(`${pluginId}/Test Provider`);
+      const searchResult = results.get(`${pluginId}/0`);
 
       expect(searchResult?.config.pluginId).toBe(pluginId);
-      expect(searchResult?.config.config.title).toBe('Test Provider');
       expect(searchResult?.config.config.category).toBe('Test Category');
     });
   });

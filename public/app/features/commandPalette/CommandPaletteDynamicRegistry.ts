@@ -3,6 +3,7 @@ import { ReplaySubject, Subject, firstValueFrom, map, scan, startWith } from 'rx
 import {
   PluginExtensionCommandPaletteDynamicConfig,
   CommandPaletteDynamicResult,
+  DynamicPluginExtensionCommandPaletteContext,
   PluginExtensionCommandPaletteContext,
 } from '@grafana/data';
 
@@ -63,20 +64,17 @@ export class CommandPaletteDynamicRegistry {
   private mapToRegistry(registry: RegistryType, item: PluginExtensionConfigs): RegistryType {
     const { pluginId, configs } = item;
 
-    for (const config of configs) {
-      const { title, searchProvider, category } = config;
-
-      if (!title || typeof title !== 'string') {
-        console.error(`${logPrefix} Plugin ${pluginId}: title is required and must be a string`);
-        continue;
-      }
+    for (let index = 0; index < configs.length; index++) {
+      const config = configs[index];
+      const { searchProvider, category } = config;
 
       if (!searchProvider || typeof searchProvider !== 'function') {
         console.error(`${logPrefix} Plugin ${pluginId}: searchProvider must be a function`);
         continue;
       }
 
-      const providerId = `${pluginId}/${title}`;
+      // Use index to differentiate multiple providers from same plugin
+      const providerId = `${pluginId}/${index}`;
 
       if (!(providerId in registry)) {
         registry[providerId] = [];
@@ -86,9 +84,8 @@ export class CommandPaletteDynamicRegistry {
         pluginId,
         config: {
           ...config,
-          category: category ?? pluginId,
+          category: category,
           minQueryLength: config.minQueryLength ?? 2,
-          debounceMs: config.debounceMs ?? 300,
         },
       });
 
@@ -123,6 +120,13 @@ export class CommandPaletteDynamicRegistry {
     const registry = await this.getState();
     const results = new Map<string, CommandPaletteDynamicSearchResult>();
     const searchQuery = context.searchQuery ?? '';
+    const signal = context.signal ?? new AbortController().signal;
+
+    // Create the dynamic context with required fields for searchProvider
+    const dynamicContext: DynamicPluginExtensionCommandPaletteContext = {
+      searchQuery,
+      signal,
+    };
 
     const searchPromises = Object.entries(registry).map(async ([providerId, registryItems]) => {
       if (!Array.isArray(registryItems) || registryItems.length === 0) {
@@ -137,13 +141,8 @@ export class CommandPaletteDynamicRegistry {
         return;
       }
 
-      // Check if provider is active
-      if (config.isActive && !config.isActive(context)) {
-        return;
-      }
-
       try {
-        const items = await config.searchProvider(context);
+        const items = await config.searchProvider(dynamicContext);
 
         // Validate results
         if (!Array.isArray(items)) {
