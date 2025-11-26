@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
+	"github.com/grafana/grafana/pkg/registry/apis/apiextensions"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -63,6 +64,7 @@ var WireSet = wire.NewSet(
 	provisioningExtras,
 
 	// Each must be added here *and* in the ServiceSink above
+	apiextensions.RegisterAPIService,
 	dashboardinternal.RegisterAPIService,
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,

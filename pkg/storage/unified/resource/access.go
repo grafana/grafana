@@ -177,6 +177,7 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			return true
 		}, claims.NoopZookie{}, nil
 	}
+
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
 		span.SetStatus(codes.Error, "Namespace mismatch")

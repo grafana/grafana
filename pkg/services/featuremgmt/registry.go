@@ -784,6 +784,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "apiExtensions",
+			Description:     "Enable Kubernetes CustomResourceDefinition (CRD) support with dynamic API registration",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:         "groupByVariable",
 			Description:  "Enable groupBy variable support in scenes dashboards",
 			Stage:        FeatureStageExperimental,

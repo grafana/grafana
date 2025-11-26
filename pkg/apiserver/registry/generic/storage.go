@@ -1,6 +1,8 @@
 package generic
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
@@ -12,16 +14,27 @@ func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, o
 	gv := resourceInfo.GroupVersion()
 	gv.Version = runtime.APIVersionInternal
 	strategy := NewStrategy(scheme, gv)
+
+	gr := resourceInfo.GroupResource()
+	var keyRootFunc func(ctx context.Context) string
+	var keyFunc func(ctx context.Context, name string) (string, error)
+
 	if resourceInfo.IsClusterScoped() {
 		strategy = strategy.WithClusterScope()
+		keyRootFunc = ClusterScopedKeyRootFunc(gr)
+		keyFunc = ClusterScopedKeyFunc(gr)
+	} else {
+		keyRootFunc = KeyRootFunc(gr)
+		keyFunc = NamespaceKeyFunc(gr)
 	}
+
 	store := &registry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
-		KeyRootFunc:               KeyRootFunc(resourceInfo.GroupResource()),
-		KeyFunc:                   NamespaceKeyFunc(resourceInfo.GroupResource()),
+		KeyRootFunc:               keyRootFunc,
+		KeyFunc:                   keyFunc,
 		PredicateFunc:             Matcher,
-		DefaultQualifiedResource:  resourceInfo.GroupResource(),
+		DefaultQualifiedResource:  gr,
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		TableConvertor:            resourceInfo.TableConverter(),
 		CreateStrategy:            strategy,
