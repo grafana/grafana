@@ -95,7 +95,7 @@ func RegisterAPIService(
 
 // GetAuthorizer returns the authorizer for CRD resources
 // Breaks locally now for ST, will need to test in MT
-// grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+// For ST just comment this out to test
 // func (b *Builder) GetAuthorizer() authorizer.Authorizer {
 // 	return grafanaauthorizer.NewServiceAuthorizer()
 // }
@@ -106,11 +106,13 @@ func NewAPIService(
 	unified resource.ResourceClient,
 	registerer prometheus.Registerer,
 	features featuremgmt.FeatureToggles,
+	storageProvider CRDStorageProvider,
 ) (*Builder, error) {
 	return &Builder{
-		features:      features,
-		accessClient:  accessClient,
-		unifiedClient: unified,
+		features:        features,
+		accessClient:    accessClient,
+		unifiedClient:   unified,
+		storageProvider: storageProvider,
 	}, nil
 }
 

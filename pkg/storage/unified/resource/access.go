@@ -135,16 +135,6 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		return claims.CheckResponse{Allowed: true}, nil
 	}
 
-	// Hack, allow creation of Cluster scoped resources (ex. register CRDs)
-	// We need to make sure it is the correct service account,
-	// not just any service account.
-	// This is called when we submit a CRD (not when we list them)
-	// Currently creating them with a Service Account thus the match
-	if req.Namespace == "" && claims.IsIdentityType(id.GetIdentityType(), claims.TypeServiceAccount, claims.TypeAccessPolicy) {
-		span.SetAttributes(attribute.Bool("allowed", true))
-		return claims.CheckResponse{Allowed: true}, nil
-	}
-
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
 		span.SetStatus(codes.Error, "Namespace mismatch")
@@ -195,13 +185,7 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 		}, claims.NoopZookie{}, nil
 	}
 
-	// Hack, allow system tokens to be able to
-	// access Cluster scoped resources (ex. register CRDs)
-	// We need to make sure it is the correct service account,
-	// not just any service account
-	isServiceAccnt := req.Namespace == "" && claims.IsIdentityType(id.GetIdentityType(), claims.TypeAccessPolicy, claims.TypeServiceAccount)
-
-	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) && !isServiceAccnt {
+	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
 		span.SetStatus(codes.Error, "Namespace mismatch")
 		span.RecordError(claims.ErrNamespaceMismatch)
