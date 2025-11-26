@@ -21,6 +21,8 @@ interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
   actions?: Array<ActionModel<Field>>;
   adHocFilters?: AdHocFilterModel[];
+  filterForSeriesLabels?: () => void | undefined;
+  filterOutSeriesLabels?: () => void | undefined;
   annotate?: () => void;
 }
 
@@ -85,7 +87,14 @@ const renderActions = makeRenderLinksOrActions<ActionModel>(
   (item, i) => <ActionButton key={i} action={item} variant="secondary" />
 );
 
-export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, adHocFilters = [] }: VizTooltipFooterProps) => {
+export const VizTooltipFooter = ({
+  dataLinks,
+  actions = [],
+  annotate,
+  adHocFilters = [],
+  filterForSeriesLabels,
+  filterOutSeriesLabels,
+}: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
   const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
   const hasOneClickAction = useMemo(() => actions.some((action) => action.oneClick === true), [actions]);
@@ -103,6 +112,19 @@ export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, adHocFilte
               </Trans>
             </Button>
           ))}
+        </div>
+      )}
+
+      {!hasOneClickLink && !hasOneClickAction && filterForSeriesLabels && filterOutSeriesLabels && (
+        <div className={styles.footerSection}>
+          <Stack direction="column" gap={0.5}>
+            <Button icon="filter" variant="secondary" size="sm" onClick={filterForSeriesLabels}>
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter">Apply as filter</Trans>
+            </Button>
+            <Button icon="filter" variant="secondary" size="sm" onClick={filterOutSeriesLabels}>
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter">Apply as inverse filter</Trans>
+            </Button>
+          </Stack>
         </div>
       )}
       {!hasOneClickLink && !hasOneClickAction && annotate != null && (

@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
+import { AdHocFilterItem } from 'src/components/Table/types';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';

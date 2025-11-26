@@ -50,6 +50,8 @@ export interface TimeSeriesTooltipProps {
   dataLinks: LinkModel[];
   hideZeros?: boolean;
   adHocFilters?: AdHocFilterModel[];
+  filterForSeriesLabels?: () => void | undefined;
+  filterOutSeriesLabels?: () => void | undefined;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
 }
@@ -70,8 +72,11 @@ export const TimeSeriesTooltip = ({
   adHocFilters,
   canExecuteActions,
   compareDiffMs,
+  filterForSeriesLabels,
+  filterOutSeriesLabels,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
+
   const xField = series.fields[0];
   let xVal = xField.values[dataIdxs[0]!];
 
@@ -107,7 +112,14 @@ export const TimeSeriesTooltip = ({
         : [];
 
       footer = (
-        <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />
+        <VizTooltipFooter
+          dataLinks={dataLinks}
+          actions={actions}
+          annotate={annotate}
+          adHocFilters={adHocFilters}
+          filterForSeriesLabels={filterForSeriesLabels}
+          filterOutSeriesLabels={filterOutSeriesLabels}
+        />
       );
     }
   }

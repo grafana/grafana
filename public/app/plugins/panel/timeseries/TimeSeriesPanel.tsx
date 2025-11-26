@@ -13,13 +13,14 @@ import {
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {
+  AdHocFilterItem,
   EventBusPlugin,
   KeyboardPlugin,
   TooltipPlugin2,
   XAxisInteractionAreaPlugin,
   usePanelContext,
 } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
 
@@ -56,6 +57,8 @@ export const TimeSeriesPanel = ({
     showThresholds,
     eventBus,
     canExecuteActions,
+    getFiltersBasedOnGrouping,
+    onBulkAddAdHocFilters,
   } = usePanelContext();
 
   const { dataLinkPostProcessor } = useDataLinksContext();
@@ -175,6 +178,26 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
+                  const groupingFilters: AdHocFilterItem[] = [];
+
+                  if (seriesIdx) {
+                    const xField = alignedFrame.fields[seriesIdx];
+
+                    if (xField.labels && getFiltersBasedOnGrouping && onBulkAddAdHocFilters) {
+                      const seriesFilters: AdHocFilterItem[] = [];
+
+                      Object.entries(xField.labels).forEach(([key, value]) => {
+                        seriesFilters.push({
+                          key,
+                          operator: FILTER_FOR_OPERATOR,
+                          value,
+                        });
+                      });
+
+                      groupingFilters.push(...getFiltersBasedOnGrouping(seriesFilters));
+                    }
+                  }
+
                   return (
                     // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                     <TimeSeriesTooltip
@@ -189,6 +212,19 @@ export const TimeSeriesPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
+                      filterForSeriesLabels={
+                        groupingFilters.length && onBulkAddAdHocFilters
+                          ? () => onBulkAddAdHocFilters(groupingFilters)
+                          : undefined
+                      }
+                      filterOutSeriesLabels={
+                        groupingFilters.length && onBulkAddAdHocFilters
+                          ? () =>
+                              onBulkAddAdHocFilters(
+                                groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
+                              )
+                          : undefined
+                      }
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
                     />
