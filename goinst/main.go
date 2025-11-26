@@ -47,6 +47,8 @@ func main() {
 		printCompile(elapsed)
 	case Link:
 		printLink(elapsed)
+	default:
+		printDefault(elapsed)
 	}
 
 	if err != nil {
@@ -60,9 +62,6 @@ func main() {
 
 func printAsm(elapsed time.Duration) {
 	logger.Println("==========Asm=========")
-	logger.Println("")
-	logger.Println("   args: %v", os.Args)
-	logger.Println("")
 	logger.Printf("   tool: %s", Asm)
 	logger.Printf("   package: %s", os.Args[len(os.Args)-1])
 	logger.Printf("   elapsed: %s", elapsed)
@@ -72,9 +71,6 @@ func printAsm(elapsed time.Duration) {
 
 func printCompile(elapsed time.Duration) {
 	logger.Println("========Compile=======")
-	logger.Println("")
-	logger.Println("   args: %v", os.Args)
-	logger.Println("")
 	logger.Printf("   tool: %s", Compile)
 	logger.Printf("   package: %s", getPackage(os.Args))
 	logger.Printf("   elapsed: %s", elapsed)
@@ -84,9 +80,6 @@ func printCompile(elapsed time.Duration) {
 
 func printLink(elapsed time.Duration) {
 	logger.Println("========LINK========")
-	logger.Println("")
-	logger.Println("   args: %v", os.Args)
-	logger.Println("")
 	logger.Printf("   tool: %s", Link)
 	logger.Printf("   package: %s", os.Args[len(os.Args)-1])
 	logger.Printf("   elapsed: %s", elapsed)
@@ -94,6 +87,14 @@ func printLink(elapsed time.Duration) {
 	logger.Println("")
 }
 
+func printDefault(elapsed time.Duration) {
+	logger.Println("========Default========")
+	logger.Println("   args: %v", os.Args)
+	logger.Println("")
+	logger.Printf("   elapsed: %s", elapsed)
+	logger.Println("======================")
+	logger.Println("")
+}
 func getTool(tool string) string {
 	parts := strings.Split(tool, "/")
 	return parts[len(parts)-1]
