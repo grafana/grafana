@@ -11967,9 +11967,12 @@
     },
     "resource-tree": {
       "header-hash": "Hash",
+      "header-status": "Status",
       "header-title": "Title",
       "header-type": "Type",
       "search-placeholder": "Search by path or title",
+      "status-pending": "Pending",
+      "status-synced": "Synced",
       "view": "View"
     },
     "resource-view": {

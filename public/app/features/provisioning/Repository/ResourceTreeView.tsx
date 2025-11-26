@@ -96,6 +96,26 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         },
       },
       {
+        id: 'status',
+        header: t('provisioning.resource-tree.header-status', 'Status'),
+        cell: ({ row: { original } }: TreeCell) => {
+          const { status } = original.item;
+          if (!status) {
+            return null;
+          }
+          return (
+            <Icon
+              name={status === 'synced' ? 'check' : 'sync'}
+              title={
+                status === 'synced'
+                  ? t('provisioning.resource-tree.status-synced', 'Synced')
+                  : t('provisioning.resource-tree.status-pending', 'Pending')
+              }
+            />
+          );
+        },
+      },
+      {
         id: 'hash',
         header: t('provisioning.resource-tree.header-hash', 'Hash'),
         cell: ({ row: { original } }: TreeCell) => {

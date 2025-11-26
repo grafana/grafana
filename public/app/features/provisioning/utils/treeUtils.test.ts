@@ -9,6 +9,7 @@ import {
   getDisplayTitle,
   getIconName,
   getItemType,
+  getStatus,
   mergeFilesAndResources,
 } from './treeUtils';
 
@@ -181,6 +182,28 @@ describe('getIconName', () => {
   });
 });
 
+describe('getStatus', () => {
+  it('should return synced when both hashes exist and match', () => {
+    expect(getStatus('abc123', 'abc123')).toBe('synced');
+  });
+
+  it('should return pending when both hashes exist but differ', () => {
+    expect(getStatus('abc123', 'xyz789')).toBe('pending');
+  });
+
+  it('should return pending when only file hash exists', () => {
+    expect(getStatus('abc123', undefined)).toBe('pending');
+  });
+
+  it('should return pending when only resource hash exists', () => {
+    expect(getStatus(undefined, 'abc123')).toBe('pending');
+  });
+
+  it('should return pending when neither hash exists', () => {
+    expect(getStatus(undefined, undefined)).toBe('pending');
+  });
+});
+
 describe('buildTree', () => {
   it('should create folder nodes for intermediate paths', () => {
     const mergedItems = [
@@ -294,6 +317,50 @@ describe('buildTree', () => {
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('Dashboards Folder');
     expect(result[0].resourceName).toBe('folder-uid');
+  });
+
+  it('should set synced status when file and resource hashes match', () => {
+    const mergedItems = [
+      {
+        path: 'dashboard.json',
+        file: { path: 'dashboard.json', size: '100', hash: 'abc123def456' },
+        resource: mockResource, // mockResource has hash: 'abc123def456'
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].status).toBe('synced');
+  });
+
+  it('should set pending status when file and resource hashes differ', () => {
+    const mergedItems = [
+      {
+        path: 'dashboard.json',
+        file: { path: 'dashboard.json', size: '100', hash: 'different-hash' },
+        resource: mockResource,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].status).toBe('pending');
+  });
+
+  it('should not set status for plain files', () => {
+    const mergedItems = [{ path: 'file.json', file: { path: 'file.json', size: '100', hash: 'h1' } }];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].status).toBeUndefined();
+  });
+
+  it('should set pending status when only resource exists', () => {
+    const mergedItems = [{ path: 'dashboard.json', resource: mockResource }];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].status).toBe('pending');
   });
 });
 

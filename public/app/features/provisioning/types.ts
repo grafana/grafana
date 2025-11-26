@@ -101,22 +101,17 @@ export interface StatusInfo {
 
 // Tree view types for combined Resources/Files view
 export type ItemType = 'Folder' | 'File' | 'Dashboard';
+export type SyncStatus = 'synced' | 'pending';
 
 export interface TreeItem {
-  // Display
   title: string;
   type: ItemType;
-
-  // Tree structure
   path: string;
   level: number;
   children: TreeItem[];
-
-  // From ResourceListItem (when available)
   resourceName?: string;
-
-  // Hash info
   hash?: string;
+  status?: SyncStatus;
 }
 
 export interface FlatTreeItem {

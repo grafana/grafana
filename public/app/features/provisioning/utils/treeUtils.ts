@@ -1,7 +1,7 @@
 import { IconName } from '@grafana/ui';
 import { ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FileDetails, FlatTreeItem, ItemType, TreeItem } from '../types';
+import { FileDetails, FlatTreeItem, ItemType, SyncStatus, TreeItem } from '../types';
 
 const collator = new Intl.Collator();
 
@@ -65,6 +65,16 @@ export function getIconName(type: ItemType): IconName {
   }
 }
 
+export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {
+  const hasFile = !!fileHash;
+  const hasResource = !!resourceHash;
+
+  if (hasFile && hasResource) {
+    return fileHash === resourceHash ? 'synced' : 'pending';
+  }
+  return 'pending';
+}
+
 export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   const nodeMap = new Map<string, TreeItem>();
   const roots: TreeItem[] = [];
@@ -90,6 +100,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       children: [],
       resourceName: existingItem?.resource?.name,
       hash: existingItem?.file?.hash ?? existingItem?.resource?.hash,
+      status: existingItem ? getStatus(existingItem.file?.hash, existingItem.resource?.hash) : undefined,
     });
   }
 
@@ -100,6 +111,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
     }
 
     const type = getItemType(item.path, item.resource);
+    const showStatus = type === 'Dashboard' || type === 'Folder';
     nodeMap.set(item.path, {
       path: item.path,
       title: getDisplayTitle(item.path, item.resource),
@@ -108,6 +120,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       children: [],
       resourceName: item.resource?.name,
       hash: item.file?.hash ?? item.resource?.hash,
+      status: showStatus ? getStatus(item.file?.hash, item.resource?.hash) : undefined,
     });
   }
 
