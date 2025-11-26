@@ -103,6 +103,11 @@ export interface AnnotationQuery {
    */
   iconColor: string;
   /**
+   * Comma-separated list of tag names to color by (e.g., "critical, warning, info").
+   * When set, the annotation color is determined by the first matching tag.
+   */
+  colorByTags?: string;
+  /**
    * Name of annotation.
    */
   name: string;

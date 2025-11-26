@@ -240,6 +240,26 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           </Stack>
         </Field>
         <Field
+          noMargin
+          label={t('dashboard-scene.annotation-settings-edit.label-color-by-tags', 'Color by tags')}
+          description={t(
+            'dashboard-scene.annotation-settings-edit.description-color-by-tags',
+            'Comma-separated list of tag names (e.g., "critical, warning, info"). Annotations with matching tags will be colored by that tag value.'
+          )}
+        >
+          <Input
+            name="colorByTags"
+            id="colorByTags"
+            value={annotation.colorByTags ?? ''}
+            onChange={onChange}
+            placeholder={t(
+              'dashboard-scene.annotation-settings-edit.placeholder-color-by-tags',
+              'e.g., critical, warning, info'
+            )}
+            data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.colorByTags}
+          />
+        </Field>
+        <Field
           label={t('dashboard-scene.annotation-settings-edit.label-show-in', 'Show in')}
           data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}
         >

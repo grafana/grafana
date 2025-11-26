@@ -359,6 +359,9 @@ export const versionedPages = {
           hide: {
             '10.4.0': 'data-testid annotation-hide',
           },
+          colorByTags: {
+            '12.0.0': 'data-testid annotation-color-by-tags',
+          },
         },
       },
       Variables: {

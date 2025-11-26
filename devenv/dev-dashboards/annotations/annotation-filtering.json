@@ -80,6 +80,19 @@
           "refId": "Anno",
           "scenarioId": "annotations"
         }
+      },
+      {
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
+        "enable": true,
+        "iconColor": "blue",
+        "name": "Blue everywhere",
+        "target": {
+          "lines": 3,
+          "refId": "Anno",
+          "scenarioId": "annotations"
+        }
       }
     ]
   },

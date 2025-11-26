@@ -3,6 +3,7 @@ import { Observable, of } from 'rxjs';
 
 import { AnnotationEvent, AnnotationQuery, DataFrame, DataFrameView, DataSourceApi } from '@grafana/data';
 import { config, toDataQueryError } from '@grafana/runtime';
+import { getTagColorsFromName } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -75,6 +76,19 @@ export function getAnnotationsByPanelId(annotations: AnnotationEvent[], panelId?
   });
 }
 
+export function findMatchingTag(eventTags: string[], colorByTags: string): string | undefined {
+  const priorityTags = colorByTags.split(',').map((t) => t.trim().toLowerCase());
+  const eventTagsLower = eventTags.map((t) => t.toLowerCase());
+
+  for (const priorityTag of priorityTags) {
+    const matchIndex = eventTagsLower.indexOf(priorityTag);
+    if (matchIndex !== -1) {
+      return eventTags[matchIndex];
+    }
+  }
+  return undefined;
+}
+
 export function translateQueryResult(annotation: AnnotationQuery, results: AnnotationEvent[]): AnnotationEvent[] {
   // if annotation has snapshotData
   // make clone and remove it
@@ -85,9 +99,19 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
 
   for (const item of results) {
     item.source = annotation;
-    item.color = config.theme2.visualization.getColorByName(annotation.iconColor);
     item.type = annotation.name;
     item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);
+
+    if (annotation.colorByTags && item.tags?.length) {
+      const matchingTag = findMatchingTag(item.tags, annotation.colorByTags);
+      if (matchingTag) {
+        item.color = getTagColorsFromName(matchingTag).color;
+      } else {
+        item.color = config.theme2.visualization.getColorByName(annotation.iconColor);
+      }
+    } else {
+      item.color = config.theme2.visualization.getColorByName(annotation.iconColor);
+    }
 
     switch (item.newState?.toLowerCase()) {
       case 'pending':

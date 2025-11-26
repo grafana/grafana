@@ -960,6 +960,9 @@ type AnnotationQuery struct {
 	Hide *bool `json:"hide,omitempty"`
 	// Color to use for the annotation event markers
 	IconColor string `json:"iconColor"`
+	// Comma-separated list of tag names to color by (e.g., "critical, warning, info").
+	// When set, the annotation color is determined by the first matching tag.
+	ColorByTags *string `json:"colorByTags,omitempty"`
 	// Filters to apply when fetching annotations
 	Filter *AnnotationPanelFilter `json:"filter,omitempty"`
 	// TODO.. this should just be a normal query target
