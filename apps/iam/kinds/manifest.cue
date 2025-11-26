@@ -22,4 +22,39 @@ v0alpha1: {
 		serviceaccountv0alpha1,
 		externalGroupMappingv0alpha1
 	]
+
+	routes: {
+		namespaced: {
+			"/searchUser": {
+				"GET": {
+					response: {
+						offset: int64
+						totalHits: int64
+						hits: [...#UserHit]
+						queryCost: float64
+						maxScore: float64
+					}
+					request: {
+						query: {
+							query: string
+							limit?:  int64 | 30
+							offset?: int64 | 0
+						}
+					}
+					responseMetadata: {
+						typeMeta: false
+						objectMeta: false
+					}
+				}
+			}
+		}
+	}
+}
+
+#UserHit: {
+	name: string
+	username: string
+	email:    string
+	title: string
+	score: float64
 }

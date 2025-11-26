@@ -24,6 +24,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingTeamRef":                                       schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingTeamRef(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetGroups":                                                         schema_pkg_apis_iam_v0alpha1_GetGroups(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetGroupsBody":                                                     schema_pkg_apis_iam_v0alpha1_GetGroupsBody(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUser":                                                     schema_pkg_apis_iam_v0alpha1_GetSearchUser(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRole":                                                        schema_pkg_apis_iam_v0alpha1_GlobalRole(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBinding":                                                 schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingList":                                             schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref),
@@ -75,6 +76,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamStatus":                                                        schema_pkg_apis_iam_v0alpha1_TeamStatus(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamstatusOperatorState":                                           schema_pkg_apis_iam_v0alpha1_TeamstatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.User":                                                              schema_pkg_apis_iam_v0alpha1_User(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserHit":                                                           schema_pkg_apis_iam_v0alpha1_UserHit(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserList":                                                          schema_pkg_apis_iam_v0alpha1_UserList(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserSpec":                                                          schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserStatus":                                                        schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
@@ -561,6 +563,62 @@ func schema_pkg_apis_iam_v0alpha1_GetGroupsBody(ref common.ReferenceCallback) co
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetSearchUser(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"offset": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"totalHits": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"hits": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserHit"),
+									},
+								},
+							},
+						},
+					},
+					"queryCost": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
+						},
+					},
+					"maxScore": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
+						},
+					},
+				},
+				Required: []string{"offset", "totalHits", "hits", "queryCost", "maxScore"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserHit"},
 	}
 }
 
@@ -2715,6 +2773,54 @@ func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.Open
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_UserHit(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"email": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"score": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
+						},
+					},
+				},
+				Required: []string{"name", "username", "email", "title", "score"},
+			},
+		},
 	}
 }
 
