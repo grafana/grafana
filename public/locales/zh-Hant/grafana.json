@@ -2612,7 +2612,9 @@
         "placeholder-search-input": "按名稱搜尋或輸入篩選條件查詢…"
       },
       "grafana-folder": "Grafana 資料夾",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "使用情況",
       "label": {
         "hide": "隱藏",
@@ -2623,6 +2625,7 @@
       "placeholder-all-data-sources": "所有資料來源",
       "placeholder-contact-point": "選擇聯絡點",
       "placeholder-data-sources": "選擇資料來源",
+      "placeholder-group-search": "",
       "placeholder-labels": "選擇標籤",
       "plugin-rules": "外掛程式規則",
       "rule-source": {
@@ -6159,8 +6162,8 @@
       "placeholder-search-for": "搜尋…",
       "radio-options": {
         "label": {
-          "suggestions": "建議",
-          "visualizations": "視覺化"
+          "all-visualizations": "",
+          "suggestions": "建議"
         }
       },
       "title-close": "關閉"
@@ -8097,8 +8100,7 @@
       "edit-pane": {
         "go-back": "返回"
       }
-    },
-    "select-group": "選擇群組"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11003,8 +11005,8 @@
       "tooltip-delete": "刪除"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "根據目前的資料",
-      "no-results-matched-your-query": "沒有符合您查詢的結果"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "找不到符合您查詢的內容"

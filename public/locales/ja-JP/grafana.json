@@ -2612,7 +2612,9 @@
         "placeholder-search-input": "名前で検索するか、フィルタークエリを入力してください…"
       },
       "grafana-folder": "Grafanaフォルダ",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "健康",
       "label": {
         "hide": "非表示",
@@ -2623,6 +2625,7 @@
       "placeholder-all-data-sources": "すべてのデータソース",
       "placeholder-contact-point": "コンタクトポイントを選択してください",
       "placeholder-data-sources": "データソースを選択してください",
+      "placeholder-group-search": "",
       "placeholder-labels": "ラベルを選択してください",
       "plugin-rules": "プラグインルール",
       "rule-source": {
@@ -6159,8 +6162,8 @@
       "placeholder-search-for": "次を検索...",
       "radio-options": {
         "label": {
-          "suggestions": "提案",
-          "visualizations": "可視化"
+          "all-visualizations": "",
+          "suggestions": "提案"
         }
       },
       "title-close": "閉じる"
@@ -8097,8 +8100,7 @@
       "edit-pane": {
         "go-back": "戻る"
       }
-    },
-    "select-group": "グループを選択"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11003,8 +11005,8 @@
       "tooltip-delete": "削除"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "現在のデータに基づく",
-      "no-results-matched-your-query": "クエリに一致する結果がありません"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "クエリに一致するものが見つかりませんでした"
