@@ -62,7 +62,6 @@ type Builder struct {
 	accessClient        authlib.AccessClient
 	unifiedClient       resource.ResourceClient
 	apiExtensionsServer *apiextensionsapiserver.CustomResourceDefinitions
-	restOptsGetter      *apistore.RESTOptionsGetter
 	storageProvider     CRDStorageProvider
 }
 
@@ -76,6 +75,7 @@ func RegisterAPIService(
 	unified resource.ResourceClient,
 	storageProvider CRDStorageProvider,
 ) (*Builder, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagApiExtensions) {
 		return nil, nil
 	}

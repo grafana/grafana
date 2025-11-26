@@ -387,7 +387,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Determine the delegate for the main server
-	var delegationTarget genericapiserver.DelegationTarget = genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler)
+	var delegationTarget = genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler)
 	var apiExtensionsServer *apiextensionsapiserver.CustomResourceDefinitions
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
