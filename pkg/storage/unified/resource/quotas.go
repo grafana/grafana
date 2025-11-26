@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/dskit/runtimeconfig"
@@ -18,15 +17,9 @@ import (
 
 const DEFAULT_RESOURCE_LIMIT = 1000
 
-type ValidatesQuotas interface {
-	ValidateQuota(namespace string, resource string) bool
-}
-
 type QuotaService struct {
-	manager        *runtimeconfig.Manager
-	quotaOverrides *QuotaOverrides
-	overridesMutex sync.RWMutex
-	logger         log.Logger // TODO: which logger do we use now? Slog? Or infra.log?
+	manager *runtimeconfig.Manager
+	logger  log.Logger
 }
 
 type ReloadOptions struct {
@@ -103,49 +96,11 @@ func NewQuotaService(ctx context.Context, logger log.Logger, reg prometheus.Regi
 
 // once the runtimeconfig manager is in a running state, it will periodically reload the configuration file into the manager if there are changes
 func (q *QuotaService) init(ctx context.Context) error {
-	if err := services.StartAndAwaitRunning(ctx, q.manager); err != nil {
-		return err
-	}
-
-	// set initial config once running
-	q.SetConfig(q.manager.GetConfig().(*QuotaOverrides))
-
-	// update config on changes
-	updateChannel := q.manager.CreateListenerChannel(1)
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case update := <-updateChannel:
-				q.logger.Info("Received quota config update", "update", update)
-				newConfig, ok := update.(*QuotaOverrides)
-				if !ok {
-					q.logger.Error("Failed to convert quota config update to QuotaOverrides", "update", update)
-					continue
-				}
-				q.SetConfig(newConfig)
-			}
-		}
-	}()
-
-	return nil
+	return services.StartAndAwaitRunning(ctx, q.manager)
 }
 
 func (q *QuotaService) stop() {
 	q.manager.StopAsync()
-}
-
-func (q *QuotaService) GetConfig() *QuotaOverrides {
-	q.overridesMutex.Lock()
-	defer q.overridesMutex.Unlock()
-	return q.quotaOverrides
-}
-
-func (q *QuotaService) SetConfig(overrides *QuotaOverrides) {
-	q.overridesMutex.Lock()
-	q.quotaOverrides = overrides
-	q.overridesMutex.Unlock()
 }
 
 func (q *QuotaService) GetQuota(nsr NamespacedResource) (ResourceQuota, error) {
@@ -153,7 +108,11 @@ func (q *QuotaService) GetQuota(nsr NamespacedResource) (ResourceQuota, error) {
 		return ResourceQuota{}, fmt.Errorf("invalid namespaced resource: %+v", nsr)
 	}
 
-	overrides := q.GetConfig()
+	overrides, ok := q.manager.GetConfig().(*QuotaOverrides)
+	if !ok {
+		return ResourceQuota{}, fmt.Errorf("failed to get quota overrides from config manager")
+	}
+
 	// should never be nil - but just in case
 	if overrides == nil {
 		return ResourceQuota{Limit: DEFAULT_RESOURCE_LIMIT}, nil

@@ -166,7 +166,7 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 func TestQuotaService_GetQuota(t *testing.T) {
 	tests := []struct {
 		name          string
-		config        *QuotaOverrides
+		setupFile     func(t *testing.T) string
 		nsr           NamespacedResource
 		expectedLimit int
 		expectError   bool
@@ -175,14 +175,15 @@ func TestQuotaService_GetQuota(t *testing.T) {
 	}{
 		{
 			name: "returns custom quota for matching tenant and resource",
-			config: &QuotaOverrides{
-				Tenants: map[string]TenantQuotas{
-					"123": {
-						Quotas: map[string]ResourceQuota{
-							"grafana.dashboard.app/dashboards": {Limit: 1500},
-						},
-					},
-				},
+			setupFile: func(t *testing.T) string {
+				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+				content := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 1500
+`
+				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+				return tmpFile
 			},
 			nsr: NamespacedResource{
 				Namespace: "stacks-123",
@@ -195,14 +196,15 @@ func TestQuotaService_GetQuota(t *testing.T) {
 		},
 		{
 			name: "returns default quota when tenant not found",
-			config: &QuotaOverrides{
-				Tenants: map[string]TenantQuotas{
-					"123": {
-						Quotas: map[string]ResourceQuota{
-							"grafana.dashboard.app/dashboards": {Limit: 1500},
-						},
-					},
-				},
+			setupFile: func(t *testing.T) string {
+				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+				content := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 1500
+`
+				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+				return tmpFile
 			},
 			nsr: NamespacedResource{
 				Namespace: "stacks-456",
@@ -215,14 +217,15 @@ func TestQuotaService_GetQuota(t *testing.T) {
 		},
 		{
 			name: "returns default quota when resource not found",
-			config: &QuotaOverrides{
-				Tenants: map[string]TenantQuotas{
-					"123": {
-						Quotas: map[string]ResourceQuota{
-							"grafana.dashboard.app/dashboards": {Limit: 1500},
-						},
-					},
-				},
+			setupFile: func(t *testing.T) string {
+				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+				content := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 1500
+`
+				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+				return tmpFile
 			},
 			nsr: NamespacedResource{
 				Namespace: "stacks-123",
@@ -235,28 +238,32 @@ func TestQuotaService_GetQuota(t *testing.T) {
 		},
 		{
 			name: "handles namespace without stacks- prefix",
-			config: &QuotaOverrides{
-				Tenants: map[string]TenantQuotas{
-					"123": {
-						Quotas: map[string]ResourceQuota{
-							"grafana.dashboard.app/dashboards": {Limit: 2000},
-						},
-					},
-				},
+			setupFile: func(t *testing.T) string {
+				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+				content := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 1500
+`
+				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+				return tmpFile
 			},
 			nsr: NamespacedResource{
 				Namespace: "123",
 				Group:     "grafana.dashboard.app",
 				Resource:  "dashboards",
 			},
-			expectedLimit: 2000,
+			expectedLimit: 1500,
 			expectError:   false,
 			description:   "should handle namespace without stacks- prefix",
 		},
 		{
 			name: "returns default quota when config is empty",
-			config: &QuotaOverrides{
-				Tenants: map[string]TenantQuotas{},
+			setupFile: func(t *testing.T) string {
+				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+				content := ""
+				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+				return tmpFile
 			},
 			nsr: NamespacedResource{
 				Namespace: "stacks-123",
@@ -269,15 +276,17 @@ func TestQuotaService_GetQuota(t *testing.T) {
 		},
 		{
 			name: "handles multiple resources for same tenant",
-			config: &QuotaOverrides{
-				Tenants: map[string]TenantQuotas{
-					"123": {
-						Quotas: map[string]ResourceQuota{
-							"grafana.dashboard.app/dashboards": {Limit: 1500},
-							"grafana.folder.app/folders":       {Limit: 2500},
-						},
-					},
-				},
+			setupFile: func(t *testing.T) string {
+				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+				content := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 1500
+    grafana.folder.app/folders:
+      limit: 2500
+`
+				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+				return tmpFile
 			},
 			nsr: NamespacedResource{
 				Namespace: "stacks-123",
@@ -289,21 +298,18 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			description:   "should return correct limit for specific resource",
 		},
 		{
-			name:   "handles nil config",
-			config: nil,
-			nsr: NamespacedResource{
-				Namespace: "stacks-123",
-				Group:     "grafana.dashboard.app",
-				Resource:  "dashboards",
-			},
-			expectedLimit: DEFAULT_RESOURCE_LIMIT,
-			expectError:   false,
-			description:   "should return default limit when config is nil",
-		},
-		{
 			name: "returns error when namespace is empty",
-			config: &QuotaOverrides{
-				Tenants: map[string]TenantQuotas{},
+			setupFile: func(t *testing.T) string {
+				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+				content := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 1500
+    grafana.folder.app/folders:
+      limit: 2500
+`
+				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+				return tmpFile
 			},
 			nsr: NamespacedResource{
 				Namespace: "",
@@ -316,8 +322,17 @@ func TestQuotaService_GetQuota(t *testing.T) {
 		},
 		{
 			name: "returns error when group is empty",
-			config: &QuotaOverrides{
-				Tenants: map[string]TenantQuotas{},
+			setupFile: func(t *testing.T) string {
+				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+				content := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 1500
+    grafana.folder.app/folders:
+      limit: 2500
+`
+				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+				return tmpFile
 			},
 			nsr: NamespacedResource{
 				Namespace: "stacks-123",
@@ -330,8 +345,17 @@ func TestQuotaService_GetQuota(t *testing.T) {
 		},
 		{
 			name: "returns error when resource is empty",
-			config: &QuotaOverrides{
-				Tenants: map[string]TenantQuotas{},
+			setupFile: func(t *testing.T) string {
+				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+				content := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 1500
+    grafana.folder.app/folders:
+      limit: 2500
+`
+				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+				return tmpFile
 			},
 			nsr: NamespacedResource{
 				Namespace: "stacks-123",
@@ -344,8 +368,17 @@ func TestQuotaService_GetQuota(t *testing.T) {
 		},
 		{
 			name: "returns error when all fields are empty",
-			config: &QuotaOverrides{
-				Tenants: map[string]TenantQuotas{},
+			setupFile: func(t *testing.T) string {
+				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+				content := `"123":
+  quotas:
+    grafana.dashboard.app/dashboards:
+      limit: 1500
+    grafana.folder.app/folders:
+      limit: 2500
+`
+				require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+				return tmpFile
 			},
 			nsr: NamespacedResource{
 				Namespace: "",
@@ -360,10 +393,17 @@ func TestQuotaService_GetQuota(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := &QuotaService{
-				quotaOverrides: tt.config,
-				logger:         log.NewNopLogger(),
+			ctx := context.Background()
+			logger := log.NewNopLogger()
+			reg := prometheus.NewRegistry()
+			opts := ReloadOptions{
+				FilePath: tt.setupFile(t),
 			}
+
+			service, err := NewQuotaService(ctx, logger, reg, opts)
+			require.NoError(t, err, "failed to create quota service")
+			err = service.init(ctx)
+			require.NoError(t, err, "failed to initialize quota service")
 
 			quota, err := service.GetQuota(tt.nsr)
 
