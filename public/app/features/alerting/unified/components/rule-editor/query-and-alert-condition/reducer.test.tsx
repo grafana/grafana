@@ -22,7 +22,6 @@ import {
   updateExpression,
   updateExpressionRefId,
   updateExpressionTimeRange,
-  updateExpressionType,
 } from './reducer';
 
 const reduceExpression: AlertQuery<ExpressionQuery> = {

@@ -32,14 +32,8 @@ export const ExpressionsEditor = ({
 }: Props) => {
   const expressionQueries = useMemo(() => {
     return queries.reduce((acc: ExpressionQuery[], query) => {
-      // this hack will make sure that expressions with broken queries (queries with missing refIds) are fixed by manually copying them from the query definition.
-      const queryModel = {
-        ...query.model,
-        refId: query.refId,
-      };
-
-      if (isExpressionQuery(queryModel)) {
-        acc.push(queryModel);
+      if (isExpressionQuery(query.model)) {
+        acc.push(query.model);
       }
 
       return acc;
