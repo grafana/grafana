@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -19,10 +18,7 @@ type ResourcePermissionsAuthorizer struct {
 	// configProvider func(ctx context.Context) (*rest.Config, error)
 }
 
-func NewResourcePermissionsAuthorizer(
-	accessClient types.AccessClient,
-	configProvider func(ctx context.Context,
-	) (*rest.Config, error)) *ResourcePermissionsAuthorizer {
+func NewResourcePermissionsAuthorizer(accessClient types.AccessClient) *ResourcePermissionsAuthorizer {
 	return &ResourcePermissionsAuthorizer{
 		accessClient: accessClient,
 	}
@@ -180,9 +176,8 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 			err := r.AfterGet(ctx, &item)
 			if err == nil {
 				filteredItems = append(filteredItems, item)
-			}
-			// Ignore unauthorized errors to filter out the items
-			if err != nil && err != errUnauthorized {
+			} else if err != errUnauthorized {
+				// Return error if it's not just unauthorized
 				return nil, err
 			}
 		}
