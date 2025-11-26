@@ -1907,11 +1907,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneRenderer.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneSplitter.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4

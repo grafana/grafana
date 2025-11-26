@@ -477,6 +477,7 @@
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
+      "analyze-rule": "Analyze rule",
       "copy-link": "Copy link",
       "duplicate": "Duplicate",
       "export": "Export",
@@ -4172,6 +4173,7 @@
     "clear": "Clear",
     "collapse": "Collapse",
     "disabled": "Disabled",
+    "discard": "Discard",
     "edit": "Edit",
     "help": "Help",
     "loading": "Loading...",
@@ -4789,7 +4791,6 @@
         "variable": "{{type}} variable",
         "variable-set": "Variables"
       },
-      "open": "Open options pane",
       "row": {
         "header": {
           "hide": "Hide",
@@ -5140,6 +5141,7 @@
       "title-matched_other": "Matched {{count}}/{{totalCount}} options"
     },
     "outline": {
+      "pane-header": "Content outline",
       "repeated-item": "Repeat",
       "tree-item": {
         "empty": "(empty)",
@@ -5351,6 +5353,32 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "Loading configuration"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "Options",
+        "tooltip": "Dashboard options"
+      },
+      "edit-schema": {
+        "title": "Code",
+        "tooltip": "Edit as code"
+      },
+      "export": {
+        "title": "Export",
+        "unsaved-modal": {
+          "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
+          "title": "Save changes to dashboard?"
+        }
+      },
+      "outline": {
+        "title": "Outline",
+        "tooltip": "Content outline"
+      },
+      "redo": "Redo",
+      "snapshot": {
+        "tooltip": "Open original dashboard"
+      },
+      "undo": "Undo"
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "Loading & initializing dashboard",
       "title-not-found": "Panel with id {{panelId}} not found"
@@ -5454,11 +5482,8 @@
           "tooltip": "This dashboard was marked as read only"
         },
         "export": {
-          "arrow": "Export",
-          "title": "Export",
           "tooltip": {
-            "as-code": "Export as code",
-            "json": "Export as JSON"
+            "as-code": "Export as code"
           }
         },
         "more-save-options": "More save options",
@@ -5510,6 +5535,9 @@
       "save-library-panel": "Save library panel",
       "settings": "Dashboard settings",
       "share-button": "Share",
+      "snapshot": {
+        "title": "Source"
+      },
       "star-add-error": "Failed to add to starred",
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
@@ -5838,9 +5866,6 @@
       "custom-options": "Custom options",
       "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "Outline"
     },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
@@ -8118,13 +8143,6 @@
           "create-slo": "Create SLO",
           "enable-slo-alerting": "Enable SLO alerting"
         }
-      }
-    }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "Go back"
       }
     }
   },

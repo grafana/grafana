@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -27,6 +28,7 @@ export function SidebarPaneHeader({ children, onClose, title }: Props) {
           onClick={onClose}
           aria-label={t('grafana-ui.sidebar.close', 'Close')}
           tooltip={t('grafana-ui.sidebar.close', 'Close')}
+          data-testid={selectors.components.Sidebar.closePane}
         />
       )}
       <Text weight="medium" variant="h6" truncate data-testid="sidebar-pane-header-title">

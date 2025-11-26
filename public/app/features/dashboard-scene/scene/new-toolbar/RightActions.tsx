@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
@@ -11,45 +10,35 @@ import { isLibraryPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
-import { DashboardSettingsButton } from './actions/DashboardSettingsButton';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
-import { EditDashboardSwitch } from './actions/EditDashboardSwitch';
-import { ExportDashboardButton } from './actions/ExportDashboardButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
 import { PlayListNextButton } from './actions/PlayListNextButton';
 import { PlayListPreviousButton } from './actions/PlayListPreviousButton';
 import { PlayListStopButton } from './actions/PlayListStopButton';
 import { SaveDashboard } from './actions/SaveDashboard';
 import { SaveLibraryPanelButton } from './actions/SaveLibraryPanelButton';
-import { ShareDashboardButton } from './actions/ShareDashboardButton';
 import { UnlinkLibraryPanelButton } from './actions/UnlinkLibraryPanelButton';
-import { ToolbarActionProps } from './types';
 import { getDynamicActions, renderActionElements } from './utils';
 
 export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
-  const { editPanel, editable, editview, isEditing, uid, meta, viewPanel } = dashboard.useState();
+  const { editPanel, editable, editview, isEditing, meta, viewPanel } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const styles = useStyles2(getStyles);
 
   const isEditable = Boolean(editable);
   const canSave = Boolean(meta.canSave);
-  const hasUid = Boolean(uid);
   const isEditingDashboard = Boolean(isEditing);
   const hasEditView = Boolean(editview);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanel);
   const isEditingLibraryPanel = isEditingPanel && isLibraryPanel(editPanel!.state.panelRef.resolve());
   const isShowingDashboard = !hasEditView && !isViewingPanel && !isEditingPanel;
-  const isEditingAndShowingDashboard = isEditingDashboard && isShowingDashboard;
-  const isSnapshot = Boolean(meta.isSnapshot);
   const canSaveInFolder = contextSrv.hasEditPermissionInFolders;
   const canEditDashboard = dashboard.canEditDashboard();
 
   const showPanelButtons = isEditingPanel && !hasEditView && !isViewingPanel;
   const showPlayButtons = isPlaying && isShowingDashboard && !isEditingDashboard;
-  const showShareButton = hasUid && !isSnapshot && !isPlaying && !isEditingPanel;
-  const showUndoRedoButtons = isEditingAndShowingDashboard && !!config.featureToggles.dashboardUndoRedo;
 
   return (
     <ToolbarButtonRow alignment="right" className={styles.container}>
@@ -107,27 +96,9 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             condition: showPanelButtons && isEditingLibraryPanel,
           },
           {
-            key: 'dashboard-undo',
-            component: UndoButton,
-            group: 'dashboard',
-            condition: showUndoRedoButtons,
-          },
-          {
-            key: 'dashboard-redo',
-            component: RedoButton,
-            group: 'dashboard',
-            condition: showUndoRedoButtons,
-          },
-          {
-            key: 'dashboard-settings',
-            component: DashboardSettingsButton,
-            group: 'dashboard',
-            condition: isEditingAndShowingDashboard && canEditDashboard,
-          },
-          {
             key: 'save-dashboard',
             component: SaveDashboard,
-            group: 'save-edit',
+            group: 'panel',
             condition: isEditingDashboard && !isEditingLibraryPanel && (canSave || canSaveInFolder),
           },
           {
@@ -136,73 +107,12 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             group: 'save-edit',
             condition: !isEditing && canEditDashboard && !isViewingPanel && !isEditable && !isPlaying,
           },
-          {
-            key: 'edit-dashboard-switch',
-            component: EditDashboardSwitch,
-            group: 'save-edit',
-            condition:
-              canEditDashboard &&
-              !isEditingPanel &&
-              !isEditingLibraryPanel &&
-              !isViewingPanel &&
-              isEditable &&
-              !isPlaying &&
-              !isEditingPanel,
-          },
-          {
-            key: 'new-export-dashboard-button',
-            component: ExportDashboardButton,
-            group: 'export-share',
-            condition: showShareButton,
-          },
-          {
-            key: 'new-share-dashboard-button',
-            component: ShareDashboardButton,
-            group: 'export-share',
-            condition: showShareButton,
-          },
         ],
         dashboard
       )}
     </ToolbarButtonRow>
   );
 };
-
-export const undoButtonID = 'undo-button';
-function UndoButton({ dashboard }: ToolbarActionProps) {
-  const editPane = dashboard.state.editPane;
-  const { undoStack } = editPane.useState();
-  const undoAction = undoStack[undoStack.length - 1];
-  const tooltip = `Undo${undoAction?.description ? ` '${undoAction.description}'` : ''}`;
-
-  return (
-    <ToolbarButton
-      id={undoButtonID}
-      icon="corner-up-left"
-      disabled={undoStack.length === 0}
-      onClick={() => editPane.undoAction()}
-      tooltip={tooltip}
-    />
-  );
-}
-
-export const redoButtonId = 'redo-button';
-function RedoButton({ dashboard }: ToolbarActionProps) {
-  const editPane = dashboard.state.editPane;
-  const { redoStack } = editPane.useState();
-  const redoAction = redoStack[redoStack.length - 1];
-  const tooltip = `Redo${redoAction?.description ? ` '${redoAction.description}'` : ''}`;
-
-  return (
-    <ToolbarButton
-      id={redoButtonId}
-      icon="corner-up-right"
-      disabled={redoStack.length === 0}
-      tooltip={tooltip}
-      onClick={() => editPane.redoAction()}
-    />
-  );
-}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({ paddingLeft: theme.spacing(0.5) }),
