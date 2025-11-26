@@ -3353,59 +3353,6 @@
         }
       }
     },
-    "/dashboards/calculate-diff": {
-      "post": {
-        "produces": [
-          "application/json",
-          "text/html"
-        ],
-        "tags": [
-          "dashboards"
-        ],
-        "summary": "Perform diff on two dashboards.",
-        "operationId": "calculateDashboardDiff",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "base": {
-                  "$ref": "#/definitions/CalculateDiffTarget"
-                },
-                "diffType": {
-                  "description": "The type of diff to return\nDescription:\n`basic`\n`json`",
-                  "type": "string",
-                  "enum": [
-                    "basic",
-                    "json"
-                  ]
-                },
-                "new": {
-                  "$ref": "#/definitions/CalculateDiffTarget"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/calculateDashboardDiffResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/dashboards/db": {
       "post": {
         "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.",
@@ -22123,6 +22070,9 @@
         "teamId": {
           "type": "integer",
           "format": "int64"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
