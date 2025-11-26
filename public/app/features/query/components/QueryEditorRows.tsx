@@ -208,7 +208,7 @@ export class QueryEditorRows extends PureComponent<Props, { focusedQueryRefId: s
     } = this.props;
     const { focusedQueryRefId } = this.state;
     const isFocused = Boolean(focusedQueryRefId);
-    const containerStyle = getContainerStyle(isFocused);
+    const containerStyle = getStyles(isFocused);
 
     return (
       <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
@@ -288,7 +288,7 @@ const getDataSourceSettings = (
 
 // Styles for focused container - using static styles since this is a class component
 // Transitions are handled in the parent functional component where we have theme access
-const getContainerStyle = (isFocused: boolean) => {
+const getStyles = (isFocused: boolean) => {
   if (!isFocused) {
     return undefined;
   }
