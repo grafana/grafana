@@ -165,6 +165,21 @@ func (aq *AlertQuery) setMaxDatapoints() error {
 	return nil
 }
 
+// setRefID sets the model refId if it's missing or invalid
+func (aq *AlertQuery) setRefID() error {
+	if aq.modelProps == nil {
+		err := aq.setModelProps()
+		if err != nil {
+			return err
+		}
+	}
+
+	if refID, ok := aq.modelProps["refId"].(string); !ok || refID != aq.RefID {
+		aq.modelProps["refId"] = aq.RefID
+	}
+	return nil
+}
+
 func (aq *AlertQuery) GetMaxDatapoints() (int64, error) {
 	err := aq.setMaxDatapoints()
 	if err != nil {
@@ -252,6 +267,11 @@ func (aq *AlertQuery) GetQuery() (string, error) {
 
 func (aq *AlertQuery) GetModel() ([]byte, error) {
 	err := aq.setMaxDatapoints()
+	if err != nil {
+		return nil, err
+	}
+
+	err = aq.setRefID()
 	if err != nil {
 		return nil, err
 	}
