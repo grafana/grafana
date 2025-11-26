@@ -4,14 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/authlib/types"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -50,10 +54,10 @@ func (a *api) getResourcePermissionsFromK8s(ctx context.Context, namespace strin
 		return nil, fmt.Errorf("failed to get resource permission from k8s: %w", err)
 	}
 
-	return a.convertK8sResourcePermissionToDTO(resourcePerm)
+	return a.convertK8sResourcePermissionToDTO(resourcePerm, namespace)
 }
 
-func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *unstructured.Unstructured) (getResourcePermissionsResponse, error) {
+func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *unstructured.Unstructured, namespace string) (getResourcePermissionsResponse, error) {
 	permissions, found, err := unstructured.NestedSlice(resourcePerm.Object, "spec", "permissions")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get permissions from spec: %w", err)
@@ -61,6 +65,12 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *unstructured.Unstr
 	if !found {
 		return getResourcePermissionsResponse{}, nil
 	}
+
+	namespaceInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		log.New("resource-permissions-api").Warn("Failed to parse namespace for orgID", "namespace", namespace, "error", err)
+	}
+	orgID := namespaceInfo.OrgID
 
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 
@@ -109,8 +119,19 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *unstructured.Unstr
 				permDTO.IsServiceAccount = userDetails.IsServiceAccount
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
-			permDTO.TeamUID = name
-			permDTO.Team = name
+			teamDetails, err := a.service.teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
+				UID:   name,
+				OrgID: orgID,
+			})
+			if err == nil {
+				permDTO.Team = teamDetails.Name
+				permDTO.TeamID = teamDetails.ID
+				permDTO.TeamUID = teamDetails.UID
+				permDTO.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, teamDetails.Email, teamDetails.Name)
+			} else {
+				permDTO.TeamUID = name
+				permDTO.Team = name
+			}
 		case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
 			permDTO.BuiltInRole = name
 		}
@@ -126,9 +147,9 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *unstructured.Unstr
 func (a *api) getAPIGroup() string {
 	switch a.service.options.Resource {
 	case "folders":
-		return "folder.grafana.app"
+		return folderv1.APIGroup
 	case "dashboards":
-		return "dashboard.grafana.app"
+		return dashboardv1.APIGroup
 	default:
 		return fmt.Sprintf("%s.grafana.app", a.service.options.Resource)
 	}
