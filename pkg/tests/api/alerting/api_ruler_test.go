@@ -2684,6 +2684,7 @@ func TestIntegrationQuota(t *testing.T) {
 							   "expression":"2 + 4 \u003E 1",
 							   "intervalMs":1000,
 							   "maxDataPoints":43200,
+							   "refId":"A",
 							   "type":"math"
 							}
 						     }
@@ -2801,6 +2802,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 												"expression": "2 + 3 > 1",
 												"intervalMs": 1000,
 												"maxDataPoints": 43200,
+												"refId": "A",
 												"type": "math"
 											}
 										}
@@ -3288,6 +3290,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3334,6 +3337,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3686,6 +3690,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3732,6 +3737,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3875,6 +3881,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                           "expression":"2 + 3 \u003C 1",
 		                           "intervalMs":1000,
 		                           "maxDataPoints":43200,
+								   "refId":"A",
 		                           "type":"math"
 		                        }
 		                     }
@@ -3998,6 +4005,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						   "expression":"2 + 3 \u003C 1",
 						   "intervalMs":1000,
 						   "maxDataPoints":43200,
+						   "refId":"A",
 						   "type":"math"
 						}
 					     }
@@ -4096,6 +4104,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						   "expression":"2 + 3 \u003C 1",
 						   "intervalMs":1000,
 						   "maxDataPoints":43200,
+						   "refId":"A",
 						   "type":"math"
 						}
 					     }
