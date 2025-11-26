@@ -57,7 +57,7 @@ Depending on how you create span metrics, the following span metrics are generat
 
 | Span metrics generator                                                                                                                                                                                                                                                     | Metric name                            | Prometheus metric type        | Description                  |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------- | :---------------------------- | :--------------------------- |
-| [Alloy](https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.connector.spanmetrics/) and [OTEL spanmetrics connector](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/connector/spanmetricsconnector)                    | `traces_span_metrics_calls_total`      | Counter                       | Total count of the span      |
+| [Alloy](https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.connector.spanmetrics/) and [OTEL span metrics connector](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/connector/spanmetricsconnector)                   | `traces_span_metrics_calls_total`      | Counter                       | Total count of the span      |
 |                                                                                                                                                                                                                                                                            | `traces_span_metrics_duration_seconds` | Histogram (native or classic) | Duration of the span         |
 | [Tempo](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/span-metrics-metrics-generator/) and [Grafana Cloud Application Observability](https://grafana.com/docs/grafana-cloud/monitor-applications/application-observability/setup/metrics-labels/) | `traces_spanmetrics_calls_total`       | Counter                       | Total count of the span      |
 |                                                                                                                                                                                                                                                                            | `traces_spanmetrics_latency`           | Histogram (native or classic) | Duration of the span         |
@@ -320,7 +320,7 @@ The following example demonstrates how to recreate the previous **alert rule tha
 Follow these steps to create the alert:
 
 1. Enable TraceQL alerting
-   To use TraceQL in alerts, you must enable the [**`tempoAlerting`** feature flag in your Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles).  
+   To use TraceQL in alerts, you must enable the [**`tempoAlerting`** feature flag in your Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles).
 
 2. Configure the alert query
 
@@ -360,15 +360,15 @@ This final alert detects when 95% of the server spans for a particular service (
 
 To explore related topics and expand the examples in this guide, see the following resources:
 
-- [Trace structure](https://grafana.com/docs/tempo/latest/introduction/trace-structure/): Learn how traces and spans are structured.  
+- [Trace structure](https://grafana.com/docs/tempo/latest/introduction/trace-structure/): Learn how traces and spans are structured.
 
-- [Grafana Tempo documentation](https://grafana.com/docs/tempo/latest/): Full reference for Grafana’s open-source tracing backend.  
+- [Grafana Tempo documentation](https://grafana.com/docs/tempo/latest/): Full reference for Grafana’s open source tracing backend.
 
-- [Span metrics using the metrics generator in Tempo](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/span-metrics-metrics-generator/): Generate span metrics directly from traces with Tempo’s built-in metrics generator.  
+- [Span metrics using the metrics generator in Tempo](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/span-metrics-metrics-generator/): Generate span metrics directly from traces with Tempo’s built-in metrics generator.
 
-- [Span metrics using Grafana Alloy](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/span-metrics-alloy/): Configure Alloy to export span metrics from OpenTelemetry (OTel) traces.  
+- [Span metrics using Grafana Alloy](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/span-metrics-alloy/): Configure Alloy to export span metrics from OpenTelemetry (OTel) traces.
 
-- [Multi-dimensional alerts](https://grafana.com/docs/grafana/latest/alerting/best-practices/multi-dimensional-alerts/): Learn how to trigger multiple alert instances per alert rule like in these examples.  
+- [Multi-dimensional alerts](https://grafana.com/docs/grafana/latest/alerting/best-practices/multi-dimensional-alerts/): Learn how to trigger multiple alert instances per alert rule like in these examples.
 
 - [Grafana SLO documentation](https://grafana.com/docs/grafana-cloud/alerting-and-irm/slo/): Use span metrics to define Service Level Objectives (SLOs) in Grafana.
 - [Trace sampling](https://grafana.com/docs/tempo/latest/set-up-for-tracing/instrument-send/set-up-collector/tail-sampling/#sampling): explore strategies and configuration in Grafana Tempo.
