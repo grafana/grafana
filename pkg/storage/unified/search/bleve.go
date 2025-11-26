@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math"
 	"os"
 	"path/filepath"
@@ -33,6 +32,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -71,7 +71,7 @@ type BleveOptions struct {
 
 	BuildVersion string
 
-	Logger *slog.Logger
+	Logger log.Logger
 
 	// Minimum time between index updates.
 	IndexMinUpdateInterval time.Duration
@@ -84,7 +84,7 @@ type BleveOptions struct {
 
 type bleveBackend struct {
 	tracer trace.Tracer
-	log    *slog.Logger
+	log    log.Logger
 	opts   BleveOptions
 
 	// set from opts.OwnsIndex, always non-nil
@@ -125,9 +125,9 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		}
 	}
 
-	log := opts.Logger
-	if log == nil {
-		log = slog.Default().With("logger", "bleve-backend")
+	l := opts.Logger
+	if l == nil {
+		l = log.New("bleve-backend")
 	}
 
 	ownFn := opts.OwnsIndex
@@ -137,7 +137,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 	}
 
 	be := &bleveBackend{
-		log:          log,
+		log:          l,
 		tracer:       tracer,
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
@@ -381,7 +381,7 @@ func (b *bleveBackend) BuildIndex(
 		return nil, err
 	}
 
-	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "reason", indexBuildReason)
+	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "reason", indexBuildReason)
 
 	// Close the newly created/opened index by default.
 	closeIndex := true
@@ -462,7 +462,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Batch all the changes
-	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater, b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
+	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
 
 	if build {
 		if b.indexMetrics != nil {
@@ -714,7 +714,7 @@ type bleveIndex struct {
 	// The values returned with all
 	allFields []*resourcepb.ResourceTableColumnDefinition
 	tracing   trace.Tracer
-	logger    *slog.Logger
+	logger    log.Logger
 
 	updaterFn         resource.UpdateFn
 	minUpdateInterval time.Duration
@@ -741,7 +741,7 @@ func (b *bleveBackend) newBleveIndex(
 	allFields []*resourcepb.ResourceTableColumnDefinition,
 	standardSearchFields resource.SearchableDocumentFields,
 	updaterFn resource.UpdateFn,
-	logger *slog.Logger,
+	logger log.Logger,
 ) *bleveIndex {
 	bi := &bleveIndex{
 		key:               key,
@@ -1179,10 +1179,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
 	}
 
-	// Convert resource-specific fields to bleve fields (just considers dashboard fields for now)
+	// Convert resource-specific fields to bleve fields.
+	// TODO: use b.fields.Field(f) instead of builders.DashboardFields() to avoid dashboard-specific code in search server.
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
-		if slices.Contains(DashboardFields(), f) {
+		if slices.Contains(builders.DashboardFields(), f) {
 			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
@@ -1535,7 +1536,8 @@ func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
 			input = field
 		}
 
-		if slices.Contains(DashboardFields(), input) {
+		// TODO: pass fields parameter and use fields.Field(input) instead of builders.DashboardFields() to avoid dashboard-specific code.
+		if slices.Contains(builders.DashboardFields(), input) {
 			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 

@@ -1,7 +1,8 @@
+import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult } from 'app/features/search/service/types';
+import { NestedFolderDTO } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -16,24 +17,22 @@ export async function listFolders(
   page = 1,
   pageSize = PAGE_SIZE
 ): Promise<DashboardViewItem[]> {
-  const searcher = getGrafanaSearcher();
+  const backendSrv = getBackendSrv();
 
-  let folders: DashboardQueryResult[] = [];
+  // TODO: what to do here for unified search?
+  let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
-    const foldersResults = await searcher.search({
-      kind: ['folder'],
-      location: parentUID || 'general',
-      from: (page - 1) * pageSize, // our pages are 1-indexed, so we need to -1 to convert that to correct value to skip
+    folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
+      parentUid: parentUID,
+      page,
       limit: pageSize,
-      offset: (page - 1) * pageSize,
     });
-    folders = foldersResults.view.toArray();
   }
 
   return folders.map((item) => ({
     kind: 'folder',
     uid: item.uid,
-    title: item.name,
+    title: item.title,
     parentTitle,
     parentUID,
     managedBy: item.managedBy,

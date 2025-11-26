@@ -243,6 +243,10 @@ const (
 	// Enables the UI to use certain backend-side filters
 	FlagAlertingUIUseBackendFilters = "alertingUIUseBackendFilters"
 
+	// FlagAlertingUIUseFullyCompatBackendFilters
+	// Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
+	FlagAlertingUIUseFullyCompatBackendFilters = "alertingUIUseFullyCompatBackendFilters"
+
 	// FlagAlertmanagerRemotePrimary
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
@@ -270,10 +274,6 @@ const (
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
-
-	// FlagOnPremToCloudMigrations
-	// Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
-	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
 	// FlagSecretsManagementAppPlatform
 	// Enable the secrets management API and services under app platform
@@ -606,10 +606,6 @@ const (
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
 
-	// FlagPostgresDSUsePGX
-	// Enables using PGX instead of libpq for PostgreSQL datasource
-	FlagPostgresDSUsePGX = "postgresDSUsePGX"
-
 	// FlagTempoAlerting
 	// Enables creating alerts from Tempo data source
 	FlagTempoAlerting = "tempoAlerting"
@@ -641,6 +637,10 @@ const (
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
 	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
+
+	// FlagKubernetesExternalGroupMapping
+	// Routes external group mapping requests from /api to the /apis endpoint
+	FlagKubernetesExternalGroupMapping = "kubernetesExternalGroupMapping"
 
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
