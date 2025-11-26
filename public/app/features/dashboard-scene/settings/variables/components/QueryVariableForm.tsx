@@ -1,5 +1,5 @@
 import { FormEvent } from 'react';
-import { useAsync } from 'react-use';
+import { useAsync, useEffectOnce } from 'react-use';
 
 import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -89,16 +89,27 @@ export function QueryVariableEditorForm({
       onQueryChange(query);
     }
 
-    if (!datasourceRef) {
-      const instanceSettings = getDataSourceSrv().getInstanceSettings({ type: datasource.type, uid: datasource.uid });
-
-      if (instanceSettings) {
-        onDataSourceChange(instanceSettings);
-      }
-    }
-
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
+
+  // update data source if it is not defined in variable model
+  useEffectOnce(() => {
+    if (!datasourceRef) {
+      (async () => {
+        const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
+        const instanceSettings = getDataSourceSrv().getInstanceSettings({ type: datasource.type, uid: datasource.uid });
+
+        if (instanceSettings) {
+          onDataSourceChange(instanceSettings);
+
+          // restoring query as data source update resets it
+          if (query) {
+            onQueryChange(query);
+          }
+        }
+      })();
+    }
+  });
 
   const { datasource, VariableQueryEditor } = dsConfig ?? {};
 
