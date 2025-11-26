@@ -371,12 +371,15 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     // Fetches both dashboards and scope navigations
     // We call this even if we have 0 scope because in that case it also closes the dashboard drawer.
-    this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId)).then(() => {
-      const selectedScopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
-      if (redirectOnApply) {
-        this.redirectAfterApply(selectedScopeNode);
-      }
-    });
+    // Only fetch dashboards based on the scopes if we don't have a navigation scope set.
+    if (!this.dashboardsService.state.navigationScope) {
+      this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId)).then(() => {
+        const selectedScopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+        if (redirectOnApply) {
+          this.redirectAfterApply(selectedScopeNode);
+        }
+      });
+    }
 
     if (scopes.length > 0) {
       const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
@@ -431,7 +434,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  public removeAllScopes = () => this.applyScopes([], false);
+  public removeAllScopes = () => {
+    this.applyScopes([], false);
+    this.dashboardsService.setNavigationScope(undefined);
+  };
 
   private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode) => {
     if (scopes.length === 0) {
