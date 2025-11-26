@@ -219,7 +219,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
-	storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
+	// storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 	teamBindingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)
