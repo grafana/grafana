@@ -11668,13 +11668,6 @@
       "saving": "Saving",
       "title-error-loading-file": "Error loading file"
     },
-    "files-view": {
-      "columns": {
-        "history": "History",
-        "view": "View"
-      },
-      "placeholder-search": "Search"
-    },
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
       "description-generate-dashboard-previews": "Create preview links for pull requests",
@@ -11923,14 +11916,6 @@
       "webhook-id": "ID:",
       "webhook-last-event": "Last Event:",
       "webhook-url": "View Webhook"
-    },
-    "repository-resources": {
-      "columns": {
-        "history": "History",
-        "view-dashboard": "View",
-        "view-folder": "View"
-      },
-      "placeholder-search": "Search"
     },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
