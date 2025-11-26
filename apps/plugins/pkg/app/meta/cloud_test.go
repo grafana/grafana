@@ -49,7 +49,7 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta.PluginJSON)
+		assert.Equal(t, expectedMeta, result.Meta.PluginJson)
 		assert.Equal(t, defaultCloudTTL, result.TTL)
 	})
 
