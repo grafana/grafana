@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -71,8 +72,7 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 	}
 }
 
-// BeforeCreate implements ResourceStorageAuthorizer.
-func (r *ResourcePermissionsAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj runtime.Object) error {
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return errUnauthenticated
@@ -102,88 +102,68 @@ func (r *ResourcePermissionsAuthorizer) BeforeCreate(ctx context.Context, obj ru
 	default:
 		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, errUnexpectedType)
 	}
+}
+
+// BeforeCreate implements ResourceStorageAuthorizer.
+func (r *ResourcePermissionsAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+	return r.beforeWrite(ctx, obj)
 }
 
 // BeforeDelete implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
-	authInfo, ok := types.AuthInfoFrom(ctx)
-	if !ok {
-		return errUnauthenticated
-	}
-	switch o := obj.(type) {
-	case *iamv0.ResourcePermission:
-		target := o.Spec.Resource
-
-		// TODO: Fetch the resource to retrieve its parent folder.
-		parent := ""
-
-		checkReq := types.CheckRequest{
-			Namespace: o.Namespace,
-			Group:     target.ApiGroup,
-			Resource:  target.Resource,
-			Verb:      utils.VerbSetPermissions,
-			Name:      target.Name,
-		}
-		res, err := r.accessClient.Check(ctx, authInfo, checkReq, parent)
-		if err != nil {
-			return err
-		}
-		if !res.Allowed {
-			return errUnauthorized
-		}
-		return nil
-	default:
-		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, errUnexpectedType)
-	}
+	return r.beforeWrite(ctx, obj)
 }
 
 // BeforeUpdate implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
-	authInfo, ok := types.AuthInfoFrom(ctx)
-	if !ok {
-		return errUnauthenticated
-	}
-	switch o := obj.(type) {
-	case *iamv0.ResourcePermission:
-		target := o.Spec.Resource
-
-		// TODO: Fetch the resource to retrieve its parent folder.
-		parent := ""
-
-		checkReq := types.CheckRequest{
-			Namespace: o.Namespace,
-			Group:     target.ApiGroup,
-			Resource:  target.Resource,
-			Verb:      utils.VerbSetPermissions,
-			Name:      target.Name,
-		}
-		res, err := r.accessClient.Check(ctx, authInfo, checkReq, parent)
-		if err != nil {
-			return err
-		}
-		if !res.Allowed {
-			return errUnauthorized
-		}
-		return nil
-	default:
-		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, errUnexpectedType)
-	}
+	return r.beforeWrite(ctx, obj)
 }
 
 // FilterList implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
+	authInfo, ok := types.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, errUnauthenticated
+	}
+
 	switch l := list.(type) {
 	case *iamv0.ResourcePermissionList:
-		// TODO: use compile instead
-		var filteredItems []iamv0.ResourcePermission
+		var (
+			filteredItems []iamv0.ResourcePermission
+			err           error
+			canViewFuncs  = map[schema.GroupResource]types.ItemChecker{}
+		)
 		for _, item := range l.Items {
-			// Reuse AfterGet to check permissions for each item
-			err := r.AfterGet(ctx, &item)
-			if err == nil {
+			gr := schema.GroupResource{
+				Group:    item.Spec.Resource.ApiGroup,
+				Resource: item.Spec.Resource.Resource,
+			}
+
+			// Reuse the same canView for items with the same resource
+			canView, found := canViewFuncs[gr]
+
+			if !found {
+				listReq := types.ListRequest{
+					Namespace: item.Namespace,
+					Group:     item.Spec.Resource.ApiGroup,
+					Resource:  item.Spec.Resource.Resource,
+					Verb:      utils.VerbGetPermissions,
+				}
+
+				canView, _, err = r.accessClient.Compile(ctx, authInfo, listReq)
+				if err != nil {
+					return nil, err
+				}
+
+				canViewFuncs[gr] = canView
+			}
+
+			// TODO : Fetch the resource to retrieve its parent folder.
+			parent := ""
+
+			allowed := canView(item.Spec.Resource.Name, parent)
+			if allowed {
 				filteredItems = append(filteredItems, item)
-			} else if err != errUnauthorized {
-				// Return error if it's not just unauthorized
-				return nil, err
 			}
 		}
 		l.Items = filteredItems
