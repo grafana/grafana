@@ -27,41 +27,74 @@ export const getRepoHref = (github?: RepositorySpec['github']) => {
   return `${github.url}/tree/${github.branch}`;
 };
 
+const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
+const splitAndEncode = (s: string) => stripSlashes(s).split('/').map(encodeURIComponent);
+
+const buildRepoUrl = ({
+  baseUrl,
+  branch,
+  providerSegments,
+  path,
+}: {
+  baseUrl?: string;
+  branch?: string | null;
+  providerSegments: string[];
+  path?: string | null;
+}) => {
+  if (!baseUrl) {
+    return undefined;
+  }
+
+  const cleanBase = stripSlashes(baseUrl.trim());
+  const cleanBranch = branch?.trim() || undefined;
+
+  const parts = [cleanBase, ...providerSegments];
+
+  if (cleanBranch) {
+    parts.push(cleanBranch);
+  }
+
+  if (path) {
+    parts.push(...splitAndEncode(path.trim()));
+  }
+
+  return parts.join('/');
+};
+
 export const getRepoHrefForProvider = (spec?: RepositorySpec) => {
   if (!spec || !spec.type) {
     return undefined;
   }
 
   switch (spec.type) {
-    case 'github': {
-      const url = spec.github?.url;
-      const branch = spec.github?.branch;
-      if (!url) {
-        return undefined;
-      }
-      return branch ? `${url}/tree/${branch}` : url;
-    }
-
-    case 'gitlab': {
-      const url = spec.gitlab?.url;
-      const branch = spec.gitlab?.branch;
-      if (!url) {
-        return undefined;
-      }
-      return branch ? `${url}/-/tree/${branch}` : url;
-    }
-    case 'bitbucket': {
-      const url = spec.bitbucket?.url;
-      const branch = spec.bitbucket?.branch;
-      if (!url) {
-        return undefined;
-      }
-      return branch ? `${url}/src/${branch}` : url;
-    }
-    case 'git': {
-      // Return a generic URL for pure git repositories
-      return spec.git?.url;
-    }
+    case 'github':
+      return buildRepoUrl({
+        baseUrl: spec.github?.url,
+        branch: spec.github?.branch,
+        providerSegments: ['tree'],
+        path: spec.github?.path,
+      });
+    case 'gitlab':
+      return buildRepoUrl({
+        baseUrl: spec.gitlab?.url,
+        branch: spec.gitlab?.branch,
+        providerSegments: ['-', 'tree'],
+        path: spec.gitlab?.path,
+      });
+    case 'bitbucket':
+      return buildRepoUrl({
+        baseUrl: spec.bitbucket?.url,
+        branch: spec.bitbucket?.branch,
+        providerSegments: ['src'],
+        path: spec.bitbucket?.path,
+      });
+    case 'git':
+      return buildRepoUrl({
+        baseUrl: spec.git?.url,
+        branch: spec.git?.branch,
+        providerSegments: ['tree'],
+        path: spec.git?.path,
+      });
     default:
       return undefined;
   }
