@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -123,28 +122,15 @@ export function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<Viz
   const variables = sceneGraph.getVariables(model);
   const groupByVariable = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
-  const styles = getStyles();
   const queries = queryRunner?.state.data?.request?.targets ?? [];
 
   return (
     <>
       {!hideGroupByAction && supportsApplicability && (
-        <div className={styles.alwaysShowMenu}>
+        <div className="show-on-hover">
           <PanelGroupByAction groupByVariable={groupByVariable!} queries={queries} />
         </div>
       )}
     </>
   );
-}
-
-function getStyles() {
-  return {
-    alwaysShowMenu: css({
-      '& + button': {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        visibility: 'visible !important' as 'visible',
-        opacity: '1 !important',
-      },
-    }),
-  };
 }

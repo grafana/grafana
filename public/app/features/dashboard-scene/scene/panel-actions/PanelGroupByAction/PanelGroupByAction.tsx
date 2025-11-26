@@ -104,6 +104,7 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
     <Button
       variant="secondary"
       size="sm"
+      fill="text"
       data-testid={selectors.components.Panels.Panel.PanelGroupByHeaderAction}
       ref={ref}
       onClick={(ev) => {

@@ -126,7 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   menuContainer: css({
     display: 'flex',
     flexDirection: 'column',
-    background: theme.colors.background.primary,
+    background: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z3,
