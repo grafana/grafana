@@ -100,7 +100,7 @@ func NewQuotaService(ctx context.Context, logger log.Logger, reg prometheus.Regi
 	}, nil
 }
 
-// one the runtimeconfig manager is in a running state, it will periodically reload the configuration file into the manager if there are changes
+// once the runtimeconfig manager is in a running state, it will periodically reload the configuration file into the manager if there are changes
 func (q *QuotaService) init(ctx context.Context) error {
 	err := q.manager.StartAsync(ctx)
 	if err != nil {
