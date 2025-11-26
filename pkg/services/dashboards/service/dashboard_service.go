@@ -319,7 +319,7 @@ func (dr *DashboardServiceImpl) listResourcesToCleanup(ctx context.Context, orgI
 	return data, nil, false
 }
 
-// processDashboardBatch processes a batch of dashboards for cleanup
+// processDashboardBatch processes a batch of dashboards for cleanup ...
 func (dr *DashboardServiceImpl) processDashboardBatch(ctx context.Context, orgID int64, items []unstructured.Unstructured) (int, []error) {
 	var errs []error
 	itemsProcessed := 0
