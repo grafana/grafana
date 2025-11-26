@@ -68,12 +68,10 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 	}
 	log.Println("done getting node version")
 
-	src := WithYarnCache(
-		WithGrafanaFrontend(d.Container().From(NodeImage(nodeVersion)), opts.GrafanaDir),
-		opts.YarnCache,
-	).WithEnvVariable("YARN_CACHE_FOLDER", "/yarn/cache").
-		WithExec([]string{"yarn", "install", "--immutable"}).
-		WithExec([]string{"yarn", "e2e:plugin:build"})
+	src :=
+		WithGrafanaFrontend(d.Container().From(NodeImage(nodeVersion)), opts.GrafanaDir).
+			WithExec([]string{"yarn", "install", "--immutable"}).
+			WithExec([]string{"yarn", "e2e:plugin:build"})
 
 	// _/ubuntu:latest sticks to latest LTS.
 	// We need ubuntu to support the image renderer plugin, which assumes glibc.
