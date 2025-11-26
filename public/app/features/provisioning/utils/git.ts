@@ -27,7 +27,11 @@ export const getRepoHref = (github?: RepositorySpec['github']) => {
   return `${github.url}/tree/${github.branch}`;
 };
 
+// Remove leading and trailing slashes from a string.
 const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
+
+// Split a path into segments and URL-encode each segment.
+// Ensures the final URL remains valid for all providers (GitHub, GitLab, etc.).
 const splitAndEncode = (s: string) => stripSlashes(s).split('/').map(encodeURIComponent);
 
 const buildRepoUrl = ({
@@ -45,15 +49,21 @@ const buildRepoUrl = ({
     return undefined;
   }
 
+  // Normalize base URL: trim whitespace + remove trailing slashes.
   const cleanBase = stripSlashes(baseUrl.trim());
   const cleanBranch = branch?.trim() || undefined;
 
+  // Start composing URL parts:
+  // base URL + provider-specific segments (e.g., "tree", "blob", etc.)
   const parts = [cleanBase, ...providerSegments];
 
+  // Append the branch name if present.
   if (cleanBranch) {
     parts.push(cleanBranch);
   }
 
+  // Append encoded path segments if provided.
+  // This ensures nested files like "src/utils/index.ts" produce safe URLs.
   if (path) {
     parts.push(...splitAndEncode(path.trim()));
   }
