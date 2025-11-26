@@ -17,6 +17,8 @@ export interface TreeNode {
   expanded: boolean;
   query: string;
   children?: Record<string, TreeNode>;
+  // Check if we have loaded all the children. Used when resolving to root.
+  childrenLoaded?: boolean;
 }
 
 export interface RecentScope extends Scope {

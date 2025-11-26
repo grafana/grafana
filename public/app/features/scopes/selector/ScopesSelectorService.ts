@@ -250,6 +250,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           children: undefined,
         };
       }
+      treeNode.childrenLoaded = true;
     });
 
     // TODO: we might not want to update the tree as a side effect of this function
@@ -520,7 +521,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       let parentPath = path.slice(0, -1);
       let parentNodeAtPath = treeNodeAtPath(newTree, parentPath);
 
-      if (parentNodeAtPath && (!parentNodeAtPath.children || Object.keys(parentNodeAtPath.children).length === 1)) {
+      if (parentNodeAtPath && !parentNodeAtPath.childrenLoaded) {
         // This will update the tree with the children
         const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, parentNodeAtPath, '');
         newTree = newTreeWithChildren;
