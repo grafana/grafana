@@ -12,6 +12,11 @@ const testEventBus = new EventBusSrv();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getAppEvents: () => testEventBus,
+  config: {
+    featureToggles: {
+      correlationsExploreEditor: false,
+    },
+  },
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => {

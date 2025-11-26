@@ -121,6 +121,11 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: () => {},
   }),
   usePluginLinks: jest.fn(() => ({ links: [] })),
+  config: {
+    featureToggles: {
+      correlationsExploreEditor: false,
+    },
+  },
 }));
 
 jest.mock('app/core/services/context_srv', () => ({

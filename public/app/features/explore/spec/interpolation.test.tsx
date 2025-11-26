@@ -13,6 +13,11 @@ const testEventBus = new EventBusSrv();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getAppEvents: () => testEventBus,
+  config: {
+    featureToggles: {
+      correlationsExploreEditor: false,
+    },
+  },
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
