@@ -34,7 +34,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingCreate(obj runtime.
 	b.zTickets <- true
 	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
 
-	go func(tb *iamv0.RoleBinding) {
+	go func(rb *iamv0.RoleBinding) {
 		start := time.Now()
 		status := "success"
 
@@ -47,10 +47,10 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingCreate(obj runtime.
 		}()
 
 		b.logger.Debug("writing role binding to zanzana",
-			"namespace", tb.Namespace,
-			"name", tb.Name,
-			"subject", tb.Spec.Subject.Name,
-			"roleRefs", tb.Spec.RoleRefs,
+			"namespace", rb.Namespace,
+			"name", rb.Name,
+			"subject", rb.Spec.Subject.Name,
+			"roleRefs", rb.Spec.RoleRefs,
 		)
 
 		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
@@ -83,9 +83,9 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingCreate(obj runtime.
 			status = "failure"
 			b.logger.Error("failed to write role binding to zanzana",
 				"err", err,
-				"namespace", tb.Namespace,
-				"name", tb.Name,
-				"subject", tb.Spec.Subject.Name,
+				"namespace", rb.Namespace,
+				"name", rb.Name,
+				"subject", rb.Spec.Subject.Name,
 				"roleRefs", rb.Spec.RoleRefs,
 			)
 		} else {
@@ -115,7 +115,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingDelete(obj runtime.
 	b.zTickets <- true
 	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
 
-	go func(tb *iamv0.RoleBinding) {
+	go func(rb *iamv0.RoleBinding) {
 		start := time.Now()
 		status := "success"
 
@@ -128,9 +128,9 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingDelete(obj runtime.
 		}()
 
 		b.logger.Debug("deleting role binding from zanzana",
-			"namespace", tb.Namespace,
-			"name", tb.Name,
-			"subject", tb.Spec.Subject.Name,
+			"namespace", rb.Namespace,
+			"name", rb.Name,
+			"subject", rb.Spec.Subject.Name,
 			"roleRefs", rb.Spec.RoleRefs,
 		)
 
@@ -164,8 +164,8 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingDelete(obj runtime.
 			status = "failure"
 			b.logger.Error("failed to delete role binding from zanzana",
 				"err", err,
-				"namespace", tb.Namespace,
-				"name", tb.Name,
+				"namespace", rb.Namespace,
+				"name", rb.Name,
 				"subject", rb.Spec.Subject.Name,
 				"roleRefs", rb.Spec.RoleRefs,
 			)
