@@ -138,7 +138,6 @@ func (provider *Provisioner) Provision(ctx context.Context) error {
 
 		provider.duplicateValidator.validate()
 		provider.log.Info("finished to provision dashboards")
-
 	}, retryOpt)
 
 	if lockErr != nil {
