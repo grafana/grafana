@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -220,10 +221,8 @@ describe('InviteUserButton', () => {
 
       render(<InviteUserButton />);
 
-      // Should skip the query
-      expect(mockUseGetCurrentOrgQuotaQuery).toHaveBeenCalledWith(undefined, {
-        skip: true,
-      });
+      // Should skip the query with skipToken
+      expect(mockUseGetCurrentOrgQuotaQuery).toHaveBeenCalledWith(skipToken);
     });
 
     it('should fetch quotas on cloud instances when button will render', () => {
@@ -231,10 +230,8 @@ describe('InviteUserButton', () => {
 
       render(<InviteUserButton />);
 
-      // Should not skip the query
-      expect(mockUseGetCurrentOrgQuotaQuery).toHaveBeenCalledWith(undefined, {
-        skip: false,
-      });
+      // Should not skip the query (pass undefined)
+      expect(mockUseGetCurrentOrgQuotaQuery).toHaveBeenCalledWith(undefined);
     });
   });
 

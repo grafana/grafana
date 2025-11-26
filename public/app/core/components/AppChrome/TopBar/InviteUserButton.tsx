@@ -1,3 +1,5 @@
+import { skipToken } from '@reduxjs/toolkit/query';
+
 import { t } from '@grafana/i18n';
 import { ToolbarButton } from '@grafana/ui';
 import { useGetCurrentOrgQuotaQuery } from 'app/api/clients/legacy';
@@ -14,9 +16,7 @@ export function InviteUserButton() {
   const isCloudInstance = !isOnPrem();
 
   // Only fetch quotas when button will render AND on Grafana Cloud
-  const { data: quotas, error } = useGetCurrentOrgQuotaQuery(undefined, {
-    skip: !shouldRender || !isCloudInstance,
-  });
+  const { data: quotas, error } = useGetCurrentOrgQuotaQuery(!shouldRender || !isCloudInstance ? skipToken : undefined);
 
   // Check if org_user quota is reached
   const userQuota = quotas?.find((quota) => quota.target === 'org_user');
