@@ -144,9 +144,19 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
               />
             ))
           ) : (
-            <Text color="secondary" element="li">
-              <Trans i18nKey="dashboard.outline.tree-item.empty">(empty)</Trans>
-            </Text>
+            <li
+              role="treeitem"
+              aria-selected={isSelected}
+              className={styles.container}
+              style={{ '--depth': depth + 1 } as React.CSSProperties}
+            >
+              <div className={styles.row}>
+                <div className={styles.indentation}></div>
+                <Text color="secondary" italic>
+                  <Trans i18nKey="dashboard.outline.tree-item.empty">(empty)</Trans>
+                </Text>
+              </div>
+            </li>
           )}
         </ul>
       )}
