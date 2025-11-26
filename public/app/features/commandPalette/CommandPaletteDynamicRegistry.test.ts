@@ -259,9 +259,7 @@ describe('CommandPaletteDynamicRegistry', () => {
       });
 
       await registry.getState();
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Registered provider: test-plugin/0')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Registered provider: test-plugin/0'));
 
       consoleLogSpy.mockRestore();
       process.env.NODE_ENV = originalNodeEnv;
