@@ -53,7 +53,17 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }
 
     const forScopeNames = navigationScope ? [navigationScope] : (fallbackScopeNames ?? []);
-    this.updateState({ navigationScope, drawerOpened: forScopeNames.length > 0 });
+    this.updateState({
+      navigationScope,
+      drawerOpened: forScopeNames.length > 0,
+      // Clear the expanded folder path so auto-expansion can work for the new scope
+      expandedFolderPath: [],
+    });
+
+    // Clear the navigation folder path from URL when the navigation scope changes
+    // since the folder structure will be different
+    locationService.partial({ nav_scope_path: null });
+
     await this.fetchDashboards(forScopeNames);
   };
 
@@ -196,12 +206,21 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         forScopeNames: [],
         loading: false,
         drawerOpened: false,
+        expandedFolderPath: [],
       });
 
       return;
     }
 
-    this.updateState({ forScopeNames, loading: true });
+    // Clear the expanded folder path when scopes change (unless this is initial load with path from URL)
+    // If we have an expandedFolderPath but forScopeNames is changing, the path is no longer valid
+    const shouldClearPath = this.state.expandedFolderPath.length > 0 && this.state.forScopeNames.length > 0;
+
+    this.updateState({
+      forScopeNames,
+      loading: true,
+      ...(shouldClearPath && { expandedFolderPath: [] }),
+    });
 
     const fetchNavigations = config.featureToggles.useScopesNavigationEndpoint
       ? this.apiClient.fetchScopeNavigations

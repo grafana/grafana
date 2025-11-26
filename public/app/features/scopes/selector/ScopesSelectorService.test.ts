@@ -14,6 +14,7 @@ jest.mock('@grafana/runtime', () => ({
   locationService: {
     push: jest.fn(),
     getLocation: jest.fn(),
+    partial: jest.fn(),
   },
 }));
 
@@ -74,6 +75,7 @@ describe('ScopesSelectorService', () => {
     dashboardsService = {
       fetchDashboards: jest.fn().mockResolvedValue(undefined),
       setNavigationScope: jest.fn(),
+      updateFolder: jest.fn(),
       state: {
         scopeNavigations: [],
         dashboards: [],
@@ -424,6 +426,43 @@ describe('ScopesSelectorService', () => {
       await service.changeScopes(['test-scope']);
 
       expect(dashboardsService.fetchDashboards).toHaveBeenCalledWith(['test-scope']);
+    });
+
+    it('should expand folder when redirecting to first scope navigation', async () => {
+      // Mock location to be on a page that's NOT in the scope navigations
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' } as Location);
+
+      // Mock scope navigations with items in groups
+      const mockScopeNavigations: ScopeNavigation[] = [
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'First Dashboard', groups: ['group1'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      dashboardsService.state.scopeNavigations = mockScopeNavigations;
+      dashboardsService.state.folders = {
+        '': {
+          title: '',
+          expanded: true,
+          folders: {
+            group1: {
+              title: 'group1',
+              expanded: false,
+              folders: {},
+              suggestedNavigations: {},
+            },
+          },
+          suggestedNavigations: {},
+        },
+      };
+
+      await service.changeScopes(['test-scope']);
+
+      // Should expand the folder containing the first navigation
+      expect(dashboardsService.updateFolder).toHaveBeenCalledWith(['', 'group1'], true);
+      // Should redirect to the first navigation
+      expect(locationService.push).toHaveBeenCalledWith('/d/dashboard1');
     });
   });
 

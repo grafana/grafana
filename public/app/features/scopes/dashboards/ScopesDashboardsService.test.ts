@@ -24,6 +24,7 @@ jest.mock('@grafana/runtime', () => ({
   },
   locationService: {
     getLocation: jest.fn(),
+    partial: jest.fn(),
   },
 }));
 
@@ -699,6 +700,103 @@ describe('ScopesDashboardsService', () => {
 
       expect(service.state.navigationScope).toBe('navScope2');
       expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['navScope2']);
+    });
+
+    it('should clear nav_scope_path when navigation scope changes', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+
+      await service.setNavigationScope('navScope1');
+
+      expect(locationService.partial).toHaveBeenCalledWith({ nav_scope_path: null });
+    });
+
+    it('should clear nav_scope_path when clearing navigation scope', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+
+      await service.setNavigationScope('navScope1');
+      (locationService.partial as jest.Mock).mockClear();
+
+      await service.setNavigationScope(undefined);
+
+      expect(locationService.partial).toHaveBeenCalledWith({ nav_scope_path: null });
+    });
+
+    it('should clear expandedFolderPath in state when navigation scope changes', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+
+      // Set an initial path (simulating a previous navigation with nested folders)
+      const testService = new ScopesDashboardsService(mockApiClient, ['', 'group1', 'subfolder']);
+      expect(testService.state.expandedFolderPath).toEqual(['', 'group1', 'subfolder']);
+
+      await testService.setNavigationScope('navScope1');
+
+      // expandedFolderPath should be cleared to allow auto-expansion
+      expect(testService.state.expandedFolderPath).toEqual([]);
+    });
+
+    it('should auto-expand folders after clearing navigation scope and selecting new scope', async () => {
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' } as Location);
+
+      // Step 1: Set a navigation scope with nested folders
+      const testService = new ScopesDashboardsService(mockApiClient, ['', 'group1', 'subfolder']);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+      await testService.setNavigationScope('navScope1');
+
+      // expandedFolderPath should be cleared
+      expect(testService.state.expandedFolderPath).toEqual([]);
+
+      // Step 2: Clear navigation scope
+      await testService.setNavigationScope(undefined);
+
+      // Step 3: Select a new scope (without navigation scope) with a dashboard that matches current URL
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'Test Dashboard', groups: ['group2'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await testService.fetchDashboards(['scope1']);
+
+      // group2 should be auto-expanded because it contains the active dashboard
+      expect(testService.state.folders[''].folders['group2'].expanded).toBe(true);
+    });
+
+    it('should clear expandedFolderPath when scopes change via fetchDashboards', async () => {
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard2' } as Location);
+
+      // Start with an initial expanded path from URL
+      const testService = new ScopesDashboardsService(mockApiClient, ['', 'group1', 'subfolder']);
+
+      // Step 1: Fetch dashboards for scope1
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'Test Dashboard', groups: ['group1'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+      await testService.fetchDashboards(['scope1']);
+
+      // Path from URL should still be set after first fetch (initial load)
+      expect(testService.state.expandedFolderPath).toEqual(['', 'group1', 'subfolder']);
+
+      // Step 2: Fetch dashboards for a different scope (scope2) - simulating scope change
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'scope2', url: '/d/dashboard2' },
+          status: { title: 'Another Dashboard', groups: ['group2'] },
+          metadata: { name: 'dashboard2' },
+        },
+      ]);
+      await testService.fetchDashboards(['scope2']);
+
+      // expandedFolderPath should be cleared because scopes changed
+      expect(testService.state.expandedFolderPath).toEqual([]);
+
+      // group2 should be auto-expanded because path was cleared and it contains active item
+      expect(testService.state.folders[''].folders['group2'].expanded).toBe(true);
     });
 
     it('should update navigation scope when clearing an existing scope', async () => {

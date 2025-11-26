@@ -7,6 +7,7 @@ import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { isCurrentPath } from '../dashboards/scopeNavgiationUtils';
+import { ScopeNavigation } from '../dashboards/types';
 
 import {
   closeNodes,
@@ -429,7 +430,23 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         // Only redirect to dashboards TODO: Remove this once Logs Drilldown has Scopes support
         firstScopeNavigation.spec.url.includes('/d/')
       ) {
+        // Before redirecting, expand the folder containing this navigation
+        // This ensures the correct folder is expanded after the redirect
+        this.expandFolderForNavigation(firstScopeNavigation);
         locationService.push(firstScopeNavigation.spec.url);
+      }
+    }
+  };
+
+  // Helper to expand the folder containing a specific navigation item
+  private expandFolderForNavigation = (navigation: ScopeNavigation | { status: { groups?: string[] } }) => {
+    const groups = navigation.status.groups ?? [];
+    if (groups.length > 0) {
+      // Find the first group that contains this navigation
+      const groupName = groups[0];
+      if (groupName && this.dashboardsService.state.folders['']?.folders[groupName]) {
+        // Update the folder to be expanded
+        this.dashboardsService.updateFolder(['', groupName], true);
       }
     }
   };
