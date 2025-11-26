@@ -2624,7 +2624,9 @@
         "placeholder-search-input": ""
       },
       "grafana-folder": "",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Sağlık",
       "label": {
         "hide": "Gizle",
@@ -2635,6 +2637,7 @@
       "placeholder-all-data-sources": "Tüm veri kaynakları",
       "placeholder-contact-point": "",
       "placeholder-data-sources": "",
+      "placeholder-group-search": "",
       "placeholder-labels": "",
       "plugin-rules": "Eklenti kuralları",
       "rule-source": {
@@ -6182,8 +6185,8 @@
       "placeholder-search-for": "Ara...",
       "radio-options": {
         "label": {
-          "suggestions": "Öneriler",
-          "visualizations": "Görselleştirmeler"
+          "all-visualizations": "",
+          "suggestions": "Öneriler"
         }
       },
       "title-close": "Kapat"
@@ -8123,8 +8126,7 @@
       "edit-pane": {
         "go-back": "Geri dön"
       }
-    },
-    "select-group": ""
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11050,8 +11052,8 @@
       "tooltip-delete": "Sil"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "Mevcut verilere göre",
-      "no-results-matched-your-query": "Sorgunuza uygun sonuç bulunamadı"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Sorgunuzla eşleşen hiçbir şey bulunamadı"
