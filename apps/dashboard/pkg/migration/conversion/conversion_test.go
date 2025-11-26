@@ -436,6 +436,10 @@ func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputD
 	outputOverride := shouldOverrideOutput()
 
 	if _, err := os.Stat(outPath); os.IsNotExist(err) || outputOverride {
+		// Ensure the output directory exists
+		err = os.MkdirAll(outputDir, 0755)
+		require.NoError(t, err, "failed to create output directory %s", outputDir)
+
 		err = os.WriteFile(outPath, outBytes, 0644)
 		require.NoError(t, err, "failed to write output file %s", outPath)
 		if outputOverride {

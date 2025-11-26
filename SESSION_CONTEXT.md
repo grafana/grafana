@@ -611,9 +611,13 @@ DEBUG [FRONTEND OUTPUT] Panel target[0] datasource: { type: 'prometheus', uid: '
 
 **Key Insight:** The backend v1beta1 output correctly has NO datasource for items without explicit datasource. When loaded through DashboardModel → Scene → transformSceneToSaveModel, it preserves this (no datasource added). But the frontend v2beta1 path incorrectly resolves and adds default datasources.
 
-## Current Test Results (4 failing tests)
+## Current Test Results (1 passing, 3 failing)
 
-### Issue 1: Frontend adds default datasource (ALL 4 tests)
+### ✅ Passing: `v2beta1.groupby-adhoc-vars.json`
+
+All issues fixed for this test.
+
+### ❌ Remaining Issue: Frontend adds default datasource (3 tests failing)
 
 **Affected tests:** `v2beta1.complete.json`, `v2beta1.ds-data-query.json`, `v2beta1.viz-config.json`
 
@@ -632,48 +636,45 @@ DEBUG [FRONTEND OUTPUT] Panel target[0] datasource: { type: 'prometheus', uid: '
 
 **Fix Required:** Only set datasource in frontend conversion if `dataQuery.datasource?.name` exists.
 
-### Issue 2: Time defaults mismatch (groupby-adhoc-vars test)
+### ✅ 19. Time Defaults (Fixed in Frontend)
 
-**Problem:** Frontend path preserves empty time strings, backend path uses defaults.
+**Problem:** Frontend path preserved empty time strings, backend path used defaults.
 
-**Diff:**
-
-```
-- Expected (frontendSpec): "from": "", "to": ""
-+ Received (backendSpec): "from": "now-6h", "to": "now"
-```
-
-**Root Cause:**
-
-- Backend v1beta1 output has defaults (we fixed this)
-- Backend path: loads defaults → DashboardModel → Scene → output defaults ✓
-- Frontend path: `SceneTimeRange(from: '', to: '')` preserves empty strings
-- `transformSceneToSaveModel` outputs `time: { from: timeRange.from, to: timeRange.to }` directly
-
-**Fix Required:** In `transformSceneToSaveModel.ts`, apply defaults when time is empty:
+**Fix Applied:** In `transformSaveModelSchemaV2ToScene.ts`:
 
 ```typescript
-time: {
-  from: timeRange.from || 'now-6h',
-  to: timeRange.to || 'now',
-},
-```
-
-Or in `transformSaveModelSchemaV2ToScene.ts`:
-
-```typescript
-new SceneTimeRange({
-  from: dashboard.timeSettings.from || 'now-6h',
-  to: dashboard.timeSettings.to || 'now',
+$timeRange: new SceneTimeRange({
+  // Use defaults when time is empty to match DashboardModel behavior
+  from: dashboard.timeSettings.from || defaultTimeSettingsSpec().from,
+  to: dashboard.timeSettings.to || defaultTimeSettingsSpec().to,
   // ...
-});
+}),
 ```
+
+### ✅ 20. Built-in Annotation (Fixed in Frontend)
+
+**Problem:** Frontend v2beta1 path wasn't adding built-in annotation when input had no built-in.
+
+**Fix Applied:** In `transformSaveModelSchemaV2ToScene.ts`:
+
+```typescript
+const found = dashboard.annotations.some((item) => item.spec.builtIn);
+if (!found) {
+  dashboard.annotations.unshift(getGrafanaBuiltInAnnotation());
+}
+```
+
+With helper function `getGrafanaBuiltInAnnotation()` that creates a built-in annotation with:
+- `group: 'grafana'`
+- `datasource: { name: '-- Grafana --' }`
+- `name: 'Annotations & Alerts'`
+- `iconColor: DEFAULT_ANNOTATION_COLOR`
+- `enable: true`, `hide: true`, `builtIn: true`
 
 ## Next Steps
 
-1. **Fix Frontend Time Defaults:** Apply defaults when time is empty in either input or output transform
-2. **Fix Frontend Datasource Resolution:** Only set datasource when input explicitly has `datasource.name`
-3. **Run Tests:** Verify all fixes with both backend and frontend tests
+1. **Fix Frontend Datasource Resolution:** Only set datasource when input explicitly has `datasource.name`
+2. **Run Tests:** Verify all fixes with both backend and frontend tests
 
 ## Important Notes
 

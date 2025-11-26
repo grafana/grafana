@@ -548,46 +548,62 @@ func TestV2alpha1ToV1beta1BasicFields(t *testing.T) {
 }
 
 // TestV2beta1ToV1beta1WriteOutputFiles writes output files from v2beta1 input files
-// This test reads v2beta1 input files, converts them to v1beta1, and writes the output files
+// This test reads v2beta1 input files (including subdirectories), converts them to v1beta1, and writes the output files
 func TestV2beta1ToV1beta1WriteOutputFiles(t *testing.T) {
 	scheme := setupTestConversionScheme(t)
 
-	// Read all v2beta1 input files
+	// Read all v2beta1 input files recursively
 	inputDir := filepath.Join("testdata", "input")
-	files, err := os.ReadDir(inputDir)
-	require.NoError(t, err, "Failed to read input directory")
+	outputBaseDir := filepath.Join("testdata", "output")
 
-	outputDir := filepath.Join("testdata", "output")
+	err := filepath.WalkDir(inputDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
 
-	for _, file := range files {
-		if file.IsDir() {
-			continue
+		if d.IsDir() {
+			return nil
 		}
 
 		// Only process v2beta1 input files
-		if !strings.HasPrefix(file.Name(), "v2beta1.") || !strings.HasSuffix(file.Name(), ".json") {
-			continue
+		if !strings.HasPrefix(d.Name(), "v2beta1.") || !strings.HasSuffix(d.Name(), ".json") {
+			return nil
+		}
+
+		// Get relative path from input directory
+		relPath, err := filepath.Rel(inputDir, path)
+		if err != nil {
+			return err
 		}
 
 		// Extract the base name (e.g., "v2beta1.complete" from "v2beta1.complete.json")
-		baseName := strings.TrimSuffix(file.Name(), ".json")
+		baseName := strings.TrimSuffix(d.Name(), ".json")
 		// The output file should be "v2beta1.complete.v1beta1.json"
 		outputFileName := baseName + ".v1beta1.json"
 
-		t.Run(fmt.Sprintf("WriteOutput_%s", file.Name()), func(t *testing.T) {
+		// Calculate output directory (preserve subdirectory structure)
+		relDir := filepath.Dir(relPath)
+		outputDir := outputBaseDir
+		if relDir != "." {
+			outputDir = filepath.Join(outputBaseDir, relDir)
+		}
+
+		t.Run(fmt.Sprintf("WriteOutput_%s", relPath), func(t *testing.T) {
 			// Read the v2beta1 input file
-			inputFile := filepath.Join(inputDir, file.Name())
 			var v2beta1 dashv2beta1.Dashboard
-			readInputFile(t, inputFile, &v2beta1)
+			readInputFile(t, path, &v2beta1)
 
 			// Convert v2beta1 → v1beta1
 			var convertedV1beta1 dashv1.Dashboard
-			err = scheme.Convert(&v2beta1, &convertedV1beta1, nil)
+			err := scheme.Convert(&v2beta1, &convertedV1beta1, nil)
 			require.NoError(t, err, "Failed to convert v2beta1 to v1beta1")
 
 			// Write output file using the shared testConversion helper
 			// dashv1.Dashboard implements metav1.Object, so we can use testConversion directly
 			testConversion(t, &convertedV1beta1, outputFileName, outputDir)
 		})
-	}
+
+		return nil
+	})
+	require.NoError(t, err, "Failed to walk input directory")
 }

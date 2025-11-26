@@ -1,9 +1,31 @@
-import { readdirSync, readFileSync } from 'fs';
+import { readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
+
+// Helper function to recursively get all files from a directory
+function getFilesRecursively(dir: string, baseDir: string = dir): Array<{ filePath: string; relativePath: string }> {
+  const files: Array<{ filePath: string; relativePath: string }> = [];
+  const entries = readdirSync(dir);
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry);
+    const stat = statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      files.push(...getFilesRecursively(fullPath, baseDir));
+    } else if (entry.endsWith('.json')) {
+      files.push({
+        filePath: fullPath,
+        relativePath: path.relative(baseDir, fullPath),
+      });
+    }
+  }
+
+  return files;
+}
 
 // Mock the config to provide datasource information
 jest.mock('@grafana/runtime', () => {
@@ -143,19 +165,26 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
     'output'
   );
 
-  const jsonInputs = readdirSync(inputDir);
+  // Get all files recursively from input directory
+  const allFiles = getFilesRecursively(inputDir);
   const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta1';
 
   // Filter to only process v2beta1 input files
-  const v2beta1Inputs = jsonInputs.filter((inputFile) => inputFile.startsWith('v2beta1.'));
+  const v2beta1Inputs = allFiles.filter(({ relativePath }) => {
+    const fileName = path.basename(relativePath);
+    return fileName.startsWith('v2beta1.') && fileName.endsWith('.json');
+  });
 
-  v2beta1Inputs.forEach((inputFile) => {
-    it(`compare ${inputFile} from v2beta1 to v1beta1 backend and frontend conversions`, async () => {
-      const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
+  v2beta1Inputs.forEach(({ filePath: inputFilePath, relativePath }) => {
+    it(`compare ${relativePath} from v2beta1 to v1beta1 backend and frontend conversions`, async () => {
+      const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
 
-      // Find the corresponding v1beta1 output file
-      const outputFileName = inputFile.replace('.json', '.v1beta1.json');
-      const outputFilePath = path.join(outputDir, outputFileName);
+      // Find the corresponding v1beta1 output file (preserving subdirectory structure)
+      const relativeDir = path.dirname(relativePath);
+      const fileName = path.basename(relativePath);
+      const outputFileName = fileName.replace('.json', '.v1beta1.json');
+      const outputFilePath =
+        relativeDir === '.' ? path.join(outputDir, outputFileName) : path.join(outputDir, relativeDir, outputFileName);
 
       // Load the backend output
       const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
