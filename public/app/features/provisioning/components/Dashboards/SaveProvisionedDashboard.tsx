@@ -33,6 +33,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
       repository={repository}
       workflowOptions={workflowOptions}
       readOnly={readOnly}
+      saveAsCopy={saveAsCopy}
     />
   );
 }
