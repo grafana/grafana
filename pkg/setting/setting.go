@@ -145,6 +145,8 @@ type Cfg struct {
 	ProvisioningLokiUser            string
 	ProvisioningLokiPassword        string
 	ProvisioningLokiTenantID        string
+	ProvisioningServerLockMinWaitMs int64
+	ProvisioningServerLockMaxWaitMs int64
 	DataPath                        string
 	LogsPath                        string
 	PluginsPath                     string
@@ -2154,6 +2156,9 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningLokiUser = valueAsString(iniFile.Section("provisioning"), "loki_user", "")
 	cfg.ProvisioningLokiPassword = valueAsString(iniFile.Section("provisioning"), "loki_password", "")
 	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
+
+	cfg.ProvisioningServerLockMinWaitMs = iniFile.Section("provisioning").Key("server_lock_min_wait_ms").MustInt64(5000)
+	cfg.ProvisioningServerLockMaxWaitMs = iniFile.Section("provisioning").Key("server_lock_max_wait_ms").MustInt64(10000)
 
 	return nil
 }
