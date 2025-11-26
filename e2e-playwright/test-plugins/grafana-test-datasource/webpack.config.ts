@@ -34,6 +34,7 @@ const config = async (env: Env): Promise<Configuration> => {
         ],
       }),
     ],
+    stats: 'normal',
   };
 
   return mergeWithCustomize({
