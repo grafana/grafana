@@ -20,7 +20,8 @@ export function InviteUserButton() {
 
   // Check if org_user quota is reached
   const userQuota = quotas?.find((quota) => quota.target === 'org_user');
-  const isQuotaReached = userQuota ? userQuota.used! >= userQuota.limit! : false;
+  const isQuotaReached =
+    userQuota != null && userQuota.used != null && userQuota.limit != null && userQuota.used >= userQuota.limit;
 
   // Only show upgrade button on Grafana Cloud when quota is reached
   const shouldShowUpgrade = isCloudInstance && isQuotaReached;
