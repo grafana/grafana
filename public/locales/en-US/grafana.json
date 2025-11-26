@@ -6218,6 +6218,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": "Back"
+      },
       "placeholder-search-for": "Search for...",
       "radio-options": {
         "label": {
