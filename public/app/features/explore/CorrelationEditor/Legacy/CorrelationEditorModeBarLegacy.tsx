@@ -16,9 +16,8 @@ import { changeCorrelationHelperData } from '../../state/explorePane';
 import { changeCorrelationEditorDetails, splitClose } from '../../state/main';
 import { runQueries } from '../../state/query';
 import { selectCorrelationDetails, selectIsHelperShowing } from '../../state/selectors';
+import { CorrelationUnsavedChangesModal } from '../CorrelationUnsavedChangesModal';
 import { showModalMessage } from '../correlationEditLogic';
-
-import { CorrelationUnsavedChangesModalLegacy } from './CorrelationUnsavedChangesModalLegacy';
 
 export const CorrelationEditorModeBarLegacy = ({ panes }: { panes: Array<[string, ExploreItemState]> }) => {
   const dispatch = useDispatch();
@@ -194,7 +193,7 @@ export const CorrelationEditorModeBarLegacy = ({ panes }: { panes: Array<[string
       />
 
       {saveMessage !== undefined && (
-        <CorrelationUnsavedChangesModalLegacy
+        <CorrelationUnsavedChangesModal
           onDiscard={() => {
             if (correlationDetails?.postConfirmAction !== undefined) {
               const { exploreId, action, changeDatasourceUid } = correlationDetails?.postConfirmAction;
