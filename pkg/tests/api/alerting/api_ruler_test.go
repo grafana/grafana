@@ -1166,6 +1166,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
+						"refId": "A",
 						"type": "math"
 					}
 				}],
@@ -1209,6 +1210,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
+						"refId": "A",
 						"type": "math"
 					}
 				}],
@@ -1264,6 +1266,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
+						"refId": "A",
 						"type": "math"
 					}
 				}],
@@ -1610,7 +1613,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 									To:   apimodels.Duration(15 * time.Minute),
 								},
 								DatasourceUID: expr.DatasourceUID,
-								Model:         json.RawMessage(`{"expression":"1","intervalMs":1000,"maxDataPoints":43200,"type":"math"}`),
+								Model:         json.RawMessage(`{"expression":"1","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}`),
 							},
 						},
 						UpdatedBy: &apimodels.UserInfo{
