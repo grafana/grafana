@@ -3,7 +3,18 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { FilterInput, Icon, LinkButton, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import {
+  CellProps,
+  Column,
+  FilterInput,
+  Icon,
+  InteractiveTable,
+  Link,
+  LinkButton,
+  Spinner,
+  Stack,
+  useStyles2,
+} from '@grafana/ui';
 import {
   Repository,
   useGetRepositoryFilesQuery,
@@ -17,6 +28,8 @@ import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources
 interface ResourceTreeViewProps {
   repo: Repository;
 }
+
+type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<FlatTreeItem, FlatTreeItem[T]>;
 
 export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const styles = useStyles2(getStyles);
@@ -45,6 +58,95 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
     return flattenTree(tree);
   }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery]);
 
+  const columns: Array<Column<FlatTreeItem>> = useMemo(
+    () => [
+      {
+        id: 'title',
+        header: t('provisioning.resource-tree.header-title', 'Title'),
+        cell: ({ row: { original } }: TreeCell) => {
+          const { item, level } = original;
+          const iconName = getIconName(item.type);
+
+          // Determine link based on type
+          const getItemLink = () => {
+            if (item.type === 'Dashboard' && item.resourceName) {
+              return `/d/${item.resourceName}`;
+            }
+            if (item.type === 'Folder' && item.resourceName) {
+              return `/dashboards/f/${item.resourceName}`;
+            }
+            return undefined;
+          };
+
+          const titleLink = getItemLink();
+
+          return (
+            <div className={styles.titleCell} style={{ paddingLeft: level * 24 }}>
+              <Icon name={iconName} className={styles.icon} />
+              {titleLink ? <Link href={titleLink}>{item.title}</Link> : <span>{item.title}</span>}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'type',
+        header: t('provisioning.resource-tree.header-type', 'Type'),
+        cell: ({ row: { original } }: TreeCell) => {
+          return <span>{original.item.type}</span>;
+        },
+      },
+      {
+        id: 'hash',
+        header: t('provisioning.resource-tree.header-hash', 'Hash'),
+        cell: ({ row: { original } }: TreeCell) => {
+          const { hash } = original.item;
+          if (!hash) {
+            return null;
+          }
+          return (
+            <span title={hash} className={styles.hash}>
+              {hash.substring(0, 7)}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row: { original } }: TreeCell) => {
+          const { item } = original;
+
+          const getViewLink = () => {
+            if (item.type === 'Dashboard' && item.resourceName) {
+              return `/d/${item.resourceName}`;
+            }
+            if (item.type === 'Folder' && item.resourceName) {
+              return `/dashboards/f/${item.resourceName}`;
+            }
+            // For files, link to file view
+            if (item.type === 'File') {
+              return `${PROVISIONING_URL}/${name}/file/${item.path}`;
+            }
+            return undefined;
+          };
+
+          const viewLink = getViewLink();
+
+          if (!viewLink) {
+            return null;
+          }
+
+          return (
+            <LinkButton href={viewLink} size="sm" variant="secondary">
+              <Trans i18nKey="provisioning.resource-tree.view">View</Trans>
+            </LinkButton>
+          );
+        },
+      },
+    ],
+    [name, styles]
+  );
+
   if (isLoading) {
     return (
       <Stack justifyContent="center" alignItems="center">
@@ -63,152 +165,18 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           onChange={setSearchQuery}
         />
       </Stack>
-
-      <div className={styles.tableWrapper}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th className={styles.titleHeader}>
-                <Trans i18nKey="provisioning.resource-tree.header-title">Title</Trans>
-              </th>
-              <th className={styles.typeHeader}>
-                <Trans i18nKey="provisioning.resource-tree.header-type">Type</Trans>
-              </th>
-              <th className={styles.hashHeader}>
-                <Trans i18nKey="provisioning.resource-tree.header-hash">Hash</Trans>
-              </th>
-              <th className={styles.actionsHeader}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {flatItems.length === 0 ? (
-              <tr>
-                <td colSpan={4} className={styles.emptyState}>
-                  <Trans i18nKey="provisioning.resource-tree.no-items">No items found</Trans>
-                </td>
-              </tr>
-            ) : (
-              flatItems.map((flatItem) => <TreeRow key={flatItem.item.path} flatItem={flatItem} repoName={name} />)
-            )}
-          </tbody>
-        </table>
-      </div>
+      <InteractiveTable
+        columns={columns}
+        data={flatItems}
+        pageSize={25}
+        getRowId={(item: FlatTreeItem) => item.item.path}
+      />
     </Stack>
   );
 }
 
-interface TreeRowProps {
-  flatItem: FlatTreeItem;
-  repoName: string;
-}
-
-function TreeRow({ flatItem, repoName }: TreeRowProps) {
-  const styles = useStyles2(getStyles);
-  const { item, level } = flatItem;
-
-  // Determine link based on type
-  const getItemLink = () => {
-    if (item.type === 'Dashboard' && item.resourceName) {
-      return `/d/${item.resourceName}`;
-    }
-    if (item.type === 'Folder' && item.resourceName) {
-      return `/dashboards/f/${item.resourceName}`;
-    }
-    return undefined;
-  };
-
-  const getViewLink = () => {
-    if (item.type === 'Dashboard' && item.resourceName) {
-      return `/d/${item.resourceName}`;
-    }
-    if (item.type === 'Folder' && item.resourceName) {
-      return `/dashboards/f/${item.resourceName}`;
-    }
-    // For files, link to file view
-    if (item.type === 'File') {
-      return `${PROVISIONING_URL}/${repoName}/file/${item.path}`;
-    }
-    return undefined;
-  };
-
-  const titleLink = getItemLink();
-  const viewLink = getViewLink();
-  const iconName = getIconName(item.type);
-
-  return (
-    <tr className={styles.row}>
-      <td className={styles.titleCell}>
-        <div className={styles.titleContent} style={{ paddingLeft: `${level * 24}px` }}>
-          <Icon name={iconName} className={styles.icon} />
-          {titleLink ? (
-            <a href={titleLink} className={styles.titleLink}>
-              {item.title}
-            </a>
-          ) : (
-            <span>{item.title}</span>
-          )}
-        </div>
-      </td>
-      <td className={styles.typeCell}>{item.type}</td>
-      <td className={styles.hashCell}>{item.hash ? item.hash.substring(0, 7) : ''}</td>
-      <td className={styles.actionsCell}>
-        {viewLink && (
-          <LinkButton href={viewLink} size="sm" variant="secondary">
-            <Trans i18nKey="provisioning.resource-tree.view">View</Trans>
-          </LinkButton>
-        )}
-      </td>
-    </tr>
-  );
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
-  tableWrapper: css({
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
-    overflow: 'hidden',
-  }),
-  table: css({
-    width: '100%',
-    borderCollapse: 'collapse',
-  }),
-  titleHeader: css({
-    textAlign: 'left',
-    padding: theme.spacing(1.5, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    backgroundColor: theme.colors.background.secondary,
-  }),
-  typeHeader: css({
-    textAlign: 'left',
-    padding: theme.spacing(1.5, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    backgroundColor: theme.colors.background.secondary,
-    width: '120px',
-  }),
-  hashHeader: css({
-    textAlign: 'left',
-    padding: theme.spacing(1.5, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    backgroundColor: theme.colors.background.secondary,
-    width: '100px',
-  }),
-  actionsHeader: css({
-    textAlign: 'right',
-    padding: theme.spacing(1.5, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    backgroundColor: theme.colors.background.secondary,
-    width: '100px',
-  }),
-  row: css({
-    '&:hover': {
-      backgroundColor: theme.colors.action.hover,
-    },
-  }),
   titleCell: css({
-    padding: theme.spacing(1, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-  }),
-  titleContent: css({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
@@ -217,33 +185,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     flexShrink: 0,
   }),
-  titleLink: css({
-    color: theme.colors.text.link,
-    textDecoration: 'none',
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-  }),
-  typeCell: css({
-    padding: theme.spacing(1, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    color: theme.colors.text.secondary,
-  }),
-  hashCell: css({
-    padding: theme.spacing(1, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+  hash: css({
     fontFamily: theme.typography.fontFamilyMonospace,
     fontSize: theme.typography.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
-  }),
-  actionsCell: css({
-    padding: theme.spacing(1, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    textAlign: 'right',
-  }),
-  emptyState: css({
-    padding: theme.spacing(4),
-    textAlign: 'center',
     color: theme.colors.text.secondary,
   }),
 });
