@@ -43,8 +43,9 @@ jobs:
 
       - name: Start Go Cache Plugin
         run: |
-          ./atool --plugin 5930 --http=localhost:5970 --modproxy --cache-dir=/tmp/gocache --local &
+          ./atool serve --plugin 5930 --http=localhost:5970 --modproxy --cache-dir=/tmp/gocache --local --cache-dir=/tmp/gocachenew --log-file go-cache.log &
           echo $! > atool.pid
+          ls ./
 
       - name: Build Grafana
         continue-on-error: true
@@ -54,7 +55,7 @@ jobs:
 
       - name: Cat trace.log an cleanup
         run: |
-          cat trace.log
+          cat go-cache.log
           kill $(cat atool.pid)
 
 
