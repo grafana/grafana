@@ -38,6 +38,10 @@ composableKinds: PanelCfg: {
 				//  - Percent: The percentage of the whole.
 				//  - Value: The raw numerical value.
 				PieChartLegendValues: "value" | "percent" @cuetsy(kind="enum")
+				// Select what to display in the center of a donut chart.
+				//  - None: Do not display anything in the center.
+				//  - Total: Display the total sum of all values.
+				PieChartCenterValue: "none" | "total" @cuetsy(kind="enum")
 				PieChartLegendOptions: {
 					common.VizLegendOptions
 					values: [...PieChartLegendValues]
@@ -49,6 +53,7 @@ composableKinds: PanelCfg: {
 				sort: common.SortOrder
 					displayLabels: [...PieChartLabels]
 					legend: PieChartLegendOptions
+					centerValue?: PieChartCenterValue
 				} @cuetsy(kind="interface")
 				FieldConfig: common.HideableFieldConfig @cuetsy(kind="interface")
 			}

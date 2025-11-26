@@ -8,7 +8,14 @@ import { addStandardDataReduceOptions } from '../stat/common';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartPanelChangedHandler } from './migrations';
-import { Options, FieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
+import {
+  Options,
+  FieldConfig,
+  PieChartType,
+  PieChartLabels,
+  PieChartLegendValues,
+  PieChartCenterValue,
+} from './panelcfg.gen';
 import { PieChartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
@@ -74,6 +81,20 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
             { value: PieChartLabels.Value, label: t('piechart.labels-options.label-value', 'Value') },
           ],
         },
+      })
+      .addSelect({
+        name: t('piechart.name-center-value', 'Center value'),
+        category,
+        path: 'centerValue',
+        description: t('piechart.description-center-value', 'Select what to display in the center of the donut'),
+        settings: {
+          options: [
+            { value: PieChartCenterValue.None, label: t('piechart.center-value-options.label-none', 'None') },
+            { value: PieChartCenterValue.Total, label: t('piechart.center-value-options.label-total', 'Total') },
+          ],
+        },
+        defaultValue: PieChartCenterValue.None,
+        showIf: (options) => options.pieType === PieChartType.Donut,
       });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);

@@ -160,6 +160,13 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 {{< figure src="/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png" alt="Pie chart labels" max-width="350px" >}}
 
+#### Center value
+
+When using the **Donut** chart type, you can display the total sum of all values in the center of the chart. This option is only available when the pie chart type is set to **Donut**. Choose from:
+
+- **None** - Don't display anything in the center (default).
+- **Total** - Display the sum of all values in the center.
+
 ### Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}

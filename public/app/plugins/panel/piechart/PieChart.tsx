@@ -29,7 +29,7 @@ import {
 } from '@grafana/ui';
 import { getTooltipContainerStyles, useComponentInstanceId } from '@grafana/ui/internal';
 
-import { PieChartType, PieChartLabels } from './panelcfg.gen';
+import { PieChartType, PieChartLabels, PieChartCenterValue } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 /**
@@ -45,6 +45,7 @@ interface PieChartProps {
   displayLabels?: PieChartLabels[];
   useGradients?: boolean; // not used?
   tooltipOptions: VizTooltipOptions;
+  centerValue?: PieChartCenterValue;
 }
 
 export const PieChart = ({
@@ -56,6 +57,7 @@ export const PieChart = ({
   highlightedTitle,
   displayLabels = [],
   tooltipOptions,
+  centerValue,
 }: PieChartProps) => {
   const theme = useTheme2();
   const componentInstanceId = useComponentInstanceId('PieChart');
@@ -168,6 +170,14 @@ export const PieChart = ({
               </>
             )}
           </Pie>
+          {pieType === PieChartType.Donut && centerValue === PieChartCenterValue.Total && (
+            <CenterValue
+              total={total}
+              fieldDisplayValues={filteredFieldDisplayValues}
+              innerRadius={layout.innerRadius}
+              theme={theme}
+            />
+          )}
         </Group>
       </svg>
       {showTooltip ? (
@@ -310,6 +320,53 @@ function PieLabel({ arc, outerRadius, innerRadius, displayLabels, total, color, 
             {((arc.data.display.numeric / total) * 100).toFixed(arc.data.field.decimals ?? 0) + '%'}
           </tspan>
         )}
+      </text>
+    </g>
+  );
+}
+
+interface CenterValueProps {
+  total: number;
+  fieldDisplayValues: FieldDisplay[];
+  innerRadius: number;
+  theme: GrafanaTheme2;
+}
+
+function CenterValue({ total, fieldDisplayValues, innerRadius, theme }: CenterValueProps) {
+  const maxWidth = innerRadius * 1.4;
+  const baseFontSize = Math.min(Math.max(innerRadius / 3, 12), 48);
+
+  let displayText: string;
+  const firstField = fieldDisplayValues[0];
+  if (firstField) {
+    const formatted = {
+      ...firstField.display,
+      numeric: total,
+      text: total.toLocaleString(undefined, {
+        maximumFractionDigits: firstField.field.decimals ?? 0,
+      }),
+    };
+    displayText = formattedValueToString(formatted);
+  } else {
+    displayText = total.toLocaleString();
+  }
+
+  const estimatedWidth = displayText.length * baseFontSize * 0.6;
+  const fontSize = estimatedWidth > maxWidth ? baseFontSize * (maxWidth / estimatedWidth) : baseFontSize;
+
+  return (
+    <g data-testid={selectors.components.Panels.Visualization.PieChart.svgCenterValue}>
+      <text
+        x={0}
+        y={0}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill={theme.colors.text.primary}
+        fontSize={fontSize}
+        fontWeight={theme.typography.fontWeightMedium}
+        style={{ pointerEvents: 'none' }}
+      >
+        {displayText}
       </text>
     </g>
   );

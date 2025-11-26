@@ -14,7 +14,7 @@ import {
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel, comparePieChartItemsByValue } from './PieChartPanel';
-import { Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
+import { Options, PieChartType, PieChartLegendValues, PieChartCenterValue } from './panelcfg.gen';
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
@@ -161,6 +161,70 @@ describe('PieChartPanel', () => {
         const slices = screen.queryAllByTestId('data testid Pie Chart Slice');
         expect(slices.length).toBe(3);
       });
+    });
+  });
+
+  describe('center value', () => {
+    const defaultConfig = {
+      custom: {
+        hideFrom: {
+          legend: false,
+          viz: false,
+          tooltip: false,
+        },
+      },
+    };
+
+    const seriesWithData = [
+      toDataFrame({
+        fields: [
+          { name: 'A', config: defaultConfig, type: FieldType.number, values: [60] },
+          { name: 'B', config: defaultConfig, type: FieldType.number, values: [40] },
+        ],
+      }),
+    ];
+
+    const baseOptions: Options = {
+      pieType: PieChartType.Donut,
+      sort: SortOrder.Descending,
+      displayLabels: [],
+      legend: {
+        displayMode: LegendDisplayMode.List,
+        showLegend: true,
+        placement: 'right',
+        calcs: [],
+        values: [PieChartLegendValues.Percent],
+      },
+      reduceOptions: { calcs: [] },
+      orientation: VizOrientation.Auto,
+      tooltip: { mode: TooltipDisplayMode.Multi, sort: SortOrder.Ascending },
+    };
+
+    it('should not show center value when set to none', () => {
+      setup({
+        data: { series: seriesWithData },
+        options: { ...baseOptions, centerValue: PieChartCenterValue.None },
+      });
+
+      expect(screen.queryByTestId('data-testid Pie Chart Center Value')).not.toBeInTheDocument();
+    });
+
+    it('should show total in center when centerValue is total', () => {
+      setup({
+        data: { series: seriesWithData },
+        options: { ...baseOptions, centerValue: PieChartCenterValue.Total },
+      });
+
+      expect(screen.queryByTestId('data-testid Pie Chart Center Value')).toBeInTheDocument();
+    });
+
+    it('should not show center value for pie chart type even when centerValue is set', () => {
+      setup({
+        data: { series: seriesWithData },
+        options: { ...baseOptions, pieType: PieChartType.Pie, centerValue: PieChartCenterValue.Total },
+      });
+
+      expect(screen.queryByTestId('data-testid Pie Chart Center Value')).not.toBeInTheDocument();
     });
   });
 });
