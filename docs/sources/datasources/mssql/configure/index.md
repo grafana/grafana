@@ -214,7 +214,7 @@ The following Azure authentication methods are supported:
 - Managed Identity
 - Azure Entra Password
 
-The Azure SQL Server that you are connecting to should support Azure Entra authentication in order to support adding the App Registration as a user in the database. For configuration details, refer to the [Azure SQL documentation](https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?view=azuresql&tabs=azure-portal).
+The Azure SQL Server that you are connecting to should support Azure Entra authentication to support adding the App Registration as a user in the database. For configuration details, refer to the [Azure SQL documentation](https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?view=azuresql&tabs=azure-portal).
 
 #### Current User authentication
 
@@ -240,7 +240,7 @@ The App Registration must also be configured with additional **API Permissions**
 1. Select **Add a permission** and choose the following permissions. They must be added individually. Refer to the [Azure documentation](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-access-web-apis) for more information.
    - Select **APIs my organization uses** > Search for **Azure SQL** and select it > **Delegated permissions** > `user_impersonation` > **Add permissions**
 
-Once all permissions have been added, the Azure authentication section in Grafana must be updated. The `scopes` section must be updated to include the `.default` scope to ensure that a token with access to all APIs declared on the App Registration is requested by Grafana. Once updated the scopes value should equal: `.default openid email profile`.
+After all permissions have been added, the Azure authentication section in Grafana must be updated. The `scopes` section must be updated to include the `.default` scope to ensure that a token with access to all APIs declared on the App Registration is requested by Grafana. Once updated the scopes value should equal: `.default openid email profile`.
 {{< /admonition >}}
 
 This method of authentication doesn't inherently support all backend functionality as a user's credentials won't be in scope. Affected functionality includes alerting, reporting, and recorded queries. Also, note that query and resource caching is disabled by default for data sources using current user authentication.
@@ -261,13 +261,13 @@ This method of authentication doesn't inherently support all backend functionali
 You must create an app registration and service principal in Azure Entra to authenticate the data source.
 For configuration details, refer to the [Azure documentation for service principals](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in).
 
-Once the app registration has been created, make note of the tenant ID, client ID, and client secret. Take the following steps to add the app registration as a SQL user:
+After the app registration has been created, make note of the tenant ID, client ID, and client secret. Take the following steps to add the app registration as a SQL user:
 
 1. Connect to your Azure SQL database as a user with administrative permissions (the user used here must have the ability to read your Azure Entra directory e.g. by possessing the `Directory Readers` role).
 2. Run `CREATE USER [$IDENTITY_NAME] FROM EXTERNAL PROVIDER;`, substituting `IDENTITY_NAME` with the app registration name.
-3. Grant the created user the appropriate level of permissions for your usecase. It is recommended that users configured for data sources only have reader permissions.
+3. Grant the created user the appropriate level of permissions for your use-case. It is recommended that users configured for data sources only have reader permissions.
 
-Once the appropriate permissions have been granted, configure the SQL Server data source to use the app registration:
+After the appropriate permissions have been granted, configure the SQL Server data source to use the app registration:
 
 1. In the SQL Server data source configuration, set **Authentication** to **Azure AD Authentication** and the Azure Authentication type to **App Registration**.
 2. Set the **Azure Cloud** value to the correct value. If you are using the Azure public cloud this will be **Azure**.
