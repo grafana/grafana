@@ -7,6 +7,7 @@ import (
 	"time"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"go.opentelemetry.io/otel/codes"
 )
 
 type OperationGroup string
@@ -27,6 +28,8 @@ func (s *Server) Mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 
 	res, err := s.mutate(ctx, req)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("failed to perform mutate request", "error", err, "namespace", req.GetNamespace())
 		return nil, errors.New("failed to perform mutate request")
 	}
