@@ -48,7 +48,7 @@ type QuotaOverrides struct {
 /*
 This service loads quota overrides from a YAML file with the following yaml structure:
 
-"stacks-123":
+"123":
 
 	  quotas:
 		grafana.dashboard.app/dashboards:
