@@ -42,7 +42,7 @@ test.describe(
       // Duplicate refId B
       // Open the actions menu
       await dashboardPage
-        .getByGrafanaSelector(selectors.components.QueryEditorRow.actionButton('Query actions menu'))
+        .getByGrafanaSelector(selectors.components.QueryEditorRow.actionButton('Actions menu'))
         .first()
         .click();
       // Click duplicate query in the menu

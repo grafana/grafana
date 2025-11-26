@@ -630,7 +630,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
                   i18nKey="query.query-editor-row.focused-message"
                   values={{ queryName: query.refId, count: hiddenQueriesCount }}
                 >
-                  Query {query.refId} is focused, {'{{count}}'} queries are hidden from view.
+                  Query {'{{queryName}}'} is focused, {'{{count}}'} queries are hidden from view.
                 </Trans>
               </Text>
               <Button fill="text" size="sm" onClick={onFocusQuery}>

@@ -12249,8 +12249,8 @@
   },
   "query": {
     "query-editor-row": {
-      "focused-message_one": "Query {{refId}} is focused, {{count}} queries are hidden from view.",
-      "focused-message_other": "Query {{refId}} is focused, {{count}} queries are hidden from view."
+      "focused-message_one": "Query {{queryName}} is focused, {{count}} queries are hidden from view.",
+      "focused-message_other": "Query {{queryName}} is focused, {{count}} queries are hidden from view."
     },
     "query-editor-row-header": {
       "hidden": "Hidden",

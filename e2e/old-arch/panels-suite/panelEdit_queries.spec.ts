@@ -36,7 +36,7 @@ describe('Panel edit tests - queries', () => {
 
     // Duplicate refId B
     // Open the actions menu
-    e2e.components.QueryEditorRow.actionButton('Query actions menu').eq(0).should('be.visible').click();
+    e2e.components.QueryEditorRow.actionButton('Actions menu').eq(0).should('be.visible').click();
     // Click duplicate query in the menu
     cy.contains('Duplicate query').should('be.visible').click();
 
