@@ -7,10 +7,16 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
+)
+
+var (
+	errUnauthenticated = fmt.Errorf("unauthenticated")
+	errUnauthorized    = fmt.Errorf("unauthorized")
+	errUnexpectedType  = fmt.Errorf("unexpected object type")
 )
 
 // ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
@@ -37,12 +43,12 @@ func New(store *registry.Store, authz ResourceStorageAuthorizer) *Wrapper {
 }
 
 // ConvertToTable implements rest.Storage.
-func (w *Wrapper) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*v1.Table, error) {
+func (w *Wrapper) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metaV1.Table, error) {
 	return w.inner.ConvertToTable(ctx, object, tableOptions)
 }
 
 // Create implements rest.Storage.
-func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidation k8srest.ValidateObjectFunc, options *v1.CreateOptions) (runtime.Object, error) {
+func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidation k8srest.ValidateObjectFunc, options *metaV1.CreateOptions) (runtime.Object, error) {
 	// Enforce authorization based on the user permissions before creating the object
 	err := w.authorizer.BeforeCreate(ctx, obj)
 	if err != nil {
@@ -55,10 +61,10 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 }
 
 // Delete implements rest.Storage.
-func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *v1.DeleteOptions) (runtime.Object, bool, error) {
+func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (runtime.Object, bool, error) {
 	// Fetch the object first to authorize
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-	getOpts := &v1.GetOptions{
+	getOpts := &metaV1.GetOptions{
 		TypeMeta: options.TypeMeta,
 	}
 	if options.Preconditions != nil {
@@ -78,7 +84,7 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 }
 
 // DeleteCollection implements rest.Storage.
-func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *v1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	// DeleteCollection is complex to authorize properly
 	// For now, deny it entirely for safety
 	return nil, fmt.Errorf("bulk delete operations are not supported through this API")
@@ -90,7 +96,7 @@ func (w *Wrapper) Destroy() {
 }
 
 // Get implements rest.Storage.
-func (w *Wrapper) Get(ctx context.Context, name string, options *v1.GetOptions) (runtime.Object, error) {
+func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptions) (runtime.Object, error) {
 	// Override the identity to use service identity for the underlying store operation
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
 
@@ -149,7 +155,7 @@ func (w *Wrapper) Update(
 	createValidation k8srest.ValidateObjectFunc,
 	updateValidation k8srest.ValidateObjectUpdateFunc,
 	forceAllowCreate bool,
-	options *v1.UpdateOptions,
+	options *metaV1.UpdateOptions,
 ) (runtime.Object, bool, error) {
 	// Create a wrapper around UpdatedObjectInfo to inject authorization
 	wrappedObjInfo := &authorizedUpdateInfo{
@@ -170,7 +176,7 @@ type authorizedUpdateInfo struct {
 	userCtx    context.Context
 }
 
-func (a *authorizedUpdateInfo) Preconditions() *v1.Preconditions {
+func (a *authorizedUpdateInfo) Preconditions() *metaV1.Preconditions {
 	return a.inner.Preconditions()
 }
 
