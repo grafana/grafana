@@ -265,20 +265,8 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
-	var quotaSvc *resource.QuotaService
-	if s.cfg.QuotasOverridesFilePath != "" {
-		quotaSvc, err = resource.NewQuotaService(context.Background(), s.log, s.reg, s.tracing, resource.ReloadOptions{
-			FilePath:     s.cfg.QuotasOverridesFilePath,
-			ReloadPeriod: s.cfg.QuotasReloadInterval,
-		})
-		if err != nil {
-			return err
-		}
-	}
-
 	serverOptions := ServerOptions{
 		Backend:        s.backend,
-		QuotaService:   quotaSvc,
 		DB:             s.db,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
@@ -291,6 +279,18 @@ func (s *service) starting(ctx context.Context) error {
 		QOSQueue:       s.queue,
 		OwnsIndexFn:    s.OwnsIndex,
 	}
+
+	if s.cfg.OverridesFilePath != "" {
+		overridesSvc, err := resource.NewOverridesService(context.Background(), s.log, s.reg, s.tracing, resource.ReloadOptions{
+			FilePath:     s.cfg.OverridesFilePath,
+			ReloadPeriod: s.cfg.OverridesReloadInterval,
+		})
+		if err != nil {
+			return err
+		}
+		serverOptions.OverridesService = overridesSvc
+	}
+
 	server, err := NewResourceServer(serverOptions)
 	if err != nil {
 		return err

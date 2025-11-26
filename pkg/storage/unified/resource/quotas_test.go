@@ -56,7 +56,7 @@ func TestNewQuotaService(t *testing.T) {
 			},
 			setupFile:   func(t *testing.T) string { return "" },
 			expectError: true,
-			errorMsg:    "quota overrides file path is required",
+			errorMsg:    "overrides file path is required",
 		},
 		{
 			name: "error when file does not exist",
@@ -65,7 +65,7 @@ func TestNewQuotaService(t *testing.T) {
 			},
 			setupFile:   func(t *testing.T) string { return "/nonexistent/path/overrides.yaml" },
 			expectError: true,
-			errorMsg:    "quota overrides file does not exist",
+			errorMsg:    "overrides file does not exist",
 		},
 	}
 
@@ -81,7 +81,7 @@ func TestNewQuotaService(t *testing.T) {
 				tt.opts.FilePath = filePath
 			}
 
-			service, err := NewQuotaService(ctx, logger, reg, tcr, tt.opts)
+			service, err := NewOverridesService(ctx, logger, reg, tcr, tt.opts)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -113,7 +113,7 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 	require.NoError(t, os.WriteFile(tmpFile, []byte(initialConfig), 0644))
 
 	// Create service with a very short reload period
-	service, err := NewQuotaService(ctx, logger, reg, tcr, ReloadOptions{
+	service, err := NewOverridesService(ctx, logger, reg, tcr, ReloadOptions{
 		FilePath:     tmpFile,
 		ReloadPeriod: 100 * time.Millisecond, // Very short reload period for testing
 	})
@@ -404,7 +404,7 @@ func TestQuotaService_GetQuota(t *testing.T) {
 				FilePath: tt.setupFile(t),
 			}
 
-			service, err := NewQuotaService(ctx, logger, reg, tcr, opts)
+			service, err := NewOverridesService(ctx, logger, reg, tcr, opts)
 			require.NoError(t, err, "failed to create quota service")
 			err = service.init(ctx)
 			require.NoError(t, err, "failed to initialize quota service")

@@ -19,7 +19,7 @@ import (
 
 const DEFAULT_RESOURCE_LIMIT = 1000
 
-type QuotaService struct {
+type OverridesService struct {
 	manager *runtimeconfig.Manager
 	logger  log.Logger
 	tracer  trace.Tracer
@@ -35,18 +35,18 @@ type ResourceQuota struct {
 	Limit int `yaml:"limit"`
 }
 
-// TenantQuotas represents all quotas for a tenant
-type TenantQuotas struct {
+// TenantOverrides represents all overrides for a tenant
+type TenantOverrides struct {
 	Quotas map[string]ResourceQuota `yaml:"quotas"`
 }
 
-// QuotaOverrides represents the entire quota configuration file
-type QuotaOverrides struct {
-	Tenants map[string]TenantQuotas
+// Overrides represents the entire quota configuration file
+type Overrides struct {
+	Tenants map[string]TenantOverrides
 }
 
 /*
-This service loads quota overrides from a YAML file with the following yaml structure:
+This service loads overrides (currently just quotas) from a YAML file with the following yaml structure:
 
 "123":
 
@@ -56,10 +56,10 @@ This service loads quota overrides from a YAML file with the following yaml stru
 		grafana.folder.app/folders:
 		  limit: 1500
 */
-func NewQuotaService(ctx context.Context, logger log.Logger, reg prometheus.Registerer, tracer trace.Tracer, opts ReloadOptions) (*QuotaService, error) {
+func NewOverridesService(_ context.Context, logger log.Logger, reg prometheus.Registerer, tracer trace.Tracer, opts ReloadOptions) (*OverridesService, error) {
 	// shouldn't be empty since we use file path existence to determine if we should enable the service
 	if opts.FilePath == "" {
-		return nil, fmt.Errorf("quota overrides file path is required")
+		return nil, fmt.Errorf("overrides file path is required")
 	}
 	if opts.ReloadPeriod == 0 {
 		opts.ReloadPeriod = time.Second * 30
@@ -68,21 +68,21 @@ func NewQuotaService(ctx context.Context, logger log.Logger, reg prometheus.Regi
 	// Check if file exists
 	if _, err := os.Stat(opts.FilePath); err != nil {
 		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("quota overrides file does not exist: %s", opts.FilePath)
+			return nil, fmt.Errorf("overrides file does not exist: %s", opts.FilePath)
 		}
-		return nil, fmt.Errorf("failed to stat quota overrides file: %w", err)
+		return nil, fmt.Errorf("failed to stat overrides file: %w", err)
 	}
 
 	config := runtimeconfig.Config{
 		ReloadPeriod: opts.ReloadPeriod,
 		LoadPath:     []string{opts.FilePath},
 		Loader: func(r io.Reader) (interface{}, error) {
-			var tenants map[string]TenantQuotas
+			var tenants map[string]TenantOverrides
 			decoder := yaml.NewDecoder(r)
 			if err := decoder.Decode(&tenants); err != nil {
 				return nil, err
 			}
-			return &QuotaOverrides{Tenants: tenants}, nil
+			return &Overrides{Tenants: tenants}, nil
 		},
 	}
 
@@ -91,24 +91,23 @@ func NewQuotaService(ctx context.Context, logger log.Logger, reg prometheus.Regi
 		return nil, err
 	}
 
-	return &QuotaService{
+	return &OverridesService{
 		manager: manager,
 		logger:  logger,
 		tracer:  tracer,
 	}, nil
 }
 
-// once the runtimeconfig manager is in a running state, it will periodically reload the configuration file into the manager if there are changes
-func (q *QuotaService) init(ctx context.Context) error {
+func (q *OverridesService) init(ctx context.Context) error {
 	return services.StartAndAwaitRunning(ctx, q.manager)
 }
 
-func (q *QuotaService) stop() {
+func (q *OverridesService) stop() {
 	q.manager.StopAsync()
 }
 
-func (q *QuotaService) GetQuota(ctx context.Context, nsr NamespacedResource) (ResourceQuota, error) {
-	_, span := q.tracer.Start(ctx, "QuotaService.GetQuota", trace.WithAttributes(
+func (q *OverridesService) GetQuota(ctx context.Context, nsr NamespacedResource) (ResourceQuota, error) {
+	_, span := q.tracer.Start(ctx, "OverridesService.GetQuota", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
 		attribute.String("group", nsr.Group),
 		attribute.String("resource", nsr.Resource),
@@ -119,7 +118,7 @@ func (q *QuotaService) GetQuota(ctx context.Context, nsr NamespacedResource) (Re
 		return ResourceQuota{}, fmt.Errorf("invalid namespaced resource: %+v", nsr)
 	}
 
-	overrides, ok := q.manager.GetConfig().(*QuotaOverrides)
+	overrides, ok := q.manager.GetConfig().(*Overrides)
 	if !ok {
 		return ResourceQuota{}, fmt.Errorf("failed to get quota overrides from config manager")
 	}

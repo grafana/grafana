@@ -15,6 +15,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -221,7 +223,7 @@ type ResourceServerOptions struct {
 	Search SearchOptions
 
 	// Quota service
-	QuotaService *QuotaService
+	QuotaService *OverridesService
 
 	// Diagnostics
 	Diagnostics resourcepb.DiagnosticsServer
@@ -383,7 +385,7 @@ type server struct {
 	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics *StorageMetrics
 	indexMetrics   *BleveIndexMetrics
-	quotaService   *QuotaService
+	quotaService   *OverridesService
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -662,25 +664,11 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	defer span.End()
 
 	// check quotas and log for now
-	if s.quotaService != nil {
-		nsr := NamespacedResource{
-			Namespace: req.Key.Namespace,
-			Group:     req.Key.Group,
-			Resource:  req.Key.Resource,
-		}
-		quota, err := s.quotaService.GetQuota(ctx, nsr)
-		if err != nil {
-			s.log.Error("failed to get quota for resource", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "error", err)
-		} else {
-			stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
-			if err != nil {
-				s.log.Error("failed to get resource stats for quota checking", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "error", err)
-			}
-			if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
-				s.log.Info("Quota exceeded on create", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
-			}
-		}
-	}
+	s.checkQuota(ctx, NamespacedResource{
+		Namespace: req.Key.Namespace,
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+	})
 
 	if r := verifyRequestKey(req.Key); r != nil {
 		return nil, fmt.Errorf("invalid request key: %s", r.Message)
@@ -1575,4 +1563,30 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	case <-queueCtx.Done():
 		return queueCtx.Err() // Timed out or canceled while waiting for execution.
 	}
+}
+
+func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
+	ctx, span := tracer.Start(ctx, "resource.server.checkQuota", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
+	defer span.End()
+
+	// check quotas and log for now
+	if s.quotaService != nil {
+		quota, err := s.quotaService.GetQuota(ctx, nsr)
+		if err != nil {
+			s.log.Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		} else {
+			stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+			if err != nil {
+				s.log.Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+			}
+			if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
+				s.log.Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
+			}
+		}
+	}
+
 }

@@ -610,8 +610,8 @@ type Cfg struct {
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
 	EnableSearch                               bool
-	QuotasOverridesFilePath                    string
-	QuotasReloadInterval                       time.Duration
+	OverridesFilePath                          string
+	OverridesReloadInterval                    time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings

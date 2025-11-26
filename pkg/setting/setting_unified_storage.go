@@ -95,8 +95,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.ResourceServerJoinRingTimeout = section.Key("resource_server_join_ring_timeout").MustDuration(10 * time.Second)
 
 	// quotas/limits config
-	cfg.QuotasOverridesFilePath = section.Key("quotas_overrides_path").String()
-	cfg.QuotasReloadInterval = section.Key("quotas_reload_period").MustDuration(30 * time.Second)
+	cfg.OverridesFilePath = section.Key("overrides_path").String()
+	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")

@@ -173,18 +173,6 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		// only enable if an overrides file path is provided
-		var quotaSvc *resource.QuotaService
-		if cfg.QuotasOverridesFilePath != "" {
-			quotaSvc, err = resource.NewQuotaService(ctx, cfg.Logger, reg, tracer, resource.ReloadOptions{
-				FilePath:     cfg.QuotasOverridesFilePath,
-				ReloadPeriod: cfg.QuotasReloadInterval,
-			})
-			if err != nil {
-				return nil, err
-			}
-		}
-
 		serverOptions := sql.ServerOptions{
 			DB:             db,
 			Cfg:            cfg,
@@ -196,7 +184,6 @@ func newClient(opts options.StorageOptions,
 			IndexMetrics:   indexMetrics,
 			Features:       features,
 			SecureValues:   secure,
-			QuotaService:   quotaSvc,
 		}
 
 		if cfg.QOSEnabled {
@@ -222,6 +209,19 @@ func newClient(opts options.StorageOptions,
 				return nil, fmt.Errorf("failed to start scheduler: %w", err)
 			}
 			serverOptions.QOSQueue = queue
+		}
+
+		// only enable if an overrides file path is provided
+		if cfg.OverridesFilePath != "" {
+			overridesSvc, err := resource.NewOverridesService(ctx, cfg.Logger, reg, tracer, resource.ReloadOptions{
+				FilePath:     cfg.OverridesFilePath,
+				ReloadPeriod: cfg.OverridesReloadInterval,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			serverOptions.OverridesService = overridesSvc
 		}
 
 		server, err := sql.NewResourceServer(serverOptions)
