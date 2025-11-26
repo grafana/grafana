@@ -6,6 +6,7 @@ import { config, locationService } from '@grafana/runtime';
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
+import { isCurrentPath } from './scopeNavgiationUtils';
 import { ScopeNavigation, SuggestedNavigationsFoldersMap, SuggestedNavigationsMap } from './types';
 
 interface ScopesDashboardsServiceState {
@@ -251,15 +252,18 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       const subScope = 'subScope' in navigation.spec ? navigation.spec.subScope : undefined;
 
       // If the current URL matches an item, expand the parent folders.
+      // Only do this if we don't have an explicit expandedFolderPath from the URL
       let expanded = false;
 
-      if (isCurrentDashboard && 'dashboard' in navigation.spec) {
-        const dashboardId = currentPath.split('/')[2];
-        expanded = navigation.spec.dashboard === dashboardId;
-      }
+      if (this.state.expandedFolderPath.length === 0) {
+        if (isCurrentDashboard && 'dashboard' in navigation.spec) {
+          const dashboardId = currentPath.split('/')[2];
+          expanded = navigation.spec.dashboard === dashboardId;
+        }
 
-      if ('url' in navigation.spec) {
-        expanded = currentPath.startsWith(navigation.spec.url);
+        if ('url' in navigation.spec && typeof navigation.spec.url === 'string') {
+          expanded = isCurrentPath(currentPath, navigation.spec.url);
+        }
       }
 
       // Helper function to add navigation item to a target
