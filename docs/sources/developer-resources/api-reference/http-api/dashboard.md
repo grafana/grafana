@@ -628,7 +628,7 @@ Status Codes:
 - **403** – Access denied
 - **404** – Not Found
 
-### Retrieving additional access information
+### Retrieve additional access information
 
 `GET /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/:uid/dto`
 
