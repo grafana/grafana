@@ -73,7 +73,3 @@ func TestCreateDashboardSnapshot_DashboardNotFound(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Dashboard not found", response["message"])
 }
-
-func ptrBool(b bool) *bool {
-	return &b
-}
