@@ -2612,7 +2612,9 @@
         "placeholder-search-input": "按名称搜索或输入筛选条件查询……"
       },
       "grafana-folder": "Grafana 文件夹",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "健康",
       "label": {
         "hide": "隐藏",
@@ -2623,6 +2625,7 @@
       "placeholder-all-data-sources": "所有数据源",
       "placeholder-contact-point": "选择联络点",
       "placeholder-data-sources": "选择数据源",
+      "placeholder-group-search": "",
       "placeholder-labels": "选择标签",
       "plugin-rules": "插件规则",
       "rule-source": {
@@ -6159,8 +6162,8 @@
       "placeholder-search-for": "搜索...",
       "radio-options": {
         "label": {
-          "suggestions": "建议",
-          "visualizations": "可视化"
+          "all-visualizations": "",
+          "suggestions": "建议"
         }
       },
       "title-close": "关闭"
@@ -8097,8 +8100,7 @@
       "edit-pane": {
         "go-back": "返回"
       }
-    },
-    "select-group": "选择组"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11003,8 +11005,8 @@
       "tooltip-delete": "删除"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "基于当前数据",
-      "no-results-matched-your-query": "没有符合您查询的结果"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "找不到与您的查询匹配的内容"

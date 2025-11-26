@@ -2648,7 +2648,9 @@
         "placeholder-search-input": "Szukaj według nazwy lub wprowadź wyrażenie do filtrowania…"
       },
       "grafana-folder": "Folder Grafana",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Zdrowie",
       "label": {
         "hide": "Ukryj",
@@ -2659,6 +2661,7 @@
       "placeholder-all-data-sources": "Wszystkie źródła danych",
       "placeholder-contact-point": "Wybierz punkt kontaktowy",
       "placeholder-data-sources": "Wybierz źródła danych",
+      "placeholder-group-search": "",
       "placeholder-labels": "Wybierz etykiety",
       "plugin-rules": "Reguły dotyczące wtyczek",
       "rule-source": {
@@ -6228,8 +6231,8 @@
       "placeholder-search-for": "Szukaj…",
       "radio-options": {
         "label": {
-          "suggestions": "Sugestie",
-          "visualizations": "Wizualizacje"
+          "all-visualizations": "",
+          "suggestions": "Sugestie"
         }
       },
       "title-close": "Zamknij"
@@ -8175,8 +8178,7 @@
       "edit-pane": {
         "go-back": "Wróć"
       }
-    },
-    "select-group": "Wybierz grupę"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11144,8 +11146,8 @@
       "tooltip-delete": "Usuń"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "Na podstawie aktualnych danych",
-      "no-results-matched-your-query": "Nie znaleziono wyników pasujących do zapytania"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Nie znaleziono wyników pasujących do Twojego zapytania"

@@ -2624,7 +2624,9 @@
         "placeholder-search-input": "Rechercher par nom ou saisir une requête de filtre..."
       },
       "grafana-folder": "Dossier Grafana",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Santé",
       "label": {
         "hide": "Masquer",
@@ -2635,6 +2637,7 @@
       "placeholder-all-data-sources": "Toutes les sources de données",
       "placeholder-contact-point": "Sélectionner un point de contact",
       "placeholder-data-sources": "Sélectionner des sources de données",
+      "placeholder-group-search": "",
       "placeholder-labels": "Sélectionner des étiquettes",
       "plugin-rules": "Règles de plugin",
       "rule-source": {
@@ -6182,8 +6185,8 @@
       "placeholder-search-for": "Rechercher…",
       "radio-options": {
         "label": {
-          "suggestions": "Suggestions",
-          "visualizations": "Visualisations"
+          "all-visualizations": "",
+          "suggestions": "Suggestions"
         }
       },
       "title-close": "Fermer"
@@ -8123,8 +8126,7 @@
       "edit-pane": {
         "go-back": "Retour"
       }
-    },
-    "select-group": "Sélectionner un groupe"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11050,8 +11052,8 @@
       "tooltip-delete": "Supprimer"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "Sur la base des données actuelles",
-      "no-results-matched-your-query": "Aucun résultat ne correspond à votre requête"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Impossible de trouver quoi que ce soit correspondant à votre requête"
