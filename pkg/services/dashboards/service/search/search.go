@@ -40,6 +40,8 @@ var (
 		resource.SEARCH_FIELD_SOURCE_PATH,
 		resource.SEARCH_FIELD_SOURCE_CHECKSUM,
 		resource.SEARCH_FIELD_SOURCE_TIME,
+		resource.SEARCH_FIELD_LEGACY_ID,
+		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
 	}
 )
 
