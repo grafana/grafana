@@ -1414,35 +1414,42 @@ function transformV2PanelToV1Panel(
     // If all queries share the same datasource, use it as panel datasource
     // If queries have different datasources, use mixed datasource
     // Compare by UID first (UID is the primary identifier), then by type if UID is missing
-    const uniqueDatasources = new Set(
-      queryDatasources.map((ds) => {
-        // Use UID as primary identifier, fallback to type if UID is missing
-        return ds.uid || ds.type || '';
-      })
-    );
-
+    // If there are no queries, don't set a panel datasource (e.g., text panels)
     let panelDatasource: DataSourceRef | undefined;
-    if (uniqueDatasources.size === 1 && uniqueDatasources.has('')) {
-      // All queries have no datasource - use default
-      panelDatasource = getDefaultDatasource();
-    } else if (uniqueDatasources.size === 1) {
-      // All queries share the same datasource - use it as panel datasource
-      const firstDs = queryDatasources[0];
-      if (firstDs.uid || firstDs.type) {
-        panelDatasource = {
-          uid: firstDs.uid || undefined,
-          type: firstDs.type || undefined,
-        };
-      }
-    } else if (uniqueDatasources.size > 1) {
-      // Multiple different datasources - use mixed datasource
-      panelDatasource = {
-        uid: '-- Mixed --',
-        type: undefined,
-      };
+
+    if (queryDatasources.length === 0) {
+      // No queries - don't set a panel datasource (e.g., text panels)
+      panelDatasource = undefined;
     } else {
-      // No datasources found - use default
-      panelDatasource = getDefaultDatasource();
+      const uniqueDatasources = new Set(
+        queryDatasources.map((ds) => {
+          // Use UID as primary identifier, fallback to type if UID is missing
+          return ds.uid || ds.type || '';
+        })
+      );
+
+      if (uniqueDatasources.size === 1 && uniqueDatasources.has('')) {
+        // All queries have no datasource - use default
+        panelDatasource = getDefaultDatasource();
+      } else if (uniqueDatasources.size === 1) {
+        // All queries share the same datasource - use it as panel datasource
+        const firstDs = queryDatasources[0];
+        if (firstDs.uid || firstDs.type) {
+          panelDatasource = {
+            uid: firstDs.uid || undefined,
+            type: firstDs.type || undefined,
+          };
+        }
+      } else if (uniqueDatasources.size > 1) {
+        // Multiple different datasources - use mixed datasource
+        panelDatasource = {
+          uid: '-- Mixed --',
+          type: undefined,
+        };
+      } else {
+        // No datasources found - use default
+        panelDatasource = getDefaultDatasource();
+      }
     }
 
     // Build targets with proper datasource handling

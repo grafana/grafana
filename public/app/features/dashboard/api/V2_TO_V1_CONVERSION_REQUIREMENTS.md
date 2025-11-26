@@ -125,6 +125,8 @@ In V1, datasources follow a hierarchical model:
 - Panel-level datasource: `panel.datasource` (optional)
 - Query-level datasource: `target.datasource` (optional, only if different from panel)
 
+**Note**: V1 `DataSourceRef` only includes `uid` and `type` fields. The `apiVersion` field (used in v2) is not part of the v1 schema and should not be included in converted datasource references.
+
 ### Conversion Rules
 
 #### 1. Extract Datasources from Queries
@@ -136,6 +138,11 @@ For each query in the panel:
 
 #### 2. Determine Panel-Level Datasource
 
+**No queries (empty queries array):**
+
+- Do NOT set `panel.datasource` (panels without queries, like text panels, don't need a datasource)
+- Panel will have no `datasource` field
+
 **All queries share the same datasource:**
 
 - Set `panel.datasource` to the shared datasource
@@ -146,9 +153,10 @@ For each query in the panel:
 - Set `panel.datasource` to `{ uid: '-- Mixed --' }`
 - Include `datasource` on each query with its specific datasource
 
-**No datasources found:**
+**Queries exist but have no datasource:**
 
 - Use default datasource (typically Grafana default datasource)
+- Queries inherit from panel (no individual datasource)
 
 **Comparison Logic:**
 
@@ -237,6 +245,23 @@ queries: [
 }
 ```
 
+#### Example 4: Panel with No Queries
+
+**V2:**
+
+```typescript
+queries: [],  // Empty queries array (e.g., text panel)
+```
+
+**V1:**
+
+```typescript
+{
+  // No datasource field (panels without queries don't need datasource)
+  targets: [];
+}
+```
+
 ### Round-Trip Preservation
 
 The conversion must ensure that:
@@ -262,9 +287,15 @@ The conversion must ensure that:
 
 **Empty datasource:**
 
-- If both UID and type are missing/empty
+- If both UID and type are missing/empty (but queries exist)
 - Use default datasource for panel
 - Queries inherit from panel (no individual datasource)
+
+**No queries (empty queries array):**
+
+- Panels with no queries (e.g., text panels, stat panels without data queries)
+- Do NOT set `panel.datasource` field
+- Panel will have no datasource property
 
 ## Panel Order and Structure Preservation
 
@@ -314,7 +345,9 @@ The conversion must ensure that:
   - Extracting datasources from queries (`q.spec.query.datasource?.name` and `q.spec.query.group`)
   - Reconstructing panel-level datasource from query datasources
   - Determining when to use mixed datasource (`"-- Mixed --"`)
+  - Handling panels with no queries (no datasource field)
   - Building query targets with appropriate datasource inheritance
+  - Returning only `uid` and `type` for datasource (no `apiVersion`, which is not part of v1 schema)
 
 ## Edge Cases
 
@@ -371,6 +404,7 @@ The conversion must ensure that:
 7. **Tabs in Rows**: Verify panels inside tabs are preserved
 8. **Round-Trip**: Verify V1 → V2 → V1 preserves structure exactly
 9. **Datasource Conversion**:
+   - No queries (empty array) → no panel datasource field
    - All queries share same datasource → panel datasource set, queries inherit
    - Queries have different datasources → panel datasource is `"-- Mixed --"`, queries have individual datasources
    - Queries with no datasource → default datasource used
