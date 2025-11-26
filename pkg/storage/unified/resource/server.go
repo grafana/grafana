@@ -668,7 +668,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 			Group:     req.Key.Group,
 			Resource:  req.Key.Resource,
 		}
-		quota, err := s.quotaService.GetQuota(nsr)
+		quota, err := s.quotaService.GetQuota(ctx, nsr)
 		if err != nil {
 			s.log.Error("failed to get quota for resource", "namespace", req.Key.Namespace, "group", req.Key.Group, "resource", req.Key.Resource, "error", err)
 		} else {

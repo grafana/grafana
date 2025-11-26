@@ -267,7 +267,7 @@ func (s *service) starting(ctx context.Context) error {
 
 	var quotaSvc *resource.QuotaService
 	if s.cfg.QuotasOverridesFilePath != "" {
-		quotaSvc, err = resource.NewQuotaService(context.Background(), s.log, s.reg, resource.ReloadOptions{
+		quotaSvc, err = resource.NewQuotaService(context.Background(), s.log, s.reg, s.tracing, resource.ReloadOptions{
 			FilePath:     s.cfg.QuotasOverridesFilePath,
 			ReloadPeriod: s.cfg.QuotasReloadInterval,
 		})

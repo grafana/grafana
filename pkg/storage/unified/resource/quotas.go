@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -20,6 +21,7 @@ const DEFAULT_RESOURCE_LIMIT = 1000
 type QuotaService struct {
 	manager *runtimeconfig.Manager
 	logger  log.Logger
+	tracer  trace.Tracer
 }
 
 type ReloadOptions struct {
@@ -53,7 +55,7 @@ This service loads quota overrides from a YAML file with the following yaml stru
 		grafana.folder.app/folders:
 		  limit: 1500
 */
-func NewQuotaService(ctx context.Context, logger log.Logger, reg prometheus.Registerer, opts ReloadOptions) (*QuotaService, error) {
+func NewQuotaService(ctx context.Context, logger log.Logger, reg prometheus.Registerer, tracer trace.Tracer, opts ReloadOptions) (*QuotaService, error) {
 	// shouldn't be empty since we use file path existence to determine if we should enable the service
 	if opts.FilePath == "" {
 		return nil, fmt.Errorf("quota overrides file path is required")
@@ -91,6 +93,7 @@ func NewQuotaService(ctx context.Context, logger log.Logger, reg prometheus.Regi
 	return &QuotaService{
 		manager: manager,
 		logger:  logger,
+		tracer:  tracer,
 	}, nil
 }
 
@@ -103,7 +106,10 @@ func (q *QuotaService) stop() {
 	q.manager.StopAsync()
 }
 
-func (q *QuotaService) GetQuota(nsr NamespacedResource) (ResourceQuota, error) {
+func (q *QuotaService) GetQuota(ctx context.Context, nsr NamespacedResource) (ResourceQuota, error) {
+	ctx, span := q.tracer.Start(ctx, "QuotaService.GetQuota")
+	defer span.End()
+
 	if nsr.Namespace == "" || nsr.Resource == "" || nsr.Group == "" {
 		return ResourceQuota{}, fmt.Errorf("invalid namespaced resource: %+v", nsr)
 	}

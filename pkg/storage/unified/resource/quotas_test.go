@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -73,13 +74,14 @@ func TestNewQuotaService(t *testing.T) {
 			ctx := context.Background()
 			logger := log.NewNopLogger()
 			reg := prometheus.NewRegistry()
+			tcr := tracing.NewNoopTracerService()
 
 			filePath := tt.setupFile(t)
 			if filePath != "" && tt.opts.FilePath == "" {
 				tt.opts.FilePath = filePath
 			}
 
-			service, err := NewQuotaService(ctx, logger, reg, tt.opts)
+			service, err := NewQuotaService(ctx, logger, reg, tcr, tt.opts)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -99,6 +101,7 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 	ctx := context.Background()
 	logger := log.NewNopLogger()
 	reg := prometheus.NewRegistry()
+	tcr := tracing.NewNoopTracerService()
 
 	// Create a temporary config file
 	tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
@@ -110,7 +113,7 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 	require.NoError(t, os.WriteFile(tmpFile, []byte(initialConfig), 0644))
 
 	// Create service with a very short reload period
-	service, err := NewQuotaService(ctx, logger, reg, ReloadOptions{
+	service, err := NewQuotaService(ctx, logger, reg, tcr, ReloadOptions{
 		FilePath:     tmpFile,
 		ReloadPeriod: 100 * time.Millisecond, // Very short reload period for testing
 	})
@@ -128,7 +131,7 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 		Group:     "grafana.dashboard.app",
 		Resource:  "dashboards",
 	}
-	quota, err := service.GetQuota(nsr)
+	quota, err := service.GetQuota(ctx, nsr)
 	require.NoError(t, err)
 	assert.Equal(t, 1500, quota.Limit, "initial quota should be 1500")
 
@@ -148,7 +151,7 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 
 	// Verify the config was updated for existing tenant
-	quota, err = service.GetQuota(nsr)
+	quota, err = service.GetQuota(ctx, nsr)
 	require.NoError(t, err)
 	assert.Equal(t, 2500, quota.Limit, "quota should be updated to 2500")
 
@@ -158,7 +161,7 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 		Group:     "grafana.folder.app",
 		Resource:  "folders",
 	}
-	quota2, err := service.GetQuota(nsr2)
+	quota2, err := service.GetQuota(ctx, nsr2)
 	require.NoError(t, err)
 	assert.Equal(t, 3000, quota2.Limit, "new tenant quota should be 3000")
 }
@@ -396,16 +399,17 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			ctx := context.Background()
 			logger := log.NewNopLogger()
 			reg := prometheus.NewRegistry()
+			tcr := tracing.NewNoopTracerService()
 			opts := ReloadOptions{
 				FilePath: tt.setupFile(t),
 			}
 
-			service, err := NewQuotaService(ctx, logger, reg, opts)
+			service, err := NewQuotaService(ctx, logger, reg, tcr, opts)
 			require.NoError(t, err, "failed to create quota service")
 			err = service.init(ctx)
 			require.NoError(t, err, "failed to initialize quota service")
 
-			quota, err := service.GetQuota(tt.nsr)
+			quota, err := service.GetQuota(ctx, tt.nsr)
 
 			if tt.expectError {
 				require.Error(t, err, tt.description)
