@@ -131,19 +131,31 @@ func NamespaceKeyFunc(gr schema.GroupResource) func(ctx context.Context, name st
 	}
 }
 
-// NoNamespaceKeyFunc is the default function for constructing storage paths
-// to a resource relative to the given prefix without a namespace.
-func NoNamespaceKeyFunc(ctx context.Context, prefix string, gr schema.GroupResource, name string) (string, error) {
-	if len(name) == 0 {
-		return "", apierrors.NewBadRequest("Name parameter required.")
+// ClusterScopedKeyFunc constructs storage paths for cluster-scoped resources (no namespace).
+func ClusterScopedKeyFunc(gr schema.GroupResource) func(ctx context.Context, name string) (string, error) {
+	return func(ctx context.Context, name string) (string, error) {
+		if len(name) == 0 {
+			return "", apierrors.NewBadRequest("Name parameter required.")
+		}
+		if msgs := path.IsValidPathSegmentName(name); len(msgs) != 0 {
+			return "", apierrors.NewBadRequest(fmt.Sprintf("Name parameter invalid: %q: %s", name, strings.Join(msgs, ";")))
+		}
+		key := &Key{
+			Group:    gr.Group,
+			Resource: gr.Resource,
+			Name:     name,
+		}
+		return key.String(), nil
 	}
-	if msgs := path.IsValidPathSegmentName(name); len(msgs) != 0 {
-		return "", apierrors.NewBadRequest(fmt.Sprintf("Name parameter invalid: %q: %s", name, strings.Join(msgs, ";")))
+}
+
+// ClusterScopedKeyRootFunc is used by the generic registry store for cluster-scoped resources.
+func ClusterScopedKeyRootFunc(gr schema.GroupResource) func(ctx context.Context) string {
+	return func(ctx context.Context) string {
+		key := &Key{
+			Group:    gr.Group,
+			Resource: gr.Resource,
+		}
+		return key.String()
 	}
-	key := &Key{
-		Group:    gr.Group,
-		Resource: gr.Resource,
-		Name:     name,
-	}
-	return prefix + key.String(), nil
 }

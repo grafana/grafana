@@ -3,6 +3,7 @@ package aggregatorrunner
 import (
 	"context"
 
+	apiextensionsinformers "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
@@ -21,4 +22,8 @@ type AggregatorRunner interface {
 
 	// Run starts the complete apiserver chain, expects it executes any logic inside a goroutine and doesn't block. Returns the running server.
 	Run(ctx context.Context, transport *options.RoundTripperFunc, stoppedCh chan error) (*genericapiserver.GenericAPIServer, error)
+
+	// SetCRDInformer sets the CRD informer for auto-registering APIServices for CRDs.
+	// This should be called before Configure if CRD API is enabled.
+	SetCRDInformer(informer apiextensionsinformers.CustomResourceDefinitionInformer)
 }
