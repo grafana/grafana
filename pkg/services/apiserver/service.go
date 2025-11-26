@@ -316,11 +316,7 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildBranch,
 	)
 
-	apiResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
-	// add the builder group versions to the api resource config
-	apiResourceConfig.EnableVersions(groupVersions...)
-
-	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
+	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, appinstaller.NewAPIResourceConfig(s.appInstallers), s.scheme); err != nil {
 		return err
 	}
 
@@ -363,7 +359,6 @@ func (s *service) start(ctx context.Context) error {
 		groupVersions,
 		defGetters,
 		s.metrics,
-		apiResourceConfig,
 	)
 	if err != nil {
 		return err
@@ -405,7 +400,6 @@ func (s *service) start(ctx context.Context) error {
 		s.features,
 		s.dualWriterMetrics,
 		s.builderMetrics,
-		apiResourceConfig,
 	)
 	if err != nil {
 		return err
