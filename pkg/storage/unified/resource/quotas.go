@@ -56,7 +56,7 @@ This service loads overrides (currently just quotas) from a YAML file with the f
 		grafana.folder.app/folders:
 		  limit: 1500
 */
-func NewOverridesService(ctx context.Context, logger log.Logger, reg prometheus.Registerer, tracer trace.Tracer, opts ReloadOptions) (*OverridesService, error) {
+func NewOverridesService(_ context.Context, logger log.Logger, reg prometheus.Registerer, tracer trace.Tracer, opts ReloadOptions) (*OverridesService, error) {
 	// shouldn't be empty since we use file path existence to determine if we should enable the service
 	if opts.FilePath == "" {
 		return nil, fmt.Errorf("overrides file path is required")
@@ -93,7 +93,7 @@ func NewOverridesService(ctx context.Context, logger log.Logger, reg prometheus.
 
 	return &OverridesService{
 		manager: manager,
-		logger:  logger.FromContext(ctx),
+		logger:  logger,
 		tracer:  tracer,
 	}, nil
 }
