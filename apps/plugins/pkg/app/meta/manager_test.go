@@ -113,7 +113,7 @@ func TestProviderManager_GetMeta(t *testing.T) {
 		assert.Equal(t, expectedTTL, cached.ttl)
 	})
 
-	t.Run("does not cache result with zero TTL and tries next provider", func(t *testing.T) {
+	t.Run("does not cache result with zero TTL", func(t *testing.T) {
 		zeroTTLMeta := pluginsv0alpha1.PluginMetaSpec{
 			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
 				Id:   "test-plugin",
@@ -121,15 +121,8 @@ func TestProviderManager_GetMeta(t *testing.T) {
 				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
 			},
 		}
-		expectedMeta := pluginsv0alpha1.PluginMetaSpec{
-			PluginJson: pluginsv0alpha1.PluginMetaJSONData{
-				Id:   "test-plugin",
-				Name: "Test Plugin",
-				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
-			},
-		}
 
-		provider1 := &mockProvider{
+		provider := &mockProvider{
 			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
 				return &Result{
 					Meta: zeroTTLMeta,
@@ -137,30 +130,21 @@ func TestProviderManager_GetMeta(t *testing.T) {
 				}, nil
 			},
 		}
-		provider2 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
-				return &Result{
-					Meta: expectedMeta,
-					TTL:  time.Hour,
-				}, nil
-			},
-		}
 
-		pm := NewProviderManager(provider1, provider2)
+		pm := NewProviderManager(provider)
 
 		result, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta)
+		assert.Equal(t, zeroTTLMeta, result.Meta)
+		assert.Equal(t, time.Duration(0), result.TTL)
 
 		pm.cacheMu.RLock()
-		cached, exists := pm.cache["test-plugin:1.0.0"]
+		_, exists := pm.cache["test-plugin:1.0.0"]
 		pm.cacheMu.RUnlock()
 
-		assert.True(t, exists)
-		assert.Equal(t, expectedMeta, cached.meta)
-		assert.Equal(t, time.Hour, cached.ttl)
+		assert.False(t, exists, "zero TTL results should not be cached")
 	})
 
 	t.Run("tries next provider when first returns ErrMetaNotFound", func(t *testing.T) {

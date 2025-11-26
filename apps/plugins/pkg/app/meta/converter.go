@@ -484,56 +484,6 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	return meta
 }
 
-// pluginToPluginMetaSpec converts a plugins.Plugin to a pluginsv0alpha1.PluginMetaSpec.
-// This includes fields that are only available on the full Plugin struct (not just JSONData).
-func pluginToPluginMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.PluginMetaSpec {
-	spec := pluginsv0alpha1.PluginMetaSpec{
-		PluginJson: jsonDataToPluginMetaJSONData(plugin.JSONData),
-	}
-
-	if plugin.Module != "" {
-		module := &pluginsv0alpha1.PluginMetaV0alpha1SpecModule{
-			Path: plugin.Module,
-		}
-		spec.Module = module
-	}
-
-	if plugin.BaseURL != "" {
-		spec.BaseURL = &plugin.BaseURL
-	}
-
-	if plugin.Signature != "" {
-		signature := &pluginsv0alpha1.PluginMetaV0alpha1SpecSignature{
-			Status: convertSignatureStatus(plugin.Signature),
-		}
-
-		if plugin.SignatureType != "" {
-			sigType := convertSignatureType(plugin.SignatureType)
-			signature.Type = &sigType
-		}
-
-		if plugin.SignatureOrg != "" {
-			signature.Org = &plugin.SignatureOrg
-		}
-
-		spec.Signature = signature
-	}
-
-	if len(plugin.Children) > 0 {
-		children := make([]string, 0, len(plugin.Children))
-		for _, child := range plugin.Children {
-			if child != nil {
-				children = append(children, child.ID)
-			}
-		}
-		if len(children) > 0 {
-			spec.Children = children
-		}
-	}
-
-	return spec
-}
-
 // pluginStorePluginToPluginMetaSpec converts a pluginstore.Plugin to a pluginsv0alpha1.PluginMetaSpec.
 // This is similar to pluginToPluginMetaSpec but works with the plugin store DTO.
 // loadingStrategy and moduleHash are optional calculated values that can be provided.
