@@ -87,8 +87,42 @@ func (p *CloudProvider) GetMeta(ctx context.Context, pluginID, version string) (
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
+	spec := pluginsv0alpha1.PluginMetaSpec{
+		PluginJson: gcomMeta.JSON,
+	}
+
+	if gcomMeta.VersionSignatureType != "" {
+		signature := &pluginsv0alpha1.PluginMetaV0alpha1SpecSignature{
+			Status: pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureStatusValid,
+		}
+
+		switch gcomMeta.VersionSignatureType {
+		case "grafana":
+			sigType := pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypeGrafana
+			signature.Type = &sigType
+		case "commercial":
+			sigType := pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypeCommercial
+			signature.Type = &sigType
+		case "community":
+			sigType := pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypeCommunity
+			signature.Type = &sigType
+		case "private":
+			sigType := pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypePrivate
+			signature.Type = &sigType
+		case "private-glob":
+			sigType := pluginsv0alpha1.PluginMetaV0alpha1SpecSignatureTypePrivateGlob
+			signature.Type = &sigType
+		}
+
+		if gcomMeta.VersionSignedByOrg != "" {
+			signature.Org = &gcomMeta.VersionSignedByOrg
+		}
+
+		spec.Signature = signature
+	}
+
 	return &Result{
-		Meta: gcomMeta.JSON,
+		Meta: spec,
 		TTL:  p.ttl,
 	}, nil
 }
@@ -96,25 +130,25 @@ func (p *CloudProvider) GetMeta(ctx context.Context, pluginID, version string) (
 // grafanaComPluginVersionMeta represents the response from grafana.com API
 // GET /api/plugins/{pluginId}/versions/{version}
 type grafanaComPluginVersionMeta struct {
-	PluginID        string                             `json:"pluginSlug"`
-	Version         string                             `json:"version"`
-	URL             string                             `json:"url"`
-	Commit          string                             `json:"commit"`
-	Description     string                             `json:"description"`
-	Keywords        []string                           `json:"keywords"`
-	CreatedAt       time.Time                          `json:"createdAt"`
-	UpdatedAt       time.Time                          `json:"updatedAt"`
-	JSON            pluginsv0alpha1.PluginMetaJSONData `json:"json"`
-	Readme          string                             `json:"readme"`
-	Downloads       int                                `json:"downloads"`
-	Verified        bool                               `json:"verified"`
-	Status          string                             `json:"status"`
-	StatusContext   string                             `json:"statusContext"`
-	DownloadSlug    string                             `json:"downloadSlug"`
-	SignatureType   string                             `json:"signatureType"`
-	SignedByOrg     string                             `json:"signedByOrg"`
-	SignedByOrgName string                             `json:"signedByOrgName"`
-	Packages        struct {
+	PluginID               string                             `json:"pluginSlug"`
+	Version                string                             `json:"version"`
+	URL                    string                             `json:"url"`
+	Commit                 string                             `json:"commit"`
+	Description            string                             `json:"description"`
+	Keywords               []string                           `json:"keywords"`
+	CreatedAt              time.Time                          `json:"createdAt"`
+	UpdatedAt              time.Time                          `json:"updatedAt"`
+	JSON                   pluginsv0alpha1.PluginMetaJSONData `json:"json"`
+	Readme                 string                             `json:"readme"`
+	Downloads              int                                `json:"downloads"`
+	Verified               bool                               `json:"verified"`
+	Status                 string                             `json:"status"`
+	StatusContext          string                             `json:"statusContext"`
+	DownloadSlug           string                             `json:"downloadSlug"`
+	VersionSignatureType   string                             `json:"versionSignatureType"`
+	VersionSignedByOrg     string                             `json:"versionSignedByOrg"`
+	VersionSignedByOrgName string                             `json:"versionSignedByOrgName"`
+	Packages               struct {
 		Any struct {
 			Md5         string `json:"md5"`
 			Sha256      string `json:"sha256"`

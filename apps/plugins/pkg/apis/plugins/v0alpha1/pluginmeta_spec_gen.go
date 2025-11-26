@@ -207,13 +207,18 @@ func NewPluginMetaExtensions() *PluginMetaExtensions {
 
 // +k8s:openapi-gen=true
 type PluginMetaSpec struct {
-	PluginJSON PluginMetaJSONData `json:"pluginJSON"`
+	PluginJson PluginMetaJSONData               `json:"pluginJson"`
+	Module     *PluginMetaV0alpha1SpecModule    `json:"module,omitempty"`
+	BaseURL    *string                          `json:"baseURL,omitempty"`
+	Signature  *PluginMetaV0alpha1SpecSignature `json:"signature,omitempty"`
+	// +listType=atomic
+	Children []string `json:"children,omitempty"`
 }
 
 // NewPluginMetaSpec creates a new PluginMetaSpec object.
 func NewPluginMetaSpec() *PluginMetaSpec {
 	return &PluginMetaSpec{
-		PluginJSON: *NewPluginMetaJSONData(),
+		PluginJson: *NewPluginMetaJSONData(),
 	}
 }
 
@@ -412,6 +417,30 @@ func NewPluginMetaV0alpha1ExtensionsExtensionPoints() *PluginMetaV0alpha1Extensi
 }
 
 // +k8s:openapi-gen=true
+type PluginMetaV0alpha1SpecModule struct {
+	Path            string                                       `json:"path"`
+	Hash            *string                                      `json:"hash,omitempty"`
+	LoadingStrategy *PluginMetaV0alpha1SpecModuleLoadingStrategy `json:"loadingStrategy,omitempty"`
+}
+
+// NewPluginMetaV0alpha1SpecModule creates a new PluginMetaV0alpha1SpecModule object.
+func NewPluginMetaV0alpha1SpecModule() *PluginMetaV0alpha1SpecModule {
+	return &PluginMetaV0alpha1SpecModule{}
+}
+
+// +k8s:openapi-gen=true
+type PluginMetaV0alpha1SpecSignature struct {
+	Status PluginMetaV0alpha1SpecSignatureStatus `json:"status"`
+	Type   *PluginMetaV0alpha1SpecSignatureType  `json:"type,omitempty"`
+	Org    *string                               `json:"org,omitempty"`
+}
+
+// NewPluginMetaV0alpha1SpecSignature creates a new PluginMetaV0alpha1SpecSignature object.
+func NewPluginMetaV0alpha1SpecSignature() *PluginMetaV0alpha1SpecSignature {
+	return &PluginMetaV0alpha1SpecSignature{}
+}
+
+// +k8s:openapi-gen=true
 type PluginMetaJSONDataType string
 
 const (
@@ -470,4 +499,34 @@ const (
 	PluginMetaV0alpha1DependenciesPluginsTypeApp        PluginMetaV0alpha1DependenciesPluginsType = "app"
 	PluginMetaV0alpha1DependenciesPluginsTypeDatasource PluginMetaV0alpha1DependenciesPluginsType = "datasource"
 	PluginMetaV0alpha1DependenciesPluginsTypePanel      PluginMetaV0alpha1DependenciesPluginsType = "panel"
+)
+
+// +k8s:openapi-gen=true
+type PluginMetaV0alpha1SpecModuleLoadingStrategy string
+
+const (
+	PluginMetaV0alpha1SpecModuleLoadingStrategyFetch  PluginMetaV0alpha1SpecModuleLoadingStrategy = "fetch"
+	PluginMetaV0alpha1SpecModuleLoadingStrategyScript PluginMetaV0alpha1SpecModuleLoadingStrategy = "script"
+)
+
+// +k8s:openapi-gen=true
+type PluginMetaV0alpha1SpecSignatureStatus string
+
+const (
+	PluginMetaV0alpha1SpecSignatureStatusInternal PluginMetaV0alpha1SpecSignatureStatus = "internal"
+	PluginMetaV0alpha1SpecSignatureStatusValid    PluginMetaV0alpha1SpecSignatureStatus = "valid"
+	PluginMetaV0alpha1SpecSignatureStatusInvalid  PluginMetaV0alpha1SpecSignatureStatus = "invalid"
+	PluginMetaV0alpha1SpecSignatureStatusModified PluginMetaV0alpha1SpecSignatureStatus = "modified"
+	PluginMetaV0alpha1SpecSignatureStatusUnsigned PluginMetaV0alpha1SpecSignatureStatus = "unsigned"
+)
+
+// +k8s:openapi-gen=true
+type PluginMetaV0alpha1SpecSignatureType string
+
+const (
+	PluginMetaV0alpha1SpecSignatureTypeGrafana     PluginMetaV0alpha1SpecSignatureType = "grafana"
+	PluginMetaV0alpha1SpecSignatureTypeCommercial  PluginMetaV0alpha1SpecSignatureType = "commercial"
+	PluginMetaV0alpha1SpecSignatureTypeCommunity   PluginMetaV0alpha1SpecSignatureType = "community"
+	PluginMetaV0alpha1SpecSignatureTypePrivate     PluginMetaV0alpha1SpecSignatureType = "private"
+	PluginMetaV0alpha1SpecSignatureTypePrivateGlob PluginMetaV0alpha1SpecSignatureType = "private-glob"
 )

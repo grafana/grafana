@@ -126,7 +126,7 @@ func (s *PluginMetaStorage) List(ctx context.Context, options *internalversion.L
 			continue
 		}
 
-		pluginMeta := createPluginMetaFromPluginMetaJSONData(result.Meta, plugin.Name, plugin.Namespace)
+		pluginMeta := createPluginMetaFromSpec(result.Meta, plugin.Name, plugin.Namespace)
 		metaItems = append(metaItems, *pluginMeta)
 	}
 
@@ -174,19 +174,17 @@ func (s *PluginMetaStorage) Get(ctx context.Context, name string, options *metav
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to fetch plugin metadata: %w", err))
 	}
 
-	return createPluginMetaFromPluginMetaJSONData(result.Meta, name, ns.Value), nil
+	return createPluginMetaFromSpec(result.Meta, name, ns.Value), nil
 }
 
-// createPluginMetaFromPluginMetaJSONData creates a PluginMeta k8s object from PluginMetaJSONData and plugin metadata.
-func createPluginMetaFromPluginMetaJSONData(pluginJSON pluginsv0alpha1.PluginMetaJSONData, name, namespace string) *pluginsv0alpha1.PluginMeta {
+// createPluginMetaFromSpec creates a PluginMeta k8s object from PluginMetaSpec and plugin metadata.
+func createPluginMetaFromSpec(spec pluginsv0alpha1.PluginMetaSpec, name, namespace string) *pluginsv0alpha1.PluginMeta {
 	pluginMeta := &pluginsv0alpha1.PluginMeta{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginJSON,
-		},
+		Spec: spec,
 	}
 
 	// Set the GroupVersionKind

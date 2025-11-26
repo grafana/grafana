@@ -1,12 +1,25 @@
 package plugins
 
 pluginMetaV0Alpha1: {
-	kind: "PluginMeta"
+	kind:   "PluginMeta"
 	plural: "pluginsmeta"
-	scope: "Namespaced"
+	scope:  "Namespaced"
 	schema: {
 		spec: {
-			pluginJSON: #JSONData,
+			pluginJson: #JSONData
+			module?: {
+				path:             string
+				hash?:            string
+				loadingStrategy?: "fetch" | "script"
+			}
+			baseURL?: string
+			signature?: {
+				status: "internal" | "valid" | "invalid" | "modified" | "unsigned"
+				type?:  "grafana" | "commercial" | "community" | "private" | "private-glob"
+				org?:   string
+			}
+			// +listType=atomic
+			children?: [...string]
 		}
 	}
 }

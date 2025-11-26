@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 var (
@@ -42,6 +44,8 @@ type AppInstaller struct {
 func RegisterAppInstaller(
 	cfgProvider configprovider.ConfigProvider,
 	restConfigProvider apiserver.RestConfigProvider,
+	pluginStore pluginstore.Store,
+	pluginAssetsService *pluginassets.Service,
 ) (*AppInstaller, error) {
 	grafanaComAPIURL := os.Getenv("GRAFANA_COM_API_URL")
 	if grafanaComAPIURL == "" {
@@ -50,7 +54,8 @@ func RegisterAppInstaller(
 
 	coreProvider := meta.NewCoreProvider()
 	cloudProvider := meta.NewCloudProvider(grafanaComAPIURL)
-	metaProviderManager := meta.NewProviderManager(coreProvider, cloudProvider)
+	localProvider := meta.NewLocalProvider(pluginStore, pluginAssetsService)
+	metaProviderManager := meta.NewProviderManager(localProvider, coreProvider, cloudProvider)
 	specificConfig := &pluginsapp.PluginAppConfig{
 		MetaProviderManager: metaProviderManager,
 	}

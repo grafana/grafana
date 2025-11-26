@@ -22,14 +22,16 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	t.Run("returns cached plugin when available", func(t *testing.T) {
 		provider := NewCoreProvider()
 
-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
-			Id:   "test-plugin",
-			Name: "Test Plugin",
-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+		expectedSpec := pluginsv0alpha1.PluginMetaSpec{
+			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+				Id:   "test-plugin",
+				Name: "Test Plugin",
+				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+			},
 		}
 
 		provider.mu.Lock()
-		provider.loadedPlugins["test-plugin"] = expectedMeta
+		provider.loadedPlugins["test-plugin"] = expectedSpec
 		provider.initialized = true
 		provider.mu.Unlock()
 
@@ -37,7 +39,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta)
+		assert.Equal(t, expectedSpec, result.Meta)
 		assert.Equal(t, defaultCoreTTL, result.TTL)
 	})
 
@@ -58,14 +60,16 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	t.Run("ignores version parameter", func(t *testing.T) {
 		provider := NewCoreProvider()
 
-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
-			Id:   "test-plugin",
-			Name: "Test Plugin",
-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+		expectedSpec := pluginsv0alpha1.PluginMetaSpec{
+			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+				Id:   "test-plugin",
+				Name: "Test Plugin",
+				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+			},
 		}
 
 		provider.mu.Lock()
-		provider.loadedPlugins["test-plugin"] = expectedMeta
+		provider.loadedPlugins["test-plugin"] = expectedSpec
 		provider.initialized = true
 		provider.mu.Unlock()
 
@@ -81,14 +85,16 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		customTTL := 2 * time.Hour
 		provider := NewCoreProviderWithTTL(customTTL)
 
-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
-			Id:   "test-plugin",
-			Name: "Test Plugin",
-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+		expectedSpec := pluginsv0alpha1.PluginMetaSpec{
+			PluginJSON: pluginsv0alpha1.PluginMetaJSONData{
+				Id:   "test-plugin",
+				Name: "Test Plugin",
+				Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+			},
 		}
 
 		provider.mu.Lock()
-		provider.loadedPlugins["test-plugin"] = expectedMeta
+		provider.loadedPlugins["test-plugin"] = expectedSpec
 		provider.initialized = true
 		provider.mu.Unlock()
 
@@ -226,8 +232,8 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		if loaded {
 			result, err := provider.GetMeta(ctx, "test-datasource", "1.0.0")
 			require.NoError(t, err)
-			assert.Equal(t, "test-datasource", result.Meta.Id)
-			assert.Equal(t, "Test Datasource", result.Meta.Name)
+			assert.Equal(t, "test-datasource", result.Meta.PluginJSON.Id)
+			assert.Equal(t, "Test Datasource", result.Meta.PluginJSON.Name)
 		}
 	})
 }
