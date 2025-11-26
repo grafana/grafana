@@ -235,6 +235,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
             tabIndex={0}
           />
         )}
+        <div className={`${styles.divider} ${styles.dividerMargin}`} />
         <IconButton
           name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
           tooltip={
@@ -299,6 +300,9 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   divider: css({
     width: 1,
     borderRight: `solid 1px ${theme.colors.border.medium}`,
-    height: theme.spacing(2.25)
+    height: theme.spacing(2.25),
+  }),
+  dividerMargin: css({
+    marginRight: theme.spacing(0.5),
   }),
 });
