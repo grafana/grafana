@@ -43,32 +43,28 @@ export function AppNotificationList() {
       if (isKioskDashboard || !payload) {
         return;
       }
-      const [title, text, traceId] = payload;
-      dispatch(notifyApp(createErrorNotification(title, text, traceId)));
+      dispatch(notifyApp(createErrorNotification(...payload)));
     };
 
     const handleWarningAlert = (payload?: AlertPayload) => {
       if (!payload) {
         return;
       }
-      const [title, text, traceId] = payload;
-      dispatch(notifyApp(createWarningNotification(title, text, traceId)));
+      dispatch(notifyApp(createWarningNotification(...payload)));
     };
 
     const handleSuccessAlert = (payload?: AlertPayload) => {
       if (!payload) {
         return;
       }
-      const [title, text, traceId] = payload;
-      dispatch(notifyApp(createSuccessNotification(title, text, traceId)));
+      dispatch(notifyApp(createSuccessNotification(...payload)));
     };
 
     const handleInfoAlert = (payload?: AlertPayload) => {
       if (!payload) {
         return;
       }
-      const [title, text, traceId] = payload;
-      dispatch(notifyApp(createInfoNotification(title, text, traceId)));
+      dispatch(notifyApp(createInfoNotification(...payload)));
     };
 
     appEvents.on(AppEvents.alertWarning, handleWarningAlert);
