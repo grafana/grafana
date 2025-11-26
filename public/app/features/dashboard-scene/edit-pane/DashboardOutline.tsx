@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
-import { Box, Icon, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Box, Icon, Sidebar, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -17,28 +17,36 @@ import { useOutlineRename } from './useOutlineRename';
 
 export interface Props {
   editPane: DashboardEditPane;
+  isEditing: boolean | undefined;
 }
 
-export function DashboardOutline({ editPane }: Props) {
+export function DashboardOutline({ editPane, isEditing }: Props) {
   const dashboard = getDashboardSceneFor(editPane);
 
   return (
-    <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
-      <DashboardOutlineNode sceneObject={dashboard} editPane={editPane} depth={0} index={0} />
-    </Box>
+    <>
+      <Sidebar.PaneHeader
+        title={t('dashboard.outline.pane-header', 'Content outline')}
+        onClose={() => editPane.closePane()}
+      />
+      <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
+        <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
+      </Box>
+    </>
   );
 }
 
 interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
   editPane: DashboardEditPane;
+  isEditing: boolean | undefined;
   depth: number;
   index: number;
 }
 
-function DashboardOutlineNode({ sceneObject, editPane, depth, index }: DashboardOutlineNodeProps) {
+function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }: DashboardOutlineNodeProps) {
   const styles = useStyles2(getStyles);
-  const { key } = sceneObject.useState();
+  const key = sceneObject.state.key;
   const [isCollapsed, setIsCollapsed] = useState(depth > 0);
   const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);
@@ -49,7 +57,7 @@ function DashboardOutlineNode({ sceneObject, editPane, depth, index }: Dashboard
   const children = editableElement.getOutlineChildren?.() ?? [];
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
-  const outlineRename = useOutlineRename(editableElement);
+  const outlineRename = useOutlineRename(editableElement, isEditing);
   const isContainer = editableElement.getOutlineChildren ? true : false;
 
   const onNodeClicked = (e: React.MouseEvent) => {
@@ -131,6 +139,7 @@ function DashboardOutlineNode({ sceneObject, editPane, depth, index }: Dashboard
                 sceneObject={child}
                 editPane={editPane}
                 depth={depth + 1}
+                isEditing={isEditing}
                 index={i}
               />
             ))

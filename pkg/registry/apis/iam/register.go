@@ -65,6 +65,7 @@ func RegisterAPIService(
 	rolesStorage RoleStorageBackend,
 	roleBindingsStorage RoleBindingStorageBackend,
 	externalGroupMappingStorageBackend ExternalGroupMappingStorageBackend,
+	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
 	userService legacyuser.Service,
@@ -90,6 +91,7 @@ func RegisterAPIService(
 		resourcePermissionsStorage:  resourcepermission.ProvideStorageBackend(dbProvider),
 		roleBindingsStorage:         roleBindingsStorage,
 		externalGroupMappingStorage: externalGroupMappingStorageBackend,
+		teamGroupsHandler:           teamGroupsHandlerImpl,
 		sso:                         ssoService,
 		authorizer:                  authorizer,
 		legacyAccessClient:          legacyAccessClient,
@@ -102,7 +104,8 @@ func RegisterAPIService(
 		features:                    features,
 		dual:                        dual,
 		unified:                     unified,
-		userSearchClient:            resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, user.NewUserLegacySearchClient(userService), features),
+		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
+			unified, user.NewUserLegacySearchClient(userService), features),
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -216,6 +219,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
+	if b.teamGroupsHandler != nil {
+		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
+	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 	teamBindingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)

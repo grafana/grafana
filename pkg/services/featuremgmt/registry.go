@@ -528,6 +528,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "alertingUIUseFullyCompatBackendFilters",
+			Description:  "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
+		{
 			Name:        "alertmanagerRemotePrimary",
 			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -659,13 +666,6 @@ var (
 			Owner:           grafanaAlertingSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,
-		},
-		{
-			Name:        "onPremToCloudMigrations",
-			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "secretsManagementAppPlatform",
@@ -1519,12 +1519,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:        "postgresDSUsePGX",
-			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOSSBigTent,
-		},
-		{
 			Name:        "tempoAlerting",
 			Description: "Enables creating alerts from Tempo data source",
 			Stage:       FeatureStageExperimental,
@@ -1591,6 +1585,13 @@ var (
 		{
 			Name:         "kubernetesAuthnMutation",
 			Description:  "Enables create, delete, and update mutations for resources owned by IAM identity",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "kubernetesExternalGroupMapping",
+			Description:  "Routes external group mapping requests from /api to the /apis endpoint",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1800,10 +1801,10 @@ var (
 		{
 			Name:         "azureResourcePickerUpdates",
 			Description:  "Enables the updated Azure Monitor resource picker",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaPartnerPluginsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:            "prometheusTypeMigration",
@@ -1894,10 +1895,10 @@ var (
 		{
 			Name:         "newPanelPadding",
 			Description:  "Increases panel padding globally",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "onlyStoreActionSets",
