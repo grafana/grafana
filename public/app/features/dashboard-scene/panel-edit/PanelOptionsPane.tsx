@@ -164,7 +164,13 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
           <div className={styles.top}>
             <Stack gap={1}>
               <img alt={pluginMeta.name} src={pluginMeta.info.logos.small} className={styles.pluginIcon} />
-              <Text element="h3" variant="body" weight="medium" truncate>
+              <Text
+                data-testid={selectors.components.PanelEditor.OptionsPane.header}
+                element="h3"
+                variant="body"
+                weight="medium"
+                truncate
+              >
                 {pluginMeta.name}
               </Text>
               <Button
