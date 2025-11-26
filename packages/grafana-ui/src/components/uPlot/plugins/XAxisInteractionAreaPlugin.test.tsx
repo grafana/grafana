@@ -137,7 +137,7 @@ describe('XAxisInteractionAreaPlugin', () => {
       expect(mockQueryZoom).not.toHaveBeenCalled();
     });
 
-    it('should set isPanning state during drag and mark waitingForSync on mouseup', () => {
+    it('should set isPanning state during drag and mark isTimeRangePending on mouseup', () => {
       setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
 
       xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
@@ -157,7 +157,7 @@ describe('XAxisInteractionAreaPlugin', () => {
         isPanning: true,
         min: expectedRange.from,
         max: expectedRange.to,
-        waitingForSync: true,
+        isTimeRangePending: true,
       });
     });
 

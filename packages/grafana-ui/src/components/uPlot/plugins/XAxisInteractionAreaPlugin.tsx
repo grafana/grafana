@@ -100,7 +100,7 @@ export const setupXAxisPan = (
 
       if (isSignificantDrag) {
         const newRange = calculatePanRange(startMin, startMax, dragPixels, u.bbox.width);
-        config.setState({ isPanning: true, min: newRange.from, max: newRange.to, waitingForSync: true });
+        config.setState({ isPanning: true, min: newRange.from, max: newRange.to, isTimeRangePending: true });
         queryZoom(newRange);
       } else {
         config.setState({ isPanning: false });
