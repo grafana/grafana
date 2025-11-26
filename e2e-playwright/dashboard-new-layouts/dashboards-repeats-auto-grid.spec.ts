@@ -312,7 +312,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        'Auto-grid repeats - move repeated panels',
+        'Auto-grid repeats - move repeated panels 2',
         JSON.stringify(testV2DashWithRepeats)
       );
 

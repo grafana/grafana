@@ -50,6 +50,7 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       await checkAutoGridLayoutInputs(dashboardPage, selectors);
     });
@@ -99,6 +100,7 @@ test.describe(
       await page.reload();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(
@@ -150,6 +152,7 @@ test.describe(
       await verifyPanelsStackedVertically(dashboardPage, selectors);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(
@@ -184,7 +187,6 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
       await page.getByLabel('Expand Panel layout category').click();
-
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       await dashboardPage
@@ -201,6 +203,7 @@ test.describe(
       await verifyPanelsStackedVertically(dashboardPage, selectors);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns)
@@ -220,7 +223,6 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
       await page.getByLabel('Expand Panel layout category').click();
-
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       const regularRowHeight = await getPanelHeight(dashboardPage, selectors);
@@ -254,6 +256,7 @@ test.describe(
       }).toPass();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight)
@@ -276,7 +279,6 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
       await page.getByLabel('Expand Panel layout category').click();
-
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       const regularRowHeight = await getPanelHeight(dashboardPage, selectors);
@@ -308,6 +310,7 @@ test.describe(
       }).toPass();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(
@@ -334,7 +337,6 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
       await page.getByLabel('Expand Panel layout category').click();
-
       await page.getByLabel('layout-selection-option-Auto grid').click();
 
       // Set narrow column width first to ensure panels fit horizontally
@@ -363,6 +365,7 @@ test.describe(
       }).toPass();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen)
