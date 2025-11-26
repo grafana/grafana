@@ -47,7 +47,6 @@ type PluginsService struct {
 	updateStrategy  string
 
 	features featuremgmt.FeatureToggles
-	ofClient openfeature.IClient
 }
 
 func ProvidePluginsService(cfg *setting.Cfg,
@@ -90,7 +89,6 @@ func ProvidePluginsService(cfg *setting.Cfg,
 		features:         features,
 		updateChecker:    updateChecker,
 		updateStrategy:   cfg.PluginUpdateStrategy,
-		ofClient:         openfeature.NewDefaultClient(),
 	}, nil
 }
 
@@ -100,7 +98,8 @@ func (s *PluginsService) IsDisabled() bool {
 
 func (s *PluginsService) Run(ctx context.Context) error {
 	s.instrumentedCheckForUpdates(ctx)
-	enabled := s.ofClient.Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
+	ofClient := openfeature.NewDefaultClient()
+	enabled := ofClient.Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
 	if enabled {
 		s.updateAll(ctx)
 	}
@@ -112,7 +111,7 @@ func (s *PluginsService) Run(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			s.instrumentedCheckForUpdates(ctx)
-			enabled := s.ofClient.Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
+			enabled := ofClient.Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
 			if enabled {
 				s.updateAll(ctx)
 			}
@@ -229,7 +228,7 @@ func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugi
 		return false
 	}
 
-	enabled := s.ofClient.Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
+	enabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
 	if enabled {
 		return s.updateChecker.CanUpdate(plugin.ID, plugin.Info.Version, gcomVersion, s.updateStrategy == setting.PluginUpdateStrategyMinor)
 	}

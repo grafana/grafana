@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -54,7 +53,6 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 			updateCheckURL: updateCheckURL,
 			updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 			features:       &featuremgmt.FeatureManager{},
-			ofClient:       openfeature.NewDefaultClient(),
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
@@ -100,7 +98,6 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 			},
 			updateCheckURL: updateCheckURL,
 			updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
-			ofClient:       openfeature.NewDefaultClient(),
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
@@ -137,7 +134,6 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				},
 			},
 			updateCheckURL: updateCheckURL,
-			ofClient:       openfeature.NewDefaultClient(),
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-panel")
@@ -220,7 +216,6 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			updateCheckURL: updateCheckURL,
 			updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 			features:       &featuremgmt.FeatureManager{},
-			ofClient:       openfeature.NewDefaultClient(),
 		}
 
 		svc.instrumentedCheckForUpdates(context.Background())
@@ -277,7 +272,6 @@ func TestPluginUpdateChecker_updateAll(t *testing.T) {
 					return nil
 				},
 			},
-			ofClient: openfeature.NewDefaultClient(),
 		}
 
 		svc.updateAll(context.Background())
