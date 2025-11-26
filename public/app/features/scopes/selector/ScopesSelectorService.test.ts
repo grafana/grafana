@@ -73,6 +73,7 @@ describe('ScopesSelectorService', () => {
 
     dashboardsService = {
       fetchDashboards: jest.fn().mockResolvedValue(undefined),
+      setNavigationScope: jest.fn(),
       state: {
         scopeNavigations: [],
         dashboards: [],
@@ -82,6 +83,7 @@ describe('ScopesSelectorService', () => {
         forScopeNames: [],
         loading: false,
         searchQuery: '',
+        navigationScope: undefined,
       },
     } as unknown as jest.Mocked<ScopesDashboardsService>;
 
@@ -394,6 +396,34 @@ describe('ScopesSelectorService', () => {
       await service.apply();
       await service.removeAllScopes();
       expect(service.state.appliedScopes).toEqual([]);
+    });
+
+    it('should clear navigation scope when removing all scopes', async () => {
+      await service.updateNode('', true, '');
+      await service.selectScope('test-scope-node');
+      await service.apply();
+      await service.removeAllScopes();
+      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith(undefined);
+    });
+  });
+
+  describe('navigation scope interaction', () => {
+    it('should skip fetchDashboards when navigationScope is set', async () => {
+      dashboardsService.state.navigationScope = 'navScope1';
+      jest.clearAllMocks();
+
+      await service.changeScopes(['test-scope']);
+
+      expect(dashboardsService.fetchDashboards).not.toHaveBeenCalled();
+    });
+
+    it('should call fetchDashboards when navigationScope is not set', async () => {
+      dashboardsService.state.navigationScope = undefined;
+      jest.clearAllMocks();
+
+      await service.changeScopes(['test-scope']);
+
+      expect(dashboardsService.fetchDashboards).toHaveBeenCalledWith(['test-scope']);
     });
   });
 

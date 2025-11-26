@@ -1,5 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom-v5-compat';
+
+import { locationService } from '@grafana/runtime';
 
 import { ScopesNavigationTreeLink } from './ScopesNavigationTreeLink';
 
@@ -9,15 +12,50 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useLocation: jest.fn(),
 }));
 
+// Mock @grafana/runtime
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  locationService: {
+    push: jest.fn(),
+  },
+}));
+
+// Mock ScopesContextProvider
+const mockScopesSelectorService = {
+  state: {
+    appliedScopes: [{ scopeId: 'currentScope' }],
+  },
+  changeScopes: jest.fn(),
+};
+
+const mockScopesDashboardsService = {
+  state: {
+    navigationScope: undefined as string | undefined,
+  },
+  setNavigationScope: jest.fn(),
+};
+
+jest.mock('../ScopesContextProvider', () => ({
+  ...jest.requireActual('../ScopesContextProvider'),
+  useScopesServices: jest.fn(() => ({
+    scopesSelectorService: mockScopesSelectorService,
+    scopesDashboardsService: mockScopesDashboardsService,
+  })),
+}));
+
 const renderWithRouter = (ui: React.ReactElement) => {
   return render(<MemoryRouter>{ui}</MemoryRouter>);
 };
 
 describe('ScopesNavigationTreeLink', () => {
   const mockUseLocation = useLocation as jest.Mock;
+  const mockLocationServicePush = locationService.push as jest.Mock;
 
   beforeEach(() => {
     mockUseLocation.mockReturnValue({ pathname: '/current-path' });
+    jest.clearAllMocks();
+    mockScopesSelectorService.state.appliedScopes = [{ scopeId: 'currentScope' }];
+    mockScopesDashboardsService.state.navigationScope = undefined;
   });
 
   afterEach(() => {
@@ -132,5 +170,142 @@ describe('ScopesNavigationTreeLink', () => {
     const icon = link.querySelector('svg');
     expect(icon).toBeInTheDocument();
     expect(link).toHaveTextContent('Metrics Drilldown');
+  });
+
+  describe('click handler with subScope', () => {
+    beforeEach(() => {
+      // Mock window.location.origin
+      Object.defineProperty(window, 'location', {
+        value: {
+          origin: 'http://localhost',
+        },
+        writable: true,
+      });
+    });
+
+    it('should prevent default navigation when subScope is provided', async () => {
+      const user = userEvent.setup();
+
+      renderWithRouter(
+        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" subScope="subScope1" />
+      );
+
+      const link = screen.getByTestId('scopes-dashboards-test-id');
+      await user.click(link);
+
+      // Should call changeScopes instead of navigating normally
+      expect(mockScopesSelectorService.changeScopes).toHaveBeenCalled();
+      expect(mockLocationServicePush).toHaveBeenCalled();
+    });
+
+    it('should set navigation scope from current scope when not already set', async () => {
+      mockScopesDashboardsService.state.navigationScope = undefined;
+      mockScopesSelectorService.state.appliedScopes = [{ scopeId: 'currentScope' }];
+
+      renderWithRouter(
+        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" subScope="subScope1" />
+      );
+
+      const link = screen.getByTestId('scopes-dashboards-test-id');
+      await userEvent.click(link);
+
+      expect(mockScopesDashboardsService.setNavigationScope).toHaveBeenCalledWith('currentScope');
+    });
+
+    it('should not set navigation scope when already set', async () => {
+      mockScopesDashboardsService.state.navigationScope = 'existingNavScope';
+      mockScopesSelectorService.state.appliedScopes = [{ scopeId: 'currentScope' }];
+
+      renderWithRouter(
+        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" subScope="subScope1" />
+      );
+
+      const link = screen.getByTestId('scopes-dashboards-test-id');
+      await userEvent.click(link);
+
+      // Should not call setNavigationScope with currentScope since it's already set
+      expect(mockScopesDashboardsService.setNavigationScope).not.toHaveBeenCalledWith('currentScope');
+    });
+
+    it('should call changeScopes with subScope', async () => {
+      renderWithRouter(
+        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" subScope="subScope1" />
+      );
+
+      const link = screen.getByTestId('scopes-dashboards-test-id');
+      await userEvent.click(link);
+
+      expect(mockScopesSelectorService.changeScopes).toHaveBeenCalledWith(['subScope1'], undefined, undefined, false);
+    });
+
+    it('should navigate to URL with updated query params', async () => {
+      renderWithRouter(
+        <ScopesNavigationTreeLink to="/test-path?existing=param" title="Test Link" id="test-id" subScope="subScope1" />
+      );
+
+      const link = screen.getByTestId('scopes-dashboards-test-id');
+      await userEvent.click(link);
+
+      expect(mockLocationServicePush).toHaveBeenCalled();
+      const pushedUrl = mockLocationServicePush.mock.calls[0][0];
+      expect(pushedUrl).toContain('/test-path');
+      expect(pushedUrl).toContain('scopes=subScope1');
+      expect(pushedUrl).toContain('navigation_scope=currentScope');
+    });
+
+    it('should remove scope_node and scope_parent from URL when navigating with subScope', async () => {
+      renderWithRouter(
+        <ScopesNavigationTreeLink
+          to="/test-path?scope_node=node1&scope_parent=parent1"
+          title="Test Link"
+          id="test-id"
+          subScope="subScope1"
+        />
+      );
+
+      const link = screen.getByTestId('scopes-dashboards-test-id');
+      await userEvent.click(link);
+
+      expect(mockLocationServicePush).toHaveBeenCalled();
+      const pushedUrl = mockLocationServicePush.mock.calls[0][0];
+      expect(pushedUrl).not.toContain('scope_node');
+      expect(pushedUrl).not.toContain('scope_parent');
+    });
+
+    it('should allow normal navigation when subScope is not provided', async () => {
+      const user = userEvent.setup();
+
+      renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" />);
+
+      const link = screen.getByTestId('scopes-dashboards-test-id');
+      await user.click(link);
+
+      // Should not call changeScopes or locationService.push when subScope is not provided
+      expect(mockScopesSelectorService.changeScopes).not.toHaveBeenCalled();
+      expect(mockLocationServicePush).not.toHaveBeenCalled();
+    });
+
+    it('should handle URL with existing query params correctly', async () => {
+      const user = userEvent.setup();
+      mockScopesDashboardsService.state.navigationScope = undefined;
+      mockScopesSelectorService.state.appliedScopes = [{ scopeId: 'currentScope' }];
+
+      renderWithRouter(
+        <ScopesNavigationTreeLink
+          to="/test-path?param1=value1&param2=value2"
+          title="Test Link"
+          id="test-id"
+          subScope="subScope1"
+        />
+      );
+
+      const link = screen.getByTestId('scopes-dashboards-test-id');
+      await user.click(link);
+
+      expect(mockLocationServicePush).toHaveBeenCalled();
+      const pushedUrl = mockLocationServicePush.mock.calls[0][0];
+      expect(pushedUrl).toContain('scopes=subScope1');
+      expect(pushedUrl).toContain('navigation_scope=currentScope');
+    });
   });
 });

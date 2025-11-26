@@ -14,15 +14,22 @@ describe('ScopesService', () => {
   let selectorService: jest.Mocked<ScopesSelectorService>;
   let dashboardsService: jest.Mocked<ScopesDashboardsService>;
   let locationService: jest.Mocked<LocationService>;
-  let stateSubscription:
+  let selectorStateSubscription:
     | ((
         state: { appliedScopes: Array<{ scopeId: string; scopeNodeId?: string; parentNodeId?: string }> },
         prevState: { appliedScopes: Array<{ scopeId: string; scopeNodeId?: string; parentNodeId?: string }> }
       ) => void)
     | undefined;
+  let dashboardsStateSubscription:
+    | ((
+        state: { navigationScope?: string; drawerOpened: boolean },
+        prevState: { navigationScope?: string; drawerOpened: boolean }
+      ) => void)
+    | undefined;
 
   beforeEach(() => {
-    stateSubscription = undefined;
+    selectorStateSubscription = undefined;
+    dashboardsStateSubscription = undefined;
 
     selectorService = {
       state: {
@@ -46,7 +53,7 @@ describe('ScopesService', () => {
         tree: { scopeNodeId: '', expanded: false, query: '', children: {} },
       }),
       subscribeToState: jest.fn((callback) => {
-        stateSubscription = callback;
+        selectorStateSubscription = callback;
         return { unsubscribe: jest.fn() };
       }),
       changeScopes: jest.fn(),
@@ -63,6 +70,7 @@ describe('ScopesService', () => {
         forScopeNames: [],
         loading: false,
         searchQuery: '',
+        navigationScope: undefined,
       },
       stateObservable: new BehaviorSubject({
         drawerOpened: false,
@@ -73,7 +81,13 @@ describe('ScopesService', () => {
         forScopeNames: [],
         loading: false,
         searchQuery: '',
+        navigationScope: undefined,
       }),
+      subscribeToState: jest.fn((callback) => {
+        dashboardsStateSubscription = callback;
+        return { unsubscribe: jest.fn() };
+      }),
+      setNavigationScope: jest.fn(),
     } as unknown as jest.Mocked<ScopesDashboardsService>;
 
     locationService = {
@@ -160,6 +174,40 @@ describe('ScopesService', () => {
 
       expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1', 'scope2'], undefined, 'node1', false);
     });
+
+    it('should read navigation_scope from URL on init', () => {
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1&navigation_scope=navScope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1');
+    });
+
+    it('should read navigation_scope along with other scope parameters', () => {
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1&scope_node=node1&navigation_scope=navScope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1');
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
+    });
+
+    it('should not call setNavigationScope when navigation_scope is not in URL', () => {
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      expect(dashboardsService.setNavigationScope).not.toHaveBeenCalled();
+    });
   });
 
   describe('URL synchronization', () => {
@@ -172,11 +220,11 @@ describe('ScopesService', () => {
     });
 
     it('should write scope_node to URL when scopes change', () => {
-      if (!stateSubscription) {
-        throw new Error('stateSubscription not set');
+      if (!selectorStateSubscription) {
+        throw new Error('selectorStateSubscription not set');
       }
 
-      stateSubscription(
+      selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
         },
@@ -196,11 +244,11 @@ describe('ScopesService', () => {
     });
 
     it('should reset scope_parent to null when writing URL', () => {
-      if (!stateSubscription) {
-        throw new Error('stateSubscription not set');
+      if (!selectorStateSubscription) {
+        throw new Error('selectorStateSubscription not set');
       }
 
-      stateSubscription(
+      selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1', parentNodeId: 'parent1' }],
         },
@@ -218,11 +266,11 @@ describe('ScopesService', () => {
     });
 
     it('should handle scopeNodeId changes without scope changes', () => {
-      if (!stateSubscription) {
-        throw new Error('stateSubscription not set');
+      if (!selectorStateSubscription) {
+        throw new Error('selectorStateSubscription not set');
       }
 
-      stateSubscription(
+      selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node2' }],
         },
@@ -242,11 +290,11 @@ describe('ScopesService', () => {
     });
 
     it('should handle missing scopeNodeId gracefully', () => {
-      if (!stateSubscription) {
-        throw new Error('stateSubscription not set');
+      if (!selectorStateSubscription) {
+        throw new Error('selectorStateSubscription not set');
       }
 
-      stateSubscription(
+      selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1' }],
         },
@@ -266,13 +314,13 @@ describe('ScopesService', () => {
     });
 
     it('should not update URL when scopes and scopeNodeId have not changed', () => {
-      if (!stateSubscription) {
-        throw new Error('stateSubscription not set');
+      if (!selectorStateSubscription) {
+        throw new Error('selectorStateSubscription not set');
       }
 
       jest.clearAllMocks();
 
-      stateSubscription(
+      selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
         },
@@ -282,6 +330,90 @@ describe('ScopesService', () => {
       );
 
       expect(locationService.partial).not.toHaveBeenCalled();
+    });
+
+    it('should write navigation_scope to URL when navigationScope changes', () => {
+      if (!dashboardsStateSubscription) {
+        throw new Error('dashboardsStateSubscription not set');
+      }
+
+      dashboardsStateSubscription(
+        {
+          navigationScope: 'navScope1',
+          drawerOpened: true,
+        },
+        {
+          navigationScope: undefined,
+          drawerOpened: false,
+        }
+      );
+
+      expect(locationService.partial).toHaveBeenCalledWith({
+        navigation_scope: 'navScope1',
+      });
+    });
+
+    it('should update navigation_scope in URL when navigationScope changes', () => {
+      if (!dashboardsStateSubscription) {
+        throw new Error('dashboardsStateSubscription not set');
+      }
+
+      dashboardsStateSubscription(
+        {
+          navigationScope: 'navScope2',
+          drawerOpened: true,
+        },
+        {
+          navigationScope: 'navScope1',
+          drawerOpened: true,
+        }
+      );
+
+      expect(locationService.partial).toHaveBeenCalledWith({
+        navigation_scope: 'navScope2',
+      });
+    });
+
+    it('should not update URL when navigationScope has not changed', () => {
+      if (!dashboardsStateSubscription) {
+        throw new Error('dashboardsStateSubscription not set');
+      }
+
+      jest.clearAllMocks();
+
+      dashboardsStateSubscription(
+        {
+          navigationScope: 'navScope1',
+          drawerOpened: true,
+        },
+        {
+          navigationScope: 'navScope1',
+          drawerOpened: false,
+        }
+      );
+
+      expect(locationService.partial).not.toHaveBeenCalled();
+    });
+
+    it('should clear navigation_scope from URL when navigationScope is cleared', () => {
+      if (!dashboardsStateSubscription) {
+        throw new Error('dashboardsStateSubscription not set');
+      }
+
+      dashboardsStateSubscription(
+        {
+          navigationScope: undefined,
+          drawerOpened: false,
+        },
+        {
+          navigationScope: 'navScope1',
+          drawerOpened: true,
+        }
+      );
+
+      expect(locationService.partial).toHaveBeenCalledWith({
+        navigation_scope: undefined,
+      });
     });
   });
 
