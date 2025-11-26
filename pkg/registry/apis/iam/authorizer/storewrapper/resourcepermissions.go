@@ -172,7 +172,25 @@ func (r *ResourcePermissionsAuthorizer) BeforeUpdate(ctx context.Context, obj ru
 
 // FilterList implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
-	panic("unimplemented")
+	switch l := list.(type) {
+	case *iamv0.ResourcePermissionList:
+		var filteredItems []iamv0.ResourcePermission
+		for _, item := range l.Items {
+			// Reuse AfterGet to check permissions for each item
+			err := r.AfterGet(ctx, &item)
+			if err == nil {
+				filteredItems = append(filteredItems, item)
+			}
+			// Ignore unauthorized errors to filter out the items
+			if err != nil && err != errUnauthorized {
+				return nil, err
+			}
+		}
+		l.Items = filteredItems
+		return l, nil
+	default:
+		return nil, fmt.Errorf("expected ResourcePermissionList, got %T: %w", l, errUnexpectedType)
+	}
 }
 
 var _ ResourceStorageAuthorizer = (*ResourcePermissionsAuthorizer)(nil)
