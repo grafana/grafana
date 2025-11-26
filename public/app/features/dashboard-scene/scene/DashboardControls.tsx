@@ -20,11 +20,12 @@ import { Box, useStyles2 } from '@grafana/ui';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardControlsButton } from './DashboardControlsMenu';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
+import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
+import { hasDashboardControls } from './dashboard-controls-menu/utils';
 
 export interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
@@ -111,19 +112,8 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     }
   }
 
-  // Dashboard controls is a separate dropdown menu at the top-right of the controls
-  public hasDashboardControls(): boolean {
-    const dashboard = getDashboardSceneFor(this);
-    const { links } = dashboard.state;
-    const hasControlMenuVariables = sceneGraph
-      .getVariables(dashboard)
-      ?.state.variables.some((v) => v.state.hide === VariableHide.inControlsMenu);
-    const hasControlMenuLinks = links.some((link) => link.placement === 'inControlsMenu');
-
-    return hasControlMenuVariables || hasControlMenuLinks;
-  }
-
   public hasControls(): boolean {
+    const dashboard = getDashboardSceneFor(this);
     const hasVariables = sceneGraph
       .getVariables(this)
       ?.state.variables.some((v) => v.state.hide !== VariableHide.hideVariable);
@@ -132,7 +122,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const hideLinks = this.state.hideLinksControls || !hasLinks;
     const hideVariables = this.state.hideVariableControls || (!hasAnnotations && !hasVariables);
     const hideTimePicker = this.state.hideTimeControls;
-    const hideDashboardControls = this.state.hideDashboardControls || !this.hasDashboardControls();
+    const hideDashboardControls = this.state.hideDashboardControls || !hasDashboardControls(dashboard);
 
     return !(hideVariables && hideLinks && hideTimePicker && hideDashboardControls);
   }
@@ -170,7 +160,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {!hideDashboardControls && model.hasDashboardControls() && <DashboardControlsButton dashboard={dashboard} />}
       </div>
       {!hideVariableControls && (
         <>
@@ -179,6 +168,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         </>
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+      {!hideDashboardControls && hasDashboardControls(dashboard) && <DashboardControlsButton dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
