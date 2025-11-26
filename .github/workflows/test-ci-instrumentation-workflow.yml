@@ -12,6 +12,15 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+
+      - name: Checkout Go Cache Plugin
+        uses: actions/checkout@v5
+        with:
+          repository: 'grafana/go-cache-plugin'
+          ref: grambbledook/local-cache-and-metrics
+          persist-credentials: false
+          path: gocacheplugin
+
       - name: Setup Go
         uses: actions/setup-go@v6.0.0
         with:
@@ -25,13 +34,27 @@ jobs:
           mv ./foo ../foo
           cd ../
 
+      - name: Build Go Cache Plugin
+        run: |
+          cd ./gocacheplugin/cmd/go-cache-plugin
+          GOWORK=off go build -o atool
+          cd ../../..
+          cp ./gocacheplugin/cmd/go-cache-plugin/atool ./
+
+      - name: Start Go Cache Plugin
+        run: |
+          ./atool --plugin 5930 --http=localhost:5970 --modproxy --cache-dir=/tmp/gocache --local &
+          echo $! > atool.pid
+
       - name: Build Grafana
         continue-on-error: true
         run: |
           make build-go
+          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./atool connect 5930" make build-go
 
-      - name: Log toolexec
+      - name: Cat trace.log an cleanup
         run: |
-          cat toolexec.log
+          cat trace.log
+          kill $(cat atool.pid)
 
 
