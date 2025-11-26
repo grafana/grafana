@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, EmptyState, Spinner, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
+import { Alert, EmptyState, Spinner, Stack, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -92,7 +92,7 @@ export default function RepositoryStatusPage() {
         ) : (
           <>
             {data ? (
-              <>
+              <Stack gap={2} direction="column">
                 <TabsBar>
                   {tabInfo.map((t: SelectableValue) => (
                     <Tab
@@ -119,7 +119,7 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
                   {tab === TabSelection.Resources && <ResourceTreeView repo={data} />}
                 </TabContent>
-              </>
+              </Stack>
             ) : (
               <div>
                 <Trans i18nKey="provisioning.repository-status-page.not-found">not found</Trans>
