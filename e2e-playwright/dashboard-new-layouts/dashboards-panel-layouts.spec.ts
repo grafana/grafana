@@ -138,7 +138,7 @@ test.describe(
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customMinColumnWidth)
-        .fill('900');
+        .fill('1100');
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customMinColumnWidth)
         .blur();
@@ -158,7 +158,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(
           selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customMinColumnWidth
         )
-      ).toHaveValue('900');
+      ).toHaveValue('1100');
 
       await verifyPanelsStackedVertically(dashboardPage, selectors);
 
