@@ -1823,13 +1823,13 @@
           {
             "name": "permission",
             "in": "query",
-            "description": "permission needed for the resource (View, Edit, Admin)",
+            "description": "permission needed for the resource (view, edit, admin)",
             "schema": {
               "type": "string",
               "enum": [
-                "View",
-                "Edit",
-                "Admin"
+                "view",
+                "edit",
+                "admin"
               ]
             }
           },
