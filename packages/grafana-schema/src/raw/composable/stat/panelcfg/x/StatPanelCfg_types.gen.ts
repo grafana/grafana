@@ -15,6 +15,14 @@ export const pluginVersion = "12.4.0-pre";
 export interface Options extends common.SingleStatBaseOptions {
   colorMode: common.BigValueColorMode;
   graphMode: common.BigValueGraphMode;
+  /**
+   * Icon name from Grafana icon library (panel-level default)
+   */
+  icon?: string;
+  /**
+   * How to display the icon (panel-level default)
+   */
+  iconMode?: common.BigValueIconMode;
   justifyMode: common.BigValueJustifyMode;
   percentChangeColorMode: common.PercentChangeColorMode;
   showPercentChange: boolean;
@@ -25,9 +33,21 @@ export interface Options extends common.SingleStatBaseOptions {
 export const defaultOptions: Partial<Options> = {
   colorMode: common.BigValueColorMode.Value,
   graphMode: common.BigValueGraphMode.Area,
+  iconMode: common.BigValueIconMode.Hidden,
   justifyMode: common.BigValueJustifyMode.Auto,
   percentChangeColorMode: common.PercentChangeColorMode.Standard,
   showPercentChange: false,
   textMode: common.BigValueTextMode.Auto,
   wideLayout: true,
 };
+
+export interface FieldConfig {
+  /**
+   * Icon name from Grafana icon library (per-field override)
+   */
+  icon?: string;
+  /**
+   * How to display the icon (per-field override)
+   */
+  iconMode?: common.BigValueIconMode;
+}

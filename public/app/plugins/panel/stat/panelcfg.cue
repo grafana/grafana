@@ -34,6 +34,17 @@ composableKinds: PanelCfg: {
 					wideLayout:             bool | *true
 					showPercentChange:      bool | *false
 					percentChangeColorMode: common.PercentChangeColorMode & (*"standard" | _)
+					// Icon name from Grafana icon library (panel-level default)
+					icon?:                  string
+					// How to display the icon (panel-level default)
+					iconMode?:              common.BigValueIconMode & (*"hidden" | _)
+				} @cuetsy(kind="interface")
+
+				FieldConfig: {
+					// Icon name from Grafana icon library (per-field override)
+					icon?:     string
+					// How to display the icon (per-field override)
+					iconMode?: common.BigValueIconMode
 				} @cuetsy(kind="interface")
 			}
 		}]

@@ -1,12 +1,13 @@
 import { cx } from '@emotion/css';
 import { memo, type MouseEventHandler } from 'react';
 
-import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
-import { PercentChangeColorMode, VizTextDisplayOptions } from '@grafana/schema';
+import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline, IconName } from '@grafana/data';
+import { BigValueIconMode, PercentChangeColorMode, VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types/theme';
 import { clearButtonStyles } from '../Button/Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
+import { Icon } from '../Icon/Icon';
 
 import { buildLayout } from './BigValueLayout';
 import { PercentChange } from './PercentChange';
@@ -80,6 +81,16 @@ export interface Props extends Themeable2 {
    * Disable the wide layout for the BigValue
    */
   disableWideLayout?: boolean;
+
+  /**
+   * Icon name from Grafana icon library to display with the value
+   */
+  icon?: string;
+
+  /**
+   * How to display the icon (hidden, icon_and_text, icon_only)
+   */
+  iconMode?: BigValueIconMode;
 }
 
 /**
@@ -88,7 +99,15 @@ export interface Props extends Themeable2 {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-bigvalue--docs
  */
 export const BigValue = memo<Props>((props) => {
-  const { onClick, className, hasLinks, theme, justifyMode = BigValueJustifyMode.Auto } = props;
+  const {
+    onClick,
+    className,
+    hasLinks,
+    theme,
+    justifyMode = BigValueJustifyMode.Auto,
+    icon,
+    iconMode = BigValueIconMode.Hidden,
+  } = props;
 
   const layout = buildLayout({ ...props, justifyMode });
   const panelStyles = layout.getPanelStyles();
@@ -100,6 +119,11 @@ export const BigValue = memo<Props>((props) => {
   const percentChangeColorMode = props.percentChangeColorMode;
   const showPercentChange = percentChange != null && !Number.isNaN(percentChange);
 
+  // Icon display logic
+  const showIcon = icon && iconMode !== BigValueIconMode.Hidden;
+  const showText = iconMode !== BigValueIconMode.IconOnly;
+  const iconStyles = showIcon ? layout.getIconStyles() : undefined;
+
   // When there is an outer data link this tooltip will override the outer native tooltip
   const tooltip = hasLinks ? undefined : textValues.tooltip;
 
@@ -107,9 +131,12 @@ export const BigValue = memo<Props>((props) => {
     return (
       <div className={className} style={panelStyles} title={tooltip}>
         <div style={valueAndTitleContainerStyles}>
-          {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
-          <FormattedValueDisplay value={textValues} style={valueStyles} />
-          {showPercentChange && (
+          {showIcon && iconStyles && (
+            <Icon name={icon as IconName} style={iconStyles} />
+          )}
+          {showText && textValues.title && <div style={titleStyles}>{textValues.title}</div>}
+          {showText && <FormattedValueDisplay value={textValues} style={valueStyles} />}
+          {showText && showPercentChange && (
             <PercentChange
               percentChange={percentChange}
               styles={layout.getPercentChangeStyles(percentChange, percentChangeColorMode, valueStyles)}
@@ -130,8 +157,11 @@ export const BigValue = memo<Props>((props) => {
       title={tooltip}
     >
       <div style={valueAndTitleContainerStyles}>
-        {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
-        <FormattedValueDisplay value={textValues} style={valueStyles} />
+        {showIcon && iconStyles && (
+          <Icon name={icon as IconName} style={iconStyles} />
+        )}
+        {showText && textValues.title && <div style={titleStyles}>{textValues.title}</div>}
+        {showText && <FormattedValueDisplay value={textValues} style={valueStyles} />}
       </div>
       {layout.renderChart()}
     </button>
