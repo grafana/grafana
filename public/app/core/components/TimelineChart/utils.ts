@@ -159,6 +159,24 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     range: (u) => {
       const state = builder.getState();
       if (state.isPanning) {
+        if (state.waitingForSync) {
+          const propsRange = coreConfig.xRange(u);
+          const propsFrom = propsRange[0];
+          const propsTo = propsRange[1];
+
+          if (propsFrom != null && propsTo != null) {
+            const MIN_TIMESPAN_MS = 1;
+            const fromMatches = Math.abs(propsFrom - state.min) <= MIN_TIMESPAN_MS;
+            const toMatches = Math.abs(propsTo - state.max) <= MIN_TIMESPAN_MS;
+            const timeRangeHasSynced = fromMatches && toMatches;
+
+            if (timeRangeHasSynced) {
+              builder.setState({ isPanning: false });
+              return propsRange;
+            }
+          }
+        }
+
         return [state.min, state.max];
       }
       return coreConfig.xRange(u);
