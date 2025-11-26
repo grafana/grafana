@@ -240,7 +240,7 @@ The App Registration must also be configured with additional **API Permissions**
 1. Select **Add a permission** and choose the following permissions. They must be added individually. Refer to the [Azure documentation](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-access-web-apis) for more information.
    - Select **APIs my organization uses** > Search for **Azure SQL** and select it > **Delegated permissions** > `user_impersonation` > **Add permissions**
 
-After all permissions have been added, the Azure authentication section in Grafana must be updated. The `scopes` section must be updated to include the `.default` scope to ensure that a token with access to all APIs declared on the App Registration is requested by Grafana. Once updated the scopes value should equal: `.default openid email profile`.
+After all permissions have been added, the Azure authentication section in Grafana must be updated. The `scopes` section must be updated to include the `.default` scope to ensure that a token with access to all APIs declared on the App Registration is requested by Grafana. After updated the scopes value should equal: `.default openid email profile`.
 {{< /admonition >}}
 
 This method of authentication doesn't inherently support all backend functionality as a user's credentials won't be in scope. Affected functionality includes alerting, reporting, and recorded queries. Also, note that query and resource caching is disabled by default for data sources using current user authentication.
