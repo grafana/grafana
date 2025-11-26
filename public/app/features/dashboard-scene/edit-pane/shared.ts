@@ -14,7 +14,6 @@ import {
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
-import { redoButtonId, undoButtonID } from '../scene/new-toolbar/RightActions';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
@@ -298,8 +297,4 @@ function makeEditAction<Source extends SceneObject, T extends keyof Source['stat
       },
     });
   };
-}
-
-export function undoRedoWasClicked(e: React.FocusEvent) {
-  return e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId);
 }

@@ -9,7 +9,7 @@ import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { dashboardEditActions, undoRedoWasClicked } from '../../edit-pane/shared';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { BulkActionElement } from '../../scene/types/BulkActionElement';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
@@ -161,7 +161,7 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
         onChange={onChange}
         onBlur={(e) => {
           const labelUnchanged = oldName.current === name;
-          const shouldSkip = labelUnchanged || undoRedoWasClicked(e);
+          const shouldSkip = labelUnchanged;
 
           if (nameError) {
             setNameError(undefined);
@@ -200,7 +200,7 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
       onChange={(e) => variable.setState({ label: e.currentTarget.value })}
       onBlur={(e) => {
         const labelUnchanged = oldLabel.current === e.currentTarget.value;
-        const shouldSkip = labelUnchanged || undoRedoWasClicked(e);
+        const shouldSkip = labelUnchanged;
 
         if (shouldSkip) {
           return;
@@ -232,7 +232,7 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
       onChange={(e) => variable.setState({ description: e.currentTarget.value })}
       onBlur={(e) => {
         const labelUnchanged = oldDescription.current === e.currentTarget.value;
-        const shouldSkip = labelUnchanged || undoRedoWasClicked(e);
+        const shouldSkip = labelUnchanged;
 
         if (shouldSkip) {
           return;

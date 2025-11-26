@@ -8,10 +8,9 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
-import { EditSchemaV2Button } from '../scene/new-toolbar/actions/EditSchemaV2Button';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
-import { dashboardEditActions, undoRedoWasClicked } from './shared';
+import { dashboardEditActions } from './shared';
 
 function useEditPaneOptions(
   this: DashboardEditableElement,
@@ -69,19 +68,16 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
   public renderActions(): ReactNode {
     return (
-      <>
-        <EditSchemaV2Button dashboard={this.dashboard} />
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => this.dashboard.onOpenSettings()}
-          tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
-          icon="sliders-v-alt"
-          iconPlacement="right"
-        >
-          <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
-        </Button>
-      </>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => this.dashboard.onOpenSettings()}
+        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+        icon="sliders-v-alt"
+        iconPlacement="right"
+      >
+        <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
+      </Button>
     );
   }
 }
@@ -104,7 +100,7 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
       }}
       onBlur={(e) => {
         const titleUnchanged = valueBeforeEdit.current === e.currentTarget.value;
-        const shouldSkip = titleUnchanged || undoRedoWasClicked(e);
+        const shouldSkip = titleUnchanged;
         if (shouldSkip) {
           return;
         }
@@ -135,7 +131,7 @@ export function DashboardDescriptionInput({ dashboard, id }: { dashboard: Dashbo
       }}
       onBlur={(e) => {
         const descriptionUnchanged = valueBeforeEdit.current === e.currentTarget.value;
-        const shouldSkip = descriptionUnchanged || undoRedoWasClicked(e);
+        const shouldSkip = descriptionUnchanged;
         if (shouldSkip) {
           return;
         }
