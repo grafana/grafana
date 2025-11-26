@@ -120,7 +120,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue
 	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
-	serverOptions.QuotaService = opts.OverridesService
+	serverOptions.OverridesService = opts.OverridesService
 
 	return resource.NewResourceServer(serverOptions)
 }

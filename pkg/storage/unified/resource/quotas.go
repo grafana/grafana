@@ -40,7 +40,7 @@ type TenantOverrides struct {
 	Quotas map[string]ResourceQuota `yaml:"quotas"`
 }
 
-// Overrides represents the entire quota configuration file
+// Overrides represents the entire overrides configuration file
 type Overrides struct {
 	Tenants map[string]TenantOverrides
 }
@@ -86,7 +86,7 @@ func NewOverridesService(_ context.Context, logger log.Logger, reg prometheus.Re
 		},
 	}
 
-	manager, err := runtimeconfig.New(config, "custom-quotas", reg, logger)
+	manager, err := runtimeconfig.New(config, "tenant-overrides", reg, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -125,8 +125,8 @@ func (q *OverridesService) GetQuota(ctx context.Context, nsr NamespacedResource)
 
 	tenantId := strings.TrimPrefix(nsr.Namespace, "stacks-")
 	groupResource := nsr.Group + "/" + nsr.Resource
-	if tenantQuotas, ok := overrides.Tenants[tenantId]; ok {
-		if resourceQuota, ok := tenantQuotas.Quotas[groupResource]; ok {
+	if tenantOverrides, ok := overrides.Tenants[tenantId]; ok {
+		if resourceQuota, ok := tenantOverrides.Quotas[groupResource]; ok {
 			return resourceQuota, nil
 		}
 	}

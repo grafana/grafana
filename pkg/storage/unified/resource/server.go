@@ -223,7 +223,7 @@ type ResourceServerOptions struct {
 	Search SearchOptions
 
 	// Quota service
-	QuotaService *OverridesService
+	OverridesService *OverridesService
 
 	// Diagnostics
 	Diagnostics resourcepb.DiagnosticsServer
@@ -347,7 +347,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
-		overridesService: opts.QuotaService,
+		overridesService: opts.OverridesService,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -418,7 +418,7 @@ func (s *server) Init(ctx context.Context) error {
 			}
 		}
 
-		// initialize custom quotas reloader
+		// initialize tenant overrides service
 		if s.initErr == nil && s.overridesService != nil {
 			s.initErr = s.overridesService.init(ctx)
 		}
@@ -456,7 +456,6 @@ func (s *server) Stop(ctx context.Context) error {
 		s.search.stop()
 	}
 
-	// stop custom quotas reloader
 	if s.overridesService != nil {
 		s.overridesService.stop()
 	}
