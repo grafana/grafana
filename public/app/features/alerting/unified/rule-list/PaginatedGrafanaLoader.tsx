@@ -17,7 +17,7 @@ import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
-import { getGrafanaFilter, hasClientSideFilters } from './hooks/grafanaFilter';
+import { getGrafanaFilter, hasGrafanaClientSideFilters } from './hooks/grafanaFilter';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
@@ -40,7 +40,7 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
   const { backendFilter } = getGrafanaFilter(filterState);
 
   const hasFilters = Boolean(groupFilter || namespaceFilter);
-  const needsClientSideFiltering = hasClientSideFilters(filterState);
+  const needsClientSideFiltering = hasGrafanaClientSideFilters(filterState);
 
   // If there are filters, we don't want to populate the cache to avoid performance issues
   // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance

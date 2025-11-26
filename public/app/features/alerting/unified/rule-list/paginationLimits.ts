@@ -1,8 +1,8 @@
 import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../featureToggles';
 import { RulesFilter } from '../search/rulesSearchParser';
 
-import { hasDatasourceFilters } from './hooks/datasourceFilter';
-import { hasClientSideFilters } from './hooks/grafanaFilter';
+import { hasDatasourceClientSideFilters } from './hooks/datasourceFilter';
+import { hasGrafanaClientSideFilters } from './hooks/grafanaFilter';
 import { FetchGroupsLimitOptions } from './hooks/prometheusGroupsGenerator';
 
 export const FRONTEND_LIST_PAGE_SIZE = 100;
@@ -25,9 +25,9 @@ export function getSearchApiGroupPageSize(hasFrontendFilters: boolean) {
 
 export function getFilteredRulesLimits(filterState: RulesFilter): FetchGroupsLimitOptions {
   return {
-    gmaLimit: getGrafanaFilterLimits(filterState),
-    dmaLimit: {
-      groupLimit: hasDatasourceFilters(filterState)
+    grafanaManagedLimit: getGrafanaFilterLimits(filterState),
+    datasourceManagedLimit: {
+      groupLimit: hasDatasourceClientSideFilters(filterState)
         ? FILTERED_GROUPS_LARGE_API_PAGE_SIZE
         : FILTERED_GROUPS_SMALL_API_PAGE_SIZE,
     },
@@ -37,7 +37,7 @@ export function getFilteredRulesLimits(filterState: RulesFilter): FetchGroupsLim
 function getGrafanaFilterLimits(filterState: RulesFilter) {
   const backendFiltersEnabled = shouldUseFullyCompatibleBackendFilters() || shouldUseBackendFilters();
 
-  const frontendFiltersInUse = hasClientSideFilters(filterState);
+  const frontendFiltersInUse = hasGrafanaClientSideFilters(filterState);
   const onlyBackendFiltersInUse = frontendFiltersInUse === false;
 
   if (backendFiltersEnabled && onlyBackendFiltersInUse) {

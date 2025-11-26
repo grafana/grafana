@@ -87,7 +87,7 @@ export function useFilteredRulesIteratorProvider() {
     const { backendFilter, frontendFilter } = getGrafanaFilter(filterState);
 
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
-      grafanaGroupsGenerator(options.gmaLimit, backendFilter)
+      grafanaGroupsGenerator(options.grafanaManagedLimit, backendFilter)
     ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>
@@ -114,7 +114,7 @@ export function useFilteredRulesIteratorProvider() {
     const dataSourceGenerators: Array<AsyncIterableX<RuleWithOrigin>> = externalRulesSourcesToFetchFrom.map(
       (dataSourceIdentifier) => {
         const promGroupsGenerator: AsyncIterableX<RuleWithOrigin> = from(
-          prometheusGroupsGenerator(dataSourceIdentifier, options.dmaLimit.groupLimit)
+          prometheusGroupsGenerator(dataSourceIdentifier, options.datasourceManagedLimit.groupLimit)
         ).pipe(
           withAbort(abortController.signal),
           concatMap((groups) =>

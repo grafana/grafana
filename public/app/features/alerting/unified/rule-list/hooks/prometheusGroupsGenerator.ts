@@ -62,8 +62,8 @@ export type GrafanaFetchGroupsLimit = MergeExclusive<{ groupLimit: number }, { r
 export type DataSourceFetchGroupsLimit = { groupLimit: number };
 
 export interface FetchGroupsLimitOptions {
-  gmaLimit: GrafanaFetchGroupsLimit;
-  dmaLimit: DataSourceFetchGroupsLimit;
+  grafanaManagedLimit: GrafanaFetchGroupsLimit;
+  datasourceManagedLimit: DataSourceFetchGroupsLimit;
 }
 
 export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {

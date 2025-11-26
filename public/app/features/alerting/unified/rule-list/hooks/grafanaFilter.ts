@@ -24,7 +24,7 @@ import {
 /**
  * Determines if client-side filtering is needed for Grafana-managed rules.
  */
-export function hasClientSideFilters(filterState: Partial<RulesFilter>): boolean {
+export function hasGrafanaClientSideFilters(filterState: Partial<RulesFilter>): boolean {
   const { ruleFilterConfig, groupFilterConfig } = buildGrafanaFilterConfigs();
 
   // Check each rule filter: if the config has a non-null handler AND the filter state has a value, we need client-side filtering

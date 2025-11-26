@@ -25,7 +25,7 @@ import {
 /**
  * Determines if client-side filtering is needed for data source-managed rules.
  */
-export function hasDatasourceFilters(filterState: Partial<RulesFilter>): boolean {
+export function hasDatasourceClientSideFilters(filterState: Partial<RulesFilter>): boolean {
   // Check if any filter that applies to datasource rules is active
   return (
     (filterState.freeFormWords && filterState.freeFormWords.length > 0) ||
