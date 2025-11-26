@@ -11058,9 +11058,7 @@
     }
   },
   "panel-group-by": {
-    "apply": "Apply",
     "button": "Group by",
-    "cancel": "Cancel",
     "loading": "Loading options...",
     "no-options": "No options found",
     "search-placeholder": "Search..."
