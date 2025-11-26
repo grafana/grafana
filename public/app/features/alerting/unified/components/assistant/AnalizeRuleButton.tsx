@@ -4,11 +4,13 @@ import { OpenAssistantProps, createAssistantContextItem, useAssistant } from '@g
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
-import { AlertingRule } from 'app/types/unified-alerting';
+import { GrafanaAlertingRule, GrafanaRecordingRule, GrafanaRule } from 'app/types/unified-alerting';
 
-export interface AnalyzeRuleButtonProps {
+import { prometheusRuleType } from '../../utils/rules';
+
+interface AnalyzeRuleButtonProps {
   /** Alert rule to analyze */
-  alertRule: AlertingRule;
+  rule: GrafanaRule;
 }
 
 /**
@@ -26,7 +28,7 @@ export function AnalyzeRuleButton(props: AnalyzeRuleButtonProps) {
 }
 
 function AnalyzeRuleButtonView({
-  alertRule,
+  rule,
   openAssistant,
 }: AnalyzeRuleButtonProps & {
   openAssistant: (props: OpenAssistantProps) => void;
@@ -34,53 +36,26 @@ function AnalyzeRuleButtonView({
   // Create alert rule context from alert rule data
   const alertContext = useMemo(() => {
     return createAssistantContextItem('structured', {
-      title: `Alert: ${alertRule.name}`,
+      title: `Alert: ${rule.name}`,
       data: {
-        alert: {
-          name: alertRule.name,
-          uid: alertRule.uid,
-          state: alertRule.state,
-          labels: alertRule.labels,
-          annotations: alertRule.annotations,
-          query: alertRule.query,
-          activeAt: alertRule.activeAt,
-          duration: alertRule.duration,
-          value: alertRule.alerts?.[0]?.value,
+        rule: {
+          name: rule.name,
+          uid: rule.uid,
+          labels: rule.labels,
+          query: rule.query,
         },
       },
     });
-  }, [alertRule]);
+  }, [rule]);
 
   // Generate default prompt
-  const analyzeRulePrompt = useMemo(() => {
-    const state = alertRule.state || 'firing';
-    const timeInfo = alertRule.activeAt ? ` starting at ${new Date(alertRule.activeAt).toISOString()}` : '';
-
-    const description = alertRule.annotations?.description || alertRule.annotations?.summary || '';
-    const labelsStr = alertRule.labels
-      ? Object.entries(alertRule.labels)
-          .map(([k, v]) => `${k}="${v}"`)
-          .join(', ')
-      : '';
-
-    let defaultPrompt = `Analyze the ${state} alert "${alertRule.name}"${timeInfo}.`;
-
-    if (description) {
-      defaultPrompt += ` ${description}`;
-    }
-
-    if (labelsStr) {
-      defaultPrompt += ` Labels: ${labelsStr}.`;
-    }
-
-    return defaultPrompt;
-  }, [alertRule]);
+  const analyzeRulePrompt = useMemo(() => buildAnalyzeRulePrompt(rule), [rule]);
 
   const handleClick = () => {
     reportInteraction('grafana_assistant_app_analyze_rule_button_clicked', {
       origin: 'alerting',
-      alertName: alertRule.name,
-      alertState: alertRule.state,
+      alertName: rule.name,
+      alertState: prometheusRuleType.grafana.alertingRule(rule) ? rule.state : undefined,
     });
 
     openAssistant({
@@ -95,9 +70,70 @@ function AnalyzeRuleButtonView({
   return (
     <Menu.Item
       label={t('alerting.alert-menu.analyze-rule', 'Analyze rule')}
-      icon="search"
+      icon="ai-sparkle"
       onClick={handleClick}
       data-testid="analyze-rule-menu-item"
     />
   );
+}
+
+/**
+ * Builds a prompt for analyzing a rule (alerting or recording).
+ * Automatically detects the rule type and uses the appropriate prompt builder.
+ */
+function buildAnalyzeRulePrompt(rule: GrafanaRule): string {
+  if (prometheusRuleType.grafana.alertingRule(rule)) {
+    return buildAnalyzeAlertingRulePrompt(rule);
+  } else if (prometheusRuleType.grafana.recordingRule(rule)) {
+    return buildAnalyzeRecordingRulePrompt(rule);
+  }
+  // Fallback (should not happen for GrafanaRule, but TypeScript requires it)
+  return `Analyze the rule "${rule.name}".`;
+}
+
+/**
+ * Builds a prompt for analyzing an alerting rule.
+ * Includes state, activeAt timestamp, annotations, and labels.
+ */
+function buildAnalyzeAlertingRulePrompt(rule: GrafanaAlertingRule): string {
+  const state = rule.state || 'firing';
+  const timeInfo = rule.activeAt ? ` starting at ${new Date(rule.activeAt).toISOString()}` : '';
+
+  let prompt = `Analyze the ${state} alert "${rule.name}"${timeInfo}.`;
+
+  const description = rule.annotations?.description || rule.annotations?.summary || '';
+  if (description) {
+    prompt += ` ${description}`;
+  }
+
+  const labelsStr = rule.labels
+    ? Object.entries(rule.labels)
+        .map(([k, v]) => `${k}="${v}"`)
+        .join(', ')
+    : '';
+  if (labelsStr) {
+    prompt += ` Labels: ${labelsStr}.`;
+  }
+
+  return prompt;
+}
+
+/**
+ * Builds a prompt for analyzing a recording rule.
+ * Includes name, query, and labels (no state or activeAt).
+ */
+function buildAnalyzeRecordingRulePrompt(rule: GrafanaRecordingRule): string {
+  const labelsStr = rule.labels
+    ? Object.entries(rule.labels)
+        .map(([k, v]) => `${k}="${v}"`)
+        .join(', ')
+    : '';
+
+  let prompt = `Analyze the recording rule "${rule.name}".`;
+
+  if (labelsStr) {
+    prompt += ` Labels: ${labelsStr}.`;
+  }
+
+  return prompt;
 }

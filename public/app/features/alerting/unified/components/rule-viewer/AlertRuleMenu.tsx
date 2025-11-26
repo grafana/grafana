@@ -123,7 +123,7 @@ const AlertRuleMenu = ({
     (!isOpenSourceEdition() || isLocalDevEnv()) && prometheusRuleType.alertingRule(promRule);
 
   const { isAvailable: isAssistantAvailable } = useAssistant();
-  const shouldShowAnalyzeRuleButton = isAssistantAvailable && prometheusRuleType.alertingRule(promRule);
+  const shouldShowAnalyzeRuleButton = isAssistantAvailable && prometheusRuleType.grafana.rule(promRule);
 
   const shareUrl = createShareLink(identifier);
 
@@ -170,9 +170,7 @@ const AlertRuleMenu = ({
       )}
       {/* TODO Migrate Declare Incident to plugin links extensions */}
       {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={promRule.name} url={''} />}
-      {shouldShowAnalyzeRuleButton && prometheusRuleType.alertingRule(promRule) && (
-        <AnalyzeRuleButton alertRule={promRule} />
-      )}
+      {shouldShowAnalyzeRuleButton && <AnalyzeRuleButton rule={promRule} />}
       {canDuplicate && (
         <Menu.Item
           label={t('alerting.alert-menu.duplicate', 'Duplicate')}
