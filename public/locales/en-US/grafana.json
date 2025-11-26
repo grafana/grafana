@@ -14576,6 +14576,11 @@
       "welcome-to-grafana": "Welcome to Grafana"
     }
   },
+  "xplore": {
+    "logs-volume-panel-list": {
+      "visible-range-description": "Range from oldest to newest logs in display"
+    }
+  },
   "xychart": {
     "category-xychart": "XY Chart",
     "name-fill-opacity": "Fill opacity",
