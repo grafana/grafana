@@ -22,6 +22,10 @@ import { intervalToSeconds } from '../utils/time';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 

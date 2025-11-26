@@ -17,6 +17,10 @@ import { mimirDataSource } from '../../mocks/server/configure';
 
 import { RulesTable } from './RulesTable';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
 jest.mock('../../hooks/useAbilities');
 
 const mocks = {
