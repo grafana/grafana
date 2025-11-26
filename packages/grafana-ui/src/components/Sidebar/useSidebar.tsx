@@ -16,7 +16,7 @@ export interface SidebarContextValue {
   bottomMargin: number;
   edgeMargin: number;
   contentMargin: number;
-  onDockChange: () => void;
+  onToggleDock: () => void;
   onResize: (diff: number) => void;
 }
 
@@ -56,7 +56,7 @@ export function useSidebar({
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
 
-  const onDockChange = useCallback(() => setIsDocked((prev) => !prev), []);
+  const onToggleDock = useCallback(() => setIsDocked((prev) => !prev), []);
 
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
   const toolbarWidth =
@@ -98,7 +98,7 @@ export function useSidebar({
 
   return {
     isDocked,
-    onDockChange,
+    onToggleDock,
     onResize,
     outerWrapperProps,
     position,
