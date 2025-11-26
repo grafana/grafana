@@ -3,19 +3,20 @@ import { t } from '@grafana/i18n';
 import {
   BigValueColorMode,
   BigValueGraphMode,
+  BigValueIconMode,
   BigValueJustifyMode,
   BigValueTextMode,
   PercentChangeColorMode,
 } from '@grafana/schema';
-import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
+import { commonOptionsBuilder, getAvailableIcons, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
 import { addStandardDataReduceOptions, addOrientationOption } from './common';
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, FieldConfig, Options } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<Options>(StatPanel)
+export const plugin = new PanelPlugin<Options, FieldConfig>(StatPanel)
   .useFieldConfig()
   .setPanelOptions((builder) => {
     const mainCategory = [t('stat.category-stat-styles', 'Stat styles')];
@@ -133,6 +134,41 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
           ],
         },
         showIf: (config) => config.showPercentChange,
+      });
+
+    // Panel-level icon options (defaults)
+    const iconCategory = [t('stat.category-icon', 'Icon')];
+    builder
+      .addSelect({
+        path: 'icon',
+        name: t('stat.name-icon', 'Icon'),
+        description: t('stat.description-icon', 'Default icon to display (can be overridden per field)'),
+        category: iconCategory,
+        settings: {
+          options: [
+            { value: '', label: t('stat.icon-options.label-none', 'None') },
+            ...getAvailableIcons().map((icon) => ({ value: icon, label: icon })),
+          ],
+          allowCustomValue: false,
+        },
+        defaultValue: '',
+      })
+      .addSelect({
+        path: 'iconMode',
+        name: t('stat.name-icon-mode', 'Icon display mode'),
+        description: t('stat.description-icon-mode', 'How to display the icon (can be overridden per field)'),
+        category: iconCategory,
+        settings: {
+          options: [
+            { value: BigValueIconMode.Hidden, label: t('stat.icon-mode-options.label-hidden', 'Hidden') },
+            {
+              value: BigValueIconMode.IconAndText,
+              label: t('stat.icon-mode-options.label-icon-and-text', 'Icon and text'),
+            },
+            { value: BigValueIconMode.IconOnly, label: t('stat.icon-mode-options.label-icon-only', 'Icon only') },
+          ],
+        },
+        defaultValue: defaultOptions.iconMode,
       });
   })
   .setNoPadding()

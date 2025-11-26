@@ -175,6 +175,33 @@ export abstract class BigValueLayout {
     };
   }
 
+  getIconStyles(): CSSProperties {
+    const ICON_TO_VALUE_RATIO = 0.85;
+    const iconSize = Math.max(this.valueFontSize * ICON_TO_VALUE_RATIO, 16);
+
+    const styles: CSSProperties = {
+      width: iconSize,
+      height: iconSize,
+      marginRight: iconSize / 4,
+      flexShrink: 0,
+    };
+
+    switch (this.props.colorMode) {
+      case BigValueColorMode.Value:
+        styles.color = this.valueColor;
+        break;
+      case BigValueColorMode.Background:
+      case BigValueColorMode.BackgroundSolid:
+        styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
+        break;
+      case BigValueColorMode.None:
+        styles.color = this.props.theme.colors.text.primary;
+        break;
+    }
+
+    return styles;
+  }
+
   getValueAndTitleContainerStyles() {
     const styles: CSSProperties = {
       display: 'flex',

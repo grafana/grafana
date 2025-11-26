@@ -596,6 +596,15 @@ export enum PercentChangeColorMode {
 }
 
 /**
+ * Icon display mode for BigValue component
+ */
+export enum BigValueIconMode {
+  Hidden = 'hidden',
+  IconAndText = 'icon_and_text',
+  IconOnly = 'icon_only',
+}
+
+/**
  * TODO -- should not be table specific!
  * TODO docs
  */

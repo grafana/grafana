@@ -11,11 +11,11 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { findNumericFieldMinMax } from '@grafana/data/internal';
-import { BigValueTextMode, BigValueGraphMode } from '@grafana/schema';
+import { BigValueGraphMode, BigValueIconMode, BigValueTextMode } from '@grafana/schema';
 import { BigValue, DataLinksContextMenu, useTheme2, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/internal';
 
-import { Options } from './panelcfg.gen';
+import { FieldConfig, Options } from './panelcfg.gen';
 
 export const StatPanel = memo(
   ({
@@ -53,6 +53,15 @@ export const StatPanel = memo(
           sparkline.timeRange = timeRange;
         }
 
+        // Extract icon config from custom field config (field-level takes precedence)
+        const customConfig = value.field?.custom as FieldConfig | undefined;
+        const fieldIcon = customConfig?.icon;
+        const fieldIconMode = customConfig?.iconMode;
+
+        // Field config takes precedence over panel options
+        const icon = fieldIcon || options.icon || '';
+        const iconMode = fieldIconMode ?? options.iconMode ?? BigValueIconMode.Hidden;
+
         return (
           <BigValue
             value={value.display}
@@ -71,6 +80,8 @@ export const StatPanel = memo(
             className={targetClassName}
             disableWideLayout={!options.wideLayout}
             percentChangeColorMode={options.percentChangeColorMode}
+            icon={icon}
+            iconMode={iconMode}
           />
         );
       },

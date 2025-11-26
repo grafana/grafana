@@ -203,6 +203,9 @@ BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(
 // TODO docs
 PercentChangeColorMode: "standard" | "inverted" | "same_as_value" @cuetsy(kind="enum",memberNames="Standard|Inverted|SameAsValue")
 
+// Icon display mode for BigValue component
+BigValueIconMode: "hidden" | "icon_and_text" | "icon_only" @cuetsy(kind="enum",memberNames="Hidden|IconAndText|IconOnly")
+
 // TODO -- should not be table specific!
 // TODO docs
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
