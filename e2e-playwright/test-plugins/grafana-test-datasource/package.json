@@ -31,6 +31,7 @@
   "dependencies": {
     "@emotion/css": "11.11.2",
     "@grafana/data": "workspace:*",
+    "@grafana/i18n": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
