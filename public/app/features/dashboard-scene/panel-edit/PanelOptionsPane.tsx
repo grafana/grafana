@@ -58,7 +58,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       open: newState,
     });
     this.setState({
-      isVizPickerOpen: !this.state.isVizPickerOpen,
+      isVizPickerOpen: newState,
       hasPickedViz: this.state.hasPickedViz || newState === false,
     });
   };
