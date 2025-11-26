@@ -211,13 +211,6 @@ app_mode = development
 
 target = storage-server
 
-[server]
-http_port = 3001
-http_addr = "127.0.0.1"
-
-[log]
-level = info
-
 [database]
 type = mysql
 host = 127.0.0.1:3306
@@ -243,12 +236,12 @@ kubernetesDashboards = true
 kubernetesFolders = true
 unifiedStorage = true
 unifiedStorageHistoryPruner = true
-unifiedStorageSearch = false
+unifiedStorageSearch = true
 unifiedStorageSearchPermissionFiltering = false
 unifiedStorageSearchSprinkles = false
 
 [unified_storage]
-enable_search = false
+enable_search = true
 https_skip_verify = true
 ```
 
