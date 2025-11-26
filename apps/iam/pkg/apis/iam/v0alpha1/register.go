@@ -322,6 +322,7 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&TeamBindingList{},
 		&ExternalGroupMapping{},
 		&ExternalGroupMappingList{},
+		&GetGroups{},
 		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
 		// &UserTeamList{},
 		// &ServiceAccountTokenList{},

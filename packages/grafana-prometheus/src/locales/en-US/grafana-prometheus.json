@@ -175,7 +175,7 @@
         "label-scrape-interval": "Scrape interval",
         "label-series-limit": "Series limit",
         "label-use-series-endpoint": "Use series endpoint",
-        "more-info": "For more information on configuring prometheus type and version in data sources, see the <2>provisioning documentation</2> .",
+        "more-info": "For more information on configuring prometheus type and version in data sources, see the <2>provisioning documentation</2>.",
         "placeholder-example-maxsourceresolutionmtimeout": "Example: {{example}}",
         "title-interval-behaviour": "Interval behaviour",
         "title-other": "Other",
