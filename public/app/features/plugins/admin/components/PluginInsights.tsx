@@ -58,7 +58,7 @@ export function PluginInsights(props: Props): React.ReactElement | null {
         </Stack>
         {pluginInsights?.insights.map((insightItem, index) => {
           return (
-            <Stack key={index} wrap direction="column" gap={0.5}>
+            <Stack key={index} wrap direction="column" gap={1}>
               <CollapsableSection
                 isOpen={false}
                 label={
@@ -69,9 +69,9 @@ export function PluginInsights(props: Props): React.ReactElement | null {
                     data-testid={`plugin-insight-${insightItem.name.toLowerCase()}`}
                   >
                     {insightItem.scoreLevel === 'Excellent' ? (
-                      <Icon name="check-circle" size="md" color={theme.colors.success.main} />
+                      <Icon name="check-circle" size="lg" color={theme.colors.success.main} />
                     ) : (
-                      <Icon name="exclamation-triangle" size="md" />
+                      <Icon name="exclamation-triangle" size="lg" />
                     )}
                     <Text
                       color="primary"
@@ -86,21 +86,18 @@ export function PluginInsights(props: Props): React.ReactElement | null {
               >
                 <Stack direction="column" gap={1}>
                   {insightItem.items.map((item, idx) => (
-                    <div key={idx}>
-                      {item.level === 'good' ? (
-                        <Icon
-                          name="check-circle"
-                          size="sm"
-                          color={theme.colors.success.main}
-                          className={styles.pluginInsightsItemIcon}
-                        />
-                      ) : (
-                        <Icon name="exclamation-triangle" size="sm" className={styles.pluginInsightsItemIcon} />
-                      )}
+                    <Stack key={idx} direction="row" gap={1} alignItems="flex-start">
+                      <span>
+                        {item.level === 'good' ? (
+                          <Icon name="check-circle" size="sm" color={theme.colors.success.main} />
+                        ) : (
+                          <Icon name="exclamation-triangle" size="sm" />
+                        )}
+                      </span>
                       <Text color="secondary" variant="body" data-testid={`plugin-insight-item-${item.id}`}>
                         {item.name}
                       </Text>
-                    </div>
+                    </Stack>
                   ))}
                 </Stack>
               </CollapsableSection>
@@ -115,8 +112,7 @@ export function PluginInsights(props: Props): React.ReactElement | null {
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     pluginVersionDetails: css({ wordBreak: 'break-word' }),
-    pluginInsightsItems: css({ marginLeft: '26px' }),
-    pluginInsightsItemIcon: css({ marginRight: '8px' }),
+    pluginInsightsItems: css({ marginLeft: '26px', paddingTop: '0 !important' }),
     pluginInsightsTooltipSeparator: css({
       border: 'none',
       borderTop: `1px solid ${theme.colors.border.medium}`,
