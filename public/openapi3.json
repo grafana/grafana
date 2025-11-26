@@ -11609,6 +11609,9 @@
           "teamId": {
             "format": "int64",
             "type": "integer"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -17602,56 +17605,6 @@
         "tags": [
           "dashboards",
           "snapshots"
-        ]
-      }
-    },
-    "/dashboards/calculate-diff": {
-      "post": {
-        "operationId": "calculateDashboardDiff",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "base": {
-                    "$ref": "#/components/schemas/CalculateDiffTarget"
-                  },
-                  "diffType": {
-                    "description": "The type of diff to return\nDescription:\n`basic`\n`json`",
-                    "enum": [
-                      "basic",
-                      "json"
-                    ],
-                    "type": "string"
-                  },
-                  "new": {
-                    "$ref": "#/components/schemas/CalculateDiffTarget"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/calculateDashboardDiffResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Perform diff on two dashboards.",
-        "tags": [
-          "dashboards"
         ]
       }
     },

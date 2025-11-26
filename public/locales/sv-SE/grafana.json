@@ -2624,7 +2624,9 @@
         "placeholder-search-input": "Sök efter namn eller ange filterfråga …"
       },
       "grafana-folder": "Grafana-mapp",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Hälsa",
       "label": {
         "hide": "Dölj",
@@ -2635,6 +2637,7 @@
       "placeholder-all-data-sources": "Alla datakällor",
       "placeholder-contact-point": "Välj kontaktpunkt",
       "placeholder-data-sources": "Välj datakällor",
+      "placeholder-group-search": "",
       "placeholder-labels": "Välj etiketter",
       "plugin-rules": "Tilläggsregler",
       "rule-source": {
@@ -6182,8 +6185,8 @@
       "placeholder-search-for": "Sök efter …",
       "radio-options": {
         "label": {
-          "suggestions": "Förslag",
-          "visualizations": "Visualiseringar"
+          "all-visualizations": "",
+          "suggestions": "Förslag"
         }
       },
       "title-close": "Stäng"
@@ -8123,8 +8126,7 @@
       "edit-pane": {
         "go-back": "Tillbaka"
       }
-    },
-    "select-group": "Markera grupp"
+    }
   },
   "grafana-data": {
     "datetime": {
@@ -11050,8 +11052,8 @@
       "tooltip-delete": "Ta bort"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "Baserat på aktuella data",
-      "no-results-matched-your-query": "Inga träffar matchade din sökfråga"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Kunde inte hitta något som matchar din fråga"

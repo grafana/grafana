@@ -2625,7 +2625,9 @@
         "placeholder-search-input": "Search by name or enter filter query..."
       },
       "grafana-folder": "Grafana folder",
-      "group-autocomplete-unavailable": "Due to large number of groups, autocomplete is not available",
+      "group-no-results": "No groups found matching \"{{search}}\"",
+      "group-search-error": "Error searching groups",
+      "group-search-prompt": "Type at least 3 characters to search groups",
       "health": "Health",
       "label": {
         "hide": "Hide",
@@ -2636,6 +2638,7 @@
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
+      "placeholder-group-search": "Search group",
       "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
       "rule-source": {
@@ -8124,8 +8127,7 @@
       "edit-pane": {
         "go-back": "Go back"
       }
-    },
-    "select-group": "Select group"
+    }
   },
   "grafana-data": {
     "datetime": {

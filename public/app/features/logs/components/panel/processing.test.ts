@@ -190,6 +190,45 @@ describe('preProcessLogs', () => {
       expect(logListModel.body).not.toBe(entry);
     });
 
+    test('Prettifies and escapes wrapped JSON', () => {
+      const entry = '{"key": "value", "otherKey": "other\\nValue"}';
+      const logListModel = createLogLine(
+        { entry, hasUnescapedContent: true },
+        {
+          escape: true, // escape
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true, // wrapped
+          prettifyJSON: true,
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toBe(`{
+  "key": "value",
+  "otherKey": "other
+Value"
+}`);
+    });
+
+    test('Prettifies JSON without escaping', () => {
+      const entry = '{"key": "value", "otherKey": "other\\nValue"}';
+      const logListModel = createLogLine(
+        { entry, hasUnescapedContent: true },
+        {
+          escape: false, // escape = false
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true, // wrapped
+          prettifyJSON: true,
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toBe(`{
+  "key": "value",
+  "otherKey": "other\\nValue"
+}`);
+    });
+
     test('Uses lossless parsing', () => {
       const entry = '{"number": 90071992547409911}';
       const logListModel = createLogLine(
