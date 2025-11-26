@@ -117,7 +117,7 @@ type DashboardsAPIBuilder struct {
 	libraryPanels                libraryelements.Service // for legacy library panels
 	publicDashboardService       publicdashboards.Service
 	snapshotService              dashboardsnapshots.Service
-	snapshotOptions              snapshot.SharingOptionGetter
+	snapshotOptions              dashv0.SnapshotSharingOptions
 	namespacer                   request.NamespaceMapper
 	isStandalone                 bool // skips any handling including anything to do with legacy storage
 }
@@ -154,6 +154,13 @@ func RegisterAPIService(
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 
+	snapshotOptions := dashv0.SnapshotSharingOptions{
+		SnapshotsEnabled:     cfg.SnapshotEnabled,
+		ExternalSnapshotURL:  cfg.ExternalSnapshotUrl,
+		ExternalSnapshotName: cfg.ExternalSnapshotName,
+		ExternalEnabled:      cfg.ExternalEnabled,
+	}
+
 	builder := &DashboardsAPIBuilder{
 		dashboardService:             dashboardService,
 		dashboardPermissions:         dashboardPermissions,
@@ -173,7 +180,7 @@ func RegisterAPIService(
 		libraryPanels:                libraryPanels,
 		publicDashboardService:       publicDashboardService,
 		snapshotService:              snapshotService,
-		snapshotOptions:              snapshot.NewSharingOptionGetter(cfg),
+		snapshotOptions:              snapshotOptions,
 		namespacer:                   namespacer,
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),

@@ -22,9 +22,9 @@ import (
 
 func TestCreateDashboardSnapshot_DashboardNotFound(t *testing.T) {
 	mockService := &MockService{}
-	cfg := snapshot.SharingOptionSpec{
-		SnapshotsEnabled: ptrBool(true),
-		ExternalEnabled:  ptrBool(false),
+	cfg := snapshot.SnapshotSharingOptions{
+		SnapshotsEnabled: true,
+		ExternalEnabled:  false,
 	}
 	testUser := &user.SignedInUser{
 		UserID: 1,

@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetRoutes(service dashboardsnapshots.Service, options SharingOptionGetter, defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
 
@@ -125,14 +125,8 @@ func GetRoutes(service dashboardsnapshots.Service, options SharingOptionGetter, 
 						return
 					}
 
-					opts, err := options(info.Value)
-					if err != nil {
-						wrap.JsonApiErr(http.StatusBadRequest, "error getting options", err)
-						return
-					}
-
 					// Use the existing snapshot service
-					dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, cmd, service)
+					dashboardsnapshots.CreateDashboardSnapshot(wrap, options, cmd, service)
 				},
 			},
 			{

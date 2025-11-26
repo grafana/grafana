@@ -36,8 +36,8 @@ var client = &http.Client{
 	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 }
 
-func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SharingOptionSpec, cmd CreateDashboardSnapshotCommand, svc Service) {
-	if !*cfg.SnapshotsEnabled {
+func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSharingOptions, cmd CreateDashboardSnapshotCommand, svc Service) {
+	if !cfg.SnapshotsEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return
 	}
@@ -74,12 +74,12 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SharingOpt
 	}
 
 	if cmd.External {
-		if !*cfg.ExternalEnabled {
+		if !cfg.ExternalEnabled {
 			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
 			return
 		}
 
-		resp, err := createExternalDashboardSnapshot(cmd, *cfg.ExternalSnapshotURL)
+		resp, err := createExternalDashboardSnapshot(cmd, cfg.ExternalSnapshotURL)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed to create external snapshot", err)
 			return

@@ -32,12 +32,12 @@ type DashboardSnapshotWithDeleteKey struct {
 // Each tenant, may have different sharing options
 // This is currently set using custom.ini, but multi-tenant support will need
 // to be managed differently
-//type SnapshotSharingOptions struct {
-//	SnapshotsEnabled     bool   `json:"snapshotEnabled"`
-//	ExternalSnapshotURL  string `json:"externalSnapshotURL,omitempty"`
-//	ExternalSnapshotName string `json:"externalSnapshotName,omitempty"`
-//	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
-//}
+type SnapshotSharingOptions struct {
+	SnapshotsEnabled     bool   `json:"snapshotEnabled"`
+	ExternalSnapshotURL  string `json:"externalSnapshotURL,omitempty"`
+	ExternalSnapshotName string `json:"externalSnapshotName,omitempty"`
+	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
+}
 
 // These are the values expected to be sent from an end user
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -81,22 +81,3 @@ type DashboardCreateResponse struct {
 	// URL that will delete the response
 	DeleteURL string `json:"deleteUrl"`
 }
-
-//// Represents an options object that must be named for each namespace/team/user
-//// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-//type SharingOptions struct {
-//	metav1.TypeMeta   `json:",inline"`
-//	metav1.ObjectMeta `json:"metadata,omitempty"`
-//
-//	// Show the options inline
-//	Spec SnapshotSharingOptions `json:"spec"`
-//}
-//
-//// Represents a list of namespaced options
-//// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-//type SharingOptionsList struct {
-//	metav1.TypeMeta `json:",inline"`
-//	metav1.ListMeta `json:"metadata,omitempty"`
-//
-//	Items []SharingOptions `json:"items"`
-//}

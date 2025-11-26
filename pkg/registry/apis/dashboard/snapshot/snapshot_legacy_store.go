@@ -28,7 +28,7 @@ type SnapshotLegacyStore struct {
 	ResourceInfo utils.ResourceInfo
 	Service      dashboardsnapshots.Service
 	Namespacer   request.NamespaceMapper
-	Options      SharingOptionGetter
+	Options      dashV0.SnapshotSharingOptions
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -141,11 +141,7 @@ func (s *SnapshotLegacyStore) Get(ctx context.Context, name string, options *met
 }
 
 func (s *SnapshotLegacyStore) checkEnabled(ns string) error {
-	opts, err := s.Options(ns)
-	if err != nil {
-		return err
-	}
-	if !*opts.Spec.SnapshotsEnabled {
+	if !s.Options.SnapshotsEnabled {
 		return fmt.Errorf("snapshots not enabled")
 	}
 	return nil
