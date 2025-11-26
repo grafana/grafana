@@ -1,34 +1,41 @@
-import { ref } from 'process';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { CustomVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
 import { Button, Modal, Stack } from '@grafana/ui';
-import { setPaneState } from 'app/features/explore/state/main';
 
+import { dashboardEditActions } from '../../../../edit-pane/shared';
 import { VariableStaticOptionsForm, VariableStaticOptionsFormRef } from '../../components/VariableStaticOptionsForm';
 import { VariableStaticOptionsFormAddButton } from '../../components/VariableStaticOptionsFormAddButton';
 
-import { ValuesBuilder } from './ValuesBuilder';
 import { ValuesPreview } from './ValuesPreview';
 
 interface ModalEditorProps {
   variable: CustomVariable;
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export function ModalEditor({ variable, isOpen, onClose }: ModalEditorProps) {
-  const formRef = useRef<VariableStaticOptionsFormRef | null>(null);
-
+export function ModalEditor({ variable, onClose }: ModalEditorProps) {
   const { query } = variable.useState();
+  const [initialQuery, setInitialQuery] = useState(query);
 
-  const options = variable.transformCsvStringToOptions(query, false).map(({ label, value }) => ({
-    value,
-    label: value === label ? '' : label,
-  }));
+  useEffectOnce(() => {
+    setInitialQuery(query);
+  });
+
+  const transformQueryToOptions = useCallback(
+    (query: string) =>
+      variable.transformCsvStringToOptions(query, false).map(({ label, value }) => ({
+        value,
+        label: value === label ? '' : label,
+      })),
+    [variable]
+  );
+
+  const [options, setOptions] = useState(transformQueryToOptions(query));
 
   const escapeEntities = useCallback((text: VariableValueSingle) => String(text).trim().replaceAll(',', '\\,'), []);
 
@@ -48,27 +55,39 @@ export function ModalEditor({ variable, isOpen, onClose }: ModalEditorProps) {
     [formatOption]
   );
 
-  const handleOptionsChange = useCallback(
-    async (options: VariableValueOption[]) => {
-      variable.setState({ query: generateQuery(options) });
-      await lastValueFrom(variable.validateAndUpdate!());
-    },
-    [variable, generateQuery]
-  );
+  const onSave = useCallback(async () => {
+    const query = generateQuery(options);
 
+    dashboardEditActions.edit({
+      source: variable,
+      description: t('dashboard.edit-pane.variable.custom-options.change-value', 'Change variable value'),
+      perform: () => {
+        variable.setState({ query });
+        lastValueFrom(variable.validateAndUpdate!());
+      },
+      undo: () => {
+        variable.setState({ query: initialQuery });
+        lastValueFrom(variable.validateAndUpdate!());
+      },
+    });
+
+    onClose();
+  }, [generateQuery, options, variable, onClose, initialQuery]);
+
+  const formRef = useRef<VariableStaticOptionsFormRef | null>(null);
   const handleOnAdd = useCallback(() => formRef.current?.addItem(), []);
 
   return (
     <Modal
       title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom Variable')}
-      isOpen={isOpen}
+      isOpen={true}
       onDismiss={onClose}
       closeOnBackdropClick={false}
       closeOnEscape={false}
     >
       <Stack direction="column" gap={2}>
-        <VariableStaticOptionsForm options={options} onChange={handleOptionsChange} ref={formRef} isInModal />
-        <ValuesPreview variable={variable} />
+        <VariableStaticOptionsForm options={options} onChange={setOptions} ref={formRef} isInModal />
+        <ValuesPreview options={options} />
       </Stack>
       <Modal.ButtonRow leftItems={<VariableStaticOptionsFormAddButton onAdd={handleOnAdd} />}>
         <Button
@@ -79,12 +98,7 @@ export function ModalEditor({ variable, isOpen, onClose }: ModalEditorProps) {
         >
           <Trans i18nKey="dashboard.edit-pane.variable.custom-options.close">Cancel</Trans>
         </Button>
-        <Button
-          variant="primary"
-          onClick={() => {
-            variable.setState({ query: generateQuery(options) });
-          }}
-        >
+        <Button variant="primary" onClick={onSave}>
           <Trans i18nKey="dashboard.edit-pane.variable.custom-options.save">Save</Trans>
         </Button>
       </Modal.ButtonRow>
