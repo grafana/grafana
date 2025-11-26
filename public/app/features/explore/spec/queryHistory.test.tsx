@@ -48,11 +48,6 @@ jest.mock('@grafana/runtime', () => ({
   },
   getAppEvents: () => testEventBus,
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
-  config: {
-    featureToggles: {
-      correlationsExploreEditor: false,
-    },
-  },
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
