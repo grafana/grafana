@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useContext } from 'react';
+import React, { ButtonHTMLAttributes, useContext } from 'react';
 
 import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 
@@ -11,38 +11,48 @@ import { Tooltip } from '../Tooltip/Tooltip';
 
 import { SidebarContext } from './useSidebar';
 
-export interface Props {
+export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon: IconName;
   active?: boolean;
-  onClick?: () => void;
-  title: string;
   tooltip?: string;
+  title: string;
 }
 
-export function SidebarButton({ icon, active, onClick, title, tooltip }: Props) {
-  const styles = useStyles2(getStyles);
-  const context = useContext(SidebarContext);
+export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
+  ({ icon, active, onClick, title, tooltip, ...restProps }, ref) => {
+    const styles = useStyles2(getStyles);
+    const context = useContext(SidebarContext);
 
-  if (!context) {
-    throw new Error('Sidebar.Button must be used within a Sidebar component');
+    if (!context) {
+      throw new Error('Sidebar.Button must be used within a Sidebar component');
+    }
+
+    const buttonClass = cx(
+      styles.button,
+      context.compact && styles.compact,
+      active && styles.active,
+      context.position === 'left' && styles.leftButton
+    );
+
+    return (
+      <Tooltip ref={ref} content={tooltip ?? title} placement={context.position === 'left' ? 'right' : 'left'}>
+        <button
+          className={buttonClass}
+          aria-label={title}
+          aria-expanded={active}
+          type="button"
+          onClick={onClick}
+          {...restProps}
+        >
+          <div className={styles.iconWrapper}>{renderIcon(icon, context.compact)}</div>
+          {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
+        </button>
+      </Tooltip>
+    );
   }
+);
 
-  const buttonClass = cx(
-    styles.button,
-    context.compact && styles.compact,
-    active && styles.active,
-    context.position === 'left' && styles.leftButton
-  );
-
-  return (
-    <Tooltip content={tooltip ?? title} placement={context.position === 'left' ? 'right' : 'left'}>
-      <button className={buttonClass} aria-label={title} aria-expanded={active} type="button" onClick={onClick}>
-        <div className={styles.iconWrapper}>{renderIcon(icon, context.compact)}</div>
-        {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
-      </button>
-    </Tooltip>
-  );
-}
+SidebarButton.displayName = 'SidebarButton';
 
 function renderIcon(icon: IconName | React.ReactNode, compact?: boolean) {
   if (!icon) {
