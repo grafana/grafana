@@ -257,7 +257,7 @@ newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
-newPanelPadding,experimental,@grafana/dashboards-squad,false,false,false
+newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false

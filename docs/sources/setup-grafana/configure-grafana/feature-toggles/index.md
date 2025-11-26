@@ -98,6 +98,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureResourcePickerUpdates`      | Enables the updated Azure Monitor resource picker                                                      |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
+| `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 
 ## Development feature toggles
