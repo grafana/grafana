@@ -1596,5 +1596,4 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
 			}
 		}
 	}
-
 }
