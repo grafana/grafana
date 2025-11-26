@@ -47,7 +47,7 @@ export function AppNotificationList() {
       dispatch(notifyApp(createErrorNotification(title, text, traceId)));
     };
 
-    const handleWarning = (payload?: AlertPayload) => {
+    const handleWarningAlert = (payload?: AlertPayload) => {
       if (!payload) {
         return;
       }
@@ -55,7 +55,7 @@ export function AppNotificationList() {
       dispatch(notifyApp(createWarningNotification(title, text, traceId)));
     };
 
-    const handleSuccess = (payload?: AlertPayload) => {
+    const handleSuccessAlert = (payload?: AlertPayload) => {
       if (!payload) {
         return;
       }
@@ -63,7 +63,7 @@ export function AppNotificationList() {
       dispatch(notifyApp(createSuccessNotification(title, text, traceId)));
     };
 
-    const handleInfo = (payload?: AlertPayload) => {
+    const handleInfoAlert = (payload?: AlertPayload) => {
       if (!payload) {
         return;
       }
@@ -71,17 +71,17 @@ export function AppNotificationList() {
       dispatch(notifyApp(createInfoNotification(title, text, traceId)));
     };
 
-    appEvents.on(AppEvents.alertWarning, handleWarning);
-    appEvents.on(AppEvents.alertSuccess, handleSuccess);
+    appEvents.on(AppEvents.alertWarning, handleWarningAlert);
+    appEvents.on(AppEvents.alertSuccess, handleSuccessAlert);
     appEvents.on(AppEvents.alertError, handleErrorAlert);
-    appEvents.on(AppEvents.alertInfo, handleInfo);
+    appEvents.on(AppEvents.alertInfo, handleInfoAlert);
 
     return () => {
       // Unsubscribe from events on unmount to avoid memory leaks
-      appEvents.off(AppEvents.alertWarning, handleWarning);
-      appEvents.off(AppEvents.alertSuccess, handleSuccess);
+      appEvents.off(AppEvents.alertWarning, handleWarningAlert);
+      appEvents.off(AppEvents.alertSuccess, handleSuccessAlert);
       appEvents.off(AppEvents.alertError, handleErrorAlert);
-      appEvents.off(AppEvents.alertInfo, handleInfo);
+      appEvents.off(AppEvents.alertInfo, handleInfoAlert);
     };
   }, [dispatch, chrome]);
 
