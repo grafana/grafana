@@ -500,8 +500,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // First close all nodes
     let newTree = closeNodes(this.state.tree!);
 
-    if (this.state.selectedScopes.length && this.state.selectedScopes[0].parentNodeId) {
-      let path = getPathOfNode(this.state.selectedScopes[0].parentNodeId, this.state.nodes);
+    if (this.state.selectedScopes.length && this.state.selectedScopes[0].scopeNodeId) {
+      let path = getPathOfNode(this.state.selectedScopes[0].scopeNodeId, this.state.nodes);
 
       // Get node at path, and request it's children if they don't exist yet
       let nodeAtPath = treeNodeAtPath(newTree, path);
@@ -509,16 +509,20 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // In the cases where nodes are not in the tree yet
       if (!nodeAtPath) {
         try {
-          newTree = (await this.resolvePathToRoot(this.state.selectedScopes[0].parentNodeId, newTree)).tree;
+          newTree = (await this.resolvePathToRoot(this.state.selectedScopes[0].scopeNodeId, newTree)).tree;
           nodeAtPath = treeNodeAtPath(newTree, path);
         } catch (error) {
           console.error('Failed to resolve path to root', error);
         }
       }
 
-      if (nodeAtPath && !nodeAtPath.children) {
+      // We have resolved to root, which means the parent node should be available
+      let parentPath = path.slice(0, -1);
+      let parentNodeAtPath = treeNodeAtPath(newTree, parentPath);
+
+      if (parentNodeAtPath && (!parentNodeAtPath.children || Object.keys(parentNodeAtPath.children).length === 1)) {
         // This will update the tree with the children
-        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, nodeAtPath, '');
+        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, parentNodeAtPath, '');
         newTree = newTreeWithChildren;
       }
 
