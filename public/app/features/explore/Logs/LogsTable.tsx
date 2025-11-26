@@ -18,7 +18,7 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AdHocFilterItem, Table } from '@grafana/ui';
+import { AdHocFilterItem, Table, TableSortByFieldState } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
@@ -38,10 +38,25 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   logsFrame: LogsFrame | null;
+  tableSortBy?: string;
+  tableSortDir?: 'asc' | 'desc';
+  onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
 }
 
 export function LogsTable(props: Props) {
-  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
+  const {
+    timeZone,
+    splitOpen,
+    range,
+    logsSortOrder,
+    width,
+    dataFrame,
+    columnsWithMeta,
+    logsFrame,
+    tableSortBy,
+    tableSortDir,
+    onSortByChange,
+  } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
   const timeIndex = logsFrame?.timeField.index;
 
@@ -167,6 +182,13 @@ export function LogsTable(props: Props) {
     }
   };
 
+  // Use persisted sortBy if available, otherwise default to time field based on logsSortOrder
+  const defaultSortBy: TableSortByFieldState[] = [
+    { displayName: logsFrame?.timeField.name || '', desc: logsSortOrder === LogsSortOrder.Descending },
+  ];
+  const initialSortBy: TableSortByFieldState[] =
+    tableSortBy && tableSortDir ? [{ displayName: tableSortBy, desc: tableSortDir === 'desc' }] : defaultSortBy;
+
   return (
     <Table
       data={tableFrame}
@@ -174,9 +196,8 @@ export function LogsTable(props: Props) {
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
-      initialSortBy={[
-        { displayName: logsFrame?.timeField.name || '', desc: logsSortOrder === LogsSortOrder.Descending },
-      ]}
+      initialSortBy={initialSortBy}
+      onSortByChange={onSortByChange}
     />
   );
 }

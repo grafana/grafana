@@ -278,6 +278,19 @@ export function LogsTableWrap(props: Props) {
 
   const styles = useStyles2(getStyles, height, sidebarWidth);
 
+  const onSortByChange = useCallback(
+    (sortBy: Array<{ displayName: string; desc?: boolean }>) => {
+      // Transform from Table format to URL format - only store the first sort column
+      if (sortBy.length > 0) {
+        updatePanelState({
+          tableSortBy: sortBy[0].displayName,
+          tableSortDir: sortBy[0].desc ? 'desc' : 'asc',
+        });
+      }
+    },
+    [updatePanelState]
+  );
+
   if (!columnsWithMeta) {
     return null;
   }
@@ -512,6 +525,9 @@ export function LogsTableWrap(props: Props) {
               dataFrame={currentDataFrame}
               columnsWithMeta={columnsWithMeta}
               height={height}
+              tableSortBy={panelState?.tableSortBy}
+              tableSortDir={panelState?.tableSortDir}
+              onSortByChange={onSortByChange}
             />
           </div>
         </div>
