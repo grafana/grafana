@@ -32,7 +32,6 @@ export const applyLayerFilter = (
       });
 
       // Only apply filter if the target query exists
-      // If query doesn't exist, fall back to no filter
       if (queryExists) {
         panelData = {
           ...panelData,
