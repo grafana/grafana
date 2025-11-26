@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -17,6 +17,7 @@ import {
 } from '@grafana/ui';
 import {
   Repository,
+  RepositorySpec,
   useGetRepositoryFilesQuery,
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
@@ -31,6 +32,16 @@ interface ResourceTreeViewProps {
 
 type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<FlatTreeItem, FlatTreeItem[T]>;
 
+function getLink(item: TreeItem, spec?: RepositorySpec) {
+  if (item.type === 'Dashboard' && item.resourceName) {
+    return `/d/${item.resourceName}`;
+  }
+  if (item.type === 'Folder' && item.resourceName) {
+    return `/dashboards/f/${item.resourceName}`;
+  }
+  return getRepoFileUrl(spec, item.path);
+}
+
 export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const styles = useStyles2(getStyles);
   const name = repo.metadata?.name ?? '';
@@ -42,20 +53,6 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
 
-  const getLink = useCallback(
-    (item: TreeItem) => {
-      if (item.type === 'Dashboard' && item.resourceName) {
-        return `/d/${item.resourceName}`;
-      }
-      if (item.type === 'Folder' && item.resourceName) {
-        return `/dashboards/f/${item.resourceName}`;
-      }
-      return getRepoFileUrl(repo.spec, item.path);
-    },
-    [repo.spec]
-  );
-
-  // Build tree from merged data
   const flatItems = useMemo(() => {
     const files = filesQuery.data?.items ?? [];
     const resources = resourcesQuery.data?.items ?? [];
@@ -63,7 +60,6 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
     const merged = mergeFilesAndResources(files, resources);
     let tree = buildTree(merged);
 
-    // Apply search filter
     if (searchQuery) {
       tree = filterTree(tree, searchQuery);
     }
@@ -79,7 +75,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         cell: ({ row: { original } }: TreeCell) => {
           const { item, level } = original;
           const iconName = getIconName(item.type);
-          const link = getLink(item);
+          const link = getLink(item, repo.spec);
 
           const isExternal = link?.startsWith('http');
 
@@ -144,7 +140,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'actions',
         header: '',
         cell: ({ row: { original } }: TreeCell) => {
-          const link = getLink(original.item);
+          const link = getLink(original.item, repo.spec);
 
           if (!link) {
             return null;
@@ -160,7 +156,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         },
       },
     ],
-    [getLink, styles]
+    [repo.spec, styles]
   );
 
   if (isLoading) {
@@ -172,15 +168,13 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   }
 
   return (
-    <Stack grow={1} direction="column" gap={2}>
-      <Stack gap={2}>
-        <FilterInput
-          placeholder={t('provisioning.resource-tree.search-placeholder', 'Search by path or title')}
-          autoFocus={true}
-          value={searchQuery}
-          onChange={setSearchQuery}
-        />
-      </Stack>
+    <Stack direction="column" gap={2}>
+      <FilterInput
+        placeholder={t('provisioning.resource-tree.search-placeholder', 'Search by path or title')}
+        autoFocus={true}
+        value={searchQuery}
+        onChange={setSearchQuery}
+      />
       <InteractiveTable
         columns={columns}
         data={flatItems}
