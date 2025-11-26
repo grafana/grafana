@@ -11939,12 +11939,10 @@
       "not-found": "not found",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
-      "tab-files": "Files",
-      "tab-files-title": "The raw file list from the repository",
       "tab-overview": "Overview",
       "tab-overview-title": "Repository overview",
       "tab-resources": "Resources",
-      "tab-resources-title": "Resources saved in grafana database",
+      "tab-resources-title": "Repository files and resources",
       "title": "Repository Status",
       "title-legacy-storage": "Legacy Storage",
       "title-queued-for-deletion": "Queued for deletion"
@@ -11966,6 +11964,14 @@
       "local-description": "Configure file provisioning",
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository"
+    },
+    "resource-tree": {
+      "header-hash": "Hash",
+      "header-title": "Title",
+      "header-type": "Type",
+      "no-items": "No items found",
+      "search-placeholder": "Search by path or title",
+      "view": "View"
     },
     "resource-view": {
       "base": "Base",

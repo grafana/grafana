@@ -98,3 +98,28 @@ export interface StatusInfo {
   title?: string;
   message?: string | string[];
 }
+
+// Tree view types for combined Resources/Files view
+export type ItemType = 'Folder' | 'File' | 'Dashboard';
+
+export interface TreeItem {
+  // Display
+  title: string;
+  type: ItemType;
+
+  // Tree structure
+  path: string;
+  level: number;
+  children: TreeItem[];
+
+  // From ResourceListItem (when available)
+  resourceName?: string;
+
+  // Hash info
+  hash?: string;
+}
+
+export interface FlatTreeItem {
+  item: TreeItem;
+  level: number;
+}

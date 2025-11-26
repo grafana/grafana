@@ -10,18 +10,16 @@ import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
-import { FilesView } from '../File/FilesView';
 import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
 import { PROVISIONING_URL } from '../constants';
 
 import { RepositoryActions } from './RepositoryActions';
 import { RepositoryOverview } from './RepositoryOverview';
-import { RepositoryResources } from './RepositoryResources';
+import { ResourceTreeView } from './ResourceTreeView';
 
 enum TabSelection {
   Overview = 'overview',
   Resources = 'resources',
-  Files = 'files',
 }
 
 export default function RepositoryStatusPage() {
@@ -50,12 +48,7 @@ export default function RepositoryStatusPage() {
       {
         value: TabSelection.Resources,
         label: t('provisioning.repository-status-page.tab-resources', 'Resources'),
-        title: t('provisioning.repository-status-page.tab-resources-title', 'Resources saved in grafana database'),
-      },
-      {
-        value: TabSelection.Files,
-        label: t('provisioning.repository-status-page.tab-files', 'Files'),
-        title: t('provisioning.repository-status-page.tab-files-title', 'The raw file list from the repository'),
+        title: t('provisioning.repository-status-page.tab-resources-title', 'Repository files and resources'),
       },
     ],
     []
@@ -124,8 +117,7 @@ export default function RepositoryStatusPage() {
                     </Alert>
                   )}
                   {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
-                  {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
-                  {tab === TabSelection.Files && <FilesView repo={data} />}
+                  {tab === TabSelection.Resources && <ResourceTreeView repo={data} />}
                 </TabContent>
               </>
             ) : (

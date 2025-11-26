@@ -20,9 +20,12 @@ export function RepositoryResources({ repo }: RepoProps) {
   const name = repo.metadata?.name ?? '';
   const query = useGetRepositoryResourcesQuery({ name });
   const [searchQuery, setSearchQuery] = useState('');
-  const data = (query.data?.items ?? []).filter((Resource) =>
-    Resource.path.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const data = (query.data?.items ?? []).filter((resource) => {
+    const lowerQuery = searchQuery.toLowerCase();
+    return (
+      resource.path.toLowerCase().includes(lowerQuery) || (resource.title?.toLowerCase().includes(lowerQuery) ?? false)
+    );
+  });
 
   // hide history button when repo type is pure git as it won't be implemented.
   const historySupported = isFileHistorySupported(repo.spec?.type);
