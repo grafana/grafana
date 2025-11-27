@@ -309,38 +309,38 @@ describe('ScopesSelectorService', () => {
       sub.unsubscribe();
     });
 
-    it('should set parent node for recent scopes', async () => {
+    it('should set parent node for recent scopes when scopeNodeId is provided', async () => {
       // Load mock node
       await service.updateNode('', true, '');
 
       await service.changeScopes(['test-scope'], 'test-scope-node');
-      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope', parentNodeId: 'test-scope-node' }]);
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope', scopeNodeId: 'test-scope-node' }]);
       expect(service.state.nodes).toEqual({ 'test-scope-node': mockNode });
       expect(storeValue[RECENT_SCOPES_KEY]).toEqual(JSON.stringify([[{ ...mockScope, parentNode: mockNode }]]));
     });
 
     it('should set scopeNodeId for the first scope only', async () => {
-      await service.changeScopes(['test-scope', 'test-scope-2'], 'parent-node', 'scope-node-1');
+      await service.changeScopes(['test-scope', 'test-scope-2'], 'scope-node-1', 'parent-node');
 
       expect(service.state.appliedScopes).toEqual([
         { scopeId: 'test-scope', scopeNodeId: 'scope-node-1', parentNodeId: 'parent-node' },
-        { scopeId: 'test-scope-2', scopeNodeId: undefined, parentNodeId: 'parent-node' },
+        { scopeId: 'test-scope-2', scopeNodeId: undefined, parentNodeId: undefined },
       ]);
     });
 
-    it('should handle scopeNodeId without parentNodeId', async () => {
-      await service.changeScopes(['test-scope'], undefined, 'scope-node-1');
-
-      expect(service.state.appliedScopes).toEqual([
-        { scopeId: 'test-scope', scopeNodeId: 'scope-node-1', parentNodeId: undefined },
-      ]);
-    });
-
-    it('should maintain backward compatibility when only parentNodeId is provided', async () => {
-      await service.changeScopes(['test-scope'], 'parent-node');
+    it('should handle explicit parentNodeId for recent scopes', async () => {
+      await service.changeScopes(['test-scope'], undefined, 'parent-node');
 
       expect(service.state.appliedScopes).toEqual([
         { scopeId: 'test-scope', scopeNodeId: undefined, parentNodeId: 'parent-node' },
+      ]);
+    });
+
+    it('should handle both scopeNodeId and parentNodeId', async () => {
+      await service.changeScopes(['test-scope'], 'scope-node', 'parent-node');
+
+      expect(service.state.appliedScopes).toEqual([
+        { scopeId: 'test-scope', scopeNodeId: 'scope-node', parentNodeId: 'parent-node' },
       ]);
     });
   });
@@ -351,7 +351,7 @@ describe('ScopesSelectorService', () => {
       expect(service.state.opened).toBe(true);
     });
 
-    it('should use scopeNodeId instead of parentNodeId to resolve path when opening selector', async () => {
+    it('should use scopeNodeId to resolve path when opening selector', async () => {
       const parentNode: ScopeNode = {
         metadata: { name: 'parent-container' },
         spec: {
@@ -384,8 +384,8 @@ describe('ScopesSelectorService', () => {
         return Promise.resolve([]);
       });
 
-      // Apply scope with scopeNodeId set
-      await service.changeScopes(['scope-1'], 'parent-container', 'child-1');
+      // Apply scope with scopeNodeId and parentNodeId set
+      await service.changeScopes(['scope-1'], 'child-1', 'parent-container');
 
       // Open the selector
       await service.open();
@@ -452,7 +452,7 @@ describe('ScopesSelectorService', () => {
         return Promise.resolve([]);
       });
 
-      await service.changeScopes(['scope-2'], 'parent-container', 'child-2');
+      await service.changeScopes(['scope-2'], 'child-2', 'parent-container');
       await service.open();
 
       // Verify all sibling nodes are loaded (not just the selected one)
@@ -496,7 +496,7 @@ describe('ScopesSelectorService', () => {
         return Promise.resolve([]);
       });
 
-      await service.changeScopes(['scope-1'], 'parent-container', 'child-1');
+      await service.changeScopes(['scope-1'], 'child-1', 'parent-container');
 
       // First open
       await service.open();

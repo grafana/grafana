@@ -330,7 +330,7 @@ describe('Tree', () => {
     expectScopesHeadline('Recommended');
   });
 
-  it('Should open to a specific path when scopes and scope_parent are provided', async () => {
+  it('Should open to a specific path when scopes and scope_node are applied', async () => {
     await openSelector();
     await expandResultApplications();
     await expandResultApplicationsCloud();

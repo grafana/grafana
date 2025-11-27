@@ -114,10 +114,10 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'node1', undefined, false);
     });
 
-    it('should read scope_parent for backward compatibility', () => {
+    it('should ignore scope_parent from URL (only used for recent scopes)', () => {
       locationService.getLocation = jest.fn().mockReturnValue({
         pathname: '/test',
         search: '?scopes=scope1&scope_parent=parent1',
@@ -125,10 +125,11 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'parent1', undefined, false);
+      // parentNodeId should be undefined since we don't read it from URL
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, undefined, false);
     });
 
-    it('should prefer scope_node when both scope_node and scope_parent exist', () => {
+    it('should only use scope_node when both scope_node and scope_parent exist in URL', () => {
       locationService.getLocation = jest.fn().mockReturnValue({
         pathname: '/test',
         search: '?scopes=scope1&scope_node=node1&scope_parent=parent1',
@@ -136,9 +137,9 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      // Should call with parent1 as parentNodeId and node1 as scopeNodeId
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'parent1', 'node1', false);
-      // Should preload node1 (not parent1)
+      // Should only use scopeNodeId from URL, parentNodeId is undefined
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'node1', undefined, false);
+      // Should preload node1
       expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith('node1', expect.anything());
     });
 
@@ -153,7 +154,7 @@ describe('ScopesService', () => {
       expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith('node1', expect.anything());
     });
 
-    it('should fallback to preload scope_parent when scope_node is not provided', () => {
+    it('should not preload when only scope_parent is in URL', () => {
       locationService.getLocation = jest.fn().mockReturnValue({
         pathname: '/test',
         search: '?scopes=scope1&scope_parent=parent1',
@@ -161,7 +162,8 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith('parent1', expect.anything());
+      // Should not preload since we don't read scope_parent from URL
+      expect(selectorService.resolvePathToRoot).not.toHaveBeenCalled();
     });
 
     it('should handle multiple scopes from URL', () => {
@@ -172,7 +174,7 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1', 'scope2'], undefined, 'node1', false);
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1', 'scope2'], 'node1', undefined, false);
     });
 
     it('should read navigation_scope from URL on init', () => {
@@ -195,7 +197,7 @@ describe('ScopesService', () => {
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
       expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1');
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'node1', undefined, false);
     });
 
     it('should not call setNavigationScope when navigation_scope is not in URL', () => {

@@ -341,12 +341,15 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return this.collapseNode(scopeNodeId);
   };
 
-  changeScopes = (scopeNames: string[], scopeNodeId?: string, redirectOnApply?: boolean) => {
+  // TODO: Remove parentNodeId when refactoring recent scopes functionality
+  changeScopes = (scopeNames: string[], scopeNodeId?: string, parentNodeId?: string, redirectOnApply?: boolean) => {
     return this.applyScopes(
       scopeNames.map((id, index) => ({
         scopeId: id,
         // Only the first scope gets the scopeNodeId
         scopeNodeId: index === 0 ? scopeNodeId : undefined,
+        // Only the first scope gets the parentNodeId (for recent scopes when node isn't loaded yet)
+        parentNodeId: index === 0 ? parentNodeId : undefined,
       })),
       redirectOnApply
     );
@@ -391,7 +394,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       // If not provided, try to get the parent from the scope node
       // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
-      const parentNodeId = scopeNode?.spec.parentName;
+      const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
       const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
 
       this.addRecentScopes(fetchedScopes, parentNode);

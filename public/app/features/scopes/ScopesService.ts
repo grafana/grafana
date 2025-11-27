@@ -71,18 +71,16 @@ export class ScopesService implements ScopesContextValue {
     // Init from the URL when we first load
     const queryParams = new URLSearchParams(locationService.getLocation().search);
     const scopeNodeId = queryParams.get('scope_node');
-    // TODO: figure out when to remove this. scope_parent is for backward compatibility only
-    const parentNodeId = queryParams.get('scope_parent');
     const navigationScope = queryParams.get('navigation_scope');
 
     if (navigationScope) {
       this.dashboardsService.setNavigationScope(navigationScope);
     }
 
-    this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined, scopeNodeId ?? undefined);
+    this.changeScopes(queryParams.getAll('scopes'), scopeNodeId ?? undefined);
 
-    // Pre-load scope node (which loads parent too) or fallback to parent node for old URLs
-    const nodeToPreload = scopeNodeId ?? parentNodeId;
+    // Pre-load scope node (which loads parent too)
+    const nodeToPreload = scopeNodeId;
     if (nodeToPreload) {
       this.selectorService.resolvePathToRoot(nodeToPreload, this.selectorService.state.tree!).catch((error) => {
         console.error('Failed to pre-load node path', error);
@@ -100,8 +98,6 @@ export class ScopesService implements ScopesContextValue {
 
         const scopes = queryParams.getAll('scopes');
         const scopeNodeId = queryParams.get('scope_node');
-        // scope_parent is for backward compatibility only
-        const parentNodeId = queryParams.get('scope_parent');
 
         // Check if new scopes are different from the old scopes
         const currentScopes = this.selectorService.state.appliedScopes.map((scope) => scope.scopeId);
@@ -109,7 +105,7 @@ export class ScopesService implements ScopesContextValue {
           // We only update scopes but never delete them. This is to keep the scopes in memory if user navigates to
           // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user
           // changes the URL directly, it would trigger a reload so scopes would still be reset.
-          this.changeScopes(scopes, parentNodeId ?? undefined, scopeNodeId ?? undefined);
+          this.changeScopes(scopes, scopeNodeId ?? undefined);
         }
       })
     );
@@ -171,9 +167,9 @@ export class ScopesService implements ScopesContextValue {
     return this._stateObservable;
   }
 
-  public changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string) =>
+  public changeScopes = (scopeNames: string[], scopeNodeId?: string, parentNodeId?: string) =>
     // Don't redirect on apply for initial load from URL. We only want to redirect when selecting from the selector
-    this.selectorService.changeScopes(scopeNames, scopeNodeId, false);
+    this.selectorService.changeScopes(scopeNames, scopeNodeId, parentNodeId, false);
 
   public setReadOnly = (readOnly: boolean) => {
     if (this.state.readOnly !== readOnly) {
