@@ -34,17 +34,14 @@ const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
 // Ensures the final URL remains valid for all providers (GitHub, GitLab, etc.).
 const splitAndEncode = (s: string) => stripSlashes(s).split('/').map(encodeURIComponent);
 
-const buildRepoUrl = ({
-  baseUrl,
-  branch,
-  providerSegments,
-  path,
-}: {
+type BuildRepoUrlParams = {
   baseUrl?: string;
   branch?: string | null;
   providerSegments: string[];
   path?: string | null;
-}) => {
+};
+
+const buildRepoUrl = ({ baseUrl, branch, providerSegments, path }: BuildRepoUrlParams) => {
   if (!baseUrl) {
     return undefined;
   }

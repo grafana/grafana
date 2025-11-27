@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Stack, Text, TextLink, Card, LinkButton, Badge } from '@grafana/ui';
+import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
@@ -17,7 +17,7 @@ interface Props {
   repository: Repository;
 }
 
-export function RepositoryCard({ repository }: Props) {
+export function RepositoryListItem({ repository }: Props) {
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
@@ -28,11 +28,11 @@ export function RepositoryCard({ repository }: Props) {
     if (spec?.type === 'github') {
       const { url = '', branch } = spec.github ?? {};
       const branchUrl = branch ? `${url}/tree/${branch}` : url;
-      const repoUrl = getRepoHrefForProvider(spec);
+      const href = getRepoHrefForProvider(spec) || branchUrl;
 
       meta.push(
-        <TextLink key="link" external href={repoUrl || branchUrl}>
-          {repoUrl || branchUrl}
+        <TextLink key="link" external href={href}>
+          {href}
         </TextLink>
       );
     } else if (spec?.type === 'local') {
