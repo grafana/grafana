@@ -433,7 +433,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
 
   if (log.hasAnsi) {
     return (
-      <span className="field no-highlighting">
+      <span className="field no-highlighting log-line-body">
         <LogMessageAnsi value={log.body} highlight={highlight} />{' '}
       </span>
     );
@@ -448,12 +448,12 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
         highlightClassName={styles.matchHighLight}
       />
     ) : (
-      <span className="field no-highlighting">{log.body} </span>
+      <span className="field no-highlighting log-line-body">{log.body} </span>
     );
   }
 
   return (
-    <span className="field log-syntax-highlight">
+    <span className="field log-syntax-highlight log-line-body">
       <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />{' '}
     </span>
   );
@@ -469,6 +469,20 @@ export function getGridTemplateColumns(dimensions: LogFieldDimension[], displaye
 
 export type LogLineStyles = ReturnType<typeof getStyles>;
 export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtualization) => {
+  const base = tinycolor(theme.colors.background.primary);
+
+  let maxContrast = theme.isDark
+    ? tinycolor(theme.colors.text.maxContrast).darken(10).toRgbString()
+    : tinycolor(theme.colors.text.maxContrast).lighten(15).toRgbString();
+  let colorDefault = theme.colors.text.primary;
+  const contrast1 = tinycolor.readability(base, maxContrast);
+  const contrast2 = tinycolor.readability(base, colorDefault);
+
+  if (contrast1 < contrast2) {
+    colorDefault = maxContrast;
+    maxContrast = theme.colors.text.primary;
+  }
+
   const colors = {
     critical: '#B877D9',
     error: theme.colors.error.text,
@@ -477,8 +491,9 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     trace: '#6ed0e0',
     info: '#6CCF8E',
     metadata: theme.colors.text.secondary,
-    default: theme.colors.text.primary,
+    default: colorDefault,
     parsedField: theme.colors.text.secondary,
+    logLineBody: maxContrast,
   };
 
   const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
@@ -539,6 +554,9 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
         '.log-search-match': {
           color: theme.components.textHighlight.text,
           backgroundColor: theme.components.textHighlight.background,
+        },
+        '&.log-line-body': {
+          color: colors.logLineBody,
         },
       },
       '& .no-highlighting': {
