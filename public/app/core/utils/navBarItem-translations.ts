@@ -60,6 +60,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.scenes.title', 'Scenes');
     case 'explore':
       return t('nav.explore.title', 'Explore');
+    case 'explore-map':
+      return t('nav.explore-map.title', 'Explore Map');
     case 'drilldown':
       return t('nav.drilldown.title', 'Drilldown');
     case 'alerting':

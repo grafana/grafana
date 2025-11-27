@@ -134,6 +134,17 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
+	if s.cfg.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Explore Map",
+			Id:         navtree.NavIDExploreMap,
+			SubTitle:   "Explore your data on an open canvas",
+			Icon:       "apps",
+			SortWeight: navtree.WeightExplore + 1,
+			Url:        s.cfg.AppSubURL + "/explore-map",
+		})
+	}
+
 	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Drilldown",

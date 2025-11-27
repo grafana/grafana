@@ -171,6 +171,16 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/explore-map',
+      pageClass: 'page-explore-map',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
+      component: SafeDynamicImport(() =>
+        config.exploreEnabled
+          ? import(/* webpackChunkName: "explore-map" */ 'app/features/explore-map/ExploreMapPage')
+          : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
+      ),
+    },
+    {
       path: '/drilldown',
       component: () => <NavLandingPage navId="drilldown" />,
     },
