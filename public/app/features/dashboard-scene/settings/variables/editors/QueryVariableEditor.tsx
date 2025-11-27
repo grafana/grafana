@@ -68,10 +68,10 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
   const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ allowCustomValue: event.currentTarget.checked });
   };
-  const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
+  const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings, preserveQuery = false) => {
     const datasource = getDataSourceRef(dsInstanceSettings);
 
-    if ((variable.state.datasource?.type || '') !== datasource.type) {
+    if (!preserveQuery && (variable.state.datasource?.type || '') !== datasource.type) {
       variable.setState({ datasource, query: '', definition: '' });
       return;
     }
