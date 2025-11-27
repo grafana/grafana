@@ -135,7 +135,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         cell: ({ row: { original } }: TreeCell) => {
           const { item } = original;
           const isDotKeepFile = item.path.endsWith('.keep') || item.path.endsWith('.gitkeep');
-          if (isDotKeepFile) {
+          if (isDotKeepFile || !item.resourceName) {
             return null;
           }
 
