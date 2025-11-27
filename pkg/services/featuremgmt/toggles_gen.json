@@ -2499,11 +2499,14 @@
     {
       "metadata": {
         "name": "panelGroupBy",
-        "resourceVersion": "1764257043719",
-        "creationTimestamp": "2025-11-27T15:24:03Z"
+        "resourceVersion": "1764257785584",
+        "creationTimestamp": "2025-11-27T15:24:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-27 15:36:25.584293 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enabled a group by action per panel",
+        "description": "Enables a group by action per panel",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
@@ -2556,6 +2559,19 @@
         "description": "Enables generating table data as PDF in reporting",
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "perPanelFiltering",
+        "resourceVersion": "1764257785584",
+        "creationTimestamp": "2025-11-27T15:36:25Z"
+      },
+      "spec": {
+        "description": "Enables filtering by grouping labels on the panel level through legend or tooltip",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {
