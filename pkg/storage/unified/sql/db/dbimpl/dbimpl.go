@@ -74,15 +74,6 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	dbType := cfg.SectionWithEnvOverrides("database").Key("type").String()
 
 	switch {
-	case grafanaDB != nil && dbType == dbTypeSQLite:
-		// For SQLite, reuse grafana's engine to share the connection pool, ensures data written by migrations is visible
-		if newConfGetter(cfg.SectionWithEnvOverrides("database"), "").Bool(grafanaDBInstrumentQueriesKey) {
-			return nil, errGrafanaDBInstrumentedNotSupported
-		}
-		logger.Info("Using grafana database engine for SQLite", "db_type", dbType)
-		p.engine = grafanaDB.GetEngine()
-		p.logQueries = cfg.SectionWithEnvOverrides("database").Key("log_queries").MustBool(false)
-		return p, nil
 	case dbType != "":
 		logger.Info("Using database section", "db_type", dbType)
 		dbCfg, err := sqlstore.NewDatabaseConfig(cfg, nil)
