@@ -1443,7 +1443,7 @@ func buildSwitchVariable(varMap map[string]interface{}, commonProps CommonVariab
 	// Extract enabledValue and disabledValue from options array
 	// First option value = enabledValue, second option value = disabledValue
 	// Fall back to "true" and "false" if options are not available
-	enabledValue := "true"  // Default fallback
+	enabledValue := "true"   // Default fallback
 	disabledValue := "false" // Default fallback
 
 	if options, ok := varMap["options"].([]interface{}); ok {
