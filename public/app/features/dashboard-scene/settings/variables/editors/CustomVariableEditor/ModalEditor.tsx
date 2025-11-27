@@ -1,5 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
-import { useEffectOnce } from 'react-use';
+import { useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,98 +9,91 @@ import { Button, Modal, Stack } from '@grafana/ui';
 import { dashboardEditActions } from '../../../../edit-pane/shared';
 import { VariableStaticOptionsForm, VariableStaticOptionsFormRef } from '../../components/VariableStaticOptionsForm';
 import { VariableStaticOptionsFormAddButton } from '../../components/VariableStaticOptionsFormAddButton';
-
-import { ValuesPreview } from './ValuesPreview';
+import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
 interface ModalEditorProps {
   variable: CustomVariable;
   onClose: () => void;
 }
 
-export function ModalEditor({ variable, onClose }: ModalEditorProps) {
-  const { query } = variable.useState();
-  const [initialQuery, setInitialQuery] = useState(query);
-
-  useEffectOnce(() => {
-    setInitialQuery(query);
-  });
-
-  const transformQueryToOptions = useCallback(
-    (query: string) =>
-      variable.transformCsvStringToOptions(query, false).map(({ label, value }) => ({
-        value,
-        label: value === label ? '' : label,
-      })),
-    [variable]
-  );
-
-  const [options, setOptions] = useState(transformQueryToOptions(query));
-
-  const escapeEntities = useCallback((text: VariableValueSingle) => String(text).trim().replaceAll(',', '\\,'), []);
-
-  const formatOption = useCallback(
-    (option: VariableValueOption) => {
-      if (!option.label || option.label === option.value) {
-        return escapeEntities(option.value);
-      }
-
-      return `${escapeEntities(option.label)} : ${escapeEntities(String(option.value))}`;
-    },
-    [escapeEntities]
-  );
-
-  const generateQuery = useCallback(
-    (options: VariableValueOption[]) => options.map(formatOption).join(', '),
-    [formatOption]
-  );
-
-  const onSave = useCallback(async () => {
-    const query = generateQuery(options);
-
-    dashboardEditActions.edit({
-      source: variable,
-      description: t('dashboard.edit-pane.variable.custom-options.change-value', 'Change variable value'),
-      perform: () => {
-        variable.setState({ query });
-        lastValueFrom(variable.validateAndUpdate!());
-      },
-      undo: () => {
-        variable.setState({ query: initialQuery });
-        lastValueFrom(variable.validateAndUpdate!());
-      },
-    });
-
-    onClose();
-  }, [generateQuery, options, variable, onClose, initialQuery]);
-
-  const formRef = useRef<VariableStaticOptionsFormRef | null>(null);
-  const handleOnAdd = useCallback(() => formRef.current?.addItem(), []);
+export function ModalEditor(props: ModalEditorProps) {
+  const { formRef, onCloseModal, options, onChangeOptions, onAddNewOption, onSaveOptions } = useModalEditor(props);
 
   return (
     <Modal
       title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom Variable')}
       isOpen={true}
-      onDismiss={onClose}
+      onDismiss={onCloseModal}
       closeOnBackdropClick={false}
       closeOnEscape={false}
     >
       <Stack direction="column" gap={2}>
-        <VariableStaticOptionsForm options={options} onChange={setOptions} ref={formRef} isInModal />
-        <ValuesPreview options={options} />
+        <VariableStaticOptionsForm options={options} onChange={onChangeOptions} ref={formRef} isInModal />
+        <VariableValuesPreview options={options} />
       </Stack>
-      <Modal.ButtonRow leftItems={<VariableStaticOptionsFormAddButton onAdd={handleOnAdd} />}>
+      <Modal.ButtonRow leftItems={<VariableStaticOptionsFormAddButton onAdd={onAddNewOption} />}>
         <Button
           variant="secondary"
           fill="outline"
-          onClick={onClose}
+          onClick={onCloseModal}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
         >
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.close">Cancel</Trans>
+          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.cancel">Cancel</Trans>
         </Button>
-        <Button variant="primary" onClick={onSave}>
+        <Button variant="primary" onClick={onSaveOptions}>
           <Trans i18nKey="dashboard.edit-pane.variable.custom-options.save">Save</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>
   );
 }
+
+function useModalEditor({ variable, onClose }: ModalEditorProps) {
+  const { query } = variable.state;
+  const [options, setOptions] = useState(() => transformQueryToOptions(variable, query));
+  const initialQueryRef = useRef(query);
+  const formRef = useRef<VariableStaticOptionsFormRef | null>(null);
+
+  return {
+    formRef,
+    onCloseModal: onClose,
+    options,
+    onChangeOptions: setOptions,
+    onAddNewOption() {
+      formRef.current?.addItem();
+    },
+    onSaveOptions() {
+      dashboardEditActions.edit({
+        source: variable,
+        description: t('dashboard.edit-pane.variable.custom-options.change-value', 'Change variable value'),
+        perform: () => {
+          variable.setState({ query: transformOptionsToQuery(options) });
+          lastValueFrom(variable.validateAndUpdate!());
+        },
+        undo: () => {
+          variable.setState({ query: initialQueryRef.current });
+          lastValueFrom(variable.validateAndUpdate!());
+        },
+      });
+
+      onClose();
+    },
+  };
+}
+
+const transformQueryToOptions = (variable: ModalEditorProps['variable'], query: string) =>
+  variable.transformCsvStringToOptions(query, false).map(({ label, value }) => ({
+    value,
+    label: value === label ? '' : label,
+  }));
+
+const formatOption = (option: VariableValueOption) => {
+  if (!option.label || option.label === option.value) {
+    return escapeEntities(option.value);
+  }
+  return `${escapeEntities(option.label)} : ${escapeEntities(String(option.value))}`;
+};
+
+const escapeEntities = (text: VariableValueSingle) => String(text).trim().replaceAll(',', '\\,');
+
+const transformOptionsToQuery = (options: VariableValueOption[]) => options.map(formatOption).join(', ');
