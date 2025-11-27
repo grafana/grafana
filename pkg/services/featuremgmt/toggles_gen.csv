@@ -182,7 +182,7 @@ k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
-elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
+elasticsearchImprovedParsing,experimental,@grafana/partner-datasources,false,false,false
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 newLogsPanel,GA,@grafana/observability-logs,false,false,true

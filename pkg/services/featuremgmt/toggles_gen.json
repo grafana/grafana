@@ -1214,13 +1214,16 @@
     {
       "metadata": {
         "name": "elasticsearchImprovedParsing",
-        "resourceVersion": "1763734583253",
-        "creationTimestamp": "2025-01-15T17:05:54Z"
+        "resourceVersion": "1764260048941",
+        "creationTimestamp": "2025-01-15T17:05:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-27 16:14:08.941633 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables less memory intensive Elasticsearch result parsing",
         "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources"
+        "codeowner": "@grafana/partner-datasources"
       }
     },
     {
