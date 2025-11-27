@@ -17,13 +17,12 @@ import {
 } from '@grafana/ui';
 import {
   Repository,
-  RepositorySpec,
   useGetRepositoryFilesQuery,
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
+import { PROVISIONING_URL } from '../constants';
 import { FlatTreeItem, TreeItem } from '../types';
-import { getRepoFileUrl } from '../utils/git';
 import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
 
 interface ResourceTreeViewProps {
@@ -32,14 +31,16 @@ interface ResourceTreeViewProps {
 
 type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<FlatTreeItem, FlatTreeItem[T]>;
 
-function getLink(item: TreeItem, spec?: RepositorySpec) {
-  if (item.type === 'Dashboard' && item.resourceName) {
-    return `/d/${item.resourceName}`;
+function getGrafanaLink(item: TreeItem) {
+  if (item.resourceName) {
+    if (item.type === 'Dashboard') {
+      return `/d/${item.resourceName}`;
+    }
+    if (item.type === 'Folder') {
+      return `/dashboards/f/${item.resourceName}`;
+    }
   }
-  if (item.type === 'Folder' && item.resourceName) {
-    return `/dashboards/f/${item.resourceName}`;
-  }
-  return getRepoFileUrl(spec, item.path);
+  return undefined;
 }
 
 export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
@@ -75,20 +76,12 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         cell: ({ row: { original } }: TreeCell) => {
           const { item, level } = original;
           const iconName = getIconName(item.type);
-          const link = getLink(item, repo.spec);
-
-          const isExternal = link?.startsWith('http');
+          const link = getGrafanaLink(item);
 
           return (
             <div className={styles.titleCell} style={{ paddingLeft: level * 24 }}>
               <Icon name={iconName} className={styles.icon} />
-              {link ? (
-                <Link href={link} target={isExternal ? '_blank' : undefined}>
-                  {item.title}
-                </Link>
-              ) : (
-                <span>{item.title}</span>
-              )}
+              {link ? <Link href={link}>{item.title}</Link> : <span>{item.title}</span>}
             </div>
           );
         },
@@ -140,23 +133,31 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'actions',
         header: '',
         cell: ({ row: { original } }: TreeCell) => {
-          const link = getLink(original.item, repo.spec);
-
-          if (!link) {
+          const { item } = original;
+          const isDotKeepFile = item.path.endsWith('.keep') || item.path.endsWith('.gitkeep');
+          if (isDotKeepFile) {
             return null;
           }
 
-          const isExternal = link.startsWith('http');
+          const viewLink = getGrafanaLink(item);
+          const sourceLink = `${PROVISIONING_URL}/${name}/file/${item.path}`;
 
           return (
-            <LinkButton href={link} size="sm" variant="secondary" target={isExternal ? '_blank' : undefined}>
-              <Trans i18nKey="provisioning.resource-tree.view">View</Trans>
-            </LinkButton>
+            <Stack direction="row" gap={1}>
+              {viewLink && (
+                <LinkButton href={viewLink} size="sm" variant="secondary">
+                  <Trans i18nKey="provisioning.resource-tree.view">View</Trans>
+                </LinkButton>
+              )}
+              <LinkButton href={sourceLink} size="sm" variant="secondary">
+                <Trans i18nKey="provisioning.resource-tree.source">Source</Trans>
+              </LinkButton>
+            </Stack>
           );
         },
       },
     ],
-    [repo.spec, styles]
+    [name, styles]
   );
 
   if (isLoading) {

@@ -11991,6 +11991,7 @@
       "header-title": "Title",
       "header-type": "Type",
       "search-placeholder": "Search by path or title",
+      "source": "Source",
       "status-pending": "Pending",
       "status-synced": "Synced",
       "view": "View"
