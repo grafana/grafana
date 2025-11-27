@@ -2,7 +2,13 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DashboardLink } from '@grafana/schema';
 import { provisioningAPIv0alpha1, RepositorySpec, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from 'app/features/apiserver/types';
+import {
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  ManagerKind,
+  ObjectMeta,
+} from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
 import { InstructionAvailability, RepoType } from '../Wizard/types';
@@ -240,9 +246,7 @@ export function getSourceFileUrl(
  * Build a source link for a repo-managed dashboard.
  * Returns undefined if the dashboard is not repo-managed or if the repository is not a git provider.
  */
-export async function buildSourceLink(
-  annotations: Record<string, string | undefined> | undefined
-): Promise<DashboardLink | undefined> {
+export async function buildSourceLink(annotations: ObjectMeta['annotations']): Promise<DashboardLink | undefined> {
   if (!annotations || !config.featureToggles.provisioning) {
     return undefined;
   }
@@ -265,8 +269,11 @@ export async function buildSourceLink(
       return undefined;
     }
 
-    const repository = settingsResult.data.items.find((repo) => repo.name === managerIdentity);
-    if (!repository || (repository.type !== 'github' && repository.type !== 'gitlab' && repository.type !== 'bitbucket')) {
+    const repository = settingsResult.data.items.find((repo: RepositoryView) => repo.name === managerIdentity);
+    if (
+      !repository ||
+      (repository.type !== 'github' && repository.type !== 'gitlab' && repository.type !== 'bitbucket')
+    ) {
       return undefined;
     }
 
