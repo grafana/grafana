@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data/';
 import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
@@ -27,21 +28,21 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       memo(
         ({
           item,
-          itemIdx,
+          conditionalRendering,
           addDndContainer,
           isDragged,
           isDragging,
           isRepeat = false,
         }: {
           item: VizPanel;
-          itemIdx?: number;
+          conditionalRendering?: ConditionalRenderingGroup;
           addDndContainer: boolean;
           isDragged: boolean;
           isDragging: boolean;
           isRepeat?: boolean;
         }) => {
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
-            useIsConditionallyHidden(model, itemIdx);
+            useIsConditionallyHidden(conditionalRendering);
 
           return isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
@@ -96,11 +97,18 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
   return (
     <>
-      <Wrapper item={body} addDndContainer={true} key={body.state.key!} isDragged={isDragged} isDragging={isDragging} />
+      <Wrapper
+        item={body}
+        conditionalRendering={model.state.conditionalRendering}
+        addDndContainer={true}
+        key={body.state.key!}
+        isDragged={isDragged}
+        isDragging={isDragging}
+      />
       {repeatedPanels.map((item, idx) => (
         <Wrapper
           item={item}
-          itemIdx={idx}
+          conditionalRendering={model.state.repeatedConditionalRendering?.[idx]}
           addDndContainer={false}
           key={item.state.key!}
           isDragged={isDragged}
