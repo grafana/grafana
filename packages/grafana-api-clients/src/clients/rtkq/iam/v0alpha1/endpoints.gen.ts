@@ -3,11 +3,11 @@ export const addTagTypes = [
   'API Discovery',
   'Display',
   'ExternalGroupMapping',
+  'Search',
   'ServiceAccount',
   'SSOSetting',
   'TeamBinding',
   'Team',
-  'Search',
   'User',
 ] as const;
 const injectedRtkApi = api
@@ -152,6 +152,15 @@ const injectedRtkApi = api
           },
         }),
         invalidatesTags: ['ExternalGroupMapping'],
+      }),
+      getSearchTeams: build.query<GetSearchTeamsApiResponse, GetSearchTeamsApiArg>({
+        query: (queryArg) => ({
+          url: `/searchTeams`,
+          params: {
+            query: queryArg.query,
+          },
+        }),
+        providesTags: ['Search'],
       }),
       listServiceAccount: build.query<ListServiceAccountApiResponse, ListServiceAccountApiArg>({
         query: (queryArg) => ({
@@ -509,15 +518,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Team'],
       }),
-      getTeamsSearch: build.query<GetTeamsSearchApiResponse, GetTeamsSearchApiArg>({
-        query: (queryArg) => ({
-          url: `/teams/search`,
-          params: {
-            query: queryArg.query,
-          },
-        }),
-        providesTags: ['Search'],
-      }),
       getTeam: build.query<GetTeamApiResponse, GetTeamApiArg>({
         query: (queryArg) => ({
           url: `/teams/${queryArg.name}`,
@@ -871,6 +871,21 @@ export type UpdateExternalGroupMappingApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type GetSearchTeamsApiResponse = /** status 200 undefined */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  hits: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  maxScore: number;
+  offset: number;
+  queryCost: number;
+  totalHits: number;
+};
+export type GetSearchTeamsApiArg = {
+  /** team name query string */
+  query?: string;
 };
 export type ListServiceAccountApiResponse = /** status 200 OK */ ServiceAccountList;
 export type ListServiceAccountApiArg = {
@@ -1420,11 +1435,6 @@ export type DeletecollectionTeamApiArg = {
   sendInitialEvents?: boolean;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
-};
-export type GetTeamsSearchApiResponse = /** status 200 undefined */ any;
-export type GetTeamsSearchApiArg = {
-  /** team name query string */
-  query?: string;
 };
 export type GetTeamApiResponse = /** status 200 OK */ Team;
 export type GetTeamApiArg = {
@@ -2099,6 +2109,8 @@ export const {
   useReplaceExternalGroupMappingMutation,
   useDeleteExternalGroupMappingMutation,
   useUpdateExternalGroupMappingMutation,
+  useGetSearchTeamsQuery,
+  useLazyGetSearchTeamsQuery,
   useListServiceAccountQuery,
   useLazyListServiceAccountQuery,
   useCreateServiceAccountMutation,
@@ -2130,8 +2142,6 @@ export const {
   useLazyListTeamQuery,
   useCreateTeamMutation,
   useDeletecollectionTeamMutation,
-  useGetTeamsSearchQuery,
-  useLazyGetTeamsSearchQuery,
   useGetTeamQuery,
   useLazyGetTeamQuery,
   useReplaceTeamMutation,
