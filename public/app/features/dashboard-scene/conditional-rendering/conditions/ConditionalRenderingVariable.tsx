@@ -127,7 +127,7 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
     }
   }
 
-  public render(): ReactElement {
+  public renderCmp(): ReactElement {
     return <this.Component model={this} key={this.state.key} />;
   }
 

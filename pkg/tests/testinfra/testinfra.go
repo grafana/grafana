@@ -103,7 +103,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	dbCfg.Key("password").SetValue(testDB.Password)
 	dbCfg.Key("name").SetValue(testDB.Database)
 
-	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database)
+	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
 
 	env, err := server.InitializeForTest(ctx, t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
@@ -526,6 +526,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
+	if opts.UnifiedStorageEnableSearch {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_search", "true")
+		require.NoError(t, err)
+	}
 	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -549,6 +555,13 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		apiserverSection, err := getOrCreateSection("grafana-apiserver")
 		require.NoError(t, err)
 		_, err = apiserverSection.NewKey("disable_controllers", "true")
+		require.NoError(t, err)
+	}
+
+	if opts.SecretsManagerEnableDBMigrations {
+		apiserverSection, err := getOrCreateSection("secrets_manager")
+		require.NoError(t, err)
+		_, err = apiserverSection.NewKey("run_secrets_db_migrations", "true")
 		require.NoError(t, err)
 	}
 
@@ -615,6 +628,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	UnifiedStorageEnableSearch            bool
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	GrafanaComSSOAPIToken                 string
@@ -623,6 +637,11 @@ type GrafanaOpts struct {
 	EnableSCIM                            bool
 	APIServerRuntimeConfig                string
 	DisableControllers                    bool
+	SecretsManagerEnableDBMigrations      bool
+
+	// Allow creating grafana dir beforehand
+	Dir     string
+	DirPath string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType

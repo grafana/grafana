@@ -24,7 +24,7 @@ export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
   metricEditorMode: MetricEditorMode.Builder,
   sql: undefined,
   sqlExpression: '',
-  matchExact: true,
+  matchExact: false,
 };
 
 export const DEFAULT_ANNOTATIONS_QUERY: Omit<CloudWatchAnnotationQuery, 'refId'> = {

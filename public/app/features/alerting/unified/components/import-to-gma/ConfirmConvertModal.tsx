@@ -385,7 +385,6 @@ function TargetFolderNotEmptyWarning({ targetFolderRules }: { targetFolderRules:
           )}
           isOpen={showTargetRules}
           onToggle={toggleShowTargetRules}
-          collapsible={true}
         >
           <RulesPreview rules={targetFolderRules} />
         </Collapse>

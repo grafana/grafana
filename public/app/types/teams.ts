@@ -89,5 +89,4 @@ export interface TeamState {
   team: Team;
   members: TeamMember[];
   groups: TeamGroup[];
-  searchMemberQuery: string;
 }

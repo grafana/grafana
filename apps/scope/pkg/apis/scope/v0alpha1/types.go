@@ -146,7 +146,12 @@ type ScopeNodeSpec struct {
 
 	NodeType NodeType `json:"nodeType"` // container | leaf
 
-	Title              string `json:"title"`
+	Title string `json:"title"`
+	//+optional
+	// Displays next to the title to provide more context.
+	SubTitle string `json:"subTitle,omitempty"`
+
+	//+optional
 	Description        string `json:"description,omitempty"`
 	DisableMultiSelect bool   `json:"disableMultiSelect"`
 
@@ -154,8 +159,8 @@ type ScopeNodeSpec struct {
 	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
 	// ?? should this be a slice of links
 
-	// Redirect to a specific URL when this node is selected.
-	RedirectUrl string `json:"redirectUrl,omitempty"`
+	// Redirect to a specific path when this node is selected.
+	RedirectPath string `json:"redirectPath,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -204,6 +209,8 @@ type FindScopeNavigationsResults struct {
 type ScopeNavigationSpec struct {
 	URL   string `json:"url"`
 	Scope string `json:"scope"`
+	// Used to navigate to a sub-scope of the main scope. URL will not be used if this is set.
+	SubScope string `json:"subScope,omitempty"`
 }
 
 // Type of the item.

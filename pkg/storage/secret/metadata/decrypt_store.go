@@ -109,7 +109,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 
 		logging.FromContext(ctx).Info("Secrets Audit Log", args...)
 
-		s.metrics.DecryptDuration.WithLabelValues(decryptResultLabel).Observe(time.Since(start).Seconds())
+		s.metrics.DecryptDuration.WithLabelValues(decryptResultLabel, cmp.Or(decrypterIdentity, "unknown")).Observe(time.Since(start).Seconds())
 
 		// Do not leak error details to caller, return only the wrapped domain errors.
 		if decryptErr != nil {
@@ -135,7 +135,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", fmt.Errorf("failed to authorize decryption with reason %v (%w)", reason, contracts.ErrDecryptNotAuthorized)
 	}
 
-	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Spec.Keeper, contracts.ReadOpts{})
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Status.Keeper, contracts.ReadOpts{})
 	if err != nil {
 		return "", fmt.Errorf("failed to read keeper config metadata storage: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
@@ -145,7 +145,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", fmt.Errorf("failed to get keeper for config: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
 
-	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace.String(), name, sv.Status.Version)
+	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace, name, sv.Status.Version)
 	if err != nil {
 		return "", fmt.Errorf("failed to expose secret: %v (%w)", err, contracts.ErrDecryptFailed)
 	}

@@ -13,7 +13,7 @@
       "label-resource-group": "リソースグループ",
       "label-resource-name": "リソース名",
       "label-resource-number": "リソース {{resourceNum}}",
-      "label-resource-uri": "リソースURI",
+      "label-resource-uri": "",
       "label-subscription": "サブスクリプション",
       "placeholder-resource-name": "名前",
       "tooltip-region": "リソースのコード領域。単一のリソースの場合はオプションですが、複数のリソースを選択する場合は必須です。",

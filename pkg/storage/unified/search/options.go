@@ -20,7 +20,8 @@ func NewSearchOptions(
 	indexMetrics *resource.BleveIndexMetrics,
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
 ) (resource.SearchOptions, error) {
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if cfg.EnableSearch || features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		root := cfg.IndexPath
 		if root == "" {
 			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")
@@ -45,7 +46,6 @@ func NewSearchOptions(
 			FileThreshold:          int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
 			IndexCacheTTL:          cfg.IndexCacheTTL,             // How long to keep the index cache in memory
 			BuildVersion:           cfg.BuildVersion,
-			UseFullNgram:           features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
 			OwnsIndex:              ownsIndexFn,
 			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 		}, tracer, indexMetrics)
@@ -66,5 +66,9 @@ func NewSearchOptions(
 			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 		}, nil
 	}
-	return resource.SearchOptions{}, nil
+	return resource.SearchOptions{
+		// it is used for search after write and throttles index updates
+		IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
+		MaxIndexAge:            cfg.MaxFileIndexAge,
+	}, nil
 }

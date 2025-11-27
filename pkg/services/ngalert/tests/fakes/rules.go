@@ -23,7 +23,7 @@ type RuleStore struct {
 	mtx sync.Mutex
 	// OrgID -> RuleGroup -> Namespace -> Rules
 	Rules       map[int64][]*models.AlertRule
-	History     map[string][]*models.AlertRule
+	History     map[string][]*models.AlertRuleVersion
 	Deleted     map[int64][]*models.AlertRule
 	Hook        func(cmd any) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []any
@@ -43,7 +43,7 @@ func NewRuleStore(t *testing.T) *RuleStore {
 			return nil
 		},
 		Folders: map[int64][]*folder.Folder{},
-		History: map[string][]*models.AlertRule{},
+		History: map[string][]*models.AlertRuleVersion{},
 	}
 }
 
@@ -55,7 +55,10 @@ mainloop:
 	for _, r := range rules {
 		rgs := f.Rules[r.OrgID]
 		cp := models.CopyRule(r)
-		f.History[r.GUID] = append(f.History[r.GUID], cp)
+		f.History[r.GUID] = append(f.History[r.GUID], &models.AlertRuleVersion{
+			AlertRule: *cp,
+			Message:   "",
+		})
 		for idx, rulePtr := range rgs {
 			if rulePtr.UID == r.UID {
 				rgs[idx] = r
@@ -85,6 +88,18 @@ mainloop:
 			f.Folders[r.OrgID] = folders
 		}
 	}
+}
+
+// AppendHistory appends to rules to the version history with the given change message.
+func (f *RuleStore) AppendHistory(guid string, rules []*models.AlertRule, message string) {
+	versions := make([]*models.AlertRuleVersion, len(rules))
+	for i := range rules {
+		versions[i] = &models.AlertRuleVersion{
+			AlertRule: *rules[i],
+			Message:   message,
+		}
+	}
+	f.History[guid] = append(f.History[guid], versions...)
 }
 
 // GetRecordedCommands filters recorded commands using predicate function. Returns the subset of the recorded commands that meet the predicate
@@ -234,12 +249,13 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 		}
 	}
 
-	if q.Limit < 0 {
+	if q.Limit < 0 && q.RuleLimit < 0 {
 		return ruleList, "", nil
 	}
 
 	outputRules := make([]*models.AlertRule, 0, len(ruleList))
 	var groupsFetched int64
+	var rulesFetched int64
 	initialCursor := cursor
 	for _, r := range ruleList {
 		// skip rules before the initial cursor
@@ -258,11 +274,16 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 				nextToken = models.EncodeGroupCursor(cursor)
 				break
 			}
+			if q.RuleLimit > 0 && rulesFetched >= q.RuleLimit {
+				nextToken = models.EncodeGroupCursor(cursor)
+				break
+			}
 			cursor = key
 			groupsFetched++
 		}
 
 		outputRules = append(outputRules, r)
+		rulesFetched++
 	}
 
 	return outputRules, nextToken, nil
@@ -443,7 +464,7 @@ func (f *RuleStore) UpdateAlertRules(_ context.Context, _ *models.UserUID, q []m
 	return nil
 }
 
-func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []models.AlertRule) ([]models.AlertRuleKeyWithId, error) {
+func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []models.InsertRule) ([]models.AlertRuleKeyWithId, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
@@ -454,7 +475,7 @@ func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []m
 			AlertRuleKey: rule.GetKey(),
 			ID:           rand.Int63(),
 		})
-		rulesPerOrg[rule.OrgID] = append(rulesPerOrg[rule.OrgID], rule)
+		rulesPerOrg[rule.OrgID] = append(rulesPerOrg[rule.OrgID], rule.AlertRule)
 	}
 
 	for orgID, rules := range rulesPerOrg {
@@ -557,7 +578,7 @@ func (f *RuleStore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uid
 	return namespacesMap, nil
 }
 
-func (f *RuleStore) GetAlertRuleVersions(_ context.Context, orgID int64, guid string) ([]*models.AlertRule, error) {
+func (f *RuleStore) GetAlertRuleVersions(_ context.Context, orgID int64, guid string) ([]*models.AlertRuleVersion, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 

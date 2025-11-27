@@ -88,6 +88,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 
 	var dialOps []grpc.DialOption
 
+	dialOps = append(dialOps, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100*1024*1024)))
 	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
 	if settings.BasicAuthEnabled {
 		// If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.

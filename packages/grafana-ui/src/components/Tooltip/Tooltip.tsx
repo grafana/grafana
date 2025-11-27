@@ -34,6 +34,9 @@ export interface TooltipProps {
   interactive?: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-tooltip--docs
+ */
 export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
   ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const arrowRef = useRef(null);

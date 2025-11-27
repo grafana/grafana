@@ -65,6 +65,7 @@ func NewQueryAPIBuilder(
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
 		// Read the expression query definitions
 		raw, err := expr.QueryTypeDefinitionListJSON()
@@ -160,6 +161,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&query.QueryDataResponse{},
 		&query.QueryTypeDefinition{},
 		&query.QueryTypeDefinitionList{},
+		&query.SQLSchemas{},
 	)
 }
 
@@ -179,6 +181,7 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	storage := map[string]rest.Storage{}
 
 	// Get a list of all datasource instances
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
 		// Eventually this would be backed either by search or reconciler pattern
 		storage[query.ConnectionResourceInfo.StoragePath()] = &connectionAccess{
@@ -188,6 +191,7 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	plugins := newPluginsStorage(b.registry)
 	storage[plugins.resourceInfo.StoragePath()] = plugins
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		// The plugin registry is still experimental, and not yet accurate
 		// For standard k8s api discovery to work, at least one resource must be registered
@@ -197,6 +201,8 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
 	storage["query"] = newQueryREST(b)
+
+	storage["sqlschemas"] = newSQLSchemasREST(b)
 
 	// Register the expressions query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)

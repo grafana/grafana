@@ -130,7 +130,6 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
         />
       </Field>
       <Collapse
-        collapsible
         className={styles.collapse}
         isOpen={isTimingOptionsExpanded}
         label={t('alerting.am-root-route-form.label-timing-options', 'Timing options')}

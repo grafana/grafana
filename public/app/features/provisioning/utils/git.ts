@@ -27,41 +27,81 @@ export const getRepoHref = (github?: RepositorySpec['github']) => {
   return `${github.url}/tree/${github.branch}`;
 };
 
+// Remove leading and trailing slashes from a string.
+const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
+
+// Split a path into segments and URL-encode each segment.
+// Ensures the final URL remains valid for all providers (GitHub, GitLab, etc.).
+const splitAndEncode = (s: string) => stripSlashes(s).split('/').map(encodeURIComponent);
+
+type BuildRepoUrlParams = {
+  baseUrl?: string;
+  branch?: string | null;
+  providerSegments: string[];
+  path?: string | null;
+};
+
+const buildRepoUrl = ({ baseUrl, branch, providerSegments, path }: BuildRepoUrlParams) => {
+  if (!baseUrl) {
+    return undefined;
+  }
+
+  // Normalize base URL: trim whitespace + remove trailing slashes.
+  const cleanBase = stripSlashes(baseUrl.trim());
+  const cleanBranch = branch?.trim() || undefined;
+
+  // Start composing URL parts:
+  // base URL + provider-specific segments (e.g., "tree", "blob", etc.)
+  const parts = [cleanBase, ...providerSegments];
+
+  // Append the branch name if present.
+  if (cleanBranch) {
+    parts.push(cleanBranch);
+  }
+
+  // Append encoded path segments if provided.
+  // This ensures nested files like "src/utils/index.ts" produce safe URLs.
+  if (path) {
+    parts.push(...splitAndEncode(path.trim()));
+  }
+
+  return parts.join('/');
+};
+
 export const getRepoHrefForProvider = (spec?: RepositorySpec) => {
   if (!spec || !spec.type) {
     return undefined;
   }
 
   switch (spec.type) {
-    case 'github': {
-      const url = spec.github?.url;
-      const branch = spec.github?.branch;
-      if (!url) {
-        return undefined;
-      }
-      return branch ? `${url}/tree/${branch}` : url;
-    }
-
-    case 'gitlab': {
-      const url = spec.gitlab?.url;
-      const branch = spec.gitlab?.branch;
-      if (!url) {
-        return undefined;
-      }
-      return branch ? `${url}/-/tree/${branch}` : url;
-    }
-    case 'bitbucket': {
-      const url = spec.bitbucket?.url;
-      const branch = spec.bitbucket?.branch;
-      if (!url) {
-        return undefined;
-      }
-      return branch ? `${url}/src/${branch}` : url;
-    }
-    case 'git': {
-      // Return a generic URL for pure git repositories
-      return spec.git?.url;
-    }
+    case 'github':
+      return buildRepoUrl({
+        baseUrl: spec.github?.url,
+        branch: spec.github?.branch,
+        providerSegments: ['tree'],
+        path: spec.github?.path,
+      });
+    case 'gitlab':
+      return buildRepoUrl({
+        baseUrl: spec.gitlab?.url,
+        branch: spec.gitlab?.branch,
+        providerSegments: ['-', 'tree'],
+        path: spec.gitlab?.path,
+      });
+    case 'bitbucket':
+      return buildRepoUrl({
+        baseUrl: spec.bitbucket?.url,
+        branch: spec.bitbucket?.branch,
+        providerSegments: ['src'],
+        path: spec.bitbucket?.path,
+      });
+    case 'git':
+      return buildRepoUrl({
+        baseUrl: spec.git?.url,
+        branch: spec.git?.branch,
+        providerSegments: ['tree'],
+        path: spec.git?.path,
+      });
     default:
       return undefined;
   }

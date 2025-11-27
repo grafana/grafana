@@ -13,7 +13,7 @@
       "label-resource-group": "資源群組",
       "label-resource-name": "資源名稱",
       "label-resource-number": "資源 {{resourceNum}}",
-      "label-resource-uri": "資源 URI",
+      "label-resource-uri": "",
       "label-subscription": "訂閱",
       "placeholder-resource-name": "名稱",
       "tooltip-region": "資源的代碼區域。對於單一資源為選填，但選取多個資源時為必填。",

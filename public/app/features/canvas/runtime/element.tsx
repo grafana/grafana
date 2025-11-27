@@ -35,6 +35,7 @@ import {
   removeStyles,
 } from 'app/plugins/panel/canvas/utils';
 
+import { reportActionTrigger } from '../../actions/analytics';
 import { getActions, getActionsDefaultField, isInfinityActionWithAuth } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
@@ -1049,6 +1050,9 @@ export class ElementState implements LayerElement {
             onConfirm={() => {
               this.showActionConfirmation = false;
               action.onClick(new MouseEvent('click'), null, this.actionVars);
+              if (action.type) {
+                reportActionTrigger(action.type, true, 'canvas');
+              }
               this.forceUpdate();
             }}
             onDismiss={() => {
@@ -1086,7 +1090,7 @@ export class ElementState implements LayerElement {
     );
   };
 
-  render() {
+  renderElement() {
     const { item, div } = this;
     const scene = this.getScene();
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
@@ -1104,7 +1108,12 @@ export class ElementState implements LayerElement {
           tabIndex={0}
           style={{ userSelect: 'none' }}
         >
-          <item.display key={this.UID} config={this.options.config} data={this.data} isSelected={isSelected} />
+          <item.display
+            key={`${this.UID}/${this.revId}`}
+            config={this.options.config}
+            data={this.data}
+            isSelected={isSelected}
+          />
         </div>
         {this.showActionConfirmation && this.renderActionsConfirmModal(this.getPrimaryAction())}
         {this.showActionVarsModal && this.renderVariablesInputModal(this.getPrimaryAction())}

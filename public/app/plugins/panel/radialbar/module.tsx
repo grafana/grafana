@@ -8,7 +8,7 @@ import { EffectsEditor } from './EffectsEditor';
 import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './GaugeMigrations';
 import { RadialBarPanel } from './RadialBarPanel';
 import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
-import { GaugeSuggestionsSupplier } from './suggestions';
+import { radialBarSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(RadialBarPanel)
   .useFieldConfig({})
@@ -35,7 +35,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       path: 'gradient',
       name: t('radialbar.config.gradient', 'Gradient'),
       category,
-      defaultValue: 'none',
+      defaultValue: defaultOptions.gradient,
       settings: {
         options: [
           { value: 'none', label: t('radialbar.config.gradient-none', 'None') },
@@ -112,6 +112,6 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       defaultValue: defaultGaugePanelEffects,
     });
   })
-  .setSuggestionsSupplier(new GaugeSuggestionsSupplier())
+  .setSuggestionsSupplier(radialBarSuggestionsSupplier)
   .setMigrationHandler(gaugePanelMigrationHandler, shouldMigrateGauge)
   .setPanelChangeHandler(gaugePanelChangedHandler);

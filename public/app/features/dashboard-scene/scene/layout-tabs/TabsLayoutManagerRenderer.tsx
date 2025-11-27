@@ -77,6 +77,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                   variant="primary"
                   fill="text"
                   onClick={() => model.addNewTab()}
+                  onPointerUp={(evt) => evt.stopPropagation()}
                   data-testid={selectors.components.CanvasGridAddActions.addTab}
                 >
                   <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
@@ -87,6 +88,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                     variant="primary"
                     fill="text"
                     onClick={() => model.pasteTab()}
+                    onPointerUp={(evt) => evt.stopPropagation()}
                     data-testid={selectors.components.CanvasGridAddActions.pasteTab}
                   >
                     <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>

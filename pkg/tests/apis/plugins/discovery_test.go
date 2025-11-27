@@ -20,41 +20,6 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
 				"freshness": "Current",
 				"resources": [
 					{
-						"resource": "plugininstalls",
-						"responseKind": {
-							"group": "",
-							"kind": "PluginInstall",
-							"version": ""
-						},
-						"scope": "Namespaced",
-						"singularResource": "plugininstalls",
-						"subresources": [
-							{
-								"responseKind": {
-									"group": "",
-									"kind": "PluginInstall",
-									"version": ""
-								},
-								"subresource": "status",
-								"verbs": [
-									"get",
-									"patch",
-									"update"
-								]
-							}
-						],
-						"verbs": [
-							"create",
-							"delete",
-							"deletecollection",
-							"get",
-							"list",
-							"patch",
-							"update",
-							"watch"
-						]
-					},
-					{
 						"resource": "pluginmetas",
 						"responseKind": {
 							"group": "",
@@ -81,6 +46,41 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
 						"verbs": [
 							"get",
 							"list"
+						]
+					},
+					{
+						"resource": "plugins",
+						"responseKind": {
+							"group": "",
+							"kind": "Plugin",
+							"version": ""
+						},
+						"scope": "Namespaced",
+						"singularResource": "plugins",
+						"subresources": [
+							{
+								"responseKind": {
+									"group": "",
+									"kind": "Plugin",
+									"version": ""
+								},
+								"subresource": "status",
+								"verbs": [
+									"get",
+									"patch",
+									"update"
+								]
+							}
+						],
+						"verbs": [
+							"create",
+							"delete",
+							"deletecollection",
+							"get",
+							"list",
+							"patch",
+							"update",
+							"watch"
 						]
 					}
 				]

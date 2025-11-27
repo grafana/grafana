@@ -57,6 +57,11 @@ export const versionedComponents = {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
   },
+  Sidebar: {
+    closePane: {
+      '12.4.0': 'data-testid Sidebar close pane',
+    },
+  },
   EditPaneHeader: {
     deleteButton: {
       '12.1.0': 'data-testid EditPaneHeader delete panel',
@@ -69,9 +74,6 @@ export const versionedComponents = {
     },
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
-    },
-    backButton: {
-      '12.1.0': 'data-testid EditPaneHeader back',
     },
   },
   TimePicker: {
@@ -426,6 +428,9 @@ export const versionedComponents = {
       loadingBar: {
         '10.0.0': () => `Panel loading bar`,
       },
+      PanelNonApplicableDrilldownsSubHeader: {
+        '12.4.0': 'Panel non-applicable drilldowns subheader',
+      },
       HoverWidget: {
         container: {
           '10.1.0': 'data-testid hover-header-container',
@@ -514,6 +519,11 @@ export const versionedComponents = {
           Value: {
             '12.2.0': 'data-testid tableng footer value',
           },
+        },
+      },
+      Tooltip: {
+        Wrapper: {
+          '12.3.0': 'data-testid viz-tooltip-wrapper',
         },
       },
     },
@@ -676,6 +686,11 @@ export const versionedComponents = {
       TabsLayout: {
         titleInput: {
           '12.2.0': 'data-testid tab title input',
+        },
+      },
+      RowsLayout: {
+        titleInput: {
+          '12.3.0': 'data-testid row title input',
         },
       },
     },
@@ -909,6 +924,10 @@ export const versionedComponents = {
     addTransformationButton: {
       '10.1.0': 'data-testid add transformation button',
       [MIN_GRAFANA_VERSION]: 'add transformation button',
+    },
+    goToQueriesButton: {
+      '10.4.0': 'data-testid go to queries button',
+      [MIN_GRAFANA_VERSION]: 'go to queries button',
     },
     removeAllTransformationsButton: {
       '10.4.0': 'data-testid remove all transformations button',

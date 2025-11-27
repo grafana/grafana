@@ -73,6 +73,8 @@ type Service interface {
 
 	// this is more "forward compatible", for example supports per-query time ranges
 	QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+
+	GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchemas, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -347,6 +349,40 @@ func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) (s
 	return from, to, nil
 }
 
+const timeRangeKey = "timeRange"
+
+func queryToJson(query *simplejson.Json, supportLocalTimeRange bool) ([]byte, error) {
+	if !supportLocalTimeRange {
+		return query.MarshalJSON()
+	}
+
+	// we need to remove the `timeRange` attribute from the JSON, if it exists there,
+	// because it might cause complications with certain data sources.
+	_, has := query.CheckGet(timeRangeKey)
+	if !has {
+		return query.MarshalJSON()
+	}
+
+	qMap, err := query.Map()
+	if err != nil {
+		return nil, err
+	}
+
+	// we do not want to modify the query,
+	// so we create a copy without
+	// the timeRange attribute
+	d := make(map[string]any)
+
+	// without the `timeRange` attribute
+	for k, v := range qMap {
+		if k != timeRangeKey {
+			d[k] = v
+		}
+	}
+
+	return simplejson.NewFromAny(d).MarshalJSON()
+}
+
 // parseRequest parses a request into parsed queries grouped by datasource uid
 func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, supportLocalTimeRange bool) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
@@ -392,7 +428,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			timeRange = gtime.NewTimeRange(reqDTO.From, reqDTO.To)
 		}
 
-		modelJSON, err := query.MarshalJSON()
+		modelJSON, err := queryToJson(query, supportLocalTimeRange)
 		if err != nil {
 			return nil, err
 		}

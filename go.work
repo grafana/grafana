@@ -9,8 +9,11 @@ use (
 	./apps/alerting/alertenrichment
 	./apps/alerting/notifications
 	./apps/alerting/rules
+	./apps/annotation
+	./apps/collections
 	./apps/correlations
 	./apps/dashboard
+	./apps/example
 	./apps/folder
 	./apps/iam
 	./apps/investigations

@@ -12,9 +12,7 @@ import {
   getResultApplicationsCloudSelect,
   getResultApplicationsGrafanaSelect,
   getResultApplicationsMimirSelect,
-  getResultCloudDevRadio,
-  getResultCloudOpsRadio,
-  getSelectorInput,
+  getSelectorInput as getSelectorButton,
   getTreeHeadline,
   queryAllDashboard,
   queryDashboard,
@@ -28,14 +26,16 @@ import {
   queryResultApplicationsCloudSelect,
   queryResultApplicationsGrafanaSelect,
   queryResultApplicationsMimirSelect,
+  getResultEnvironmentsDevSelect,
+  getResultEnvironmentsProdSelect,
   querySelectorApply,
 } from './selectors';
 
 const expectInDocument = (selector: () => HTMLElement) => expect(selector()).toBeInTheDocument();
 const expectNotInDocument = (selector: () => HTMLElement | null) => expect(selector()).not.toBeInTheDocument();
 const expectChecked = (selector: () => HTMLInputElement) => expect(selector()).toBeChecked();
-const expectRadioChecked = (selector: () => HTMLInputElement) => expect(selector().checked).toBe(true);
-const expectRadioNotChecked = (selector: () => HTMLInputElement) => expect(selector().checked).toBe(false);
+const expectNotChecked = (selector: () => HTMLInputElement) => expect(selector()).not.toBeChecked();
+
 const expectValue = (selector: () => HTMLInputElement, value: string) => expect(selector().value).toBe(value);
 const expectTextContent = (selector: () => HTMLElement, text: string) => expect(selector()).toHaveTextContent(text);
 const expectDisabled = (selector: () => HTMLElement) => expect(selector()).toBeDisabled();
@@ -45,8 +45,8 @@ export const expectRecentScope = (scope: string) => expectInDocument(() => getRe
 export const expectRecentScopeNotPresentInDocument = () => expectNotInDocument(queryRecentScopesSection);
 export const expectRecentScopesSection = () => expectInDocument(getRecentScopesSection);
 export const expectScopesSelectorClosed = () => expectNotInDocument(querySelectorApply);
-export const expectScopesSelectorDisabled = () => expectDisabled(getSelectorInput);
-export const expectScopesSelectorValue = (value: string) => expectValue(getSelectorInput, value);
+export const expectScopesSelectorDisabled = () => expectDisabled(getSelectorButton);
+export const expectScopesSelectorValue = (value: string) => expect(getSelectorButton().dataset.value).toBe(value);
 export const expectScopesHeadline = (value: string) => expectTextContent(getTreeHeadline, value);
 export const expectPersistedApplicationsGrafanaNotPresent = () =>
   expectNotInDocument(queryPersistedApplicationsGrafanaSelect);
@@ -62,10 +62,11 @@ export const expectResultApplicationsMimirPresent = () => expectInDocument(getRe
 export const expectResultApplicationsMimirNotPresent = () => expectNotInDocument(queryResultApplicationsMimirSelect);
 export const expectResultApplicationsCloudPresent = () => expectInDocument(getResultApplicationsCloudSelect);
 export const expectResultApplicationsCloudNotPresent = () => expectNotInDocument(queryResultApplicationsCloudSelect);
-export const expectResultCloudDevSelected = () => expectRadioChecked(getResultCloudDevRadio);
-export const expectResultCloudDevNotSelected = () => expectRadioNotChecked(getResultCloudDevRadio);
-export const expectResultCloudOpsSelected = () => expectRadioChecked(getResultCloudOpsRadio);
-export const expectResultCloudOpsNotSelected = () => expectRadioNotChecked(getResultCloudOpsRadio);
+
+export const expectResultEnvironmentsDevSelected = () => expectChecked(getResultEnvironmentsDevSelect);
+export const expectResultEnvironmentsDevNotSelected = () => expectNotChecked(getResultEnvironmentsDevSelect);
+export const expectResultEnvironmentsProdSelected = () => expectChecked(getResultEnvironmentsProdSelect);
+export const expectResultEnvironmentsProdNotSelected = () => expectNotChecked(getResultEnvironmentsProdSelect);
 
 export const expectDashboardsDisabled = () => expectDisabled(getDashboardsExpand);
 export const expectDashboardsClosed = () => expectNotInDocument(queryDashboardsContainer);
