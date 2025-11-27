@@ -477,6 +477,7 @@
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
+      "analyze-rule": "Analyze rule",
       "copy-link": "Copy link",
       "duplicate": "Duplicate",
       "export": "Export",
@@ -3476,6 +3477,14 @@
         "label-negative-y": "Negative Y"
       }
     },
+    "suggestions": {
+      "horizontal": "Horizontal bar chart",
+      "hz-stacked": "Horizontal bar chart - stacked",
+      "hz-stacked-percent": "Horizontal bar chart - stacked by percentage",
+      "vert-stacked": "Bar chart - stacked",
+      "vert-stacked-percent": "Bar chart - stacked by percentage",
+      "vertical": "Bar chart"
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
       "gaps-options": {
@@ -3520,6 +3529,10 @@
     },
     "name-show-unfilled-area": "Show unfilled area",
     "name-value-display": "Value display",
+    "suggestions": {
+      "basic": "Bar gauge",
+      "lcd": "Bar gauge - LCD"
+    },
     "value-display-options": {
       "label-hidden": "Hidden",
       "label-text-color": "Text color",
@@ -7848,6 +7861,7 @@
     "suggestions": {
       "arc": "Gauge",
       "circular": "Circular gauge",
+      "no-thresholds": "Gauge - no thresholds",
       "style": {
         "circular": "Glowing",
         "simple": "Simple"
@@ -11102,6 +11116,10 @@
     "pie-chart-type-options": {
       "label-donut": "Donut",
       "label-pie": "Pie"
+    },
+    "suggestions": {
+      "donut": "Donut chart",
+      "pie": "Pie chart"
     }
   },
   "playlist": {
@@ -11685,13 +11703,6 @@
       "saving": "Saving",
       "title-error-loading-file": "Error loading file"
     },
-    "files-view": {
-      "columns": {
-        "history": "History",
-        "view": "View"
-      },
-      "placeholder-search": "Search"
-    },
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
       "description-generate-dashboard-previews": "Create preview links for pull requests",
@@ -11902,9 +11913,6 @@
       "source-code": "Source code"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
@@ -11941,14 +11949,6 @@
       "webhook-last-event": "Last Event:",
       "webhook-url": "View Webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "History",
-        "view-dashboard": "View",
-        "view-folder": "View"
-      },
-      "placeholder-search": "Search"
-    },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
@@ -11956,12 +11956,10 @@
       "not-found": "not found",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
-      "tab-files": "Files",
-      "tab-files-title": "The raw file list from the repository",
       "tab-overview": "Overview",
       "tab-overview-title": "Repository overview",
       "tab-resources": "Resources",
-      "tab-resources-title": "Resources saved in grafana database",
+      "tab-resources-title": "Repository files and resources",
       "title": "Repository Status",
       "title-legacy-storage": "Legacy Storage",
       "title-queued-for-deletion": "Queued for deletion"
@@ -11983,6 +11981,17 @@
       "local-description": "Configure file provisioning",
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository"
+    },
+    "resource-tree": {
+      "header-hash": "Hash",
+      "header-status": "Status",
+      "header-title": "Title",
+      "header-type": "Type",
+      "search-placeholder": "Search by path or title",
+      "source": "Source",
+      "status-pending": "Pending",
+      "status-synced": "Synced",
+      "view": "View"
     },
     "resource-view": {
       "base": "Base",
@@ -13050,6 +13059,12 @@
       "label-same-as-value": "Same as Value",
       "label-standard": "Standard"
     },
+    "suggestions": {
+      "stat-color-background": "Stat - color background",
+      "stat-discrete-values": "Stat - discrete values",
+      "stat-discrete-values-color-background": "Stat - discrete values - color background",
+      "stat-single-string": "Stat - single string"
+    },
     "text-alignment-options": {
       "label-auto": "Auto",
       "label-center": "Center"
@@ -13387,7 +13402,8 @@
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
-      "zoom-out-tooltip": "Time range zoom out <br /> CTRL+Z"
+      "zoom-out-tooltip": "Time range zoom out <br /> CTRL+Z",
+      "zoom-out-tooltip-new": "Time range zoom out <br /> t -"
     },
     "time-range": {
       "apply": "Apply time range",
@@ -13488,6 +13504,16 @@
         "label-never": "Never",
         "label-threshold": "Threshold"
       }
+    },
+    "suggestions": {
+      "area": "Area chart",
+      "area-stacked": "Area chart - stacked",
+      "area-stacked-percentage": "Area chart - stacked by percentage",
+      "bar": "Bar chart",
+      "bar-stacked": "Bar chart - stacked",
+      "bar-stacked-percent": "Bar chart - stacked by percentage",
+      "line": "Line chart",
+      "line-smooth": "Line chart - smooth"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",

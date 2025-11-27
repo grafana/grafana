@@ -36,6 +36,10 @@ import { AlertRuleProvider } from './RuleContext';
 import RuleViewer, { ActiveTab } from './RuleViewer';
 import { addRulePageEnrichmentSection } from './tabs/extensions/RuleViewerExtension';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
 // metadata and interactive elements
 const ELEMENTS = {
   loading: byText(/Loading rule/i),
