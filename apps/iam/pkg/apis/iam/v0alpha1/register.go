@@ -317,7 +317,7 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&ServiceAccountList{},
 		&Team{},
 		&TeamList{},
-		&GetSearch{},
+		&GetSearchTeams{},
 		&TeamBinding{},
 		&TeamBindingList{},
 		&ExternalGroupMapping{},

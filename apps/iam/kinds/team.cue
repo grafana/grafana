@@ -31,29 +31,5 @@ teamv0alpha1: teamKind & {
 				responseMetadata: objectMeta: false
 			}
 		}
-		"/search": {
-			"GET": {
-				request: {
-					query: { 
-						query?: string
-					}
-				}
-				response: {
-					#TeamHit: {
-						name: string
-						title: string
-						email: string
-						provisioned: bool
-						externalUID: string
-					}
-					offset: int64
-					totalHits: int64
-					hits: [...#TeamHit]
-					queryCost: float64
-					maxScore: float64
-				}
-				responseMetadata: objectMeta: false
-			}
-		}
 	}
 }

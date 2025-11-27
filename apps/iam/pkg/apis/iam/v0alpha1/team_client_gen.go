@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 )
@@ -100,30 +99,6 @@ func (c *TeamClient) GetGroups(ctx context.Context, identifier resource.Identifi
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal response bytes into GetGroups: %w", err)
-	}
-	return &cast, nil
-}
-
-type GetSearchRequest struct {
-	Params  GetSearchRequestParams
-	Headers http.Header
-}
-
-func (c *TeamClient) GetSearch(ctx context.Context, identifier resource.Identifier, request GetSearchRequest) (*GetSearch, error) {
-	params := url.Values{}
-	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
-		Path:    "/search",
-		Verb:    "GET",
-		Query:   params,
-		Headers: request.Headers,
-	})
-	if err != nil {
-		return nil, err
-	}
-	cast := GetSearch{}
-	err = json.Unmarshal(resp, &cast)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetSearch: %w", err)
 	}
 	return &cast, nil
 }

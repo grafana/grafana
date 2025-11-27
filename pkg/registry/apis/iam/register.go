@@ -37,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/teamsearch"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -224,7 +223,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 
 		storage[teamResource.StoragePath()] = dw
-		storage[teamResource.StoragePath("search")] = teamsearch.NewTeamSearchREST(b.tracing, b.unified)
 	}
 
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
@@ -470,7 +468,11 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	return b.display.GetAPIRoutes(defs)
+
+	routes := b.teamSearch.GetAPIRoutes(defs)
+	routes.Namespace = append(routes.Namespace, b.display.GetAPIRoutes(defs).Namespace...)
+
+	return routes
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
