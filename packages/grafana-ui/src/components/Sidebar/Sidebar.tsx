@@ -3,6 +3,7 @@ import { ReactNode, useContext, useRef } from 'react';
 import { useClickAway } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -75,7 +76,7 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
           icon={'web-section-alt'}
           onClick={context.onToggleDock}
           title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
-          data-testid="sidebar-dock-toggle"
+          data-testid={selectors.components.Sidebar.dockToggle}
         />
       )}
     </div>
