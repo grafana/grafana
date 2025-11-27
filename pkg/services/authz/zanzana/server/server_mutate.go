@@ -15,6 +15,7 @@ const (
 	OperationGroupFolder      OperationGroup = "folder"
 	OperationGroupPermission  OperationGroup = "permission"
 	OperationGroupUserOrgRole OperationGroup = "user_org_role"
+	OperationGroupRoleBinding OperationGroup = "role_binding"
 )
 
 func (s *Server) Mutate(ctx context.Context, req *authzextv1.MutateRequest) (*authzextv1.MutateResponse, error) {
@@ -63,6 +64,10 @@ func (s *Server) mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 			if err := s.mutateOrgRoles(ctx, storeInf, operations); err != nil {
 				return nil, fmt.Errorf("failed to mutate org roles: %w", err)
 			}
+		case OperationGroupRoleBinding:
+			if err := s.mutateRoleBindings(ctx, storeInf, operations); err != nil {
+				return nil, fmt.Errorf("failed to mutate role bindings: %w", err)
+			}
 		default:
 			s.logger.Warn("unsupported operation group", "operationGroup", operationGroup)
 		}
@@ -79,6 +84,8 @@ func getOperationGroup(operation *authzextv1.MutateOperation) (OperationGroup, e
 		return OperationGroupPermission, nil
 	case *authzextv1.MutateOperation_UpdateUserOrgRole, *authzextv1.MutateOperation_DeleteUserOrgRole, *authzextv1.MutateOperation_AddUserOrgRole:
 		return OperationGroupUserOrgRole, nil
+	case *authzextv1.MutateOperation_CreateRoleBinding, *authzextv1.MutateOperation_DeleteRoleBinding:
+		return OperationGroupRoleBinding, nil
 	}
 	return OperationGroup(""), errors.New("unsupported mutate operation type")
 }

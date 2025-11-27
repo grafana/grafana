@@ -220,7 +220,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
-	storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
+	if b.teamGroupsHandler != nil {
+		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
+	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 	teamBindingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)
@@ -344,6 +346,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		roleBindingStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
 		if err != nil {
 			return err
+		}
+		if enableZanzanaSync {
+			b.logger.Info("Enabling hooks for RoleBinding to sync to Zanzana")
+			roleBindingStore.AfterCreate = b.AfterRoleBindingCreate
+			roleBindingStore.AfterDelete = b.AfterRoleBindingDelete
+			roleBindingStore.BeginUpdate = b.BeginRoleBindingUpdate
 		}
 		storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
 	}
