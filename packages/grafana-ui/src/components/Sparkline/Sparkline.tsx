@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { PureComponent } from 'react';
 import { AlignedData, Range } from 'uplot';
@@ -33,6 +34,7 @@ export interface SparklineProps extends Themeable2 {
   height: number;
   config?: FieldConfig<GraphFieldConfig>;
   sparkline: FieldSparkline;
+  onHover?: (value: number | null, index: number | null) => void;
 }
 
 interface State {
@@ -106,14 +108,12 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
   }
 
   prepareConfig(data: DataFrame) {
-    const { theme } = this.props;
+    const { theme, onHover, config } = this.props;
     const builder = new UPlotConfigBuilder();
 
-    builder.setCursor({
-      show: false,
-      x: false, // no crosshairs
-      y: false,
-    });
+    // Check if interaction is enabled (default to true)
+    // Use type assertion since interactionEnabled is on TableSparklineCellOptions
+    const interactionEnabled = (config?.custom as any)?.interactionEnabled ?? true;
 
     // X is the first field in the alligned frame
     const xField = data.fields[0];
@@ -140,6 +140,9 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       theme,
       placement: AxisPlacement.Hidden,
     });
+
+    // Track the series color for cursor point styling
+    let seriesColor: string | undefined;
 
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
@@ -168,7 +171,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       });
 
       const colorMode = getFieldColorModeForField(field);
-      const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
+      seriesColor = colorMode.getCalculator(field, theme)(0, 0);
       const pointsMode =
         customConfig.drawStyle === GraphDrawStyle.Points ? VisibilityMode.Always : customConfig.showPoints;
 
@@ -183,12 +186,59 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
         showPoints: pointsMode,
-        pointSize: customConfig.pointSize,
+        pointSize: customConfig.pointSize || 5, // Ensure minimum size for cursor point calculation
         fillOpacity: customConfig.fillOpacity,
         fillColor: customConfig.fillColor,
         lineStyle: customConfig.lineStyle,
         gradientMode: customConfig.gradientMode,
         spanNulls: customConfig.spanNulls,
+      });
+    }
+
+    // Configure cursor after series so we have the series color
+    if (interactionEnabled && onHover) {
+      // Enable cursor with vertical bar indicator for hover interaction
+      // Vertical bar is more visible on small sparklines (25-30px height) than a dot
+      builder.setCursor({
+        show: true,
+        x: true, // show vertical line (bar indicator)
+        y: false, // no horizontal line
+        points: {
+          show: false, // don't show dots - use vertical bar instead
+          // Provide safe functions that don't access this.frames (which is undefined for Sparkline)
+          stroke: () => 'transparent',
+          fill: () => 'transparent',
+          size: () => 0,
+          width: () => 0,
+        },
+        focus: {
+          prox: 30, // proximity in CSS pixels for hover detection
+        },
+      } as any); // Type assertion needed for cursor styling properties
+
+      // Track cursor position and call onHover with the value at that position
+      // Using setLegend hook which fires on hover (not just drag-to-select like setSelect)
+      builder.addHook('setLegend', (u) => {
+        const dataIdx = u.cursor.idxs?.[1]; // Get the data index from the cursor
+        if (dataIdx != null) {
+          const yData = u.data[1]; // Y-axis data (values)
+          if (yData && dataIdx < yData.length) {
+            const value = yData[dataIdx];
+            if (value != null && isFinite(value)) {
+              onHover(value, dataIdx);
+              return;
+            }
+          }
+        }
+        // Reset on mouse leave or when no valid data point
+        onHover(null, null);
+      });
+    } else {
+      // Default behavior: cursor disabled
+      builder.setCursor({
+        show: false,
+        x: false, // no crosshairs
+        y: false,
       });
     }
 
@@ -198,6 +248,19 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
   render() {
     const { data, configBuilder } = this.state;
     const { width, height } = this.props;
-    return <UPlotChart data={data} config={configBuilder} width={width} height={height} />;
+
+    // Style the vertical cursor bar to be more visible on small sparklines
+    const cursorStyles = css`
+      .u-cursor-x {
+        border-left: 2px solid !important;
+        opacity: 1 !important;
+      }
+    `;
+
+    return (
+      <div className={cursorStyles}>
+        <UPlotChart data={data} config={configBuilder} width={width} height={height} />
+      </div>
+    );
   }
 }

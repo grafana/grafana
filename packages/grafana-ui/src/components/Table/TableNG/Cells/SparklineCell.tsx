@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
+import { useState, useCallback } from 'react';
 
 import { FieldConfig, getMinMaxAndDelta, Field, isDataFrameWithValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -32,11 +33,19 @@ export const defaultSparklineCellConfig: TableSparklineCellOptions = {
   barAlignment: BarAlignment.Center,
   showPoints: VisibilityMode.Never,
   hideValue: false,
+  interactionEnabled: true,
 };
 
 export const SparklineCell = (props: SparklineCellProps) => {
   const { field, value, theme, timeRange, rowIdx, width } = props;
   const sparkline = prepareSparklineValue(value, field);
+
+  // Hover state management for interactive sparklines
+  const [hoverValue, setHoverValue] = useState<number | null>(null);
+
+  const handleHover = useCallback((value: number | null, index: number | null) => {
+    setHoverValue(value);
+  }, []);
 
   if (!sparkline) {
     return (
@@ -80,8 +89,10 @@ export const SparklineCell = (props: SparklineCellProps) => {
   let valueWidth = 0;
   let valueElement: React.ReactNode = null;
   if (!hideValue) {
-    const newValue = isDataFrameWithValue(value) ? value.value : null;
-    const displayValue = field.display!(newValue);
+    // Use hover value if hovering, otherwise use the default value
+    const defaultValue = isDataFrameWithValue(value) ? value.value : null;
+    const displayRawValue = hoverValue ?? defaultValue;
+    const displayValue = field.display!(displayRawValue);
     const alignmentFactor = getAlignmentFactor(field, displayValue, rowIdx!);
 
     valueWidth =
@@ -94,7 +105,14 @@ export const SparklineCell = (props: SparklineCellProps) => {
   return (
     <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
       {valueElement}
-      <Sparkline width={width - valueWidth} height={25} sparkline={sparkline} config={config} theme={theme} />
+      <Sparkline
+        width={width - valueWidth}
+        height={25}
+        sparkline={sparkline}
+        config={config}
+        theme={theme}
+        onHover={handleHover}
+      />
     </MaybeWrapWithLink>
   );
 };
