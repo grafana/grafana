@@ -3028,6 +3028,7 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
+    rxjs: "npm:^7.8.2"
     tinycolor2: "npm:^1.6.0"
     type-fest: "npm:^4.40.0"
     typescript: "npm:5.9.2"

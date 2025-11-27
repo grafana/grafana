@@ -4,6 +4,16 @@ import { Provider } from 'react-redux';
 
 import { generatedAPI as notificationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { setBackendSrv } from '@grafana/runtime';
+
+import { MockBackendSrv } from './backendSrv.mock';
+
+// Initialize BackendSrv for tests - this allows RTKQ to make HTTP requests
+// The actual HTTP requests will be intercepted by MSW (setupMockServer)
+// We only need to implement fetch() which is what RTKQ uses
+// we could remove this once @grafana/api-client no longer uses the BackendSrv
+// @ts-ignore
+setBackendSrv(new MockBackendSrv());
 
 // create an empty store
 export const store = configureStore({
