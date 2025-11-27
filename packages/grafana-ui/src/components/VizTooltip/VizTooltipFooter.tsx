@@ -120,7 +120,7 @@ export const VizTooltipFooter = ({
 
       {!hasOneClickLink && !hasOneClickAction && filterByGroupedLabels && (
         <div className={styles.footerSection}>
-          <Stack direction="column" gap={0.5}>
+          <Stack direction="column" gap={0.5} width="fit-content">
             <Button
               icon="filter"
               variant="secondary"
