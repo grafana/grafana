@@ -103,6 +103,11 @@ func (p *resourceDBProvider) Init(ctx context.Context) (db.DB, error) {
 	return p.resourceDB, p.initErr
 }
 
+// GetEngine returns the underlying xorm.Engine for data migrations.
+func (p *resourceDBProvider) GetEngine() *xorm.Engine {
+	return p.engine
+}
+
 func (p *resourceDBProvider) initDB(ctx context.Context) (db.DB, error) {
 	p.log.Info("Initializing Resource DB",
 		"db_type",

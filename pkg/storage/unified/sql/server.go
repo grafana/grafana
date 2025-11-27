@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
@@ -32,6 +33,7 @@ type QOSEnqueueDequeuer interface {
 type ServerOptions struct {
 	Backend        resource.StorageBackend
 	DB             infraDB.DB
+	DBProvider     db.DBProvider // If provided, use this instead of creating a new one
 	Cfg            *setting.Cfg
 	Tracer         trace.Tracer
 	Reg            prometheus.Registerer
@@ -91,9 +93,14 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		serverOptions.Backend = opts.Backend
 		// TODO: we should probably have a proper interface for diagnostics/lifecycle
 	} else {
-		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
-		if err != nil {
-			return nil, err
+		// Use provided DBProvider if available, otherwise create a new one
+		eDB := opts.DBProvider
+		if eDB == nil {
+			var err error
+			eDB, err = dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),

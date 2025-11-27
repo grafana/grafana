@@ -53,12 +53,13 @@ func filterResponse(response *resourcepb.BulkResponse, resources []schema.GroupR
 }
 
 type CountValidator struct {
-	name        string
-	client      resourcepb.ResourceIndexClient
-	resource    schema.GroupResource
-	table       string
-	whereClause string
-	driverName  string
+	name         string
+	client       resourcepb.ResourceIndexClient
+	resource     schema.GroupResource
+	table        string
+	whereClause  string
+	driverName   string
+	legacyEngine *xorm.Engine
 }
 
 func NewCountValidator(
@@ -67,14 +68,16 @@ func NewCountValidator(
 	table string,
 	whereClause string,
 	driverName string,
+	legacy *xorm.Engine,
 ) Validator {
 	return &CountValidator{
-		name:        "CountValidator",
-		client:      client,
-		resource:    resource,
-		table:       table,
-		whereClause: whereClause,
-		driverName:  driverName,
+		name:         "CountValidator",
+		client:       client,
+		resource:     resource,
+		table:        table,
+		whereClause:  whereClause,
+		driverName:   driverName,
+		legacyEngine: legacy,
 	}
 }
 
@@ -119,7 +122,7 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 		return fmt.Errorf("invalid namespace %s: %w", summary.Namespace, err)
 	}
 
-	legacyCount, err := sess.Table(v.table).Where(v.whereClause, orgID).Count()
+	legacyCount, err := v.legacyEngine.Table(v.table).Where(v.whereClause, orgID).Count()
 	if err != nil {
 		return fmt.Errorf("failed to count %s: %w", v.table, err)
 	}
@@ -176,22 +179,25 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 }
 
 type FolderTreeValidator struct {
-	name       string
-	client     resourcepb.ResourceIndexClient
-	resource   schema.GroupResource
-	driverName string
+	name         string
+	client       resourcepb.ResourceIndexClient
+	resource     schema.GroupResource
+	driverName   string
+	legacyEngine *xorm.Engine
 }
 
 func NewFolderTreeValidator(
 	client resourcepb.ResourceIndexClient,
 	resource schema.GroupResource,
 	driverName string,
+	legacyEngine *xorm.Engine,
 ) Validator {
 	return &FolderTreeValidator{
-		name:       "FolderTreeValidator",
-		client:     client,
-		resource:   resource,
-		driverName: driverName,
+		name:         "FolderTreeValidator",
+		client:       client,
+		resource:     resource,
+		driverName:   driverName,
+		legacyEngine: legacyEngine,
 	}
 }
 
@@ -235,7 +241,7 @@ func (v *FolderTreeValidator) Validate(ctx context.Context, sess *xorm.Session, 
 	}
 
 	// Build legacy folder parent map
-	legacyParentMap, err := v.buildLegacyFolderParentMap(sess, orgID, log)
+	legacyParentMap, err := v.buildLegacyFolderParentMap(orgID, log)
 	if err != nil {
 		return fmt.Errorf("failed to build legacy folder parent map: %w", err)
 	}
@@ -298,10 +304,10 @@ func (v *FolderTreeValidator) Validate(ctx context.Context, sess *xorm.Session, 
 	return nil
 }
 
-func (v *FolderTreeValidator) buildLegacyFolderParentMap(sess *xorm.Session, orgID int64, log log.Logger) (map[string]string, error) {
+func (v *FolderTreeValidator) buildLegacyFolderParentMap(orgID int64, log log.Logger) (map[string]string, error) {
 	// Query all folders for this org
 	var folders []legacyFolder
-	err := sess.Table("dashboard").
+	err := v.legacyEngine.Table("dashboard").
 		Cols("id", "uid", "folder_uid", "title").
 		Where("org_id = ? AND is_folder = ?", orgID, true).
 		Find(&folders)

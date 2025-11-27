@@ -31,7 +31,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 			resourceServer.resetCalls()
 			indexServer.resetCalls()
 
-			client, err := newClient(
+			client, _, err := newClient(
 				options.StorageOptions{
 					StorageType: options.StorageTypeUnifiedGrpc,
 					Address:     resourceServerAddress,
@@ -64,7 +64,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 			resourceServer.resetCalls()
 			indexServer.resetCalls()
 
-			client, err := newClient(
+			client, _, err := newClient(
 				options.StorageOptions{
 					StorageType:         options.StorageTypeUnifiedGrpc,
 					Address:             resourceServerAddress,

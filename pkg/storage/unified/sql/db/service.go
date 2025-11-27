@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 //go:generate mockery --with-expecter --name DB
@@ -17,6 +19,13 @@ type DBProvider interface {
 	// Init initializes the SQL Database, running migrations if needed. It is
 	// idempotent and thread-safe.
 	Init(context.Context) (DB, error)
+}
+
+// EngineProvider provides access to the underlying xorm.Engine.
+type EngineProvider interface {
+	// GetEngine returns the underlying xorm.Engine.
+	// It can be used to run data migrations to unified storage.
+	GetEngine() *xorm.Engine
 }
 
 // DB is a thin abstraction on *sql.DB to allow mocking to provide better unit

@@ -33,7 +33,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/util/scheduler"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 type Options struct {
@@ -47,6 +50,21 @@ type Options struct {
 	SecureValues secrets.InlineSecureValueSupport
 }
 
+// ResourceClient wraps a ResourceClient
+type ResourceClient struct {
+	resource.ResourceClient
+	engineProvider db.EngineProvider
+}
+
+// GetEngine returns the underlying xorm.Engine of the underlying resource server
+// Returns nil for gRPC or file-based storage modes.
+func (c *ResourceClient) GetEngine() *xorm.Engine {
+	if c.engineProvider != nil {
+		return c.engineProvider.GetEngine()
+	}
+	return nil
+}
+
 type clientMetrics struct {
 	requestDuration *prometheus.HistogramVec
 	requestRetries  *prometheus.CounterVec
@@ -56,9 +74,9 @@ type clientMetrics struct {
 func ProvideUnifiedStorageClient(opts *Options,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
-) (resource.ResourceClient, error) {
+) (*ResourceClient, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-	client, err := newClient(options.StorageOptions{
+	client, engineProvider, err := newClient(options.StorageOptions{
 		StorageType:             options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
 		DataPath:                apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
 		Address:                 apiserverCfg.Key("address").MustString(""),
@@ -67,34 +85,39 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
 	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
-	if err == nil {
-		// Decide whether to disable SQL fallback stats per resource in Mode 5.
-		// Otherwise we would still try to query the legacy SQL database in Mode 5.
-		var disableDashboardsFallback, disableFoldersFallback bool
-		if opts.Cfg != nil {
-			// String are static here, so we don't need to import the packages.
-			foldersMode := opts.Cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
-			disableFoldersFallback = foldersMode == grafanarest.Mode5
-			dashboardsMode := opts.Cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
-			disableDashboardsFallback = dashboardsMode == grafanarest.Mode5
-		}
-
-		// Used to get the folder stats
-		client = federated.NewFederatedClient(
-			client, // The original
-			legacysql.NewDatabaseProvider(opts.DB),
-			disableDashboardsFallback,
-			disableFoldersFallback,
-		)
+	if err != nil {
+		return nil, err
 	}
 
-	return client, err
+	// Decide whether to disable SQL fallback stats per resource in Mode 5.
+	// Otherwise we would still try to query the legacy SQL database in Mode 5.
+	var disableDashboardsFallback, disableFoldersFallback bool
+	if opts.Cfg != nil {
+		// String are static here, so we don't need to import the packages.
+		foldersMode := opts.Cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
+		disableFoldersFallback = foldersMode == grafanarest.Mode5
+		dashboardsMode := opts.Cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
+		disableDashboardsFallback = dashboardsMode == grafanarest.Mode5
+	}
+
+	// Used to get the folder stats
+	federatedClient := federated.NewFederatedClient(
+		client,
+		legacysql.NewDatabaseProvider(opts.DB),
+		disableDashboardsFallback,
+		disableFoldersFallback,
+	)
+
+	return &ResourceClient{
+		ResourceClient: federatedClient,
+		engineProvider: engineProvider,
+	}, nil
 }
 
 func newClient(opts options.StorageOptions,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
+	infradb infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
@@ -102,7 +125,7 @@ func newClient(opts options.StorageOptions,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	secure secrets.InlineSecureValueSupport,
-) (resource.ResourceClient, error) {
+) (resource.ResourceClient, db.EngineProvider, error) {
 	ctx := context.Background()
 
 	switch opts.StorageType {
@@ -112,18 +135,18 @@ func newClient(opts options.StorageOptions,
 		}
 
 		// Create BadgerDB instance
-		db, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
+		badgerDB, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
 			WithLogger(nil))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		kv := resource.NewBadgerKV(db)
+		kv := resource.NewBadgerKV(badgerDB)
 		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 			KvStore: kv,
 		})
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -133,13 +156,13 @@ func newClient(opts options.StorageOptions,
 			},
 		})
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		return resource.NewLocalResourceClient(server), nil
+		return resource.NewLocalResourceClient(server), nil, nil
 
 	case options.StorageTypeUnifiedGrpc:
 		if opts.Address == "" {
-			return nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
+			return nil, nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
 		}
 
 		var (
@@ -151,30 +174,44 @@ func newClient(opts options.StorageOptions,
 
 		conn, err = newGrpcConn(opts.Address, metrics, features, opts.GrpcClientKeepaliveTime)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if opts.SearchServerAddress != "" {
 			indexConn, err = newGrpcConn(opts.SearchServerAddress, metrics, features, opts.GrpcClientKeepaliveTime)
 
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		} else {
 			indexConn = conn
 		}
 
 		// Create a resource client
-		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
+		client, err := resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
+		return client, nil, err
 
 	default:
 		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics, nil)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
+		}
+
+		// Create DBProvider for SQL storage - this will be shared with migration service
+		dbProvider, err := dbimpl.ProvideResourceDB(infradb, cfg, tracer)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// The concrete type implements both DBProvider and EngineProvider
+		engineProvider, ok := dbProvider.(db.EngineProvider)
+		if !ok {
+			return nil, nil, fmt.Errorf("DBProvider does not implement EngineProvider")
 		}
 
 		serverOptions := sql.ServerOptions{
-			DB:             db,
+			DB:             infradb,
+			DBProvider:     dbProvider,
 			Cfg:            cfg,
 			Tracer:         tracer,
 			Reg:            reg,
@@ -194,28 +231,28 @@ func newClient(opts options.StorageOptions,
 				Logger:           cfg.Logger,
 			})
 			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
-				return nil, fmt.Errorf("failed to start queue: %w", err)
+				return nil, nil, fmt.Errorf("failed to start queue: %w", err)
 			}
 			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 				NumWorkers: cfg.QOSNumberWorker,
 				Logger:     cfg.Logger,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("failed to create scheduler: %w", err)
+				return nil, nil, fmt.Errorf("failed to create scheduler: %w", err)
 			}
 
 			err = services.StartAndAwaitRunning(ctx, scheduler)
 			if err != nil {
-				return nil, fmt.Errorf("failed to start scheduler: %w", err)
+				return nil, nil, fmt.Errorf("failed to start scheduler: %w", err)
 			}
 			serverOptions.QOSQueue = queue
 		}
 
 		server, err := sql.NewResourceServer(serverOptions)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		return resource.NewLocalResourceClient(server), nil
+		return resource.NewLocalResourceClient(server), engineProvider, nil
 	}
 }
 

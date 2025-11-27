@@ -10,8 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,11 +23,12 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/migrati
 var logger = log.New("storage.unified.migrations")
 
 type UnifiedStorageMigrationServiceImpl struct {
-	migrator UnifiedMigrator
-	cfg      *setting.Cfg
-	sqlStore db.DB
-	kv       kvstore.KVStore
-	client   resource.ResourceClient
+	migrator         UnifiedMigrator
+	cfg              *setting.Cfg
+	sqlStore         db.DB
+	kv               kvstore.KVStore
+	client           *unified.ResourceClient
+	resourceDBEngine *xorm.Engine // For SQLite, use unified storage's engine for data migrations
 }
 
 var _ contract.UnifiedStorageMigrationService = (*UnifiedStorageMigrationServiceImpl)(nil)
@@ -36,14 +39,23 @@ func ProvideUnifiedStorageMigrationService(
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	kv kvstore.KVStore,
-	client resource.ResourceClient,
+	client *unified.ResourceClient,
 ) contract.UnifiedStorageMigrationService {
+	// Get engine from unified storage client, fallback to grafana core database engine
+	resourceEngine := client.GetEngine()
+	if resourceEngine != nil {
+		logger.Info("Using Resource DB for unified storage migrations")
+	} else {
+		logger.Info("Using SQL Store DB for unified storage migrations")
+		resourceEngine = sqlStore.GetEngine()
+	}
 	return &UnifiedStorageMigrationServiceImpl{
-		migrator: migrator,
-		cfg:      cfg,
-		sqlStore: sqlStore,
-		kv:       kv,
-		client:   client,
+		migrator:         migrator,
+		cfg:              cfg,
+		sqlStore:         sqlStore,
+		kv:               kv,
+		client:           client,
+		resourceDBEngine: resourceEngine,
 	}
 }
 
@@ -61,7 +73,7 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 	// TODO: Re-enable once migrations are ready
 	// TODO: add guarantee that this only runs once
-	// return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client)
+	//return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client, p.resourceDBEngine)
 	return nil
 }
 
@@ -70,10 +82,11 @@ func RegisterMigrations(
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	client resource.ResourceClient,
+	resourceDBEngine *xorm.Engine,
 ) error {
 	ctx, span := tracer.Start(context.Background(), "storage.unified.RegisterMigrations")
 	defer span.End()
-	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
+	mg := sqlstoremigrator.NewScopedMigrator(resourceDBEngine, cfg, "unifiedstorage")
 	mg.AddCreateMigration()
 
 	if err := prometheus.Register(mg); err != nil {
@@ -81,7 +94,7 @@ func RegisterMigrations(
 	}
 
 	// Register resource migrations
-	registerDashboardAndFolderMigration(mg, migrator, client)
+	registerDashboardAndFolderMigration(mg, sqlStore.GetEngine(), migrator, client)
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
@@ -100,7 +113,7 @@ func RegisterMigrations(
 	return nil
 }
 
-func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
+func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, legacyEngine *xorm.Engine, migrator UnifiedMigrator, client resource.ResourceClient) {
 	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 	driverName := mg.Dialect.DriverName()
@@ -111,6 +124,7 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator
 		"dashboard",
 		"org_id = ? and is_folder = true",
 		driverName,
+		legacyEngine,
 	)
 
 	dashboardCountValidator := NewCountValidator(
@@ -119,15 +133,17 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator
 		"dashboard",
 		"org_id = ? and is_folder = false",
 		driverName,
+		legacyEngine,
 	)
 
-	folderTreeValidator := NewFolderTreeValidator(client, folders, driverName)
+	folderTreeValidator := NewFolderTreeValidator(client, folders, driverName, legacyEngine)
 
 	dashboardsAndFolders := NewResourceMigration(
 		migrator,
 		[]schema.GroupResource{folders, dashboards},
 		"folders-dashboards",
 		[]Validator{folderCountValidator, dashboardCountValidator, folderTreeValidator},
+		legacyEngine,
 	)
 	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
 }

@@ -26,11 +26,12 @@ type Validator interface {
 // ResourceMigration handles migration of specific resource types from legacy to unified storage.
 type ResourceMigration struct {
 	migrator.MigrationBase
-	migrator    UnifiedMigrator
-	resources   []schema.GroupResource
-	migrationID string
-	validators  []Validator // Optional: custom validation logic for this migration
-	log         log.Logger
+	migrator     UnifiedMigrator
+	resources    []schema.GroupResource
+	migrationID  string
+	validators   []Validator // Optional: custom validation logic for this migration
+	log          log.Logger
+	legacyEngine *xorm.Engine
 }
 
 // NewResourceMigration creates a new migration for the specified resources.
@@ -39,13 +40,15 @@ func NewResourceMigration(
 	resources []schema.GroupResource,
 	migrationID string,
 	validators []Validator,
+	legacyEngine *xorm.Engine,
 ) *ResourceMigration {
 	return &ResourceMigration{
-		migrator:    migrator,
-		resources:   resources,
-		migrationID: migrationID,
-		validators:  validators,
-		log:         log.New("storage.unified.resource_migration." + migrationID),
+		migrator:     migrator,
+		resources:    resources,
+		migrationID:  migrationID,
+		validators:   validators,
+		legacyEngine: legacyEngine,
+		log:          log.New("storage.unified.resource_migration." + migrationID),
 	}
 }
 
@@ -60,7 +63,7 @@ func (m *ResourceMigration) SQL(_ migrator.Dialect) string {
 func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	ctx := context.Background()
 
-	orgs, err := m.getAllOrgs(sess)
+	orgs, err := m.getAllOrgs()
 	if err != nil {
 		m.log.Error("failed to get organizations", "error", err)
 		return fmt.Errorf("failed to get organizations: %w", err)
@@ -174,9 +177,9 @@ type orgInfo struct {
 }
 
 // getAllOrgs retrieves all organizations from the database
-func (m *ResourceMigration) getAllOrgs(sess *xorm.Session) ([]orgInfo, error) {
+func (m *ResourceMigration) getAllOrgs() ([]orgInfo, error) {
 	var orgs []orgInfo
-	err := sess.Table("org").Cols("id", "name").Find(&orgs)
+	err := m.legacyEngine.Table("org").Cols("id", "name").Find(&orgs)
 	if err != nil {
 		return nil, err
 	}
