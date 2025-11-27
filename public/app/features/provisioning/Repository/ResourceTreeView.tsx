@@ -140,7 +140,14 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           }
 
           const viewLink = getGrafanaLink(item);
-          const sourceLink = item.hasFile ? getRepoFileUrl(repo.spec, item.path) : undefined;
+          let sourceLink: string | undefined = undefined;
+          if (item.hasFile && repo.spec?.type) {
+            const spec = repo.spec;
+            const config = spec.github || spec.gitlab || spec.bitbucket;
+            if (config) {
+              sourceLink = getRepoFileUrl(spec.type, config.url, config.branch, item.path, config.path);
+            }
+          }
 
           if (!viewLink && !sourceLink) {
             return null;

@@ -112,51 +112,51 @@ export function getHasTokenInstructions(type: RepoType): type is InstructionAvai
   return type === 'github' || type === 'gitlab' || type === 'bitbucket';
 }
 
-export function getRepoFileUrl(spec?: RepositorySpec, filePath?: string) {
-  if (!spec || !spec.type || !filePath) {
+/**
+ * Build a URL to a specific source file in a repository.
+ * Only works for git providers (GitHub, GitLab, Bitbucket).
+ * @param repoType - The repository type
+ * @param url - The repository base URL
+ * @param branch - The branch name (defaults to 'main' if not provided)
+ * @param filePath - The path to the file in the repository
+ * @param pathPrefix - Optional path prefix to prepend to filePath (e.g., from RepositorySpec.path)
+ */
+export function getRepoFileUrl(
+  repoType: RepoType,
+  url: string | undefined,
+  branch: string | undefined,
+  filePath: string | undefined,
+  pathPrefix?: string | null
+): string | undefined {
+  if (!url || !filePath) {
     return undefined;
   }
 
-  switch (spec.type) {
-    case 'github': {
-      const { url, branch, path } = spec.github ?? {};
-      if (!url) {
-        return undefined;
-      }
-      const fullPath = path ? `${path}${filePath}` : filePath;
+  const effectiveBranch = branch || 'main';
+  const fullPath = pathPrefix ? `${pathPrefix}${filePath}` : filePath;
+
+  switch (repoType) {
+    case 'github':
       return buildRepoUrl({
         baseUrl: url,
-        branch: branch || 'main',
+        branch: effectiveBranch,
         providerSegments: ['blob'],
         path: fullPath,
       });
-    }
-    case 'gitlab': {
-      const { url, branch, path } = spec.gitlab ?? {};
-      if (!url) {
-        return undefined;
-      }
-      const fullPath = path ? `${path}${filePath}` : filePath;
+    case 'gitlab':
       return buildRepoUrl({
         baseUrl: url,
-        branch: branch || 'main',
+        branch: effectiveBranch,
         providerSegments: ['-', 'blob'],
         path: fullPath,
       });
-    }
-    case 'bitbucket': {
-      const { url, branch, path } = spec.bitbucket ?? {};
-      if (!url) {
-        return undefined;
-      }
-      const fullPath = path ? `${path}${filePath}` : filePath;
+    case 'bitbucket':
       return buildRepoUrl({
         baseUrl: url,
-        branch: branch || 'main',
+        branch: effectiveBranch,
         providerSegments: ['src'],
         path: fullPath,
       });
-    }
     default:
       return undefined;
   }
@@ -217,32 +217,6 @@ export function getRepoCommitUrl(spec?: RepositorySpec, commit?: string) {
 }
 
 /**
- * Build a URL to a specific source file in a repository.
- * Only works for git providers (GitHub, GitLab, Bitbucket).
- */
-export function getSourceFileUrl(
-  repoType: RepositoryView['type'],
-  url: string | undefined,
-  branch: string | undefined,
-  sourcePath: string | undefined
-): string | undefined {
-  if (!url || !sourcePath) {
-    return undefined;
-  }
-
-  switch (repoType) {
-    case 'github':
-      return branch ? `${url}/blob/${branch}/${sourcePath}` : `${url}/blob/main/${sourcePath}`;
-    case 'gitlab':
-      return branch ? `${url}/-/blob/${branch}/${sourcePath}` : `${url}/-/blob/main/${sourcePath}`;
-    case 'bitbucket':
-      return branch ? `${url}/src/${branch}/${sourcePath}` : `${url}/src/main/${sourcePath}`;
-    default:
-      return undefined;
-  }
-}
-
-/**
  * Build a source link for a repo-managed dashboard.
  * Returns undefined if the dashboard is not repo-managed or if the repository is not a git provider.
  */
@@ -265,7 +239,7 @@ export async function buildSourceLink(annotations: ObjectMeta['annotations']): P
       return undefined;
     }
 
-    const sourceUrl = getSourceFileUrl(repository.type, repository.url, repository.branch, sourcePath);
+    const sourceUrl = getRepoFileUrl(repository.type, repository.url, repository.branch, sourcePath);
     if (!sourceUrl) {
       return undefined;
     }
