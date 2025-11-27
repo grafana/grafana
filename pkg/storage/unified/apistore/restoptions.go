@@ -54,6 +54,9 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 	// Create BadgerDB with in-memory mode
 	db, err := badger.Open(badger.DefaultOptions("").
 		WithInMemory(true).
+		WithMemTableSize(256 << 10).  // 256KB memtable size
+		WithValueThreshold(16 << 10). // 16KB threshold for storing values in LSM vs value log
+		WithNumMemtables(2).          // Keep only 2 memtables in memory
 		WithLogger(nil))
 	if err != nil {
 		return nil, err
