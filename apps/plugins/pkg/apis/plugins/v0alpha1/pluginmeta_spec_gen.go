@@ -207,10 +207,12 @@ func NewPluginMetaExtensions() *PluginMetaExtensions {
 
 // +k8s:openapi-gen=true
 type PluginMetaSpec struct {
-	PluginJson PluginMetaJSONData               `json:"pluginJson"`
-	Module     *PluginMetaV0alpha1SpecModule    `json:"module,omitempty"`
-	BaseURL    *string                          `json:"baseURL,omitempty"`
-	Signature  *PluginMetaV0alpha1SpecSignature `json:"signature,omitempty"`
+	PluginJson   PluginMetaJSONData               `json:"pluginJson"`
+	Module       *PluginMetaV0alpha1SpecModule    `json:"module,omitempty"`
+	BaseURL      *string                          `json:"baseURL,omitempty"`
+	Signature    *PluginMetaV0alpha1SpecSignature `json:"signature,omitempty"`
+	Angular      *PluginMetaV0alpha1SpecAngular   `json:"angular,omitempty"`
+	Translations map[string]string                `json:"translations,omitempty"`
 	// +listType=atomic
 	Children []string `json:"children,omitempty"`
 }
@@ -438,6 +440,16 @@ type PluginMetaV0alpha1SpecSignature struct {
 // NewPluginMetaV0alpha1SpecSignature creates a new PluginMetaV0alpha1SpecSignature object.
 func NewPluginMetaV0alpha1SpecSignature() *PluginMetaV0alpha1SpecSignature {
 	return &PluginMetaV0alpha1SpecSignature{}
+}
+
+// +k8s:openapi-gen=true
+type PluginMetaV0alpha1SpecAngular struct {
+	Detected bool `json:"detected"`
+}
+
+// NewPluginMetaV0alpha1SpecAngular creates a new PluginMetaV0alpha1SpecAngular object.
+func NewPluginMetaV0alpha1SpecAngular() *PluginMetaV0alpha1SpecAngular {
+	return &PluginMetaV0alpha1SpecAngular{}
 }
 
 // +k8s:openapi-gen=true

@@ -537,6 +537,14 @@ func pluginStorePluginToPluginMetaSpec(plugin pluginstore.Plugin, loadingStrateg
 		spec.Children = plugin.Children
 	}
 
+	spec.Angular = &pluginsv0alpha1.PluginMetaV0alpha1SpecAngular{
+		Detected: plugin.Angular.Detected,
+	}
+
+	if len(plugin.Translations) > 0 {
+		spec.Translations = plugin.Translations
+	}
+
 	return spec
 }
 

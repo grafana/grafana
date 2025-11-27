@@ -18,6 +18,10 @@ pluginMetaV0Alpha1: {
 				type?:  "grafana" | "commercial" | "community" | "private" | "private-glob"
 				org?:   string
 			}
+			angular?: {
+				detected: bool
+			}
+			translations?: [string]: string
 			// +listType=atomic
 			children?: [...string]
 		}

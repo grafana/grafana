@@ -121,6 +121,11 @@ func (p *CloudProvider) GetMeta(ctx context.Context, pluginID, version string) (
 		spec.Signature = signature
 	}
 
+	// Set angular info
+	spec.Angular = &pluginsv0alpha1.PluginMetaV0alpha1SpecAngular{
+		Detected: gcomMeta.AngularDetected,
+	}
+
 	return &Result{
 		Meta: spec,
 		TTL:  p.ttl,
