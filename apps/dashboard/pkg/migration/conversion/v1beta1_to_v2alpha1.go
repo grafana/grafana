@@ -1835,6 +1835,13 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 			// Set to default datasource (matches frontend v36 migration behavior)
 			dsType := getDefaultDatasourceType(ctx, dsIndexProvider)
 			dsUID := ""
+			// Get default datasource UID from provider if available
+			if dsIndexProvider != nil {
+				dsIndex := dsIndexProvider.Index(ctx)
+				if defaultDS := dsIndex.GetDefault(); defaultDS != nil {
+					dsUID = defaultDS.UID
+				}
+			}
 			// Resolve Grafana datasource UID if default type is "datasource"
 			dsUID = resolveGrafanaDatasourceUID(dsType, dsUID)
 			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
