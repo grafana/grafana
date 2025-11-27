@@ -490,5 +490,18 @@ export const handyTestingSchema: Spec = {
         allowCustomValue: true,
       },
     },
+    {
+      kind: 'SwitchVariable',
+      spec: {
+        name: 'switchVar',
+        label: 'Switch Variable',
+        description: 'A switch variable',
+        current: 'false',
+        enabledValue: 'true',
+        disabledValue: 'false',
+        hide: 'dontHide',
+        skipUrlSync: false,
+      },
+    },
   ],
 };
