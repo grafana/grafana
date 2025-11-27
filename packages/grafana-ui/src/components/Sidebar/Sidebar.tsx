@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useContext } from 'react';
+import { ReactNode, useContext, useRef } from 'react';
+import { useClickAway } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -19,6 +20,7 @@ export interface Props {
 export function SidebarComp({ children, contextValue }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+  const ref = useRef<HTMLDivElement>(null);
   const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin } = contextValue;
 
   const className = cx({
@@ -30,9 +32,15 @@ export function SidebarComp({ children, contextValue }: Props) {
 
   const style = { [position]: theme.spacing(edgeMargin), bottom: theme.spacing(bottomMargin) };
 
+  useClickAway(ref, () => {
+    if (!isDocked && hasOpenPane) {
+      contextValue.onClosePane?.();
+    }
+  });
+
   return (
     <SidebarContext.Provider value={contextValue}>
-      <div className={className} style={style}>
+      <div ref={ref} className={className} style={style}>
         {!tabsMode && <SidebarResizer />}
         {children}
       </div>
