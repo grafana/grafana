@@ -4297,6 +4297,8 @@
           "title",
           "type",
           "target",
+          "url",
+          "path",
           "workflows"
         ],
         "properties": {
@@ -4306,6 +4308,11 @@
           },
           "name": {
             "description": "The k8s name for this repository",
+            "type": "string",
+            "default": ""
+          },
+          "path": {
+            "description": "For git, this is the target path",
             "type": "string",
             "default": ""
           },
@@ -4334,6 +4341,11 @@
               "gitlab",
               "local"
             ]
+          },
+          "url": {
+            "description": "For git, this is the target URL",
+            "type": "string",
+            "default": ""
           },
           "workflows": {
             "description": "The supported workflows",

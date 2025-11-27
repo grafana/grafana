@@ -136,6 +136,18 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				return
 			}
 
+			for _, i := range settings.Items {
+				switch i.Type {
+				case provisioning.LocalRepositoryType:
+					assert.Empty(collect, i.URL)
+					assert.Equal(collect, i.Path, helper.ProvisioningPath)
+				case provisioning.GitHubRepositoryType:
+					assert.NotEmpty(collect, i.URL)
+					assert.Equal(collect, i.URL, "https://github.com/grafana/grafana-git-sync-demo")
+					assert.Equal(collect, i.Path, "grafana/")
+				}
+			}
+
 			assert.ElementsMatch(collect, []provisioning.RepositoryType{
 				provisioning.LocalRepositoryType,
 				provisioning.GitHubRepositoryType,
