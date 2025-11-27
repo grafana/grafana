@@ -312,18 +312,7 @@ export const handyTestingSchema: Spec = {
         label: 'Custom Variable',
         multi: true,
         name: 'customVar',
-        options: [
-          {
-            selected: true,
-            text: 'option1',
-            value: 'option1',
-          },
-          {
-            selected: false,
-            text: 'option2',
-            value: 'option2',
-          },
-        ],
+        options: [],
         query: 'option1, option2',
         skipUrlSync: false,
         allowCustomValue: true,

@@ -371,23 +371,7 @@ describe('sceneVariablesSetToVariables', () => {
       "label": "test-label",
       "multi": true,
       "name": "test",
-      "options": [
-        {
-          "selected": true,
-          "text": "test",
-          "value": "test",
-        },
-        {
-          "selected": false,
-          "text": "test1",
-          "value": "test1",
-        },
-        {
-          "selected": true,
-          "text": "test2",
-          "value": "test2",
-        },
-      ],
+      "options": [],
       "query": "test,test1,test2",
       "type": "custom",
     }
@@ -1161,23 +1145,7 @@ describe('sceneVariablesSetToVariables', () => {
         "label": "test-label",
         "multi": true,
         "name": "test",
-        "options": [
-          {
-            "selected": true,
-            "text": "test",
-            "value": "test",
-          },
-          {
-            "selected": false,
-            "text": "test1",
-            "value": "test1",
-          },
-          {
-            "selected": true,
-            "text": "test2",
-            "value": "test2",
-          },
-        ],
+        "options": [],
         "query": "test,test1,test2",
         "skipUrlSync": false,
       },
