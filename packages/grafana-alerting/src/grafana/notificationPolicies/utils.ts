@@ -1,6 +1,7 @@
 import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash';
 
-import { RoutingTree, RoutingTreeRoute } from '../api/notifications/v0alpha1/notifications.api.gen';
+import { RoutingTree, RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
 import { Label } from '../matchers/types';
 import { LabelMatchDetails, matchLabels } from '../matchers/utils';
 

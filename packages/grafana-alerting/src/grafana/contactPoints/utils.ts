@@ -1,6 +1,7 @@
 import { countBy, isEmpty } from 'lodash';
 
-import { Receiver } from '../api/notifications/v0alpha1/notifications.api.gen';
+import { Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
 import { ContactPoint } from '../api/notifications/v0alpha1/types';
 
 /**

@@ -83,6 +83,14 @@
     "./rtkq/shorturl/v1beta1": {
       "import": "./src/clients/rtkq/shorturl/v1beta1/index.ts",
       "require": "./src/clients/rtkq/shorturl/v1beta1/index.ts"
+    },
+    "./rtkq/notifications.alerting/v0alpha1": {
+      "import": "./src/clients/rtkq/notifications.alerting/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/notifications.alerting/v0alpha1/index.ts"
+    },
+    "./rtkq/rules.alerting/v0alpha1": {
+      "import": "./src/clients/rtkq/rules.alerting/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/rules.alerting/v0alpha1/index.ts"
     }
   },
   "publishConfig": {

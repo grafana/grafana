@@ -2,13 +2,16 @@ import { configureStore } from '@reduxjs/toolkit';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
-import { notificationsAPIv0alpha1 } from '../src/unstable';
+import { generatedAPI as notificationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 // create an empty store
 export const store = configureStore({
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(notificationsAPIv0alpha1.middleware),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(notificationsAPIv0alpha1.middleware).concat(rulesAPIv0alpha1.middleware),
   reducer: {
     [notificationsAPIv0alpha1.reducerPath]: notificationsAPIv0alpha1.reducer,
+    [rulesAPIv0alpha1.reducerPath]: rulesAPIv0alpha1.reducer,
   },
 });
 

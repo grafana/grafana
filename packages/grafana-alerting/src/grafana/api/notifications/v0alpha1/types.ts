@@ -3,7 +3,11 @@
  */
 import { MergeDeep, MergeExclusive, OverrideProperties } from 'type-fest';
 
-import type { ListReceiverApiResponse, Receiver, ReceiverIntegration } from './notifications.api.gen';
+import type {
+  ListReceiverApiResponse,
+  Receiver,
+  ReceiverIntegration,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
 type GenericIntegration = OverrideProperties<
   ReceiverIntegration,

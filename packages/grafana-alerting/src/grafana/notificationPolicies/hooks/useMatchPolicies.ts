@@ -1,6 +1,10 @@
 import { useCallback } from 'react';
 
-import { RoutingTree, notificationsAPI } from '../../api/notifications/v0alpha1/notifications.api.gen';
+import {
+  RoutingTree,
+  generatedAPI as notificationsAPIv0alpha1,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
 import { Label } from '../../matchers/types';
 import { USER_DEFINED_TREE_NAME } from '../consts';
 import { Route, RouteWithID } from '../types';
@@ -36,7 +40,7 @@ export type InstanceMatchResult = {
  *          and returns an array of InstanceMatchResult objects, each containing the matched routes and matching details
  */
 export function useMatchInstancesToRouteTrees() {
-  const { data, ...rest } = notificationsAPI.endpoints.listRoutingTree.useQuery(
+  const { data, ...rest } = notificationsAPIv0alpha1.endpoints.listRoutingTree.useQuery(
     {},
     {
       refetchOnFocus: true,
