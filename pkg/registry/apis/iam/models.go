@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
@@ -75,9 +74,8 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Buffered channel to limit the amount of concurrent writes to Zanzana
 	zTickets chan bool
 
-	reg     prometheus.Registerer
-	logger  log.Logger
-	tracing *tracing.TracingService
+	reg    prometheus.Registerer
+	logger log.Logger
 
 	dual             dualwrite.Service
 	unified          resource.ResourceClient
