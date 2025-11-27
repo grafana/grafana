@@ -128,7 +128,7 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 			Operator: string(selection.Equals),
 			Values:   []string{email},
 		},
-	}, []string{"name", "email", "login"})
+	}, []string{"fields.email", "fields.login"})
 
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
@@ -159,7 +159,7 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 			Operator: string(selection.Equals),
 			Values:   []string{login},
 		},
-	}, []string{"name", "email", "login"})
+	}, []string{"fields.email", "fields.login"})
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
 		return err

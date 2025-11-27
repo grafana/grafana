@@ -20,7 +20,11 @@ const (
 	UserResourceGroup = "iam.grafana.com"
 )
 
-var _ resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
+var (
+	_          resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
+	fieldLogin                                = fmt.Sprintf("%s%s", res.SEARCH_FIELD_PREFIX, builders.USER_LOGIN)
+	fieldEmail                                = fmt.Sprintf("%s%s", res.SEARCH_FIELD_PREFIX, builders.USER_EMAIL)
+)
 
 // UserLegacySearchClient is a client for searching for users in the legacy search engine.
 type UserLegacySearchClient struct {
@@ -72,9 +76,9 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		switch field.Key {
 		case res.SEARCH_FIELD_TITLE:
 			title = vals[0]
-		case "fields.login":
+		case fieldLogin:
 			login = vals[0]
-		case "fields.email":
+		case fieldEmail:
 			email = vals[0]
 		}
 	}
@@ -126,21 +130,35 @@ func getResourceKey(item *user.UserSearchHitDTO, namespace string) *resourcepb.R
 	}
 }
 
+// func (c *ExternalGroupMappingLegacySearchClient) getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
+// 	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
+// 	for _, f := range fields {
+// 		switch f {
+// 		case fieldExternalGroup:
+// 			cols = append(cols, builders.ExternalGroupMappingTableColumnDefinitions[builders.EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP])
+// 		case fieldTeamName:
+// 			cols = append(cols, builders.ExternalGroupMappingTableColumnDefinitions[builders.EXTERNAL_GROUP_MAPPING_TEAM])
+// 		}
+// 	}
+// 	return cols
+// }
+
 func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
-	columns := defaultColumns()
+	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
 	for _, field := range fields {
 		switch field {
-		case "email":
-			columns = append(columns, builders.UserTableColumnDefinitions[builders.USER_EMAIL])
-		case "login":
-			columns = append(columns, builders.UserTableColumnDefinitions[builders.USER_LOGIN])
+		case fieldEmail:
+			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_EMAIL])
+		case fieldLogin:
+			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_LOGIN])
 		}
 	}
-	return columns
+	return cols
 }
 
 func createBaseCells(u *user.UserSearchHitDTO, fields []string) [][]byte {
-	cells := createDefaultCells(u)
+	// cells := createDefaultCells(u)
+	cells := make([][]byte, 0, len(fields))
 	for _, field := range fields {
 		switch field {
 		case "email":
@@ -152,17 +170,17 @@ func createBaseCells(u *user.UserSearchHitDTO, fields []string) [][]byte {
 	return cells
 }
 
-func createDefaultCells(u *user.UserSearchHitDTO) [][]byte {
-	return [][]byte{
-		[]byte(u.UID),
-		[]byte(u.Name),
-	}
-}
+// func createDefaultCells(u *user.UserSearchHitDTO) [][]byte {
+// 	return [][]byte{
+// 		[]byte(u.UID),
+// 		[]byte(u.Name),
+// 	}
+// }
 
-func defaultColumns() []*resourcepb.ResourceTableColumnDefinition {
-	searchFields := res.StandardSearchFields()
-	return []*resourcepb.ResourceTableColumnDefinition{
-		searchFields.Field(res.SEARCH_FIELD_NAME),
-		searchFields.Field(res.SEARCH_FIELD_TITLE),
-	}
-}
+// func defaultColumns() []*resourcepb.ResourceTableColumnDefinition {
+// 	searchFields := res.StandardSearchFields()
+// 	return []*resourcepb.ResourceTableColumnDefinition{
+// 		searchFields.Field(res.SEARCH_FIELD_NAME),
+// 		searchFields.Field(res.SEARCH_FIELD_TITLE),
+// 	}
+// }
