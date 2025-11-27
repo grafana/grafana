@@ -99,7 +99,13 @@ function buildAnalyzeAlertingRulePrompt(rule: GrafanaAlertingRule): string {
   const state = rule.state || 'firing';
   const timeInfo = rule.activeAt ? ` starting at ${new Date(rule.activeAt).toISOString()}` : '';
 
-  let prompt = `Analyze the ${state} alert "${rule.name}"${timeInfo}.`;
+  let prompt = `
+  Analyze the ${state} alert "${rule.name} (uid: ${rule.uid})"${timeInfo}.
+  Get the rule definition, read the queries and run them to understand the rule
+  Get the rule state and instances to understand its current state
+  Read the rule conditions and understand how it works. Then suggest query and conditions improvements if applicable
+  Suggest navigation to the alerting alerts page with the rule uid and state to analyze the alerts.
+  `;
 
   const description = rule.annotations?.description || rule.annotations?.summary || '';
   if (description) {
