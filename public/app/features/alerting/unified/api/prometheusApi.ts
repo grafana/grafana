@@ -39,6 +39,7 @@ export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'nam
   dashboardUid?: string;
   panelId?: number;
   limitAlerts?: number;
+  ruleLimit?: number;
   contactPoint?: string;
   health?: RuleHealth[];
   state?: PromAlertingRuleState[];
@@ -93,6 +94,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         state,
         type,
         groupLimit,
+        ruleLimit,
         limitAlerts,
         groupNextToken,
         title,
@@ -109,6 +111,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           state: state,
           rule_type: type,
           limit_alerts: limitAlerts,
+          rule_limit: ruleLimit?.toFixed(0),
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
           'search.rule_name': title,

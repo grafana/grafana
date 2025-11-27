@@ -24,26 +24,26 @@ import {
 /**
  * Determines if client-side filtering is needed for Grafana-managed rules.
  */
-export function hasClientSideFilters(filterState: RulesFilter): boolean {
+export function hasGrafanaClientSideFilters(filterState: Partial<RulesFilter>): boolean {
   const { ruleFilterConfig, groupFilterConfig } = buildGrafanaFilterConfigs();
 
   // Check each rule filter: if the config has a non-null handler AND the filter state has a value, we need client-side filtering
   const hasActiveRuleFilters =
-    (ruleFilterConfig.freeFormWords !== null && filterState.freeFormWords.length > 0) ||
-    (ruleFilterConfig.ruleName !== null && Boolean(filterState.ruleName)) ||
-    (ruleFilterConfig.ruleState !== null && Boolean(filterState.ruleState)) ||
-    (ruleFilterConfig.ruleType !== null && Boolean(filterState.ruleType)) ||
-    (ruleFilterConfig.dataSourceNames !== null && filterState.dataSourceNames.length > 0) ||
-    (ruleFilterConfig.labels !== null && filterState.labels.length > 0) ||
-    (ruleFilterConfig.ruleHealth !== null && Boolean(filterState.ruleHealth)) ||
-    (ruleFilterConfig.dashboardUid !== null && Boolean(filterState.dashboardUid)) ||
-    (ruleFilterConfig.plugins !== null && Boolean(filterState.plugins)) ||
-    (ruleFilterConfig.contactPoint !== null && Boolean(filterState.contactPoint));
+    (ruleFilterConfig.freeFormWords !== null && Boolean(filterState?.freeFormWords?.length)) ||
+    (ruleFilterConfig.ruleName !== null && Boolean(filterState?.ruleName)) ||
+    (ruleFilterConfig.ruleState !== null && Boolean(filterState?.ruleState)) ||
+    (ruleFilterConfig.ruleType !== null && Boolean(filterState?.ruleType)) ||
+    (ruleFilterConfig.dataSourceNames !== null && Boolean(filterState?.dataSourceNames?.length)) ||
+    (ruleFilterConfig.labels !== null && Boolean(filterState?.labels?.length)) ||
+    (ruleFilterConfig.ruleHealth !== null && Boolean(filterState?.ruleHealth)) ||
+    (ruleFilterConfig.dashboardUid !== null && Boolean(filterState?.dashboardUid)) ||
+    (ruleFilterConfig.plugins !== null && Boolean(filterState?.plugins)) ||
+    (ruleFilterConfig.contactPoint !== null && Boolean(filterState?.contactPoint));
 
   // Check each group filter: if the config has a non-null handler AND the filter state has a value, we need client-side filtering
   const hasActiveGroupFilters =
-    (groupFilterConfig.namespace !== null && Boolean(filterState.namespace)) ||
-    (groupFilterConfig.groupName !== null && Boolean(filterState.groupName));
+    (groupFilterConfig.namespace !== null && Boolean(filterState?.namespace)) ||
+    (groupFilterConfig.groupName !== null && Boolean(filterState?.groupName));
 
   return hasActiveRuleFilters || hasActiveGroupFilters;
 }
@@ -55,7 +55,7 @@ export function hasClientSideFilters(filterState: RulesFilter): boolean {
  * The backend filter is used for server-side filtering when `shouldUseBackendFilters()` is enabled,
  * while the frontend filter provides client-side matching functions for rules and groups.
  */
-export function getGrafanaFilter(filterState: RulesFilter) {
+export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
   const normalizedFilterState = normalizeFilterState(filterState);
 
   const { ruleFilterConfig, groupFilterConfig } = buildGrafanaFilterConfigs();

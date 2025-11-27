@@ -8,7 +8,7 @@ import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid } from '../../utils/datasource';
 import { getFilter } from '../../utils/search';
 
-import { getGrafanaFilter, hasClientSideFilters } from './grafanaFilter';
+import { getGrafanaFilter, hasGrafanaClientSideFilters } from './grafanaFilter';
 
 jest.mock('../../utils/datasource');
 
@@ -670,41 +670,41 @@ describe('grafana-managed rules', () => {
     });
   });
 
-  describe('hasClientSideFilters', () => {
+  describe('hasGrafanaClientSideFilters', () => {
     describe('when alertingUIUseBackendFilters is disabled', () => {
       testWithFeatureToggles({ disable: ['alertingUIUseBackendFilters'] });
 
       it('should return false when no filters are applied', () => {
-        expect(hasClientSideFilters(getFilter({}))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({}))).toBe(false);
       });
 
       it('should return true for title-related filters (freeFormWords, ruleName)', () => {
-        expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(true);
       });
 
       it('should return true for ruleType filter', () => {
-        expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(true);
       });
 
       it('should return true for dashboardUid filter', () => {
-        expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(true);
       });
 
       it('should return true for groupName filter', () => {
-        expect(hasClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(true);
       });
 
       it('should return true for client-side only filters', () => {
-        expect(hasClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
       });
 
       it('should return false for backend-only filters (state, health, contactPoint)', () => {
-        expect(hasClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
       });
     });
 
@@ -712,36 +712,36 @@ describe('grafana-managed rules', () => {
       testWithFeatureToggles({ enable: ['alertingUIUseBackendFilters'] });
 
       it('should return false when no filters are applied', () => {
-        expect(hasClientSideFilters(getFilter({}))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({}))).toBe(false);
       });
 
       it('should return false for title-related filters (handled by backend)', () => {
-        expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(false);
       });
 
       it('should return false for ruleType filter (handled by backend)', () => {
-        expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
       });
 
       it('should return false for dashboardUid filter (handled by backend)', () => {
-        expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
       });
 
       it('should return false for groupName filter (handled by backend)', () => {
-        expect(hasClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(false);
       });
 
       it('should return true for client-side only filters', () => {
-        expect(hasClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
       });
 
       it('should return false for backend-only filters (state, health, contactPoint)', () => {
-        expect(hasClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
       });
     });
 
@@ -750,20 +750,20 @@ describe('grafana-managed rules', () => {
 
       it('should return correct values for all filter types', () => {
         // Should return false for: empty, backend-handled (ruleType, dashboardUid), and backend-only filters
-        expect(hasClientSideFilters(getFilter({}))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({}))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
 
         // Should return true for: frontend-handled filters
-        expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
       });
     });
 
@@ -772,20 +772,20 @@ describe('grafana-managed rules', () => {
 
       it('should return correct values for all filter types', () => {
         // Should return false for: empty, all backend-handled filters, and backend-only filters
-        expect(hasClientSideFilters(getFilter({}))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
-        expect(hasClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({}))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
+        expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
 
         // Should return true for: always-frontend filters only
-        expect(hasClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
-        expect(hasClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
+        expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
       });
     });
   });
