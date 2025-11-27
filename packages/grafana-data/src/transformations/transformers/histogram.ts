@@ -244,7 +244,10 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
 
     for (let i = 0; i < yMaxField.values.length; i++) {
       let max = yMaxField.values[i];
-      countsByMax.set(max, countsByMax.get(max) + countField.values[i]);
+      let currentCount = countsByMax.get(max);
+      if (currentCount !== undefined) {
+        countsByMax.set(max, currentCount + countField.values[i]);
+      }
     }
 
     let fields = {
