@@ -1322,7 +1322,7 @@ var (
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaPartnerPluginsSquad,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
