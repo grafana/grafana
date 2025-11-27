@@ -3,7 +3,8 @@
 package v0alpha1
 
 type GetSomethingRequestParams struct {
-	Message *string `json:"message,omitempty"`
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
 }
 
 // NewGetSomethingRequestParams creates a new GetSomethingRequestParams object.

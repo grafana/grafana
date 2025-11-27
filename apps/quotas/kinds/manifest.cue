@@ -40,21 +40,26 @@ v0alpha1: {
     // served indicates whether this particular version is served by the API server.
     // served should be set to false before a version is removed from the manifest entirely.
     // served defaults to true if not present.
-    served: false
+    served: true
 
 		routes: {
 				// namespaced contains namespace-scoped resource routes for the version,
 				// which are exposed as HTTP handlers on '<version>/namespaces/<namespace>/<route>'.
 				namespaced: {
-						"/something": {
+					// TODO fix route name once kinds are removed
+						"/quotaUsage": {
 								"GET": {
 										response: {
 												namespace: string
-												message: string
+												group: string
+												resource: string
+												usage: int64
+												limit: int64
 										}
 										request: {
 												query: {
-														message?: string
+														group: string
+														resource: string
 												}
 										}
 								}

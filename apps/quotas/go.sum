@@ -52,8 +52,6 @@ github.com/grafana/grafana-app-sdk v0.48.2 h1:CQQDhwo1fWaXQVKvxxOcK6azbuY3E2TgJH
 github.com/grafana/grafana-app-sdk v0.48.2/go.mod h1:LDOvQ7OOyHLcXdSa0InATCa5OMoYAd6E1+rGLrMgHuk=
 github.com/grafana/grafana-app-sdk/logging v0.48.1 h1:veM0X5LAPyN3KsDLglWjIofndbGuf7MqnrDuDN+F/Ng=
 github.com/grafana/grafana-app-sdk/logging v0.48.1/go.mod h1:Gh/nBWnspK3oDNWtiM5qUF/fardHzOIEez+SPI3JeHA=
-github.com/grafana/grafana/apps/example v0.0.0-20251125163306-ccba9fd70bf9 h1:YcUlU2tCZ9lUNUTjUuFQqN/r2KWzbA7MJxh9i3V9ua4=
-github.com/grafana/grafana/apps/example v0.0.0-20251125163306-ccba9fd70bf9/go.mod h1:qbi907CFycuaAhg5H2HEsZslc2E6cZTnzRuvu0WZ/dU=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 h1:8Tjv8EJ+pM1xP8mK6egEbD1OgnVTyacbefKhmbLhIhU=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2/go.mod h1:pkJQ2tZHJ0aFOVEEot6oZmaVEZcRme73eIFmhiVuRWs=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=

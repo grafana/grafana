@@ -3,7 +3,7 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type GetSomethingBody struct {
+type GetQuotaUsageBody struct {
 	Namespace string `json:"namespace"`
 	Group     string `json:"group"`
 	Resource  string `json:"resource"`
@@ -11,7 +11,7 @@ type GetSomethingBody struct {
 	Limit     int64  `json:"limit"`
 }
 
-// NewGetSomethingBody creates a new GetSomethingBody object.
-func NewGetSomethingBody() *GetSomethingBody {
-	return &GetSomethingBody{}
+// NewGetQuotaUsageBody creates a new GetQuotaUsageBody object.
+func NewGetQuotaUsageBody() *GetQuotaUsageBody {
+	return &GetQuotaUsageBody{}
 }

@@ -4,36 +4,73 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"github.com/grafana/grafana/apps/example/pkg/apis/example/v1alpha1"
 	quotasv0alpha1 "github.com/grafana/grafana/apps/quotas/pkg/apis/quotas/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// GetSomethingHandler handles requests for the GET /something resource route
-func GetSomethingHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-	message := "This is a namespaced route"
-	if request.URL.Query().Has("message") {
-		message = request.URL.Query().Get("message")
+type QuotasAppConfig struct {
+	//ResourceClient unifiedStorage.ResourceClient
+}
+
+type QuotasHandler struct {
+	//ResourceClient unifiedStorage.ResourceClient
+}
+
+func NewQuotasHandler(cfg *QuotasAppConfig) *QuotasHandler {
+	return &QuotasHandler{
+		//ResourceClient: cfg.ResourceClient,
 	}
-	return json.NewEncoder(writer).Encode(v1alpha1.GetSomething{
+}
+
+// GetQuota handles requests for the GET /something resource route
+func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+	groupResource := ""
+	if request.URL.Query().Has("groupResource") {
+		groupResource = request.URL.Query().Get("groupResource")
+	}
+	resName := strings.Split(groupResource, "/")[0]
+	resGroup := strings.Split(groupResource, "/")[1]
+	fmt.Println(resName, resGroup)
+
+	//quotaReq := &resourcepb.QuotaUsageRequest{
+	//	Key: &resourcepb.ResourceKey{
+	//		Namespace: request.ResourceIdentifier.Namespace,
+	//		Group:     resGroup,
+	//		Resource:  resName,
+	//	},
+	//}
+	//quota, err := h.ResourceClient.GetQuotaUsage(ctx, quotaReq)
+	//if err != nil {
+	//	return err
+	//}
+
+	return json.NewEncoder(writer).Encode(quotasv0alpha1.GetQuotaUsage{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: fmt.Sprintf("%s/%s", v1alpha1.APIGroup, v1alpha1.APIVersion),
+			APIVersion: fmt.Sprintf("%s/%s", quotasv0alpha1.APIGroup, quotasv0alpha1.APIVersion),
 		},
-		GetSomethingBody: v1alpha1.GetSomethingBody{
+		GetQuotaUsageBody: quotasv0alpha1.GetQuotaUsageBody{
 			Namespace: request.ResourceIdentifier.Namespace,
-			Message:   message,
+			Resource:  resName,
+			Group:     resGroup,
+			Usage:     1,
+			Limit:     10,
+			//Usage:     quota.Usage,
+			//Limit:     quota.Limit,
 		},
 	})
 }
 
 func New(cfg app.Config) (app.App, error) {
+	handler := NewQuotasHandler(cfg.SpecificConfig.(*QuotasAppConfig))
+
 	simpleConfig := simple.AppConfig{
 		Name:       "quotas",
 		KubeConfig: cfg.KubeConfig,
@@ -53,9 +90,9 @@ func New(cfg app.Config) (app.App, error) {
 			"v0alpha1": {
 				{
 					Namespaced: true,
-					Path:       "something",
+					Path:       "quotaUsage",
 					Method:     "GET",
-				}: GetSomethingHandler,
+				}: handler.GetQuota,
 			},
 		},
 	}

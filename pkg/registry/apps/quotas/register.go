@@ -2,6 +2,7 @@ package quotas
 
 import (
 	"github.com/grafana/grafana/apps/quotas/pkg/apis"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -24,15 +25,20 @@ type QuotasAppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	resourceClient resource.ResourceClient,
 ) (*QuotasAppInstaller, error) {
 	installer := &QuotasAppInstaller{
 		cfg: cfg,
 	}
-	provider := simple.NewAppProvider(apis.LocalManifest(), nil, quotasapp.New)
+	specificConfig := &quotasapp.QuotasAppConfig{
+		//ResourceClient: resourceClient,
+	}
+	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, quotasapp.New)
 
 	appConfig := app.Config{
-		KubeConfig:   restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-		ManifestData: *apis.LocalManifest().ManifestData,
+		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData:   *apis.LocalManifest().ManifestData,
+		SpecificConfig: specificConfig,
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.NewGoTypeAssociator())
 	if err != nil {
