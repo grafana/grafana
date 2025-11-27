@@ -339,8 +339,7 @@ export function getGroupedFilters(
   const groupingFilters: AdHocFilterItem[] = [];
   const xField = frame.fields[seriesIdx];
 
-  if (xField && xField.labels) {
-    // && xField.config.filterable
+  if (xField && xField.labels && xField.config.filterable) {
     const seriesFilters: AdHocFilterItem[] = [];
 
     Object.entries(xField.labels).forEach(([key, value]) => {

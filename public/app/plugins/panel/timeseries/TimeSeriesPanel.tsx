@@ -197,7 +197,7 @@ export const TimeSeriesPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       filterByGroupedLabels={
-                        groupingFilters.length && onBulkAddAdHocFilters
+                        config.featureToggles.perPanelFiltering && groupingFilters.length && onBulkAddAdHocFilters
                           ? {
                               onFilterForGroupedLabels: () => onBulkAddAdHocFilters(groupingFilters),
                               onFilterOutGroupedLabels: () =>
