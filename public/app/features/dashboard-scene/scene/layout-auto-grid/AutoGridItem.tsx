@@ -31,6 +31,7 @@ export interface AutoGridItemState extends SceneObjectState {
   variableName?: string;
   isHidden?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
+  repeatedConditionalRendering?: ConditionalRenderingGroup[];
 }
 
 export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements DashboardLayoutItem {
@@ -130,7 +131,21 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
       }
     }
 
-    this.setState({ repeatedPanels });
+    let repeatedConditionalRendering: ConditionalRenderingGroup[] | undefined;
+
+    if (this.state.conditionalRendering) {
+      repeatedConditionalRendering = repeatedPanels.reduce<ConditionalRenderingGroup[]>((acc, panel) => {
+        const conditionalRendering = this.state.conditionalRendering!.clone();
+        conditionalRendering.setTarget(panel);
+        acc.push(conditionalRendering);
+
+        return acc;
+      }, []);
+
+      this.state.conditionalRendering.setTarget(panelToRepeat);
+    }
+
+    this.setState({ repeatedPanels, repeatedConditionalRendering });
     this._prevRepeatValues = values;
   }
 
