@@ -2,7 +2,23 @@ import { getBackendSrv } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboardsResponse, Link } from '../types';
+import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS } from '../interactions';
+import { GnetDashboard, GnetDashboardsResponse, Link } from '../types';
+
+// panel types that might contain JavaScript code
+// and we want to filter them out due to security reasons
+const PANEL_TYPE_FILTER_SLUGS = [
+  'aceiot-svg-panel',
+  'ae3e-plotly-panel',
+  'gapit-htmlgraphics-panel',
+  'marcusolsson-dynamictext-panel',
+  'volkovlabs-echarts-panel',
+  'volkovlabs-form-panel',
+];
+
+// arbitrary value
+const MIN_DOWNLOADS_FILTER = 1000;
+const MAX_PAGES_FILTER = 10;
 
 /**
  * Parameters for fetching community dashboards from Grafana.com
@@ -56,6 +72,7 @@ export async function fetchCommunityDashboards(
     pageSize: params.pageSize.toString(),
     includeLogo: params.includeLogo ? '1' : '0',
     includeScreenshots: params.includeScreenshots ? 'true' : 'false',
+    includePanelTypeSlugs: 'true',
   });
 
   if (params.dataSourceSlugIn) {
@@ -69,13 +86,14 @@ export async function fetchCommunityDashboards(
     showErrorAlert: false,
   });
 
-  // Grafana.com API returns format: { page: number, pages: number, items: GnetDashboard[] }
-  // We normalize it to use "dashboards" instead of "items" for consistency
   if (result && Array.isArray(result.items)) {
+    const dashboards = filterNotSafeDashboards(result.items);
+
+    // We don't want to show more than MAX_PAGES_FILTER * PAGE_SIZE dashboards due to security reasons
     return {
       page: result.page || params.page,
-      pages: result.pages || 1,
-      items: result.items,
+      pages: result.pages > MAX_PAGES_FILTER ? MAX_PAGES_FILTER : result.pages || 1,
+      items: dashboards,
     };
   }
 
@@ -109,3 +127,28 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
     return [];
   }
 }
+
+// We only show dashboards with at least MIN_DOWNLOADS_FILTER downloads
+// They are already ordered by downloads amount
+const filterNotSafeDashboards = (dashboards: GnetDashboard[]): GnetDashboard[] => {
+  return dashboards.filter((item: GnetDashboard) => {
+    if (
+      item.panelTypeSlugs?.some((slug: string) => PANEL_TYPE_FILTER_SLUGS.includes(slug)) ||
+      item.downloads < MIN_DOWNLOADS_FILTER
+    ) {
+      DashboardLibraryInteractions.communityDashboardFiltered({
+        libraryItemId: String(item.id),
+        libraryItemTitle: item.name,
+        panelTypeSlugs: item.panelTypeSlugs || [],
+        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+        reason: item.downloads < MIN_DOWNLOADS_FILTER ? 'low_downloads' : 'contains_javascript',
+      });
+      console.warn(
+        `Community dashboard ${item.id} ${item.name} filtered out due to low downloads ${item.downloads} or panel types ${item.panelTypeSlugs?.join(', ')} that can embed JavasScript`
+      );
+      return false;
+    }
+    return true;
+  });
+};

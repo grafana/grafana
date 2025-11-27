@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
-import { useAsync, useDebounce } from 'react-use';
+import { useAsync, useAsyncFn, useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -132,33 +132,46 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const showEmptyState = !loading && (!response?.dashboards || response.dashboards.length === 0);
   const showError = !loading && error;
 
-  const onPreviewCommunityDashboard = (dashboard: GnetDashboard) => {
-    if (!response) {
-      return;
-    }
+  const [{ error: isPreviewDashboardError }, onPreviewCommunityDashboard] = useAsyncFn(
+    async (dashboard: GnetDashboard) => {
+      if (!response) {
+        return;
+      }
 
-    // Track item click
-    DashboardLibraryInteractions.itemClicked({
-      contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-      datasourceTypes: [response.datasourceType],
-      libraryItemId: String(dashboard.id),
-      libraryItemTitle: dashboard.name,
-      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-      eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-      discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
-    });
+      // Track item click
+      DashboardLibraryInteractions.itemClicked({
+        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+        datasourceTypes: [response.datasourceType],
+        libraryItemId: String(dashboard.id),
+        libraryItemTitle: dashboard.name,
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+        discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+      });
 
-    onUseCommunityDashboard({
-      dashboard,
-      datasourceUid: datasourceUid || '',
-      datasourceType: response.datasourceType,
-      eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-      onShowMapping,
-    });
-  };
+      await onUseCommunityDashboard({
+        dashboard,
+        datasourceUid: datasourceUid || '',
+        datasourceType: response.datasourceType,
+        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+        onShowMapping,
+      });
+    },
+    [response, datasourceUid, debouncedSearchQuery, onShowMapping]
+  );
 
   return (
     <Stack direction="column" gap={2} height="100%">
+      {isPreviewDashboardError && (
+        <div>
+          <Alert
+            title={t('dashboard-library.community-error-title', 'Error loading community dashboard')}
+            severity="error"
+          >
+            <Trans i18nKey="dashboard-library.community-error-description">Failed to load community dashboard.</Trans>
+          </Alert>
+        </div>
+      )}
       <FilterInput
         placeholder={
           datasourceType

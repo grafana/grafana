@@ -2,6 +2,7 @@ import { BackendSrv, getBackendSrv } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
+import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS } from '../interactions';
 import { GnetDashboard } from '../types';
 
 import {
@@ -14,9 +15,20 @@ import {
 
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn(),
+  reportInteraction: jest.fn(),
 }));
 
+jest.mock('../interactions', () => ({
+  ...jest.requireActual('../interactions'),
+  DashboardLibraryInteractions: {
+    ...jest.requireActual('../interactions').DashboardLibraryInteractions,
+    communityDashboardFiltered: jest.fn(),
+  },
+}));
 const mockGetBackendSrv = getBackendSrv as jest.MockedFunction<typeof getBackendSrv>;
+const mockCommunityDashboardFiltered = DashboardLibraryInteractions.communityDashboardFiltered as jest.MockedFunction<
+  typeof DashboardLibraryInteractions.communityDashboardFiltered
+>;
 
 // Helper to create mock BackendSrv
 const createMockBackendSrv = (overrides: Partial<BackendSrv> = {}): BackendSrv =>
@@ -30,7 +42,7 @@ const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDa
   id: 1,
   name: 'Test Dashboard',
   description: 'Test Description',
-  downloads: 100,
+  downloads: 2000,
   datasource: 'Prometheus',
   ...overrides,
 });
@@ -80,6 +92,85 @@ describe('dashboardLibraryApi', () => {
   });
 
   describe('fetchCommunityDashboards', () => {
+    describe('filterNotSafeDashboards', () => {
+      it('should filter out dashboards with panel types that can contain JavaScript code', async () => {
+        const safeDashboard = createMockGnetDashboard({ id: 1 });
+        const mockDashboards = [
+          safeDashboard,
+          createMockGnetDashboard({ id: 2, panelTypeSlugs: ['ae3e-plotly-panel'] }),
+        ];
+        const mockResponse = {
+          page: 1,
+          pages: 5,
+          items: mockDashboards,
+        };
+        mockGet.mockResolvedValue(mockResponse);
+
+        const result = await fetchCommunityDashboards(defaultFetchParams);
+
+        expect(mockCommunityDashboardFiltered).toHaveBeenCalledWith({
+          libraryItemId: '2',
+          libraryItemTitle: 'Test Dashboard',
+          panelTypeSlugs: ['ae3e-plotly-panel'],
+          reason: 'panel_type_contains_javascript',
+          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+        });
+
+        expect(result).toEqual({
+          page: 1,
+          pages: 5,
+          items: [safeDashboard],
+        });
+      });
+
+      it('should filter out dashboards with low downloads', async () => {
+        const safeDashboard = createMockGnetDashboard({ id: 1 });
+        const mockDashboards = [safeDashboard, createMockGnetDashboard({ id: 2, downloads: 999 })];
+        const mockResponse = {
+          page: 1,
+          pages: 5,
+          items: mockDashboards,
+        };
+        mockGet.mockResolvedValue(mockResponse);
+
+        const result = await fetchCommunityDashboards(defaultFetchParams);
+
+        expect(mockCommunityDashboardFiltered).toHaveBeenCalledWith({
+          libraryItemId: '2',
+          libraryItemTitle: 'Test Dashboard',
+          panelTypeSlugs: [],
+          reason: 'low_downloads',
+          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+        });
+
+        expect(result).toEqual({
+          page: 1,
+          pages: 5,
+          items: [safeDashboard],
+        });
+      });
+    });
+
+    it('should not return more than MAX_PAGES_FILTER pages due to security reasons', async () => {
+      const mockDashboards = Array.from({ length: 11 }, (_, index) => createMockGnetDashboard({ id: index + 1 }));
+      const mockResponse = {
+        page: 1,
+        pages: 11,
+        items: mockDashboards.slice(0, 10),
+      };
+      mockGet.mockResolvedValue(mockResponse);
+
+      const result = await fetchCommunityDashboards(defaultFetchParams);
+
+      expect(result).toEqual({
+        page: 1,
+        pages: 10,
+        items: mockDashboards.slice(0, 10),
+      });
+    });
+
     it('should fetch community dashboards with correct query parameters', async () => {
       const mockDashboards = [createMockGnetDashboard({ id: 1 }), createMockGnetDashboard({ id: 2 })];
       const mockResponse = {
@@ -93,7 +184,7 @@ describe('dashboardLibraryApi', () => {
       const result = await fetchCommunityDashboards(defaultFetchParams);
 
       expect(mockGet).toHaveBeenCalledWith(
-        '/api/gnet/dashboards?orderBy=downloads&direction=desc&page=1&pageSize=10&includeLogo=1&includeScreenshots=true',
+        '/api/gnet/dashboards?orderBy=downloads&direction=desc&page=1&pageSize=10&includeLogo=1&includeScreenshots=true&includePanelTypeSlugs=true',
         undefined,
         undefined,
         { showErrorAlert: false }

@@ -38,6 +38,7 @@ export interface GnetDashboard {
   orgSlug?: string;
   userId?: number;
   userName?: string;
+  panelTypeSlugs?: string[];
 }
 
 export interface GnetDashboardsResponse {

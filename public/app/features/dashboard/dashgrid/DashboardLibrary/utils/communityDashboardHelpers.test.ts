@@ -4,7 +4,13 @@ import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { fetchCommunityDashboard } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, CREATION_ORIGINS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../interactions';
+import {
+  CONTENT_KINDS,
+  CREATION_ORIGINS,
+  DashboardLibraryInteractions,
+  EVENT_LOCATIONS,
+  SOURCE_ENTRY_POINTS,
+} from '../interactions';
 import { GnetDashboard } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs } from './autoMapDatasources';
@@ -27,10 +33,21 @@ jest.mock('./autoMapDatasources', () => ({
   parseConstantInputs: jest.fn(),
 }));
 
+jest.mock('../interactions', () => ({
+  ...jest.requireActual('../interactions'),
+  DashboardLibraryInteractions: {
+    ...jest.requireActual('../interactions').DashboardLibraryInteractions,
+    communityDashboardFiltered: jest.fn(),
+  },
+}));
+
 // Mock function references
 const mockFetchCommunityDashboard = fetchCommunityDashboard as jest.MockedFunction<typeof fetchCommunityDashboard>;
 const mockTryAutoMapDatasources = tryAutoMapDatasources as jest.MockedFunction<typeof tryAutoMapDatasources>;
 const mockParseConstantInputs = parseConstantInputs as jest.MockedFunction<typeof parseConstantInputs>;
+const mockCommunityDashboardFiltered = DashboardLibraryInteractions.communityDashboardFiltered as jest.MockedFunction<
+  typeof DashboardLibraryInteractions.communityDashboardFiltered
+>;
 
 // Helper functions for creating mock objects
 const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => ({
@@ -170,6 +187,10 @@ describe('communityDashboardHelpers', () => {
   });
 
   describe('onUseCommunityDashboard', () => {
+    let consoleWarnSpy: jest.SpyInstance;
+    let consoleErrorSpy: jest.SpyInstance;
+    let locationServicePushSpy: jest.SpyInstance;
+
     async function setup(options?: {
       dashboard?: Partial<GnetDashboard>;
       dashboardJson?: Partial<DashboardJson>;
@@ -206,7 +227,16 @@ describe('communityDashboardHelpers', () => {
     }
 
     beforeEach(() => {
+      consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      locationServicePushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+    });
+
+    afterEach(() => {
       jest.clearAllMocks();
+      consoleWarnSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+      locationServicePushSpy.mockRestore();
     });
 
     it('should navigate directly when all datasources are auto-mapped and no constants', async () => {
@@ -218,8 +248,8 @@ describe('communityDashboardHelpers', () => {
         },
       });
 
-      expect(locationService.push).toHaveBeenCalled();
-      expect(locationService.push).toHaveBeenCalledWith(
+      expect(locationServicePushSpy).toHaveBeenCalled();
+      expect(locationServicePushSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           pathname: expect.any(String),
           search: expect.stringContaining('gnetId=123'),
@@ -249,7 +279,7 @@ describe('communityDashboardHelpers', () => {
       });
 
       expect(mockOnShowMapping).toHaveBeenCalled();
-      expect(locationService.push).not.toHaveBeenCalled();
+      expect(locationServicePushSpy).not.toHaveBeenCalled();
       expect(mockOnShowMapping).toHaveBeenCalledWith(
         expect.objectContaining({
           dashboardName: 'Test Dashboard',
@@ -281,7 +311,7 @@ describe('communityDashboardHelpers', () => {
       });
 
       expect(mockOnShowMapping).toHaveBeenCalled();
-      expect(locationService.push).not.toHaveBeenCalled();
+      expect(locationServicePushSpy).not.toHaveBeenCalled();
       expect(mockOnShowMapping).toHaveBeenCalledWith(
         expect.objectContaining({
           dashboardName: 'Test Dashboard',
@@ -302,9 +332,32 @@ describe('communityDashboardHelpers', () => {
       });
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
-      expect(locationService.push).not.toHaveBeenCalled();
+      expect(locationServicePushSpy).not.toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();
+    });
+
+    it('should throw an error if the dashboard contains JavaScript code', async () => {
+      const dashboardJson = createMockDashboardJson({
+        // The function only checks for 'options' property, so a partial object is sufficient
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        panels: [{ type: 'panel', options: { template: '{{ javascript:alert("XSS") }}' } } as any],
+      });
+
+      await expect(setup({ dashboardJson })).rejects.toThrow(
+        'Community dashboard 123 Test Dashboard contains JavaScript code'
+      );
+
+      expect(mockCommunityDashboardFiltered).toHaveBeenCalledWith({
+        libraryItemId: '123',
+        libraryItemTitle: 'Test Dashboard',
+        panelTypeSlugs: [],
+        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+        eventLocation: EVENT_LOCATIONS.COMMUNITY_DASHBOARD_LOADED,
+      });
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
+      expect(locationServicePushSpy).not.toHaveBeenCalled();
     });
   });
 });
