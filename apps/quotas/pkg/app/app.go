@@ -41,14 +41,14 @@ func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResp
 	if request.URL.Query().Has("groupResource") {
 		groupResource = request.URL.Query().Get("groupResource")
 	}
-	resName := strings.Split(groupResource, "/")[0]
-	resGroup := strings.Split(groupResource, "/")[1]
+	group := strings.Split(groupResource, "/")[0]
+	res := strings.Split(groupResource, "/")[1]
 
 	quotaReq := &resourcepb.QuotaUsageRequest{
 		Key: &resourcepb.ResourceKey{
 			Namespace: request.ResourceIdentifier.Namespace,
-			Group:     resGroup,
-			Resource:  resName,
+			Group:     group,
+			Resource:  res,
 		},
 	}
 	quota, err := h.ResourceClient.GetQuotaUsage(ctx, quotaReq)
