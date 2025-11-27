@@ -11,7 +11,10 @@ import {
 } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
+import { RepoTypeDisplay } from '../Wizard/types';
+
 import { getHasTokenInstructions, getRepoFileUrl } from './git';
+import { isValidRepoType } from './guards';
 
 /**
  * Build a source link for a repo-managed dashboard.
@@ -32,12 +35,17 @@ export async function buildSourceLink(annotations: ObjectMeta['annotations']): P
     const settingsResult = await dispatch(provisioningAPIv0alpha1.endpoints.getFrontendSettings.initiate());
     const repository = settingsResult.data?.items.find((repo: RepositoryView) => repo.name === managerIdentity);
 
-    if (!repository || !getHasTokenInstructions(repository.type)) {
+    if (!repository) {
+      return undefined;
+    }
+
+    const repoType = repository.type;
+    if (!getHasTokenInstructions(repoType) || !isValidRepoType(repoType)) {
       return undefined;
     }
 
     const sourceUrl = getRepoFileUrl({
-      repoType: repository.type,
+      repoType,
       url: repository.url,
       branch: repository.branch,
       filePath: sourcePath,
@@ -47,8 +55,9 @@ export async function buildSourceLink(annotations: ObjectMeta['annotations']): P
       return undefined;
     }
 
+    const providerName = RepoTypeDisplay[repoType];
     return {
-      title: t('dashboard.source-link.title', 'Source'),
+      title: t('dashboard.source-link.title', 'Source ({{provider}})', { provider: providerName }),
       type: 'link',
       url: sourceUrl,
       icon: 'external link',

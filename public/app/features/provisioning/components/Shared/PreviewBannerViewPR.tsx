@@ -1,8 +1,9 @@
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Icon, Stack, TextLink } from '@grafana/ui';
-import { RepoTypeDisplay, RepoType } from 'app/features/provisioning/Wizard/types';
+import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { isValidRepoType } from 'app/features/provisioning/utils/guards';
 
 import { commonAlertProps } from '../Dashboards/DashboardPreviewBanner';
 import { getBranchUrl } from '../utils/url';
@@ -119,13 +120,6 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl, b
       )}
     </Alert>
   );
-}
-
-export function isValidRepoType(repoType: string | undefined): repoType is RepoType {
-  if (typeof repoType !== 'string') {
-    return false;
-  }
-  return repoType in RepoTypeDisplay;
 }
 
 function showBranchInfo(repoType: string | undefined, branchInfo?: PreviewBranchInfo): boolean {

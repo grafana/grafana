@@ -5396,7 +5396,7 @@
       "title-not-found": "Panel with id {{panelId}} not found"
     },
     "source-link": {
-      "title": "Source",
+      "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
     },
     "sub-menu-un-connected": {
