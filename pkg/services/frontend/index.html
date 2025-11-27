@@ -260,17 +260,7 @@
         }
 
         async function rotateSession() {
-          const resp = await fetch('/api/user/auth-tokens/rotate', { method: 'POST' });
-
-          if (resp.status === 200) {
-            return true;
-          }
-
-          if (resp.status === 401) {
-            return false;
-          }
-
-          return undefined;
+          await fetch('/api/user/auth-tokens/rotate', { method: 'POST' });
         }
 
         /**
@@ -338,7 +328,8 @@
                   await rotateSession();
                 }
               } catch (error) {
-                console.error(error);
+                // Just ignore any errors in session rotation. The user can just log in again.
+                console.warn("Failed to rotate session", error);
               }
 
               try {
