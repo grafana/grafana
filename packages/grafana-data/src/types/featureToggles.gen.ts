@@ -1193,4 +1193,8 @@ export interface FeatureToggles {
   * @default false
   */
   rudderstackUpgrade?: boolean;
+  /**
+  * Adds support for Kubernetes alerting historian APIs
+  */
+  kubernetesAlertingHistorian?: boolean;
 }

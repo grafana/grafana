@@ -761,4 +761,8 @@ const (
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
+
+	// FlagKubernetesAlertingHistorian
+	// Adds support for Kubernetes alerting historian APIs
+	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 )
