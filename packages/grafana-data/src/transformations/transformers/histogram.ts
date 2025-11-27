@@ -210,6 +210,8 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
     let denseMins: number[] = [];
     let denseMaxs: number[] = [];
 
+    const MAX_DENSIFIED_BUCKETS = 1000;
+
     for (let i = 0; i < uniqueMaxs.length; i++) {
       let curMax = uniqueMaxs[i];
       let curMin = uniqueMins[i];
@@ -223,12 +225,16 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
         curMax = curMax * bucketFactor;
         curMin = curMin * bucketFactor;
 
-        while (curMax < nextMax * 0.999999) {
+        while (curMax < nextMax * 0.999999 && denseMaxs.length < MAX_DENSIFIED_BUCKETS) {
           denseMaxs.push(curMax);
           denseMins.push(curMin);
 
           curMax = curMax * bucketFactor;
           curMin = curMin * bucketFactor;
+        }
+
+        if (denseMaxs.length >= MAX_DENSIFIED_BUCKETS) {
+          break;
         }
       }
     }
