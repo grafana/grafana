@@ -171,6 +171,11 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 
 WORKDIR $GF_PATHS_HOME
 
+# Addresses CVE-2025-46394 and CVE-2024-58251.
+# Currently the base alpine:3.22.2 image comes with busybox 1.37.0-r19 which does not have the fix.
+# When the base image updates busybox, this line can be removed.
+RUN apk add --no-cache busybox=1.37.0-r20
+
 # Install dependencies
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
