@@ -1490,7 +1490,7 @@ func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRe
 
 	// handle case where no resources exist yet - very unlikely but possible
 	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
-	if len(usage) > 0 {
+	if len(usage) <= 0 {
 		rsp.Usage = 0
 	} else {
 		rsp.Usage = usage[0].Count

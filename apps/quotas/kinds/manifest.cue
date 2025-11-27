@@ -45,26 +45,21 @@ v0alpha1: {
 		routes: {
 				// namespaced contains namespace-scoped resource routes for the version,
 				// which are exposed as HTTP handlers on '<version>/namespaces/<namespace>/<route>'.
-				namespaced: {
-					// TODO fix route name once kinds are removed
-						"/quotaUsage": {
-								"GET": {
-										response: {
-												namespace: string
-												group: string
-												resource: string
-												usage: int64
-												limit: int64
-										}
-										request: {
-												query: {
-														group: string
-														resource: string
-												}
-										}
-								}
-						}
-				}
+        namespaced: {
+            "/usage": {
+                "GET": {
+                    response: {
+                        namespace: string
+                        message: string
+                    }
+                    request: {
+                        query: {
+                            message?: string
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // [OPTIONAL]

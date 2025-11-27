@@ -31,7 +31,7 @@ func RegisterAppInstaller(
 		cfg: cfg,
 	}
 	specificConfig := &quotasapp.QuotasAppConfig{
-		//ResourceClient: resourceClient,
+		ResourceClient: resourceClient,
 	}
 	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, quotasapp.New)
 

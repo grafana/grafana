@@ -44,32 +44,18 @@ var appManifestData = app.ManifestData{
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
-					"/quotaUsage": {
+					"/usage": {
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "getQuotaUsage",
+								OperationId: "getUsage",
 
 								Parameters: []*spec3.Parameter{
 
 									{
 										ParameterProps: spec3.ParameterProps{
-											Name:     "group",
-											In:       "query",
-											Required: true,
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name:     "resource",
-											In:       "query",
-											Required: true,
+											Name: "message",
+											In:   "query",
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Type: []string{"string"},
@@ -97,20 +83,15 @@ var appManifestData = app.ManifestData{
 																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 																			},
 																		},
-																		"group": {
-																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"string"},
-																			},
-																		},
 																		"kind": {
 																			SchemaProps: spec.SchemaProps{
 																				Type:        []string{"string"},
 																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 																			},
 																		},
-																		"limit": {
+																		"message": {
 																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"integer"},
+																				Type: []string{"string"},
 																			},
 																		},
 																		"namespace": {
@@ -118,23 +99,10 @@ var appManifestData = app.ManifestData{
 																				Type: []string{"string"},
 																			},
 																		},
-																		"resource": {
-																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"string"},
-																			},
-																		},
-																		"usage": {
-																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"integer"},
-																			},
-																		},
 																	},
 																	Required: []string{
 																		"namespace",
-																		"group",
-																		"resource",
-																		"usage",
-																		"limit",
+																		"message",
 																		"apiVersion",
 																		"kind",
 																	},
@@ -175,7 +143,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/quotaUsage|GET": v0alpha1.GetQuotaUsage{},
+	"v0alpha1||<namespace>/usage|GET": v0alpha1.GetUsage{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

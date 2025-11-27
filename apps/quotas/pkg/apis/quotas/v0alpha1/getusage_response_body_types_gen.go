@@ -3,12 +3,12 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type GetSomethingBody struct {
+type GetUsageBody struct {
 	Namespace string `json:"namespace"`
 	Message   string `json:"message"`
 }
 
-// NewGetSomethingBody creates a new GetSomethingBody object.
-func NewGetSomethingBody() *GetSomethingBody {
-	return &GetSomethingBody{}
+// NewGetUsageBody creates a new GetUsageBody object.
+func NewGetUsageBody() *GetUsageBody {
+	return &GetUsageBody{}
 }
