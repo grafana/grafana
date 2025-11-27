@@ -689,9 +689,20 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	namespaceUIDs := make([]string, 0, len(opts.AllowedNamespaces))
 
 	folderUID := opts.Query.Get("folder_uid")
+	searchFolder := opts.Query.Get("search.folder")
+
 	_, exists := opts.AllowedNamespaces[folderUID]
 	if folderUID != "" && exists {
+		// Exact folder UID match
 		namespaceUIDs = append(namespaceUIDs, folderUID)
+	} else if searchFolder != "" {
+		// Search folders by full path
+		matcher := NewTextMatcher(searchFolder)
+		for uid, fullpath := range opts.AllowedNamespaces {
+			if matcher.Match(fullpath) {
+				namespaceUIDs = append(namespaceUIDs, uid)
+			}
+		}
 	} else {
 		for k := range opts.AllowedNamespaces {
 			namespaceUIDs = append(namespaceUIDs, k)
@@ -700,8 +711,14 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 
 	span.SetAttributes(
 		attribute.Bool("folder_uid_set", folderUID != ""),
+		attribute.Bool("search_folder_set", searchFolder != ""),
 		attribute.Int("namespace_count", len(namespaceUIDs)),
 	)
+
+	if searchFolder != "" && len(namespaceUIDs) == 0 {
+		log.Debug("No folders matched search.folder, returning empty response")
+		return ruleResponse
+	}
 
 	ruleGroups := opts.Query["rule_group"]
 	ruleUIDs := opts.Query["rule_uid"]

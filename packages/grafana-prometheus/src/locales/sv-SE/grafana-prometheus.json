@@ -175,7 +175,7 @@
         "label-scrape-interval": "Skrapningsintervall",
         "label-series-limit": "Seriegräns",
         "label-use-series-endpoint": "Använd serieändpunkt",
-        "more-info": "",
+        "more-info": "För mer information om hur du konfigurerar prometheustyp och -version i datakällor, se <2>provisioneringsdokumentationen</2>.",
         "placeholder-example-maxsourceresolutionmtimeout": "Exempel: {{example}}",
         "title-interval-behaviour": "Intervallbeteende",
         "title-other": "Annat",
