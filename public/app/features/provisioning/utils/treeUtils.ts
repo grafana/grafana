@@ -17,24 +17,21 @@ function isFileDetails(obj: unknown): obj is FileDetails {
 
 export function mergeFilesAndResources(files: unknown[], resources: ResourceListItem[]): MergedItem[] {
   const merged = new Map<string, MergedItem>();
+  const inferredFolders = new Set<string>();
 
-  // Add files
   for (const file of files) {
     if (isFileDetails(file)) {
       merged.set(file.path, { path: file.path, file });
-    }
-  }
 
-  // Infer folders from file paths and add as synthetic file entries
-  const inferredFolders = new Set<string>();
-  for (const file of files) {
-    if (isFileDetails(file)) {
+      // Infer parent folders from file path
       const parts = file.path.split('/');
       for (let i = 1; i < parts.length; i++) {
         inferredFolders.add(parts.slice(0, i).join('/'));
       }
     }
   }
+
+  // Add inferred folders that don't already exist
   for (const folderPath of inferredFolders) {
     if (!merged.has(folderPath)) {
       merged.set(folderPath, { path: folderPath, file: { path: folderPath, hash: '' } });
@@ -94,14 +91,9 @@ export function getIconName(type: ItemType): IconName {
 }
 
 export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {
-  const hasFile = fileHash !== undefined;
-  const hasResource = resourceHash !== undefined;
-
-  if (hasFile && hasResource) {
-    if (fileHash === '') {
-      return 'synced';
-    }
-    return fileHash === resourceHash ? 'synced' : 'pending';
+  if (fileHash !== undefined && resourceHash !== undefined) {
+    // Empty file hash means inferred folder (synced if resource exists)
+    return fileHash === '' || fileHash === resourceHash ? 'synced' : 'pending';
   }
   return 'pending';
 }
@@ -111,19 +103,15 @@ function calculateFolderStatus(node: TreeItem): SyncStatus | undefined {
     return node.status;
   }
 
-  // Start with folder's own status (from file/resource merge)
-  let status = node.status;
-
   // If any child is pending, folder is pending
   for (const child of node.children) {
     const childStatus = child.type === 'Folder' ? calculateFolderStatus(child) : child.status;
     if (childStatus === 'pending') {
-      status = 'pending';
-      break;
+      return 'pending';
     }
   }
 
-  return status;
+  return node.status;
 }
 
 export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
@@ -163,7 +151,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
     }
   }
 
-  // Sort: folders first, then alphabetically
+  // Sort: folders first, then alphabetically, recursively
   const sortNodes = (nodes: TreeItem[]) => {
     nodes.sort((a, b) => {
       if (a.type === 'Folder' && b.type !== 'Folder') {
@@ -175,14 +163,13 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       return collator.compare(a.title, b.title);
     });
     for (const node of nodes) {
-      if (node.children.length > 0) {
-        sortNodes(node.children);
-      }
+      sortNodes(node.children);
     }
   };
 
   sortNodes(roots);
 
+  // Update folder statuses recursively (folders inherit pending from children)
   const updateFolderStatus = (nodes: TreeItem[]) => {
     for (const node of nodes) {
       if (node.type === 'Folder') {
@@ -225,19 +212,15 @@ export function filterTree(items: TreeItem[], searchQuery: string): TreeItem[] {
   const lowerQuery = searchQuery.toLowerCase();
 
   const filterNode = (node: TreeItem): TreeItem | null => {
-    const matchesPath = node.path.toLowerCase().includes(lowerQuery);
-    const matchesTitle = node.title.toLowerCase().includes(lowerQuery);
+    const matches = node.path.toLowerCase().includes(lowerQuery) || node.title.toLowerCase().includes(lowerQuery);
 
-    if (matchesPath || matchesTitle) {
+    if (matches) {
       return node;
     }
 
     if (node.type === 'Folder' && node.children.length > 0) {
       const filteredChildren = node.children.map(filterNode).filter((n): n is TreeItem => n !== null);
-
-      if (filteredChildren.length > 0) {
-        return { ...node, children: filteredChildren };
-      }
+      return filteredChildren.length > 0 ? { ...node, children: filteredChildren } : null;
     }
 
     return null;
