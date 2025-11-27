@@ -24,11 +24,8 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 		return fmt.Errorf("failed to convert dashboard spec: %w", err)
 	}
 
-	// FIXME: THIS IS NOT NEEDED, IT IS AN INVALID DASHBOARD
-	// Wrap in "dashboard" key to match v1beta1 structure
-	out.Spec.Object = map[string]interface{}{
-		"dashboard": dashboardJSON,
-	}
+	// Set the dashboard JSON directly at the Spec.Object level
+	out.Spec.Object = dashboardJSON
 
 	return nil
 }

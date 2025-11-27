@@ -245,38 +245,33 @@ func TestV2alpha1ToV1beta1FromInputFiles(t *testing.T) {
 			err = json.Unmarshal(expectedSpecJSON, &expectedSpec)
 			require.NoError(t, err, "Failed to unmarshal expected spec")
 
-			// Compare dashboard structures
-			convertedDashboard, ok1 := convertedSpec["dashboard"].(map[string]interface{})
-			expectedDashboard, ok2 := expectedSpec["dashboard"].(map[string]interface{})
+			// Compare dashboard structures directly at the spec level (no "dashboard" wrapper)
+			// Compare key fields
+			assert.Equal(t, expectedSpec["title"], convertedSpec["title"], "Title mismatch")
+			assert.Equal(t, expectedSpec["description"], convertedSpec["description"], "Description mismatch")
+			assert.Equal(t, expectedSpec["tags"], convertedSpec["tags"], "Tags mismatch")
 
-			if ok1 && ok2 {
-				// Compare key fields
-				assert.Equal(t, expectedDashboard["title"], convertedDashboard["title"], "Title mismatch")
-				assert.Equal(t, expectedDashboard["description"], convertedDashboard["description"], "Description mismatch")
-				assert.Equal(t, expectedDashboard["tags"], convertedDashboard["tags"], "Tags mismatch")
+			// Compare panels count
+			expectedPanels, _ := expectedSpec["panels"].([]interface{})
+			convertedPanels, _ := convertedSpec["panels"].([]interface{})
+			assert.Equal(t, len(expectedPanels), len(convertedPanels), "Panel count mismatch")
 
-				// Compare panels count
-				expectedPanels, _ := expectedDashboard["panels"].([]interface{})
-				convertedPanels, _ := convertedDashboard["panels"].([]interface{})
-				assert.Equal(t, len(expectedPanels), len(convertedPanels), "Panel count mismatch")
+			// Compare variables count
+			expectedTemplating, _ := expectedSpec["templating"].(map[string]interface{})
+			convertedTemplating, _ := convertedSpec["templating"].(map[string]interface{})
+			if expectedTemplating != nil && convertedTemplating != nil {
+				expectedVars, _ := expectedTemplating["list"].([]interface{})
+				convertedVars, _ := convertedTemplating["list"].([]interface{})
+				assert.Equal(t, len(expectedVars), len(convertedVars), "Variable count mismatch")
+			}
 
-				// Compare variables count
-				expectedTemplating, _ := expectedDashboard["templating"].(map[string]interface{})
-				convertedTemplating, _ := convertedDashboard["templating"].(map[string]interface{})
-				if expectedTemplating != nil && convertedTemplating != nil {
-					expectedVars, _ := expectedTemplating["list"].([]interface{})
-					convertedVars, _ := convertedTemplating["list"].([]interface{})
-					assert.Equal(t, len(expectedVars), len(convertedVars), "Variable count mismatch")
-				}
-
-				// Compare annotations count
-				expectedAnnotations, _ := expectedDashboard["annotations"].(map[string]interface{})
-				convertedAnnotations, _ := convertedDashboard["annotations"].(map[string]interface{})
-				if expectedAnnotations != nil && convertedAnnotations != nil {
-					expectedAnnList, _ := expectedAnnotations["list"].([]interface{})
-					convertedAnnList, _ := convertedAnnotations["list"].([]interface{})
-					assert.Equal(t, len(expectedAnnList), len(convertedAnnList), "Annotation count mismatch")
-				}
+			// Compare annotations count
+			expectedAnnotations, _ := expectedSpec["annotations"].(map[string]interface{})
+			convertedAnnotations, _ := convertedSpec["annotations"].(map[string]interface{})
+			if expectedAnnotations != nil && convertedAnnotations != nil {
+				expectedAnnList, _ := expectedAnnotations["list"].([]interface{})
+				convertedAnnList, _ := convertedAnnotations["list"].([]interface{})
+				assert.Equal(t, len(expectedAnnList), len(convertedAnnList), "Annotation count mismatch")
 			}
 		})
 	}
@@ -350,8 +345,8 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 		require.NoError(t, err, "AutoGridLayout conversion should succeed")
 
 		// Verify panels were created with 3x3 grid positioning
-		dashboard, ok := v1beta1.Spec.Object["dashboard"].(map[string]interface{})
-		require.True(t, ok, "Dashboard should be wrapped in 'dashboard' key")
+		// Dashboard JSON is directly at Spec.Object level (no "dashboard" wrapper)
+		dashboard := v1beta1.Spec.Object
 
 		panels, ok := dashboard["panels"].([]interface{})
 		require.True(t, ok, "Panels should exist")
@@ -444,8 +439,8 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 		require.NoError(t, err, "TabsLayout conversion should succeed")
 
 		// Verify panels were created with 3x3 grid positioning
-		dashboard, ok := v1beta1.Spec.Object["dashboard"].(map[string]interface{})
-		require.True(t, ok, "Dashboard should be wrapped in 'dashboard' key")
+		// Dashboard JSON is directly at Spec.Object level (no "dashboard" wrapper)
+		dashboard := v1beta1.Spec.Object
 
 		panels, ok := dashboard["panels"].([]interface{})
 		require.True(t, ok, "Panels should exist")
@@ -520,9 +515,8 @@ func TestV2alpha1ToV1beta1BasicFields(t *testing.T) {
 	err = scheme.Convert(&v2alpha1, &v1beta1, nil)
 	require.NoError(t, err)
 
-	// Verify the conversion
-	dashboard, ok := v1beta1.Spec.Object["dashboard"].(map[string]interface{})
-	require.True(t, ok, "Dashboard should be wrapped in 'dashboard' key")
+	// Verify the conversion - dashboard JSON is directly at Spec.Object level (no "dashboard" wrapper)
+	dashboard := v1beta1.Spec.Object
 
 	assert.Equal(t, "Test Dashboard", dashboard["title"])
 	assert.Equal(t, "Test Description", dashboard["description"])

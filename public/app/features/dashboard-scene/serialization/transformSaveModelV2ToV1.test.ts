@@ -10,7 +10,6 @@ import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2T
 import { transformSaveModelToScene } from './transformSaveModelToScene';
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 
-
 // Helper function to recursively get all files from a directory
 function getFilesRecursively(dir: string, baseDir: string = dir): Array<{ filePath: string; relativePath: string }> {
   const files: Array<{ filePath: string; relativePath: string }> = [];
@@ -214,8 +213,8 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
       // BACKEND PATH:
       // Go conversion (v2beta1 → v1beta1) → load into Scene → serialize back
       // This simulates: API returns v1beta1 → UI loads it → user saves changes
-      const backendDashboardSpec = backendOutput.spec?.dashboard || backendOutput.spec;
-      const backendOutputAfterLoadedByScene = loadAndSerializeV1SaveModel(backendDashboardSpec);
+      // Note: v1beta1 spec contains the dashboard fields directly (no "dashboard" wrapper)
+      const backendOutputAfterLoadedByScene = loadAndSerializeV1SaveModel(backendOutput.spec);
 
       // Transform using frontend path: v2beta1 -> Scene -> v1beta1
       // Extract the spec from v2beta1 format and use it as the dashboard data
@@ -230,7 +229,7 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
       // Remove metadata fields that may differ between backend and frontend transformations
       const frontendSpec = { ...frontendOutputAfterLoadedByScene };
       const backendSpec = { ...backendOutputAfterLoadedByScene };
-      
+
       // Remove metadata fields that are not part of the core dashboard spec
       delete frontendSpec.uid;
       delete backendSpec.uid;
@@ -252,10 +251,10 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
  */
 /*
  * Loads a v1beta1 dashboard into Scene and serializes it back to v1beta1.
- * 
+ *
  * This simulates the real-world flow when editing a dashboard:
  * v1beta1 JSON → DashboardModel → Scene → v1beta1 JSON
- * 
+ *
  * This function is used to normalize both backend and frontend outputs
  * through the same Scene load/save cycle, ensuring we compare apples to apples.
  */
@@ -285,13 +284,12 @@ function loadAndSerializeV1SaveModel(dashboard: Dashboard): Dashboard {
  * FRONTEND PATH:
  * Transforms v2beta1 to v1beta1 using the frontend conversion pipeline:
  * v2beta1 input → Scene (via transformSaveModelSchemaV2ToScene) → v1beta1 (via transformSceneToSaveModel)
- * 
+ *
  * Then passes through loadAndSerializeV1SaveModel to normalize with the same Scene load/save
  * cycle that the backend output goes through. This ensures both paths are compared after
  * the same normalization process.
  */
 function transformV2ToV1UsingFrontendTransformers(jsonInput: DashboardWithAccessInfo<DashboardV2Spec>): Dashboard {
-
   // Step 1: Load v2beta1 into Scene
   const scene = transformSaveModelSchemaV2ToScene({
     spec: jsonInput.spec,
@@ -305,13 +303,13 @@ function transformV2ToV1UsingFrontendTransformers(jsonInput: DashboardWithAccess
     access: {},
     kind: 'DashboardWithAccessInfo',
   });
-  
+
   // Step 2: Transform Scene to v1beta1
   const frontendOutput = transformSceneToSaveModel(scene, false);
 
   // Step 3: Normalize by passing through Scene load/save (same as backend path)
   // This ensures both paths are compared after identical Scene processing
   const frontendOutputAfterLoadedByScene = loadAndSerializeV1SaveModel(frontendOutput);
-  
+
   return frontendOutputAfterLoadedByScene;
 }

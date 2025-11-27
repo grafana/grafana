@@ -789,5 +789,4 @@ FOR EVERY CONVERSION - NEVER OVERRIDE THIS SECTION
      - Frontend: loads v2beta1 input -> convert to scene -> scene to v1beta1 -> frontendOutput
        - input/v2beta1.\*.json -> transformSaveModelV2ToScene -> scene -> transformSceneToSaveModel -> backendOutput
      - expect(backendOutput).toEqual(frontendOutput)
-
 3. UNIT TESTS

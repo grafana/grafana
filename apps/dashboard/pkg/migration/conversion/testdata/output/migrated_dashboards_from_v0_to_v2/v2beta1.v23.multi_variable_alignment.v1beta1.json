@@ -5,284 +5,282 @@
     "name": "v23.multi_variable_alignment.v42"
   },
   "spec": {
-    "dashboard": {
-      "annotations": {
-        "list": [
-          {
-            "builtIn": 1,
-            "datasource": {
-              "type": "grafana",
-              "uid": "-- Grafana --"
-            },
-            "enable": true,
-            "hide": true,
-            "iconColor": "rgba(0, 211, 255, 1)",
-            "name": "Annotations \u0026 Alerts",
-            "type": "dashboard"
-          }
-        ]
-      },
-      "editable": true,
-      "graphTooltip": 0,
-      "liveNow": false,
-      "panels": [
+    "annotations": {
+      "list": [
         {
-          "gridPos": {
-            "h": 3,
-            "w": 6,
-            "x": 0,
-            "y": 0
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
           },
-          "id": 1,
-          "options": {},
-          "pluginVersion": "",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "default-ds-uid"
-              },
-              "expr": "up",
-              "hide": false,
-              "refId": "A"
-            }
-          ],
-          "title": "Test Panel",
-          "type": "stat"
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "type": "dashboard"
         }
-      ],
-      "preload": false,
-      "refresh": "",
-      "schemaVersion": 42,
-      "templating": {
-        "list": [
+      ]
+    },
+    "editable": true,
+    "graphTooltip": 0,
+    "liveNow": false,
+    "panels": [
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
           {
-            "allowCustomValue": true,
-            "current": {
-              "text": [
-                "A"
-              ],
-              "value": [
-                "A"
-              ]
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
             },
-            "hide": 0,
-            "includeAll": false,
-            "multi": true,
-            "name": "multi_single_value",
-            "options": [],
-            "query": {},
-            "refresh": 1,
-            "regex": "",
-            "skipUrlSync": false,
-            "sort": 0,
-            "type": "query"
-          },
-          {
-            "allowCustomValue": true,
-            "current": {
-              "text": [
-                "B",
-                "C"
-              ],
-              "value": [
-                "B",
-                "C"
-              ]
-            },
-            "hide": 0,
-            "includeAll": false,
-            "multi": true,
-            "name": "multi_array_value",
-            "options": [],
-            "query": {},
-            "refresh": 1,
-            "regex": "",
-            "skipUrlSync": false,
-            "sort": 0,
-            "type": "query"
-          },
-          {
-            "allowCustomValue": true,
-            "current": {
-              "text": "D",
-              "value": "D"
-            },
-            "hide": 0,
-            "includeAll": false,
-            "multi": false,
-            "name": "non_multi_array_value",
-            "options": [],
-            "query": {},
-            "refresh": 1,
-            "regex": "",
-            "skipUrlSync": false,
-            "sort": 0,
-            "type": "query"
-          },
-          {
-            "allowCustomValue": true,
-            "current": {
-              "text": "E",
-              "value": "E"
-            },
-            "hide": 0,
-            "includeAll": false,
-            "multi": false,
-            "name": "non_multi_single_value",
-            "options": [],
-            "query": {},
-            "refresh": 1,
-            "regex": "",
-            "skipUrlSync": false,
-            "sort": 0,
-            "type": "query"
-          },
-          {
-            "allowCustomValue": true,
-            "current": {
-              "text": "F",
-              "value": "F"
-            },
-            "hide": 0,
-            "includeAll": false,
-            "multi": false,
-            "name": "no_multi_property",
-            "options": [],
-            "query": {},
-            "refresh": 1,
-            "regex": "",
-            "skipUrlSync": false,
-            "sort": 0,
-            "type": "query"
-          },
-          {
-            "allowCustomValue": true,
-            "current": {
-              "text": "",
-              "value": ""
-            },
-            "hide": 0,
-            "includeAll": false,
-            "multi": true,
-            "name": "empty_current",
-            "options": [],
-            "query": {},
-            "refresh": 1,
-            "regex": "",
-            "skipUrlSync": false,
-            "sort": 0,
-            "type": "query"
-          },
-          {
-            "allowCustomValue": true,
-            "current": {
-              "text": "",
-              "value": ""
-            },
-            "hide": 0,
-            "includeAll": false,
-            "multi": true,
-            "name": "nil_current",
-            "options": [],
-            "query": {},
-            "refresh": 1,
-            "regex": "",
-            "skipUrlSync": false,
-            "sort": 0,
-            "type": "query"
-          },
-          {
-            "allowCustomValue": true,
-            "current": {
-              "text": [
-                "G"
-              ],
-              "value": [
-                "G"
-              ]
-            },
-            "hide": 0,
-            "includeAll": false,
-            "multi": true,
-            "name": "custom_variable",
-            "options": [],
-            "query": "",
-            "skipUrlSync": false,
-            "type": "custom"
-          },
-          {
-            "current": {
-              "text": "H",
-              "value": "H"
-            },
-            "hide": 0,
-            "name": "textbox_variable",
-            "query": "",
-            "skipUrlSync": false,
-            "type": "textbox"
-          },
-          {
-            "allowCustomValue": true,
-            "current": {
-              "text": [
-                "Prometheus",
-                "InfluxDB"
-              ],
-              "value": [
-                "prometheus",
-                "influxdb"
-              ]
-            },
-            "hide": 0,
-            "includeAll": false,
-            "multi": true,
-            "name": "datasource_variable",
-            "options": [],
-            "query": "prometheus",
-            "refresh": 0,
-            "regex": "",
-            "skipUrlSync": false,
-            "type": "datasource"
-          },
-          {
-            "auto": false,
-            "auto_count": 0,
-            "auto_min": "",
-            "current": {
-              "text": "1m",
-              "value": "1m"
-            },
-            "hide": 0,
-            "name": "interval_variable",
-            "options": [],
-            "query": "",
-            "skipUrlSync": false,
-            "type": "interval"
+            "expr": "up",
+            "hide": false,
+            "refId": "A"
           }
-        ]
-      },
-      "time": {
-        "from": "now-6h",
-        "to": "now"
-      },
-      "timepicker": {
-        "refresh_intervals": [
-          "5s",
-          "10s",
-          "30s",
-          "1m",
-          "5m",
-          "15m",
-          "30m",
-          "1h",
-          "2h",
-          "1d"
-        ]
-      },
-      "timezone": "",
-      "title": "V23 Multi Variables Migration Test Dashboard"
-    }
+        ],
+        "title": "Test Panel",
+        "type": "stat"
+      }
+    ],
+    "preload": false,
+    "refresh": "",
+    "schemaVersion": 42,
+    "templating": {
+      "list": [
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": [
+              "A"
+            ],
+            "value": [
+              "A"
+            ]
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": true,
+          "name": "multi_single_value",
+          "options": [],
+          "query": {},
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": [
+              "B",
+              "C"
+            ],
+            "value": [
+              "B",
+              "C"
+            ]
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": true,
+          "name": "multi_array_value",
+          "options": [],
+          "query": {},
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": "D",
+            "value": "D"
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": false,
+          "name": "non_multi_array_value",
+          "options": [],
+          "query": {},
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": "E",
+            "value": "E"
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": false,
+          "name": "non_multi_single_value",
+          "options": [],
+          "query": {},
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": "F",
+            "value": "F"
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": false,
+          "name": "no_multi_property",
+          "options": [],
+          "query": {},
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": true,
+          "name": "empty_current",
+          "options": [],
+          "query": {},
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": true,
+          "name": "nil_current",
+          "options": [],
+          "query": {},
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": [
+              "G"
+            ],
+            "value": [
+              "G"
+            ]
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": true,
+          "name": "custom_variable",
+          "options": [],
+          "query": "",
+          "skipUrlSync": false,
+          "type": "custom"
+        },
+        {
+          "current": {
+            "text": "H",
+            "value": "H"
+          },
+          "hide": 0,
+          "name": "textbox_variable",
+          "query": "",
+          "skipUrlSync": false,
+          "type": "textbox"
+        },
+        {
+          "allowCustomValue": true,
+          "current": {
+            "text": [
+              "Prometheus",
+              "InfluxDB"
+            ],
+            "value": [
+              "prometheus",
+              "influxdb"
+            ]
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": true,
+          "name": "datasource_variable",
+          "options": [],
+          "query": "prometheus",
+          "refresh": 0,
+          "regex": "",
+          "skipUrlSync": false,
+          "type": "datasource"
+        },
+        {
+          "auto": false,
+          "auto_count": 0,
+          "auto_min": "",
+          "current": {
+            "text": "1m",
+            "value": "1m"
+          },
+          "hide": 0,
+          "name": "interval_variable",
+          "options": [],
+          "query": "",
+          "skipUrlSync": false,
+          "type": "interval"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
+    "timezone": "",
+    "title": "V23 Multi Variables Migration Test Dashboard"
   },
   "status": {
     "conversion": {
