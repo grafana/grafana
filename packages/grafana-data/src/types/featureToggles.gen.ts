@@ -1193,4 +1193,9 @@ export interface FeatureToggles {
   * @default false
   */
   rudderstackUpgrade?: boolean;
+  /**
+  * Enables the new correlations editor in Explore
+  * @default false
+  */
+  correlationsExploreEditor?: boolean;
 }

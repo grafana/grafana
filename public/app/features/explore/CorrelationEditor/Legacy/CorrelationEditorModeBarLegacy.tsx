@@ -10,16 +10,16 @@ import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState } from 'app/types/explore';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
-import { showModalMessage } from './correlationEditLogic';
-import { saveCurrentCorrelation } from './state/correlations';
-import { changeDatasource } from './state/datasource';
-import { changeCorrelationHelperData } from './state/explorePane';
-import { changeCorrelationEditorDetails, splitClose } from './state/main';
-import { runQueries } from './state/query';
-import { selectCorrelationDetails, selectIsHelperShowing } from './state/selectors';
+import { saveCurrentCorrelation } from '../../state/correlations';
+import { changeDatasource } from '../../state/datasource';
+import { changeCorrelationHelperData } from '../../state/explorePane';
+import { changeCorrelationEditorDetails, splitClose } from '../../state/main';
+import { runQueries } from '../../state/query';
+import { selectCorrelationDetails, selectIsHelperShowing } from '../../state/selectors';
+import { CorrelationUnsavedChangesModal } from '../CorrelationUnsavedChangesModal';
+import { showModalMessage } from '../correlationEditLogic';
 
-export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, ExploreItemState]> }) => {
+export const CorrelationEditorModeBarLegacy = ({ panes }: { panes: Array<[string, ExploreItemState]> }) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const correlationDetails = useSelector(selectCorrelationDetails);

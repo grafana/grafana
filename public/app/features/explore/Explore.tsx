@@ -20,7 +20,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   AdHocFilterItem,
@@ -40,7 +40,8 @@ import { getTimeZone } from '../profile/state/selectors';
 import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
-import { CorrelationHelper } from './CorrelationHelper';
+import { CorrelationHelper } from './CorrelationEditor/CorrelationHelper/CorrelationHelper';
+import { CorrelationHelperLegacy } from './CorrelationEditor/Legacy/CorrelationHelperLegacy';
 import { CustomContainer } from './CustomContainer';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
@@ -596,6 +597,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
       queryLibraryRef,
     } = this.props;
     const { contentOutlineVisible } = this.state;
+    const correlationsExploreEditor = config.featureToggles.correlationsExploreEditor;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
@@ -616,7 +618,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
     const isCorrelationsEditorMode = correlationEditorDetails?.editorMode;
     const showCorrelationHelper = Boolean(isCorrelationsEditorMode || correlationEditorDetails?.correlationDirty);
     if (showCorrelationHelper && correlationEditorHelperData !== undefined) {
-      correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
+      correlationsBox = correlationsExploreEditor ? (
+        <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />
+      ) : (
+        <CorrelationHelperLegacy exploreId={exploreId} correlations={correlationEditorHelperData} />
+      );
     }
 
     return (
@@ -625,7 +631,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           exploreId={exploreId}
           onChangeTime={this.onChangeTime}
           onContentOutlineToogle={this.onContentOutlineToogle}
-          isContentOutlineOpen={contentOutlineVisible}
+          isContentOutlineOpen={contentOutlineVisible && !showCorrelationHelper}
         />
         <div
           style={{
@@ -636,7 +642,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
         >
           <div className={styles.wrapper}>
             {contentOutlineVisible && !compact && (
-              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
+              <ContentOutline
+                scroller={this.scrollElement}
+                panelId={`content-outline-container-${exploreId}`}
+                defaultCollapsed={showCorrelationHelper}
+              />
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}

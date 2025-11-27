@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { ErrorBoundaryAlert, LoadingPlaceholder, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -11,7 +12,8 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ExploreQueryParams } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
 
-import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
+import { CorrelationEditorModeBar } from './CorrelationEditor/CorrelationEditorModeBar';
+import { CorrelationEditorModeBarLegacy } from './CorrelationEditor/Legacy/CorrelationEditorModeBarLegacy';
 import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
@@ -31,7 +33,8 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
 }
 
 function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
-  const styles = useStyles2(getStyles);
+  const correlationsExploreEditor = config.featureToggles.correlationsExploreEditor;
+  const styles = useStyles2(getStyles, correlationsExploreEditor);
   const theme = useTheme2();
   useTimeSrvFix();
   useStateSync(props.queryParams);
@@ -71,7 +74,12 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         <Trans i18nKey="nav.explore.title" />
       </h1>
       <ExploreActions />
-      {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
+      {showCorrelationEditorBar &&
+        (correlationsExploreEditor ? (
+          <CorrelationEditorModeBar panes={panes} />
+        ) : (
+          <CorrelationEditorModeBarLegacy panes={panes} />
+        ))}
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}
@@ -108,7 +116,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, correlationsExploreEditor?: boolean) => {
   return {
     pageScrollbarWrapper: css({
       width: '100%',
@@ -119,10 +127,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
     }),
     correlationsEditorIndicator: css({
-      borderLeft: `4px solid ${theme.colors.primary.main}`,
-      borderRight: `4px solid ${theme.colors.primary.main}`,
-      borderBottom: `4px solid ${theme.colors.primary.main}`,
       overflow: 'scroll',
+      borderLeft: correlationsExploreEditor ? 'none' : `4px solid ${theme.colors.primary.main}`,
+      borderRight: correlationsExploreEditor ? 'none' : `4px solid ${theme.colors.primary.main}`,
+      borderBottom: correlationsExploreEditor ? 'none' : `4px solid ${theme.colors.primary.main}`,
     }),
   };
 };

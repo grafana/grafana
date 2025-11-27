@@ -11,8 +11,8 @@ import {
   getSupportedTransTypeDetails,
   getTransformOptions,
   TransformationFieldDetails,
-} from '../correlations/Forms/types';
-import { getTransformationVars } from '../correlations/transformations';
+} from '../../../correlations/Forms/types';
+import { getTransformationVars } from '../../../correlations/transformations';
 
 interface CorrelationTransformationAddModalProps {
   onCancel: () => void;
@@ -35,7 +35,7 @@ const LabelWithTooltip = ({ label, tooltipText }: { label: string; tooltipText: 
   </Stack>
 );
 
-export const CorrelationTransformationAddModal = ({
+export const CorrelationTransformationAddModalLegacy = ({
   onSave,
   onCancel,
   fieldList,
@@ -144,7 +144,7 @@ export const CorrelationTransformationAddModal = ({
           field variables.
         </Trans>
       </p>
-      <Field label={t('explore.correlation-transformation-add-modal.label-field', 'Field')}>
+      <Field noMargin label={t('explore.correlation-transformation-add-modal.label-field', 'Field')}>
         <Controller
           control={control}
           render={({ field: { onChange, ref, ...field } }) => (
@@ -175,7 +175,7 @@ export const CorrelationTransformationAddModal = ({
               autoEscape={false}
             />
           </pre>
-          <Field label={t('explore.correlation-transformation-add-modal.label-type', 'Type')}>
+          <Field noMargin label={t('explore.correlation-transformation-add-modal.label-type', 'Type')}>
             <Controller
               control={control}
               render={({ field: { onChange, ref, ...field } }) => (
@@ -198,6 +198,7 @@ export const CorrelationTransformationAddModal = ({
           </Field>
           {formFieldsVis.expressionDetails.show && (
             <Field
+              noMargin
               label={
                 formFieldsVis.expressionDetails.helpText ? (
                   <LabelWithTooltip
@@ -216,6 +217,7 @@ export const CorrelationTransformationAddModal = ({
           )}
           {formFieldsVis.mapValueDetails.show && (
             <Field
+              noMargin
               label={
                 formFieldsVis.mapValueDetails.helpText ? (
                   <LabelWithTooltip

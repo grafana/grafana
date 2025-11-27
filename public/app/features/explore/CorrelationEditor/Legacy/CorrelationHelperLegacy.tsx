@@ -21,13 +21,13 @@ import {
 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { getTransformationVars } from '../correlations/transformations';
-import { generateDefaultLabel } from '../correlations/utils';
+import { getTransformationVars } from '../../../correlations/transformations';
+import { generateDefaultLabel } from '../../../correlations/utils';
+import { changeCorrelationHelperData } from '../../state/explorePane';
+import { changeCorrelationEditorDetails } from '../../state/main';
+import { selectCorrelationDetails, selectPanes } from '../../state/selectors';
 
-import { CorrelationTransformationAddModal } from './CorrelationTransformationAddModal';
-import { changeCorrelationHelperData } from './state/explorePane';
-import { changeCorrelationEditorDetails } from './state/main';
-import { selectCorrelationDetails, selectPanes } from './state/selectors';
+import { CorrelationTransformationAddModalLegacy } from './CorrelationTransformationAddModalLegacy';
 
 interface Props {
   exploreId: string;
@@ -39,7 +39,7 @@ interface FormValues {
   description: string;
 }
 
-export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
+export const CorrelationHelperLegacy = ({ exploreId, correlations }: Props) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const panes = useSelector(selectPanes);
@@ -135,7 +135,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
   return (
     <>
       {showTransformationAddModal && (
-        <CorrelationTransformationAddModal
+        <CorrelationTransformationAddModalLegacy
           onCancel={() => {
             setTransformationIdxToEdit(undefined);
             setShowTransformationAddModal(false);
@@ -184,7 +184,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             </Stack>
           }
         >
-          <Field label={t('explore.correlation-helper.label-label', 'Label')} htmlFor={`${id}-label`}>
+          <Field noMargin label={t('explore.correlation-helper.label-label', 'Label')} htmlFor={`${id}-label`}>
             <Input
               {...register('label')}
               id={`${id}-label`}
@@ -195,7 +195,11 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
               }}
             />
           </Field>
-          <Field label={t('explore.correlation-helper.label-description', 'Description')} htmlFor={`${id}-description`}>
+          <Field
+            noMargin
+            label={t('explore.correlation-helper.label-description', 'Description')}
+            htmlFor={`${id}-description`}
+          >
             <Input {...register('description')} id={`${id}-description`} />
           </Field>
         </Collapse>
