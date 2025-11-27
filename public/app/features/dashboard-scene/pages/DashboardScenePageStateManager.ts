@@ -920,7 +920,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 }
 
 export function shouldForceV2API(): boolean {
-  return Boolean(config.featureToggles.v2DashboardAPIVersion || config.featureToggles.dashboardNewLayouts);
+  return Boolean(config.featureToggles.kubernetesDashboardsV2 || config.featureToggles.dashboardNewLayouts);
 }
 
 export class UnifiedDashboardScenePageStateManager extends DashboardScenePageStateManagerBase<

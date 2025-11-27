@@ -343,9 +343,9 @@ const (
 	// Enables experimental new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
-	// FlagV2DashboardAPIVersion
-	// Enables the v2 dashboard API version
-	FlagV2DashboardAPIVersion = "v2DashboardAPIVersion"
+	// FlagKubernetesDashboardsV2
+	// Use the v2 kubernetes API in the frontend for dashboards
+	FlagKubernetesDashboardsV2 = "kubernetesDashboardsV2"
 
 	// FlagDashboardUndoRedo
 	// Enables undo/redo in dynamic dashboards

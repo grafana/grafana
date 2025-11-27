@@ -629,8 +629,8 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:         "v2DashboardAPIVersion",
-			Description:  "Enables the v2 dashboard API version",
+			Name:         "kubernetesDashboardsV2",
+			Description:  "Use the v2 kubernetes API in the frontend for dashboards",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaDashboardsSquad,
