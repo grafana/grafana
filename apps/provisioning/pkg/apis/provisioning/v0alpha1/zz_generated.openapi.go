@@ -1690,6 +1690,20 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target URL",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target path",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"workflows": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The supported workflows",
