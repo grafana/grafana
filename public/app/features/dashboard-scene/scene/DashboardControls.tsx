@@ -272,7 +272,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
       float: 'right',
-      alignItems: 'center',
+      alignItems: 'flex-start',
     }),
     timeControls: css({
       display: 'flex',

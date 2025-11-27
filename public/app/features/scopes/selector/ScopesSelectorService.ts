@@ -129,81 +129,38 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   // Resets query and toggles expanded state of a node
   public toggleExpandedNode = async (scopeNodeId: string) => {
-    const path = getPathOfNode(scopeNodeId, this.state.nodes);
-    const nodeToToggle = treeNodeAtPath(this.state.tree!, path);
-
-    if (!nodeToToggle) {
-      throw new Error(`Node ${scopeNodeId} not found in tree`);
-    }
-
-    if (nodeToToggle.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToToggle.scopeNodeId])) {
-      throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
-    }
-
-    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-      treeNode.expanded = !nodeToToggle.expanded;
-      treeNode.query = '';
-    });
-
-    this.updateState({ tree: newTree });
-    // If we are collapsing, we need to make sure that all the parent's children are avilable
-    if (nodeToToggle.expanded === true) {
-      const parentPath = path.slice(0, -1);
-      const parentNode = treeNodeAtPath(this.state.tree!, parentPath);
-      if (parentNode) {
-        await this.loadNodeChildren(parentPath, parentNode, parentNode.query);
-      }
-    } else {
-      await this.loadNodeChildren(path, nodeToToggle);
-    }
-  };
-
-  public filterNode = async (scopeNodeId: string, query: string) => {
-    const path = getPathOfNode(scopeNodeId, this.state.nodes);
-    const nodeToFilter = treeNodeAtPath(this.state.tree!, path);
-
-    if (!nodeToFilter) {
-      throw new Error(`Trying to filter node at path or id ${scopeNodeId} not found`);
-    }
-
-    if (nodeToFilter.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToFilter.scopeNodeId])) {
-      throw new Error(`Trying to filter node at id ${scopeNodeId} that is not expandable`);
-    }
-
-    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-      treeNode.expanded = true;
-      treeNode.query = query;
-    });
-    this.updateState({ tree: newTree });
-
-    await this.loadNodeChildren(path, nodeToFilter, query);
-  };
-
-  private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
-    this.interactionProfiler?.startInteraction('scopeNodeDiscovery');
-
-    const path = getPathOfNode(scopeNodeId, this.state.nodes);
-
-    const nodeToExpand = treeNodeAtPath(this.state.tree!, path);
+    this.interactionProfiler?.startInteraction('scopeToggleExpandedNode');
 
     try {
-      if (!nodeToExpand) {
+      const path = getPathOfNode(scopeNodeId, this.state.nodes);
+      const nodeToToggle = treeNodeAtPath(this.state.tree!, path);
+
+      if (!nodeToToggle) {
         throw new Error(`Node ${scopeNodeId} not found in tree`);
       }
 
-      if (nodeToExpand.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
+      if (nodeToToggle.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToToggle.scopeNodeId])) {
         throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
       }
 
-      if (!nodeToExpand.expanded || nodeToExpand.query !== query) {
-        const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-          treeNode.expanded = true;
-          treeNode.query = query || '';
-        });
-        this.updateState({ tree: newTree });
+      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+        treeNode.expanded = !nodeToToggle.expanded;
+        treeNode.query = '';
+      });
 
-        await this.loadNodeChildren(path, nodeToExpand, query);
+      this.updateState({ tree: newTree });
+      // If we are collapsing, we need to make sure that all the parent's children are available
+      if (nodeToToggle.expanded) {
+        const parentPath = path.slice(0, -1);
+        const parentNode = treeNodeAtPath(this.state.tree!, parentPath);
+        if (parentNode) {
+          await this.loadNodeChildren(parentPath, parentNode, parentNode.query);
+        }
+      } else {
+        await this.loadNodeChildren(path, nodeToToggle);
       }
+      // Catch and throw error so we can ensure the profiler is stopped
+      // todo: leverage component-level
     } catch (error) {
       throw error;
     } finally {
@@ -211,20 +168,34 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  private collapseNode = async (scopeNodeId: string) => {
-    const path = getPathOfNode(scopeNodeId, this.state.nodes);
+  public filterNode = async (scopeNodeId: string, query: string) => {
+    this.interactionProfiler?.startInteraction('scopeNodeFilter');
 
-    const nodeToCollapse = treeNodeAtPath(this.state.tree!, path);
+    try {
+      const path = getPathOfNode(scopeNodeId, this.state.nodes);
+      const nodeToFilter = treeNodeAtPath(this.state.tree!, path);
 
-    if (!nodeToCollapse) {
-      throw new Error(`Trying to collapse node at path or id ${scopeNodeId} not found`);
+      if (!nodeToFilter) {
+        throw new Error(`Trying to filter node at path or id ${scopeNodeId} not found`);
+      }
+
+      if (nodeToFilter.scopeNodeId !== '' && !isNodeExpandable(this.state.nodes[nodeToFilter.scopeNodeId])) {
+        throw new Error(`Trying to filter node at id ${scopeNodeId} that is not expandable`);
+      }
+
+      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+        treeNode.expanded = true;
+        treeNode.query = query;
+      });
+      this.updateState({ tree: newTree });
+
+      await this.loadNodeChildren(path, nodeToFilter, query);
+      // Catch and throw error so we can ensure the profiler is stopped
+    } catch (error) {
+      throw error;
+    } finally {
+      this.interactionProfiler?.stopInteraction();
     }
-
-    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
-      treeNode.expanded = false;
-      treeNode.query = '';
-    });
-    this.updateState({ tree: newTree });
   };
 
   private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string) => {
@@ -330,15 +301,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     let newSelectedScopes = this.state.selectedScopes.filter(filter);
     this.updateState({ selectedScopes: newSelectedScopes });
-  };
-
-  // TODO: Replace all usage of this function with expandNode and filterNode.
-  // @deprecated
-  public updateNode = async (scopeNodeId: string, expanded: boolean, query: string) => {
-    if (expanded) {
-      return this.expandOrFilterNode(scopeNodeId, query);
-    }
-    return this.collapseNode(scopeNodeId);
   };
 
   changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string, redirectOnApply?: boolean) => {
@@ -494,7 +456,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    */
   public open = async () => {
     if (!this.state.tree?.children || Object.keys(this.state.tree?.children).length === 0) {
-      await this.expandOrFilterNode('');
+      await this.filterNode('', '');
     }
 
     // First close all nodes
