@@ -15,20 +15,6 @@ type DashboardSnapshotWithDeleteKey struct {
 	DeleteKey string `json:"deleteKey,omitempty"`
 }
 
-//// This is the snapshot returned from the subresource
-//// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-//type FullDashboardSnapshot struct {
-//	metav1.TypeMeta `json:",inline"`
-//	// +optional
-//	metav1.ObjectMeta `json:"metadata,omitempty"`
-//
-//	// Snapshot summary info
-//	Info SnapshotSpec `json:"info"`
-//
-//	// The raw dashboard (unstructured for now)
-//	Dashboard common.Unstructured `json:"dashboard"`
-//}
-
 // Each tenant, may have different sharing options
 // This is currently set using custom.ini, but multi-tenant support will need
 // to be managed differently
