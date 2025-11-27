@@ -69,5 +69,14 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opti
     return;
   }
 
-  return [{ score: determineScore(dataSummary) }];
+  return [
+    {
+      score: determineScore(dataSummary),
+      cardOptions: {
+        previewModifier: (s) => {
+          s.options!.legend = { show: false };
+        },
+      },
+    },
+  ];
 };
