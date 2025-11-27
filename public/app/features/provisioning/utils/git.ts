@@ -247,33 +247,21 @@ export function getSourceFileUrl(
  * Returns undefined if the dashboard is not repo-managed or if the repository is not a git provider.
  */
 export async function buildSourceLink(annotations: ObjectMeta['annotations']): Promise<DashboardLink | undefined> {
-  if (!annotations || !config.featureToggles.provisioning) {
-    return undefined;
-  }
-
-  const managerKind = annotations[AnnoKeyManagerKind];
-  if (managerKind !== ManagerKind.Repo) {
+  if (!annotations || !config.featureToggles.provisioning || annotations[AnnoKeyManagerKind] !== ManagerKind.Repo) {
     return undefined;
   }
 
   const managerIdentity = annotations[AnnoKeyManagerIdentity];
   const sourcePath = annotations[AnnoKeySourcePath];
-
   if (!managerIdentity || !sourcePath) {
     return undefined;
   }
 
   try {
     const settingsResult = await dispatch(provisioningAPIv0alpha1.endpoints.getFrontendSettings.initiate());
-    if (!settingsResult.data) {
-      return undefined;
-    }
+    const repository = settingsResult.data?.items.find((repo: RepositoryView) => repo.name === managerIdentity);
 
-    const repository = settingsResult.data.items.find((repo: RepositoryView) => repo.name === managerIdentity);
-    if (
-      !repository ||
-      (repository.type !== 'github' && repository.type !== 'gitlab' && repository.type !== 'bitbucket')
-    ) {
+    if (!repository || !getHasTokenInstructions(repository.type)) {
       return undefined;
     }
 
