@@ -101,22 +101,25 @@ export function getHasTokenInstructions(type: RepoType): type is InstructionAvai
   return type === 'github' || type === 'gitlab' || type === 'bitbucket';
 }
 
+type GetRepoFileUrlParams = {
+  repoType: RepoType;
+  url: string | undefined;
+  branch?: string | undefined;
+  filePath: string | undefined;
+  pathPrefix?: string | null;
+};
+
 /**
  * Build a URL to a specific source file in a repository.
  * Only works for git providers (GitHub, GitLab, Bitbucket).
- * @param repoType - The repository type
- * @param url - The repository base URL
- * @param branch - The branch name (defaults to 'main' if not provided)
- * @param filePath - The path to the file in the repository
- * @param pathPrefix - Optional path prefix to prepend to filePath (e.g., from RepositorySpec.path)
  */
-export function getRepoFileUrl(
-  repoType: RepoType,
-  url: string | undefined,
-  branch: string | undefined,
-  filePath: string | undefined,
-  pathPrefix?: string | null
-): string | undefined {
+export function getRepoFileUrl({
+  repoType,
+  url,
+  branch,
+  filePath,
+  pathPrefix,
+}: GetRepoFileUrlParams): string | undefined {
   if (!url || !filePath) {
     return undefined;
   }

@@ -36,7 +36,13 @@ export async function buildSourceLink(annotations: ObjectMeta['annotations']): P
       return undefined;
     }
 
-    const sourceUrl = getRepoFileUrl(repository.type, repository.url, repository.branch, sourcePath, repository.path);
+    const sourceUrl = getRepoFileUrl({
+      repoType: repository.type,
+      url: repository.url,
+      branch: repository.branch,
+      filePath: sourcePath,
+      pathPrefix: repository.path,
+    });
     if (!sourceUrl) {
       return undefined;
     }

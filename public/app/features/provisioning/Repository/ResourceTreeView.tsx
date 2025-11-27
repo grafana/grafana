@@ -145,7 +145,13 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
             const spec = repo.spec;
             const config = spec.github || spec.gitlab || spec.bitbucket;
             if (config) {
-              sourceLink = getRepoFileUrl(spec.type, config.url, config.branch, item.path, config.path);
+              sourceLink = getRepoFileUrl({
+                repoType: spec.type,
+                url: config.url,
+                branch: config.branch,
+                filePath: item.path,
+                pathPrefix: config.path,
+              });
             }
           }
 
