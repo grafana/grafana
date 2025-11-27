@@ -1040,7 +1040,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
     if (options.route === DashboardRoutes.New) {
-      const newDashboardVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
+      const newDashboardVersion = shouldForceV2API() ? 'v2' : 'v1';
       this.setActiveManager(newDashboardVersion);
     }
     return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));

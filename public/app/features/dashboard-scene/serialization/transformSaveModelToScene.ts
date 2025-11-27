@@ -33,6 +33,7 @@ import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { shouldForceV2API } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -257,7 +258,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = oldModel.uid;
-  const serializerVersion = config.featureToggles.dashboardNewLayouts && !oldModel.meta.isSnapshot ? 'v2' : 'v1';
+  const serializerVersion = shouldForceV2API() && !oldModel.meta.isSnapshot ? 'v2' : 'v1';
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
