@@ -331,10 +331,16 @@ export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions | HeatmapT
   return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
 };
 
-export function getGroupedFilters(frame: DataFrame, seriesIdx: number) {
+export function getGroupedFilters(
+  frame: DataFrame,
+  seriesIdx: number,
+  getFiltersBasedOnGrouping: (filters: AdHocFilterItem[]) => AdHocFilterItem[]
+) {
+  const groupingFilters: AdHocFilterItem[] = [];
   const xField = frame.fields[seriesIdx];
 
-  if (xField && xField.labels && xField.config.filterable) {
+  if (xField && xField.labels) {
+    // && xField.config.filterable
     const seriesFilters: AdHocFilterItem[] = [];
 
     Object.entries(xField.labels).forEach(([key, value]) => {
@@ -347,4 +353,6 @@ export function getGroupedFilters(frame: DataFrame, seriesIdx: number) {
 
     groupingFilters.push(...getFiltersBasedOnGrouping(seriesFilters));
   }
+
+  return groupingFilters;
 }
