@@ -156,11 +156,6 @@ After submitting your feature request, monitor the discussion. Answer questions 
 
 ## Contributing the feature yourself
 
-If you want to implement the feature yourself:
-
-1. Wait for feedback from maintainers to ensure the feature aligns with Grafana's direction.
-2. Discuss the implementation approach in the feature request discussion.
-3. Follow the [developer guide](developer-guide.md) to set up your environment.
-4. Create a pull request following the [pull request guidelines](create-pull-request.md).
+If you want to implement the feature yourself, feel free to create a pull request following the [pull request guidelines](create-pull-request.md).
 
 We welcome community contributions and appreciate your help making Grafana better!
