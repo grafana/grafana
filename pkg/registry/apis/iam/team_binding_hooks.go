@@ -59,7 +59,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingCreate(obj runtime.
 		err := b.zClient.Mutate(ctx, &v1.MutateRequest{
 			Namespace: tb.Namespace,
 			Operations: []*v1.MutateOperation{
-				&v1.MutateOperation{
+				{
 					Operation: &v1.MutateOperation_CreateTeamBinding{
 						CreateTeamBinding: &v1.CreateTeamBindingOperation{
 							SubjectName: tb.Spec.Subject.Name,
@@ -247,7 +247,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingDelete(obj runtime.
 		err := b.zClient.Mutate(ctx, &v1.MutateRequest{
 			Namespace: tb.Namespace,
 			Operations: []*v1.MutateOperation{
-				&v1.MutateOperation{
+				{
 					Operation: &v1.MutateOperation_DeleteTeamBinding{
 						DeleteTeamBinding: &v1.DeleteTeamBindingOperation{
 							SubjectName: tb.Spec.Subject.Name,
