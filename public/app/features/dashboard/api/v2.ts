@@ -18,7 +18,7 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { buildSourceLink } from 'app/features/provisioning/utils/git';
+import { buildSourceLink } from 'app/features/provisioning/utils/sourceLink';
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
