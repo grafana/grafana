@@ -896,6 +896,24 @@ describe('getHistogramFields', () => {
       }
     `);
   });
+
+  it('should prevent excessive densification when sparse histogram has large gaps', () => {
+    const result = getHistogramFields(
+      toDataFrame({
+        meta: {
+          type: DataFrameType.HeatmapCells,
+        },
+        fields: [
+          { name: 'yMin', type: FieldType.number, values: [0.001, 1000] },
+          { name: 'yMax', type: FieldType.number, values: [0.00101, 1010] },
+          { name: 'count', type: FieldType.number, values: [10, 20] },
+        ],
+      })
+    );
+
+    expect(result).toBeDefined();
+    expect(result!.counts[0].values.length).toBeLessThanOrEqual(1001);
+  });
 });
 
 describe('joinHistograms', () => {
