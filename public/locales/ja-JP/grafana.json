@@ -474,6 +474,7 @@
       "noOptionsMessage-no-datasources-found": "データソースが見つかりません"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "リンクをコピー",
       "duplicate": "複製",
       "export": "エクスポート",
@@ -3464,6 +3465,14 @@
         "label-negative-y": "Y軸を反転"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "右側にスペースが必要",
       "gaps-options": {
@@ -3508,6 +3517,10 @@
     },
     "name-show-unfilled-area": "未入力の領域を表示",
     "name-value-display": "値を表示",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "非表示",
       "label-text-color": "文字色",
@@ -4152,6 +4165,7 @@
     "clear": "消去",
     "collapse": "折りたたみ表示",
     "disabled": "",
+    "discard": "",
     "edit": "編集",
     "help": "ヘルプ",
     "loading": "読み込み中...",
@@ -4769,7 +4783,6 @@
         "variable": "{{type}}変数",
         "variable-set": "変数"
       },
-      "open": "オプションペインを開く",
       "row": {
         "header": {
           "hide": "非表示",
@@ -5119,6 +5132,7 @@
       "title-matched_other": "{{count}}/{{totalCount}}件のオプションが一致"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "繰り返し",
       "tree-item": {
         "empty": "（空白）",
@@ -5330,6 +5344,32 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "設定を読み込み中"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "ダッシュボードの読み込みと初期化",
       "title-not-found": "ID{{panelId}}のパネルが見つかりません"
@@ -5433,11 +5473,8 @@
           "tooltip": "このダッシュボードは読み取り専用に設定されています"
         },
         "export": {
-          "arrow": "エクスポート",
-          "title": "エクスポート",
           "tooltip": {
-            "as-code": "コードとしてエクスポート",
-            "json": "JSON形式でエクスポート"
+            "as-code": "コードとしてエクスポート"
           }
         },
         "more-save-options": "その他の保存オプション",
@@ -5489,6 +5526,9 @@
       "save-library-panel": "ライブラリパネルを保存",
       "settings": "ダッシュボードの設定",
       "share-button": "共有",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5816,9 +5856,6 @@
       "custom-options": "カスタムオプション",
       "name-values-separated-comma": "カンマ区切りの値",
       "selection-options": "選択オプション"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "概要"
     },
     "dashboard-link-form": {
       "back-to-list": "一覧に戻る",
@@ -7798,6 +7835,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8092,13 +8130,6 @@
           "create-slo": "SLOを作成",
           "enable-slo-alerting": "SLOアラートを有効化"
         }
-      }
-    }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "戻る"
       }
     }
   },
@@ -11038,6 +11069,10 @@
     "pie-chart-type-options": {
       "label-donut": "ドーナツ",
       "label-pie": "円"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -12977,6 +13012,12 @@
       "label-same-as-value": "値と同じ",
       "label-standard": "標準"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "自動",
       "label-center": "中央"
@@ -13313,7 +13354,8 @@
       "forwards-time-aria-label": "時間範囲を前に移動",
       "to": "へ",
       "zoom-out-button": "時間範囲をズームアウト",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "時間範囲を適用",
@@ -13414,6 +13456,16 @@
         "label-never": "なし",
         "label-threshold": "しきい値"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "タイムゾーンを追加",

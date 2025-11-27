@@ -477,6 +477,7 @@
       "noOptionsMessage-no-datasources-found": "Keine Datenquellen gefunden"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "Link kopieren",
       "duplicate": "Duplikat",
       "export": "Exportieren",
@@ -3476,6 +3477,14 @@
         "label-negative-y": "Negativ Y"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Leerzeichen von der rechten Seite erforderlich",
       "gaps-options": {
@@ -3520,6 +3529,10 @@
     },
     "name-show-unfilled-area": "Ungefüllten Bereich anzeigen",
     "name-value-display": "Wertanzeige",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "Ausgeblendet",
       "label-text-color": "Textfarbe",
@@ -4172,6 +4185,7 @@
     "clear": "Löschen",
     "collapse": "Einklappen",
     "disabled": "",
+    "discard": "",
     "edit": "Bearbeiten",
     "help": "Hilfe",
     "loading": "Wird geladen ...",
@@ -4789,7 +4803,6 @@
         "variable": "{{type}} Variable",
         "variable-set": "Variable"
       },
-      "open": "Optionsfenster öffnen",
       "row": {
         "header": {
           "hide": "Ausblenden",
@@ -5140,6 +5153,7 @@
       "title-matched_other": "Übereinstimmend {{count}}/{{totalCount}} Optionen"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "Wiederholen",
       "tree-item": {
         "empty": "(leer)",
@@ -5351,6 +5365,32 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "Konfiguration wird geladen"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "Laden und Initialisieren des Dashboards",
       "title-not-found": "Das Panel mit der ID {{panelId}} wurde nicht gefunden"
@@ -5454,11 +5494,8 @@
           "tooltip": "Dieses Dashboard wurde als schreibgeschützt markiert"
         },
         "export": {
-          "arrow": "Exportieren",
-          "title": "Exportieren",
           "tooltip": {
-            "as-code": "Als Code exportieren",
-            "json": "Als JSON exportieren"
+            "as-code": "Als Code exportieren"
           }
         },
         "more-save-options": "Weitere Speicheroptionen",
@@ -5510,6 +5547,9 @@
       "save-library-panel": "Bibliotheks-Panel speichern",
       "settings": "Dashboard-Einstellungen",
       "share-button": "Teilen",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5838,9 +5878,6 @@
       "custom-options": "Benutzerdefinierte Optionen",
       "name-values-separated-comma": "Werte werden durch Komma getrennt",
       "selection-options": "Auswahloptionen"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "Rahmen"
     },
     "dashboard-link-form": {
       "back-to-list": "Zurück zur Liste",
@@ -7824,6 +7861,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8118,13 +8156,6 @@
           "create-slo": "SLO erstellen",
           "enable-slo-alerting": "SLO-Alerting aktivieren"
         }
-      }
-    }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "Zurückgehen"
       }
     }
   },
@@ -11085,6 +11116,10 @@
     "pie-chart-type-options": {
       "label-donut": "Donut",
       "label-pie": "Kreis"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -13033,6 +13068,12 @@
       "label-same-as-value": "Identisch mit Wert",
       "label-standard": "Standard"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "Auto",
       "label-center": "Mitte"
@@ -13370,7 +13411,8 @@
       "forwards-time-aria-label": "Zeitbereich nach vorne verschieben",
       "to": "bis",
       "zoom-out-button": "Zeitbereich verkleinern",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "Zeitbereich anwenden",
@@ -13471,6 +13513,16 @@
         "label-never": "Nie",
         "label-threshold": "Schwellenwert"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Zeitzone hinzufügen",
