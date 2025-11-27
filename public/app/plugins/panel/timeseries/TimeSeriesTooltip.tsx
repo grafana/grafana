@@ -18,6 +18,7 @@ import {
   getContentItems,
   VizTooltipItem,
   AdHocFilterModel,
+  FilterByGroupedLabelsModel,
 } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
@@ -50,8 +51,7 @@ export interface TimeSeriesTooltipProps {
   dataLinks: LinkModel[];
   hideZeros?: boolean;
   adHocFilters?: AdHocFilterModel[];
-  filterForSeriesLabels?: () => void | undefined;
-  filterOutSeriesLabels?: () => void | undefined;
+  filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
 }
@@ -72,8 +72,7 @@ export const TimeSeriesTooltip = ({
   adHocFilters,
   canExecuteActions,
   compareDiffMs,
-  filterForSeriesLabels,
-  filterOutSeriesLabels,
+  filterByGroupedLabels,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -117,8 +116,7 @@ export const TimeSeriesTooltip = ({
           actions={actions}
           annotate={annotate}
           adHocFilters={adHocFilters}
-          filterForSeriesLabels={filterForSeriesLabels}
-          filterOutSeriesLabels={filterOutSeriesLabels}
+          filterByGroupedLabels={filterByGroupedLabels}
         />
       );
     }

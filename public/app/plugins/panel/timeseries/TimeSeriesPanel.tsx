@@ -212,17 +212,15 @@ export const TimeSeriesPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
-                      filterForSeriesLabels={
+                      filterByGroupedLabels={
                         groupingFilters.length && onBulkAddAdHocFilters
-                          ? () => onBulkAddAdHocFilters(groupingFilters)
-                          : undefined
-                      }
-                      filterOutSeriesLabels={
-                        groupingFilters.length && onBulkAddAdHocFilters
-                          ? () =>
-                              onBulkAddAdHocFilters(
-                                groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                              )
+                          ? {
+                              onFilterForGroupedLabels: () => onBulkAddAdHocFilters(groupingFilters),
+                              onFilterOutGroupedLabels: () =>
+                                onBulkAddAdHocFilters(
+                                  groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
+                                ),
+                            }
                           : undefined
                       }
                       canExecuteActions={userCanExecuteActions}
