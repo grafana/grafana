@@ -341,7 +341,7 @@ const Log = memo(
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
         {(log.displayLevel || !wrapLogMessage) && (
-          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}{' '}</span>
+          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
           <span className="field">
@@ -448,7 +448,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
         highlightClassName={styles.matchHighLight}
       />
     ) : (
-      <span className="field no-highlighting">{log.body}{' '}</span>
+      <span className="field no-highlighting">{log.body} </span>
     );
   }
 
