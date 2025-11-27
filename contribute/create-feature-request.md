@@ -39,13 +39,13 @@ Explain what's difficult, inefficient, or impossible with the current implementa
 **Example of a strong answer:**
 
 ```
-When using a datasource variable in dashboards and using the "Export" feature in a dashboard, 
-this will automatically create an input for the datasource(s) being used, but it will also 
-effectively override the use of the datasource variable in all panels. 
+When using a datasource variable in dashboards and using the "Export" feature in a dashboard,
+this will automatically create an input for the datasource(s) being used, but it will also
+effectively override the use of the datasource variable in all panels.
 
-This makes a confusing 
-experience when importing the dashboard, because users are prompted for an input, but the 
-selected datasource won't be reflected in the datasource variable, and any changes to the 
+This makes a confusing
+experience when importing the dashboard, because users are prompted for an input, but the
+selected datasource won't be reflected in the datasource variable, and any changes to the
 datasource variable will not have any effect on the dashboard.
 ```
 
@@ -82,7 +82,7 @@ Be specific and concrete about the expected behavior. If you're suggesting a UI 
 Ideal behavior here would be that when using the export feature, either:
 
 1. No inputs section is created for datasource types that are used as datasource variables.
-2. IF an input is created, it should only be used to replace the currently selected value of 
+2. IF an input is created, it should only be used to replace the currently selected value of
    the datasource variable, rather than override the datasource in panels.
 ```
 
@@ -164,4 +164,3 @@ If you want to implement the feature yourself:
 4. Create a pull request following the [pull request guidelines](create-pull-request.md).
 
 We welcome community contributions and appreciate your help making Grafana better!
-
