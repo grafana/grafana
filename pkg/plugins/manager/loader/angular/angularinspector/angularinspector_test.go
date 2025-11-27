@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 )
 
 type fakeDetector struct {
@@ -81,7 +82,11 @@ func TestPatternsListInspector(t *testing.T) {
 		{
 			name: "CDN plugins return false without calling detectors",
 			plugin: &plugins.Plugin{
-				Class: plugins.ClassCDN,
+				FS: &pluginfakes.FakePluginFS{
+					TypeFunc: func() plugins.FSType {
+						return plugins.FSTypeCDN
+					},
+				},
 			},
 			fakeDetectors: []*fakeDetector{
 				{returns: true},

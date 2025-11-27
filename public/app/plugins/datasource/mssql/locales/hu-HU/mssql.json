@@ -69,7 +69,7 @@
       "description-encrypt-false": "",
       "description-encrypt-older-version": "Ha a Microsoft SQL Server régebbi verzióját használja, például a 2008-at vagy a 2008R2-t, akkor előfordulhat, hogy le kell tiltania a titkosítást, hogy csatlakozhasson.",
       "description-encrypt-true": "",
-      "description-min-interval": "",
+      "description-min-interval": "Az automatikus csoportosítás időintervallumának alsó határa. Javasoljuk, hogy az írási gyakoriságra állítsa be, például <1>{{exampleInterval}}</1> értékre, ha az adatait percenként írja.",
       "description-tls-cert": "Az SQL Server-tanúsítványt aláíró hitelesítésszolgáltató nyilvános kulcsos tanúsítványát tartalmazó fájl elérési útvonala. Akkor szükséges, ha a kiszolgáló tanúsítványa saját aláírású.",
       "label-auth-settings": "Azure-hitelesítési beállítások",
       "label-auth-type": "Hitelesítés típusa",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "Jelölje meg, hogy a DNS „SRV” rekordjait kell-e használni a KDC-k és más kiszolgálók keresésére egy tartományban. Az alapértelmezett érték <1>{{default}}</1>.",
-      "description-krb5-config-file-path": "",
+      "description-krb5-config-file-path": "A <2>MIT krb5 csomag</2> konfigurációs fájljának elérési útvonala. Az alapértelmezett érték <4>{{default}}</4>.",
       "description-udp-preference-limit": "Az alapértelmezett érték <1>{{default}}</1>, ami azt jelenti, hogy mindig TCP-t használ, és opcionális.",
       "label-dns-lookup-kdc": "DNS-keresés – KDC",
       "label-krb5-config-file-path": "krb5 konfigurációs fájl útvonala",

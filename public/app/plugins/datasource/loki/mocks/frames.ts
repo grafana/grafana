@@ -222,6 +222,33 @@ export function getMockFrames() {
     length: 2,
   };
 
+  const metricFrameAB: DataFrame = {
+    refId: 'A',
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1000000, 2000000, 3000000, 4000000],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        config: {},
+        values: [6, 7, 5, 4],
+        labels: {
+          level: 'debug',
+        },
+      },
+    ],
+    meta: {
+      notices: [],
+      type: DataFrameType.TimeSeriesMulti,
+      stats: [{ displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 33 }],
+    },
+    length: 4,
+  };
+
   const metricFrameC: DataFrame = {
     refId: 'A',
     name: 'some-time-series',
@@ -305,6 +332,7 @@ export function getMockFrames() {
     metricFrameA,
     metricFrameB,
     metricFrameC,
+    metricFrameAB,
     emptyFrame,
   };
 }

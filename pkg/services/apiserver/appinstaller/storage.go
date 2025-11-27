@@ -107,7 +107,7 @@ func NewDualWriter(
 	if currentMode != mode {
 		klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
 	}
-	return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
+	return dualwrite.NewStaticStorage(gr, currentMode, legacy, storage)
 }
 
 func getRequestInfo(gr schema.GroupResource, namespaceMapper request.NamespaceMapper) *k8srequest.RequestInfo {

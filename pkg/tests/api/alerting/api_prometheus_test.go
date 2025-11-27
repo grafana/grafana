@@ -252,7 +252,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"duration": 10,
 				"folderUid": "default",
 				"uid": "%s",
@@ -270,7 +270,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"folderUid": "default",
 				"uid": "%s",
 				"health": "ok",
@@ -317,7 +317,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"duration": 10,
 				"folderUid": "default",
 				"uid": "%s",
@@ -335,7 +335,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"folderUid": "default",
 				"uid": "%s",
 				"health": "ok",
@@ -359,6 +359,161 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 			return true
 		}, 18*time.Second, 2*time.Second)
 	}
+}
+
+func TestIntegrationPrometheusRulesPagination(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testinfra.SQLiteIntegrationTest(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+	apiClient.CreateFolder(t, "default", "default")
+
+	interval, err := model.ParseDuration("10s")
+	require.NoError(t, err)
+
+	// Create 3 rule groups with different numbers of rules
+	// Group 1: 5 rules, Group 2: 3 rules, Group 3: 2 rules (total: 10 rules)
+	for groupIdx := 1; groupIdx <= 3; groupIdx++ {
+		var rulesCount int
+		switch groupIdx {
+		case 1:
+			rulesCount = 5
+		case 2:
+			rulesCount = 3
+		case 3:
+			rulesCount = 2
+		}
+
+		rules := make([]apimodels.PostableExtendedRuleNode, rulesCount)
+		for i := 0; i < rulesCount; i++ {
+			rules[i] = apimodels.PostableExtendedRuleNode{
+				ApiRuleNode: &apimodels.ApiRuleNode{
+					For: &interval,
+				},
+				GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+					Title:     fmt.Sprintf("rule-%d-%d", groupIdx, i+1),
+					Condition: "A",
+					Data: []apimodels.AlertQuery{
+						{
+							RefID: "A",
+							RelativeTimeRange: apimodels.RelativeTimeRange{
+								From: apimodels.Duration(time.Duration(5) * time.Hour),
+								To:   apimodels.Duration(time.Duration(3) * time.Hour),
+							},
+							DatasourceUID: expr.DatasourceUID,
+							Model: json.RawMessage(`{
+								"type": "math",
+								"expression": "0 > 1"
+							}`),
+						},
+					},
+				},
+			}
+		}
+
+		ruleGroup := apimodels.PostableRuleGroupConfig{
+			Name:  fmt.Sprintf("group-%d", groupIdx),
+			Rules: rules,
+		}
+
+		apiClient.PostRulesGroup(t, "default", &ruleGroup, false)
+	}
+
+	t.Run("with group_limit should return only 2 groups", func(t *testing.T) {
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules?group_limit=2", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(promRulesURL)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		var result apimodels.RuleResponse
+		err = json.NewDecoder(resp.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Len(t, result.Data.RuleGroups, 2)
+		require.NotEmpty(t, result.Data.NextToken)
+	})
+
+	// Test rule_limit: with limit of 7, should return groups 1 and 2 (5+3=8 rules in total expected)
+	t.Run("with rule_limit should return full groups with rules limit", func(t *testing.T) {
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules?rule_limit=7", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(promRulesURL)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		var result apimodels.RuleResponse
+		err = json.NewDecoder(resp.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Len(t, result.Data.RuleGroups, 2)
+
+		totalRules := 0
+		for _, group := range result.Data.RuleGroups {
+			totalRules += len(group.Rules)
+		}
+		require.Equal(t, 8, totalRules)
+		require.NotEmpty(t, result.Data.NextToken)
+	})
+
+	// With both group_limit and rule_limit set, the API should return
+	// data with respect to whichever limit is reached first.
+	t.Run("both limits respect whichever is reached first", func(t *testing.T) {
+		// group_limit=1 with rule_limit=100: group limit reached first
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules?group_limit=1&rule_limit=100", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(promRulesURL)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		var result apimodels.RuleResponse
+		err = json.NewDecoder(resp.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Len(t, result.Data.RuleGroups, 1)
+	})
+
+	t.Run("rule_limit=0 returns empty results", func(t *testing.T) {
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules?rule_limit=0", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(promRulesURL)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		var result apimodels.RuleResponse
+		err = json.NewDecoder(resp.Body).Decode(&result)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Len(t, result.Data.RuleGroups, 0, "should return no groups")
+	})
 }
 
 func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
@@ -484,7 +639,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"name": "AlwaysFiring",
 				"uid": "%s",
 				"folderUid": "default",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"duration": 10,
 				"keepFiringFor": 15,
 				"annotations": {
@@ -501,7 +656,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"name": "AlwaysFiringButSilenced",
 				"uid": "%s",
 				"folderUid": "default",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"health": "ok",
 				"isPaused": false,
 				"type": "alerting",
@@ -533,7 +688,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"name": "AlwaysFiring",
 				"uid": "%s",
 				"folderUid": "default",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"duration": 10,
 				"keepFiringFor": 15,
 				"annotations": {

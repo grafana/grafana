@@ -169,7 +169,8 @@ func TestLogsResultsToDataframes(t *testing.T) {
 	})
 	hiddenLogStreamField.SetConfig(&data.FieldConfig{
 		Custom: map[string]any{
-			"hidden": true,
+			"hidden":   true,
+			"hideFrom": map[string]any{"viz": true},
 		},
 	})
 
@@ -180,7 +181,8 @@ func TestLogsResultsToDataframes(t *testing.T) {
 	})
 	hiddenLogField.SetConfig(&data.FieldConfig{
 		Custom: map[string]any{
-			"hidden": true,
+			"hidden":   true,
+			"hideFrom": map[string]any{"viz": true},
 		},
 	})
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
@@ -208,7 +209,9 @@ func TestService_Run(t *testing.T) {
 
 			t.Cleanup(func() {
 				s.StopAsync()
-				err := s.AwaitTerminated(context.Background())
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				err := s.AwaitTerminated(ctx)
 				if tt.shouldThrowError {
 					require.ErrorContains(t, err, "Failed to install plugin")
 					return
@@ -224,6 +227,8 @@ func TestService_Run(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+
+			<-s.installComplete
 
 			if tt.shouldInstall {
 				expectedInstalled := 0
@@ -246,7 +251,6 @@ func TestService_Run(t *testing.T) {
 						expectedInstalled++
 					}
 				}
-				<-s.installComplete
 				require.Equal(t, expectedInstalled, installed)
 				require.Equal(t, expectedInstalledFromURL, installedFromURL)
 			}

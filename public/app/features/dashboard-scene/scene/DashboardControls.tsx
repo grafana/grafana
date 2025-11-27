@@ -2,6 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -15,7 +17,8 @@ import {
   SceneObjectUrlValues,
   CancelActivationHandler,
 } from '@grafana/scenes';
-import { Box, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Button, useStyles2 } from '@grafana/ui';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -25,6 +28,9 @@ import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
+import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
+import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
+import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
 
 export interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
@@ -32,7 +38,7 @@ export interface DashboardControlsState extends SceneObjectState {
   hideTimeControls?: boolean;
   hideVariableControls?: boolean;
   hideLinksControls?: boolean;
-  // Hides the dashbaord-controls dropdown menu
+  // Hides the dashboard-controls dropdown menu
   hideDashboardControls?: boolean;
 }
 
@@ -163,12 +169,16 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       data-testid={selectors.pages.Dashboard.Controls}
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
-      {!hideTimeControls && (
-        <div className={cx(styles.timeControls, editPanel && styles.timeControlsWrap)}>
-          <timePicker.Component model={timePicker} />
-          <refreshPicker.Component model={refreshPicker} />
-        </div>
-      )}
+      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+        {!hideTimeControls && (
+          <div className={styles.timeControls}>
+            <timePicker.Component model={timePicker} />
+            <refreshPicker.Component model={refreshPicker} />
+          </div>
+        )}
+        {!hideDashboardControls && model.hasDashboardControls() && <DashboardControlsButton dashboard={dashboard} />}
+        {config.featureToggles.dashboardNewLayouts && <DashboardControlActions dashboard={dashboard} />}
+      </div>
       {!hideVariableControls && (
         <>
           <VariableControls dashboard={dashboard} />
@@ -177,13 +187,39 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
-      {!hideDashboardControls && model.hasDashboardControls() && (
-        <Stack>
-          <DashboardControlsButton dashboard={dashboard} />
-        </Stack>
-      )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
+  );
+}
+
+function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
+  const { isEditing, editPanel, uid, meta } = dashboard.useState();
+  const { isPlaying } = playlistSrv.useState();
+
+  if (editPanel) {
+    return null;
+  }
+
+  const canEditDashboard = dashboard.canEditDashboard();
+  const hasUid = Boolean(uid);
+  const isSnapshot = Boolean(meta.isSnapshot);
+  const showShareButton = hasUid && !isSnapshot && !isPlaying;
+
+  return (
+    <>
+      {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
+      {isEditing && <SaveDashboard dashboard={dashboard} />}
+      {!isPlaying && canEditDashboard && <EditDashboardSwitch dashboard={dashboard} />}
+      {isPlaying && (
+        <Button
+          variant="secondary"
+          onClick={() => playlistSrv.stop()}
+          data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
+        >
+          <Trans i18nKey="dashboard.toolbar.new.playlist-stop">Stop playlist</Trans>
+        </Button>
+      )}
+    </>
   );
 }
 
@@ -230,14 +266,21 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'unset',
       position: 'unset',
     }),
-    timeControls: css({
+    rightControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
       float: 'right',
+      alignItems: 'center',
     }),
-    timeControlsWrap: css({
+    timeControls: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+    }),
+    rightControlsWrap: css({
       flexWrap: 'wrap',
       marginLeft: 'auto',
     }),

@@ -44,7 +44,7 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}
 	AddDefaultLabelsAndAnnotations(a)
 	return am.Base.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
-		Alert: &alertingNotify.TestReceiversConfigAlertParams{
+		Alert: &models.TestReceiversConfigAlertParams{
 			Annotations: v2.APILabelSetToModelLabelSet(a.Annotations),
 			Labels:      v2.APILabelSetToModelLabelSet(a.Labels),
 		},
