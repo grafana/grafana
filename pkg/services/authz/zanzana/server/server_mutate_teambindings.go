@@ -85,6 +85,8 @@ func (s *Server) getTeamBindingTuple(ctx context.Context, subject string, team s
 		relation = zanzana.RelationTeamAdmin
 	case string(iamv0.TeamBindingTeamPermissionMember):
 		relation = zanzana.RelationTeamMember
+	default:
+		return nil, fmt.Errorf("unknown team permission '%s', expected member or admin", permission)
 	}
 
 	tuple := &openfgav1.TupleKey{
