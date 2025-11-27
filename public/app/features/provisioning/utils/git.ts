@@ -1,4 +1,9 @@
-import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { DashboardLink } from '@grafana/schema';
+import { provisioningAPIv0alpha1, RepositorySpec, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from 'app/features/apiserver/types';
+import { dispatch } from 'app/store/store';
 
 import { InstructionAvailability, RepoType } from '../Wizard/types';
 
@@ -203,4 +208,88 @@ export function getRepoCommitUrl(spec?: RepositorySpec, commit?: string) {
   }
 
   return { hasUrl: !!url, url };
+}
+
+/**
+ * Build a URL to a specific source file in a repository.
+ * Only works for git providers (GitHub, GitLab, Bitbucket).
+ */
+export function getSourceFileUrl(
+  repoType: RepositoryView['type'],
+  url: string | undefined,
+  branch: string | undefined,
+  sourcePath: string | undefined
+): string | undefined {
+  if (!url || !sourcePath) {
+    return undefined;
+  }
+
+  switch (repoType) {
+    case 'github':
+      return branch ? `${url}/blob/${branch}/${sourcePath}` : `${url}/blob/main/${sourcePath}`;
+    case 'gitlab':
+      return branch ? `${url}/-/blob/${branch}/${sourcePath}` : `${url}/-/blob/main/${sourcePath}`;
+    case 'bitbucket':
+      return branch ? `${url}/src/${branch}/${sourcePath}` : `${url}/src/main/${sourcePath}`;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Build a source link for a repo-managed dashboard.
+ * Returns undefined if the dashboard is not repo-managed or if the repository is not a git provider.
+ */
+export async function buildSourceLink(
+  annotations: Record<string, string | undefined> | undefined
+): Promise<DashboardLink | undefined> {
+  if (!annotations || !config.featureToggles.provisioning) {
+    return undefined;
+  }
+
+  const managerKind = annotations[AnnoKeyManagerKind];
+  if (managerKind !== ManagerKind.Repo) {
+    return undefined;
+  }
+
+  const managerIdentity = annotations[AnnoKeyManagerIdentity];
+  const sourcePath = annotations[AnnoKeySourcePath];
+
+  if (!managerIdentity || !sourcePath) {
+    return undefined;
+  }
+
+  try {
+    const settingsResult = await dispatch(provisioningAPIv0alpha1.endpoints.getFrontendSettings.initiate());
+    if (!settingsResult.data) {
+      return undefined;
+    }
+
+    const repository = settingsResult.data.items.find((repo) => repo.name === managerIdentity);
+    if (!repository || (repository.type !== 'github' && repository.type !== 'gitlab' && repository.type !== 'bitbucket')) {
+      return undefined;
+    }
+
+    const sourceUrl = getSourceFileUrl(repository.type, repository.url, repository.branch, sourcePath);
+    if (!sourceUrl) {
+      return undefined;
+    }
+
+    const providerName = repository.type.charAt(0).toUpperCase() + repository.type.slice(1);
+    return {
+      title: t('dashboard.source-link.title', 'Source ({{provider}})', { provider: providerName }),
+      type: 'link',
+      url: sourceUrl,
+      icon: 'external-link-alt',
+      tooltip: t('dashboard.source-link.tooltip', 'View source file in repository'),
+      targetBlank: true,
+      tags: [],
+      asDropdown: false,
+      includeVars: false,
+      keepTime: false,
+    };
+  } catch (e) {
+    console.warn('Failed to fetch repository info for source link:', e);
+    return undefined;
+  }
 }

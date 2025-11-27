@@ -21,6 +21,7 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { buildSourceLink } from 'app/features/provisioning/utils/git';
 import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -158,6 +159,12 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       if (managerKind) {
         result.meta.provisioned = annotations[AnnoKeyManagerAllowsEdits] === 'true' || managerKind === ManagerKind.Repo;
         result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
+      }
+
+      // Inject source link for repo-managed dashboards
+      const sourceLink = await buildSourceLink(annotations);
+      if (sourceLink) {
+        result.dashboard.links = [sourceLink, ...(result.dashboard.links || [])];
       }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
