@@ -41,6 +41,7 @@ type ResourceServer interface {
 	resourcepb.ManagedObjectIndexServer
 	resourcepb.BlobStoreServer
 	resourcepb.DiagnosticsServer
+	resourcepb.QuotasServer
 }
 
 type ListIterator interface {
@@ -1463,6 +1464,38 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
+	return rsp, nil
+}
+
+func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
+	if s.overridesService == nil {
+		return &resourcepb.QuotaUsageResponse{Error: &resourcepb.ErrorResult{
+			Message: "quota manager not configured",
+			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+	nsr := NamespacedResource{
+		Namespace: req.Key.Namespace,
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+	}
+	usage, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	if err != nil {
+		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+	limit, err := s.overridesService.GetQuota(ctx, nsr)
+	if err != nil {
+		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+
+	// handle case where no resources exist yet - very unlikely but possible
+	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
+	if len(usage) > 0 {
+		rsp.Usage = 0
+	} else {
+		rsp.Usage = usage[0].Count
+	}
+
 	return rsp, nil
 }
 

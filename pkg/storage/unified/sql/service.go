@@ -312,6 +312,7 @@ func (s *service) starting(ctx context.Context) error {
 	resourcepb.RegisterManagedObjectIndexServer(srv, server)
 	resourcepb.RegisterBlobStoreServer(srv, server)
 	resourcepb.RegisterDiagnosticsServer(srv, server)
+	resourcepb.RegisterQuotasServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service
