@@ -6,6 +6,7 @@
   "version": "12.4.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
+    "analytics-report": "node --experimental-strip-types ./scripts/cli/analytics/main.mts",
     "check-frontend-dev": "./scripts/check-frontend-dev.sh",
     "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js",
     "build:nominify": "yarn run build -- --env noMinify=1",
