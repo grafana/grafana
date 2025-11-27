@@ -1913,6 +1913,18 @@
     },
     {
       "metadata": {
+        "name": "kubernetesDashboardsV2",
+        "resourceVersion": "1764236054307",
+        "creationTimestamp": "2025-11-27T09:34:14Z"
+      },
+      "spec": {
+        "description": "Use the v2 kubernetes API in the frontend for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesExternalGroupMapping",
         "resourceVersion": "1764062806326",
         "creationTimestamp": "2025-11-25T09:17:49Z",
@@ -3545,6 +3557,22 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "v2DashboardAPIVersion",
+        "resourceVersion": "1762457740470",
+        "creationTimestamp": "2025-11-06T19:22:05Z",
+        "deletionTimestamp": "2025-11-27T09:34:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-06 19:35:40.470587 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the v2 dashboard API version",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {

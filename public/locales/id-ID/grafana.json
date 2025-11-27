@@ -474,6 +474,7 @@
       "noOptionsMessage-no-datasources-found": "Tidak ada sumber data yang ditemukan"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "Salin tautan",
       "duplicate": "Duplikasikan",
       "export": "Ekspor",
@@ -3464,6 +3465,14 @@
         "label-negative-y": "Y Negatif"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Membutuhkan ruang dari sisi kanan",
       "gaps-options": {
@@ -3508,6 +3517,10 @@
     },
     "name-show-unfilled-area": "Tampilkan area yang tidak terisi",
     "name-value-display": "Tampilan nilai",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "Tersembunyi",
       "label-text-color": "Warna teks",
@@ -4152,6 +4165,7 @@
     "clear": "Hapus",
     "collapse": "Ciutkan",
     "disabled": "",
+    "discard": "",
     "edit": "Edit",
     "help": "Bantuan",
     "loading": "Memuat...",
@@ -4769,7 +4783,6 @@
         "variable": "variabel {{type}}",
         "variable-set": "Variabel"
       },
-      "open": "Buka panel opsi",
       "row": {
         "header": {
           "hide": "Sembunyikan",
@@ -5119,6 +5132,7 @@
       "title-matched_other": "Cocok {{count}}/{{totalCount}} opsi"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "Ulangi",
       "tree-item": {
         "empty": "(kosong)",
@@ -5330,6 +5344,32 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "Memuat konfigurasi"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "Memuat & menginisialisasi dasbor",
       "title-not-found": "Panel dengan id {{panelId}} tidak ditemukan"
@@ -5433,11 +5473,8 @@
           "tooltip": "Dasbor ini ditandai sebagai hanya baca"
         },
         "export": {
-          "arrow": "Ekspor",
-          "title": "Ekspor",
           "tooltip": {
-            "as-code": "Ekspor sebagai kode",
-            "json": "Ekspor sebagai JSON"
+            "as-code": "Ekspor sebagai kode"
           }
         },
         "more-save-options": "Opsi simpan lainnya",
@@ -5489,6 +5526,9 @@
       "save-library-panel": "Simpan panel pustaka",
       "settings": "Pengaturan dasbor",
       "share-button": "Bagikan",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5816,9 +5856,6 @@
       "custom-options": "Opsi kustom",
       "name-values-separated-comma": "Nilai dipisahkan dengan koma",
       "selection-options": "Opsi pemilihan"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "Garis besar"
     },
     "dashboard-link-form": {
       "back-to-list": "Kembali ke daftar",
@@ -7798,6 +7835,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8092,13 +8130,6 @@
           "create-slo": "Buat SLO",
           "enable-slo-alerting": "Aktifkan peringatan SLO"
         }
-      }
-    }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "Kembali"
       }
     }
   },
@@ -11038,6 +11069,10 @@
     "pie-chart-type-options": {
       "label-donut": "Donat",
       "label-pie": "Lingkaran"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -12977,6 +13012,12 @@
       "label-same-as-value": "Sama dengan Nilai",
       "label-standard": "Standar"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "Otomatis",
       "label-center": "Pusat"
@@ -13313,7 +13354,8 @@
       "forwards-time-aria-label": "Pindahkan rentang waktu ke depan",
       "to": "ke",
       "zoom-out-button": "Perkecil rentang waktu",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "Gunakan rentang waktu",
@@ -13414,6 +13456,16 @@
         "label-never": "Jangan pernah",
         "label-threshold": "Ambang batas"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Tambahkan zona waktu",

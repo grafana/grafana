@@ -361,6 +361,10 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Use the v2 kubernetes API in the frontend for dashboards
+  */
+  kubernetesDashboardsV2?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   */
   dashboardUndoRedo?: boolean;
