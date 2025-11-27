@@ -56,7 +56,6 @@ func TestResourcePermissions_List(t *testing.T) {
 			},
 		},
 	}
-	compileCalled := false
 	accessClient := &fakeAccessClient{
 		compileFunc: func(id types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
 			require.NotNil(t, id)
@@ -77,9 +76,6 @@ func TestResourcePermissions_List(t *testing.T) {
 			}
 			require.Equal(t, utils.VerbGetPermissions, req.Verb)
 
-			// Mark that compile was called
-			compileCalled = true
-
 			// Return a checker that allows only specific resources: fold-1 and dash-2
 			return func(name, folder string) bool {
 				if name == "fold-1" || name == "dash-2" {
@@ -98,7 +94,7 @@ func TestResourcePermissions_List(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, list)
 	require.True(t, inner.listCalled, "inner store List should be called")
-	require.True(t, compileCalled, "accessClient.Compile should be called")
+	require.True(t, accessClient.compileCalled, "accessClient.Compile should be called")
 
 	respList, ok := list.(*iamv0.ResourcePermissionList)
 	require.True(t, ok, "response should be of type ResourcePermissionList")
