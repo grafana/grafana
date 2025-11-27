@@ -18,11 +18,21 @@ export interface CanvasViewport {
   panY: number;
 }
 
+export interface UserCursor {
+  userId: string;
+  userName: string;
+  color: string;
+  x: number;
+  y: number;
+  lastUpdated: number;
+}
+
 export interface ExploreMapState {
   viewport: CanvasViewport;
   panels: Record<string, ExploreMapPanel>;
   selectedPanelId?: string;
   nextZIndex: number;
+  cursors: Record<string, UserCursor>;
 }
 
 export const initialExploreMapState: ExploreMapState = {
@@ -34,4 +44,5 @@ export const initialExploreMapState: ExploreMapState = {
   panels: {},
   selectedPanelId: undefined,
   nextZIndex: 1,
+  cursors: {},
 };

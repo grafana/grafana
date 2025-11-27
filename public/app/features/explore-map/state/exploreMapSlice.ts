@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { generateExploreId } from 'app/core/utils/explore';
 
-import { CanvasViewport, ExploreMapState, initialExploreMapState, PanelPosition } from './types';
+import { CanvasViewport, ExploreMapState, initialExploreMapState, PanelPosition, UserCursor } from './types';
 
 const exploreMapSlice = createSlice({
   name: 'exploreMap',
@@ -99,6 +99,14 @@ const exploreMapSlice = createSlice({
     loadCanvas: (state, action: PayloadAction<ExploreMapState>) => {
       return action.payload;
     },
+
+    updateCursor: (state, action: PayloadAction<UserCursor>) => {
+      state.cursors[action.payload.userId] = action.payload;
+    },
+
+    removeCursor: (state, action: PayloadAction<{ userId: string }>) => {
+      delete state.cursors[action.payload.userId];
+    },
   },
 });
 
@@ -112,6 +120,8 @@ export const {
   resetCanvas,
   duplicatePanel,
   loadCanvas,
+  updateCursor,
+  removeCursor,
 } = exploreMapSlice.actions;
 
 export const exploreMapReducer = exploreMapSlice.reducer;

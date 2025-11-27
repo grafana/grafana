@@ -7,9 +7,11 @@ import { useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { useTransformContext } from '../context/TransformContext';
+import { useMockCursors } from '../hooks/useMockCursors';
 import { selectPanel, updateViewport } from '../state/exploreMapSlice';
 
 import { ExploreMapPanelContainer } from './ExploreMapPanelContainer';
+import { UserCursor } from './UserCursor';
 
 export function ExploreMapCanvas() {
   const styles = useStyles2(getStyles);
@@ -19,6 +21,10 @@ export function ExploreMapCanvas() {
 
   const panels = useSelector((state) => state.exploreMap.panels);
   const viewport = useSelector((state) => state.exploreMap.viewport);
+  const cursors = useSelector((state) => state.exploreMap.cursors);
+
+  // Initialize mock cursors
+  useMockCursors();
 
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent) => {
@@ -66,6 +72,9 @@ export function ExploreMapCanvas() {
           <div ref={canvasRef} className={styles.canvas} onClick={handleCanvasClick}>
             {Object.values(panels).map((panel) => (
               <ExploreMapPanelContainer key={panel.id} panel={panel} />
+            ))}
+            {Object.values(cursors).map((cursor) => (
+              <UserCursor key={cursor.userId} cursor={cursor} />
             ))}
           </div>
         </TransformComponent>
