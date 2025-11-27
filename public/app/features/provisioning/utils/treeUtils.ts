@@ -65,9 +65,7 @@ export function getItemType(path: string, resource?: ResourceListItem): ItemType
   if (!resource && !path.includes('.')) {
     return 'Folder';
   }
-  if (!resource && path.endsWith('.json')) {
-    return 'Dashboard';
-  }
+  // Unsynced files are "File" - don't infer Dashboard from .json
   return 'File';
 }
 

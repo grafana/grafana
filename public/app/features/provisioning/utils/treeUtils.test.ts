@@ -164,10 +164,10 @@ describe('getItemType', () => {
     expect(result).toBe('Folder');
   });
 
-  it('should return Dashboard for JSON files without resource', () => {
+  it('should return File for unsynced files regardless of extension', () => {
     const result = getItemType('some/path/file.json', undefined);
 
-    expect(result).toBe('Dashboard');
+    expect(result).toBe('File');
   });
 
   it('should return File for non-JSON paths without resource', () => {
@@ -381,13 +381,13 @@ describe('buildTree', () => {
     expect(result[0].status).toBeUndefined();
   });
 
-  it('should set pending status for JSON files without resource', () => {
+  it('should show unsynced JSON files as File type with no status', () => {
     const mergedItems = [{ path: 'dashboard.json', file: { path: 'dashboard.json', size: '100', hash: 'h1' } }];
 
     const result = buildTree(mergedItems);
 
-    expect(result[0].type).toBe('Dashboard');
-    expect(result[0].status).toBe('pending');
+    expect(result[0].type).toBe('File');
+    expect(result[0].status).toBeUndefined();
   });
 
   it('should set pending status when only resource exists', () => {
