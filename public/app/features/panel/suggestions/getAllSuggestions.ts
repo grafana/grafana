@@ -4,6 +4,7 @@ import {
   VisualizationSuggestionsBuilder,
   PanelModel,
   VisualizationSuggestionScore,
+  PreferredVisualisationType,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
@@ -23,7 +24,25 @@ export const panelsToCheckFirst = [
   'flamegraph',
   'traces',
   'nodeGraph',
+  'heatmap',
+  'histogram',
+  'geomap',
 ];
+
+/**
+ * some of the PreferredVisualisationTypes do not match the panel plugin ids, so we have to map them. d'oh.
+ */
+const PLUGIN_ID_TO_PREFERRED_VIZ_TYPE: Record<string, PreferredVisualisationType> = {
+  traces: 'trace',
+  timeseries: 'graph',
+  table: 'table',
+  logs: 'logs',
+  nodeGraph: 'nodeGraph',
+  flamegraph: 'flamegraph',
+};
+const mapPreferredVisualisationTypeToPlugin = (type: string): PreferredVisualisationType | undefined => {
+  return PLUGIN_ID_TO_PREFERRED_VIZ_TYPE[type];
+};
 
 export async function getAllSuggestions(
   data?: PanelData,
@@ -61,13 +80,13 @@ export async function getAllSuggestions(
   }
 
   return list.sort((a, b) => {
-    if (builder.dataSummary.preferredVisualisationType) {
-      if (a.pluginId === builder.dataSummary.preferredVisualisationType) {
-        return -1;
-      }
-      if (b.pluginId === builder.dataSummary.preferredVisualisationType) {
-        return 1;
-      }
+    const mappedA = mapPreferredVisualisationTypeToPlugin(a.pluginId);
+    if (mappedA && builder.dataSummary.hasPreferredVisualisationType(mappedA)) {
+      return -1;
+    }
+    const mappedB = mapPreferredVisualisationTypeToPlugin(a.pluginId);
+    if (mappedB && builder.dataSummary.hasPreferredVisualisationType(mappedB)) {
+      return 1;
     }
     return (b.score ?? VisualizationSuggestionScore.OK) - (a.score ?? VisualizationSuggestionScore.OK);
   });

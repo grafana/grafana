@@ -477,6 +477,7 @@
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
+      "analyze-rule": "Analyze rule",
       "copy-link": "Copy link",
       "duplicate": "Duplicate",
       "export": "Export",
@@ -3476,6 +3477,14 @@
         "label-negative-y": "Negative Y"
       }
     },
+    "suggestions": {
+      "horizontal": "Horizontal bar chart",
+      "hz-stacked": "Horizontal bar chart - stacked",
+      "hz-stacked-percent": "Horizontal bar chart - stacked by percentage",
+      "vert-stacked": "Bar chart - stacked",
+      "vert-stacked-percent": "Bar chart - stacked by percentage",
+      "vertical": "Bar chart"
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
       "gaps-options": {
@@ -3520,6 +3529,10 @@
     },
     "name-show-unfilled-area": "Show unfilled area",
     "name-value-display": "Value display",
+    "suggestions": {
+      "basic": "Bar gauge",
+      "lcd": "Bar gauge - LCD"
+    },
     "value-display-options": {
       "label-hidden": "Hidden",
       "label-text-color": "Text color",
@@ -4172,6 +4185,7 @@
     "clear": "Clear",
     "collapse": "Collapse",
     "disabled": "Disabled",
+    "discard": "Discard",
     "edit": "Edit",
     "help": "Help",
     "loading": "Loading...",
@@ -4789,7 +4803,6 @@
         "variable": "{{type}} variable",
         "variable-set": "Variables"
       },
-      "open": "Open options pane",
       "row": {
         "header": {
           "hide": "Hide",
@@ -5140,6 +5153,7 @@
       "title-matched_other": "Matched {{count}}/{{totalCount}} options"
     },
     "outline": {
+      "pane-header": "Content outline",
       "repeated-item": "Repeat",
       "tree-item": {
         "empty": "(empty)",
@@ -5351,6 +5365,32 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "Loading configuration"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "Options",
+        "tooltip": "Dashboard options"
+      },
+      "edit-schema": {
+        "title": "Code",
+        "tooltip": "Edit as code"
+      },
+      "export": {
+        "title": "Export",
+        "unsaved-modal": {
+          "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
+          "title": "Save changes to dashboard?"
+        }
+      },
+      "outline": {
+        "title": "Outline",
+        "tooltip": "Content outline"
+      },
+      "redo": "Redo",
+      "snapshot": {
+        "tooltip": "Open original dashboard"
+      },
+      "undo": "Undo"
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "Loading & initializing dashboard",
       "title-not-found": "Panel with id {{panelId}} not found"
@@ -5454,11 +5494,8 @@
           "tooltip": "This dashboard was marked as read only"
         },
         "export": {
-          "arrow": "Export",
-          "title": "Export",
           "tooltip": {
-            "as-code": "Export as code",
-            "json": "Export as JSON"
+            "as-code": "Export as code"
           }
         },
         "more-save-options": "More save options",
@@ -5510,6 +5547,9 @@
       "save-library-panel": "Save library panel",
       "settings": "Dashboard settings",
       "share-button": "Share",
+      "snapshot": {
+        "title": "Source"
+      },
       "star-add-error": "Failed to add to starred",
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
@@ -5838,9 +5878,6 @@
       "custom-options": "Custom options",
       "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "Outline"
     },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
@@ -7824,6 +7861,7 @@
     "suggestions": {
       "arc": "Gauge",
       "circular": "Circular gauge",
+      "no-thresholds": "Gauge - no thresholds",
       "style": {
         "circular": "Glowing",
         "simple": "Simple"
@@ -8118,13 +8156,6 @@
           "create-slo": "Create SLO",
           "enable-slo-alerting": "Enable SLO alerting"
         }
-      }
-    }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "Go back"
       }
     }
   },
@@ -11085,6 +11116,10 @@
     "pie-chart-type-options": {
       "label-donut": "Donut",
       "label-pie": "Pie"
+    },
+    "suggestions": {
+      "donut": "Donut chart",
+      "pie": "Pie chart"
     }
   },
   "playlist": {
@@ -13026,6 +13061,12 @@
       "label-same-as-value": "Same as Value",
       "label-standard": "Standard"
     },
+    "suggestions": {
+      "stat-color-background": "Stat - color background",
+      "stat-discrete-values": "Stat - discrete values",
+      "stat-discrete-values-color-background": "Stat - discrete values - color background",
+      "stat-single-string": "Stat - single string"
+    },
     "text-alignment-options": {
       "label-auto": "Auto",
       "label-center": "Center"
@@ -13363,7 +13404,8 @@
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
       "zoom-out-button": "Zoom out time range",
-      "zoom-out-tooltip": "Time range zoom out <br /> CTRL+Z"
+      "zoom-out-tooltip": "Time range zoom out <br /> CTRL+Z",
+      "zoom-out-tooltip-new": "Time range zoom out <br /> t -"
     },
     "time-range": {
       "apply": "Apply time range",
@@ -13464,6 +13506,16 @@
         "label-never": "Never",
         "label-threshold": "Threshold"
       }
+    },
+    "suggestions": {
+      "area": "Area chart",
+      "area-stacked": "Area chart - stacked",
+      "area-stacked-percentage": "Area chart - stacked by percentage",
+      "bar": "Bar chart",
+      "bar-stacked": "Bar chart - stacked",
+      "bar-stacked-percent": "Bar chart - stacked by percentage",
+      "line": "Line chart",
+      "line-smooth": "Line chart - smooth"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",
