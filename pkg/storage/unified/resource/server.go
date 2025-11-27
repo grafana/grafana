@@ -457,7 +457,10 @@ func (s *server) Stop(ctx context.Context) error {
 	}
 
 	if s.overridesService != nil {
-		s.overridesService.stop()
+		if err := s.overridesService.stop(ctx); err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
+		}
 	}
 
 	// Stops the streaming
@@ -1574,26 +1577,29 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
-	ctx, span := tracer.Start(ctx, "resource.server.checkQuota", trace.WithAttributes(
+	span := trace.SpanFromContext(ctx)
+	span.AddEvent("checkQuota", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
 		attribute.String("group", nsr.Group),
 		attribute.String("resource", nsr.Resource),
 	))
-	defer span.End()
 
-	// check quotas and log for now
-	if s.overridesService != nil {
-		quota, err := s.overridesService.GetQuota(ctx, nsr)
-		if err != nil {
-			s.log.FromContext(ctx).Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
-		} else {
-			stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
-			if err != nil {
-				s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
-			}
-			if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
-				s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
-			}
-		}
+	if s.overridesService == nil {
+		return
+	}
+
+	quota, err := s.overridesService.GetQuota(ctx, nsr)
+	if err != nil {
+		s.log.FromContext(ctx).Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		return
+	}
+
+	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	if err != nil {
+		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		return
+	}
+	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
+		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
 	}
 }

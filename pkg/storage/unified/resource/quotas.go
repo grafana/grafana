@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.yaml.in/yaml/v3"
 )
@@ -35,14 +34,14 @@ type ResourceQuota struct {
 	Limit int `yaml:"limit"`
 }
 
-// TenantOverrides represents all overrides for a tenant
-type TenantOverrides struct {
+// NamespaceOverrides represents all overrides for a tenant
+type NamespaceOverrides struct {
 	Quotas map[string]ResourceQuota `yaml:"quotas"`
 }
 
 // Overrides represents the entire overrides configuration file
 type Overrides struct {
-	Tenants map[string]TenantOverrides
+	Namespaces map[string]NamespaceOverrides
 }
 
 /*
@@ -77,12 +76,12 @@ func NewOverridesService(_ context.Context, logger log.Logger, reg prometheus.Re
 		ReloadPeriod: opts.ReloadPeriod,
 		LoadPath:     []string{opts.FilePath},
 		Loader: func(r io.Reader) (interface{}, error) {
-			var tenants map[string]TenantOverrides
+			var tenants map[string]NamespaceOverrides
 			decoder := yaml.NewDecoder(r)
 			if err := decoder.Decode(&tenants); err != nil {
 				return nil, err
 			}
-			return &Overrides{Tenants: tenants}, nil
+			return &Overrides{Namespaces: tenants}, nil
 		},
 	}
 
@@ -102,18 +101,11 @@ func (q *OverridesService) init(ctx context.Context) error {
 	return services.StartAndAwaitRunning(ctx, q.manager)
 }
 
-func (q *OverridesService) stop() {
-	q.manager.StopAsync()
+func (q *OverridesService) stop(ctx context.Context) error {
+	return services.StopAndAwaitTerminated(ctx, q.manager)
 }
 
-func (q *OverridesService) GetQuota(ctx context.Context, nsr NamespacedResource) (ResourceQuota, error) {
-	_, span := q.tracer.Start(ctx, "OverridesService.GetQuota", trace.WithAttributes(
-		attribute.String("namespace", nsr.Namespace),
-		attribute.String("group", nsr.Group),
-		attribute.String("resource", nsr.Resource),
-	))
-	defer span.End()
-
+func (q *OverridesService) GetQuota(_ context.Context, nsr NamespacedResource) (ResourceQuota, error) {
 	if nsr.Namespace == "" || nsr.Resource == "" || nsr.Group == "" {
 		return ResourceQuota{}, fmt.Errorf("invalid namespaced resource: %+v", nsr)
 	}
@@ -125,7 +117,7 @@ func (q *OverridesService) GetQuota(ctx context.Context, nsr NamespacedResource)
 
 	tenantId := strings.TrimPrefix(nsr.Namespace, "stacks-")
 	groupResource := nsr.Group + "/" + nsr.Resource
-	if tenantOverrides, ok := overrides.Tenants[tenantId]; ok {
+	if tenantOverrides, ok := overrides.Namespaces[tenantId]; ok {
 		if resourceQuota, ok := tenantOverrides.Quotas[groupResource]; ok {
 			return resourceQuota, nil
 		}

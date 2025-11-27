@@ -123,7 +123,10 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 	// Initialize the service
 	err = service.init(ctx)
 	require.NoError(t, err)
-	defer service.stop()
+	defer func(service *OverridesService, ctx context.Context) {
+		err := service.stop(ctx)
+		require.NoError(t, err)
+	}(service, ctx)
 
 	// Verify initial config
 	nsr := NamespacedResource{
