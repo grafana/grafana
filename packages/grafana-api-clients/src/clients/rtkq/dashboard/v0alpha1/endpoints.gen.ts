@@ -612,8 +612,8 @@ export type GetSearchApiArg = {
   tags?: string[];
   /** find dashboards that reference a given libraryPanel */
   libraryPanel?: string;
-  /** permission needed for the resource (View, Edit, Admin) */
-  permission?: 'View' | 'Edit' | 'Admin';
+  /** permission needed for the resource (view, edit, admin) */
+  permission?: 'view' | 'edit' | 'admin';
   /** sortable field */
   sort?: string;
   /** number of results to return */

@@ -477,6 +477,7 @@
       "noOptionsMessage-no-datasources-found": "Nessuna fonte dati trovata"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "Copia link",
       "duplicate": "Duplica",
       "export": "Esporta",
@@ -2624,7 +2625,9 @@
         "placeholder-search-input": "Cerca per nome o inserisci una query di filtro..."
       },
       "grafana-folder": "Cartella Grafana",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Stato",
       "label": {
         "hide": "Nascondi",
@@ -2635,6 +2638,7 @@
       "placeholder-all-data-sources": "Tutte le fonti dei dati",
       "placeholder-contact-point": "Seleziona punto di contatto",
       "placeholder-data-sources": "Seleziona origini dati",
+      "placeholder-group-search": "",
       "placeholder-labels": "Seleziona etichette",
       "plugin-rules": "Regole dei componenti aggiuntivi",
       "rule-source": {
@@ -3473,6 +3477,14 @@
         "label-negative-y": "Y negativo"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Richiedi spazio dal lato destro",
       "gaps-options": {
@@ -3517,6 +3529,10 @@
     },
     "name-show-unfilled-area": "Mostra area non riempita",
     "name-value-display": "Visualizzazione del valore",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "Nascosto",
       "label-text-color": "Colore del testo",
@@ -4169,6 +4185,7 @@
     "clear": "Cancella",
     "collapse": "Riduci",
     "disabled": "",
+    "discard": "",
     "edit": "Modifica",
     "help": "Guida",
     "loading": "Caricamento in corso...",
@@ -4786,7 +4803,6 @@
         "variable": "{{type}} variabile",
         "variable-set": "Variabili"
       },
-      "open": "Apri il riquadro delle opzioni",
       "row": {
         "header": {
           "hide": "Nascondi",
@@ -5137,6 +5153,7 @@
       "title-matched_other": "{{count}} corrispondente/{{totalCount}} opzioni"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "Ripeti",
       "tree-item": {
         "empty": "(vuoto)",
@@ -5348,6 +5365,32 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "Caricamento configurazione"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "Caricamento e inizializzazione della dashboard",
       "title-not-found": "Pannello con ID {{panelId}} non trovato"
@@ -5451,11 +5494,8 @@
           "tooltip": "Questa dashboard è stata contrassegnata come di sola lettura"
         },
         "export": {
-          "arrow": "Esporta",
-          "title": "Esporta",
           "tooltip": {
-            "as-code": "Esporta come codice",
-            "json": "Esporta in formato JSON"
+            "as-code": "Esporta come codice"
           }
         },
         "more-save-options": "Altre opzioni di salvataggio",
@@ -5507,6 +5547,9 @@
       "save-library-panel": "Salva pannello della libreria",
       "settings": "Impostazioni dashboard",
       "share-button": "Condividi",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5835,9 +5878,6 @@
       "custom-options": "Opzioni personalizzate",
       "name-values-separated-comma": "Valori separati da virgola",
       "selection-options": "Seleziona opzioni"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "Schema"
     },
     "dashboard-link-form": {
       "back-to-list": "Torna all'elenco",
@@ -6182,8 +6222,8 @@
       "placeholder-search-for": "Cerca...",
       "radio-options": {
         "label": {
-          "suggestions": "Suggerimenti",
-          "visualizations": "Visualizzazioni"
+          "all-visualizations": "",
+          "suggestions": "Suggerimenti"
         }
       },
       "title-close": "Chiudi"
@@ -7821,6 +7861,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8117,14 +8158,6 @@
         }
       }
     }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "Torna indietro"
-      }
-    },
-    "select-group": "Seleziona gruppo"
   },
   "grafana-data": {
     "datetime": {
@@ -11050,8 +11083,8 @@
       "tooltip-delete": "Elimina"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "In base ai dati attuali",
-      "no-results-matched-your-query": "Nessun risultato corrisponde alla tua query"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
@@ -11083,6 +11116,10 @@
     "pie-chart-type-options": {
       "label-donut": "A ciambella",
       "label-pie": "A torta"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -13031,6 +13068,12 @@
       "label-same-as-value": "Uguale al valore",
       "label-standard": "Standard"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "Automatico",
       "label-center": "Centrale"
@@ -13368,7 +13411,8 @@
       "forwards-time-aria-label": "Usa un intervallo di tempo successivo",
       "to": "a",
       "zoom-out-button": "Riduci l'intervallo di tempo",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "Applica intervallo di tempo",
@@ -13469,6 +13513,16 @@
         "label-never": "Mai",
         "label-threshold": "Soglia"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Aggiungi fuso orario",

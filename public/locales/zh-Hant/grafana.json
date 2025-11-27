@@ -474,6 +474,7 @@
       "noOptionsMessage-no-datasources-found": "未找到資料來源"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "複製網址",
       "duplicate": "重複",
       "export": "匯出",
@@ -2612,7 +2613,9 @@
         "placeholder-search-input": "按名稱搜尋或輸入篩選條件查詢…"
       },
       "grafana-folder": "Grafana 資料夾",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "使用情況",
       "label": {
         "hide": "隱藏",
@@ -2623,6 +2626,7 @@
       "placeholder-all-data-sources": "所有資料來源",
       "placeholder-contact-point": "選擇聯絡點",
       "placeholder-data-sources": "選擇資料來源",
+      "placeholder-group-search": "",
       "placeholder-labels": "選擇標籤",
       "plugin-rules": "外掛程式規則",
       "rule-source": {
@@ -3461,6 +3465,14 @@
         "label-negative-y": "負 Y"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "需要在右側保留空間",
       "gaps-options": {
@@ -3505,6 +3517,10 @@
     },
     "name-show-unfilled-area": "顯示未填充區域",
     "name-value-display": "數值顯示",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "隱藏",
       "label-text-color": "文字色彩",
@@ -4149,6 +4165,7 @@
     "clear": "清除",
     "collapse": "收闔",
     "disabled": "",
+    "discard": "",
     "edit": "編輯",
     "help": "說明",
     "loading": "正在載入…",
@@ -4766,7 +4783,6 @@
         "variable": "{{type}}變數",
         "variable-set": "變量"
       },
-      "open": "開啟選項窗格",
       "row": {
         "header": {
           "hide": "隱藏",
@@ -5116,6 +5132,7 @@
       "title-matched_other": "匹配的 {{count}}/{{totalCount}} 個選項"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "重複",
       "tree-item": {
         "empty": "（空）",
@@ -5327,6 +5344,32 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "正在匯入設定"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "正在載入並初始化儀表板",
       "title-not-found": "未找到 ID 為 {{panelId}} 的面板"
@@ -5430,11 +5473,8 @@
           "tooltip": "此儀表板已標記為唯讀"
         },
         "export": {
-          "arrow": "匯出",
-          "title": "匯出",
           "tooltip": {
-            "as-code": "匯出為程式碼",
-            "json": "匯出為 JSON"
+            "as-code": "匯出為程式碼"
           }
         },
         "more-save-options": "更多儲存選項",
@@ -5486,6 +5526,9 @@
       "save-library-panel": "儲存資料庫面板",
       "settings": "儀表板設定",
       "share-button": "分享",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5813,9 +5856,6 @@
       "custom-options": "自訂選項",
       "name-values-separated-comma": "以逗號分隔的值",
       "selection-options": "選擇選項"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "外框"
     },
     "dashboard-link-form": {
       "back-to-list": "返回清單",
@@ -6159,8 +6199,8 @@
       "placeholder-search-for": "搜尋…",
       "radio-options": {
         "label": {
-          "suggestions": "建議",
-          "visualizations": "視覺化"
+          "all-visualizations": "",
+          "suggestions": "建議"
         }
       },
       "title-close": "關閉"
@@ -7795,6 +7835,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8091,14 +8132,6 @@
         }
       }
     }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "返回"
-      }
-    },
-    "select-group": "選擇群組"
   },
   "grafana-data": {
     "datetime": {
@@ -11003,8 +11036,8 @@
       "tooltip-delete": "刪除"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "根據目前的資料",
-      "no-results-matched-your-query": "沒有符合您查詢的結果"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "找不到符合您查詢的內容"
@@ -11036,6 +11069,10 @@
     "pie-chart-type-options": {
       "label-donut": "甜甜圈圖",
       "label-pie": "圓餅圖"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -12975,6 +13012,12 @@
       "label-same-as-value": "與值相同",
       "label-standard": "標準"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "自動",
       "label-center": "置中"
@@ -13311,7 +13354,8 @@
       "forwards-time-aria-label": "將時間範圍向前移動",
       "to": "至",
       "zoom-out-button": "縮小時間範圍",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "套用時間範圍",
@@ -13412,6 +13456,16 @@
         "label-never": "從不",
         "label-threshold": "閾值"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "新增時區",
