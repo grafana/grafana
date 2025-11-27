@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -32,13 +31,23 @@ type ResourceStorageAuthorizer interface {
 // It overrides the identity in the context to use service identity for the underlying store operations.
 // That way, the underlying store authorization is always successful, and the authorization is enforced by the wrapper.
 type Wrapper struct {
-	inner      *registry.Store
+	inner      K8sStorage
 	authorizer ResourceStorageAuthorizer
+}
+
+type K8sStorage interface {
+	k8srest.Storage
+	k8srest.Scoper
+	k8srest.SingularNameProvider
+	k8srest.Lister
+	k8srest.Getter
+	k8srest.CreaterUpdater
+	k8srest.GracefulDeleter
 }
 
 var _ rest.Storage = (*Wrapper)(nil)
 
-func New(store *registry.Store, authz ResourceStorageAuthorizer) *Wrapper {
+func New(store K8sStorage, authz ResourceStorageAuthorizer) *Wrapper {
 	return &Wrapper{inner: store, authorizer: authz}
 }
 
