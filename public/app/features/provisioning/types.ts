@@ -83,7 +83,7 @@ export type AuthorInfo = {
 
 export type FileDetails = {
   path: string;
-  size: string;
+  size?: string;
   hash: string;
 };
 

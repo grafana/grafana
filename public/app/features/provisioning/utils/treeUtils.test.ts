@@ -100,6 +100,48 @@ describe('mergeFilesAndResources', () => {
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('dashboards/my-dashboard.json');
   });
+
+  it('should handle folder in resources but not in files', () => {
+    const files = [
+      {
+        path: 'new-dashboard-2025-10-24-NKAPX.json',
+        hash: '78383507641a9fe0c6dc715bf81989c2732e84df',
+      },
+    ];
+    const resources: ResourceListItem[] = [
+      {
+        path: 'new-dashboard-2025-10-24-NKAPX.json',
+        group: 'dashboard.grafana.app',
+        resource: 'dashboards',
+        name: 'dcf20b2odenyf4d',
+        hash: '78383507641a9fe0c6dc715bf81989c2732e84df',
+        title: 'v2 dashboard',
+        folder: 'repository-89cac64',
+      },
+      {
+        path: 'unsynced-folder',
+        group: 'folder.grafana.app',
+        resource: 'folders',
+        name: 'unsynced-folder-pyqothnbi8kcxjvo7tnujum7',
+        hash: '',
+        title: 'unsynced-folder',
+        folder: 'repository-89cac64',
+      },
+    ];
+
+    const result = mergeFilesAndResources(files, resources);
+
+    expect(result).toHaveLength(2);
+
+    const dashboard = result.find((r) => r.path === 'new-dashboard-2025-10-24-NKAPX.json');
+    expect(dashboard?.file).toBeDefined();
+    expect(dashboard?.resource).toBeDefined();
+
+    const folder = result.find((r) => r.path === 'unsynced-folder');
+    expect(folder?.file).toBeUndefined();
+    expect(folder?.resource).toBeDefined();
+    expect(folder?.resource?.resource).toBe('folders');
+  });
 });
 
 describe('getItemType', () => {
@@ -392,12 +434,40 @@ describe('buildTree', () => {
   });
 
   it('should set pending status for unsynced folders with no dashboard children', () => {
-    const mergedItems = [{ path: 'folder/file.txt', file: { path: 'folder/file.txt', size: '100', hash: 'h1' } }];
+    const mergedItems = [
+      {
+        path: 'unsynced-folder',
+        resource: {
+          path: 'unsynced-folder',
+          group: 'folder.grafana.app',
+          resource: 'folders',
+          name: 'unsynced-folder-pyqothnbi8kcxjvo7tnujum7',
+          hash: '',
+          title: 'unsynced-folder',
+          folder: 'repository-89cac64',
+        },
+      },
+      {
+        path: 'new-dashboard-2025-10-24-NKAPX.json',
+        file: {
+          path: 'new-dashboard-2025-10-24-NKAPX.json',
+          hash: '78383507641a9fe0c6dc715bf81989c2732e84df',
+        },
+        resource: {
+          path: 'new-dashboard-2025-10-24-NKAPX.json',
+          group: 'dashboard.grafana.app',
+          resource: 'dashboards',
+          name: 'dcf20b2odenyf4d',
+          hash: '78383507641a9fe0c6dc715bf81989c2732e84df',
+          title: 'v2 dashboard',
+          folder: 'repository-89cac64',
+        },
+      },
+    ];
 
     const result = buildTree(mergedItems);
 
     expect(result[0].type).toBe('Folder');
-    expect(result[0].resourceName).toBeUndefined();
     expect(result[0].status).toBe('pending');
   });
 
@@ -405,6 +475,24 @@ describe('buildTree', () => {
     const mergedItems = [
       { path: 'folder', resource: mockFolderResource },
       { path: 'folder/file.txt', file: { path: 'folder/file.txt', size: '100', hash: 'h1' } },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].resourceName).toBe('folder-uid');
+    expect(result[0].status).toBe('synced');
+  });
+
+  it('should show synced status for folder in resources but not in files', () => {
+    const syncedResource = { ...mockResource, hash: 'matching-hash' };
+    const mergedItems = [
+      { path: 'folder', resource: mockFolderResource },
+      {
+        path: 'folder/dashboard.json',
+        file: { path: 'folder/dashboard.json', size: '100', hash: 'matching-hash' },
+        resource: syncedResource,
+      },
     ];
 
     const result = buildTree(mergedItems);

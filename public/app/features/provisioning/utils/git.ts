@@ -17,16 +17,6 @@ export function validateBranchName(branchName?: string) {
   return branchName && branchNameRegex.test(branchName!);
 }
 
-export const getRepoHref = (github?: RepositorySpec['github']) => {
-  if (!github?.url) {
-    return undefined;
-  }
-  if (!github.branch) {
-    return github.url;
-  }
-  return `${github.url}/tree/${github.branch}`;
-};
-
 // Remove leading and trailing slashes from a string.
 const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
 
@@ -123,7 +113,12 @@ export function getRepoFileUrl(spec?: RepositorySpec, filePath?: string) {
         return undefined;
       }
       const fullPath = path ? `${path}${filePath}` : filePath;
-      return `${url}/blob/${branch || 'main'}/${fullPath}`;
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: branch || 'main',
+        providerSegments: ['blob'],
+        path: fullPath,
+      });
     }
     case 'gitlab': {
       const { url, branch, path } = spec.gitlab ?? {};
@@ -131,7 +126,12 @@ export function getRepoFileUrl(spec?: RepositorySpec, filePath?: string) {
         return undefined;
       }
       const fullPath = path ? `${path}${filePath}` : filePath;
-      return `${url}/-/blob/${branch || 'main'}/${fullPath}`;
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: branch || 'main',
+        providerSegments: ['-', 'blob'],
+        path: fullPath,
+      });
     }
     case 'bitbucket': {
       const { url, branch, path } = spec.bitbucket ?? {};
@@ -139,7 +139,12 @@ export function getRepoFileUrl(spec?: RepositorySpec, filePath?: string) {
         return undefined;
       }
       const fullPath = path ? `${path}${filePath}` : filePath;
-      return `${url}/src/${branch || 'main'}/${fullPath}`;
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: branch || 'main',
+        providerSegments: ['src'],
+        path: fullPath,
+      });
     }
     default:
       return undefined;
@@ -147,38 +152,55 @@ export function getRepoFileUrl(spec?: RepositorySpec, filePath?: string) {
 }
 
 export function getRepoCommitUrl(spec?: RepositorySpec, commit?: string) {
-  let url: string | undefined = undefined;
-  let hasUrl = false;
-
   if (!spec || !spec.type || !commit) {
-    return { hasUrl, url };
+    return { hasUrl: false, url: undefined };
   }
 
   const gitType = spec.type;
 
   // local repositories don't have a URL
-  if (gitType !== 'local' && commit) {
-    switch (gitType) {
-      case 'github':
-        if (spec.github?.url) {
-          url = `${spec.github.url}/commit/${commit}`;
-          hasUrl = true;
-        }
-        break;
-      case 'gitlab':
-        if (spec.gitlab?.url) {
-          url = `${spec.gitlab.url}/-/commit/${commit}`;
-          hasUrl = true;
-        }
-        break;
-      case 'bitbucket':
-        if (spec.bitbucket?.url) {
-          url = `${spec.bitbucket.url}/commits/${commit}`;
-          hasUrl = true;
-        }
-        break;
-    }
+  if (gitType === 'local') {
+    return { hasUrl: false, url: undefined };
   }
 
-  return { hasUrl, url };
+  let url: string | undefined = undefined;
+  let providerSegments: string[] = [];
+
+  switch (gitType) {
+    case 'github':
+      if (spec.github?.url) {
+        providerSegments = ['commit'];
+        url = buildRepoUrl({
+          baseUrl: spec.github.url,
+          branch: undefined,
+          providerSegments,
+          path: commit,
+        });
+      }
+      break;
+    case 'gitlab':
+      if (spec.gitlab?.url) {
+        providerSegments = ['-', 'commit'];
+        url = buildRepoUrl({
+          baseUrl: spec.gitlab.url,
+          branch: undefined,
+          providerSegments,
+          path: commit,
+        });
+      }
+      break;
+    case 'bitbucket':
+      if (spec.bitbucket?.url) {
+        providerSegments = ['commits'];
+        url = buildRepoUrl({
+          baseUrl: spec.bitbucket.url,
+          branch: undefined,
+          providerSegments,
+          path: commit,
+        });
+      }
+      break;
+  }
+
+  return { hasUrl: !!url, url };
 }
