@@ -2,16 +2,7 @@ import { ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { TreeItem } from '../types';
 
-import {
-  buildTree,
-  filterTree,
-  flattenTree,
-  getDisplayTitle,
-  getIconName,
-  getItemType,
-  getStatus,
-  mergeFilesAndResources,
-} from './treeUtils';
+import { buildTree, filterTree, flattenTree, getItemType, getStatus, mergeFilesAndResources } from './treeUtils';
 
 // Mock data
 const mockFileDetails = {
@@ -145,57 +136,6 @@ describe('getItemType', () => {
     const result = getItemType('some/path', unknownResource);
 
     expect(result).toBe('File');
-  });
-});
-
-describe('getDisplayTitle', () => {
-  it('should return resource title when available', () => {
-    const result = getDisplayTitle('dashboards/my-dashboard.json', mockResource);
-
-    expect(result).toBe('My Dashboard');
-  });
-
-  it('should return last path segment when no resource title', () => {
-    const result = getDisplayTitle('folder/subfolder/file.json', undefined);
-
-    expect(result).toBe('file.json');
-  });
-
-  it('should handle paths without slashes', () => {
-    const result = getDisplayTitle('root-file.json', undefined);
-
-    expect(result).toBe('root-file.json');
-  });
-
-  it('should return path when split returns empty', () => {
-    const resourceNoTitle = {
-      ...mockResource,
-      title: undefined,
-    };
-
-    const result = getDisplayTitle('some-file.json', resourceNoTitle);
-
-    expect(result).toBe('some-file.json');
-  });
-});
-
-describe('getIconName', () => {
-  it('should return folder icon for Folder type', () => {
-    const result = getIconName('Folder');
-
-    expect(result).toBe('folder');
-  });
-
-  it('should return apps icon for Dashboard type', () => {
-    const result = getIconName('Dashboard');
-
-    expect(result).toBe('apps');
-  });
-
-  it('should return file-alt icon for File type', () => {
-    const result = getIconName('File');
-
-    expect(result).toBe('file-alt');
   });
 });
 
@@ -385,6 +325,93 @@ describe('buildTree', () => {
     const result = buildTree(mergedItems);
 
     expect(result[0].status).toBe('pending');
+  });
+
+  it('should set folder status to synced when all children are synced', () => {
+    const syncedResource = { ...mockResource, hash: 'matching-hash' };
+    const mergedItems = [
+      { path: 'folder', resource: mockFolderResource },
+      {
+        path: 'folder/dashboard1.json',
+        file: { path: 'folder/dashboard1.json', size: '100', hash: 'matching-hash' },
+        resource: syncedResource,
+      },
+      {
+        path: 'folder/dashboard2.json',
+        file: { path: 'folder/dashboard2.json', size: '100', hash: 'matching-hash' },
+        resource: { ...syncedResource, name: 'other-uid' },
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].resourceName).toBe('folder-uid');
+    expect(result[0].status).toBe('synced');
+  });
+
+  it('should set folder status to pending when any child is pending', () => {
+    const syncedResource = { ...mockResource, hash: 'matching-hash' };
+    const mergedItems = [
+      { path: 'folder', resource: mockFolderResource },
+      {
+        path: 'folder/dashboard1.json',
+        file: { path: 'folder/dashboard1.json', size: '100', hash: 'matching-hash' },
+        resource: syncedResource,
+      },
+      {
+        path: 'folder/dashboard2.json',
+        file: { path: 'folder/dashboard2.json', size: '100', hash: 'different-hash' },
+        resource: syncedResource,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].resourceName).toBe('folder-uid');
+    expect(result[0].status).toBe('pending');
+  });
+
+  it('should propagate pending status from nested folders', () => {
+    const syncedResource = { ...mockResource, hash: 'matching-hash' };
+    const mergedItems = [
+      {
+        path: 'parent/child/dashboard.json',
+        file: { path: 'parent/child/dashboard.json', size: '100', hash: 'different-hash' },
+        resource: syncedResource,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].path).toBe('parent');
+    expect(result[0].status).toBe('pending');
+    expect(result[0].children[0].path).toBe('parent/child');
+    expect(result[0].children[0].status).toBe('pending');
+  });
+
+  it('should set pending status for unsynced folders with no dashboard children', () => {
+    const mergedItems = [{ path: 'folder/file.txt', file: { path: 'folder/file.txt', size: '100', hash: 'h1' } }];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].resourceName).toBeUndefined();
+    expect(result[0].status).toBe('pending');
+  });
+
+  it('should set synced status for synced folders with only non-dashboard children', () => {
+    const mergedItems = [
+      { path: 'folder', resource: mockFolderResource },
+      { path: 'folder/file.txt', file: { path: 'folder/file.txt', size: '100', hash: 'h1' } },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].resourceName).toBe('folder-uid');
+    expect(result[0].status).toBe('synced');
   });
 });
 

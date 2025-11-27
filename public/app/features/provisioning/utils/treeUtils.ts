@@ -81,6 +81,33 @@ export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus 
   return 'pending';
 }
 
+function calculateFolderStatus(node: TreeItem): SyncStatus | undefined {
+  if (node.type !== 'Folder') {
+    return node.status;
+  }
+
+  // Unsynced folders are always pending
+  if (!node.resourceName) {
+    return 'pending';
+  }
+
+  const childStatuses: Array<SyncStatus | undefined> = [];
+  for (const child of node.children) {
+    if (child.type === 'Folder') {
+      childStatuses.push(calculateFolderStatus(child));
+    } else if (child.status) {
+      childStatuses.push(child.status);
+    }
+  }
+
+  if (childStatuses.some((s) => s === 'pending')) {
+    return 'pending';
+  }
+
+  // Synced folder with no pending children is synced
+  return 'synced';
+}
+
 export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   const nodeMap = new Map<string, TreeItem>();
   const roots: TreeItem[] = [];
@@ -164,6 +191,17 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   };
 
   sortNodes(roots);
+
+  const updateFolderStatus = (nodes: TreeItem[]) => {
+    for (const node of nodes) {
+      if (node.type === 'Folder') {
+        updateFolderStatus(node.children);
+        node.status = calculateFolderStatus(node);
+      }
+    }
+  };
+
+  updateFolderStatus(roots);
   return roots;
 }
 
