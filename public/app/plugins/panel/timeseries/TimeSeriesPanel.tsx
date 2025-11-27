@@ -13,14 +13,13 @@ import {
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {
-  AdHocFilterItem,
   EventBusPlugin,
   KeyboardPlugin,
   TooltipPlugin2,
   XAxisInteractionAreaPlugin,
   usePanelContext,
 } from '@grafana/ui';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { FILTER_OUT_OPERATOR, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
 
@@ -32,7 +31,7 @@ import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getTimezones, prepareGraphableFields } from './utils';
+import { getGroupedFilters, getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -178,25 +177,10 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
-                  const groupingFilters: AdHocFilterItem[] = [];
-
-                  if (seriesIdx) {
-                    const xField = alignedFrame.fields[seriesIdx];
-
-                    if (xField.labels && getFiltersBasedOnGrouping && onBulkAddAdHocFilters) {
-                      const seriesFilters: AdHocFilterItem[] = [];
-
-                      Object.entries(xField.labels).forEach(([key, value]) => {
-                        seriesFilters.push({
-                          key,
-                          operator: FILTER_FOR_OPERATOR,
-                          value,
-                        });
-                      });
-
-                      groupingFilters.push(...getFiltersBasedOnGrouping(seriesFilters));
-                    }
-                  }
+                  const groupingFilters =
+                    seriesIdx && getFiltersBasedOnGrouping
+                      ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
+                      : [];
 
                   return (
                     // not sure it header time here works for annotations, since it's taken from nearest datapoint index
