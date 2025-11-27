@@ -119,7 +119,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   // Create all nodes (files, dashboards, folders)
   for (const item of mergedItems) {
     const type = getItemType(item.path, item.resource);
-    const showStatus = type === 'Dashboard' || type === 'Folder';
+    const showStatus = type === 'Dashboard' || type === 'Folder' || item.path.endsWith('.json');
 
     nodeMap.set(item.path, {
       path: item.path,

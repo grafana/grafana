@@ -381,13 +381,13 @@ describe('buildTree', () => {
     expect(result[0].status).toBeUndefined();
   });
 
-  it('should show unsynced JSON files as File type with no status', () => {
+  it('should show unsynced JSON files as File type with pending status', () => {
     const mergedItems = [{ path: 'dashboard.json', file: { path: 'dashboard.json', size: '100', hash: 'h1' } }];
 
     const result = buildTree(mergedItems);
 
     expect(result[0].type).toBe('File');
-    expect(result[0].status).toBeUndefined();
+    expect(result[0].status).toBe('pending');
   });
 
   it('should set pending status when only resource exists', () => {
