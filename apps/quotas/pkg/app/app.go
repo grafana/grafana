@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -36,13 +35,14 @@ func NewQuotasHandler(cfg *QuotasAppConfig) *QuotasHandler {
 
 // GetQuota handles requests for the GET /something resource route
 func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-	// expects a query param "groupResource" with value like "dashboards.grafana.app/dashboard"
-	groupResource := "/"
-	if request.URL.Query().Has("groupResource") {
-		groupResource = request.URL.Query().Get("groupResource")
+	if !request.URL.Query().Has("group") {
+		return fmt.Errorf("missing required query parameters: group")
 	}
-	group := strings.Split(groupResource, "/")[0]
-	res := strings.Split(groupResource, "/")[1]
+	if !request.URL.Query().Has("resource") {
+		return fmt.Errorf("missing required query parameters: resource")
+	}
+	group := request.URL.Query().Get("group")
+	res := request.URL.Query().Get("resource")
 
 	quotaReq := &resourcepb.QuotaUsageRequest{
 		Key: &resourcepb.ResourceKey{
@@ -62,8 +62,8 @@ func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResp
 		},
 		GetQuotaUsageBody: quotasv0alpha1.GetQuotaUsageBody{
 			Namespace: request.ResourceIdentifier.Namespace,
-			Resource:  resName,
-			Group:     resGroup,
+			Resource:  res,
+			Group:     group,
 			Usage:     quota.Usage,
 			Limit:     quota.Limit,
 		},
