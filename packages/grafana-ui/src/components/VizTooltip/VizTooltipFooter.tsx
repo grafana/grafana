@@ -135,7 +135,9 @@ export const VizTooltipFooter = ({
               size="sm"
               onClick={filterByGroupedLabels.onFilterOutGroupedLabels}
             >
-              <Trans i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter">Apply as inverse filter</Trans>
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-inverse-filter">
+                Apply as inverse filter
+              </Trans>
             </Button>
           </Stack>
         </div>
