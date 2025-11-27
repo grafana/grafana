@@ -1792,6 +1792,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAlertingHistorian",
+        "resourceVersion": "1764257713773",
+        "creationTimestamp": "2025-11-27T15:35:13Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes alerting historian APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAlertingRules",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2025-07-31T22:56:50Z",
