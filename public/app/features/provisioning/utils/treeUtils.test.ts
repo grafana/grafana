@@ -38,10 +38,15 @@ describe('mergeFilesAndResources', () => {
 
     const result = mergeFilesAndResources(files, resources);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].path).toBe('dashboards/my-dashboard.json');
-    expect(result[0].file).toEqual(mockFileDetails);
-    expect(result[0].resource).toEqual(mockResource);
+    // 2 items: the file + inferred folder 'dashboards'
+    expect(result).toHaveLength(2);
+    const file = result.find((r) => r.path === 'dashboards/my-dashboard.json');
+    expect(file?.file).toEqual(mockFileDetails);
+    expect(file?.resource).toEqual(mockResource);
+
+    const folder = result.find((r) => r.path === 'dashboards');
+    expect(folder?.file).toEqual({ path: 'dashboards', hash: '' });
+    expect(folder?.resource).toBeUndefined();
   });
 
   it('should handle files without matching resources', () => {
@@ -86,8 +91,10 @@ describe('mergeFilesAndResources', () => {
 
     const result = mergeFilesAndResources(files, resources);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].path).toBe('dashboards/my-dashboard.json');
+    // 2 items: the file + inferred folder 'dashboards'
+    expect(result).toHaveLength(2);
+    expect(result.find((r) => r.path === 'dashboards/my-dashboard.json')).toBeDefined();
+    expect(result.find((r) => r.path === 'dashboards')).toBeDefined();
   });
 
   it('should skip resources with empty path (root)', () => {
@@ -201,11 +208,22 @@ describe('getStatus', () => {
   it('should return pending when neither hash exists', () => {
     expect(getStatus(undefined, undefined)).toBe('pending');
   });
+
+  it('should return synced for inferred folder (empty file hash) with resource', () => {
+    // Empty hash means folder was inferred from file paths
+    expect(getStatus('', 'abc123')).toBe('synced');
+  });
+
+  it('should return pending for inferred folder (empty file hash) without resource', () => {
+    expect(getStatus('', undefined)).toBe('pending');
+  });
 });
 
 describe('buildTree', () => {
-  it('should create folder nodes for intermediate paths', () => {
+  it('should build tree with folder hierarchy', () => {
     const mergedItems = [
+      { path: 'folder', file: { path: 'folder', hash: '' } },
+      { path: 'folder/subfolder', file: { path: 'folder/subfolder', hash: '' } },
       { path: 'folder/subfolder/file.json', file: { path: 'folder/subfolder/file.json', size: '100', hash: 'h1' } },
     ];
 
@@ -220,7 +238,10 @@ describe('buildTree', () => {
   });
 
   it('should place files under correct parent folders', () => {
-    const mergedItems = [{ path: 'folder/file.txt', file: { path: 'folder/file.txt', size: '100', hash: 'h1' } }];
+    const mergedItems = [
+      { path: 'folder', file: { path: 'folder', hash: '' } },
+      { path: 'folder/file.txt', file: { path: 'folder/file.txt', size: '100', hash: 'h1' } },
+    ];
 
     const result = buildTree(mergedItems);
 
@@ -234,6 +255,7 @@ describe('buildTree', () => {
   it('should sort folders before files', () => {
     const mergedItems = [
       { path: 'file.txt', file: { path: 'file.txt', size: '100', hash: 'h1' } },
+      { path: 'folder', file: { path: 'folder', hash: '' } },
       { path: 'folder/nested.txt', file: { path: 'folder/nested.txt', size: '100', hash: 'h2' } },
     ];
 
@@ -272,7 +294,14 @@ describe('buildTree', () => {
   });
 
   it('should handle deeply nested paths', () => {
-    const mergedItems = [{ path: 'a/b/c/d/e/file.txt', file: { path: 'a/b/c/d/e/file.txt', size: '100', hash: 'h1' } }];
+    const mergedItems = [
+      { path: 'a', file: { path: 'a', hash: '' } },
+      { path: 'a/b', file: { path: 'a/b', hash: '' } },
+      { path: 'a/b/c', file: { path: 'a/b/c', hash: '' } },
+      { path: 'a/b/c/d', file: { path: 'a/b/c/d', hash: '' } },
+      { path: 'a/b/c/d/e', file: { path: 'a/b/c/d/e', hash: '' } },
+      { path: 'a/b/c/d/e/file.txt', file: { path: 'a/b/c/d/e/file.txt', size: '100', hash: 'h1' } },
+    ];
 
     const result = buildTree(mergedItems);
 
@@ -372,7 +401,7 @@ describe('buildTree', () => {
   it('should set folder status to synced when all children are synced', () => {
     const syncedResource = { ...mockResource, hash: 'matching-hash' };
     const mergedItems = [
-      { path: 'folder', resource: mockFolderResource },
+      { path: 'folder', file: { path: 'folder', hash: '' }, resource: mockFolderResource },
       {
         path: 'folder/dashboard1.json',
         file: { path: 'folder/dashboard1.json', size: '100', hash: 'matching-hash' },
@@ -418,6 +447,8 @@ describe('buildTree', () => {
   it('should propagate pending status from nested folders', () => {
     const syncedResource = { ...mockResource, hash: 'matching-hash' };
     const mergedItems = [
+      { path: 'parent', file: { path: 'parent', hash: '' } },
+      { path: 'parent/child', file: { path: 'parent/child', hash: '' } },
       {
         path: 'parent/child/dashboard.json',
         file: { path: 'parent/child/dashboard.json', size: '100', hash: 'different-hash' },
@@ -471,7 +502,8 @@ describe('buildTree', () => {
     expect(result[0].status).toBe('pending');
   });
 
-  it('should set synced status for synced folders with only non-dashboard children', () => {
+  it('should set pending status for folder in resources but not in files', () => {
+    // Folder only exists in resources (e.g., deleted from repo but not synced yet)
     const mergedItems = [
       { path: 'folder', resource: mockFolderResource },
       { path: 'folder/file.txt', file: { path: 'folder/file.txt', size: '100', hash: 'h1' } },
@@ -481,13 +513,14 @@ describe('buildTree', () => {
 
     expect(result[0].type).toBe('Folder');
     expect(result[0].resourceName).toBe('folder-uid');
-    expect(result[0].status).toBe('synced');
+    expect(result[0].status).toBe('pending');
   });
 
-  it('should show synced status for folder in resources but not in files', () => {
+  it('should set synced status for folder inferred from files with matching resource', () => {
+    // Folder inferred from file paths AND exists in resources → synced
     const syncedResource = { ...mockResource, hash: 'matching-hash' };
     const mergedItems = [
-      { path: 'folder', resource: mockFolderResource },
+      { path: 'folder', file: { path: 'folder', hash: '' }, resource: mockFolderResource },
       {
         path: 'folder/dashboard.json',
         file: { path: 'folder/dashboard.json', size: '100', hash: 'matching-hash' },

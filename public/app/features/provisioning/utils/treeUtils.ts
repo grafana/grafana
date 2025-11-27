@@ -18,12 +18,30 @@ function isFileDetails(obj: unknown): obj is FileDetails {
 export function mergeFilesAndResources(files: unknown[], resources: ResourceListItem[]): MergedItem[] {
   const merged = new Map<string, MergedItem>();
 
+  // Add files
   for (const file of files) {
     if (isFileDetails(file)) {
       merged.set(file.path, { path: file.path, file });
     }
   }
 
+  // Infer folders from file paths and add as synthetic file entries
+  const inferredFolders = new Set<string>();
+  for (const file of files) {
+    if (isFileDetails(file)) {
+      const parts = file.path.split('/');
+      for (let i = 1; i < parts.length; i++) {
+        inferredFolders.add(parts.slice(0, i).join('/'));
+      }
+    }
+  }
+  for (const folderPath of inferredFolders) {
+    if (!merged.has(folderPath)) {
+      merged.set(folderPath, { path: folderPath, file: { path: folderPath, hash: '' } });
+    }
+  }
+
+  // Merge resources
   for (const resource of resources) {
     if (!resource.path) {
       continue;
@@ -44,6 +62,10 @@ export function getItemType(path: string, resource?: ResourceListItem): ItemType
     return 'Dashboard';
   }
   if (resource?.resource === 'folders') {
+    return 'Folder';
+  }
+  // Inferred folder (no extension means it's a folder from file paths)
+  if (!resource && !path.includes('.')) {
     return 'Folder';
   }
   if (!resource && path.endsWith('.json')) {
@@ -72,10 +94,13 @@ export function getIconName(type: ItemType): IconName {
 }
 
 export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {
-  const hasFile = !!fileHash;
-  const hasResource = !!resourceHash;
+  const hasFile = fileHash !== undefined;
+  const hasResource = resourceHash !== undefined;
 
   if (hasFile && hasResource) {
+    if (fileHash === '') {
+      return 'synced';
+    }
     return fileHash === resourceHash ? 'synced' : 'pending';
   }
   return 'pending';
@@ -86,64 +111,30 @@ function calculateFolderStatus(node: TreeItem): SyncStatus | undefined {
     return node.status;
   }
 
-  // Unsynced folders are always pending
-  if (!node.resourceName) {
-    return 'pending';
-  }
+  // Start with folder's own status (from file/resource merge)
+  let status = node.status;
 
-  const childStatuses: Array<SyncStatus | undefined> = [];
+  // If any child is pending, folder is pending
   for (const child of node.children) {
-    if (child.type === 'Folder') {
-      childStatuses.push(calculateFolderStatus(child));
-    } else if (child.status) {
-      childStatuses.push(child.status);
+    const childStatus = child.type === 'Folder' ? calculateFolderStatus(child) : child.status;
+    if (childStatus === 'pending') {
+      status = 'pending';
+      break;
     }
   }
 
-  if (childStatuses.some((s) => s === 'pending')) {
-    return 'pending';
-  }
-
-  // Synced folder with no pending children is synced
-  return 'synced';
+  return status;
 }
 
 export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   const nodeMap = new Map<string, TreeItem>();
   const roots: TreeItem[] = [];
 
-  // Collect all folder paths that need to be created
-  const folderPaths = new Set<string>();
+  // Create all nodes (files, dashboards, folders)
   for (const item of mergedItems) {
-    const parts = item.path.split('/');
-    for (let i = 1; i < parts.length; i++) {
-      folderPaths.add(parts.slice(0, i).join('/'));
-    }
-  }
-
-  // Create folder nodes
-  for (const folderPath of folderPaths) {
-    const existingItem = mergedItems.find((m) => m.path === folderPath);
-
-    nodeMap.set(folderPath, {
-      path: folderPath,
-      title: getDisplayTitle(folderPath, existingItem?.resource),
-      type: 'Folder',
-      level: 0,
-      children: [],
-      resourceName: existingItem?.resource?.name,
-      hash: existingItem?.file?.hash ?? existingItem?.resource?.hash,
-      status: undefined,
-    });
-  }
-
-  // Create file/dashboard nodes
-  for (const item of mergedItems) {
-    if (folderPaths.has(item.path)) {
-      continue;
-    }
-
     const type = getItemType(item.path, item.resource);
+    const showStatus = type === 'Dashboard' || type === 'Folder';
+
     nodeMap.set(item.path, {
       path: item.path,
       title: getDisplayTitle(item.path, item.resource),
@@ -152,7 +143,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       children: [],
       resourceName: item.resource?.name,
       hash: item.file?.hash ?? item.resource?.hash,
-      status: type === 'Dashboard' ? getStatus(item.file?.hash, item.resource?.hash) : undefined,
+      status: showStatus ? getStatus(item.file?.hash, item.resource?.hash) : undefined,
     });
   }
 
