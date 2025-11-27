@@ -2,8 +2,8 @@ import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Icon, Stack, TextLink } from '@grafana/ui';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
+import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { isValidRepoType } from 'app/features/provisioning/utils/guards';
 
 import { commonAlertProps } from '../Dashboards/DashboardPreviewBanner';
 import { getBranchUrl } from '../utils/url';

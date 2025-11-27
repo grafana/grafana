@@ -12,9 +12,9 @@ import {
 import { dispatch } from 'app/store/store';
 
 import { RepoTypeDisplay } from '../Wizard/types';
+import { isValidRepoType } from '../guards';
 
 import { getHasTokenInstructions, getRepoFileUrl } from './git';
-import { isValidRepoType } from './guards';
 
 /**
  * Build a source link for a repo-managed dashboard.

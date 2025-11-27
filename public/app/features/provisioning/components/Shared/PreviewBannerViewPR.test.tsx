@@ -5,7 +5,7 @@ import { textUtil } from '@grafana/data';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
-import { isValidRepoType } from '../../utils/guards';
+import { isValidRepoType } from '../../guards';
 
 import { PreviewBannerViewPR } from './PreviewBannerViewPR';
 
