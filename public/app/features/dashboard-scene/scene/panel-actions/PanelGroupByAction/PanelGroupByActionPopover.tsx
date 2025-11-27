@@ -71,7 +71,7 @@ export function PanelGroupByActionPopover({
             <div className={styles.searchContainer}>
               <Input
                 prefix={<Icon name="search" />}
-                placeholder={t('panel-group-by.search-placeholder', 'Search...')}
+                placeholder={t('panel-group-by.search-placeholder', 'Search')}
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.currentTarget.value)}
               />
@@ -81,7 +81,7 @@ export function PanelGroupByActionPopover({
           <div className={styles.listContainer}>
             {isLoading ? (
               <div className={styles.emptyMessage}>
-                <Trans i18nKey="panel-group-by.loading">Loading options...</Trans>
+                <Trans i18nKey="panel-group-by.loading">Loading options</Trans>
               </div>
             ) : options.length === 0 ? (
               <div className={styles.emptyMessage}>

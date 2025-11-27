@@ -11059,9 +11059,9 @@
   },
   "panel-group-by": {
     "button": "Group by",
-    "loading": "Loading options...",
+    "loading": "Loading options",
     "no-options": "No options found",
-    "search-placeholder": "Search..."
+    "search-placeholder": "Search"
   },
   "panel-type-filter": {
     "clear-button": "Clear types",
