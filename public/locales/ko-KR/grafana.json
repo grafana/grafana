@@ -474,6 +474,7 @@
       "noOptionsMessage-no-datasources-found": "데이터 소스를 찾을 수 없습니다"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "링크 복사",
       "duplicate": "복제",
       "export": "내보내기",
@@ -2612,7 +2613,9 @@
         "placeholder-search-input": "이름으로 검색하거나 필터 쿼리를 입력하세요..."
       },
       "grafana-folder": "Grafana 폴더",
-      "group-autocomplete-unavailable": "",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "상태",
       "label": {
         "hide": "숨기기",
@@ -2623,6 +2626,7 @@
       "placeholder-all-data-sources": "모든 데이터 소스",
       "placeholder-contact-point": "연락처 선택",
       "placeholder-data-sources": "데이터 소스 선택",
+      "placeholder-group-search": "",
       "placeholder-labels": "레이블 선택",
       "plugin-rules": "플러그인 규칙",
       "rule-source": {
@@ -3461,6 +3465,14 @@
         "label-negative-y": "Y 음수 값"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "오른쪽에서 공간이 필요합니다.",
       "gaps-options": {
@@ -3505,6 +3517,10 @@
     },
     "name-show-unfilled-area": "미채움 영역 표시",
     "name-value-display": "값 표시",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "숨김",
       "label-text-color": "텍스트 색상",
@@ -4149,6 +4165,7 @@
     "clear": "초기화",
     "collapse": "접기",
     "disabled": "",
+    "discard": "",
     "edit": "편집",
     "help": "도움말",
     "loading": "로딩 중...",
@@ -4766,7 +4783,6 @@
         "variable": "{{type}} 변수",
         "variable-set": "변수"
       },
-      "open": "옵션 창 열기",
       "row": {
         "header": {
           "hide": "숨기기",
@@ -5116,6 +5132,7 @@
       "title-matched_other": "{{totalCount}}개 옵션 중 {{count}}개 일치함"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "반복",
       "tree-item": {
         "empty": "(비어 있음)",
@@ -5327,6 +5344,32 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "구성 로딩 중"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "대시보드 로딩 및 초기화",
       "title-not-found": "ID가 {{panelId}}인 패널을 찾을 수 없음"
@@ -5430,11 +5473,8 @@
           "tooltip": "이 대시보드는 읽기 전용으로 표시되었습니다."
         },
         "export": {
-          "arrow": "내보내기",
-          "title": "내보내기",
           "tooltip": {
-            "as-code": "코드로 내보내기",
-            "json": "JSON으로 내보내기"
+            "as-code": "코드로 내보내기"
           }
         },
         "more-save-options": "저장 옵션 더 보기",
@@ -5486,6 +5526,9 @@
       "save-library-panel": "라이브러리 패널 저장",
       "settings": "대시보드 설정",
       "share-button": "공유",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5813,9 +5856,6 @@
       "custom-options": "사용자 지정 옵션",
       "name-values-separated-comma": "쉼표로 구분된 값",
       "selection-options": "선택 옵션"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "개요"
     },
     "dashboard-link-form": {
       "back-to-list": "목록으로 돌아가기",
@@ -6159,8 +6199,8 @@
       "placeholder-search-for": "검색…",
       "radio-options": {
         "label": {
-          "suggestions": "제안",
-          "visualizations": "시각화"
+          "all-visualizations": "",
+          "suggestions": "제안"
         }
       },
       "title-close": "닫기"
@@ -7795,6 +7835,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8091,14 +8132,6 @@
         }
       }
     }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "뒤로 가기"
-      }
-    },
-    "select-group": "그룹 선택"
   },
   "grafana-data": {
     "datetime": {
@@ -11003,8 +11036,8 @@
       "tooltip-delete": "삭제"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "현재 데이터 기반",
-      "no-results-matched-your-query": "쿼리와 일치하는 결과가 없습니다"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"
@@ -11036,6 +11069,10 @@
     "pie-chart-type-options": {
       "label-donut": "도넛",
       "label-pie": "원형"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -12975,6 +13012,12 @@
       "label-same-as-value": "값과 동일",
       "label-standard": "표준"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "자동",
       "label-center": "중앙"
@@ -13311,7 +13354,8 @@
       "forwards-time-aria-label": "시간 범위를 이후로 변경",
       "to": "종료",
       "zoom-out-button": "시간 범위 확대",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "시간 범위 적용",
@@ -13412,6 +13456,16 @@
         "label-never": "기록 없음",
         "label-threshold": "임계값"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "시간대 추가",

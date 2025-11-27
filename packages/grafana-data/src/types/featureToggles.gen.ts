@@ -1091,7 +1091,7 @@ export interface FeatureToggles {
   graphiteBackendMode?: boolean;
   /**
   * Enables the updated Azure Monitor resource picker
-  * @default false
+  * @default true
   */
   azureResourcePickerUpdates?: boolean;
   /**
@@ -1150,7 +1150,7 @@ export interface FeatureToggles {
   pluginStoreServiceLoading?: boolean;
   /**
   * Increases panel padding globally
-  * @default false
+  * @default true
   */
   newPanelPadding?: boolean;
   /**
