@@ -4251,7 +4251,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@inquirer/type@npm:^3.0.10":
+"@inquirer/type@npm:^3.0.10, @inquirer/type@npm:^3.0.9":
   version: 3.0.10
   resolution: "@inquirer/type@npm:3.0.10"
   peerDependencies:
@@ -4260,18 +4260,6 @@ __metadata:
     "@types/node":
       optional: true
   checksum: 10/57d113a9db7abc73326491e29bedc88ef362e53779f9f58a1b61225e0be068ce0c54e33cd65f4a13ca46131676fb72c3ef488463c4c9af0aa89680684c55d74c
-  languageName: node
-  linkType: hard
-
-"@inquirer/type@npm:^3.0.9":
-  version: 3.0.9
-  resolution: "@inquirer/type@npm:3.0.9"
-  peerDependencies:
-    "@types/node": ">=18"
-  peerDependenciesMeta:
-    "@types/node":
-      optional: true
-  checksum: 10/960ba4737405f70bac17e7cdc4696c60064b06c8dd13a4b3d0783763ba1714bdadbd598b88d537ab9415b7d5d61e011ac042cfbd1438b2a35298e2868724b853
   languageName: node
   linkType: hard
 
@@ -5038,14 +5026,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jridgewell/sourcemap-codec@npm:^1.4.10, @jridgewell/sourcemap-codec@npm:^1.4.14, @jridgewell/sourcemap-codec@npm:^1.4.15, @jridgewell/sourcemap-codec@npm:^1.5.0":
-  version: 1.5.0
-  resolution: "@jridgewell/sourcemap-codec@npm:1.5.0"
-  checksum: 10/4ed6123217569a1484419ac53f6ea0d9f3b57e5b57ab30d7c267bdb27792a27eb0e4b08e84a2680aa55cc2f2b411ffd6ec3db01c44fdc6dc43aca4b55f8374fd
-  languageName: node
-  linkType: hard
-
-"@jridgewell/sourcemap-codec@npm:^1.5.5":
+"@jridgewell/sourcemap-codec@npm:^1.4.10, @jridgewell/sourcemap-codec@npm:^1.4.14, @jridgewell/sourcemap-codec@npm:^1.4.15, @jridgewell/sourcemap-codec@npm:^1.5.0, @jridgewell/sourcemap-codec@npm:^1.5.5":
   version: 1.5.5
   resolution: "@jridgewell/sourcemap-codec@npm:1.5.5"
   checksum: 10/5d9d207b462c11e322d71911e55e21a4e2772f71ffe8d6f1221b8eb5ae6774458c1d242f897fb0814e8714ca9a6b498abfa74dfe4f434493342902b1a48b33a5
@@ -8146,17 +8127,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/icons@npm:^1.2.12":
-  version: 1.2.12
-  resolution: "@storybook/icons@npm:1.2.12"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 10/5df56f0856764ed7e4bb24ef7a08a8a9c93f8eedcb16dac062f1dfd3bd1fe6cb4a0aa5a0794083d95e31c04960d126a4d2028cfb4c53681bf05513bb38eae9d2
-  languageName: node
-  linkType: hard
-
-"@storybook/icons@npm:^1.6.0":
+"@storybook/icons@npm:^1.2.12, @storybook/icons@npm:^1.6.0":
   version: 1.6.0
   resolution: "@storybook/icons@npm:1.6.0"
   peerDependencies:
@@ -9281,7 +9252,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/core@npm:1.15.2, @swc/core@npm:^1.13.5":
+"@swc/core@npm:1.15.2":
   version: 1.15.2
   resolution: "@swc/core@npm:1.15.2"
   dependencies:
@@ -9327,7 +9298,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/core@npm:^1.10.8, @swc/core@npm:^1.5.22":
+"@swc/core@npm:^1.10.8, @swc/core@npm:^1.13.5, @swc/core@npm:^1.5.22":
   version: 1.15.3
   resolution: "@swc/core@npm:1.15.3"
   dependencies:
@@ -13540,20 +13511,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chai@npm:^5.1.1":
-  version: 5.2.0
-  resolution: "chai@npm:5.2.0"
-  dependencies:
-    assertion-error: "npm:^2.0.1"
-    check-error: "npm:^2.1.1"
-    deep-eql: "npm:^5.0.1"
-    loupe: "npm:^3.1.0"
-    pathval: "npm:^2.0.0"
-  checksum: 10/2ce03671c159c6a567bf1912756daabdbb7c075f3c0078f1b59d61da8d276936367ee696dfe093b49e1479d9ba93a6074c8e55d49791dddd8061728cdcad249e
-  languageName: node
-  linkType: hard
-
-"chai@npm:^5.2.0":
+"chai@npm:^5.1.1, chai@npm:^5.2.0":
   version: 5.3.3
   resolution: "chai@npm:5.3.3"
   dependencies:
@@ -18451,18 +18409,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fs-extra@npm:^11.1.1, fs-extra@npm:^11.2.0":
-  version: 11.3.0
-  resolution: "fs-extra@npm:11.3.0"
-  dependencies:
-    graceful-fs: "npm:^4.2.0"
-    jsonfile: "npm:^6.0.1"
-    universalify: "npm:^2.0.0"
-  checksum: 10/c9fe7b23dded1efe7bbae528d685c3206477e20cc60e9aaceb3f024f9b9ff2ee1f62413c161cb88546cc564009ab516dec99e9781ba782d869bb37e4fe04a97f
-  languageName: node
-  linkType: hard
-
-"fs-extra@npm:^11.3.2":
+"fs-extra@npm:^11.1.1, fs-extra@npm:^11.2.0, fs-extra@npm:^11.3.2":
   version: 11.3.2
   resolution: "fs-extra@npm:11.3.2"
   dependencies:
@@ -23543,14 +23490,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loupe@npm:^3.1.0, loupe@npm:^3.1.1, loupe@npm:^3.1.2":
-  version: 3.1.3
-  resolution: "loupe@npm:3.1.3"
-  checksum: 10/9e98c34daf0eba48ccc603595e51f2ae002110982d84879cf78c51de2c632f0c571dfe82ce4210af60c32203d06b443465c269bda925076fe6d9b612cc65c321
-  languageName: node
-  linkType: hard
-
-"loupe@npm:^3.1.4":
+"loupe@npm:^3.1.0, loupe@npm:^3.1.1, loupe@npm:^3.1.2, loupe@npm:^3.1.4":
   version: 3.2.1
   resolution: "loupe@npm:3.2.1"
   checksum: 10/a4d78ec758aaa04e0e35d5cd1c15e970beb9cdbfd3d0f34f98b9bcda489f896a7190b3b6cc40b7a6dcb8e97e82e96eafaae10096aaa469804acdba6f7c2bde5f
@@ -23645,21 +23585,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"magic-string@npm:^0.30.17":
+"magic-string@npm:^0.30.17, magic-string@npm:^0.30.3, magic-string@npm:^0.30.5":
   version: 0.30.21
   resolution: "magic-string@npm:0.30.21"
   dependencies:
     "@jridgewell/sourcemap-codec": "npm:^1.5.5"
   checksum: 10/57d5691f41ed40d962d8bd300148114f53db67fadbff336207db10a99f2bdf4a1be9cac3a68ee85dba575912ee1d4402e4396408196ec2d3afd043b076156221
-  languageName: node
-  linkType: hard
-
-"magic-string@npm:^0.30.3, magic-string@npm:^0.30.5":
-  version: 0.30.17
-  resolution: "magic-string@npm:0.30.17"
-  dependencies:
-    "@jridgewell/sourcemap-codec": "npm:^1.5.0"
-  checksum: 10/2f71af2b0afd78c2e9012a29b066d2c8ba45a9cd0c8070f7fd72de982fb1c403b4e3afdb1dae00691d56885ede66b772ef6bedf765e02e3a7066208fe2fec4aa
   languageName: node
   linkType: hard
 
@@ -24889,9 +24820,9 @@ __metadata:
   linkType: hard
 
 "node-forge@npm:^1.3.1":
-  version: 1.3.1
-  resolution: "node-forge@npm:1.3.1"
-  checksum: 10/05bab6868633bf9ad4c3b1dd50ec501c22ffd69f556cdf169a00998ca1d03e8107a6032ba013852f202035372021b845603aeccd7dfcb58cdb7430013b3daa8d
+  version: 1.3.2
+  resolution: "node-forge@npm:1.3.2"
+  checksum: 10/dcc54aaffe0cf52367214a20c0032aa9b209d9095dd14526504f1972d1900a07e96046b3684cb0c8d0cc3d48744dd18e02b7b447ab28fac615ffb850beeabf18
   languageName: node
   linkType: hard
 
@@ -28322,25 +28253,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-docgen@npm:^7.0.0":
-  version: 7.0.3
-  resolution: "react-docgen@npm:7.0.3"
-  dependencies:
-    "@babel/core": "npm:^7.18.9"
-    "@babel/traverse": "npm:^7.18.9"
-    "@babel/types": "npm:^7.18.9"
-    "@types/babel__core": "npm:^7.18.0"
-    "@types/babel__traverse": "npm:^7.18.0"
-    "@types/doctrine": "npm:^0.0.9"
-    "@types/resolve": "npm:^1.20.2"
-    doctrine: "npm:^3.0.0"
-    resolve: "npm:^1.22.1"
-    strip-indent: "npm:^4.0.0"
-  checksum: 10/53eaed76cceb55606584c6ab603f04ec78c066cfb9ed983e1f7b388a75bfb8c2fc9c6b7ab299bac311b3daeca95adb8076b58ca96b41907b33c518299268831f
-  languageName: node
-  linkType: hard
-
-"react-docgen@npm:^7.1.1":
+"react-docgen@npm:^7.0.0, react-docgen@npm:^7.1.1":
   version: 7.1.1
   resolution: "react-docgen@npm:7.1.1"
   dependencies:
