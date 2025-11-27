@@ -47,6 +47,14 @@ export const QuickAdd = ({}: Props) => {
   if (!showQuickAdd) {
     return null;
   }
+  const handleVisibleChange = () => {
+    if (!isOpen) {
+      reportInteraction('grafana_create_new_button_menu_opened', {
+        from: 'quickadd',
+      });
+    }
+    setIsOpen(!isOpen);
+  };
 
   const MenuActions = () => {
     return (
@@ -68,7 +76,7 @@ export const QuickAdd = ({}: Props) => {
 
   return showQuickAdd ? (
     <>
-      <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
+      <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={handleVisibleChange}>
         <ToolbarButton
           iconOnly
           icon={'plus'}

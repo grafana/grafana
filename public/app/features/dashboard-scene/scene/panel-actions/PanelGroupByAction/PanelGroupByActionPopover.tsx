@@ -41,9 +41,7 @@ export function PanelGroupByActionPopover({
   );
 
   const isChecked = (option: VariableValueOption) => {
-    const { value } = option;
-
-    return values.find((s) => s === value) !== undefined;
+    return values.includes(option.value);
   };
 
   const handleApply = useCallback(() => {
@@ -51,15 +49,7 @@ export function PanelGroupByActionPopover({
       return;
     }
 
-    const selectedValues: VariableValueSingle[] = [];
-    const selectedLabels: string[] = [];
-
-    for (const value of values) {
-      selectedValues.push(value);
-      selectedLabels.push(String(value));
-    }
-
-    groupByVariable.changeValueTo(selectedValues, selectedLabels, true);
+    groupByVariable.changeValueTo(values, values.map(String), true);
     onCancel();
   }, [groupByVariable, onCancel, values]);
 
@@ -81,7 +71,7 @@ export function PanelGroupByActionPopover({
             <div className={styles.searchContainer}>
               <Input
                 prefix={<Icon name="search" />}
-                placeholder={t('panel-group-by.search-placeholder', 'Search...')}
+                placeholder={t('panel-group-by.search-placeholder', 'Search')}
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.currentTarget.value)}
               />
@@ -91,7 +81,7 @@ export function PanelGroupByActionPopover({
           <div className={styles.listContainer}>
             {isLoading ? (
               <div className={styles.emptyMessage}>
-                <Trans i18nKey="panel-group-by.loading">Loading options...</Trans>
+                <Trans i18nKey="panel-group-by.loading">Loading options</Trans>
               </div>
             ) : options.length === 0 ? (
               <div className={styles.emptyMessage}>
@@ -160,18 +150,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       outlineOffset: '-2px',
     },
   }),
-  optionLabel: css({
-    flex: 1,
-  }),
   emptyMessage: css({
     padding: theme.spacing(2),
     textAlign: 'center',
     color: theme.colors.text.secondary,
-  }),
-  applyContainer: css({
-    display: 'flex',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1),
-    borderTop: `1px solid ${theme.colors.border.weak}`,
   }),
 });

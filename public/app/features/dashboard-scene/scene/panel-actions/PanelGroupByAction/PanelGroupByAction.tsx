@@ -35,24 +35,17 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
     try {
       if (groupByOptions.length === 0) {
         await lastValueFrom(groupByVariable.validateAndUpdate());
+        const options = await getApplicableGroupByOptions(groupByVariable, groupByVariable.state.options, queries);
+
+        setSelectedValues(getGroupByValue(groupByVariable));
+        setOptions(options);
         return;
       }
 
-      const values = groupByOptions.map((option) => option.value);
-      const applicability = await groupByVariable.getGroupByApplicabilityForQueries(values, queries);
+      const options = await getApplicableGroupByOptions(groupByVariable, groupByOptions, queries);
 
-      const applicableOptions = applicability
-        ? applicability.filter((item) => item.applicable).map((item) => ({ label: item.key, value: item.key }))
-        : groupByOptions;
-
-      const currentValues = Array.isArray(groupByVariable.state.value)
-        ? groupByVariable.state.value
-        : groupByVariable.state.value
-          ? [groupByVariable.state.value]
-          : [];
-
-      setSelectedValues(currentValues);
-      setOptions(applicableOptions);
+      setSelectedValues(getGroupByValue(groupByVariable));
+      setOptions(options);
     } catch (error) {
       setSelectedValues([]);
       setOptions([]);
@@ -89,14 +82,7 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
 
   const openPopover = () => {
     // Reset checked state to match current variable value when opening
-    const currentValues = Array.isArray(groupByVariable.state.value)
-      ? groupByVariable.state.value
-      : groupByVariable.state.value
-        ? [groupByVariable.state.value]
-        : [];
-
-    setSelectedValues(currentValues);
-
+    setSelectedValues(getGroupByValue(groupByVariable));
     setPopoverVisible(true);
   };
 
@@ -140,4 +126,25 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
       )}
     </Button>
   );
+}
+
+function getGroupByValue(groupByVariable: GroupByVariable) {
+  return Array.isArray(groupByVariable.state.value)
+    ? groupByVariable.state.value
+    : groupByVariable.state.value
+      ? [groupByVariable.state.value]
+      : [];
+}
+
+async function getApplicableGroupByOptions(
+  groupByVariable: GroupByVariable,
+  options: VariableValueOption[],
+  queries: SceneDataQuery[]
+) {
+  const values = options.map((option) => option.value);
+  const applicability = await groupByVariable.getGroupByApplicabilityForQueries(values, queries);
+
+  return applicability
+    ? applicability.filter((item) => item.applicable).map((item) => ({ label: item.key, value: item.key }))
+    : options;
 }
