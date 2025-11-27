@@ -41,6 +41,7 @@
             }
           ],
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -69,6 +70,7 @@
             }
           ],
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -97,6 +99,7 @@
             }
           ],
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -126,6 +129,7 @@
             }
           ],
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -154,6 +158,7 @@
             }
           ],
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -176,6 +181,7 @@
           },
           "id": 6,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

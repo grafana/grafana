@@ -45,6 +45,7 @@
           },
           "id": 1,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -67,6 +68,7 @@
           },
           "id": 2,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

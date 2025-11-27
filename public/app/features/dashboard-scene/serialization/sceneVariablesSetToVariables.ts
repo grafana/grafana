@@ -90,7 +90,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
         multi: variable.state.isMulti,
-        ...(variable.state.allowCustomValue && { allowCustomValue: variable.state.allowCustomValue }),
+        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
         skipUrlSync: variable.state.skipUrlSync,
         staticOptions: variable.state.staticOptions?.map((option) => ({
           text: option.label,
@@ -117,11 +117,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
+        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
       };
-      // Only include allowCustomValue if it's explicitly set to false (not the default true)
-      if (variable.state.allowCustomValue === false) {
-        customVariable.allowCustomValue = false;
-      }
       variables.push(customVariable);
     } else if (sceneUtils.isDataSourceVariable(variable)) {
       variables.push({
@@ -139,7 +136,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
-        // Include allowCustomValue if explicitly set (true or false)
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
       });
     } else if (sceneUtils.isConstantVariable(variable)) {
@@ -212,7 +208,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           value: variable.state.value,
         },
         defaultValue: defaultVariableOption,
-        // Include allowCustomValue if explicitly set (true or false)
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
       });
     } else if (sceneUtils.isAdHocVariable(variable)) {
@@ -223,11 +218,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         baseFilters: variable.state.baseFilters || [],
         filters: [...validateFiltersOrigin(variable.state.originFilters), ...variable.state.filters],
         defaultKeys: variable.state.defaultKeys,
+        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
       };
-      // Only include allowCustomValue if it's explicitly set to false (not the default true)
-      if (variable.state.allowCustomValue === false) {
-        adhocVariable.allowCustomValue = false;
-      }
       variables.push(adhocVariable);
     } else if (sceneUtils.isSwitchVariable(variable)) {
       variables.push({

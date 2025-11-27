@@ -687,6 +687,7 @@
       "templating": {
         "list": [
           {
+            "allowCustomValue": false,
             "current": {
               "text": "",
               "value": ""
@@ -710,6 +711,7 @@
             "type": "query"
           },
           {
+            "allowCustomValue": false,
             "current": {
               "text": "",
               "value": ""
@@ -730,6 +732,7 @@
             "type": "query"
           },
           {
+            "allowCustomValue": false,
             "current": {
               "text": "",
               "value": ""
@@ -747,6 +750,7 @@
             "type": "query"
           },
           {
+            "allowCustomValue": false,
             "current": {
               "text": "",
               "value": ""

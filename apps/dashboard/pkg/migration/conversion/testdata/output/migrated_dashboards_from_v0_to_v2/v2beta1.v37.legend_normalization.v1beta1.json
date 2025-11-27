@@ -37,6 +37,7 @@
           "options": {
             "legend": true
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with Boolean Legend True",
           "type": "timeseries"
@@ -52,6 +53,7 @@
           "options": {
             "legend": false
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with Boolean Legend False",
           "type": "timeseries"
@@ -70,6 +72,7 @@
               "showLegend": false
             }
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with Hidden DisplayMode",
           "type": "timeseries"
@@ -88,6 +91,7 @@
               "showLegend": false
             }
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with ShowLegend False",
           "type": "stat"
@@ -107,6 +111,7 @@
               "showLegend": true
             }
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with Table Legend",
           "type": "barchart"
@@ -126,6 +131,7 @@
               "showLegend": true
             }
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with List Legend",
           "type": "histogram"
@@ -139,6 +145,7 @@
           },
           "id": 7,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with No Options",
           "type": "text"
@@ -156,6 +163,7 @@
               "fields": "/.*temperature.*/"
             }
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with No Legend Config",
           "type": "gauge"
@@ -169,6 +177,7 @@
           },
           "id": 9,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with Null Legend",
           "type": "piechart"
@@ -196,6 +205,7 @@
           "options": {
             "legend": true
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Nested Panel with Boolean Legend",
           "type": "timeseries"
@@ -214,6 +224,7 @@
               "showLegend": false
             }
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Nested Panel with Hidden DisplayMode",
           "type": "timeseries"
@@ -232,6 +243,7 @@
               "showLegend": false
             }
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Nested Panel with Conflicting Properties",
           "type": "stat"

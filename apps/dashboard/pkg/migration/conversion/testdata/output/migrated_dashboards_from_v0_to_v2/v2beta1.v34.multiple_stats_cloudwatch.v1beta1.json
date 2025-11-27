@@ -297,6 +297,7 @@
           },
           "id": 1,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -365,6 +366,7 @@
           },
           "id": 2,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -396,6 +398,7 @@
           },
           "id": 3,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -427,6 +430,7 @@
           },
           "id": 4,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -501,6 +505,7 @@
           },
           "id": 5,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -531,6 +536,7 @@
           },
           "id": 6,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -639,6 +645,7 @@
               },
               "id": 8,
               "options": {},
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -704,6 +711,7 @@
               },
               "id": 9,
               "options": {},
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -754,6 +762,7 @@
               },
               "id": 10,
               "options": {},
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -785,6 +794,7 @@
               },
               "id": 11,
               "options": {},
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -835,6 +845,7 @@
               },
               "id": 12,
               "options": {},
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -866,6 +877,7 @@
               },
               "id": 13,
               "options": {},
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -947,6 +959,7 @@
               },
               "id": 14,
               "options": {},
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -1029,6 +1042,7 @@
               },
               "id": 15,
               "options": {},
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -1056,6 +1070,7 @@
           },
           "id": 8,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -1121,6 +1136,7 @@
           },
           "id": 9,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -1171,6 +1187,7 @@
           },
           "id": 10,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -1202,6 +1219,7 @@
           },
           "id": 11,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -1252,6 +1270,7 @@
           },
           "id": 12,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -1283,6 +1302,7 @@
           },
           "id": 13,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -1364,6 +1384,7 @@
           },
           "id": 14,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -1446,6 +1467,7 @@
           },
           "id": 15,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

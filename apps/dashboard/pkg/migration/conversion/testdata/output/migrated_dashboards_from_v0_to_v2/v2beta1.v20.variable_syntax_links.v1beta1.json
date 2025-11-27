@@ -48,6 +48,7 @@
               }
             ]
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -88,6 +89,7 @@
               }
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -130,6 +132,7 @@
               }
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -172,6 +175,7 @@
               }
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -196,6 +200,7 @@
           "options": {
             "content": "This panel has no data links or field options to migrate."
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

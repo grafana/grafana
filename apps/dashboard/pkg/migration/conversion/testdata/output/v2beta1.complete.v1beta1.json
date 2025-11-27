@@ -154,6 +154,7 @@
       "templating": {
         "list": [
           {
+            "allowCustomValue": false,
             "current": {
               "text": "All",
               "value": [
@@ -208,6 +209,7 @@
             "type": "constant"
           },
           {
+            "allowCustomValue": false,
             "current": {
               "text": "gdev-prometheus",
               "value": "gdev-prometheus"

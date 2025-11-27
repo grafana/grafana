@@ -36,6 +36,7 @@
           },
           "id": 1,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -60,6 +61,7 @@
           },
           "id": 2,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -84,6 +86,7 @@
           },
           "id": 3,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -107,6 +110,7 @@
           },
           "id": 4,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -130,6 +134,7 @@
           },
           "id": 5,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -181,6 +186,7 @@
           },
           "id": 6,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -223,6 +229,7 @@
           },
           "id": 7,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "description": "Empty string target should also migrate to empty object {}",
@@ -243,6 +250,7 @@
           },
           "id": 8,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -286,6 +294,7 @@
               },
               "id": 10,
               "options": {},
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -314,6 +323,7 @@
           },
           "id": 10,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

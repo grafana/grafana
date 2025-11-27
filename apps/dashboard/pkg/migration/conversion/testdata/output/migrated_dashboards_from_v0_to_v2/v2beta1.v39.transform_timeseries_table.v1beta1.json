@@ -35,6 +35,7 @@
           },
           "id": 1,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with TimeSeriesTable Transformation - Single Stat",
           "transformations": [
@@ -58,6 +59,7 @@
           },
           "id": 2,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with TimeSeriesTable Transformation - Multiple Stats",
           "transformations": [
@@ -90,6 +92,7 @@
           },
           "id": 3,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with TimeSeriesTable Transformation - Mixed with Other Transforms",
           "transformations": [
@@ -130,6 +133,7 @@
           },
           "id": 4,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with Non-TimeSeriesTable Transformation (Should Remain Unchanged)",
           "transformations": [
@@ -154,6 +158,7 @@
           },
           "id": 5,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with TimeSeriesTable - Empty RefIdToStat",
           "transformations": [
@@ -173,6 +178,7 @@
           },
           "id": 6,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with TimeSeriesTable - No Options (Should Skip)",
           "transformations": [
@@ -192,6 +198,7 @@
           },
           "id": 7,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with TimeSeriesTable - Invalid Options (Should Skip)",
           "transformations": [
@@ -213,6 +220,7 @@
           },
           "id": 8,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with No Transformations (Should Remain Unchanged)",
           "type": "timeseries"
@@ -238,6 +246,7 @@
           },
           "id": 10,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Nested Panel with TimeSeriesTable",
           "transformations": [

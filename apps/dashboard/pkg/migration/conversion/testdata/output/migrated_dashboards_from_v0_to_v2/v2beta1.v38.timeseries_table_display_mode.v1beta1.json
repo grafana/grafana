@@ -45,6 +45,7 @@
           },
           "id": 1,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Table with Basic Gauge",
           "type": "table"
@@ -68,6 +69,7 @@
           },
           "id": 2,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Table with Gradient Gauge",
           "type": "table"
@@ -91,6 +93,7 @@
           },
           "id": 3,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Table with LCD Gauge",
           "type": "table"
@@ -114,6 +117,7 @@
           },
           "id": 4,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Table with Color Background",
           "type": "table"
@@ -137,6 +141,7 @@
           },
           "id": 5,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Table with Color Background Solid",
           "type": "table"
@@ -159,6 +164,7 @@
           },
           "id": 6,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Table with Unknown Mode",
           "type": "table"
@@ -179,6 +185,7 @@
           },
           "id": 7,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Table with No Display Mode",
           "type": "table"
@@ -234,6 +241,7 @@
           },
           "id": 8,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Table with Overrides",
           "type": "table"
@@ -247,6 +255,7 @@
           },
           "id": 9,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Non-table Panel (Should Remain Unchanged)",
           "type": "timeseries"
@@ -282,6 +291,7 @@
           },
           "id": 11,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Nested Table with Basic Mode",
           "type": "table"
@@ -322,6 +332,7 @@
           },
           "id": 12,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Nested Table with Gradient Gauge",
           "type": "table"

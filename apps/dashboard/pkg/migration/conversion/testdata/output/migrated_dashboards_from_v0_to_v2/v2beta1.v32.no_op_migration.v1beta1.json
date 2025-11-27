@@ -41,6 +41,7 @@
           },
           "id": 1,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -79,6 +80,7 @@
           },
           "id": 2,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -118,6 +120,7 @@
           },
           "id": 4,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Nested stat panel",
           "type": "stat"

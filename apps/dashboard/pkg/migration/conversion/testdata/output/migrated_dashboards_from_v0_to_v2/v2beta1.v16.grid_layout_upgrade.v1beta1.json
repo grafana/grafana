@@ -47,6 +47,7 @@
           },
           "id": 1,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -69,6 +70,7 @@
           },
           "id": 2,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -101,6 +103,7 @@
               },
               "id": 3,
               "options": {},
+              "pluginVersion": "",
               "targets": [],
               "title": "Process List",
               "type": "table"
@@ -114,6 +117,7 @@
               },
               "id": 4,
               "options": {},
+              "pluginVersion": "",
               "targets": [],
               "title": "Network I/O",
               "type": "timeseries"
@@ -127,6 +131,7 @@
               },
               "id": 5,
               "options": {},
+              "pluginVersion": "",
               "targets": [],
               "title": "Disk I/O",
               "type": "timeseries"
@@ -144,6 +149,7 @@
           },
           "id": 3,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Process List",
           "type": "table"
@@ -157,6 +163,7 @@
           },
           "id": 4,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Network I/O",
           "type": "timeseries"
@@ -170,6 +177,7 @@
           },
           "id": 5,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Disk I/O",
           "type": "timeseries"
@@ -195,6 +203,7 @@
           },
           "id": 6,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -217,6 +226,7 @@
           },
           "id": 7,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -239,6 +249,7 @@
           },
           "id": 8,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -273,6 +284,7 @@
           },
           "id": 9,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -295,6 +307,7 @@
           },
           "id": 10,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -329,6 +342,7 @@
           },
           "id": 11,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

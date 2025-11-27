@@ -116,6 +116,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -205,6 +206,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -295,6 +297,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -385,6 +388,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -475,6 +479,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -564,6 +569,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -731,6 +737,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -817,6 +824,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -907,6 +915,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

@@ -35,6 +35,7 @@
           },
           "id": 4,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

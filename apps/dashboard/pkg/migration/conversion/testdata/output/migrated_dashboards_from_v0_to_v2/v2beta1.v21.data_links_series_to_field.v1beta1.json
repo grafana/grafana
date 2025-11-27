@@ -46,6 +46,7 @@
               }
             ]
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -83,6 +84,7 @@
               }
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -122,6 +124,7 @@
               }
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -151,6 +154,7 @@
               }
             ]
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -173,6 +177,7 @@
           },
           "id": 5,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

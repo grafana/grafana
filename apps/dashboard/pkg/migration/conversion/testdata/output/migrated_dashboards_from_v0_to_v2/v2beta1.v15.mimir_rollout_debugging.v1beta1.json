@@ -146,6 +146,7 @@
             "xTickLabelRotation": 0,
             "xTickLabelSpacing": 0
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -254,6 +255,7 @@
             "xTickLabelRotation": 0,
             "xTickLabelSpacing": 0
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -355,6 +357,7 @@
             "xTickLabelRotation": 0,
             "xTickLabelSpacing": 0
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -450,6 +453,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -537,6 +541,7 @@
             "xTickLabelRotation": 0,
             "xTickLabelSpacing": 0
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -638,6 +643,7 @@
             "xTickLabelRotation": 0,
             "xTickLabelSpacing": 0
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

@@ -52,6 +52,7 @@
             "content": "This dashboard demonstrates various monitoring components for application observability and performance metrics.\n",
             "mode": "markdown"
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -89,6 +90,7 @@
             "content": "This service handles background processing tasks for the application system. It manages various types of operations including data synchronization, resource management, and batch processing.\n\nSupported operation types:\n1. Sync: Synchronizes data between different systems\n2. Process: Handles batch data processing tasks\n3. Cleanup: Removes outdated or temporary resources\n4. Update: Applies configuration changes across services\n\nService dependencies:\n- Data API: For reading and writing application data\n- Configuration Service: For managing system settings\n- Queue Service: For handling task scheduling\n- Storage Service: For persistent data management\n- Auth Service: For authentication and authorization\n- Metrics Service: For collecting operational statistics\n",
             "mode": "markdown"
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -114,6 +116,7 @@
             "content": "Error monitoring helps identify issues in the system. This section displays error logs and success rates for operations.",
             "mode": "markdown"
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -158,6 +161,7 @@
           },
           "id": 8,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -187,6 +191,7 @@
             "sortOrder": "Descending",
             "wrapLogMessage": true
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -215,6 +220,7 @@
             "sortOrder": "Descending",
             "wrapLogMessage": true
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -241,6 +247,7 @@
             "content": "Performance monitoring examines factors that affect system response times, including operation duration, queue lengths, and processing delays. This section provides metrics and traces for performance analysis.\n",
             "mode": "markdown"
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -264,6 +271,7 @@
           },
           "id": 12,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -288,6 +296,7 @@
           },
           "id": 13,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -355,6 +364,7 @@
           },
           "id": 14,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -437,6 +447,7 @@
           },
           "id": 15,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -492,6 +503,7 @@
           },
           "id": 16,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -521,6 +533,7 @@
           },
           "id": 17,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -547,6 +560,7 @@
           },
           "id": 18,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -604,6 +618,7 @@
             "content": "Resource utilization monitoring for application containers",
             "mode": "markdown"
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -626,6 +641,7 @@
           },
           "id": 20,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -650,6 +666,7 @@
           },
           "id": 21,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -694,6 +711,7 @@
           },
           "id": 22,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

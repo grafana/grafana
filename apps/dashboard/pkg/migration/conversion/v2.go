@@ -111,6 +111,8 @@ func Convert_V2beta1_to_V0(in *dashv2beta1.Dashboard, out *dashv0.Dashboard, sco
 
 func Convert_V2beta1_to_V1beta1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv1.APIVERSION
+	out.Kind = in.Kind
 
 	// Convert v2beta1 → v2alpha1 first, then v2alpha1 → v1beta1
 	// This combines the atomic conversions, similar to Convert_V1beta1_to_V2beta1

@@ -96,21 +96,28 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
-	// Read all files from input directory
-	files, err := os.ReadDir(filepath.Join("testdata", "input"))
-	require.NoError(t, err, "Failed to read input directory")
-
-	for _, file := range files {
-		if file.IsDir() {
-			continue
+	// Read all files from input directory recursively
+	inputBaseDir := filepath.Join("testdata", "input")
+	err = filepath.WalkDir(inputBaseDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
 
-		t.Run(fmt.Sprintf("Convert_%s", file.Name()), func(t *testing.T) {
+		if d.IsDir() {
+			return nil
+		}
+
+		// Get relative path from input directory
+		relPath, err := filepath.Rel(inputBaseDir, path)
+		if err != nil {
+			return err
+		}
+
+		t.Run(fmt.Sprintf("Convert_%s", relPath), func(t *testing.T) {
 			// Read input dashboard file
-			inputFile := filepath.Join("testdata", "input", file.Name())
 			// ignore gosec G304 as this function is only used in the test process
 			//nolint:gosec
-			inputData, err := os.ReadFile(inputFile)
+			inputData, err := os.ReadFile(path)
 			require.NoError(t, err, "Failed to read input file")
 
 			// Parse the input dashboard to get its version
@@ -118,52 +125,101 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			err = json.Unmarshal(inputData, &rawDash)
 			require.NoError(t, err, "Failed to unmarshal dashboard JSON")
 
-			// Extract apiVersion
-			apiVersion, ok := rawDash["apiVersion"].(string)
-			require.True(t, ok, "apiVersion not found or not a string")
-
-			// Parse group and version from apiVersion (format: "group/version")
-			gv, err := schema.ParseGroupVersion(apiVersion)
-			require.NoError(t, err)
-			require.Equal(t, dashv0.GROUP, gv.Group)
-
-			// Validate that the input file starts with the apiVersion declared in the object
-			expectedPrefix := fmt.Sprintf("%s.", gv.Version)
-			if !strings.HasPrefix(file.Name(), expectedPrefix) {
-				t.Fatalf(
-					"Input file %s does not match its declared apiVersion %s. "+
-						"Expected filename to start with \"%s\". "+
-						"Example: if apiVersion is \"dashboard.grafana.app/v1beta1\", "+
-						"filename should start with \"v1beta1.<descriptive-name>.json\"",
-					file.Name(), apiVersion, expectedPrefix)
-			}
-
-			// Create source object based on version
+			// Extract apiVersion to determine source type
+			fileName := d.Name()
 			var sourceDash metav1.Object
-			switch gv.Version {
-			case "v0alpha1":
-				var dash dashv0.Dashboard
-				err = json.Unmarshal(inputData, &dash)
-				sourceDash = &dash
-			case "v1beta1":
-				var dash dashv1.Dashboard
-				err = json.Unmarshal(inputData, &dash)
-				sourceDash = &dash
-			case "v2alpha1":
-				var dash dashv2alpha1.Dashboard
-				err = json.Unmarshal(inputData, &dash)
-				sourceDash = &dash
-			case "v2beta1":
-				var dash dashv2beta1.Dashboard
-				err = json.Unmarshal(inputData, &dash)
-				sourceDash = &dash
-			default:
-				t.Fatalf("Unsupported source version: %s", gv.Version)
+			var sourceVersion string
+
+			apiVersion, ok := rawDash["apiVersion"].(string)
+			if !ok {
+				// Non-API object: wrap raw dashboard JSON based on filename prefix
+				// These are raw dashboard specs (like output from v0 to v1 migration)
+				// Filename format: v1beta1.something.json or v0alpha1.something.json
+				parts := strings.SplitN(fileName, ".", 2)
+				if len(parts) < 2 {
+					t.Skipf("Skipping %s - cannot determine version from filename", relPath)
+					return
+				}
+				sourceVersion = parts[0]
+
+				switch sourceVersion {
+				case "v0alpha1":
+					sourceDash = &dashv0.Dashboard{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Dashboard",
+							APIVersion: dashv0.APIVERSION,
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: strings.TrimSuffix(fileName, ".json"),
+						},
+						Spec: common.Unstructured{Object: rawDash},
+					}
+				case "v1beta1":
+					sourceDash = &dashv1.Dashboard{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Dashboard",
+							APIVersion: dashv1.APIVERSION,
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: strings.TrimSuffix(fileName, ".json"),
+						},
+						Spec: common.Unstructured{Object: rawDash},
+					}
+				default:
+					t.Skipf("Skipping %s - unsupported version prefix %s for non-API object", relPath, sourceVersion)
+					return
+				}
+			} else {
+				// Parse group and version from apiVersion (format: "group/version")
+				gv, err := schema.ParseGroupVersion(apiVersion)
+				require.NoError(t, err)
+				require.Equal(t, dashv0.GROUP, gv.Group)
+
+				// Validate that the input file starts with the apiVersion declared in the object
+				expectedPrefix := fmt.Sprintf("%s.", gv.Version)
+				if !strings.HasPrefix(fileName, expectedPrefix) {
+					t.Fatalf(
+						"Input file %s does not match its declared apiVersion %s. "+
+							"Expected filename to start with \"%s\". "+
+							"Example: if apiVersion is \"dashboard.grafana.app/v1beta1\", "+
+							"filename should start with \"v1beta1.<descriptive-name>.json\"",
+						fileName, apiVersion, expectedPrefix)
+				}
+
+				// Create source object based on version
+				switch gv.Version {
+				case "v0alpha1":
+					var dash dashv0.Dashboard
+					err = json.Unmarshal(inputData, &dash)
+					sourceDash = &dash
+				case "v1beta1":
+					var dash dashv1.Dashboard
+					err = json.Unmarshal(inputData, &dash)
+					sourceDash = &dash
+				case "v2alpha1":
+					var dash dashv2alpha1.Dashboard
+					err = json.Unmarshal(inputData, &dash)
+					sourceDash = &dash
+				case "v2beta1":
+					var dash dashv2beta1.Dashboard
+					err = json.Unmarshal(inputData, &dash)
+					sourceDash = &dash
+				default:
+					t.Fatalf("Unsupported source version: %s", gv.Version)
+				}
+				require.NoError(t, err, "Failed to unmarshal dashboard into typed object")
+				sourceVersion = gv.Version
 			}
-			require.NoError(t, err, "Failed to unmarshal dashboard into typed object")
+
+			// Calculate output directory (preserve subdirectory structure)
+			relDir := filepath.Dir(relPath)
+			outBaseDir := filepath.Join("testdata", "output")
+			outDir := outBaseDir
+			if relDir != "." {
+				outDir = filepath.Join(outBaseDir, relDir)
+			}
 
 			// Ensure output directory exists
-			outDir := filepath.Join("testdata", "output")
 			// ignore gosec G301 as this function is only used in the test process
 			//nolint:gosec
 			err = os.MkdirAll(outDir, 0755)
@@ -174,14 +230,14 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			targetVersions := make(map[string]runtime.Object)
 
 			// Get original filename without extension
-			originalName := strings.TrimSuffix(file.Name(), ".json")
+			originalName := strings.TrimSuffix(fileName, ".json")
 
 			// Get all Dashboard versions from the manifest
 			for _, kind := range manifest.ManifestData.Kinds() {
 				if kind.Kind == "Dashboard" {
 					for _, version := range kind.Versions {
 						// Skip converting to the same version
-						if version.VersionName == gv.Version {
+						if version.VersionName == sourceVersion {
 							continue
 						}
 
@@ -222,7 +278,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 					var dataLossErr *ConversionDataLossError
 					if err != nil && errors.As(err, &dataLossErr) {
 						// Check if this is a V2 downgrade
-						if strings.HasPrefix(gv.Version, "v2") &&
+						if strings.HasPrefix(sourceVersion, "v2") &&
 							(strings.Contains(filename, "v0alpha1") || strings.Contains(filename, "v1beta1")) {
 							// Write output file anyway for V2 downgrades (even with data loss)
 							// This helps with debugging and understanding what data is preserved
@@ -240,7 +296,10 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 				})
 			}
 		})
-	}
+
+		return nil
+	})
+	require.NoError(t, err, "Failed to walk input directory")
 }
 
 // TestMigratedDashboardsConversion tests conversion of already-migrated dashboards

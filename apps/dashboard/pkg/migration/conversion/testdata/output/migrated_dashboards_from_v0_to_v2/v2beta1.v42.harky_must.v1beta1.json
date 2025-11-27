@@ -54,6 +54,7 @@
           },
           "id": 1,
           "options": {},
+          "pluginVersion": "",
           "targets": [],
           "title": "Panel with hideFrom.viz = true",
           "type": "timeseries"

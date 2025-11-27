@@ -111,6 +111,7 @@
               "mode": "multi"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -137,6 +138,7 @@
               "mode": "single"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -164,6 +166,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -190,6 +193,7 @@
               "mode": "single"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -246,6 +250,7 @@
           },
           "id": 5,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -299,6 +304,7 @@
                   "mode": "multi"
                 }
               },
+              "pluginVersion": "",
               "targets": [],
               "title": "Nested panel with both migrations",
               "type": "timeseries"
@@ -322,6 +328,7 @@
                   "showLegend": true
                 }
               },
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -360,6 +367,7 @@
               },
               "id": 9,
               "options": {},
+              "pluginVersion": "",
               "targets": [
                 {
                   "datasource": {
@@ -407,6 +415,7 @@
               "mode": "multi"
             }
           },
+          "pluginVersion": "",
           "targets": [],
           "title": "Nested panel with both migrations",
           "type": "timeseries"
@@ -430,6 +439,7 @@
               "showLegend": true
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -468,6 +478,7 @@
           },
           "id": 9,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

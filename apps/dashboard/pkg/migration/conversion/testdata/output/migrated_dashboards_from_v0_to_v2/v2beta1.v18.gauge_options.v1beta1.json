@@ -57,6 +57,7 @@
               "unit": "ms"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -84,6 +85,7 @@
               "unit": "percent"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -112,6 +114,7 @@
               "unit": "bytes"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -146,6 +149,7 @@
               "unit": "short"
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -173,6 +177,7 @@
               "showLegend": true
             }
           },
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

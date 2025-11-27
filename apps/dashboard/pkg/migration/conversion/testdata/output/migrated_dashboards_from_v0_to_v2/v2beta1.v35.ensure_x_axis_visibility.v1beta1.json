@@ -56,6 +56,7 @@
           },
           "id": 6,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -111,6 +112,7 @@
           },
           "id": 7,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -140,6 +142,7 @@
           },
           "id": 8,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -169,6 +172,7 @@
           },
           "id": 9,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -191,6 +195,7 @@
           },
           "id": 5,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -213,6 +218,7 @@
           },
           "id": 10,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -240,6 +246,7 @@
           },
           "id": 11,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {
@@ -283,6 +290,7 @@
           },
           "id": 12,
           "options": {},
+          "pluginVersion": "",
           "targets": [
             {
               "datasource": {

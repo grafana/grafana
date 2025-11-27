@@ -7,6 +7,7 @@ import (
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 // ConvertDashboard_V2alpha1_to_V1beta1 converts a v2alpha1 dashboard to v1beta1 format.
@@ -23,6 +24,7 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 		return fmt.Errorf("failed to convert dashboard spec: %w", err)
 	}
 
+	// FIXME: THIS IS NOT NEEDED, IT IS AN INVALID DASHBOARD
 	// Wrap in "dashboard" key to match v1beta1 structure
 	out.Spec.Object = map[string]interface{}{
 		"dashboard": dashboardJSON,
@@ -43,7 +45,7 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 		dashboard["tags"] = in.Tags
 	}
 	dashboard["graphTooltip"] = transformCursorSyncFromEnum(in.CursorSync)
-	dashboard["schemaVersion"] = 42 // Latest schema version to prevent migrations when loaded
+	dashboard["schemaVersion"] = schemaversion.LATEST_VERSION
 	dashboard["preload"] = in.Preload
 	if in.Editable != nil {
 		dashboard["editable"] = *in.Editable
@@ -68,6 +70,11 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert panels: %w", err)
 	}
+	// Check the panels are not missed
+	if len(panels) < len(in.Elements) {
+		return nil, fmt.Errorf("some panels were not converted from v2alpha1 to v1beta1")
+	}
+
 	if len(panels) > 0 {
 		dashboard["panels"] = panels
 	}
@@ -198,10 +205,24 @@ func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.Dashboa
 		return convertGridLayoutToPanels(elements, layout.GridLayoutKind)
 	}
 
+	// TODO: Support nested rows layouts
+	// Steps:
+	// 1. Add nested row panels to testdata/input/layouts/rows
+	// 2. Run the tests to convert output
+	// Warning: If we create an scene with nested row layouts and then we transfrom scene to V1 model, it will break.
+	// We have different options: We handle it in the tests, or we add a fallback in the frontend transformer. This is going to be needed anyway for the Export as V1.
+	// At least we could map 1 to 1 what the frontend and backend reproduces.
 	if layout.RowsLayoutKind != nil {
 		return convertRowsLayoutToPanels(elements, layout.RowsLayoutKind)
 	}
 
+	// TODO: Support nested AutoGrid layouts
+	// Steps:
+	// 1. We should map sizes to the grid layout items
+	// 2. Run the tests to convert output
+	// Warning: If we create an scene with autgrid layouts and then we transfrom scene to V1 model, it will break.
+	// We have different options: We handle it in the tests, or we add a fallback in the frontend transformer. This is going to be needed anyway for the Export as V1.
+	// At least we could map 1 to 1 what the frontend and backend reproduces.
 	if layout.AutoGridLayoutKind != nil {
 		// TODO: Improve the logic to fallback in a smart way
 		// For now, convert AutoGridLayout to a basic 3x3 grid layout
@@ -209,6 +230,13 @@ func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.Dashboa
 		return convertAutoGridLayoutToPanels(elements, layout.AutoGridLayoutKind)
 	}
 
+	// TODO: Support nested AutoGrid layouts
+	// Steps:
+	// 1. We should map sizes to the grid layout items
+	// 2. Run the tests to convert output
+	// Warning: If we create an scene with autgrid layouts and then we transfrom scene to V1 model, it will break.
+	// We have different options: We handle it in the tests, or we add a fallback in the frontend transformer. This is going to be needed anyway for the Export as V1.
+	// At least we could map 1 to 1 what the frontend and backend reproduces.
 	if layout.TabsLayoutKind != nil {
 		// TODO: Improve the logic to fallback in a smart way
 		// For now, convert TabsLayout to a basic 3x3 grid layout
@@ -239,6 +267,7 @@ func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 	return panels, nil
 }
 
+// FIXME: This is not supporting nested rows layouts
 func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind) ([]interface{}, error) {
 	panels := make([]interface{}, 0)
 	var currentRowY int64 = 0
@@ -498,15 +527,14 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 
 	panel["id"] = int(spec.Id)
 	panel["title"] = spec.Title
+	panel["pluginVersion"] = spec.VizConfig.Spec.PluginVersion
+
 	if spec.Description != "" {
 		panel["description"] = spec.Description
 	}
 
 	// Convert vizConfig - use the plugin ID from VizConfig.Kind, not PanelKind.Kind
 	panel["type"] = spec.VizConfig.Kind // panel type from vizConfig kind (plugin ID)
-	if spec.VizConfig.Spec.PluginVersion != "" {
-		panel["pluginVersion"] = spec.VizConfig.Spec.PluginVersion
-	}
 	if spec.VizConfig.Spec.Options != nil {
 		panel["options"] = spec.VizConfig.Spec.Options
 	}
@@ -703,9 +731,7 @@ func convertQueryVariableToV1(variable *dashv2alpha1.DashboardQueryVariableKind)
 	if spec.Definition != nil {
 		varMap["definition"] = *spec.Definition
 	}
-	if spec.AllowCustomValue {
-		varMap["allowCustomValue"] = spec.AllowCustomValue
-	}
+	varMap["allowCustomValue"] = spec.AllowCustomValue
 
 	// Convert query - handle LEGACY_STRING_VALUE_KEY
 	querySpec := spec.Query.Spec
@@ -765,9 +791,7 @@ func convertDatasourceVariableToV1(variable *dashv2alpha1.DashboardDatasourceVar
 	if spec.AllValue != nil {
 		varMap["allValue"] = *spec.AllValue
 	}
-	if spec.AllowCustomValue {
-		varMap["allowCustomValue"] = spec.AllowCustomValue
-	}
+	varMap["allowCustomValue"] = spec.AllowCustomValue
 
 	return varMap, nil
 }
@@ -798,9 +822,7 @@ func convertCustomVariableToV1(variable *dashv2alpha1.DashboardCustomVariableKin
 	if spec.AllValue != nil {
 		varMap["allValue"] = *spec.AllValue
 	}
-	if spec.AllowCustomValue {
-		varMap["allowCustomValue"] = spec.AllowCustomValue
-	}
+	varMap["allowCustomValue"] = spec.AllowCustomValue
 
 	return varMap, nil
 }
@@ -1098,11 +1120,13 @@ func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryK
 		}
 
 		// Copy legacy options
+		// This is used to copy any unknown properties from the v1 at the root of the annotations that were not handled by the conversion.
+		// When they are converted into V2 they are moved to legacyOptions. Now we move them back to the root of the annotation.
 		if annotation.Spec.LegacyOptions != nil {
 			for k, v := range annotation.Spec.LegacyOptions {
 				// Skip fields already handled
 				if k != "name" && k != "enable" && k != "hide" && k != "iconColor" &&
-					k != "datasource" && k != "target" && k != "filter" && k != "builtIn" && k != "type" {
+					k != "datasource" && k != "target" && k != "filter" && k != "builtIn" {
 					annotationMap[k] = v
 				}
 			}

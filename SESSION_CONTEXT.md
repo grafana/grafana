@@ -665,16 +665,107 @@ if (!found) {
 ```
 
 With helper function `getGrafanaBuiltInAnnotation()` that creates a built-in annotation with:
+
 - `group: 'grafana'`
 - `datasource: { name: '-- Grafana --' }`
 - `name: 'Annotations & Alerts'`
 - `iconColor: DEFAULT_ANNOTATION_COLOR`
 - `enable: true`, `hide: true`, `builtIn: true`
 
+## Remaining Discrepancies (Detailed Analysis)
+
+### ⚠️ 21. Annotation Datasource ALWAYS Added by Frontend
+
+**Problem:** Frontend `transformV2ToV1AnnotationQuery` ALWAYS adds `datasource` to annotations, even when the v2beta1 input doesn't have one.
+
+**Debug Evidence:**
+
+```
+[BACKEND GO OUTPUT] rollouts annotation: { name: "rollouts" } (NO datasource)
+[BACKEND] After Scene load: { name: "rollouts" } (NO datasource) ✅ Correct
+[FRONTEND V2->V1] rollouts annotation: { name: "rollouts", datasource: { type: "prometheus", uid: "default-ds-uid" } } ❌ ADDED
+```
+
+**Root Cause:** In `annotations.ts` lines 126-128:
+
+```typescript
+const datasource = getRuntimePanelDataSource(dataQuery);
+annoQuerySpec.datasource = datasource; // ALWAYS sets datasource
+```
+
+`getRuntimePanelDataSource()` always resolves to a datasource (defaults to config.defaultDatasource when none specified).
+
+**Go Backend Behavior (CORRECT):** In `v2alpha1_to_v1beta1.go` lines 1049-1061:
+
+```go
+if annotation.Spec.Datasource != nil {
+    // Only add if explicitly specified
+    annotationMap["datasource"] = datasource
+}
+```
+
+**Fix Required:** Only set `annoQuerySpec.datasource` if the input annotation has an explicit datasource.
+
+### ⚠️ 22. Annotation `type` from legacyOptions Copied by Frontend
+
+**Problem:** Frontend spreads `legacyOptions` including `type: "tags"`, but Go backend explicitly skips `type`.
+
+**Debug Evidence:**
+
+```
+Input v2beta1: { legacyOptions: { type: "tags", expr: "up", ... } }
+[BACKEND] After Scene load: { name: "rollouts" } (NO type) ✅ Correct
+[FRONTEND V2->V1]: { name: "rollouts", type: "tags" } ❌ ADDED
+```
+
+**Root Cause:** In `annotations.ts` lines 118-123:
+
+```typescript
+if (annotationQuery.legacyOptions) {
+  annoQuerySpec = {
+    ...annoQuerySpec,
+    ...annotationQuery.legacyOptions, // Copies ALL fields including `type`
+  };
+}
+```
+
+**Go Backend Behavior (CORRECT):** In `v2alpha1_to_v1beta1.go` lines 1094-1101:
+
+```go
+for k, v := range annotation.Spec.LegacyOptions {
+    if k != "name" && k != "type" && ... { // Explicitly SKIPS `type`
+        annotationMap[k] = v
+    }
+}
+```
+
+**Fix Required:** When spreading `legacyOptions`, exclude `type` field to match Go behavior.
+
+### ⚠️ 23. Panel-Level Datasource with Variable References
+
+**Problem:** Panels using variable references like `$datasource` have different outputs.
+
+**Debug Evidence:**
+
+```
+[BACKEND]: Panel has datasource at target level: { datasource: { uid: "$datasource" } }
+[FRONTEND]: Panel has datasource at panel level AND target level
+```
+
+**Root Cause:** Different handling of panel-level vs target-level datasource when using variable references.
+
+### ⚠️ 24. Panel Ordering / Grid Position Differences
+
+**Problem:** Some panels have different `y` positions or are in different order.
+
+**Root Cause:** Layout serialization differences between frontend v2→v1 and Go v2→v1.
+
 ## Next Steps
 
-1. **Fix Frontend Datasource Resolution:** Only set datasource when input explicitly has `datasource.name`
-2. **Run Tests:** Verify all fixes with both backend and frontend tests
+1. **Fix Annotation Datasource:** Only set `datasource` in `transformV2ToV1AnnotationQuery` when input has explicit datasource
+2. **Fix Annotation Type:** Exclude `type` when spreading `legacyOptions` in `transformV2ToV1AnnotationQuery`
+3. **Investigate Panel Datasource:** Determine correct behavior for panel-level vs target-level datasource
+4. **Investigate Panel Ordering:** Check layout serialization for grid position differences
 
 ## Important Notes
 

@@ -336,9 +336,8 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
         getDataSourceSrv().getInstanceSettings({ type: ds.type })?.meta.multiValueFilterOperators
       ),
     };
-    // Only set allowCustomValue if it's explicitly set to false (not the default true)
-    if (variable.spec.allowCustomValue === false) {
-      adhocVariableState.allowCustomValue = false;
+    if (variable.spec.allowCustomValue !== undefined) {
+      adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
     }
     return new AdHocFiltersVariable(adhocVariableState);
   }
@@ -355,6 +354,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       defaultToAll: Boolean(variable.spec.includeAll),
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
+      ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
     return new QueryVariable({
@@ -373,6 +373,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       definition: variable.spec.definition,
+      ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
     });
   } else if (variable.kind === defaultDatasourceVariableKind().kind) {
     return new DataSourceVariable({
@@ -389,6 +390,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       defaultOptionEnabled:
         variable.spec.current?.value === DEFAULT_DATASOURCE && variable.spec.current?.text === 'default',
+      ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
     });
   } else if (variable.kind === defaultIntervalVariableKind().kind) {
     // If query is missing/empty, extract intervals from options instead of using defaults
