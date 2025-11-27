@@ -109,7 +109,7 @@ const defaultMatchers = {
  * "Time as X" core component, expects ascending x
  */
 export class GraphNG extends Component<GraphNGProps, GraphNGState> {
-  private plotInstance: React.RefObject<uPlot>;
+  private plotInstance: React.RefObject<uPlot | null>;
 
   constructor(props: GraphNGProps) {
     super(props);

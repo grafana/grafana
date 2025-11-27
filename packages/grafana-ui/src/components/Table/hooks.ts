@@ -43,7 +43,7 @@ export function useFixScrollbarContainer(
  */
 export function useResetVariableListSizeCache(
   extendedState: GrafanaTableState,
-  listRef: React.RefObject<VariableSizeList>,
+  listRef: React.RefObject<VariableSizeList | null>,
   data: DataFrame,
   hasUniqueId: boolean
 ) {

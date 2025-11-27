@@ -22,7 +22,7 @@ import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './c
 import { CollapseConfig, CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type RenderOptions = {
-  canvasRef: RefObject<HTMLCanvasElement>;
+  canvasRef: RefObject<HTMLCanvasElement | null>;
   data: FlameGraphDataContainer;
   root: LevelItem;
   direction: 'children' | 'parents';
@@ -373,7 +373,7 @@ function useColorFunction(
   );
 }
 
-function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: number, numberOfLevels: number) {
+function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement | null>, wrapperWidth: number, numberOfLevels: number) {
   const [ctx, setCtx] = useState<CanvasRenderingContext2D>();
 
   useEffect(() => {

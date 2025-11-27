@@ -384,7 +384,9 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       <div className="graph-panel" aria-label={ariaLabel}>
         <div
           className="graph-panel__chart"
-          ref={(e) => (this.element = e)}
+          ref={(e) => {
+            this.element = e;
+          }}
           style={{ height, width }}
           onMouseLeave={() => {
             this.setState({ isTooltipVisible: false });

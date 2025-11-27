@@ -211,7 +211,9 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
       <div className={cx(wrapperClassName, styles.wrapper)}>
         <div className="slate-query-field" data-testid={selectors.components.QueryField.container}>
           <Editor
-            ref={(editor) => (this.editor = editor!)}
+            ref={(editor) => {
+              this.editor = editor;
+            }}
             schema={SCHEMA}
             autoCorrect={false}
             readOnly={this.props.disabled}

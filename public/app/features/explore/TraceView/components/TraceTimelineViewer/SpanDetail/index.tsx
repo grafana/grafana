@@ -561,7 +561,7 @@ const CardsContainer = ({
   mainContainerRef,
 }: {
   listOfContentCards: React.ReactNode[];
-  mainContainerRef?: React.RefObject<HTMLDivElement>;
+  mainContainerRef?: React.RefObject<HTMLDivElement | null>;
 }) => {
   const styles = useStyles2(getStyles);
 

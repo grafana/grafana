@@ -96,7 +96,7 @@ export interface GraphNGState {
 export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
-  private plotInstance: React.RefObject<uPlot>;
+  private plotInstance: React.RefObject<uPlot | null>;
 
   private subscription = new Subscription();
 
