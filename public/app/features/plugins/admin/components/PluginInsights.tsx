@@ -69,9 +69,14 @@ export function PluginInsights(props: Props): React.ReactElement | null {
                     data-testid={`plugin-insight-${insightItem.name.toLowerCase()}`}
                   >
                     {insightItem.scoreLevel === 'Excellent' ? (
-                      <Icon name="check-circle" size="lg" color={theme.colors.success.main} />
+                      <Icon
+                        name="check-circle"
+                        size="lg"
+                        color={theme.colors.success.main}
+                        data-testid="excellent-icon"
+                      />
                     ) : (
-                      <Icon name="exclamation-triangle" size="lg" />
+                      <Icon name="exclamation-triangle" size="lg" data-testid="poor-icon" />
                     )}
                     <Text
                       color="primary"

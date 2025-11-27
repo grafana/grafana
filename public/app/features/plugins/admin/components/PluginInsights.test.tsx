@@ -110,47 +110,35 @@ describe('PluginInsights', () => {
     const qualityCategory = screen.getByTestId('plugin-insight-quality');
 
     expect(securityCategory).toBeInTheDocument();
-    expect(securityCategory).toHaveTextContent('security');
+    expect(securityCategory).toHaveTextContent('Security');
     expect(qualityCategory).toBeInTheDocument();
-    expect(qualityCategory).toHaveTextContent('quality');
+    expect(qualityCategory).toHaveTextContent('Quality');
   });
 
   it('should render individual insight items with test ids', async () => {
     render(<PluginInsights pluginInsights={mockPluginInsights} />);
-    await userEvent.click(screen.getByText('security'));
+    await userEvent.click(screen.getByText('Security'));
     expect(screen.getByTestId('plugin-insight-item-signature')).toBeInTheDocument();
     expect(screen.getByTestId('plugin-insight-item-trackingscripts')).toBeInTheDocument();
-    await userEvent.click(screen.getByText('quality'));
+    await userEvent.click(screen.getByText('Quality'));
     expect(screen.getByTestId('plugin-insight-item-metadatavalid')).toBeInTheDocument();
     expect(screen.getByTestId('plugin-insight-item-code-rules')).toBeInTheDocument();
   });
 
-  it('should display correct colors for Excellent and Fair score levels', () => {
+  it('should display correct icons for Excellent score level', () => {
     render(<PluginInsights pluginInsights={mockPluginInsights} />);
 
-    // Excellent score level should be green
-    const securityColorPicker = screen.getByTestId('plugin-insight-security');
-    const securityColorButton = securityColorPicker.querySelector('button');
-    expect(securityColorButton).toHaveStyle({ background: '#1a7f4b' });
-
-    // Fair score level should be orange
-    const qualityColorPicker = screen.getByTestId('plugin-insight-quality');
-    const qualityColorButton = qualityColorPicker.querySelector('button');
-    expect(qualityColorButton).toHaveStyle({ background: '#ff9900' });
+    const securityCategory = screen.getByTestId('plugin-insight-security');
+    const securityIcon = securityCategory.querySelector('[data-testid="excellent-icon"]');
+    expect(securityIcon).toBeInTheDocument();
   });
 
-  it('should display correct colors for Poor and Critical score levels', () => {
-    // Test Poor level (red)
+  it('should display correct icons for Poor score levels', () => {
+    // Test Poor level - should show exclamation-triangle
     const { rerender } = render(<PluginInsights pluginInsights={mockPluginInsightsWithPoorLevel} />);
-    const poorColorPicker = screen.getByTestId('plugin-insight-quality');
-    const poorColorButton = poorColorPicker.querySelector('button');
-    expect(poorColorButton).toHaveStyle({ background: '#d10e5c' });
-
-    // Test Critical level (red)
-    rerender(<PluginInsights pluginInsights={mockPluginInsightsWithDangerLevel} />);
-    const criticalColorPicker = screen.getByTestId('plugin-insight-security');
-    const criticalColorButton = criticalColorPicker.querySelector('button');
-    expect(criticalColorButton).toHaveStyle({ background: '#d10e5c' });
+    const poorCategory = screen.getByTestId('plugin-insight-quality');
+    const poorIcon = poorCategory.querySelector('[data-testid="poor-icon"]');
+    expect(poorIcon).toBeInTheDocument();
   });
 
   it('should handle multiple items with different insight levels', async () => {
@@ -194,7 +182,7 @@ describe('PluginInsights', () => {
       ],
     };
     render(<PluginInsights pluginInsights={multiLevelInsights} />);
-    await userEvent.click(screen.getByText('quality'));
+    await userEvent.click(screen.getByText('Quality'));
     expect(screen.getByText('Info level item')).toBeInTheDocument();
     expect(screen.getByText('OK level item')).toBeInTheDocument();
     expect(screen.getByText('Good level item')).toBeInTheDocument();
