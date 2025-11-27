@@ -32,7 +32,7 @@ export function RepositoryListItem({ repository }: Props) {
 
       meta.push(
         <TextLink key="link" external href={href}>
-          {href}
+          {href.split('/').slice(3).join('/')}
         </TextLink>
       );
     } else if (spec?.type === 'local') {
