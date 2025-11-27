@@ -49,27 +49,6 @@ const mockPluginInsights: CatalogPluginInsights = {
   ],
 };
 
-const mockPluginInsightsWithDangerLevel: CatalogPluginInsights = {
-  id: 2,
-  name: 'test-plugin-danger',
-  version: '0.5.0',
-  insights: [
-    {
-      name: 'security',
-      scoreValue: 20,
-      scoreLevel: SCORE_LEVELS.CRITICAL,
-      items: [
-        {
-          id: 'virus-scan',
-          name: 'Critical vulnerability detected',
-          description: 'Severe security issue found',
-          level: 'danger' as InsightLevel,
-        },
-      ],
-    },
-  ],
-};
-
 const mockPluginInsightsWithPoorLevel: CatalogPluginInsights = {
   id: 3,
   name: 'test-plugin-poor',
@@ -135,7 +114,7 @@ describe('PluginInsights', () => {
 
   it('should display correct icons for Poor score levels', () => {
     // Test Poor level - should show exclamation-triangle
-    const { rerender } = render(<PluginInsights pluginInsights={mockPluginInsightsWithPoorLevel} />);
+    render(<PluginInsights pluginInsights={mockPluginInsightsWithPoorLevel} />);
     const poorCategory = screen.getByTestId('plugin-insight-quality');
     const poorIcon = poorCategory.querySelector('[data-testid="poor-icon"]');
     expect(poorIcon).toBeInTheDocument();
