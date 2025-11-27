@@ -239,17 +239,16 @@ export async function buildSourceLink(annotations: ObjectMeta['annotations']): P
       return undefined;
     }
 
-    const sourceUrl = getRepoFileUrl(repository.type, repository.url, repository.branch, sourcePath);
+    const sourceUrl = getRepoFileUrl(repository.type, repository.url, repository.branch, sourcePath, repository.path);
     if (!sourceUrl) {
       return undefined;
     }
 
-    const providerName = repository.type.charAt(0).toUpperCase() + repository.type.slice(1);
     return {
-      title: t('dashboard.source-link.title', 'Source ({{provider}})', { provider: providerName }),
+      title: t('dashboard.source-link.title', 'Source'),
       type: 'link',
       url: sourceUrl,
-      icon: 'external-link-alt',
+      icon: 'external link',
       tooltip: t('dashboard.source-link.tooltip', 'View source file in repository'),
       targetBlank: true,
       tags: [],

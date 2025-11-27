@@ -5395,6 +5395,10 @@
       "loading-initializing-dashboard": "Loading & initializing dashboard",
       "title-not-found": "Panel with id {{panelId}} not found"
     },
+    "source-link": {
+      "title": "Source",
+      "tooltip": "View source file in repository"
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Template variables"
     },
