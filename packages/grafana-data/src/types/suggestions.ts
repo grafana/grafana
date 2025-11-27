@@ -135,7 +135,7 @@ export interface VisualizationSuggestionsSupplierDeprecated {
 export interface VisualizationSuggestionsBuilder {
   dataSummary: PanelDataSummary;
   getListAppender: <Options extends unknown, FieldConfig extends {}>(
-    suggestion: PanelPluginVisualizationSuggestion<Options, FieldConfig>
+    suggestion: Omit<PanelPluginVisualizationSuggestion<Options, FieldConfig>, 'hash'>
   ) => {
     append: (suggestion: VisualizationSuggestion<Options, FieldConfig>) => void;
   };
