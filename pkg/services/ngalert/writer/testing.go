@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -37,7 +38,7 @@ func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != target.ExpectedPath {
-			require.Fail(t, "Received unexpected request for endpoint %s", r.URL.Path)
+			require.Fail(t, fmt.Sprintf("Received unexpected request for endpoint %s", r.URL.Path))
 		}
 
 		target.mtx.Lock()
