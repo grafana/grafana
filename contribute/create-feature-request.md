@@ -9,7 +9,6 @@ We're excited to hear your ideas! Before you submit a feature request, consider 
 - Read the [Code of Conduct](../CODE_OF_CONDUCT.md) to understand our community guidelines.
 - Search [existing feature requests](https://github.com/grafana/grafana/issues?q=is%3Aissue+is%3Aopen+label%3Atype%2Ffeature-request) to see if someone already suggested something similar.
 - Discuss your idea in the [Grafana community forums](https://community.grafana.com/) to refine it and gather feedback.
-- For general questions or troubleshooting, use the [forums](https://community.grafana.com/) instead of creating a feature request.
 
 ## Your first feature request
 
