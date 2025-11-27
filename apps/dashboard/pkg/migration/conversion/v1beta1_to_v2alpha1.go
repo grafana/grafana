@@ -1432,7 +1432,6 @@ func getOptionValue(optMap map[string]interface{}) string {
 
 // Switch Variable
 func buildSwitchVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
-	// Extract current value from current.value or current.text
 	current := ""
 	if currentVal, exists := varMap["current"]; exists {
 		if currentMap, ok := currentVal.(map[string]interface{}); ok {
@@ -1440,11 +1439,11 @@ func buildSwitchVariable(varMap map[string]interface{}, commonProps CommonVariab
 		}
 	}
 
-	// Extract enabledValue and disabledValue from options array
-	// First option value = enabledValue, second option value = disabledValue
-	// Fall back to "true" and "false" if options are not available
-	enabledValue := "true"   // Default fallback
-	disabledValue := "false" // Default fallback
+	// In V1 the enabled value is the first value of the options array, 
+	// while the disabled value is second one.
+	// (Falling back to "true" and "false" if options are not available)
+	enabledValue := "true"
+	disabledValue := "false"
 
 	if options, ok := varMap["options"].([]interface{}); ok {
 		// Get enabledValue from first option
