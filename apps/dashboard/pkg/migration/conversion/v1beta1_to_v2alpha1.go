@@ -1439,7 +1439,7 @@ func buildSwitchVariable(varMap map[string]interface{}, commonProps CommonVariab
 		}
 	}
 
-	// In V1 the enabled value is the first value of the options array, 
+	// In V1 the enabled value is the first value of the options array,
 	// while the disabled value is second one.
 	// (Falling back to "true" and "false" if options are not available)
 	enabledValue := "true"
