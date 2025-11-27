@@ -615,6 +615,8 @@ type Cfg struct {
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
 	EnableSearch                               bool
+	OverridesFilePath                          string
+	OverridesReloadInterval                    time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
