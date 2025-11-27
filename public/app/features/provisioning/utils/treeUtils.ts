@@ -130,6 +130,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       resourceName: item.resource?.name,
       hash: item.file?.hash ?? item.resource?.hash,
       status: showStatus ? getStatus(item.file?.hash, item.resource?.hash) : undefined,
+      hasFile: !!item.file,
     });
   }
 

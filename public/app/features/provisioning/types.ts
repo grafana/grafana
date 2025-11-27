@@ -112,6 +112,7 @@ export interface TreeItem {
   resourceName?: string;
   hash?: string;
   status?: SyncStatus;
+  hasFile?: boolean;
 }
 
 export interface FlatTreeItem {

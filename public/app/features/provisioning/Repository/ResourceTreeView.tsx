@@ -135,12 +135,16 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         cell: ({ row: { original } }: TreeCell) => {
           const { item } = original;
           const isDotKeepFile = item.path.endsWith('.keep') || item.path.endsWith('.gitkeep');
-          if (isDotKeepFile || !item.resourceName) {
+          if (isDotKeepFile) {
             return null;
           }
 
           const viewLink = getGrafanaLink(item);
-          const sourceLink = getRepoFileUrl(repo.spec, item.path);
+          const sourceLink = item.hasFile ? getRepoFileUrl(repo.spec, item.path) : undefined;
+
+          if (!viewLink && !sourceLink) {
+            return null;
+          }
 
           return (
             <Stack direction="row" gap={1}>
