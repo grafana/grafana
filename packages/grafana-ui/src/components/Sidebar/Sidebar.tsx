@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { getPortalContainer } from '../Portal/Portal';
 
 import { SidebarButton } from './SidebarButton';
 import { SidebarPaneHeader } from './SidebarPaneHeader';
@@ -32,7 +33,12 @@ export function SidebarComp({ children, contextValue }: Props) {
 
   const style = { [position]: theme.spacing(edgeMargin), bottom: theme.spacing(bottomMargin) };
 
-  useClickAway(ref, () => {
+  useClickAway(ref, (evt) => {
+    const portalContainer = getPortalContainer();
+    // ignore clicks inside portal container
+    if (evt.target instanceof Node && portalContainer && portalContainer.contains(evt.target)) {
+      return;
+    }
     if (!isDocked && hasOpenPane) {
       contextValue.onClosePane?.();
     }
