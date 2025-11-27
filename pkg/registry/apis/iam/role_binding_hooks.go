@@ -43,7 +43,6 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingCreate(obj runtime.
 			<-b.zTickets
 			// Record operation duration and count
 			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
-			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
 		b.logger.Debug("writing role binding to zanzana",
@@ -88,9 +87,6 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingCreate(obj runtime.
 				"subject", rb.Spec.Subject.Name,
 				"roleRefs", rb.Spec.RoleRefs,
 			)
-		} else {
-			// Record successful tuple write
-			hooksTuplesCounter.WithLabelValues(resourceType, operation, "write").Inc()
 		}
 	}(rb.DeepCopy()) // Pass a copy of the object
 }
@@ -124,7 +120,6 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingDelete(obj runtime.
 			<-b.zTickets
 			// Record operation duration and count
 			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
-			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
 		b.logger.Debug("deleting role binding from zanzana",
@@ -169,9 +164,6 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingDelete(obj runtime.
 				"subject", rb.Spec.Subject.Name,
 				"roleRefs", rb.Spec.RoleRefs,
 			)
-		} else {
-			// Record successful tuple deletion
-			hooksTuplesCounter.WithLabelValues(resourceType, operation, "delete").Inc()
 		}
 	}(rb.DeepCopy()) // Pass a copy of the object
 }
@@ -226,7 +218,6 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleBindingUpdate(ctx context.
 				<-b.zTickets
 				// Record operation duration and count
 				hooksDurationHistogram.WithLabelValues(resourceType, "update", status).Observe(time.Since(start).Seconds())
-				hooksOperationCounter.WithLabelValues(resourceType, "update", status).Inc()
 			}()
 
 			b.logger.Debug("updating role binding in zanzana",
@@ -284,20 +275,16 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleBindingUpdate(ctx context.
 					"namespace", newRB.Namespace,
 					"name", newRB.Name,
 				)
-			} else {
-				// Record successful operations
-				if len(oldRB.Spec.RoleRefs) > 0 {
-					hooksTuplesCounter.WithLabelValues(resourceType, "update", "delete").Inc()
-				}
-				if len(newRB.Spec.RoleRefs) > 0 {
-					hooksTuplesCounter.WithLabelValues(resourceType, "update", "write").Inc()
-				}
 			}
 		}()
 	}, nil
 }
 
 func roleRefsEqual(oldRoleRefs, newRoleRefs []iamv0.RoleBindingspecRoleRef) bool {
+	if len(oldRoleRefs) != len(newRoleRefs) {
+		return false
+	}
+
 	oldRoleRefsMap := make(map[string]string)
 	for _, roleRef := range oldRoleRefs {
 		oldRoleRefsMap[roleRef.Name] = string(roleRef.Kind)

@@ -133,6 +133,10 @@ func TestBeginRoleBindingUpdate(t *testing.T) {
 						Kind: "role",
 						Name: "role-foo",
 					},
+					{
+						Kind: "role",
+						Name: "role-2",
+					},
 				},
 			},
 		}
@@ -162,7 +166,7 @@ func TestBeginRoleBindingUpdate(t *testing.T) {
 			require.Equal(t, "org-1", req.Namespace)
 
 			require.NotNil(t, req.Operations)
-			require.Len(t, req.Operations, 2)
+			require.Len(t, req.Operations, 3)
 
 			// Should write new binding and delete old one
 			require.True(t, containsOperation(req.Operations, &v1.MutateOperation{
@@ -339,6 +343,10 @@ func TestAfterRoleBindingDelete(t *testing.T) {
 						Kind: "role",
 						Name: "role-1",
 					},
+					{
+						Kind: "role",
+						Name: "role-2",
+					},
 				},
 			},
 		}
@@ -350,7 +358,7 @@ func TestAfterRoleBindingDelete(t *testing.T) {
 
 			// Should have deletes but no writes
 			require.NotNil(t, req.Operations)
-			require.Len(t, req.Operations, 1)
+			require.Len(t, req.Operations, 2)
 			require.True(t, containsOperation(req.Operations, &v1.MutateOperation{
 				Operation: &v1.MutateOperation_DeleteRoleBinding{
 					DeleteRoleBinding: &v1.DeleteRoleBindingOperation{
@@ -358,6 +366,16 @@ func TestAfterRoleBindingDelete(t *testing.T) {
 						SubjectName: "user-1",
 						RoleKind:    "role",
 						RoleName:    "role-1",
+					},
+				},
+			}))
+			require.True(t, containsOperation(req.Operations, &v1.MutateOperation{
+				Operation: &v1.MutateOperation_DeleteRoleBinding{
+					DeleteRoleBinding: &v1.DeleteRoleBindingOperation{
+						SubjectKind: "user",
+						SubjectName: "user-1",
+						RoleKind:    "role",
+						RoleName:    "role-2",
 					},
 				},
 			}))
