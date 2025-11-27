@@ -107,9 +107,14 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl, b
       {/* when repo type is not local, we show branch information */}
       {showBranchInfo(repoType, branchInfo) && (
         <Box marginTop={1}>
-          <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.branch-text">branch: </Trans>
-          <TextLink href={getBranchUrl(repoBaseUrl!, targetBranch!, repoType)}>{targetBranch}</TextLink> {'\u2192'}{' '}
-          <TextLink href={getBranchUrl(repoBaseUrl!, configuredBranch!, repoType)}>{configuredBranch}</TextLink>
+          <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.branch-text">branch:</Trans>{' '}
+          <TextLink href={getBranchUrl(repoBaseUrl!, targetBranch!, repoType)} external>
+            {targetBranch}
+          </TextLink>{' '}
+          {'\u2192'}{' '}
+          <TextLink href={getBranchUrl(repoBaseUrl!, configuredBranch!, repoType)} external>
+            {configuredBranch}
+          </TextLink>
         </Box>
       )}
     </Alert>
