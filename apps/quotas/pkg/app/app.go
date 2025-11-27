@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -36,9 +37,12 @@ func NewQuotasHandler(cfg *QuotasAppConfig) *QuotasHandler {
 // GetQuota handles requests for the GET /something resource route
 func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 	if !request.URL.Query().Has("group") {
+		// TODO its returning a 500 instead of 400 bad request
+		writer.WriteHeader(http.StatusBadRequest)
 		return fmt.Errorf("missing required query parameters: group")
 	}
 	if !request.URL.Query().Has("resource") {
+		writer.WriteHeader(http.StatusBadRequest)
 		return fmt.Errorf("missing required query parameters: resource")
 	}
 	group := request.URL.Query().Get("group")
@@ -56,6 +60,7 @@ func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResp
 		return err
 	}
 
+	writer.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(writer).Encode(quotasv0alpha1.GetQuotaUsage{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: fmt.Sprintf("%s/%s", quotasv0alpha1.APIGroup, quotasv0alpha1.APIVersion),
