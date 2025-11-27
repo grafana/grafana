@@ -44,10 +44,10 @@ type RepositoryView struct {
 	Branch string `json:"branch,omitempty"`
 
 	// For git, this is the target URL
-	URL string `json:"url"`
+	URL string `json:"url,omitempty"`
 
 	// For git, this is the target path
-	Path string `json:"path"`
+	Path string `json:"path,omitempty"`
 
 	// The supported workflows
 	Workflows []Workflow `json:"workflows"`

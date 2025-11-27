@@ -4297,8 +4297,6 @@
           "title",
           "type",
           "target",
-          "url",
-          "path",
           "workflows"
         ],
         "properties": {
@@ -4313,8 +4311,7 @@
           },
           "path": {
             "description": "For git, this is the target path",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "target": {
             "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
@@ -4344,8 +4341,7 @@
           },
           "url": {
             "description": "For git, this is the target URL",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "workflows": {
             "description": "The supported workflows",
