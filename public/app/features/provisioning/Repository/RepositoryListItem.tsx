@@ -2,12 +2,13 @@ import { ReactNode } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Stack, Text, TextLink, Icon, Card, LinkButton, Badge } from '@grafana/ui';
+import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
+import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 
 import { SyncRepository } from './SyncRepository';
@@ -16,7 +17,7 @@ interface Props {
   repository: Repository;
 }
 
-export function RepositoryCard({ repository }: Props) {
+export function RepositoryListItem({ repository }: Props) {
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
@@ -27,24 +28,13 @@ export function RepositoryCard({ repository }: Props) {
     if (spec?.type === 'github') {
       const { url = '', branch } = spec.github ?? {};
       const branchUrl = branch ? `${url}/tree/${branch}` : url;
+      const href = getRepoHrefForProvider(spec) || branchUrl;
 
       meta.push(
-        <TextLink key="link" external href={branchUrl}>
-          {branchUrl}
+        <TextLink key="link" external href={href}>
+          {href.split('/').slice(3).join('/')}
         </TextLink>
       );
-
-      if (status?.webhook?.id) {
-        const webhookUrl = `${url}/settings/hooks/${status.webhook.id}`;
-        meta.push(
-          <Stack gap={1} direction="row" alignItems="center">
-            <TextLink key="webhook" href={webhookUrl}>
-              <Trans i18nKey="provisioning.repository-card.get-repository-meta.webhook">Webhook</Trans>
-            </TextLink>
-            <Icon name="check" className="text-success" />
-          </Stack>
-        );
-      }
     } else if (spec?.type === 'local') {
       meta.push(
         <Text variant="bodySmall" key="path">
