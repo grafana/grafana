@@ -20,6 +20,8 @@ replace github.com/grafana/grafana/apps/alerting/notifications => ../alerting/no
 
 replace github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
 
+replace github.com/grafana/grafana/apps/alerting/historian => ../alerting/historian
+
 replace github.com/grafana/grafana/apps/correlations => ../correlations
 
 replace github.com/grafana/grafana/apps/investigations => ../investigations
