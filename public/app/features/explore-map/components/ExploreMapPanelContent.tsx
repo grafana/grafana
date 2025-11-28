@@ -17,13 +17,76 @@ interface ExploreMapPanelContentProps {
 }
 
 
-export function ExploreMapPanelContent({ exploreId }: ExploreMapPanelContentProps) {
+// Patch getBoundingClientRect to fix AutoSizer measurements with CSS transforms
+// Store original function
+const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+let isPatched = false;
+
+function patchGetBoundingClientRect() {
+  if (isPatched) {
+    return;
+  }
+
+  Element.prototype.getBoundingClientRect = function (this: Element) {
+    const result = originalGetBoundingClientRect.call(this);
+
+    // Very conservative: only patch if this is an HTMLElement with offsetWidth available
+    // and it's inside a transformed container
+    if (!(this instanceof HTMLElement)) {
+      return result;
+    }
+
+    // Check if we should use offsetWidth by looking at the stack trace
+    // This is hacky but safer than checking DOM position which can fail
+    try {
+      // Only apply fix if called from AutoSizer context
+      const stack = new Error().stack || '';
+      const isFromAutoSizer = stack.includes('AutoSizer') || stack.includes('_onResize');
+
+      if (!isFromAutoSizer) {
+        return result;
+      }
+
+      // Check if this element has transforms applied
+      let element: Element | null = this;
+      while (element) {
+        const style = window.getComputedStyle(element);
+        if (style.transform && style.transform !== 'none') {
+          // Use offsetWidth which is not affected by transforms
+          return {
+            ...result,
+            width: this.offsetWidth,
+            height: this.offsetHeight,
+            right: result.left + this.offsetWidth,
+            bottom: result.top + this.offsetHeight,
+          } as DOMRect;
+        }
+        element = element.parentElement;
+      }
+    } catch (e) {
+      // If anything fails, return original result
+      return result;
+    }
+
+    return result;
+  };
+
+  isPatched = true;
+  console.log('[ExploreMapPanelContent] Patched getBoundingClientRect for AutoSizer');
+}
+
+export function ExploreMapPanelContent({ exploreId, width, height }: ExploreMapPanelContentProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Create scoped event bus for this panel
   const eventBus = useMemo(() => new EventBusSrv(), []);
+
+  // Patch getBoundingClientRect on mount
+  useEffect(() => {
+    patchGetBoundingClientRect();
+  }, []);
 
   // Check if the explore pane exists in Redux
   const explorePane = useSelector((state) => state.explore?.panes?.[exploreId]);
@@ -72,7 +135,13 @@ export function ExploreMapPanelContent({ exploreId }: ExploreMapPanelContentProp
   }
 
   return (
-    <div className={styles.container}>
+    <div
+      className={styles.container}
+      style={{
+        width: `${width}px`,
+        height: `${height}px`,
+      }}
+    >
       <ExplorePaneContainer exploreId={exploreId} />
     </div>
   );
