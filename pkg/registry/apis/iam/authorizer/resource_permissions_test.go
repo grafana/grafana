@@ -36,8 +36,8 @@ var (
 	)
 )
 
-func newResourcePermission(apiGroup, resource, name string) iamv0.ResourcePermission {
-	return iamv0.ResourcePermission{
+func newResourcePermission(apiGroup, resource, name string) *iamv0.ResourcePermission {
+	return &iamv0.ResourcePermission{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "org-2"},
 		Spec: iamv0.ResourcePermissionSpec{
 			Resource: iamv0.ResourcePermissionspecResource{
@@ -49,6 +49,109 @@ func newResourcePermission(apiGroup, resource, name string) iamv0.ResourcePermis
 	}
 }
 
+type authzTestSetup struct {
+	resPermAuthz *ResourcePermissionsAuthorizer
+	accessClient *fakeAccessClient
+	ctx          context.Context
+}
+
+func setupAuthzTest(t *testing.T, checkFunc func(types.AuthInfo, *types.CheckRequest, string) (types.CheckResponse, error)) *authzTestSetup {
+	accessClient := &fakeAccessClient{checkFunc: checkFunc}
+	return &authzTestSetup{
+		resPermAuthz: NewResourcePermissionsAuthorizer(accessClient),
+		accessClient: accessClient,
+		ctx:          types.WithAuthInfo(context.Background(), user),
+	}
+}
+
+func TestResourcePermissions_AfterGet(t *testing.T) {
+	fold1 := newResourcePermission("folder.grafana.app", "folders", "fold-1")
+
+	tests := []struct {
+		name        string
+		shouldAllow bool
+	}{
+		{
+			name:        "allow access",
+			shouldAllow: true,
+		},
+		{
+			name:        "deny access",
+			shouldAllow: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
+				require.NotNil(t, id)
+				// Check is called with the user's identity
+				require.Equal(t, "user:u001", id.GetUID())
+				require.Equal(t, "org-2", id.GetNamespace())
+				// Check the request values
+				require.Equal(t, "org-2", req.Namespace)
+				require.Equal(t, fold1.Spec.Resource.ApiGroup, req.Group)
+				require.Equal(t, fold1.Spec.Resource.Resource, req.Resource)
+				require.Equal(t, fold1.Spec.Resource.Name, req.Name)
+				require.Equal(t, utils.VerbGetPermissions, req.Verb)
+
+				return types.CheckResponse{Allowed: tt.shouldAllow}, nil
+			}
+
+			setup := setupAuthzTest(t, checkFunc)
+
+			err := setup.resPermAuthz.AfterGet(setup.ctx, fold1)
+			if tt.shouldAllow {
+				require.NoError(t, err, "expected no error for allowed access")
+			} else {
+				require.Error(t, err, "expected error for denied access")
+			}
+			require.True(t, setup.accessClient.checkCalled, "accessClient.Check should be called")
+		})
+	}
+}
+
+func TestResourcePermissions_FilterList(t *testing.T) {
+	// In this test, the user has permission to access only fold-1 and dash-2.
+	// We verify that FilterList returns only those two objects.
+
+	inner := &fakeInnerStore{
+		listResponse: &iamv0.ResourcePermissionList{
+			Items: []iamv0.ResourcePermission{
+				*newResourcePermission("folder.grafana.app", "folders", "fold-1"),
+				*newResourcePermission("folder.grafana.app", "folders", "fold-2"),
+				*newResourcePermission("dashboard.grafana.app", "dashboards", "dash-2"),
+			},
+		},
+	}
+	accessClient := &fakeAccessClient{
+		compileFunc: func(id types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
+			// Return a checker that allows only specific resources: fold-1 and dash-2
+			return func(name, folder string) bool {
+				if name == "fold-1" || name == "dash-2" {
+					return true
+				}
+				return false
+			}, &types.NoopZookie{}, nil
+		},
+	}
+
+	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
+	wrapper := storewrapper.New(inner, resPermAuthz)
+
+	ctx := types.WithAuthInfo(context.Background(), user)
+	list, err := wrapper.List(ctx, &internalversion.ListOptions{Limit: 10})
+	require.NoError(t, err)
+	require.NotNil(t, list)
+	require.True(t, inner.listCalled, "inner store List should be called")
+	require.True(t, accessClient.compileCalled, "accessClient.Compile should be called")
+
+	respList, ok := list.(*iamv0.ResourcePermissionList)
+	require.True(t, ok, "response should be of type ResourcePermissionList")
+	require.Len(t, respList.Items, 2, "response list should have 2 items after filtering")
+	require.Equal(t, "fold-1", respList.Items[0].Spec.Resource.Name)
+	require.Equal(t, "dash-2", respList.Items[1].Spec.Resource.Name)
+}
+
 func TestResourcePermissions_List(t *testing.T) {
 	// In this test, the user has permission to access only fold-1 and dash-2.
 	// We verify that List returns only those two objects.
@@ -56,9 +159,9 @@ func TestResourcePermissions_List(t *testing.T) {
 	inner := &fakeInnerStore{
 		listResponse: &iamv0.ResourcePermissionList{
 			Items: []iamv0.ResourcePermission{
-				newResourcePermission("folder.grafana.app", "folders", "fold-1"),
-				newResourcePermission("folder.grafana.app", "folders", "fold-2"),
-				newResourcePermission("dashboard.grafana.app", "dashboards", "dash-2"),
+				*newResourcePermission("folder.grafana.app", "folders", "fold-1"),
+				*newResourcePermission("folder.grafana.app", "folders", "fold-2"),
+				*newResourcePermission("dashboard.grafana.app", "dashboards", "dash-2"),
 			},
 		},
 	}
@@ -147,7 +250,7 @@ func TestResourcePermissions_Get(t *testing.T) {
 	// First, test access to fold-1
 	t.Run("access to fold-1", func(t *testing.T) {
 		fold1 := newResourcePermission("folder.grafana.app", "folders", "fold-1")
-		inner := &fakeInnerStore{getResponse: &fold1}
+		inner := &fakeInnerStore{getResponse: fold1}
 		accessClient := &fakeAccessClient{checkFunc: checkFunc}
 		resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
 		wrapper := storewrapper.New(inner, resPermAuthz)
@@ -165,7 +268,7 @@ func TestResourcePermissions_Get(t *testing.T) {
 	// Now, test access to dash-1
 	t.Run("access to dash-1", func(t *testing.T) {
 		dash1 := newResourcePermission("dashboard.grafana.app", "dashboards", "dash-1")
-		inner := &fakeInnerStore{getResponse: &dash1}
+		inner := &fakeInnerStore{getResponse: dash1}
 		accessClient := &fakeAccessClient{checkFunc: checkFunc}
 		resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
 		wrapper := storewrapper.New(inner, resPermAuthz)
@@ -212,7 +315,7 @@ func TestResourcePermissions_Delete(t *testing.T) {
 	// First, test deletion of fold-1
 	t.Run("delete fold-1", func(t *testing.T) {
 		fold1 := newResourcePermission("folder.grafana.app", "folders", "fold-1")
-		inner := &fakeInnerStore{getResponse: &fold1, deleteResponse: &fold1, deleteStatus: true}
+		inner := &fakeInnerStore{getResponse: fold1, deleteResponse: fold1, deleteStatus: true}
 		accessClient := &fakeAccessClient{checkFunc: checkFunc}
 		resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
 		wrapper := storewrapper.New(inner, resPermAuthz)
@@ -232,7 +335,7 @@ func TestResourcePermissions_Delete(t *testing.T) {
 	// Now, test deletion of dash-1
 	t.Run("delete dash-1", func(t *testing.T) {
 		dash1 := newResourcePermission("dashboard.grafana.app", "dashboards", "dash-1")
-		inner := &fakeInnerStore{getResponse: &dash1}
+		inner := &fakeInnerStore{getResponse: dash1}
 		accessClient := &fakeAccessClient{checkFunc: checkFunc}
 		resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
 		wrapper := storewrapper.New(inner, resPermAuthz)
