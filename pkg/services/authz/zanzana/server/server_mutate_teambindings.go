@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
