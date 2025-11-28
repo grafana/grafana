@@ -85,8 +85,13 @@ func RegisterMigrations(
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
+	migrationLocking := sec.Key("migration_locking").MustBool(true)
+	if mg.Dialect.DriverName() == sqlstoremigrator.SQLite {
+		// disable migration locking for SQLite to avoid "database is locked" errors in the bulk operations
+		migrationLocking = false
+	}
 	if err := mg.RunMigrations(ctx,
-		sec.Key("migration_locking").MustBool(true),
+		migrationLocking,
 		sec.Key("locking_attempt_timeout_sec").MustInt()); err != nil {
 		return fmt.Errorf("unified storage data migration failed: %w", err)
 	}
@@ -98,12 +103,14 @@ func RegisterMigrations(
 func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
 	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	driverName := mg.Dialect.DriverName()
 
 	folderCountValidator := NewCountValidator(
 		client,
 		folders,
 		"dashboard",
 		"org_id = ? and is_folder = true",
+		driverName,
 	)
 
 	dashboardCountValidator := NewCountValidator(
@@ -111,9 +118,10 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator
 		dashboards,
 		"dashboard",
 		"org_id = ? and is_folder = false",
+		driverName,
 	)
 
-	folderTreeValidator := NewFolderTreeValidator(client, folders)
+	folderTreeValidator := NewFolderTreeValidator(client, folders, driverName)
 
 	dashboardsAndFolders := NewResourceMigration(
 		migrator,
