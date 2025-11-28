@@ -18,6 +18,8 @@ export interface SidebarContextValue {
   contentMargin: number;
   onToggleDock: () => void;
   onResize: (diff: number) => void;
+  /** Called when pane is closed or clicked outside of (in undocked mode) */
+  onClosePane?: () => void;
 }
 
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
@@ -35,6 +37,8 @@ export interface UseSideBarOptions {
   edgeMargin?: number;
   /** defaults to 2 grid units (16px) */
   contentMargin?: number;
+  /** Called when pane is closed or clicked outside of (in undocked mode) */
+  onClosePane?: () => void;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -48,6 +52,7 @@ export function useSidebar({
   bottomMargin = 2,
   edgeMargin = 2,
   contentMargin = 2,
+  onClosePane,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
   const [isDocked, setIsDocked] = React.useState(false);
@@ -109,5 +114,6 @@ export function useSidebar({
     edgeMargin,
     bottomMargin,
     contentMargin,
+    onClosePane,
   };
 }

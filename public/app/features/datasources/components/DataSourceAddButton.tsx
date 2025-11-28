@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, type JSX } from 'react';
 
 import { Pages } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
