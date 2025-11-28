@@ -287,3 +287,111 @@ func TestWrapper_List(t *testing.T) {
 		setup.mockStore.AssertExpectations(t)
 	})
 }
+
+func TestWrapper_Update(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		oldObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{
+			Name: "to-update", ResourceVersion: "2", Labels: map[string]string{"updated": "false"},
+		}}
+		objInfo := &fakeUpdatedObjectInfo{obj: oldObj}
+		updateOpts := &metaV1.UpdateOptions{}
+
+		var authzInfo *authorizedUpdateInfo
+
+		// Verify service identity is used to call the underlying store
+		setup.mockStore.On("Update",
+			mock.MatchedBy(matchesServiceIdentity()),
+			"to-update",
+			mock.MatchedBy(func(info *authorizedUpdateInfo) bool {
+				// Capture the authorizedUpdateInfo for later verification
+				authzInfo = info
+				return true
+			}),
+			mock.Anything,
+			mock.Anything,
+			false,
+			updateOpts).Return(oldObj, true, nil)
+
+		result, updated, err := setup.wrapper.Update(setup.ctx, "to-update", objInfo, nil, nil, false, updateOpts)
+		require.NoError(t, err)
+		assert.Equal(t, oldObj, result)
+		assert.True(t, updated)
+
+		// Now verify that the authorization was performed inside UpdatedObject
+		setup.mockAuth.On("BeforeUpdate", mock.MatchedBy(matchesOriginalUser()), oldObj).Return(nil)
+		obj, err := authzInfo.UpdatedObject(context.Background(), oldObj)
+		require.NoError(t, err)
+		assert.Equal(t, oldObj, obj)
+
+		// Assert expectations
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
+}
+
+func TestWrapper_DeleteCollection(t *testing.T) {
+	setup := newTestSetup(t)
+
+	result, err := setup.wrapper.DeleteCollection(setup.ctx, nil, &metaV1.DeleteOptions{}, &internalversion.ListOptions{})
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "bulk delete operations are not supported")
+	assert.Nil(t, result)
+}
+
+func TestWrapper_PassthroughMethods(t *testing.T) {
+	setup := newTestSetup(t)
+
+	t.Run("New", func(t *testing.T) {
+		obj := &fakeObject{}
+		setup.mockStore.On("New").Return(obj).Once()
+		assert.Equal(t, obj, setup.wrapper.New())
+	})
+
+	t.Run("NewList", func(t *testing.T) {
+		obj := &fakeObject{}
+		setup.mockStore.On("NewList").Return(obj).Once()
+		assert.Equal(t, obj, setup.wrapper.NewList())
+	})
+
+	t.Run("GetSingularName", func(t *testing.T) {
+		setup.mockStore.On("GetSingularName").Return("fake").Once()
+		assert.Equal(t, "fake", setup.wrapper.GetSingularName())
+	})
+
+	t.Run("NamespaceScoped", func(t *testing.T) {
+		setup.mockStore.On("NamespaceScoped").Return(true).Once()
+		assert.True(t, setup.wrapper.NamespaceScoped())
+	})
+
+	t.Run("Destroy", func(t *testing.T) {
+		setup.mockStore.On("Destroy").Once()
+		setup.wrapper.Destroy()
+	})
+
+	t.Run("ConvertToTable", func(t *testing.T) {
+		obj := &fakeObject{}
+		table := &metaV1.Table{}
+		setup.mockStore.On("ConvertToTable", setup.ctx, obj, mock.Anything).Return(table, nil).Once()
+		result, err := setup.wrapper.ConvertToTable(setup.ctx, obj, nil)
+		require.NoError(t, err)
+		assert.Equal(t, table, result)
+	})
+
+	setup.mockStore.AssertExpectations(t)
+}
+
+// fakeUpdatedObjectInfo implements k8srest.UpdatedObjectInfo for testing
+type fakeUpdatedObjectInfo struct {
+	obj runtime.Object
+}
+
+func (f *fakeUpdatedObjectInfo) Preconditions() *metaV1.Preconditions {
+	return nil
+}
+
+func (f *fakeUpdatedObjectInfo) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
+	return f.obj, nil
+}
