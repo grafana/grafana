@@ -44,6 +44,7 @@ type AnnotationBackend struct {
 type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
 	GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error)
+	GetAlertRuleVersionFolders(ctx context.Context, orgID int64, guid string) ([]string, error)
 }
 
 type AnnotationStore interface {
