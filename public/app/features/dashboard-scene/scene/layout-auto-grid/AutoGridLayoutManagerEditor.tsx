@@ -117,7 +117,9 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
             id="min-column-width"
             defaultValue={columnWidth}
             onBlur={onCustomMinWidthChanged}
-            ref={(ref) => setInputRef(ref)}
+            ref={(ref) => {
+              setInputRef(ref);
+            }}
             type="number"
             min={50}
             max={2000}
@@ -233,7 +235,9 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             id="min-height"
             defaultValue={rowHeight}
             onBlur={onCustomHeightChanged}
-            ref={(ref) => setInputRef(ref)}
+            ref={(ref) => {
+              setInputRef(ref);
+            }}
             type="number"
             min={50}
             max={2000}

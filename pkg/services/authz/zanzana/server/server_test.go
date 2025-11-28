@@ -144,6 +144,10 @@ func TestIntegrationServer(t *testing.T) {
 	t.Run("test mutate team bindings", func(t *testing.T) {
 		testMutateTeamBindings(t, srv)
 	})
+
+	t.Run("test mutate roles", func(t *testing.T) {
+		testMutateRoles(t, srv)
+	})
 }
 
 func setupOpenFGAServer(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {

@@ -25,10 +25,7 @@ export function DashboardOutline({ editPane, isEditing }: Props) {
 
   return (
     <>
-      <Sidebar.PaneHeader
-        title={t('dashboard.outline.pane-header', 'Content outline')}
-        onClose={() => editPane.closePane()}
-      />
+      <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
       <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
         <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
       </Box>
