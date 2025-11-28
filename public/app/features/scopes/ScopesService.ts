@@ -73,6 +73,11 @@ export class ScopesService implements ScopesContextValue {
     const scopeNodeId = queryParams.get('scope_node');
     // TODO: figure out when to remove this. scope_parent is for backward compatibility only
     const parentNodeId = queryParams.get('scope_parent');
+    const navigationScope = queryParams.get('navigation_scope');
+
+    if (navigationScope) {
+      this.dashboardsService.setNavigationScope(navigationScope);
+    }
 
     this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined, scopeNodeId ?? undefined);
 
@@ -130,6 +135,16 @@ export class ScopesService implements ScopesContextValue {
             },
             true
           );
+        }
+      })
+    );
+    // Update the URL based on change in the navigation scope
+    this.subscriptions.push(
+      this.dashboardsService.subscribeToState((state, prevState) => {
+        if (state.navigationScope !== prevState.navigationScope) {
+          this.locationService.partial({
+            navigation_scope: state.navigationScope,
+          });
         }
       })
     );

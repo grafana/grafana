@@ -896,6 +896,42 @@ describe('getHistogramFields', () => {
       }
     `);
   });
+
+  it('should prevent excessive densification when sparse histogram has large gaps', () => {
+    const result = getHistogramFields(
+      toDataFrame({
+        meta: {
+          type: DataFrameType.HeatmapCells,
+        },
+        fields: [
+          { name: 'yMin', type: FieldType.number, values: [0.001, 1000] },
+          { name: 'yMax', type: FieldType.number, values: [0.00101, 1010] },
+          { name: 'count', type: FieldType.number, values: [10, 20] },
+        ],
+      })
+    );
+
+    expect(result).toBeDefined();
+    expect(result!.counts[0].values.length).toBeLessThanOrEqual(1001);
+  });
+
+  it('should handle multiple observed buckets when hitting densification limit', () => {
+    const result = getHistogramFields(
+      toDataFrame({
+        meta: {
+          type: DataFrameType.HeatmapCells,
+        },
+        fields: [
+          { name: 'yMin', type: FieldType.number, values: [0.001, 1000, 2000] },
+          { name: 'yMax', type: FieldType.number, values: [0.00101, 1010, 2020] },
+          { name: 'count', type: FieldType.number, values: [10, 20, 30] },
+        ],
+      })
+    );
+
+    expect(result).toBeDefined();
+    expect(result!.counts[0].values.every((v) => !isNaN(v))).toBe(true);
+  });
 });
 
 describe('joinHistograms', () => {
