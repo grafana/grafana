@@ -58,12 +58,14 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
-	// TODO: Re-enable once migrations are ready and disabled on cloud
-	//cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
-	cfg.DisableDataMigrations = true
+	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
 	if !cfg.DisableDataMigrations && cfg.getUnifiedStorageType() == "unified" {
-		cfg.enforceMigrationToUnifiedConfigs()
+		// Helper log to find instances running migrations in the future
+		cfg.Logger.Info("Unified migration configs not yet enforced")
+		//cfg.enforceMigrationToUnifiedConfigs() // TODO: uncomment when ready for release
 	} else {
+		// Helper log to find instances disabling migration
+		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.getUnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
 		cfg.EnableSearch = section.Key("enable_search").MustBool(false)
 	}
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)

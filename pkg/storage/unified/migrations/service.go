@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
@@ -50,13 +51,19 @@ func ProvideUnifiedStorageMigrationService(
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 	// TODO: temporary skip migrations in test environments to prevent integration test timeouts.
 	if os.Getenv("GRAFANA_TEST_DB") != "" {
+		// Record that this instance would skip migrations due to test environment
+		metrics.MUnifiedStorageMigrationStatus.WithLabelValues("test_environment").Set(0)
 		return nil
 	}
 
 	// skip migrations if disabled in config
 	if p.cfg.DisableDataMigrations {
+		metrics.MUnifiedStorageMigrationStatus.WithLabelValues("config_disabled").Set(0)
 		logger.Info("Data migrations are disabled, skipping")
 		return nil
+	} else {
+		metrics.MUnifiedStorageMigrationStatus.WithLabelValues("would_run").Set(1)
+		logger.Info("Data migrations not yet enforced, skipping")
 	}
 
 	// TODO: Re-enable once migrations are ready

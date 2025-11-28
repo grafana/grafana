@@ -228,6 +228,12 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 		m["stats.plugins.advisor.unhealthy_datasources"] = report.DatasourcesUnhealthy
 	}
 
+	if s.cfg.DisableDataMigrations {
+		m["stats.unified_storage.data_migrations.disabled.count"] = 1
+	} else {
+		m["stats.unified_storage.data_migrations.disabled.count"] = 0
+	}
+
 	featureUsageStats := s.features.GetUsageStats(ctx)
 	for k, v := range featureUsageStats {
 		m[k] = v
