@@ -210,7 +210,7 @@ export const LogListContextProvider = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
-  prettifyJSON,
+  prettifyJSON: prettifyJSONProp,
   setDisplayedFields,
   showControls,
   showLogAttributes,
@@ -221,7 +221,7 @@ export const LogListContextProvider = ({
   timestampResolution = logOptionsStorageKey
     ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ms')
     : 'ms',
-  wrapLogMessage,
+  wrapLogMessage: wrapLogMessageProp,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
     dedupStrategy,
@@ -238,7 +238,9 @@ export const LogListContextProvider = ({
   });
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
   const [listStyle, setListStyleState] = useState(
-    listStyleProp ? listStyleProp : getLogListStyleFromOldProps(wrapLogMessage, prettifyJSON, logOptionsStorageKey)
+    listStyleProp
+      ? listStyleProp
+      : getLogListStyleFromOldProps(wrapLogMessageProp, prettifyJSONProp, logOptionsStorageKey)
   );
 
   useEffect(() => {
@@ -345,9 +347,9 @@ export const LogListContextProvider = ({
         deprecationWarning('LogsPanel', 'prettifyJSON', 'listStyle');
         return listStyle;
       }
-      return getLogListStyleFromOldProps(wrapLogMessage, prettifyJSON, undefined);
+      return getLogListStyleFromOldProps(wrapLogMessageProp, prettifyJSONProp, undefined);
     });
-  }, [wrapLogMessage, prettifyJSON]);
+  }, [wrapLogMessageProp, prettifyJSONProp]);
 
   // Sync timestamp resolution
   useEffect(() => {
@@ -407,7 +409,15 @@ export const LogListContextProvider = ({
 
   const setListStyle = useCallback(
     (newStyle: LogListStyle) => {
-      setListStyleState(newStyle);
+      setListStyleState((prevStyle: LogListStyle) => {
+        if (!wrapLogMessage(prevStyle) !== wrapLogMessage(newStyle)) {
+          onLogOptionsChange?.('wrapLogMessage', wrapLogMessage(newStyle));
+        }
+        if (!prettifyJSON(prevStyle) !== prettifyJSON(newStyle)) {
+          onLogOptionsChange?.('prettifyLogMessage', prettifyJSON(newStyle));
+        }
+        return newStyle;
+      });
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.listStyle`, newStyle);
       }
