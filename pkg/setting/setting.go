@@ -509,6 +509,9 @@ type Cfg struct {
 	// Query history
 	QueryHistoryEnabled bool
 
+	// StartupSettings settings
+	StartupSettings StartupSettings
+
 	// Open feature settings
 	OpenFeature OpenFeatureSettings
 
@@ -1465,6 +1468,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
 
+	// app platform config
+	cfg.readStartupSettingsSection()
 	return nil
 }
 
