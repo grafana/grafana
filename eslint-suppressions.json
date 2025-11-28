@@ -1845,19 +1845,9 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneRenderer.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneSplitter.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4
-    }
-  },
-  "public/app/features/dashboard-scene/edit-pane/DashboardOutline.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
@@ -1890,11 +1880,6 @@
   },
   "public/app/features/dashboard-scene/panel-edit/PanelOptionsPane.test.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -2014,9 +1999,6 @@
     }
   },
   "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    },
     "react-hooks/rules-of-hooks": {
       "count": 4
     }
@@ -3642,16 +3624,6 @@
   "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.tsx": {
     "no-restricted-syntax": {
       "count": 7
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/types/query.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/types/templateVariables.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/azuremonitor/utils/common.ts": {

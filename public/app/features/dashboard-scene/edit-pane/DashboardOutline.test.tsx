@@ -101,7 +101,7 @@ describe('DashboardOutline', () => {
 
       render(
         <ElementSelectionContext.Provider value={scene.state.editPane.state.selectionContext}>
-          <DashboardOutline editPane={scene.state.editPane} />
+          <DashboardOutline editPane={scene.state.editPane} isEditing={true} />
         </ElementSelectionContext.Provider>
       );
       // select Row lvl 1

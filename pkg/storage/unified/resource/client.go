@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/fullstorydev/grpchan"
@@ -24,6 +23,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -158,7 +158,7 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 	return newResourceClient(cc, cci), nil
 }
 
-var authLogger = slog.Default().With("logger", "resource-client-auth-interceptor")
+var authLogger = log.New("resource-client-auth-interceptor")
 
 func idTokenExtractor(ctx context.Context) (string, error) {
 	if identity.IsServiceIdentity(ctx) {
@@ -175,7 +175,7 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	}
 
 	if !types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
-		authLogger.Warn(
+		authLogger.FromContext(ctx).Warn(
 			"calling resource store as the service without id token or marking it as the service identity",
 			"subject", info.GetSubject(),
 			"uid", info.GetUID(),

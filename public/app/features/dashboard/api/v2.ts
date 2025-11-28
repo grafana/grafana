@@ -18,6 +18,7 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { buildSourceLink } from 'app/features/provisioning/utils/sourceLink';
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -73,6 +74,12 @@ export class K8sDashboardV2API
         // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
         // AnnoKeyFolder undefined -> top-level dashboard -> empty string
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
+      }
+
+      // Inject source link for repo-managed dashboards
+      const sourceLink = await buildSourceLink(dashboard.metadata.annotations);
+      if (sourceLink) {
+        dashboard.spec.links = [sourceLink, ...(dashboard.spec.links || [])];
       }
 
       return dashboard;

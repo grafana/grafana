@@ -1,5 +1,5 @@
 import { Placement } from '@popperjs/core';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, type JSX } from 'react';
 
 import { PopoverContent } from './types';
 

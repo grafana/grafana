@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/atomic"
@@ -263,7 +264,11 @@ func (b *backend) Stop(_ context.Context) error {
 
 // GetResourceStats implements Backend.
 func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
 	defer span.End()
 
 	req := &sqlStatsRequest{
@@ -994,7 +999,9 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 		b.lastImportTimeDeletionTime.Store(now)
 	}
 
-	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{SQLTemplate: sqltemplate.New(b.dialect)})
+	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+	})
 	if err != nil {
 		return func(yield func(resource.ResourceLastImportTime, error) bool) {
 			yield(resource.ResourceLastImportTime{}, err)
@@ -1036,4 +1043,8 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 			yield(resource.ResourceLastImportTime{}, err)
 		}
 	}
+}
+
+func (b *backend) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("rebuild indexes not supported by unistore sql backend")
 }

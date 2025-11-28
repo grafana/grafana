@@ -32,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -136,9 +136,9 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "permission",
 										In:          "query",
-										Description: "permission needed for the resource (View, Edit, Admin)",
+										Description: "permission needed for the resource (view, edit, admin)",
 										Required:    false,
-										Schema:      spec.StringProperty().WithEnum("View", "Edit", "Admin"),
+										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin"),
 									},
 								},
 								{
@@ -406,7 +406,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	// Add sorting
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
-			if slices.Contains(search.DashboardFields(), sort) {
+			if slices.Contains(builders.DashboardFields(), sort) {
 				sort = resource.SEARCH_FIELD_PREFIX + sort
 			}
 			s := &resourcepb.ResourceSearchRequest_Sort{Field: sort}
@@ -441,7 +441,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	// The libraryPanel filter
 	if libraryPanel, ok := queryParams["libraryPanel"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 			Operator: "=",
 			Values:   libraryPanel,
 		})
