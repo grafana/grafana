@@ -42,7 +42,7 @@ export interface UserCursor {
 export interface ExploreMapState {
   viewport: CanvasViewport;
   panels: Record<string, ExploreMapPanel>;
-  selectedPanelId?: string;
+  selectedPanelIds: string[];
   nextZIndex: number;
   cursors: Record<string, UserCursor>;
 }
@@ -58,7 +58,7 @@ export const initialExploreMapState: ExploreMapState = {
     panY: -4460, // -(5000 - 1080/2) = -4460
   },
   panels: {},
-  selectedPanelId: undefined,
+  selectedPanelIds: [],
   nextZIndex: 1,
   cursors: {},
 };

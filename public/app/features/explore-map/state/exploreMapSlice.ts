@@ -48,14 +48,12 @@ const exploreMapSlice = createSlice({
         position: { ...defaultPosition, ...action.payload.position },
       };
       state.nextZIndex++;
-      state.selectedPanelId = panelId;
+      state.selectedPanelIds = [panelId];
     },
 
     removePanel: (state, action: PayloadAction<{ panelId: string }>) => {
       delete state.panels[action.payload.panelId];
-      if (state.selectedPanelId === action.payload.panelId) {
-        state.selectedPanelId = undefined;
-      }
+      state.selectedPanelIds = state.selectedPanelIds.filter((id) => id !== action.payload.panelId);
     },
 
     updatePanelPosition: (
@@ -68,6 +66,36 @@ const exploreMapSlice = createSlice({
       }
     },
 
+    updateMultiplePanelPositions: (
+      state,
+      action: PayloadAction<{ panelId: string; deltaX: number; deltaY: number }>
+    ) => {
+      const { panelId, deltaX, deltaY } = action.payload;
+
+      // If the dragged panel is selected, move all selected panels EXCEPT the dragged one
+      // (the dragged panel is controlled by react-rnd)
+      if (state.selectedPanelIds.includes(panelId)) {
+        state.selectedPanelIds.forEach((id) => {
+          // Skip the panel being dragged - react-rnd controls it
+          if (id === panelId) {
+            return;
+          }
+          const panel = state.panels[id];
+          if (panel) {
+            panel.position.x += deltaX;
+            panel.position.y += deltaY;
+          }
+        });
+      } else {
+        // If dragging a non-selected panel, just move that one
+        const panel = state.panels[panelId];
+        if (panel) {
+          panel.position.x += deltaX;
+          panel.position.y += deltaY;
+        }
+      }
+    },
+
     bringPanelToFront: (state, action: PayloadAction<{ panelId: string }>) => {
       const panel = state.panels[action.payload.panelId];
       if (panel) {
@@ -76,15 +104,57 @@ const exploreMapSlice = createSlice({
       }
     },
 
-    selectPanel: (state, action: PayloadAction<{ panelId?: string }>) => {
-      state.selectedPanelId = action.payload.panelId;
-      if (action.payload.panelId) {
-        const panel = state.panels[action.payload.panelId];
+    selectPanel: (state, action: PayloadAction<{ panelId?: string; addToSelection?: boolean }>) => {
+      const { panelId, addToSelection } = action.payload;
+
+      if (!panelId) {
+        // Clear selection
+        state.selectedPanelIds = [];
+        return;
+      }
+
+      if (addToSelection) {
+        // Toggle panel in selection
+        if (state.selectedPanelIds.includes(panelId)) {
+          state.selectedPanelIds = state.selectedPanelIds.filter((id) => id !== panelId);
+        } else {
+          state.selectedPanelIds.push(panelId);
+        }
+      } else {
+        // Single selection
+        state.selectedPanelIds = [panelId];
+      }
+
+      // Bring all selected panels to front
+      state.selectedPanelIds.forEach((id) => {
+        const panel = state.panels[id];
         if (panel) {
           panel.position.zIndex = state.nextZIndex;
           state.nextZIndex++;
         }
+      });
+    },
+
+    selectMultiplePanels: (state, action: PayloadAction<{ panelIds: string[]; addToSelection?: boolean }>) => {
+      const { panelIds, addToSelection } = action.payload;
+
+      if (addToSelection) {
+        // Add to existing selection (dedupe)
+        const newIds = panelIds.filter((id) => !state.selectedPanelIds.includes(id));
+        state.selectedPanelIds = [...state.selectedPanelIds, ...newIds];
+      } else {
+        // Replace selection
+        state.selectedPanelIds = panelIds;
       }
+
+      // Bring all selected panels to front
+      state.selectedPanelIds.forEach((id) => {
+        const panel = state.panels[id];
+        if (panel) {
+          panel.position.zIndex = state.nextZIndex;
+          state.nextZIndex++;
+        }
+      });
     },
 
     updateViewport: (state, action: PayloadAction<Partial<CanvasViewport>>) => {
@@ -93,7 +163,7 @@ const exploreMapSlice = createSlice({
 
     resetCanvas: (state) => {
       state.panels = {};
-      state.selectedPanelId = undefined;
+      state.selectedPanelIds = [];
       state.nextZIndex = 1;
       state.viewport = initialExploreMapState.viewport;
     },
@@ -115,7 +185,7 @@ const exploreMapSlice = createSlice({
           exploreState: sourcePanel.exploreState,
         };
         state.nextZIndex++;
-        state.selectedPanelId = newPanelId;
+        state.selectedPanelIds = [newPanelId];
       }
     },
 
@@ -130,7 +200,10 @@ const exploreMapSlice = createSlice({
     },
 
     loadCanvas: (state, action: PayloadAction<ExploreMapState>) => {
-      return action.payload;
+      const loadedState = action.payload;
+      // Clear any selection state from loaded data
+      loadedState.selectedPanelIds = [];
+      return loadedState;
     },
 
     updateCursor: (state, action: PayloadAction<UserCursor>) => {
@@ -147,8 +220,10 @@ export const {
   addPanel,
   removePanel,
   updatePanelPosition,
+  updateMultiplePanelPositions,
   bringPanelToFront,
   selectPanel,
+  selectMultiplePanels,
   updateViewport,
   resetCanvas,
   duplicatePanel,

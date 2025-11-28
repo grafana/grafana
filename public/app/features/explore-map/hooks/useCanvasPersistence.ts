@@ -34,6 +34,7 @@ export function useCanvasPersistence() {
       // Enrich exploreMapState with current Explore state for each panel
       const enrichedState: ExploreMapState = {
         ...exploreMapState,
+        selectedPanelIds: [], // Don't persist selection state
         cursors: {}, // Don't persist cursor state - it's ephemeral
         panels: Object.fromEntries(
           Object.entries(exploreMapState.panels).map(([panelId, panel]) => {
@@ -74,6 +75,7 @@ export function useCanvasPersistence() {
       const enrichedState: ExploreMapState = {
         ...exploreMapState,
         viewport: initialExploreMapState.viewport, // Don't export viewport state - use initial centered viewport
+        selectedPanelIds: [], // Don't export selection state
         cursors: {}, // Don't export cursor state - it's ephemeral
         panels: Object.fromEntries(
           Object.entries(exploreMapState.panels).map(([panelId, panel]) => {

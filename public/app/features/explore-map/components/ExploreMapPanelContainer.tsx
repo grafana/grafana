@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Rnd, RndDragCallback, RndResizeCallback } from 'react-rnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,6 +13,7 @@ import {
   duplicatePanel,
   removePanel,
   selectPanel,
+  updateMultiplePanelPositions,
   updatePanelPosition,
 } from '../state/exploreMapSlice';
 import { ExploreMapPanel } from '../state/types';
@@ -27,21 +28,79 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const rndRef = useRef<Rnd>(null);
+  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
 
-  const selectedPanelId = useSelector((state) => state.exploreMap.selectedPanelId);
+  const selectedPanelIds = useSelector((state) => state.exploreMap.selectedPanelIds || []);
   const viewport = useSelector((state) => state.exploreMap.viewport);
-  const isSelected = selectedPanelId === panel.id;
+  const isSelected = selectedPanelIds.includes(panel.id);
+
+  const handleDragStart: RndDragCallback = useCallback(
+    (_e, data) => {
+      setDragStartPos({ x: data.x, y: data.y });
+    },
+    []
+  );
+
+  const handleDrag: RndDragCallback = useCallback(
+    (_e, data) => {
+      if (!dragStartPos) {
+        return;
+      }
+
+      const deltaX = data.x - dragStartPos.x;
+      const deltaY = data.y - dragStartPos.y;
+
+      // If this panel is selected and there are multiple selections, move all others
+      if (isSelected && selectedPanelIds.length > 1) {
+        dispatch(
+          updateMultiplePanelPositions({
+            panelId: panel.id,
+            deltaX,
+            deltaY,
+          })
+        );
+        setDragStartPos({ x: data.x, y: data.y });
+      }
+    },
+    [dispatch, panel.id, dragStartPos, isSelected, selectedPanelIds.length]
+  );
 
   const handleDragStop: RndDragCallback = useCallback(
     (_e, data) => {
-      dispatch(
-        updatePanelPosition({
-          panelId: panel.id,
-          position: { x: data.x, y: data.y },
-        })
-      );
+      if (dragStartPos) {
+        const deltaX = data.x - dragStartPos.x;
+        const deltaY = data.y - dragStartPos.y;
+
+        // Final position update for all panels
+        if (isSelected && selectedPanelIds.length > 1) {
+          // Update other panels with the remaining delta
+          dispatch(
+            updateMultiplePanelPositions({
+              panelId: panel.id,
+              deltaX,
+              deltaY,
+            })
+          );
+          // Update the dragged panel's position in Redux
+          dispatch(
+            updatePanelPosition({
+              panelId: panel.id,
+              position: { x: data.x, y: data.y },
+            })
+          );
+        } else {
+          // Single panel drag
+          dispatch(
+            updatePanelPosition({
+              panelId: panel.id,
+              position: { x: data.x, y: data.y },
+            })
+          );
+        }
+      }
+      setDragStartPos(null);
     },
-    [dispatch, panel.id]
+    [dispatch, panel.id, dragStartPos, isSelected, selectedPanelIds.length]
   );
 
   const handleResizeStop: RndResizeCallback = useCallback(
@@ -67,10 +126,28 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
     [dispatch, panel.id]
   );
 
-  const handleMouseDown = useCallback(() => {
-    dispatch(selectPanel({ panelId: panel.id }));
-    dispatch(bringPanelToFront({ panelId: panel.id }));
-  }, [dispatch, panel.id]);
+  const handleMouseDown = useCallback(
+    (e: MouseEvent) => {
+      // Check for Cmd (Mac) or Ctrl (Windows/Linux) key
+      const isMultiSelect = e.metaKey || e.ctrlKey;
+
+      // If this panel is already selected and we're not multi-selecting,
+      // don't change selection (allows dragging multiple selected panels)
+      if (isSelected && !isMultiSelect) {
+        // Just bring to front, don't change selection
+        dispatch(bringPanelToFront({ panelId: panel.id }));
+        return;
+      }
+
+      dispatch(selectPanel({ panelId: panel.id, addToSelection: isMultiSelect }));
+
+      // Only bring to front if not multi-selecting
+      if (!isMultiSelect) {
+        dispatch(bringPanelToFront({ panelId: panel.id }));
+      }
+    },
+    [dispatch, panel.id, isSelected]
+  );
 
   const handleRemove = useCallback(
     (e: React.MouseEvent) => {
@@ -97,6 +174,8 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
       position={{ x: panel.position.x, y: panel.position.y }}
       size={{ width: panel.position.width, height: panel.position.height }}
       scale={viewport.zoom}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
       onMouseDown={handleMouseDown}
