@@ -785,7 +785,7 @@ var (
 		},
 		{
 			Name:            "apiExtensions",
-			Description:     "Enable Kubernetes CustomResourceDefinition (CRD) support with dynamic API registration",
+			Description:     "Enable Kubernetes CustomResourceDefinition (CRD) support with dynamic API registration (Enterprise + MT-only)",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,

@@ -21,8 +21,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kube-openapi/pkg/common"
 
-	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
-
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -402,30 +400,6 @@ func (s *service) start(ctx context.Context) error {
 
 	// Determine the delegate for the main server
 	var delegationTarget = genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler)
-	var apiExtensionsServer *apiextensionsapiserver.CustomResourceDefinitions
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	apiExtensionsEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagApiExtensions)
-
-	if apiExtensionsEnabled && restOptsGetter != nil {
-		// Create the K8s apiextensions-apiserver for CRD/CR handling
-		// This server handles:
-		// - CRD storage (create, get, list, update, delete CRDs)
-		// - Custom resource handling (dynamically serves CRs based on registered CRDs)
-		s.log.Info("Creating apiextensions server")
-		apiExtensionsServer, err = s.createAPIExtensionsServer(builders, serverConfig, delegationTarget, restOptsGetter)
-		if err != nil {
-			return fmt.Errorf("failed to create apiextensions server: %w", err)
-		}
-		if apiExtensionsServer != nil {
-			s.log.Info("apiextensions server created successfully, chaining as delegate")
-			// Chain the apiextensions server as the delegate
-			// Requests go: grafana-apiserver -> apiextensions-apiserver -> notFoundHandler
-			delegationTarget = apiExtensionsServer.GenericAPIServer
-		} else {
-			s.log.Warn("apiextensions server was not created (returned nil)")
-		}
-	}
 
 	// Create the main Grafana API server
 	server, err := serverConfig.Complete().New("grafana-apiserver", delegationTarget)
@@ -484,11 +458,6 @@ func (s *service) start(ctx context.Context) error {
 	isDataplaneAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator)
 
 	if isKubernetesAggregatorEnabled {
-		// Pass CRD informer to aggregator if apiextensions is enabled (for auto-registering APIServices for CRDs)
-		if apiExtensionsServer != nil && apiExtensionsServer.Informers != nil {
-			s.log.Info("Starting CRD informer for apiextensions service")
-			s.aggregatorRunner.SetCRDInformer(apiExtensionsServer.Informers.Apiextensions().V1().CustomResourceDefinitions())
-		}
 		aggregatorServer, err := s.aggregatorRunner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
 		if err != nil {
 			return err
@@ -692,31 +661,4 @@ func useNamespaceFromPath(path string, user *user.SignedInUser) {
 			}
 		}
 	}
-}
-
-// createAPIExtensionsServer creates the Kubernetes apiextensions-apiserver for CRD/CR handling.
-// This server is chained as a delegate, handling CRD storage and dynamic custom resource serving.
-func (s *service) createAPIExtensionsServer(
-	builders []builder.APIGroupBuilder,
-	serverConfig *genericapiserver.RecommendedConfig,
-	delegationTarget genericapiserver.DelegationTarget,
-	restOptsGetter *apistore.RESTOptionsGetter,
-) (*apiextensionsapiserver.CustomResourceDefinitions, error) {
-	// Find the apiextensions Builder
-	type apiExtensionsCreator interface {
-		CreateAPIExtensionsServer(
-			serverConfig genericapiserver.RecommendedConfig,
-			delegationTarget genericapiserver.DelegationTarget,
-			restOptsGetter *apistore.RESTOptionsGetter,
-		) (*apiextensionsapiserver.CustomResourceDefinitions, error)
-	}
-
-	for _, b := range builders {
-		if creator, ok := b.(apiExtensionsCreator); ok {
-			return creator.CreateAPIExtensionsServer(*serverConfig, delegationTarget, restOptsGetter)
-		}
-	}
-
-	// No apiextensions builder found
-	return nil, nil
 }
