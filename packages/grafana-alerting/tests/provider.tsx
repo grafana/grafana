@@ -16,7 +16,7 @@ import { MockBackendSrv } from './backendSrv.mock';
 setBackendSrv(new MockBackendSrv());
 
 // create an empty store
-export const store = configureStore({
+export const store: ReturnType<typeof configureStore> = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(notificationsAPIv0alpha1.middleware).concat(rulesAPIv0alpha1.middleware),
   reducer: {

@@ -44,7 +44,7 @@ type ListContactPointsQueryOptions = Parameters<
 export function useListContactPoints(
   queryArgs: ListContactPointsQueryArgs = {},
   queryOptions: ListContactPointsQueryOptions = {}
-) {
+): ListContactPointsHookResult {
   return notificationsAPIv0alpha1.useListReceiverQuery<ListContactPointsHookResult>(queryArgs, queryOptions);
 }
 
@@ -70,7 +70,14 @@ type UseCreateContactPointOptions = Parameters<
  * This function wraps the notificationsAPI.useCreateReceiverMutation with proper typing
  * to ensure that the payload supports type narrowing.
  */
-export function useCreateContactPoint(options?: UseCreateContactPointOptions) {
+export function useCreateContactPoint(
+  options?: UseCreateContactPointOptions
+): readonly [
+  (
+    args: CreateContactPointArgs
+  ) => ReturnType<ReturnType<typeof notificationsAPIv0alpha1.endpoints.createReceiver.useMutation>[0]>,
+  ReturnType<typeof notificationsAPIv0alpha1.endpoints.createReceiver.useMutation<CreateContactPointMutation>>[1],
+] {
   const [updateFn, result] =
     notificationsAPIv0alpha1.endpoints.createReceiver.useMutation<CreateContactPointMutation>(options);
 
