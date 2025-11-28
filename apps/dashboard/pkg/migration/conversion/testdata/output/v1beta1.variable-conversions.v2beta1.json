@@ -319,6 +319,19 @@
         }
       },
       {
+        "kind": "SwitchVariable",
+        "spec": {
+          "name": "switch_var",
+          "current": "false",
+          "enabledValue": "true",
+          "disabledValue": "false",
+          "label": "Enable Feature",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Toggle feature on/off"
+        }
+      },
+      {
         "kind": "QueryVariable",
         "spec": {
           "name": "legacy_string_var",

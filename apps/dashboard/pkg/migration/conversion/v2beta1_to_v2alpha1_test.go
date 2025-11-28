@@ -480,6 +480,51 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 			},
 		},
 		{
+			name: "dashboard with switch variable",
+			createV2beta1: func() *dashv2beta1.Dashboard {
+				label := "Enable Feature"
+				description := "Toggle feature"
+				return &dashv2beta1.Dashboard{
+					Spec: dashv2beta1.DashboardSpec{
+						Title: "Test Dashboard",
+						Variables: []dashv2beta1.DashboardVariableKind{
+							{
+								SwitchVariableKind: &dashv2beta1.DashboardSwitchVariableKind{
+									Kind: "SwitchVariable",
+									Spec: dashv2beta1.DashboardSwitchVariableSpec{
+										Name:          "switch_var",
+										Current:       "false",
+										EnabledValue:  "true",
+										DisabledValue: "false",
+										Label:         &label,
+										Description:   &description,
+										Hide:          dashv2beta1.DashboardVariableHideDontHide,
+										SkipUrlSync:   false,
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.Len(t, v2alpha1.Spec.Variables, 1)
+				variable := v2alpha1.Spec.Variables[0]
+				require.NotNil(t, variable.SwitchVariableKind, "SwitchVariableKind should not be nil")
+				assert.Equal(t, "SwitchVariable", variable.SwitchVariableKind.Kind)
+				assert.Equal(t, "switch_var", variable.SwitchVariableKind.Spec.Name)
+				assert.Equal(t, "false", variable.SwitchVariableKind.Spec.Current)
+				assert.Equal(t, "true", variable.SwitchVariableKind.Spec.EnabledValue)
+				assert.Equal(t, "false", variable.SwitchVariableKind.Spec.DisabledValue)
+				assert.NotNil(t, variable.SwitchVariableKind.Spec.Label)
+				assert.Equal(t, "Enable Feature", *variable.SwitchVariableKind.Spec.Label)
+				assert.NotNil(t, variable.SwitchVariableKind.Spec.Description)
+				assert.Equal(t, "Toggle feature", *variable.SwitchVariableKind.Spec.Description)
+				assert.Equal(t, dashv2alpha1.DashboardVariableHideDontHide, variable.SwitchVariableKind.Spec.Hide)
+				assert.False(t, variable.SwitchVariableKind.Spec.SkipUrlSync)
+			},
+		},
+		{
 			name: "dashboard with rows layout",
 			createV2beta1: func() *dashv2beta1.Dashboard {
 				return &dashv2beta1.Dashboard{

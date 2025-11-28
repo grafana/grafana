@@ -259,6 +259,32 @@
           "skipUrlSync": false
         },
         {
+          "name": "switch_var",
+          "type": "switch",
+          "label": "Enable Feature",
+          "description": "Toggle feature on/off",
+          "query": "",
+          "current": {
+            "selected": false,
+            "text": "false",
+            "value": "false"
+          },
+          "options": [
+            {
+              "selected": false,
+              "text": "true",
+              "value": "true"
+            },
+            {
+              "selected": true,
+              "text": "false",
+              "value": "false"
+            }
+          ],
+          "hide": 0,
+          "skipUrlSync": false
+        },
+        {
           "name": "legacy_string_var",
           "type": "query",
           "label": "Legacy Variable",
