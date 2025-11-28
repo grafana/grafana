@@ -11803,13 +11803,6 @@
       "saving": "Ukládání",
       "title-error-loading-file": "Chyba při načítání souboru"
     },
-    "files-view": {
-      "columns": {
-        "history": "Historie",
-        "view": "Zobrazit"
-      },
-      "placeholder-search": "Hledat"
-    },
     "finish-step": {
       "description-enable-previews": "Přidá náhled obrázku změn nástěnky v pull requestech. Obrázky nástěnek Grafana budou sdíleny ve vašem úložišti Git a uvidí je každý, kdo má přístup k úložišti.",
       "description-generate-dashboard-previews": "Vytvořte odkazy na náhledy pro žádosti o stažení",
@@ -12024,9 +12017,6 @@
       "source-code": "Zdrojový kód"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Jen pro čtení",
       "settings": "Nastavení",
       "view": "Zobrazit"
@@ -12063,14 +12053,6 @@
       "webhook-last-event": "Poslední událost:",
       "webhook-url": "Zobrazit webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Historie",
-        "view-dashboard": "Zobrazit",
-        "view-folder": "Zobrazit"
-      },
-      "placeholder-search": "Hledat"
-    },
     "repository-status-page": {
       "back-to-repositories": "Zpět na úložiště",
       "cleaning-up-resources": "Čištění zdrojů úložiště",
@@ -12078,12 +12060,10 @@
       "not-found": "nenalezeno",
       "not-found-message": "Úložiště nebylo nalezeno",
       "repository-config-exists-configuration": "Ujistěte se, že konfigurace úložiště existuje v konfiguračním souboru.",
-      "tab-files": "Soubory",
-      "tab-files-title": "Seznam nezpracovaných souborů z úložiště",
       "tab-overview": "Přehled",
       "tab-overview-title": "Přehled úložiště",
       "tab-resources": "Zdroje",
-      "tab-resources-title": "Zdroje uložené v databázi Grafany",
+      "tab-resources-title": "",
       "title": "Stav úložiště",
       "title-legacy-storage": "Starší verze úložiště",
       "title-queued-for-deletion": "Zařazeno do fronty k odstranění"
@@ -12105,6 +12085,17 @@
       "local-description": "Konfigurovat zajištění souborů",
       "pure-git": "Pouze Git",
       "pure-git-description": "Připojit k jakémukoli úložišti Git"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Základ",
