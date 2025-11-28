@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef, useCallback, useState, CSSProperties } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import * as React from 'react';
 import { useTable, Column, TableOptions, Cell } from 'react-table';
-import { FixedSizeList } from 'react-window';
-import InfiniteLoader from 'react-window-infinite-loader';
+import { List, useListRef, type RowComponentProps } from 'react-window';
+import { useInfiniteLoader } from 'react-window-infinite-loader';
 import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
@@ -57,8 +57,7 @@ export const SearchResultsTable = React.memo(
     const styles = useStyles2(getStyles);
     const columnStyles = useStyles2(getColumnStyles);
     const tableStyles = useTableStyles(useTheme2(), TableCellHeight.Sm);
-    const infiniteLoaderRef = useRef<InfiniteLoader>(null);
-    const [listEl, setListEl] = useState<FixedSizeList | null>(null);
+    const listRef = useListRef(null);
     const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
 
     const memoizedData = useMemo(() => {
@@ -72,15 +71,13 @@ export const SearchResultsTable = React.memo(
       return Array(response.totalRows).fill(0);
     }, [response]);
 
-    // Scroll to the top and clear loader cache when the query results change
+    // Scroll to the top when the query results change
     useEffect(() => {
-      if (infiniteLoaderRef.current) {
-        infiniteLoaderRef.current.resetloadMoreItemsCache();
-      }
-      if (listEl) {
-        listEl.scrollTo(0);
-      }
-    }, [memoizedData, listEl]);
+      const list = listRef.current;
+      list?.scrollToRow({
+        index: 0,
+      });
+    }, [listRef, memoizedData]);
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
@@ -129,8 +126,14 @@ export const SearchResultsTable = React.memo(
       [response, selection, selectionToggle]
     );
 
+    const onRowsRendered = useInfiniteLoader({
+      rowCount: rows.length,
+      isRowLoaded: response.isItemLoaded,
+      loadMoreRows: handleLoadMore,
+    });
+
     const RenderRow = useCallback(
-      ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
+      ({ index: rowIndex, style }: RowComponentProps) => {
         const row = rows[rowIndex];
         prepareRow(row);
 
@@ -225,29 +228,19 @@ export const SearchResultsTable = React.memo(
         })}
 
         <div {...getTableBodyProps()}>
-          <InfiniteLoader
-            ref={infiniteLoaderRef}
-            isItemLoaded={response.isItemLoaded}
-            itemCount={rows.length}
-            loadMoreItems={handleLoadMore}
-          >
-            {({ onItemsRendered, ref }) => (
-              <FixedSizeList
-                ref={(innerRef) => {
-                  ref(innerRef);
-                  setListEl(innerRef);
-                }}
-                onItemsRendered={onItemsRendered}
-                height={height - ROW_HEIGHT}
-                itemCount={rows.length}
-                itemSize={tableStyles.rowHeight}
-                width={width}
-                style={{ overflow: 'hidden auto' }}
-              >
-                {RenderRow}
-              </FixedSizeList>
-            )}
-          </InfiniteLoader>
+          <List
+            rowProps={{}}
+            listRef={listRef}
+            rowComponent={RenderRow}
+            rowCount={rows.length}
+            onRowsRendered={onRowsRendered}
+            rowHeight={tableStyles.rowHeight}
+            style={{
+              height: height - ROW_HEIGHT,
+              width: width,
+              overflow: 'hidden auto',
+            }}
+          />
         </div>
       </div>
     );
