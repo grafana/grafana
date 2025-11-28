@@ -222,7 +222,7 @@ func (ng *AlertNG) init() error {
 			ExternalURL:       ng.Cfg.AppURL,
 			SmtpConfig:        smtpCfg,
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
-			DispatchTimer:     notifier.GetDispatchTimer(initCtx, ng.FeatureToggles).String(),
+			DispatchTimer:     notifier.GetDispatchTimer(ng.FeatureToggles).String(),
 		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, invalidReceiverAction notifier.InvalidReceiversAction) error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, invalidReceiverAction, ng.FeatureToggles)
