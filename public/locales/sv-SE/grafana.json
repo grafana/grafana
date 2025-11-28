@@ -11703,13 +11703,6 @@
       "saving": "Sparar",
       "title-error-loading-file": "Ett fel uppstod när en fil laddades"
     },
-    "files-view": {
-      "columns": {
-        "history": "Historik",
-        "view": "Visa"
-      },
-      "placeholder-search": "Sök"
-    },
     "finish-step": {
       "description-enable-previews": "Lägger till en förhandsgranskning av ändringar i instrumentpanelen för pull-förfrågningar. Bilder av dina Grafana-instrumentpaneler kommer att delas på din Git-lagringsplats och vara synliga för alla med lagringsåtkomst.",
       "description-generate-dashboard-previews": "Skapa förhandsgranskningslänkar för pull-begäranden",
@@ -11920,9 +11913,6 @@
       "source-code": "Källkod"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Skrivskyddad",
       "settings": "Inställningar",
       "view": "Visa"
@@ -11959,14 +11949,6 @@
       "webhook-last-event": "Senaste händelsen:",
       "webhook-url": "Visa webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Historik",
-        "view-dashboard": "Visa",
-        "view-folder": "Visa"
-      },
-      "placeholder-search": "Sök"
-    },
     "repository-status-page": {
       "back-to-repositories": "Tillbaka till lagringsplatserna",
       "cleaning-up-resources": "Rensa lagringsplatsresurser",
@@ -11974,12 +11956,10 @@
       "not-found": "hittades inte",
       "not-found-message": "Lagringsplatsen hittades inte",
       "repository-config-exists-configuration": "Verifiera att lagringsplatskonfigurationen finns i konfigurationsfilen.",
-      "tab-files": "Filer",
-      "tab-files-title": "Rådatafillistan från lagringsplatsen",
       "tab-overview": "Översikt",
       "tab-overview-title": "Översikt över lagringsplats",
       "tab-resources": "Resurser",
-      "tab-resources-title": "Resurser sparade i Grafana-databasen",
+      "tab-resources-title": "",
       "title": "Status för lagringsplats",
       "title-legacy-storage": "Äldre lagring",
       "title-queued-for-deletion": "Köad för radering"
@@ -12001,6 +11981,17 @@
       "local-description": "Konfigurera provisionering med filer",
       "pure-git": "Ren Git",
       "pure-git-description": "Anslut till valfri Git-lagringsplats"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Bas",

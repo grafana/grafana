@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import { PureComponent, ReactNode } from 'react';
+import { PureComponent, ReactNode, type JSX } from 'react';
 
 import {
   CoreApp,

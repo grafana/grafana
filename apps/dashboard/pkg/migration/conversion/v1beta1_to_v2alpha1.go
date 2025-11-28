@@ -967,6 +967,10 @@ func transformVariables(ctx context.Context, dashboard map[string]interface{}, d
 			if textVar, err := buildTextVariable(varMap, commonProps); err == nil {
 				variables = append(variables, textVar)
 			}
+		case "switch":
+			if switchVar, err := buildSwitchVariable(varMap, commonProps); err == nil {
+				variables = append(variables, switchVar)
+			}
 		case "groupby":
 			if groupByVar, err := buildGroupByVariable(ctx, varMap, commonProps, dsIndexProvider); err == nil {
 				variables = append(variables, groupByVar)
@@ -1423,6 +1427,75 @@ func buildTextVariable(varMap map[string]interface{}, commonProps CommonVariable
 
 	return dashv2alpha1.DashboardVariableKind{
 		TextVariableKind: textVar,
+	}, nil
+}
+
+// Helper function to extract string value from an option map (value or text field)
+func getOptionValue(optMap map[string]interface{}) string {
+	if val, ok := optMap["value"].(string); ok && val != "" {
+		return val
+	}
+	if val, ok := optMap["text"].(string); ok && val != "" {
+		return val
+	}
+	return ""
+}
+
+// Switch Variable
+func buildSwitchVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
+	current := ""
+	if currentVal, exists := varMap["current"]; exists {
+		if currentMap, ok := currentVal.(map[string]interface{}); ok {
+			current = getOptionValue(currentMap)
+		}
+	}
+
+	// In V1 the enabled value is the first value of the options array,
+	// while the disabled value is second one.
+	// (Falling back to "true" and "false" if options are not available)
+	enabledValue := "true"
+	disabledValue := "false"
+
+	if options, ok := varMap["options"].([]interface{}); ok {
+		// Get enabledValue from first option
+		if len(options) > 0 {
+			if opt1, ok := options[0].(map[string]interface{}); ok {
+				if val := getOptionValue(opt1); val != "" {
+					enabledValue = val
+				}
+			}
+		}
+		// Get disabledValue from second option
+		if len(options) > 1 {
+			if opt2, ok := options[1].(map[string]interface{}); ok {
+				if val := getOptionValue(opt2); val != "" {
+					disabledValue = val
+				}
+			}
+		}
+	}
+
+	// Set current to disabledValue if not set
+	if current == "" {
+		current = disabledValue
+	}
+
+	switchVar := &dashv2alpha1.DashboardSwitchVariableKind{
+		Kind: "SwitchVariable",
+		Spec: dashv2alpha1.DashboardSwitchVariableSpec{
+			Name:          commonProps.Name,
+			Current:       current,
+			EnabledValue:  enabledValue,
+			DisabledValue: disabledValue,
+			Label:         commonProps.Label,
+			Description:   commonProps.Description,
+			Hide:          commonProps.Hide,
+			SkipUrlSync:   commonProps.SkipUrlSync,
+		},
+	}
+
+	return dashv2alpha1.DashboardVariableKind{
+		SwitchVariableKind: switchVar,
 	}, nil
 }
 

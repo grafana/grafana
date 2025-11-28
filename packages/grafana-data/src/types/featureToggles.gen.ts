@@ -377,6 +377,10 @@ export interface FeatureToggles {
   */
   perPanelNonApplicableDrilldowns?: boolean;
   /**
+  * Enabled a group by action per panel
+  */
+  panelGroupBy?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
   panelFilterVariable?: boolean;
@@ -1193,4 +1197,8 @@ export interface FeatureToggles {
   * @default false
   */
   rudderstackUpgrade?: boolean;
+  /**
+  * Adds support for Kubernetes alerting historian APIs
+  */
+  kubernetesAlertingHistorian?: boolean;
 }

@@ -608,6 +608,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "panelGroupBy",
+			Description:  "Enabled a group by action per panel",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
@@ -1322,7 +1329,7 @@ var (
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaPartnerPluginsSquad,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
@@ -1969,6 +1976,13 @@ var (
 			Expression:      "false",
 			RequiresRestart: false,
 			HideFromDocs:    false,
+		},
+		{
+			Name:            "kubernetesAlertingHistorian",
+			Description:     "Adds support for Kubernetes alerting historian APIs",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
 		},
 	}
 )
