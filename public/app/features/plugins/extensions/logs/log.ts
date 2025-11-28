@@ -31,7 +31,25 @@ export class ExtensionsLog {
     this.subject = subject ?? new ReplaySubject<ExtensionsLogItem>(logsNumberLimit, logsRetentionTime);
 
     if (!channel) {
-      this.channel.onmessage = (msg: MessageEvent<ExtensionsLogItem>) => this.subject.next(msg.data);
+      this.channel.onmessage = (msg: MessageEvent) => {
+        // Handle backlog requests from plugins
+        if (msg.data?.type === 'request-backlog') {
+          console.log('[ExtensionsLog] Backlog requested, sending buffered messages');
+
+          // Get all buffered messages from ReplaySubject and send them
+          const buffer: ExtensionsLogItem[] = [];
+          const tempSub = this.subject.subscribe((item) => buffer.push(item));
+          tempSub.unsubscribe();
+
+          buffer.forEach((item) => this.channel.postMessage(item));
+
+          // Confirm backlog sent
+          this.channel.postMessage({ type: 'backlog-complete' });
+        } else if (msg.data?.level) {
+          // Regular log messages from other contexts
+          this.subject.next(msg.data);
+        }
+      };
     }
   }
 
