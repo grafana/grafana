@@ -28,6 +28,11 @@ export type InstanceMatchResult = {
   matchedRoutes: RouteMatch[];
 };
 
+interface UseMatchInstancesToRouteTreesReturnType
+  extends ReturnType<typeof notificationsAPIv0alpha1.endpoints.listRoutingTree.useQuery> {
+  matchInstancesToRouteTrees: (instances: Label[][]) => InstanceMatchResult[];
+}
+
 /**
  * React hook that finds notification policy routes in all routing trees that match the provided set of alert instances.
  *
@@ -39,10 +44,6 @@ export type InstanceMatchResult = {
  * @returns An object containing a `matchInstancesToRoutingTrees` function that takes alert instances
  *          and returns an array of InstanceMatchResult objects, each containing the matched routes and matching details
  */
-interface UseMatchInstancesToRouteTreesReturnType
-  extends ReturnType<typeof notificationsAPIv0alpha1.endpoints.listRoutingTree.useQuery> {
-  matchInstancesToRouteTrees: (instances: Label[][]) => InstanceMatchResult[];
-}
 export function useMatchInstancesToRouteTrees(): UseMatchInstancesToRouteTreesReturnType {
   const { data, ...rest } = notificationsAPIv0alpha1.endpoints.listRoutingTree.useQuery(
     {},
