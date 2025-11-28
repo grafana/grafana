@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 
 	"go.opentelemetry.io/otel/trace"
@@ -20,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -133,18 +133,12 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		Offset:  int64(offset),
 		Page:    int64(page),
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
+		Fields: []string{
+			builders.TEAM_SEARCH_EMAIL,
+			builders.TEAM_SEARCH_PROVISIONED,
+			builders.TEAM_SEARCH_EXTERNAL_UID,
+		},
 	}
-
-	fields := []string{"title", "email", "provisioned", "externalUID"}
-	if queryParams.Has("field") {
-		// add fields to search and exclude duplicates
-		for _, f := range queryParams["field"] {
-			if f != "" && !slices.Contains(fields, f) {
-				fields = append(fields, f)
-			}
-		}
-	}
-	searchRequest.Fields = fields
 
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {

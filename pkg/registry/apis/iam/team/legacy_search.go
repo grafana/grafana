@@ -77,7 +77,7 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 	namespace := signedInUser.GetNamespace()
 
 	for _, t := range res.Teams {
-		cells := createDefaultCells(t)
+		cells := createCells(t, req.Fields)
 		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 			Key:   getResourceKey(t, namespace),
 			Cells: cells,
@@ -99,23 +99,41 @@ func getResourceKey(t *team.TeamDTO, namespace string) *resourcepb.ResourceKey {
 }
 
 func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
-	searchFields := res.StandardSearchFields()
+	columns := getDefaultColumns()
 
+	for _, field := range fields {
+		columns = append(columns, builders.TeamSearchTableColumnDefinitions[field])
+	}
+
+	return columns
+}
+
+func getDefaultColumns() []*resourcepb.ResourceTableColumnDefinition {
+	searchFields := res.StandardSearchFields()
 	return []*resourcepb.ResourceTableColumnDefinition{
 		searchFields.Field(res.SEARCH_FIELD_NAME),
 		searchFields.Field(res.SEARCH_FIELD_TITLE),
-		searchFields.Field(builders.TEAM_SEARCH_EMAIL),
-		searchFields.Field(builders.TEAM_SEARCH_PROVISIONED),
-		searchFields.Field(builders.TEAM_SEARCH_EXTERNAL_UID),
 	}
+}
+
+func createCells(t *team.TeamDTO, fields []string) [][]byte {
+	cells := createDefaultCells(t)
+	for _, field := range fields {
+		switch field {
+		case builders.TEAM_SEARCH_EMAIL:
+			cells = append(cells, []byte(t.Email))
+		case builders.TEAM_SEARCH_PROVISIONED:
+			cells = append(cells, []byte(strconv.FormatBool(t.IsProvisioned)))
+		case builders.TEAM_SEARCH_EXTERNAL_UID:
+			cells = append(cells, []byte(t.ExternalUID))
+		}
+	}
+	return cells
 }
 
 func createDefaultCells(t *team.TeamDTO) [][]byte {
 	return [][]byte{
 		[]byte(t.UID),
 		[]byte(t.Name),
-		[]byte(t.Email),
-		[]byte(strconv.FormatBool(t.IsProvisioned)),
-		[]byte(t.ExternalUID),
 	}
 }
