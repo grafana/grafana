@@ -2,11 +2,10 @@ import { configureStore } from '@reduxjs/toolkit';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
+import { MockBackendSrv } from '@grafana/api-clients';
 import { generatedAPI as notificationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
-
-import { MockBackendSrv } from './backendSrv.mock';
 
 // Initialize BackendSrv for tests - this allows RTKQ to make HTTP requests
 // The actual HTTP requests will be intercepted by MSW (setupMockServer)
