@@ -551,7 +551,6 @@
         "description": "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -565,7 +564,6 @@
         "description": "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -768,16 +766,19 @@
     {
       "metadata": {
         "name": "azureResourcePickerUpdates",
-        "resourceVersion": "1763734583253",
+        "resourceVersion": "1764153435365",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-26 10:37:15.365919 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the updated Azure Monitor resource picker",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/partner-datasources",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1213,13 +1214,16 @@
     {
       "metadata": {
         "name": "elasticsearchImprovedParsing",
-        "resourceVersion": "1763734583253",
-        "creationTimestamp": "2025-01-15T17:05:54Z"
+        "resourceVersion": "1764260048941",
+        "creationTimestamp": "2025-01-15T17:05:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-27 16:14:08.941633 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables less memory intensive Elasticsearch result parsing",
         "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources"
+        "codeowner": "@grafana/partner-datasources"
       }
     },
     {
@@ -1791,6 +1795,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAlertingHistorian",
+        "resourceVersion": "1764257713773",
+        "creationTimestamp": "2025-11-27T15:35:13Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes alerting historian APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAlertingRules",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2025-07-31T22:56:50Z",
@@ -1908,6 +1925,18 @@
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesDashboardsV2",
+        "resourceVersion": "1764236054307",
+        "creationTimestamp": "2025-11-27T09:34:14Z"
+      },
+      "spec": {
+        "description": "Use the v2 kubernetes API in the frontend for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {
@@ -2361,14 +2390,18 @@
     {
       "metadata": {
         "name": "newPanelPadding",
-        "resourceVersion": "1763734583253",
-        "creationTimestamp": "2025-11-12T15:40:46Z"
+        "resourceVersion": "1764168915089",
+        "creationTimestamp": "2025-11-12T15:40:46Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-26 14:55:15.089551 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Increases panel padding globally",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -3540,6 +3573,22 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "v2DashboardAPIVersion",
+        "resourceVersion": "1762457740470",
+        "creationTimestamp": "2025-11-06T19:22:05Z",
+        "deletionTimestamp": "2025-11-27T09:34:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-06 19:35:40.470587 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the v2 dashboard API version",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {
