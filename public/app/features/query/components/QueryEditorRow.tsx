@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import classNames from 'classnames';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
@@ -22,7 +23,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
+import { Badge, Button, Dropdown, ErrorBoundaryAlert, Icon, List, Menu, Stack, Text } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -73,6 +74,8 @@ export interface Props<TQuery extends DataQuery> {
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
+  isFocused?: boolean;
+  onFocusQuery?: () => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -130,9 +133,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       datasource = await this.dataSourceSrv.get();
     }
 
-    if (typeof this.props.onDataSourceLoaded === 'function') {
-      this.props.onDataSourceLoaded(datasource);
-    }
+    this.props.onDataSourceLoaded?.(datasource);
 
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
@@ -242,10 +243,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     onRemoveQuery(query);
-
-    if (onQueryRemoved) {
-      onQueryRemoved();
-    }
+    onQueryRemoved?.();
   };
 
   onCancelQueryLibraryEdit = () => {
@@ -265,20 +263,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const { query, onAddQuery, onQueryCopied } = this.props;
     const copy = cloneDeep(query);
     onAddQuery(copy);
-
-    if (onQueryCopied) {
-      onQueryCopied();
-    }
+    onQueryCopied?.();
   };
 
   onHideQuery = () => {
     const { query, onChange, onRunQuery, onQueryToggled } = this.props;
     onChange({ ...query, hide: !query.hide });
     onRunQuery();
-
-    if (onQueryToggled) {
-      onQueryToggled(query.hide);
-    }
+    onQueryToggled?.(query.hide);
 
     reportInteraction('query_editor_row_hide_query_clicked', {
       hide: !query.hide,
@@ -397,49 +389,109 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return extraActions;
   };
 
-  renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
+  buildMenuItems = (): ReactNode[] => {
+    const { isFocused, onFocusQuery } = this.props;
     const { datasource, showingHelp } = this.state;
-    const isHidden = !!query.hide;
-
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
-    const isEditingQueryLibrary = queryLibraryRef !== undefined;
+    const isEditingQueryLibrary = this.props.queryLibraryRef !== undefined;
+
+    return [
+      // Data source help
+      hasEditorHelp && (
+        <Menu.Item
+          key="datasource-help"
+          label={
+            showingHelp
+              ? t('query-operation.header.hide-datasource-help', 'Hide data source help')
+              : t('query-operation.header.datasource-help', 'Show data source help')
+          }
+          icon="question-circle"
+          onClick={this.onToggleHelp}
+          active={showingHelp}
+        />
+      ),
+      // Duplicate query
+      !isEditingQueryLibrary && (
+        <Menu.Item
+          key="duplicate-query"
+          label={t('query-operation.header.duplicate-query', 'Duplicate query')}
+          icon="copy"
+          onClick={this.onCopyQuery}
+        />
+      ),
+      // Focus query
+      onFocusQuery && (
+        <Menu.Item
+          key="focus-query"
+          label={
+            isFocused
+              ? t('query-operation.header.collapse', 'Show all queries')
+              : t('query-operation.header.focus', 'Focus query')
+          }
+          icon={isFocused ? 'compress-screen' : 'expand-screen'}
+          onClick={onFocusQuery}
+          active={Boolean(isFocused)}
+          testId={selectors.components.QueryEditorRow.actionButton('Focus query')}
+        />
+      ),
+    ].filter((item): item is JSX.Element => Boolean(item));
+  };
+
+  renderSavedQueryButtons = (): ReactNode => {
+    const { query, app, queryLibraryRef } = this.props;
+    const { datasource } = this.state;
     const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
     const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    const isEditingQueryLibrary = queryLibraryRef !== undefined;
+
+    if (isEditingQueryLibrary || isUnifiedAlerting || isExpressionQuery) {
+      return null;
+    }
+
+    return (
+      <SavedQueryButtons
+        query={{
+          ...query,
+          datasource: datasource ? { uid: datasource.uid, type: datasource.type } : query.datasource,
+        }}
+        app={app}
+        onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+        onSelectQuery={this.onSelectQueryFromLibrary}
+        datasourceFilters={datasource?.name ? [datasource.name] : []}
+      />
+    );
+  };
+
+  renderActions = () => {
+    const { query, hideHideQueryButton = false, queryLibraryRef } = this.props;
+    const isHidden = !!query.hide;
+    const isEditingQueryLibrary = queryLibraryRef !== undefined;
+
+    // Build all action components
+    const savedQueryButtons = this.renderSavedQueryButtons();
+    const extraActions = this.renderExtraActions();
+    const menuItems = this.buildMenuItems();
+
+    // Only render dropdown if there are menu items
+    const actionsDropdown =
+      menuItems.length > 0 ? (
+        <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom-end">
+          <Button
+            icon="ellipsis-v"
+            variant="secondary"
+            fill="text"
+            size="sm"
+            aria-label={t('query-operation.header.actions-menu', 'Query actions menu')}
+            data-testid={selectors.components.QueryEditorRow.actionButton('Actions menu')}
+          />
+        </Dropdown>
+      ) : null;
 
     return (
       <>
-        {!isEditingQueryLibrary && !isUnifiedAlerting && !isExpressionQuery && (
-          <SavedQueryButtons
-            query={{
-              ...query,
-              datasource: datasource ? { uid: datasource.uid, type: datasource.type } : query.datasource,
-            }}
-            app={app}
-            onUpdateSuccess={this.onExitQueryLibraryEditingMode}
-            onSelectQuery={this.onSelectQueryFromLibrary}
-            datasourceFilters={datasource?.name ? [datasource.name] : []}
-          />
-        )}
-
-        {hasEditorHelp && (
-          <QueryOperationToggleAction
-            title={t('query-operation.header.datasource-help', 'Show data source help')}
-            icon="question-circle"
-            onClick={this.onToggleHelp}
-            active={showingHelp}
-          />
-        )}
-        {this.renderExtraActions()}
-        {!isEditingQueryLibrary && (
-          <QueryOperationAction
-            title={t('query-operation.header.duplicate-query', 'Duplicate query')}
-            icon="copy"
-            onClick={this.onCopyQuery}
-          />
-        )}
-
-        {!hideHideQueryButton ? (
+        {savedQueryButtons}
+        {extraActions}
+        {!hideHideQueryButton && (
           <QueryOperationToggleAction
             dataTestId={selectors.components.QueryEditorRow.actionButton('Hide response')}
             title={
@@ -451,7 +503,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             active={isHidden}
             onClick={this.onHideQuery}
           />
-        ) : null}
+        )}
         {!isEditingQueryLibrary && (
           <QueryOperationAction
             title={t('query-operation.header.remove-query', 'Remove query')}
@@ -459,6 +511,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             onClick={this.onRemoveQuery}
           />
         )}
+        {actionsDropdown}
       </>
     );
   };
@@ -485,6 +538,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   render() {
     const {
       query,
+      queries,
       index,
       visualization,
       collapsable,
@@ -494,14 +548,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       app,
       queryLibraryRef,
       onCancelQueryLibraryEdit,
+      isFocused,
+      onFocusQuery,
     } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isHidden = query.hide;
     const error =
       data?.error && data.error.refId === query.refId ? data.error : data?.errors?.find((e) => e.refId === query.refId);
+    // Note: We can't use hooks in class components, so we use static styles
     const rowClasses = classNames('query-editor-row', {
       'query-editor-row--disabled': isHidden,
       'gf-form-disabled': isHidden,
+      [focusedRowStyle]: isFocused,
     });
 
     if (!datasource) {
@@ -521,6 +579,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         actions={hideActionButtons ? undefined : this.renderActions}
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
+        highlight={isFocused}
       >
         <div className={rowClasses} id={this.id}>
           <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
@@ -541,8 +600,32 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       </QueryOperationRow>
     );
 
+    const hiddenQueriesCount = Math.max(0, queries.length - 1); // Total queries minus the focused one
+
     return (
-      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
+      <div
+        data-testid="query-editor-row"
+        aria-label={selectors.components.QueryEditorRows.rows}
+        className={classNames({ [focusedWrapperStyle]: isFocused })}
+      >
+        {isFocused && hiddenQueriesCount > 0 && (
+          <div className={focusedBannerStyle}>
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Icon name="expand-screen" />
+              <Text color="primary" variant="bodySmall" italic>
+                <Trans
+                  i18nKey="query.query-editor-row.focused-message"
+                  values={{ queryName: query.refId, count: hiddenQueriesCount }}
+                >
+                  Query {'{{queryName}}'} is focused, {'{{count}}'} queries are hidden from view.
+                </Trans>
+              </Text>
+              <Button fill="text" size="sm" onClick={onFocusQuery}>
+                <Trans i18nKey="query-operation.header.collapse">Show all queries</Trans>
+              </Button>
+            </Stack>
+          </div>
+        )}
         {queryLibraryRef && (
           <MaybeQueryLibraryEditingHeader
             query={query}
@@ -659,3 +742,26 @@ function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
     return null;
   }
 }
+
+// Static styles for focused state - used in class component
+// Transitions are handled in parent components where we have theme access
+const focusedWrapperStyle = css({
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  flex: '1 1 auto',
+});
+
+const focusedRowStyle = css({
+  flex: '1 1 100%',
+  height: '100%',
+  width: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  // Remove margins when focused to maximize space
+  marginBottom: 0,
+});
+
+const focusedBannerStyle = css({
+  marginBottom: '10px',
+});

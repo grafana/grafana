@@ -85,9 +85,13 @@ describe('Explore QueryRows', () => {
     // waiting for the d&d component to fully render.
     await screen.findAllByText('someDs query editor');
 
-    let duplicateButton = screen.getByLabelText(/Duplicate query/i);
+    // Open the actions menu
+    const actionsMenuButton = screen.getByLabelText(/Query actions menu/i);
+    fireEvent.click(actionsMenuButton);
 
-    fireEvent.click(duplicateButton);
+    // Click duplicate query in the menu
+    const duplicateMenuItem = await screen.findByText(/Duplicate query/i);
+    fireEvent.click(duplicateMenuItem);
 
     // We should have another row with refId B
     expect(await screen.findByLabelText('Query editor row title B')).toBeInTheDocument();

@@ -35,7 +35,10 @@ describe('Panel edit tests - queries', () => {
     e2e.components.QueryEditorRows.rows({ timeout: flakyTimeout }).should('have.length', 1);
 
     // Duplicate refId B
-    e2e.components.QueryEditorRow.actionButton('Duplicate query').eq(0).should('be.visible').click();
+    // Open the actions menu
+    e2e.components.QueryEditorRow.actionButton('Actions menu').eq(0).should('be.visible').click();
+    // Click duplicate query in the menu
+    cy.contains('Duplicate query').should('be.visible').click();
 
     // We expect row with refId Band and A to exist and be visible
     e2e.components.QueryEditorRows.rows().should('have.length', 2);

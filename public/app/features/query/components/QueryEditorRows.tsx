@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { DragDropContext, DragStart, Droppable, DropResult } from '@hello-pangea/dnd';
 import { PureComponent, ReactNode } from 'react';
 
@@ -44,9 +45,15 @@ export interface Props {
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
+  onFocusQuery?: (arg0: boolean) => void;
 }
 
-export class QueryEditorRows extends PureComponent<Props> {
+export class QueryEditorRows extends PureComponent<Props, { focusedQueryRefId: string | null }> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { focusedQueryRefId: null };
+  }
+
   onRemoveQuery = (query: DataQuery) => {
     this.props.onQueriesChange(this.props.queries.filter((item) => item !== query));
   };
@@ -169,6 +176,16 @@ export class QueryEditorRows extends PureComponent<Props> {
     });
   };
 
+  setFocusedQueryRefId = (refId: string | null) => {
+    this.setState({ focusedQueryRefId: refId });
+    this.props.onFocusQuery?.(Boolean(refId));
+  };
+
+  toggleFocusedQuery = (refId: string) => {
+    const newFocusedRefId = this.state.focusedQueryRefId === refId ? null : refId;
+    this.setFocusedQueryRefId(newFocusedRefId);
+  };
+
   render() {
     const {
       dsSettings,
@@ -189,14 +206,26 @@ export class QueryEditorRows extends PureComponent<Props> {
       onCancelQueryLibraryEdit,
       isOpen,
     } = this.props;
+    const { focusedQueryRefId } = this.state;
+    const isFocused = Boolean(focusedQueryRefId);
+    const containerStyle = getStyles(isFocused);
 
     return (
       <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
           {(provided) => {
             return (
-              <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
+              <div
+                data-testid="query-editor-rows"
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={containerStyle}
+              >
                 {queries.map((query, index) => {
+                  // If a query is focused, don't render any other queries
+                  if (focusedQueryRefId && focusedQueryRefId !== query.refId) {
+                    return null;
+                  }
                   const dataSourceSettings = getDataSourceSettings(query, dsSettings);
                   const onChangeDataSourceSettings = dsSettings.meta.mixed
                     ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
@@ -229,6 +258,8 @@ export class QueryEditorRows extends PureComponent<Props> {
                       queryLibraryRef={queryLibraryRef}
                       onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
                       isOpen={isOpen}
+                      isFocused={focusedQueryRefId === query.refId}
+                      onFocusQuery={() => this.toggleFocusedQuery(query.refId)}
                     />
                   );
 
@@ -253,4 +284,18 @@ const getDataSourceSettings = (
   }
   const querySettings = getDataSourceSrv().getInstanceSettings(query.datasource);
   return querySettings || groupSettings;
+};
+
+// Styles for focused container - using static styles since this is a class component
+// Transitions are handled in the parent functional component where we have theme access
+const getStyles = (isFocused: boolean) => {
+  if (!isFocused) {
+    return undefined;
+  }
+  return css({
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    flex: '1 1 auto',
+  });
 };

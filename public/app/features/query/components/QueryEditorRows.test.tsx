@@ -1,6 +1,7 @@
-import { fireEvent, queryByLabelText, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, queryByLabelText, render, screen, waitFor, within } from '@testing-library/react';
 
 import type { DataSourceApi } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
 import { DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -251,13 +252,18 @@ describe('QueryEditorRows', () => {
 
     renderScenario({ onAddQuery, onQueryCopied });
     const queryEditorRows = await screen.findAllByTestId('query-editor-row');
-    queryEditorRows.map(async (childQuery) => {
-      const duplicateQueryButton = queryByLabelText(childQuery, 'Duplicate query') as HTMLElement;
 
-      expect(duplicateQueryButton).toBeInTheDocument();
+    for (const childQuery of queryEditorRows) {
+      // Open the actions menu
+      const actionsMenuButton = queryByLabelText(childQuery, 'Query actions menu') as HTMLElement;
+      expect(actionsMenuButton).toBeInTheDocument();
+      fireEvent.click(actionsMenuButton);
 
-      fireEvent.click(duplicateQueryButton);
-    });
+      // Click duplicate query in the menu
+      const duplicateMenuItem = await screen.findByText('Duplicate query');
+      expect(duplicateMenuItem).toBeInTheDocument();
+      fireEvent.click(duplicateMenuItem);
+    }
 
     expect(onAddQuery).toHaveBeenCalledTimes(queryEditorRows.length);
     expect(onQueryCopied).toHaveBeenCalledTimes(queryEditorRows.length);
@@ -269,13 +275,15 @@ describe('QueryEditorRows', () => {
     renderScenario({ onQueriesChange, onQueryRemoved });
 
     const queryEditorRows = await screen.findAllByTestId('query-editor-row');
-    queryEditorRows.map(async (childQuery) => {
-      const deleteQueryButton = queryByLabelText(childQuery, 'Remove query') as HTMLElement;
+    for (const childQuery of queryEditorRows) {
+      const deleteQueryButton = within(childQuery).getByTestId(
+        selectors.components.QueryEditorRow.actionButton('Remove query')
+      );
 
       expect(deleteQueryButton).toBeInTheDocument();
 
       fireEvent.click(deleteQueryButton);
-    });
+    }
 
     expect(onQueriesChange).toHaveBeenCalledTimes(queryEditorRows.length);
     expect(onQueryRemoved).toHaveBeenCalledTimes(queryEditorRows.length);
