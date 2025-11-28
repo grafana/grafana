@@ -160,42 +160,38 @@ export function ExploreMapCanvas() {
       // Update grid scale dynamically to maintain visibility at different zoom levels
       if (canvasRef.current) {
         const scale = ref.state.scale;
-        // Adjust grid size and line width based on zoom level to maintain visibility
-        // Formula: we want the rendered line to be at least 1px on screen
-        // So if scale = 0.17, and we want 1px visible, we need lineWidth / scale >= 1
-        // Therefore lineWidth >= 1 / scale
+        // Adjust grid size and dot size based on zoom level to maintain visibility
         let gridSize = 20;
-        let lineWidth = 1;
+        let dotSize = 1.5;
 
         if (scale < 0.8) {
           gridSize = 40;
-          lineWidth = 2;
+          dotSize = 3;
         }
         if (scale < 0.5) {
           gridSize = 80;
-          lineWidth = 3;
+          dotSize = 4;
         }
         if (scale < 0.3) {
           gridSize = 160;
-          lineWidth = 4;
+          dotSize = 6;
         }
         if (scale < 0.2) {
           gridSize = 200;
-          lineWidth = 6;
+          dotSize = 10;
         }
         if (scale < 0.15) {
           gridSize = 320;
-          lineWidth = 8;
+          dotSize = 14;
         }
         if (scale < 0.1) {
           gridSize = 640;
-          lineWidth = 12;
+          dotSize = 18;
         }
 
         canvasRef.current.style.backgroundSize = `${gridSize}px ${gridSize}px`;
         canvasRef.current.style.backgroundImage = `
-          linear-gradient(var(--grid-color) ${lineWidth}px, transparent ${lineWidth}px),
-          linear-gradient(90deg, var(--grid-color) ${lineWidth}px, transparent ${lineWidth}px)
+          radial-gradient(circle, var(--grid-color) ${dotSize}px, transparent ${dotSize}px)
         `;
       }
     },
@@ -290,11 +286,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '10000px',
       '--grid-color': theme.colors.border.weak,
       backgroundImage: `
-        linear-gradient(var(--grid-color) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px)
+        radial-gradient(circle, var(--grid-color) 1.5px, transparent 1.5px)
       `,
       backgroundSize: '20px 20px',
-      backgroundPosition: '-1px -1px',
     }),
     selectionRect: css({
       position: 'absolute',
