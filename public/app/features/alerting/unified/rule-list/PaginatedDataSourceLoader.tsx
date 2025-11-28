@@ -14,7 +14,7 @@ import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
-import { getDatasourceFilter } from './hooks/filters';
+import { getDatasourceFilter } from './hooks/datasourceFilter';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
