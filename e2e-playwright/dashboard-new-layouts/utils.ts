@@ -98,12 +98,18 @@ export async function checkRepeatedPanelTitles(
   dashboardPage: DashboardPage,
   selectors: E2ESelectorGroups,
   title: string,
-  options: Array<string | number>
+  options: Array<string | number>,
+  expectHidden = false
 ) {
   for (const option of options) {
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(`${title}${option}`))
-    ).toBeVisible();
+    const titleLocator = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Panel.title(`${title}${option}`)
+    );
+    if (expectHidden) {
+      await expect(titleLocator).toBeHidden();
+    } else {
+      await expect(titleLocator).toBeVisible();
+    }
   }
 }
 
