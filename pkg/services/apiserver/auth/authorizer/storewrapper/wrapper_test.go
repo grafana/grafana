@@ -41,7 +41,11 @@ func (f *FakeAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error
 
 func (f *FakeAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	args := f.Called(ctx, list)
-	return args.Get(0).(runtime.Object), args.Error(1)
+	var res runtime.Object
+	if args.Get(0) != nil {
+		res = args.Get(0).(runtime.Object)
+	}
+	return res, args.Error(1)
 }
 
 type fakeObject struct {
