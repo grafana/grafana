@@ -1,7 +1,7 @@
 // Libraries
 import $ from 'jquery';
 import { uniqBy } from 'lodash';
-import { PureComponent } from 'react';
+import { PureComponent, type JSX } from 'react';
 import * as React from 'react';
 
 // Types
