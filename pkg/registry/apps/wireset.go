@@ -2,6 +2,7 @@ package appregistry
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
@@ -27,5 +28,6 @@ var WireSet = wire.NewSet(
 	notifications.RegisterAppInstaller,
 	logsdrilldown.RegisterAppInstaller,
 	annotation.RegisterAppInstaller,
+	quotas.RegisterAppInstaller,
 	example.RegisterAppInstaller,
 )
