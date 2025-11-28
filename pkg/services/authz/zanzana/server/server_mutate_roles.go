@@ -68,21 +68,10 @@ func (s *Server) mutateRoles(ctx context.Context, store *storeInfo, operations [
 	return nil
 }
 
-func getRoleTuples(roleName string, rolePermissions []*authzextv1.RolePermission) ([]*openfgav1.TupleKey, error) {
-	permissions := make([]iamv0.RolespecPermission, len(rolePermissions))
-	for i, p := range rolePermissions {
-		permissions[i] = iamv0.RolespecPermission{
-			Action: p.Action,
-			Scope:  p.Scope,
-		}
-	}
-	return convertRolePermissionsToTuples(roleName, permissions)
-}
-
 // convertRolePermissionsToTuples converts role permissions (action/scope) to v1 TupleKey format
 // using the shared zanzana.ConvertRolePermissionsToTuples utility and common.ToAuthzExtTupleKeys
-func convertRolePermissionsToTuples(roleUID string, permissions []iamv0.RolespecPermission) ([]*openfgav1.TupleKey, error) {
-	// Convert IAM permissions to zanzana.RolePermission format
+func convertRolePermissionsToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*openfgav1.TupleKey, error) {
+	// Convert to zanzana.RolePermission
 	rolePerms := make([]zanzana.RolePermission, 0, len(permissions))
 	for _, perm := range permissions {
 		// Split the scope to get kind, attribute, identifier
