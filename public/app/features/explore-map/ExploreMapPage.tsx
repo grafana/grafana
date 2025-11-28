@@ -10,6 +10,7 @@ import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { ExploreMapCanvas } from './components/ExploreMapCanvas';
+import { ExploreMapFloatingToolbar } from './components/ExploreMapFloatingToolbar';
 import { ExploreMapToolbar } from './components/ExploreMapToolbar';
 import { TransformProvider } from './context/TransformContext';
 import { useCanvasPersistence } from './hooks/useCanvasPersistence';
@@ -38,6 +39,7 @@ export default function ExploreMapPage(props: GrafanaRouteComponentProps) {
           </h1>
           <ExploreMapToolbar />
           <ExploreMapCanvas />
+          <ExploreMapFloatingToolbar />
         </div>
       </TransformProvider>
     </ErrorBoundaryAlert>

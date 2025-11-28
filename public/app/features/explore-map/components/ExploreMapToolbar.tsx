@@ -3,12 +3,12 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, ButtonGroup, ConfirmModal, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { ButtonGroup, ConfirmModal, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { useTransformContext } from '../context/TransformContext';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
-import { addPanel, resetCanvas } from '../state/exploreMapSlice';
+import { resetCanvas } from '../state/exploreMapSlice';
 
 export function ExploreMapToolbar() {
   const styles = useStyles2(getStyles);
@@ -19,15 +19,6 @@ export function ExploreMapToolbar() {
 
   const panelCount = useSelector((state) => Object.keys(state.exploreMap.panels).length);
   const viewport = useSelector((state) => state.exploreMap.viewport);
-
-  const handleAddPanel = useCallback(() => {
-    dispatch(addPanel({
-      viewportSize: {
-        width: window.innerWidth,
-        height: window.innerHeight
-      }
-    }));
-  }, [dispatch]);
 
   const handleResetCanvas = useCallback(() => {
     setShowResetConfirm(true);
@@ -75,9 +66,6 @@ export function ExploreMapToolbar() {
     <>
       <div className={styles.toolbar}>
         <div className={styles.toolbarSection}>
-          <Button icon="plus" onClick={handleAddPanel} variant="primary">
-            <Trans i18nKey="explore-map.toolbar.add-panel">Add Panel</Trans>
-          </Button>
           <span className={styles.panelCount}>
             <Trans i18nKey="explore-map.toolbar.panel-count" values={{ count: panelCount }}>
               {{ count: panelCount }} panels
