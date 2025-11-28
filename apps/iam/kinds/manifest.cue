@@ -37,8 +37,8 @@ v0alpha1: {
 					request: {
 						query: {
 							query: string
-							limit?:  int64 | 30
-							offset?: int64 | 0
+							limit?:  int64 | 10
+							offset?: int64 | 1
 						}
 					}
 					responseMetadata: {
@@ -53,8 +53,11 @@ v0alpha1: {
 
 #UserHit: {
 	name: string
-	username: string
-	email:    string
 	title: string
+	login: string
+	email: string
+	role: string
+	lastSeenAt: string
+	provisioned: bool
 	score: float64
 }

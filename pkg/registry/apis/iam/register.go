@@ -43,8 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -69,7 +69,7 @@ func RegisterAPIService(
 	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
-	userService legacyuser.Service,
+	orgService org.Service,
 	tracer trace.Tracer,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
@@ -107,7 +107,7 @@ func RegisterAPIService(
 		dual:                        dual,
 		unified:                     unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-			unified, user.NewUserLegacySearchClient(userService), features),
+			unified, user.NewUserLegacySearchClient(orgService), features),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracer, builder.userSearchClient, features)
 

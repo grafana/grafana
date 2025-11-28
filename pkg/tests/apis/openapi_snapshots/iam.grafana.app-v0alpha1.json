@@ -918,11 +918,62 @@
         "operationId": "getSearchUser",
         "parameters": [
           {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          },
+          {
             "name": "query",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "number of results to return",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 10
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "page number (starting from 1)",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "sortable field",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "default sorting"
+              },
+              "-title": {
+                "summary": "title descending",
+                "value": "-title"
+              },
+              "title": {
+                "summary": "title ascending",
+                "value": "title"
+              }
             }
           }
         ],
@@ -5568,7 +5619,8 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec"
+          "spec",
+          "status"
         ],
         "properties": {
           "apiVersion": {
@@ -5593,6 +5645,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserSpec"
+              }
+            ]
+          },
+          "status": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserStatus"
               }
             ]
           }
@@ -5692,6 +5752,19 @@
           "title": {
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserStatus": {
+        "type": "object",
+        "required": [
+          "lastSeenAt"
+        ],
+        "properties": {
+          "lastSeenAt": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -7668,7 +7741,8 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec"
+          "spec",
+          "status"
         ],
         "properties": {
           "apiVersion": {
@@ -7685,6 +7759,9 @@
           "spec": {
             "description": "Spec is the spec of the User",
             "default": {}
+          },
+          "status": {
+            "default": {}
           }
         }
       },
@@ -7692,9 +7769,12 @@
         "type": "object",
         "required": [
           "name",
-          "username",
-          "email",
           "title",
+          "login",
+          "email",
+          "role",
+          "lastSeenAt",
+          "provisioned",
           "score"
         ],
         "properties": {
@@ -7702,7 +7782,23 @@
             "type": "string",
             "default": ""
           },
+          "lastSeenAt": {
+            "type": "string",
+            "default": ""
+          },
+          "login": {
+            "type": "string",
+            "default": ""
+          },
           "name": {
+            "type": "string",
+            "default": ""
+          },
+          "provisioned": {
+            "type": "boolean",
+            "default": false
+          },
+          "role": {
             "type": "string",
             "default": ""
           },
@@ -7712,10 +7808,6 @@
             "default": 0
           },
           "title": {
-            "type": "string",
-            "default": ""
-          },
-          "username": {
             "type": "string",
             "default": ""
           }
@@ -7796,50 +7888,14 @@
       },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserStatus": {
         "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {}
-            }
-          }
-        }
-      },
-      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserstatusOperatorState": {
-        "type": "object",
         "required": [
-          "lastEvaluation",
-          "state"
+          "lastSeenAt"
         ],
         "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-            "type": "string"
-          },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
+          "lastSeenAt": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },

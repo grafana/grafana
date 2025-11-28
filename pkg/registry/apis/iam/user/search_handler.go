@@ -6,6 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"slices"
+	"strconv"
+	"strings"
 
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/kube-openapi/pkg/common"
@@ -16,7 +19,9 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -68,6 +73,56 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Schema:   spec.StringProperty(),
 									},
 								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "limit",
+										In:          "query",
+										Description: "number of results to return",
+										Example:     10,
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "page",
+										In:          "query",
+										Description: "page number (starting from 1)",
+										Example:     1,
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "sort",
+										In:          "query",
+										Description: "sortable field",
+										Example:     "",
+										Examples: map[string]*spec3.Example{
+											"": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "default sorting",
+													Value:   "",
+												},
+											},
+											"title": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "title ascending",
+													Value:   "title",
+												},
+											},
+											"-title": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "title descending",
+													Value:   "-title",
+												},
+											},
+										},
+										Required: false,
+										Schema:   spec.StringProperty(),
+									},
+								},
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
@@ -110,6 +165,22 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pageStr := queryParams.Get("page")
+	page := int64(1)
+	if pageStr != "" {
+		if p, err := strconv.ParseInt(pageStr, 10, 64); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	limitStr := queryParams.Get("limit")
+	limit := int64(10)
+	if limitStr != "" {
+		if l, err := strconv.ParseInt(limitStr, 10, 64); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
 	userGvr := iamv0.UserResourceInfo.GroupResource()
 	request := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
@@ -120,7 +191,28 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		Query:  queryParams.Get("query"),
-		Fields: []string{"title", "fields.name", "fields.login"},
+		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole},
+		Limit:  limit,
+		Offset: (page - 1) * limit,
+	}
+
+	if queryParams.Has("sort") {
+		for _, sort := range queryParams["sort"] {
+			currField := sort
+			desc := false
+			if strings.HasPrefix(sort, "-") {
+				currField = sort[1:]
+				desc = true
+			}
+			if slices.Contains(builders.UserSortableFields, currField) {
+				sort = resource.SEARCH_FIELD_PREFIX + currField
+			}
+			s := &resourcepb.ResourceSearchRequest_Sort{
+				Field: sort,
+				Desc:  desc,
+			}
+			request.SortBy = append(request.SortBy, s)
+		}
 	}
 
 	resp, err := s.client.Search(ctx, request)
@@ -138,7 +230,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if resp.TotalHits > 0 {
 		for _, row := range resp.Results.Rows {
 			hit := iamv0.UserHit{
-				Name: row.Key.Name,
+				Name:       row.Key.Name,
+				Title:      string(row.Cells[0]),
+				Email:      string(row.Cells[1]),
+				Login:      string(row.Cells[2]),
+				LastSeenAt: string(row.Cells[3]),
+				Role:       string(row.Cells[4]),
 			}
 			result.Hits = append(result.Hits, hit)
 		}

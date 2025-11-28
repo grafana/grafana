@@ -1,6 +1,6 @@
 {
     "metadata": {
-        "name": "user-with-login-and-email",
+        "name": "with-login-and-email",
         "namespace": "default"
     },
     "spec": {

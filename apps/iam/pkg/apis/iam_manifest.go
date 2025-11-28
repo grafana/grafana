@@ -268,7 +268,27 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"lastSeenAt": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"login": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
 								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"provisioned": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"role": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},
@@ -283,17 +303,15 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
-								"username": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
 							},
 							Required: []string{
 								"name",
-								"username",
-								"email",
 								"title",
+								"login",
+								"email",
+								"role",
+								"lastSeenAt",
+								"provisioned",
 								"score",
 							},
 						},

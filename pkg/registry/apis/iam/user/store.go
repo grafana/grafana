@@ -293,10 +293,12 @@ func toUserItem(u *common.UserWithRole, ns string) iamv0alpha1.User {
 			Provisioned:   u.IsProvisioned,
 			Role:          u.Role,
 		},
+		Status: iamv0alpha1.UserStatus{
+			LastSeenAt: u.LastSeenAt.Unix(),
+		},
 	}
 	obj, _ := utils.MetaAccessor(item)
 	obj.SetUpdatedTimestamp(&u.Updated)
-	obj.SetAnnotation(AnnoKeyLastSeenAt, formatTime(&u.LastSeenAt))
 	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
 	return *item
 }

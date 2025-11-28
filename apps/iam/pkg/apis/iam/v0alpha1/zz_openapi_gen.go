@@ -80,7 +80,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserList":                                                          schema_pkg_apis_iam_v0alpha1_UserList(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserSpec":                                                          schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserStatus":                                                        schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
-		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserstatusOperatorState":                                           schema_pkg_apis_iam_v0alpha1_UserstatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping": schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping(ref),
 	}
 }
@@ -2767,12 +2766,18 @@ func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.Open
 							Ref:         ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserSpec"),
 						},
 					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserStatus"),
+						},
+					},
 				},
-				Required: []string{"metadata", "spec"},
+				Required: []string{"metadata", "spec", "status"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserSpec", "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -2789,7 +2794,14 @@ func schema_pkg_apis_iam_v0alpha1_UserHit(ref common.ReferenceCallback) common.O
 							Format:  "",
 						},
 					},
-					"username": {
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"login": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -2803,10 +2815,24 @@ func schema_pkg_apis_iam_v0alpha1_UserHit(ref common.ReferenceCallback) common.O
 							Format:  "",
 						},
 					},
-					"title": {
+					"role": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"lastSeenAt": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"provisioned": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
 							Format:  "",
 						},
 					},
@@ -2818,7 +2844,7 @@ func schema_pkg_apis_iam_v0alpha1_UserHit(ref common.ReferenceCallback) common.O
 						},
 					},
 				},
-				Required: []string{"name", "username", "email", "title", "score"},
+				Required: []string{"name", "title", "login", "email", "role", "lastSeenAt", "provisioned", "score"},
 			},
 		},
 	}
@@ -2947,90 +2973,15 @@ func schema_pkg_apis_iam_v0alpha1_UserStatus(ref common.ReferenceCallback) commo
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"operatorStates": {
+					"lastSeenAt": {
 						SchemaProps: spec.SchemaProps{
-							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserstatusOperatorState"),
-									},
-								},
-							},
-						},
-					},
-					"additionalFields": {
-						SchemaProps: spec.SchemaProps{
-							Description: "additionalFields is reserved for future use",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
 						},
 					},
 				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserstatusOperatorState"},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_UserstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"descriptiveState": {
-						SchemaProps: spec.SchemaProps{
-							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "details contains any extra information that is operator-specific",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"lastEvaluation", "state"},
+				Required: []string{"lastSeenAt"},
 			},
 		},
 	}
