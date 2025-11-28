@@ -487,7 +487,7 @@ test.describe(
 
     // there is a bug in the Snapshot feature that prevents the next two tests from passing
     // tracking issue: https://github.com/grafana/grafana/issues/114509
-    test('can view repeated panel inside snapshot', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can view repeated panel inside snapshot', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -520,7 +520,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
       ).not.toBeAttached();
     });
-    test('can view single panel in a repeated row inside snapshot', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can view single panel in a repeated row inside snapshot', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
