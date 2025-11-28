@@ -125,6 +125,8 @@ type MutateOperation struct {
 	//	*MutateOperation_AddUserOrgRole
 	//	*MutateOperation_CreateRoleBinding
 	//	*MutateOperation_DeleteRoleBinding
+	//	*MutateOperation_CreateTeamBinding
+	//	*MutateOperation_DeleteTeamBinding
 	Operation     isMutateOperation_Operation `protobuf_oneof:"operation"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -248,6 +250,24 @@ func (x *MutateOperation) GetDeleteRoleBinding() *DeleteRoleBindingOperation {
 	return nil
 }
 
+func (x *MutateOperation) GetCreateTeamBinding() *CreateTeamBindingOperation {
+	if x != nil {
+		if x, ok := x.Operation.(*MutateOperation_CreateTeamBinding); ok {
+			return x.CreateTeamBinding
+		}
+	}
+	return nil
+}
+
+func (x *MutateOperation) GetDeleteTeamBinding() *DeleteTeamBindingOperation {
+	if x != nil {
+		if x, ok := x.Operation.(*MutateOperation_DeleteTeamBinding); ok {
+			return x.DeleteTeamBinding
+		}
+	}
+	return nil
+}
+
 type isMutateOperation_Operation interface {
 	isMutateOperation_Operation()
 }
@@ -288,6 +308,14 @@ type MutateOperation_DeleteRoleBinding struct {
 	DeleteRoleBinding *DeleteRoleBindingOperation `protobuf:"bytes,9,opt,name=delete_role_binding,json=deleteRoleBinding,proto3,oneof"`
 }
 
+type MutateOperation_CreateTeamBinding struct {
+	CreateTeamBinding *CreateTeamBindingOperation `protobuf:"bytes,10,opt,name=create_team_binding,json=createTeamBinding,proto3,oneof"`
+}
+
+type MutateOperation_DeleteTeamBinding struct {
+	DeleteTeamBinding *DeleteTeamBindingOperation `protobuf:"bytes,11,opt,name=delete_team_binding,json=deleteTeamBinding,proto3,oneof"`
+}
+
 func (*MutateOperation_SetFolderParent) isMutateOperation_Operation() {}
 
 func (*MutateOperation_DeleteFolder) isMutateOperation_Operation() {}
@@ -305,6 +333,10 @@ func (*MutateOperation_AddUserOrgRole) isMutateOperation_Operation() {}
 func (*MutateOperation_CreateRoleBinding) isMutateOperation_Operation() {}
 
 func (*MutateOperation_DeleteRoleBinding) isMutateOperation_Operation() {}
+
+func (*MutateOperation_CreateTeamBinding) isMutateOperation_Operation() {}
+
+func (*MutateOperation_DeleteTeamBinding) isMutateOperation_Operation() {}
 
 type SetFolderParentOperation struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -843,6 +875,132 @@ func (x *DeleteRoleBindingOperation) GetRoleName() string {
 	return ""
 }
 
+type CreateTeamBindingOperation struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// uid of the identity
+	SubjectName string `protobuf:"bytes,1,opt,name=subject_name,json=subjectName,proto3" json:"subject_name,omitempty"`
+	// uid of the team
+	TeamName string `protobuf:"bytes,2,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`
+	// permission of the identity in the team (admin/member)
+	Permission    string `protobuf:"bytes,3,opt,name=permission,proto3" json:"permission,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateTeamBindingOperation) Reset() {
+	*x = CreateTeamBindingOperation{}
+	mi := &file_extention_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateTeamBindingOperation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateTeamBindingOperation) ProtoMessage() {}
+
+func (x *CreateTeamBindingOperation) ProtoReflect() protoreflect.Message {
+	mi := &file_extention_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateTeamBindingOperation.ProtoReflect.Descriptor instead.
+func (*CreateTeamBindingOperation) Descriptor() ([]byte, []int) {
+	return file_extention_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *CreateTeamBindingOperation) GetSubjectName() string {
+	if x != nil {
+		return x.SubjectName
+	}
+	return ""
+}
+
+func (x *CreateTeamBindingOperation) GetTeamName() string {
+	if x != nil {
+		return x.TeamName
+	}
+	return ""
+}
+
+func (x *CreateTeamBindingOperation) GetPermission() string {
+	if x != nil {
+		return x.Permission
+	}
+	return ""
+}
+
+type DeleteTeamBindingOperation struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// uid of the identity
+	SubjectName string `protobuf:"bytes,1,opt,name=subject_name,json=subjectName,proto3" json:"subject_name,omitempty"`
+	// uid of the team
+	TeamName string `protobuf:"bytes,2,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`
+	// permission of the identity in the team (admin/member)
+	Permission    string `protobuf:"bytes,3,opt,name=permission,proto3" json:"permission,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteTeamBindingOperation) Reset() {
+	*x = DeleteTeamBindingOperation{}
+	mi := &file_extention_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteTeamBindingOperation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteTeamBindingOperation) ProtoMessage() {}
+
+func (x *DeleteTeamBindingOperation) ProtoReflect() protoreflect.Message {
+	mi := &file_extention_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteTeamBindingOperation.ProtoReflect.Descriptor instead.
+func (*DeleteTeamBindingOperation) Descriptor() ([]byte, []int) {
+	return file_extention_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *DeleteTeamBindingOperation) GetSubjectName() string {
+	if x != nil {
+		return x.SubjectName
+	}
+	return ""
+}
+
+func (x *DeleteTeamBindingOperation) GetTeamName() string {
+	if x != nil {
+		return x.TeamName
+	}
+	return ""
+}
+
+func (x *DeleteTeamBindingOperation) GetPermission() string {
+	if x != nil {
+		return x.Permission
+	}
+	return ""
+}
+
 type Resource struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// group of the resource (e.g: "dashboard.grafana.app")
@@ -857,7 +1015,7 @@ type Resource struct {
 
 func (x *Resource) Reset() {
 	*x = Resource{}
-	mi := &file_extention_proto_msgTypes[12]
+	mi := &file_extention_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -869,7 +1027,7 @@ func (x *Resource) String() string {
 func (*Resource) ProtoMessage() {}
 
 func (x *Resource) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[12]
+	mi := &file_extention_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -882,7 +1040,7 @@ func (x *Resource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Resource.ProtoReflect.Descriptor instead.
 func (*Resource) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{12}
+	return file_extention_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Resource) GetGroup() string {
@@ -920,7 +1078,7 @@ type Permission struct {
 
 func (x *Permission) Reset() {
 	*x = Permission{}
-	mi := &file_extention_proto_msgTypes[13]
+	mi := &file_extention_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -932,7 +1090,7 @@ func (x *Permission) String() string {
 func (*Permission) ProtoMessage() {}
 
 func (x *Permission) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[13]
+	mi := &file_extention_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -945,7 +1103,7 @@ func (x *Permission) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Permission.ProtoReflect.Descriptor instead.
 func (*Permission) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{13}
+	return file_extention_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *Permission) GetKind() string {
@@ -981,7 +1139,7 @@ type TupleKey struct {
 
 func (x *TupleKey) Reset() {
 	*x = TupleKey{}
-	mi := &file_extention_proto_msgTypes[14]
+	mi := &file_extention_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -993,7 +1151,7 @@ func (x *TupleKey) String() string {
 func (*TupleKey) ProtoMessage() {}
 
 func (x *TupleKey) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[14]
+	mi := &file_extention_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1006,7 +1164,7 @@ func (x *TupleKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TupleKey.ProtoReflect.Descriptor instead.
 func (*TupleKey) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{14}
+	return file_extention_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *TupleKey) GetUser() string {
@@ -1047,7 +1205,7 @@ type Tuple struct {
 
 func (x *Tuple) Reset() {
 	*x = Tuple{}
-	mi := &file_extention_proto_msgTypes[15]
+	mi := &file_extention_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1059,7 +1217,7 @@ func (x *Tuple) String() string {
 func (*Tuple) ProtoMessage() {}
 
 func (x *Tuple) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[15]
+	mi := &file_extention_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1072,7 +1230,7 @@ func (x *Tuple) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tuple.ProtoReflect.Descriptor instead.
 func (*Tuple) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{15}
+	return file_extention_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Tuple) GetKey() *TupleKey {
@@ -1100,7 +1258,7 @@ type TupleKeyWithoutCondition struct {
 
 func (x *TupleKeyWithoutCondition) Reset() {
 	*x = TupleKeyWithoutCondition{}
-	mi := &file_extention_proto_msgTypes[16]
+	mi := &file_extention_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1112,7 +1270,7 @@ func (x *TupleKeyWithoutCondition) String() string {
 func (*TupleKeyWithoutCondition) ProtoMessage() {}
 
 func (x *TupleKeyWithoutCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[16]
+	mi := &file_extention_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1125,7 +1283,7 @@ func (x *TupleKeyWithoutCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TupleKeyWithoutCondition.ProtoReflect.Descriptor instead.
 func (*TupleKeyWithoutCondition) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{16}
+	return file_extention_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *TupleKeyWithoutCondition) GetUser() string {
@@ -1159,7 +1317,7 @@ type RelationshipCondition struct {
 
 func (x *RelationshipCondition) Reset() {
 	*x = RelationshipCondition{}
-	mi := &file_extention_proto_msgTypes[17]
+	mi := &file_extention_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1171,7 +1329,7 @@ func (x *RelationshipCondition) String() string {
 func (*RelationshipCondition) ProtoMessage() {}
 
 func (x *RelationshipCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[17]
+	mi := &file_extention_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1184,7 +1342,7 @@ func (x *RelationshipCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RelationshipCondition.ProtoReflect.Descriptor instead.
 func (*RelationshipCondition) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{17}
+	return file_extention_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *RelationshipCondition) GetName() string {
@@ -1213,7 +1371,7 @@ type ReadRequest struct {
 
 func (x *ReadRequest) Reset() {
 	*x = ReadRequest{}
-	mi := &file_extention_proto_msgTypes[18]
+	mi := &file_extention_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1225,7 +1383,7 @@ func (x *ReadRequest) String() string {
 func (*ReadRequest) ProtoMessage() {}
 
 func (x *ReadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[18]
+	mi := &file_extention_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1238,7 +1396,7 @@ func (x *ReadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadRequest.ProtoReflect.Descriptor instead.
 func (*ReadRequest) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{18}
+	return file_extention_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ReadRequest) GetNamespace() string {
@@ -1280,7 +1438,7 @@ type ReadRequestTupleKey struct {
 
 func (x *ReadRequestTupleKey) Reset() {
 	*x = ReadRequestTupleKey{}
-	mi := &file_extention_proto_msgTypes[19]
+	mi := &file_extention_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1292,7 +1450,7 @@ func (x *ReadRequestTupleKey) String() string {
 func (*ReadRequestTupleKey) ProtoMessage() {}
 
 func (x *ReadRequestTupleKey) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[19]
+	mi := &file_extention_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1305,7 +1463,7 @@ func (x *ReadRequestTupleKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadRequestTupleKey.ProtoReflect.Descriptor instead.
 func (*ReadRequestTupleKey) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{19}
+	return file_extention_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ReadRequestTupleKey) GetUser() string {
@@ -1339,7 +1497,7 @@ type ReadResponse struct {
 
 func (x *ReadResponse) Reset() {
 	*x = ReadResponse{}
-	mi := &file_extention_proto_msgTypes[20]
+	mi := &file_extention_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1351,7 +1509,7 @@ func (x *ReadResponse) String() string {
 func (*ReadResponse) ProtoMessage() {}
 
 func (x *ReadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[20]
+	mi := &file_extention_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1364,7 +1522,7 @@ func (x *ReadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadResponse.ProtoReflect.Descriptor instead.
 func (*ReadResponse) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{20}
+	return file_extention_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ReadResponse) GetTuples() []*Tuple {
@@ -1390,7 +1548,7 @@ type WriteRequestWrites struct {
 
 func (x *WriteRequestWrites) Reset() {
 	*x = WriteRequestWrites{}
-	mi := &file_extention_proto_msgTypes[21]
+	mi := &file_extention_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1402,7 +1560,7 @@ func (x *WriteRequestWrites) String() string {
 func (*WriteRequestWrites) ProtoMessage() {}
 
 func (x *WriteRequestWrites) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[21]
+	mi := &file_extention_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1415,7 +1573,7 @@ func (x *WriteRequestWrites) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteRequestWrites.ProtoReflect.Descriptor instead.
 func (*WriteRequestWrites) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{21}
+	return file_extention_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *WriteRequestWrites) GetTupleKeys() []*TupleKey {
@@ -1434,7 +1592,7 @@ type WriteRequestDeletes struct {
 
 func (x *WriteRequestDeletes) Reset() {
 	*x = WriteRequestDeletes{}
-	mi := &file_extention_proto_msgTypes[22]
+	mi := &file_extention_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1446,7 +1604,7 @@ func (x *WriteRequestDeletes) String() string {
 func (*WriteRequestDeletes) ProtoMessage() {}
 
 func (x *WriteRequestDeletes) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[22]
+	mi := &file_extention_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1459,7 +1617,7 @@ func (x *WriteRequestDeletes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteRequestDeletes.ProtoReflect.Descriptor instead.
 func (*WriteRequestDeletes) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{22}
+	return file_extention_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *WriteRequestDeletes) GetTupleKeys() []*TupleKeyWithoutCondition {
@@ -1480,7 +1638,7 @@ type WriteRequest struct {
 
 func (x *WriteRequest) Reset() {
 	*x = WriteRequest{}
-	mi := &file_extention_proto_msgTypes[23]
+	mi := &file_extention_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1492,7 +1650,7 @@ func (x *WriteRequest) String() string {
 func (*WriteRequest) ProtoMessage() {}
 
 func (x *WriteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[23]
+	mi := &file_extention_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1505,7 +1663,7 @@ func (x *WriteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteRequest.ProtoReflect.Descriptor instead.
 func (*WriteRequest) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{23}
+	return file_extention_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *WriteRequest) GetNamespace() string {
@@ -1537,7 +1695,7 @@ type WriteResponse struct {
 
 func (x *WriteResponse) Reset() {
 	*x = WriteResponse{}
-	mi := &file_extention_proto_msgTypes[24]
+	mi := &file_extention_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1549,7 +1707,7 @@ func (x *WriteResponse) String() string {
 func (*WriteResponse) ProtoMessage() {}
 
 func (x *WriteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[24]
+	mi := &file_extention_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1562,7 +1720,7 @@ func (x *WriteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteResponse.ProtoReflect.Descriptor instead.
 func (*WriteResponse) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{24}
+	return file_extention_proto_rawDescGZIP(), []int{26}
 }
 
 type BatchCheckRequest struct {
@@ -1576,7 +1734,7 @@ type BatchCheckRequest struct {
 
 func (x *BatchCheckRequest) Reset() {
 	*x = BatchCheckRequest{}
-	mi := &file_extention_proto_msgTypes[25]
+	mi := &file_extention_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1588,7 +1746,7 @@ func (x *BatchCheckRequest) String() string {
 func (*BatchCheckRequest) ProtoMessage() {}
 
 func (x *BatchCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[25]
+	mi := &file_extention_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1601,7 +1759,7 @@ func (x *BatchCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCheckRequest.ProtoReflect.Descriptor instead.
 func (*BatchCheckRequest) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{25}
+	return file_extention_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *BatchCheckRequest) GetSubject() string {
@@ -1639,7 +1797,7 @@ type BatchCheckItem struct {
 
 func (x *BatchCheckItem) Reset() {
 	*x = BatchCheckItem{}
-	mi := &file_extention_proto_msgTypes[26]
+	mi := &file_extention_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1651,7 +1809,7 @@ func (x *BatchCheckItem) String() string {
 func (*BatchCheckItem) ProtoMessage() {}
 
 func (x *BatchCheckItem) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[26]
+	mi := &file_extention_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1664,7 +1822,7 @@ func (x *BatchCheckItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCheckItem.ProtoReflect.Descriptor instead.
 func (*BatchCheckItem) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{26}
+	return file_extention_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *BatchCheckItem) GetVerb() string {
@@ -1718,7 +1876,7 @@ type BatchCheckResponse struct {
 
 func (x *BatchCheckResponse) Reset() {
 	*x = BatchCheckResponse{}
-	mi := &file_extention_proto_msgTypes[27]
+	mi := &file_extention_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1730,7 +1888,7 @@ func (x *BatchCheckResponse) String() string {
 func (*BatchCheckResponse) ProtoMessage() {}
 
 func (x *BatchCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[27]
+	mi := &file_extention_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1743,7 +1901,7 @@ func (x *BatchCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCheckResponse.ProtoReflect.Descriptor instead.
 func (*BatchCheckResponse) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{27}
+	return file_extention_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *BatchCheckResponse) GetGroups() map[string]*BatchCheckGroupResource {
@@ -1762,7 +1920,7 @@ type BatchCheckGroupResource struct {
 
 func (x *BatchCheckGroupResource) Reset() {
 	*x = BatchCheckGroupResource{}
-	mi := &file_extention_proto_msgTypes[28]
+	mi := &file_extention_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1774,7 +1932,7 @@ func (x *BatchCheckGroupResource) String() string {
 func (*BatchCheckGroupResource) ProtoMessage() {}
 
 func (x *BatchCheckGroupResource) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[28]
+	mi := &file_extention_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1787,7 +1945,7 @@ func (x *BatchCheckGroupResource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCheckGroupResource.ProtoReflect.Descriptor instead.
 func (*BatchCheckGroupResource) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{28}
+	return file_extention_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *BatchCheckGroupResource) GetItems() map[string]bool {
@@ -1807,7 +1965,7 @@ type QueryRequest struct {
 
 func (x *QueryRequest) Reset() {
 	*x = QueryRequest{}
-	mi := &file_extention_proto_msgTypes[29]
+	mi := &file_extention_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1819,7 +1977,7 @@ func (x *QueryRequest) String() string {
 func (*QueryRequest) ProtoMessage() {}
 
 func (x *QueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[29]
+	mi := &file_extention_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1832,7 +1990,7 @@ func (x *QueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRequest.ProtoReflect.Descriptor instead.
 func (*QueryRequest) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{29}
+	return file_extention_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *QueryRequest) GetNamespace() string {
@@ -1861,7 +2019,7 @@ type QueryResponse struct {
 
 func (x *QueryResponse) Reset() {
 	*x = QueryResponse{}
-	mi := &file_extention_proto_msgTypes[30]
+	mi := &file_extention_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1873,7 +2031,7 @@ func (x *QueryResponse) String() string {
 func (*QueryResponse) ProtoMessage() {}
 
 func (x *QueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[30]
+	mi := &file_extention_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1886,7 +2044,7 @@ func (x *QueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryResponse.ProtoReflect.Descriptor instead.
 func (*QueryResponse) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{30}
+	return file_extention_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *QueryResponse) GetResult() isQueryResponse_Result {
@@ -1927,7 +2085,7 @@ type QueryOperation struct {
 
 func (x *QueryOperation) Reset() {
 	*x = QueryOperation{}
-	mi := &file_extention_proto_msgTypes[31]
+	mi := &file_extention_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1939,7 +2097,7 @@ func (x *QueryOperation) String() string {
 func (*QueryOperation) ProtoMessage() {}
 
 func (x *QueryOperation) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[31]
+	mi := &file_extention_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1952,7 +2110,7 @@ func (x *QueryOperation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryOperation.ProtoReflect.Descriptor instead.
 func (*QueryOperation) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{31}
+	return file_extention_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *QueryOperation) GetOperation() isQueryOperation_Operation {
@@ -1991,7 +2149,7 @@ type GetFolderParentsQuery struct {
 
 func (x *GetFolderParentsQuery) Reset() {
 	*x = GetFolderParentsQuery{}
-	mi := &file_extention_proto_msgTypes[32]
+	mi := &file_extention_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2003,7 +2161,7 @@ func (x *GetFolderParentsQuery) String() string {
 func (*GetFolderParentsQuery) ProtoMessage() {}
 
 func (x *GetFolderParentsQuery) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[32]
+	mi := &file_extention_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2016,7 +2174,7 @@ func (x *GetFolderParentsQuery) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFolderParentsQuery.ProtoReflect.Descriptor instead.
 func (*GetFolderParentsQuery) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{32}
+	return file_extention_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GetFolderParentsQuery) GetFolder() string {
@@ -2036,7 +2194,7 @@ type GetFolderParentsResult struct {
 
 func (x *GetFolderParentsResult) Reset() {
 	*x = GetFolderParentsResult{}
-	mi := &file_extention_proto_msgTypes[33]
+	mi := &file_extention_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2048,7 +2206,7 @@ func (x *GetFolderParentsResult) String() string {
 func (*GetFolderParentsResult) ProtoMessage() {}
 
 func (x *GetFolderParentsResult) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[33]
+	mi := &file_extention_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2061,7 +2219,7 @@ func (x *GetFolderParentsResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFolderParentsResult.ProtoReflect.Descriptor instead.
 func (*GetFolderParentsResult) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{33}
+	return file_extention_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GetFolderParentsResult) GetParentUids() []string {
@@ -2090,7 +2248,7 @@ var file_extention_proto_rawDesc = string([]byte{
 	0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x75, 0x74,
 	0x61, 0x74, 0x65, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x6f, 0x70,
 	0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x10, 0x0a, 0x0e, 0x4d, 0x75, 0x74, 0x61,
-	0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xec, 0x06, 0x0a, 0x0f, 0x4d,
+	0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xb0, 0x08, 0x0a, 0x0f, 0x4d,
 	0x75, 0x74, 0x61, 0x74, 0x65, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x5a,
 	0x0a, 0x11, 0x73, 0x65, 0x74, 0x5f, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x5f, 0x70, 0x61, 0x72,
 	0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x61, 0x75, 0x74, 0x68,
@@ -2144,74 +2302,102 @@ var file_extention_proto_rawDesc = string([]byte{
 	0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c,
 	0x65, 0x74, 0x65, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x4f, 0x70,
 	0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x48, 0x00, 0x52, 0x11, 0x64, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x42, 0x0b, 0x0a, 0x09,
-	0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x73, 0x0a, 0x18, 0x53, 0x65, 0x74,
-	0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x50, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x4f, 0x70, 0x65, 0x72,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x16, 0x0a, 0x06, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x12, 0x16, 0x0a,
-	0x06, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x70,
-	0x61, 0x72, 0x65, 0x6e, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x5f,
-	0x65, 0x78, 0x69, 0x73, 0x74, 0x69, 0x6e, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0e,
-	0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x78, 0x69, 0x73, 0x74, 0x69, 0x6e, 0x67, 0x22, 0x70,
-	0x0a, 0x15, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x4f, 0x70,
-	0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x16, 0x0a, 0x06, 0x66, 0x6f, 0x6c, 0x64, 0x65,
-	0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x12,
-	0x16, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x06, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x64, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x5f, 0x65, 0x78, 0x69, 0x73, 0x74, 0x69, 0x6e, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08,
-	0x52, 0x0e, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x78, 0x69, 0x73, 0x74, 0x69, 0x6e, 0x67,
-	0x22, 0x95, 0x01, 0x0a, 0x19, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x65, 0x72, 0x6d, 0x69,
-	0x73, 0x73, 0x69, 0x6f, 0x6e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x38,
-	0x0a, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x1c, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69,
-	0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x08,
-	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x3e, 0x0a, 0x0a, 0x70, 0x65, 0x72, 0x6d,
-	0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x61,
+	0x65, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x12, 0x60, 0x0a, 0x13,
+	0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x5f, 0x74, 0x65, 0x61, 0x6d, 0x5f, 0x62, 0x69, 0x6e, 0x64,
+	0x69, 0x6e, 0x67, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2e, 0x2e, 0x61, 0x75, 0x74, 0x68,
+	0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67,
+	0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x48, 0x00, 0x52, 0x11, 0x63, 0x72, 0x65,
+	0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x12, 0x60,
+	0x0a, 0x13, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x5f, 0x74, 0x65, 0x61, 0x6d, 0x5f, 0x62, 0x69,
+	0x6e, 0x64, 0x69, 0x6e, 0x67, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2e, 0x2e, 0x61, 0x75,
+	0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31,
+	0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x42, 0x69, 0x6e, 0x64, 0x69,
+	0x6e, 0x67, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x48, 0x00, 0x52, 0x11, 0x64,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67,
+	0x42, 0x0b, 0x0a, 0x09, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x73, 0x0a,
+	0x18, 0x53, 0x65, 0x74, 0x46, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x50, 0x61, 0x72, 0x65, 0x6e, 0x74,
+	0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x16, 0x0a, 0x06, 0x66, 0x6f, 0x6c,
+	0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x66, 0x6f, 0x6c, 0x64, 0x65,
+	0x72, 0x12, 0x16, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x06, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x64, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x5f, 0x65, 0x78, 0x69, 0x73, 0x74, 0x69, 0x6e, 0x67, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x0e, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x78, 0x69, 0x73, 0x74, 0x69,
+	0x6e, 0x67, 0x22, 0x70, 0x0a, 0x15, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x6f, 0x6c, 0x64,
+	0x65, 0x72, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x16, 0x0a, 0x06, 0x66,
+	0x6f, 0x6c, 0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x66, 0x6f, 0x6c,
+	0x64, 0x65, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x06, 0x70, 0x61, 0x72, 0x65, 0x6e, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x64,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x5f, 0x65, 0x78, 0x69, 0x73, 0x74, 0x69, 0x6e, 0x67, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x0e, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x78, 0x69, 0x73,
+	0x74, 0x69, 0x6e, 0x67, 0x22, 0x95, 0x01, 0x0a, 0x19, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50,
+	0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x12, 0x38, 0x0a, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74,
+	0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x52, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x3e, 0x0a, 0x0a,
+	0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x1e, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69,
+	0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e,
+	0x52, 0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x22, 0x95, 0x01, 0x0a,
+	0x19, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f,
+	0x6e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x38, 0x0a, 0x08, 0x72, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x61,
 	0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76,
-	0x31, 0x2e, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x65,
-	0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x22, 0x95, 0x01, 0x0a, 0x19, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x4f, 0x70, 0x65,
-	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x38, 0x0a, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a,
-	0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
-	0x12, 0x3e, 0x0a, 0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74,
-	0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73,
-	0x73, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e,
-	0x22, 0x41, 0x0a, 0x17, 0x41, 0x64, 0x64, 0x55, 0x73, 0x65, 0x72, 0x4f, 0x72, 0x67, 0x52, 0x6f,
+	0x31, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x08, 0x72, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x12, 0x3e, 0x0a, 0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69,
+	0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a,
+	0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x65,
+	0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73,
+	0x73, 0x69, 0x6f, 0x6e, 0x22, 0x41, 0x0a, 0x17, 0x41, 0x64, 0x64, 0x55, 0x73, 0x65, 0x72, 0x4f,
+	0x72, 0x67, 0x52, 0x6f, 0x6c, 0x65, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12,
+	0x12, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x75,
+	0x73, 0x65, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22, 0x44, 0x0a, 0x1a, 0x55, 0x70, 0x64, 0x61, 0x74,
+	0x65, 0x55, 0x73, 0x65, 0x72, 0x4f, 0x72, 0x67, 0x52, 0x6f, 0x6c, 0x65, 0x4f, 0x70, 0x65, 0x72,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x75, 0x73, 0x65, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x6f, 0x6c,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22, 0x44, 0x0a,
+	0x1a, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x4f, 0x72, 0x67, 0x52, 0x6f,
 	0x6c, 0x65, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x75,
 	0x73, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x75, 0x73, 0x65, 0x72, 0x12,
 	0x12, 0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72,
-	0x6f, 0x6c, 0x65, 0x22, 0x44, 0x0a, 0x1a, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x55, 0x73, 0x65,
-	0x72, 0x4f, 0x72, 0x67, 0x52, 0x6f, 0x6c, 0x65, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x12, 0x12, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x04, 0x75, 0x73, 0x65, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22, 0x44, 0x0a, 0x1a, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x4f, 0x72, 0x67, 0x52, 0x6f, 0x6c, 0x65, 0x4f, 0x70,
-	0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x75, 0x73, 0x65, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x72,
-	0x6f, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22,
-	0x9c, 0x01, 0x0a, 0x1a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x69,
-	0x6e, 0x64, 0x69, 0x6e, 0x67, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x21,
-	0x0a, 0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x6b, 0x69, 0x6e, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x4b, 0x69, 0x6e,
-	0x64, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x6e, 0x61, 0x6d,
-	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74,
-	0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x6b, 0x69, 0x6e,
-	0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x6f, 0x6c, 0x65, 0x4b, 0x69, 0x6e,
-	0x64, 0x12, 0x1b, 0x0a, 0x09, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x04,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x6f, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x9c,
-	0x01, 0x0a, 0x1a, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x69, 0x6e,
+	0x6f, 0x6c, 0x65, 0x22, 0x9c, 0x01, 0x0a, 0x1a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x6f,
+	0x6c, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x6b, 0x69,
+	0x6e, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63,
+	0x74, 0x4b, 0x69, 0x6e, 0x64, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74,
+	0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62,
+	0x6a, 0x65, 0x63, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x72, 0x6f, 0x6c, 0x65,
+	0x5f, 0x6b, 0x69, 0x6e, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x6f, 0x6c,
+	0x65, 0x4b, 0x69, 0x6e, 0x64, 0x12, 0x1b, 0x0a, 0x09, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x6e, 0x61,
+	0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x6f, 0x6c, 0x65, 0x4e, 0x61,
+	0x6d, 0x65, 0x22, 0x9c, 0x01, 0x0a, 0x1a, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x6f, 0x6c,
+	0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x6b, 0x69, 0x6e,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74,
+	0x4b, 0x69, 0x6e, 0x64, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f,
+	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62, 0x6a,
+	0x65, 0x63, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x72, 0x6f, 0x6c, 0x65, 0x5f,
+	0x6b, 0x69, 0x6e, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x6f, 0x6c, 0x65,
+	0x4b, 0x69, 0x6e, 0x64, 0x12, 0x1b, 0x0a, 0x09, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x6e, 0x61, 0x6d,
+	0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x6f, 0x6c, 0x65, 0x4e, 0x61, 0x6d,
+	0x65, 0x22, 0x7c, 0x0a, 0x1a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x42,
+	0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12,
+	0x21, 0x0a, 0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x4e, 0x61,
+	0x6d, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x74, 0x65, 0x61, 0x6d, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x74, 0x65, 0x61, 0x6d, 0x4e, 0x61, 0x6d, 0x65, 0x12,
+	0x1e, 0x0a, 0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x22,
+	0x7c, 0x0a, 0x1a, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x42, 0x69, 0x6e,
 	0x64, 0x69, 0x6e, 0x67, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x21, 0x0a,
-	0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x6b, 0x69, 0x6e, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x4b, 0x69, 0x6e, 0x64,
-	0x12, 0x21, 0x0a, 0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x4e,
-	0x61, 0x6d, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x6b, 0x69, 0x6e, 0x64,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x6f, 0x6c, 0x65, 0x4b, 0x69, 0x6e, 0x64,
-	0x12, 0x1b, 0x0a, 0x09, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x6f, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x50, 0x0a,
+	0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x4e, 0x61, 0x6d, 0x65,
+	0x12, 0x1b, 0x0a, 0x09, 0x74, 0x65, 0x61, 0x6d, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x08, 0x74, 0x65, 0x61, 0x6d, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1e, 0x0a,
+	0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x22, 0x50, 0x0a,
 	0x08, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f,
 	0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x12,
 	0x1a, 0x0a, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
@@ -2417,7 +2603,7 @@ func file_extention_proto_rawDescGZIP() []byte {
 	return file_extention_proto_rawDescData
 }
 
-var file_extention_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_extention_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_extention_proto_goTypes = []any{
 	(*MutateRequest)(nil),              // 0: authz.extention.v1.MutateRequest
 	(*MutateResponse)(nil),             // 1: authz.extention.v1.MutateResponse
@@ -2431,33 +2617,35 @@ var file_extention_proto_goTypes = []any{
 	(*DeleteUserOrgRoleOperation)(nil), // 9: authz.extention.v1.DeleteUserOrgRoleOperation
 	(*CreateRoleBindingOperation)(nil), // 10: authz.extention.v1.CreateRoleBindingOperation
 	(*DeleteRoleBindingOperation)(nil), // 11: authz.extention.v1.DeleteRoleBindingOperation
-	(*Resource)(nil),                   // 12: authz.extention.v1.Resource
-	(*Permission)(nil),                 // 13: authz.extention.v1.Permission
-	(*TupleKey)(nil),                   // 14: authz.extention.v1.TupleKey
-	(*Tuple)(nil),                      // 15: authz.extention.v1.Tuple
-	(*TupleKeyWithoutCondition)(nil),   // 16: authz.extention.v1.TupleKeyWithoutCondition
-	(*RelationshipCondition)(nil),      // 17: authz.extention.v1.RelationshipCondition
-	(*ReadRequest)(nil),                // 18: authz.extention.v1.ReadRequest
-	(*ReadRequestTupleKey)(nil),        // 19: authz.extention.v1.ReadRequestTupleKey
-	(*ReadResponse)(nil),               // 20: authz.extention.v1.ReadResponse
-	(*WriteRequestWrites)(nil),         // 21: authz.extention.v1.WriteRequestWrites
-	(*WriteRequestDeletes)(nil),        // 22: authz.extention.v1.WriteRequestDeletes
-	(*WriteRequest)(nil),               // 23: authz.extention.v1.WriteRequest
-	(*WriteResponse)(nil),              // 24: authz.extention.v1.WriteResponse
-	(*BatchCheckRequest)(nil),          // 25: authz.extention.v1.BatchCheckRequest
-	(*BatchCheckItem)(nil),             // 26: authz.extention.v1.BatchCheckItem
-	(*BatchCheckResponse)(nil),         // 27: authz.extention.v1.BatchCheckResponse
-	(*BatchCheckGroupResource)(nil),    // 28: authz.extention.v1.BatchCheckGroupResource
-	(*QueryRequest)(nil),               // 29: authz.extention.v1.QueryRequest
-	(*QueryResponse)(nil),              // 30: authz.extention.v1.QueryResponse
-	(*QueryOperation)(nil),             // 31: authz.extention.v1.QueryOperation
-	(*GetFolderParentsQuery)(nil),      // 32: authz.extention.v1.GetFolderParentsQuery
-	(*GetFolderParentsResult)(nil),     // 33: authz.extention.v1.GetFolderParentsResult
-	nil,                                // 34: authz.extention.v1.BatchCheckResponse.GroupsEntry
-	nil,                                // 35: authz.extention.v1.BatchCheckGroupResource.ItemsEntry
-	(*timestamppb.Timestamp)(nil),      // 36: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),            // 37: google.protobuf.Struct
-	(*wrapperspb.Int32Value)(nil),      // 38: google.protobuf.Int32Value
+	(*CreateTeamBindingOperation)(nil), // 12: authz.extention.v1.CreateTeamBindingOperation
+	(*DeleteTeamBindingOperation)(nil), // 13: authz.extention.v1.DeleteTeamBindingOperation
+	(*Resource)(nil),                   // 14: authz.extention.v1.Resource
+	(*Permission)(nil),                 // 15: authz.extention.v1.Permission
+	(*TupleKey)(nil),                   // 16: authz.extention.v1.TupleKey
+	(*Tuple)(nil),                      // 17: authz.extention.v1.Tuple
+	(*TupleKeyWithoutCondition)(nil),   // 18: authz.extention.v1.TupleKeyWithoutCondition
+	(*RelationshipCondition)(nil),      // 19: authz.extention.v1.RelationshipCondition
+	(*ReadRequest)(nil),                // 20: authz.extention.v1.ReadRequest
+	(*ReadRequestTupleKey)(nil),        // 21: authz.extention.v1.ReadRequestTupleKey
+	(*ReadResponse)(nil),               // 22: authz.extention.v1.ReadResponse
+	(*WriteRequestWrites)(nil),         // 23: authz.extention.v1.WriteRequestWrites
+	(*WriteRequestDeletes)(nil),        // 24: authz.extention.v1.WriteRequestDeletes
+	(*WriteRequest)(nil),               // 25: authz.extention.v1.WriteRequest
+	(*WriteResponse)(nil),              // 26: authz.extention.v1.WriteResponse
+	(*BatchCheckRequest)(nil),          // 27: authz.extention.v1.BatchCheckRequest
+	(*BatchCheckItem)(nil),             // 28: authz.extention.v1.BatchCheckItem
+	(*BatchCheckResponse)(nil),         // 29: authz.extention.v1.BatchCheckResponse
+	(*BatchCheckGroupResource)(nil),    // 30: authz.extention.v1.BatchCheckGroupResource
+	(*QueryRequest)(nil),               // 31: authz.extention.v1.QueryRequest
+	(*QueryResponse)(nil),              // 32: authz.extention.v1.QueryResponse
+	(*QueryOperation)(nil),             // 33: authz.extention.v1.QueryOperation
+	(*GetFolderParentsQuery)(nil),      // 34: authz.extention.v1.GetFolderParentsQuery
+	(*GetFolderParentsResult)(nil),     // 35: authz.extention.v1.GetFolderParentsResult
+	nil,                                // 36: authz.extention.v1.BatchCheckResponse.GroupsEntry
+	nil,                                // 37: authz.extention.v1.BatchCheckGroupResource.ItemsEntry
+	(*timestamppb.Timestamp)(nil),      // 38: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),            // 39: google.protobuf.Struct
+	(*wrapperspb.Int32Value)(nil),      // 40: google.protobuf.Int32Value
 }
 var file_extention_proto_depIdxs = []int32{
 	2,  // 0: authz.extention.v1.MutateRequest.operations:type_name -> authz.extention.v1.MutateOperation
@@ -2470,43 +2658,45 @@ var file_extention_proto_depIdxs = []int32{
 	7,  // 7: authz.extention.v1.MutateOperation.add_user_org_role:type_name -> authz.extention.v1.AddUserOrgRoleOperation
 	10, // 8: authz.extention.v1.MutateOperation.create_role_binding:type_name -> authz.extention.v1.CreateRoleBindingOperation
 	11, // 9: authz.extention.v1.MutateOperation.delete_role_binding:type_name -> authz.extention.v1.DeleteRoleBindingOperation
-	12, // 10: authz.extention.v1.CreatePermissionOperation.resource:type_name -> authz.extention.v1.Resource
-	13, // 11: authz.extention.v1.CreatePermissionOperation.permission:type_name -> authz.extention.v1.Permission
-	12, // 12: authz.extention.v1.DeletePermissionOperation.resource:type_name -> authz.extention.v1.Resource
-	13, // 13: authz.extention.v1.DeletePermissionOperation.permission:type_name -> authz.extention.v1.Permission
-	17, // 14: authz.extention.v1.TupleKey.condition:type_name -> authz.extention.v1.RelationshipCondition
-	14, // 15: authz.extention.v1.Tuple.key:type_name -> authz.extention.v1.TupleKey
-	36, // 16: authz.extention.v1.Tuple.timestamp:type_name -> google.protobuf.Timestamp
-	37, // 17: authz.extention.v1.RelationshipCondition.context:type_name -> google.protobuf.Struct
-	19, // 18: authz.extention.v1.ReadRequest.tuple_key:type_name -> authz.extention.v1.ReadRequestTupleKey
-	38, // 19: authz.extention.v1.ReadRequest.page_size:type_name -> google.protobuf.Int32Value
-	15, // 20: authz.extention.v1.ReadResponse.tuples:type_name -> authz.extention.v1.Tuple
-	14, // 21: authz.extention.v1.WriteRequestWrites.tuple_keys:type_name -> authz.extention.v1.TupleKey
-	16, // 22: authz.extention.v1.WriteRequestDeletes.tuple_keys:type_name -> authz.extention.v1.TupleKeyWithoutCondition
-	21, // 23: authz.extention.v1.WriteRequest.writes:type_name -> authz.extention.v1.WriteRequestWrites
-	22, // 24: authz.extention.v1.WriteRequest.deletes:type_name -> authz.extention.v1.WriteRequestDeletes
-	26, // 25: authz.extention.v1.BatchCheckRequest.items:type_name -> authz.extention.v1.BatchCheckItem
-	34, // 26: authz.extention.v1.BatchCheckResponse.groups:type_name -> authz.extention.v1.BatchCheckResponse.GroupsEntry
-	35, // 27: authz.extention.v1.BatchCheckGroupResource.items:type_name -> authz.extention.v1.BatchCheckGroupResource.ItemsEntry
-	31, // 28: authz.extention.v1.QueryRequest.operation:type_name -> authz.extention.v1.QueryOperation
-	33, // 29: authz.extention.v1.QueryResponse.folder_parents:type_name -> authz.extention.v1.GetFolderParentsResult
-	32, // 30: authz.extention.v1.QueryOperation.get_folder_parents:type_name -> authz.extention.v1.GetFolderParentsQuery
-	28, // 31: authz.extention.v1.BatchCheckResponse.GroupsEntry.value:type_name -> authz.extention.v1.BatchCheckGroupResource
-	25, // 32: authz.extention.v1.AuthzExtentionService.BatchCheck:input_type -> authz.extention.v1.BatchCheckRequest
-	18, // 33: authz.extention.v1.AuthzExtentionService.Read:input_type -> authz.extention.v1.ReadRequest
-	23, // 34: authz.extention.v1.AuthzExtentionService.Write:input_type -> authz.extention.v1.WriteRequest
-	0,  // 35: authz.extention.v1.AuthzExtentionService.Mutate:input_type -> authz.extention.v1.MutateRequest
-	29, // 36: authz.extention.v1.AuthzExtentionService.Query:input_type -> authz.extention.v1.QueryRequest
-	27, // 37: authz.extention.v1.AuthzExtentionService.BatchCheck:output_type -> authz.extention.v1.BatchCheckResponse
-	20, // 38: authz.extention.v1.AuthzExtentionService.Read:output_type -> authz.extention.v1.ReadResponse
-	24, // 39: authz.extention.v1.AuthzExtentionService.Write:output_type -> authz.extention.v1.WriteResponse
-	1,  // 40: authz.extention.v1.AuthzExtentionService.Mutate:output_type -> authz.extention.v1.MutateResponse
-	30, // 41: authz.extention.v1.AuthzExtentionService.Query:output_type -> authz.extention.v1.QueryResponse
-	37, // [37:42] is the sub-list for method output_type
-	32, // [32:37] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	12, // 10: authz.extention.v1.MutateOperation.create_team_binding:type_name -> authz.extention.v1.CreateTeamBindingOperation
+	13, // 11: authz.extention.v1.MutateOperation.delete_team_binding:type_name -> authz.extention.v1.DeleteTeamBindingOperation
+	14, // 12: authz.extention.v1.CreatePermissionOperation.resource:type_name -> authz.extention.v1.Resource
+	15, // 13: authz.extention.v1.CreatePermissionOperation.permission:type_name -> authz.extention.v1.Permission
+	14, // 14: authz.extention.v1.DeletePermissionOperation.resource:type_name -> authz.extention.v1.Resource
+	15, // 15: authz.extention.v1.DeletePermissionOperation.permission:type_name -> authz.extention.v1.Permission
+	19, // 16: authz.extention.v1.TupleKey.condition:type_name -> authz.extention.v1.RelationshipCondition
+	16, // 17: authz.extention.v1.Tuple.key:type_name -> authz.extention.v1.TupleKey
+	38, // 18: authz.extention.v1.Tuple.timestamp:type_name -> google.protobuf.Timestamp
+	39, // 19: authz.extention.v1.RelationshipCondition.context:type_name -> google.protobuf.Struct
+	21, // 20: authz.extention.v1.ReadRequest.tuple_key:type_name -> authz.extention.v1.ReadRequestTupleKey
+	40, // 21: authz.extention.v1.ReadRequest.page_size:type_name -> google.protobuf.Int32Value
+	17, // 22: authz.extention.v1.ReadResponse.tuples:type_name -> authz.extention.v1.Tuple
+	16, // 23: authz.extention.v1.WriteRequestWrites.tuple_keys:type_name -> authz.extention.v1.TupleKey
+	18, // 24: authz.extention.v1.WriteRequestDeletes.tuple_keys:type_name -> authz.extention.v1.TupleKeyWithoutCondition
+	23, // 25: authz.extention.v1.WriteRequest.writes:type_name -> authz.extention.v1.WriteRequestWrites
+	24, // 26: authz.extention.v1.WriteRequest.deletes:type_name -> authz.extention.v1.WriteRequestDeletes
+	28, // 27: authz.extention.v1.BatchCheckRequest.items:type_name -> authz.extention.v1.BatchCheckItem
+	36, // 28: authz.extention.v1.BatchCheckResponse.groups:type_name -> authz.extention.v1.BatchCheckResponse.GroupsEntry
+	37, // 29: authz.extention.v1.BatchCheckGroupResource.items:type_name -> authz.extention.v1.BatchCheckGroupResource.ItemsEntry
+	33, // 30: authz.extention.v1.QueryRequest.operation:type_name -> authz.extention.v1.QueryOperation
+	35, // 31: authz.extention.v1.QueryResponse.folder_parents:type_name -> authz.extention.v1.GetFolderParentsResult
+	34, // 32: authz.extention.v1.QueryOperation.get_folder_parents:type_name -> authz.extention.v1.GetFolderParentsQuery
+	30, // 33: authz.extention.v1.BatchCheckResponse.GroupsEntry.value:type_name -> authz.extention.v1.BatchCheckGroupResource
+	27, // 34: authz.extention.v1.AuthzExtentionService.BatchCheck:input_type -> authz.extention.v1.BatchCheckRequest
+	20, // 35: authz.extention.v1.AuthzExtentionService.Read:input_type -> authz.extention.v1.ReadRequest
+	25, // 36: authz.extention.v1.AuthzExtentionService.Write:input_type -> authz.extention.v1.WriteRequest
+	0,  // 37: authz.extention.v1.AuthzExtentionService.Mutate:input_type -> authz.extention.v1.MutateRequest
+	31, // 38: authz.extention.v1.AuthzExtentionService.Query:input_type -> authz.extention.v1.QueryRequest
+	29, // 39: authz.extention.v1.AuthzExtentionService.BatchCheck:output_type -> authz.extention.v1.BatchCheckResponse
+	22, // 40: authz.extention.v1.AuthzExtentionService.Read:output_type -> authz.extention.v1.ReadResponse
+	26, // 41: authz.extention.v1.AuthzExtentionService.Write:output_type -> authz.extention.v1.WriteResponse
+	1,  // 42: authz.extention.v1.AuthzExtentionService.Mutate:output_type -> authz.extention.v1.MutateResponse
+	32, // 43: authz.extention.v1.AuthzExtentionService.Query:output_type -> authz.extention.v1.QueryResponse
+	39, // [39:44] is the sub-list for method output_type
+	34, // [34:39] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_extention_proto_init() }
@@ -2524,11 +2714,13 @@ func file_extention_proto_init() {
 		(*MutateOperation_AddUserOrgRole)(nil),
 		(*MutateOperation_CreateRoleBinding)(nil),
 		(*MutateOperation_DeleteRoleBinding)(nil),
+		(*MutateOperation_CreateTeamBinding)(nil),
+		(*MutateOperation_DeleteTeamBinding)(nil),
 	}
-	file_extention_proto_msgTypes[30].OneofWrappers = []any{
+	file_extention_proto_msgTypes[32].OneofWrappers = []any{
 		(*QueryResponse_FolderParents)(nil),
 	}
-	file_extention_proto_msgTypes[31].OneofWrappers = []any{
+	file_extention_proto_msgTypes[33].OneofWrappers = []any{
 		(*QueryOperation_GetFolderParents)(nil),
 	}
 	type x struct{}
@@ -2537,7 +2729,7 @@ func file_extention_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_extention_proto_rawDesc), len(file_extention_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   36,
+			NumMessages:   38,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
