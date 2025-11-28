@@ -3,16 +3,16 @@
 package v1alpha1
 
 // +k8s:openapi-gen=true
-type LogsDrilldownSpec struct {
+type LogsDrilldownDefaultsSpec struct {
 	DefaultFields      []string `json:"defaultFields"`
 	PrettifyJSON       bool     `json:"prettifyJSON"`
 	WrapLogMessage     bool     `json:"wrapLogMessage"`
 	InterceptDismissed bool     `json:"interceptDismissed"`
 }
 
-// NewLogsDrilldownSpec creates a new LogsDrilldownSpec object.
-func NewLogsDrilldownSpec() *LogsDrilldownSpec {
-	return &LogsDrilldownSpec{
+// NewLogsDrilldownDefaultsSpec creates a new LogsDrilldownDefaultsSpec object.
+func NewLogsDrilldownDefaultsSpec() *LogsDrilldownDefaultsSpec {
+	return &LogsDrilldownDefaultsSpec{
 		DefaultFields: []string{},
 	}
 }
