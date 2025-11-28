@@ -70,13 +70,19 @@ describe('CommunityDashboardSection', () => {
     mockFetchCommunityDashboards.mockResolvedValue({
       page: 1,
       pages: 5,
-      items: [createMockGnetDashboard()],
+      items: [
+        createMockGnetDashboard(),
+        createMockGnetDashboard({ id: 2, name: 'Test Dashboard 2' }),
+        createMockGnetDashboard({ id: 3, name: 'Test Dashboard 3' }),
+      ],
     });
 
     await setup();
 
     await waitFor(() => {
       expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+      expect(screen.getByText('Test Dashboard 2')).toBeInTheDocument();
+      expect(screen.getByText('Test Dashboard 3')).toBeInTheDocument();
     });
   });
 
