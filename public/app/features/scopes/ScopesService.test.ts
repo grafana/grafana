@@ -117,6 +117,7 @@ describe('ScopesService', () => {
       expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
     });
 
+    // TODO: remove when parentNodeId is removed
     it('should ignore scope_parent from URL (only used for recent scopes)', () => {
       locationService.getLocation = jest.fn().mockReturnValue({
         pathname: '/test',
@@ -129,6 +130,7 @@ describe('ScopesService', () => {
       expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, undefined, false);
     });
 
+    // TODO: remove when parentNodeId is removed
     it('should only use scope_node when both scope_node and scope_parent exist in URL', () => {
       locationService.getLocation = jest.fn().mockReturnValue({
         pathname: '/test',
@@ -154,6 +156,7 @@ describe('ScopesService', () => {
       expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith('node1', expect.anything());
     });
 
+    // TODO: remove when parentNodeId is removed
     it('should not preload when only scope_parent is in URL', () => {
       locationService.getLocation = jest.fn().mockReturnValue({
         pathname: '/test',
