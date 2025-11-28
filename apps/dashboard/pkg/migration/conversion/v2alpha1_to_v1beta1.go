@@ -679,6 +679,12 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	}
 	panel["targets"] = targets
 
+	// Detect mixed datasource - set panel.datasource to "mixed" if queries use different datasources
+	// This matches the frontend behavior in getPanelDataSource (layoutSerializers/utils.ts)
+	if mixedDS := detectMixedDatasource(spec.Data.Spec.Queries, dsIndex); mixedDS != nil {
+		panel["datasource"] = mixedDS
+	}
+
 	// Convert transformations
 	if len(spec.Data.Spec.Transformations) > 0 {
 		transformations := make([]map[string]interface{}, 0, len(spec.Data.Spec.Transformations))
@@ -846,6 +852,99 @@ func resolveDatasourceForVariable(explicitDS *dashv2alpha1.DashboardDataSourceRe
 func resolveDatasourceForAnnotation(explicitDS *dashv2alpha1.DashboardDataSourceRef, queryKind string, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
 	// Use the same resolution logic as variables
 	return resolveDatasourceForVariable(explicitDS, queryKind, dsIndex)
+}
+
+// detectMixedDatasource checks if panel queries use different datasources.
+// Returns a mixed datasource reference if queries use different datasources, nil otherwise.
+// This matches the frontend behavior in getPanelDataSource (layoutSerializers/utils.ts).
+//
+// The logic mirrors the frontend:
+// - If query has explicit datasource.uid, use { uid, type } from it
+// - Otherwise, resolve via dsIndex (similar to frontend's getRuntimePanelDataSource → getDataSourceForQuery)
+// - Compare resolved datasources to detect mixed mode
+func detectMixedDatasource(queries []dashv2alpha1.DashboardPanelQueryKind, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
+	if len(queries) == 0 {
+		return nil
+	}
+
+	var firstUID, firstType string
+	var hasFirst bool
+
+	for _, query := range queries {
+		var queryUID, queryType string
+
+		// Get datasource from query - mirrors frontend's getPanelDataSource logic
+		if query.Spec.Datasource != nil && query.Spec.Datasource.Uid != nil && *query.Spec.Datasource.Uid != "" {
+			// Explicit datasource reference
+			queryUID = *query.Spec.Datasource.Uid
+			queryType = query.Spec.Query.Kind // Use query kind as type
+		} else {
+			// No explicit datasource - resolve like frontend's getRuntimePanelDataSource → getDataSourceForQuery
+			// 1. Try to find datasource matching the query kind (type)
+			// 2. Fall back to default datasource
+			queryKind := query.Spec.Query.Kind
+			resolved := resolveRuntimeDatasource(queryKind, dsIndex)
+			if resolved != nil {
+				queryUID = resolved["uid"].(string)
+				queryType = resolved["type"].(string)
+			} else {
+				// No resolution possible - use empty values
+				queryUID = ""
+				queryType = queryKind
+			}
+		}
+
+		if !hasFirst {
+			firstUID = queryUID
+			firstType = queryType
+			hasFirst = true
+		} else if firstUID != queryUID || firstType != queryType {
+			// Different datasource found - this is a mixed panel
+			return map[string]interface{}{
+				"type": "mixed",
+				"uid":  "-- Mixed --",
+			}
+		}
+	}
+
+	// Not mixed - don't set panel-level datasource
+	return nil
+}
+
+// resolveRuntimeDatasource resolves a datasource for a query kind, similar to frontend's getDataSourceForQuery.
+// It tries to find a datasource matching the query type, then falls back to default.
+func resolveRuntimeDatasource(queryKind string, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
+	if dsIndex == nil {
+		return nil
+	}
+
+	// First, check if default datasource matches the query type
+	if dsIndex.DefaultDS != nil && dsIndex.DefaultDS.Type == queryKind {
+		return map[string]interface{}{
+			"uid":  dsIndex.DefaultDS.UID,
+			"type": dsIndex.DefaultDS.Type,
+		}
+	}
+
+	// Look for any datasource matching the query type
+	for _, ds := range dsIndex.ByUID {
+		if ds.Type == queryKind {
+			return map[string]interface{}{
+				"uid":  ds.UID,
+				"type": ds.Type,
+			}
+		}
+	}
+
+	// Fall back to default datasource (like frontend does)
+	if dsIndex.DefaultDS != nil {
+		return map[string]interface{}{
+			"uid":  dsIndex.DefaultDS.UID,
+			"type": dsIndex.DefaultDS.Type,
+		}
+	}
+
+	return nil
 }
 
 func convertLibraryPanelKindToV1(libPanelKind *dashv2alpha1.DashboardLibraryPanelKind, panel map[string]interface{}) (map[string]interface{}, error) {

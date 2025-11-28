@@ -416,6 +416,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,

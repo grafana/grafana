@@ -120,6 +120,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
         "description": "Tests v33 target migration with various edge cases: null target (unchanged), valid string (migrated), non-existing string (preserved), missing datasource field (unchanged).",
         "gridPos": {
           "h": 3,
@@ -168,6 +172,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
         "description": "Tests v33 migration when panel datasource is null but targets have mixed reference types (object, string). Panel should stay null, targets should migrate appropriately.",
         "gridPos": {
           "h": 3,
@@ -228,6 +236,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
         "description": "Tests v33 migration with completely unknown datasource names. Since migration returns nil for unknown datasources, they should be preserved unchanged.",
         "gridPos": {
           "h": 3,

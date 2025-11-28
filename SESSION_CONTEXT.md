@@ -611,30 +611,19 @@ DEBUG [FRONTEND OUTPUT] Panel target[0] datasource: { type: 'prometheus', uid: '
 
 **Key Insight:** The backend v1beta1 output correctly has NO datasource for items without explicit datasource. When loaded through DashboardModel → Scene → transformSceneToSaveModel, it preserves this (no datasource added). But the frontend v2beta1 path incorrectly resolves and adds default datasources.
 
-## Current Test Results (1 passing, 3 failing)
+## Current Test Results (All v2→v1 tests passing)
 
-### ✅ Passing: `v2beta1.groupby-adhoc-vars.json`
+### ✅ All v2beta1 to v1beta1 Comparison Tests Passing
 
-All issues fixed for this test.
+All tests in `transformSaveModelV2ToV1.test.ts` now pass:
 
-### ❌ Remaining Issue: Frontend adds default datasource (3 tests failing)
+- `v2beta1.complete.json` ✅
+- `v2beta1.ds-data-query.json` ✅
+- `v2beta1.groupby-adhoc-vars.json` ✅
+- `v2beta1.viz-config.json` ✅
+- All 55 migrated dashboard tests ✅
 
-**Affected tests:** `v2beta1.complete.json`, `v2beta1.ds-data-query.json`, `v2beta1.viz-config.json`
-
-**Problem:** Frontend path adds `datasource` to annotations, panels, targets, and variables that don't have explicit datasource in the v2beta1 input.
-
-**Diff pattern:**
-
-```
-- Expected (frontendSpec):
--   "datasource": { "type": "prometheus", "uid": "default-ds-uid" }
-+ Received (backendSpec):
-+   (no datasource)
-```
-
-**Root Cause:** Frontend's `getRuntimePanelDataSource()` → `getDataSourceForQuery()` always resolves a datasource, even when input doesn't have one.
-
-**Fix Required:** Only set datasource in frontend conversion if `dataQuery.datasource?.name` exists.
+**Total: 59/59 tests passing**
 
 ### ✅ 19. Time Defaults (Fixed in Frontend)
 
@@ -674,37 +663,11 @@ With helper function `getGrafanaBuiltInAnnotation()` that creates a built-in ann
 
 ## Remaining Discrepancies (Detailed Analysis)
 
-### ⚠️ 21. Annotation Datasource ALWAYS Added by Frontend
+### ✅ 21. Annotation Datasource (RESOLVED)
 
-**Problem:** Frontend `transformV2ToV1AnnotationQuery` ALWAYS adds `datasource` to annotations, even when the v2beta1 input doesn't have one.
+**Problem:** Frontend `transformV2ToV1AnnotationQuery` was adding `datasource` to annotations without explicit datasource refs.
 
-**Debug Evidence:**
-
-```
-[BACKEND GO OUTPUT] rollouts annotation: { name: "rollouts" } (NO datasource)
-[BACKEND] After Scene load: { name: "rollouts" } (NO datasource) ✅ Correct
-[FRONTEND V2->V1] rollouts annotation: { name: "rollouts", datasource: { type: "prometheus", uid: "default-ds-uid" } } ❌ ADDED
-```
-
-**Root Cause:** In `annotations.ts` lines 126-128:
-
-```typescript
-const datasource = getRuntimePanelDataSource(dataQuery);
-annoQuerySpec.datasource = datasource; // ALWAYS sets datasource
-```
-
-`getRuntimePanelDataSource()` always resolves to a datasource (defaults to config.defaultDatasource when none specified).
-
-**Go Backend Behavior (CORRECT):** In `v2alpha1_to_v1beta1.go` lines 1049-1061:
-
-```go
-if annotation.Spec.Datasource != nil {
-    // Only add if explicitly specified
-    annotationMap["datasource"] = datasource
-}
-```
-
-**Fix Required:** Only set `annoQuerySpec.datasource` if the input annotation has an explicit datasource.
+**Status:** RESOLVED - The annotation datasource handling now correctly only adds datasource when explicitly specified in the input.
 
 ### ⚠️ 22. Annotation `type` from legacyOptions Copied by Frontend
 
@@ -741,31 +704,110 @@ for k, v := range annotation.Spec.LegacyOptions {
 
 **Fix Required:** When spreading `legacyOptions`, exclude `type` field to match Go behavior.
 
-### ⚠️ 23. Panel-Level Datasource with Variable References
+### ✅ 23. Panel-Level Datasource / Mixed Datasource Detection (RESOLVED)
 
-**Problem:** Panels using variable references like `$datasource` have different outputs.
+**Problem:** Panels using different datasources weren't consistently detected as "mixed" between frontend and backend.
 
-**Debug Evidence:**
+**Status:** RESOLVED - Both frontend and backend now have consistent mixed datasource detection:
 
-```
-[BACKEND]: Panel has datasource at target level: { datasource: { uid: "$datasource" } }
-[FRONTEND]: Panel has datasource at panel level AND target level
-```
-
-**Root Cause:** Different handling of panel-level vs target-level datasource when using variable references.
+- Both resolve datasources before comparing (using defaults when needed)
+- Both return `{ type: 'mixed', uid: '-- Mixed --' }` only for truly mixed panels
+- Both return `undefined` (no panel-level datasource) for non-mixed panels
 
 ### ⚠️ 24. Panel Ordering / Grid Position Differences
 
-**Problem:** Some panels have different `y` positions or are in different order.
+**Problem:** Some panels may have different `y` positions or be in different order.
 
-**Root Cause:** Layout serialization differences between frontend v2→v1 and Go v2→v1.
+**Status:** May be resolved with the row layout fixes. Needs verification if any issues remain.
+
+## Issues Fixed (Session 3)
+
+### ✅ 25. Mixed Datasource Detection (Fixed in Both Frontend and Backend)
+
+**Problem:** Panels with queries using different datasources weren't consistently detected as "mixed" between frontend and backend.
+
+**Root Cause:**
+
+- Frontend had `getPanelDataSource` that detected mixed datasources but was modified to always return `undefined`
+- Backend didn't have mixed datasource detection at all
+
+**Fix Applied:**
+
+1. **Frontend** (`layoutSerializers/utils.ts` - `getPanelDataSource`):
+   - Restored mixed datasource detection logic
+   - Iterates through panel queries and compares datasources
+   - Returns `{ type: 'mixed', uid: '-- Mixed --' }` if queries use different datasources
+   - Returns `undefined` for non-mixed panels (each query has its own datasource)
+
+```typescript
+function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
+  // ... iterate queries, resolve datasources, compare ...
+  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
+}
+```
+
+2. **Backend** (`v2alpha1_to_v1beta1.go` - new `detectMixedDatasource` function):
+   - Added new function to detect mixed datasources
+   - Mirrors frontend logic: resolves datasources before comparing
+   - Uses `dsIndex` to resolve default datasources (same as frontend's `getDataSourceForQuery`)
+   - Called in `convertPanelKindToV1` after converting targets
+
+```go
+func detectMixedDatasource(queries []dashv2alpha1.DashboardPanelQueryKind, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
+    // ... iterate queries, resolve datasources, compare ...
+    if isMixed {
+        return map[string]interface{}{"type": "mixed", "uid": "-- Mixed --"}
+    }
+    return nil
+}
+```
+
+3. **Backend** (`v2alpha1_to_v1beta1.go` - new `resolveRuntimeDatasource` helper):
+   - Mirrors frontend's `getDataSourceForQuery` logic
+   - Tries to find datasource matching query type
+   - Falls back to default datasource
+
+**Key Behavior:**
+
+- Queries WITH explicit datasource refs (different UIDs/types) → detected as mixed
+- Queries WITHOUT explicit refs (both resolve to default) → NOT mixed
+
+### ✅ 26. rowItemToSaveModel Unit Tests Added
+
+**Problem:** `rowItemToSaveModel` function lacked comprehensive unit tests.
+
+**Fix Applied:** Added 8 unit tests in `transformSceneToSaveModel.test.ts`:
+
+1. Expanded rows with correct Y positioning
+2. Collapsed rows with panels nested inside
+3. Hidden header rows (no row panel created)
+4. Rows with repeat variables
+5. Multiple rows with correct Y progression
+6. Expanded parent row with nested rows (flattening to top level)
+7. Collapsed parent row with nested rows (storing inside parent)
+8. Multiple levels of nested rows when expanded
+
+## Current Test Status
+
+### ✅ All v2→v1 Comparison Tests Passing (59/59)
+
+All tests in `transformSaveModelV2ToV1.test.ts` now pass:
+
+- `v2beta1.complete.json`
+- `v2beta1.ds-data-query.json`
+- `v2beta1.groupby-adhoc-vars.json`
+- `v2beta1.viz-config.json`
+- All migrated dashboard tests
+
+### ⚠️ Some Other Serialization Tests Failing (Snapshot Updates Needed)
+
+Some tests in other serialization test files have snapshot failures that need updating with `jest -u`.
 
 ## Next Steps
 
-1. **Fix Annotation Datasource:** Only set `datasource` in `transformV2ToV1AnnotationQuery` when input has explicit datasource
+1. **Update Snapshots:** Run `jest -u` on failing snapshot tests if changes are correct
 2. **Fix Annotation Type:** Exclude `type` when spreading `legacyOptions` in `transformV2ToV1AnnotationQuery`
-3. **Investigate Panel Datasource:** Determine correct behavior for panel-level vs target-level datasource
-4. **Investigate Panel Ordering:** Check layout serialization for grid position differences
+3. **Investigate Panel Ordering:** Check layout serialization for grid position differences (if still relevant)
 
 ## Important Notes
 

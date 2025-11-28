@@ -22,6 +22,7 @@ import {
   DataQueryKind,
   defaultPanelQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
@@ -188,21 +189,40 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
 /**
  * Get panel-level datasource for a v2beta1 panel.
  *
- * In v2beta1 schema, there's NO panel-level datasource concept - only query-level.
- * Each query has its own datasource reference (DataQueryKind.datasource).
- * The panel-level datasource is a v1beta1 concept that we should NOT infer from queries.
+ * In v2beta1 schema, there's NO panel-level datasource concept - each query has its own.
+ * However, we still need to set panel-level datasource to "mixed" when queries use
+ * different datasources, so the Scene can properly handle mixed datasource mode.
  *
- * This matches the Go backend behavior which does NOT add panel.datasource when
- * converting v2beta1 → v1beta1.
+ * This function returns:
+ * - Mixed datasource if queries use different datasources
+ * - undefined otherwise (each query has its own datasource)
  *
- * @returns undefined since v2beta1 has no panel-level datasource
+ * This ensures v2→Scene→v1 conversion produces the same output as the Go backend,
+ * which does NOT add panel-level datasource for non-mixed panels.
  */
-function getPanelDataSource(_panel: PanelKind): DataSourceRef | undefined {
-  // v2beta1 schema doesn't have panel-level datasource.
-  // Each query has its own datasource handled by panelQueryKindToSceneQuery().
-  // Returning undefined ensures we don't add a panel-level datasource that
-  // doesn't exist in the original v2beta1 schema.
-  return undefined;
+function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
+  if (!panel.spec.data?.spec.queries?.length) {
+    return undefined;
+  }
+
+  let firstDatasource: DataSourceRef | undefined = undefined;
+  let isMixedDatasource = false;
+
+  panel.spec.data.spec.queries.forEach((query) => {
+    const queryDs = query.spec.query.datasource?.name
+      ? { uid: query.spec.query.datasource.name, type: query.spec.query.group }
+      : getRuntimePanelDataSource(query.spec.query);
+
+    if (!firstDatasource) {
+      firstDatasource = queryDs;
+    } else if (firstDatasource.uid !== queryDs?.uid || firstDatasource.type !== queryDs?.type) {
+      isMixedDatasource = true;
+    }
+  });
+
+  // Only return mixed datasource - for non-mixed panels, each query already has its own datasource
+  // This matches the Go backend behavior which doesn't add panel.datasource for non-mixed panels
+  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
 }
 
 /**

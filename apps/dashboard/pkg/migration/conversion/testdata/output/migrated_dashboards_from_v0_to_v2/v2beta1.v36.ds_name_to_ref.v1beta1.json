@@ -145,6 +145,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
         "description": "Tests mixed datasource panel - targets should migrate independently",
         "gridPos": {
           "h": 3,
@@ -221,6 +225,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
         "description": "Tests panel with expression query - should not inherit expression as panel datasource",
         "gridPos": {
           "h": 3,
