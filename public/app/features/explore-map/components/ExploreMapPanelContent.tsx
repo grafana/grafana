@@ -53,13 +53,12 @@ function patchGetBoundingClientRect() {
         const style = window.getComputedStyle(element);
         if (style.transform && style.transform !== 'none') {
           // Use offsetWidth which is not affected by transforms
-          return {
-            ...result,
-            width: this.offsetWidth,
-            height: this.offsetHeight,
-            right: result.left + this.offsetWidth,
-            bottom: result.top + this.offsetHeight,
-          } as DOMRect;
+          return new DOMRect(
+            result.left,
+            result.top,
+            this.offsetWidth,
+            this.offsetHeight
+          );
         }
         element = element.parentElement;
       }
@@ -72,7 +71,6 @@ function patchGetBoundingClientRect() {
   };
 
   isPatched = true;
-  console.log('[ExploreMapPanelContent] Patched getBoundingClientRect for AutoSizer');
 }
 
 export function ExploreMapPanelContent({ exploreId, width, height }: ExploreMapPanelContentProps) {

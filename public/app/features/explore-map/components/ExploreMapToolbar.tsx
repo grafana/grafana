@@ -47,11 +47,8 @@ export function ExploreMapToolbar() {
 
   const handleResetZoom = useCallback(() => {
     if (transformRef?.current) {
-      console.log('[ExploreMapToolbar] Resetting zoom, transformRef:', transformRef.current);
       // Reset both scale and position to initial values
       transformRef.current.setTransform(0, 0, 1, 200);
-    } else {
-      console.log('[ExploreMapToolbar] transformRef is null or current is not set');
     }
   }, [transformRef]);
 

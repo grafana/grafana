@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useRef } from 'react';
-import { Rnd } from 'react-rnd';
+import { DraggableData, Rnd, RndResizeCallback } from 'react-rnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -32,7 +33,7 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
   const isSelected = selectedPanelId === panel.id;
 
   const handleDragStop = useCallback(
-    (e: any, data: any) => {
+    (_e: MouseEvent | TouchEvent, data: DraggableData) => {
       dispatch(
         updatePanelPosition({
           panelId: panel.id,
@@ -43,8 +44,8 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
     [dispatch, panel.id]
   );
 
-  const handleResizeStop = useCallback(
-    (e: any, direction: any, ref: any, delta: any, position: any) => {
+  const handleResizeStop: RndResizeCallback = useCallback(
+    (_e, _direction, ref, _delta, position) => {
       const newWidth = ref.offsetWidth;
       const newHeight = ref.offsetHeight;
 
@@ -108,7 +109,9 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
     >
       <div className={styles.panel}>
         <div className={cx(styles.panelHeader, 'panel-drag-handle')}>
-          <div className={styles.panelTitle}>Explore Panel {panel.id.slice(0, 8)}</div>
+          <div className={styles.panelTitle}>
+            {t('explore-map.panel.title', 'Explore Panel {{id}}', { id: panel.id.slice(0, 8) })}
+          </div>
           <div className={styles.panelActions}>
             <Button
               icon="copy"
@@ -116,9 +119,16 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
               size="sm"
               fill="text"
               onClick={handleDuplicate}
-              tooltip="Duplicate panel"
+              tooltip={t('explore-map.panel.duplicate', 'Duplicate panel')}
             />
-            <Button icon="times" variant="secondary" size="sm" fill="text" onClick={handleRemove} tooltip="Remove" />
+            <Button
+              icon="times"
+              variant="secondary"
+              size="sm"
+              fill="text"
+              onClick={handleRemove}
+              tooltip={t('explore-map.panel.remove', 'Remove')}
+            />
           </div>
         </div>
         <div className={styles.panelContent}>
