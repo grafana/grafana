@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Button, ButtonGroup, ConfirmModal, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { useTransformContext } from '../context/TransformContext';
@@ -14,6 +15,7 @@ export function ExploreMapToolbar() {
   const dispatch = useDispatch();
   const { exportCanvas, importCanvas } = useCanvasPersistence();
   const { transformRef } = useTransformContext();
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const panelCount = useSelector((state) => Object.keys(state.exploreMap.panels).length);
   const viewport = useSelector((state) => state.exploreMap.viewport);
@@ -23,9 +25,12 @@ export function ExploreMapToolbar() {
   }, [dispatch]);
 
   const handleResetCanvas = useCallback(() => {
-    if (confirm('Are you sure you want to clear all panels? This cannot be undone.')) {
-      dispatch(resetCanvas());
-    }
+    setShowResetConfirm(true);
+  }, []);
+
+  const confirmResetCanvas = useCallback(() => {
+    dispatch(resetCanvas());
+    setShowResetConfirm(false);
   }, [dispatch]);
 
   const handleZoomIn = useCallback(() => {
@@ -42,7 +47,11 @@ export function ExploreMapToolbar() {
 
   const handleResetZoom = useCallback(() => {
     if (transformRef?.current) {
-      transformRef.current.resetTransform();
+      console.log('[ExploreMapToolbar] Resetting zoom, transformRef:', transformRef.current);
+      // Reset both scale and position to initial values
+      transformRef.current.setTransform(0, 0, 1, 200);
+    } else {
+      console.log('[ExploreMapToolbar] transformRef is null or current is not set');
     }
   }, [transformRef]);
 
@@ -55,32 +64,67 @@ export function ExploreMapToolbar() {
   }, [importCanvas]);
 
   return (
-    <div className={styles.toolbar}>
-      <div className={styles.toolbarSection}>
-        <Button icon="plus" onClick={handleAddPanel} variant="primary">
-          Add Panel
-        </Button>
-        <span className={styles.panelCount}>{panelCount} panels</span>
+    <>
+      <div className={styles.toolbar}>
+        <div className={styles.toolbarSection}>
+          <Button icon="plus" onClick={handleAddPanel} variant="primary">
+            <Trans i18nKey="explore-map.toolbar.add-panel">Add Panel</Trans>
+          </Button>
+          <span className={styles.panelCount}>
+            <Trans i18nKey="explore-map.toolbar.panel-count" values={{ count: panelCount }}>
+              {{ count: panelCount }} panels
+            </Trans>
+          </span>
+        </div>
+
+        <div className={styles.toolbarSection}>
+          <ButtonGroup>
+            <ToolbarButton
+              icon="search-minus"
+              onClick={handleZoomOut}
+              tooltip={t('explore-map.toolbar.zoom-out', 'Zoom out')}
+            />
+            <ToolbarButton onClick={handleResetZoom} tooltip={t('explore-map.toolbar.reset-zoom', 'Reset zoom')}>
+              {Math.round(viewport.zoom * 100)}%
+            </ToolbarButton>
+            <ToolbarButton icon="search-plus" onClick={handleZoomIn} tooltip={t('explore-map.toolbar.zoom-in', 'Zoom in')} />
+          </ButtonGroup>
+        </div>
+
+        <div className={styles.toolbarSection}>
+          <ButtonGroup>
+            <ToolbarButton
+              icon="save"
+              onClick={handleExport}
+              tooltip={t('explore-map.toolbar.export', 'Export canvas')}
+            />
+            <ToolbarButton
+              icon="upload"
+              onClick={handleImport}
+              tooltip={t('explore-map.toolbar.import', 'Import canvas')}
+            />
+            <ToolbarButton
+              icon="trash-alt"
+              onClick={handleResetCanvas}
+              tooltip={t('explore-map.toolbar.clear', 'Clear all panels')}
+              variant="destructive"
+            />
+          </ButtonGroup>
+        </div>
       </div>
 
-      <div className={styles.toolbarSection}>
-        <ButtonGroup>
-          <ToolbarButton icon="search-minus" onClick={handleZoomOut} tooltip="Zoom out" />
-          <ToolbarButton onClick={handleResetZoom} tooltip="Reset zoom">
-            {Math.round(viewport.zoom * 100)}%
-          </ToolbarButton>
-          <ToolbarButton icon="search-plus" onClick={handleZoomIn} tooltip="Zoom in" />
-        </ButtonGroup>
-      </div>
-
-      <div className={styles.toolbarSection}>
-        <ButtonGroup>
-          <ToolbarButton icon="save" onClick={handleExport} tooltip="Export canvas" />
-          <ToolbarButton icon="upload" onClick={handleImport} tooltip="Import canvas" />
-          <ToolbarButton icon="trash-alt" onClick={handleResetCanvas} tooltip="Clear all panels" variant="destructive" />
-        </ButtonGroup>
-      </div>
-    </div>
+      <ConfirmModal
+        isOpen={showResetConfirm}
+        title={t('explore-map.toolbar.confirm-reset.title', 'Clear all panels')}
+        body={t(
+          'explore-map.toolbar.confirm-reset.body',
+          'Are you sure you want to clear all panels? This cannot be undone.'
+        )}
+        confirmText={t('explore-map.toolbar.confirm-reset.confirm', 'Clear')}
+        onConfirm={confirmResetCanvas}
+        onDismiss={() => setShowResetConfirm(false)}
+      />
+    </>
   );
 }
 
