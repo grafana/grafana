@@ -12,8 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8srest "k8s.io/apiserver/pkg/registry/rest"
 )
 
 var (
@@ -47,6 +49,9 @@ func newResourcePermission(apiGroup, resource, name string) iamv0.ResourcePermis
 }
 
 func TestResourcePermissions_List(t *testing.T) {
+	// In this test, the user has permission to access only fold-1 and dash-2.
+	// We verify that List returns only those two objects.
+
 	inner := &fakeInnerStore{
 		listResponse: &iamv0.ResourcePermissionList{
 			Items: []iamv0.ResourcePermission{
@@ -172,6 +177,75 @@ func TestResourcePermissions_Get(t *testing.T) {
 	})
 }
 
+func TestResourcePermissions_Delete(t *testing.T) {
+	// In this test, the user has permission to delete fold-1 but not dash-1.
+	// We verify that Delete succeeds for fold-1 and denies access for dash-1.
+
+	checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
+		// Check the request values
+		require.NotNil(t, id)
+		// Check is called with the user's identity
+		require.Equal(t, "user:u001", id.GetUID())
+		require.Equal(t, "org-2", id.GetNamespace())
+		require.Equal(t, "org-2", req.Namespace)
+		if req.Group == "folder.grafana.app" {
+			require.Equal(t, "folder.grafana.app", req.Group)
+			require.Equal(t, "folders", req.Resource)
+			require.Equal(t, "fold-1", req.Name)
+		}
+		if req.Group == "dashboard.grafana.app" {
+			require.Equal(t, "dashboard.grafana.app", req.Group)
+			require.Equal(t, "dashboards", req.Resource)
+			require.Equal(t, "dash-1", req.Name)
+		}
+
+		// Allow deletion only for fold-1
+		if req.Name == "fold-1" {
+			return types.CheckResponse{Allowed: true}, nil
+		}
+		return types.CheckResponse{Allowed: false}, nil
+	}
+
+	ctx := types.WithAuthInfo(context.Background(), user)
+
+	// First, test deletion of fold-1
+	t.Run("delete fold-1", func(t *testing.T) {
+		fold1 := newResourcePermission("folder.grafana.app", "folders", "fold-1")
+		inner := &fakeInnerStore{getResponse: &fold1, deleteResponse: &fold1, deleteStatus: true}
+		accessClient := &fakeAccessClient{checkFunc: checkFunc}
+		resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
+		wrapper := New(inner, resPermAuthz)
+
+		obj, deleted, err := wrapper.Delete(ctx, "folder.grafana.app/folders/fold-1", nil, &metaV1.DeleteOptions{})
+		require.NoError(t, err)
+		require.True(t, accessClient.checkCalled, "accessClient.Check should be called")
+		require.True(t, inner.getCalled, "inner store Get should be called")
+		require.True(t, inner.deleteCalled, "inner store Delete should be called")
+		require.NotNil(t, obj)
+		require.True(t, deleted)
+		resp, ok := obj.(*iamv0.ResourcePermission)
+		require.True(t, ok, "response should be of type ResourcePermission")
+		require.Equal(t, "fold-1", resp.Spec.Resource.Name)
+	})
+
+	// Now, test deletion of dash-1
+	t.Run("delete dash-1", func(t *testing.T) {
+		dash1 := newResourcePermission("dashboard.grafana.app", "dashboards", "dash-1")
+		inner := &fakeInnerStore{getResponse: &dash1}
+		accessClient := &fakeAccessClient{checkFunc: checkFunc}
+		resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
+		wrapper := New(inner, resPermAuthz)
+
+		obj, deleted, err := wrapper.Delete(ctx, "dashboard.grafana.app/dashboards/dash-1", nil, &metaV1.DeleteOptions{})
+		require.Error(t, err, "expected error when deleting unauthorized resource")
+		require.True(t, inner.getCalled, "inner store Get should be called")
+		require.True(t, accessClient.checkCalled, "accessClient.Check should be called")
+		require.False(t, inner.deleteCalled, "inner store Delete should not be called")
+		require.Nil(t, obj, "expected nil object for unauthorized delete")
+		require.False(t, deleted)
+	})
+}
+
 // -----
 // Fakes
 // -----
@@ -184,6 +258,10 @@ type fakeInnerStore struct {
 
 	getCalled   bool
 	getResponse runtime.Object
+
+	deleteCalled   bool
+	deleteResponse runtime.Object
+	deleteStatus   bool
 }
 
 func (f *fakeInnerStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -194,6 +272,11 @@ func (f *fakeInnerStore) List(ctx context.Context, options *internalversion.List
 func (f *fakeInnerStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	f.getCalled = true
 	return f.getResponse, nil
+}
+
+func (f *fakeInnerStore) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (runtime.Object, bool, error) {
+	f.deleteCalled = true
+	return f.deleteResponse, f.deleteStatus, nil
 }
 
 // fakeAccessClient is a mock implementation of claims.AccessClient
