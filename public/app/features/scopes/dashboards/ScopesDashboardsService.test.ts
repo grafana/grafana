@@ -1,7 +1,6 @@
 import { Location } from 'history';
 import { Subject } from 'rxjs';
 
-import { ScopeDashboardBinding } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 
 import { ScopesApiClient } from '../ScopesApiClient';
@@ -15,7 +14,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     featureToggles: {
-      useScopesNavigationEndpoint: false,
+      useScopesNavigationEndpoint: true,
     },
     apps: {},
   },
@@ -33,12 +32,17 @@ describe('ScopesDashboardsService', () => {
   let mockApiClient: jest.Mocked<ScopesApiClient>;
 
   beforeEach(() => {
+    const fetchScopeNavigationsMock = jest.fn().mockResolvedValue([]);
     mockApiClient = {
       fetchDashboards: jest.fn(),
-      fetchScopeNavigations: jest.fn(),
+      fetchScopeNavigations: fetchScopeNavigationsMock,
     } as unknown as jest.Mocked<ScopesApiClient>;
 
     service = new ScopesDashboardsService(mockApiClient);
+  });
+
+  afterEach(() => {
+    config.featureToggles.useScopesNavigationEndpoint = true;
   });
 
   describe('folder expansion based on location', () => {
@@ -46,14 +50,14 @@ describe('ScopesDashboardsService', () => {
       // Mock current location to be a dashboard
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' } as Location);
 
-      const mockDashboards: ScopeDashboardBinding[] = [
+      const mockNavigations: ScopeNavigation[] = [
         {
           spec: {
             scope: 'scope1',
-            dashboard: 'dashboard1',
+            url: '/d/dashboard1',
           },
           status: {
-            dashboardTitle: 'Test Dashboard',
+            title: 'Test Dashboard',
             groups: ['group1'],
           },
           metadata: {
@@ -62,7 +66,7 @@ describe('ScopesDashboardsService', () => {
         },
       ];
 
-      mockApiClient.fetchDashboards.mockResolvedValue(mockDashboards);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
       await service.fetchDashboards(['scope1']);
 
       // Verify that the folder is expanded because the current dashboard ID matches
@@ -168,14 +172,14 @@ describe('ScopesDashboardsService', () => {
       // Mock current location to not match any navigation
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/different-path' } as Location);
 
-      const mockDashboards: ScopeDashboardBinding[] = [
+      const mockNavigations: ScopeNavigation[] = [
         {
           spec: {
             scope: 'scope1',
-            dashboard: 'dashboard1',
+            url: '/d/dashboard1',
           },
           status: {
-            dashboardTitle: 'Test Dashboard',
+            title: 'Test Dashboard',
             groups: ['group1'],
           },
           metadata: {
@@ -184,7 +188,7 @@ describe('ScopesDashboardsService', () => {
         },
       ];
 
-      mockApiClient.fetchDashboards.mockResolvedValue(mockDashboards);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
       await service.fetchDashboards(['scope1']);
 
       // Verify that the folder is not expanded because the current location doesn't match
@@ -197,14 +201,14 @@ describe('ScopesDashboardsService', () => {
         pathname: '/d/dashboard1/very-important',
       } as Location);
 
-      const mockDashboards: ScopeDashboardBinding[] = [
+      const mockNavigations: ScopeNavigation[] = [
         {
           spec: {
             scope: 'scope1',
-            dashboard: 'dashboard1',
+            url: '/d/dashboard1',
           },
           status: {
-            dashboardTitle: 'Test Dashboard',
+            title: 'Test Dashboard',
             groups: ['group1'],
           },
           metadata: {
@@ -213,7 +217,7 @@ describe('ScopesDashboardsService', () => {
         },
       ];
 
-      mockApiClient.fetchDashboards.mockResolvedValue(mockDashboards);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
       await service.fetchDashboards(['scope1']);
 
       // Verify that the folder is expanded because the current path starts with the dashboard ID
@@ -224,14 +228,14 @@ describe('ScopesDashboardsService', () => {
       // Mock current location to be a specific dashboard
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' } as Location);
 
-      const mockDashboards: ScopeDashboardBinding[] = [
+      const mockNavigations: ScopeNavigation[] = [
         {
           spec: {
             scope: 'scope1',
-            dashboard: 'dashboard1',
+            url: '/d/dashboard1',
           },
           status: {
-            dashboardTitle: 'Test Dashboard',
+            title: 'Test Dashboard',
             groups: ['group1'],
           },
           metadata: {
@@ -241,10 +245,10 @@ describe('ScopesDashboardsService', () => {
         {
           spec: {
             scope: 'scope1',
-            dashboard: 'dashboard2',
+            url: '/d/dashboard2',
           },
           status: {
-            dashboardTitle: 'Another Dashboard',
+            title: 'Another Dashboard',
             groups: ['group2'],
           },
           metadata: {
@@ -253,7 +257,7 @@ describe('ScopesDashboardsService', () => {
         },
       ];
 
-      mockApiClient.fetchDashboards.mockResolvedValue(mockDashboards);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
       await service.fetchDashboards(['scope1']);
 
       // Verify that only the folder containing the current dashboard is expanded
@@ -695,6 +699,144 @@ describe('ScopesDashboardsService', () => {
       // Verify that valid items are still present
       expect(filteredItems.length).toBe(1); // Should have 1 item (loki-item-1)
       expect(filteredItems.some((item) => item.metadata.name === 'loki-item-1')).toBe(true);
+    });
+  });
+
+  describe('setNavigationScope', () => {
+    beforeEach(() => {
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+      // Reset mocks but keep the mock functions
+      mockApiClient.fetchDashboards.mockClear();
+      // Note: fetchScopeNavigations mock is set up in top-level beforeEach
+      // Individual tests will override it with their own mockResolvedValue calls
+    });
+
+    it('should set navigation scope and fetch dashboards', async () => {
+      // Mock non-empty results so drawerOpened stays true after fetchDashboards completes
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'navScope1', url: '/d/dashboard1' },
+          status: { title: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+
+      await service.setNavigationScope('navScope1');
+
+      expect(service.state.navigationScope).toBe('navScope1');
+      expect(service.state.drawerOpened).toBe(true);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['navScope1']);
+    });
+
+    it('should clear navigation scope and use fallback scope names', async () => {
+      // Mock non-empty results so drawerOpened stays true after fetchDashboards completes
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'fallbackScope1', url: '/d/dashboard1' },
+          status: { title: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+      // Set an initial navigation scope
+      await service.setNavigationScope('initialScope');
+      expect(service.state.navigationScope).toBe('initialScope');
+      expect(service.state.drawerOpened).toBe(true);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['initialScope']);
+
+      await service.setNavigationScope(undefined, ['fallbackScope1', 'fallbackScope2']);
+
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(service.state.drawerOpened).toBe(true);
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['fallbackScope1', 'fallbackScope2']);
+    });
+
+    it('should not run if previous and next navigation scopes are undefined and we provide fallback scope names', async () => {
+      await service.setNavigationScope(undefined, ['fallbackScope1', 'fallbackScope2']);
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(service.state.drawerOpened).toBe(false);
+      expect(mockApiClient.fetchScopeNavigations).not.toHaveBeenCalled();
+    });
+
+    it('should close drawer when navigation scope is cleared without fallback', async () => {
+      // When setNavigationScope is called with undefined and no fallback,
+      // it calls fetchDashboards([]), which returns early without calling the API
+      await service.setNavigationScope(undefined);
+
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(service.state.drawerOpened).toBe(false);
+      // fetchDashboards([]) returns early, so API client is not called
+      expect(mockApiClient.fetchScopeNavigations).not.toHaveBeenCalled();
+    });
+
+    it('should not update state if navigation scope has not changed', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'navScope1', url: '/d/dashboard1' },
+          status: { title: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+      await service.setNavigationScope('navScope1');
+      mockApiClient.fetchScopeNavigations.mockClear();
+
+      await service.setNavigationScope('navScope1');
+
+      expect(mockApiClient.fetchScopeNavigations).not.toHaveBeenCalled();
+    });
+
+    it('should update navigation scope when changing from one scope to another', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+
+      await service.setNavigationScope('navScope1');
+      mockApiClient.fetchScopeNavigations.mockClear();
+
+      await service.setNavigationScope('navScope2');
+
+      expect(service.state.navigationScope).toBe('navScope2');
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['navScope2']);
+    });
+
+    it('should update navigation scope when clearing an existing scope', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+
+      await service.setNavigationScope('navScope1');
+      mockApiClient.fetchScopeNavigations.mockClear();
+
+      await service.setNavigationScope(undefined, ['fallbackScope']);
+
+      expect(service.state.navigationScope).toBeUndefined();
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['fallbackScope']);
+    });
+
+    it('should open drawer when navigation scope is set', async () => {
+      // Mock to return non-empty results so drawer stays open
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'navScope1', url: '/d/dashboard1' },
+          status: { title: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+
+      await service.setNavigationScope('navScope1');
+
+      expect(service.state.drawerOpened).toBe(true);
+    });
+
+    it('should open drawer when fallback scopes are provided', async () => {
+      // Mock non-empty results so drawerOpened stays true after fetchDashboards completes
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'fallbackScope', url: '/d/dashboard1' },
+          status: { title: 'Test', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+      await service.setNavigationScope('initialScope');
+
+      await service.setNavigationScope(undefined, ['fallbackScope']);
+
+      expect(service.state.drawerOpened).toBe(true);
     });
   });
 });

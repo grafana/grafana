@@ -361,6 +361,10 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Use the v2 kubernetes API in the frontend for dashboards
+  */
+  kubernetesDashboardsV2?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   */
   dashboardUndoRedo?: boolean;
@@ -372,6 +376,10 @@ export interface FeatureToggles {
   * Enables viewing non-applicable drilldowns on a panel level
   */
   perPanelNonApplicableDrilldowns?: boolean;
+  /**
+  * Enabled a group by action per panel
+  */
+  panelGroupBy?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
@@ -1091,7 +1099,7 @@ export interface FeatureToggles {
   graphiteBackendMode?: boolean;
   /**
   * Enables the updated Azure Monitor resource picker
-  * @default false
+  * @default true
   */
   azureResourcePickerUpdates?: boolean;
   /**
@@ -1150,7 +1158,7 @@ export interface FeatureToggles {
   pluginStoreServiceLoading?: boolean;
   /**
   * Increases panel padding globally
-  * @default false
+  * @default true
   */
   newPanelPadding?: boolean;
   /**
@@ -1189,4 +1197,8 @@ export interface FeatureToggles {
   * @default false
   */
   rudderstackUpgrade?: boolean;
+  /**
+  * Adds support for Kubernetes alerting historian APIs
+  */
+  kubernetesAlertingHistorian?: boolean;
 }

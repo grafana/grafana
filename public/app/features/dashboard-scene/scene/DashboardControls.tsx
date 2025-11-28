@@ -2,6 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -15,7 +17,8 @@ import {
   SceneObjectUrlValues,
   CancelActivationHandler,
 } from '@grafana/scenes';
-import { Box, useStyles2 } from '@grafana/ui';
+import { Box, Button, useStyles2 } from '@grafana/ui';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -25,6 +28,9 @@ import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
+import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
+import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
+import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
 
 export interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
@@ -32,7 +38,7 @@ export interface DashboardControlsState extends SceneObjectState {
   hideTimeControls?: boolean;
   hideVariableControls?: boolean;
   hideLinksControls?: boolean;
-  // Hides the dashbaord-controls dropdown menu
+  // Hides the dashboard-controls dropdown menu
   hideDashboardControls?: boolean;
 }
 
@@ -170,7 +176,13 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {!hideDashboardControls && model.hasDashboardControls() && <DashboardControlsButton dashboard={dashboard} />}
+        {!hideDashboardControls && model.hasDashboardControls() && (
+          <div className={styles.dashboardControlsButton}>
+            <DashboardControlsButton dashboard={dashboard} />
+          </div>
+        )}
+        {config.featureToggles.dashboardNewLayouts && <DashboardControlActions dashboard={dashboard} />}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
       {!hideVariableControls && (
         <>
@@ -178,10 +190,40 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}
-      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
+  );
+}
+
+function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
+  const { isEditing, editPanel, uid, meta } = dashboard.useState();
+  const { isPlaying } = playlistSrv.useState();
+
+  if (editPanel) {
+    return null;
+  }
+
+  const canEditDashboard = dashboard.canEditDashboard();
+  const hasUid = Boolean(uid);
+  const isSnapshot = Boolean(meta.isSnapshot);
+  const showShareButton = hasUid && !isSnapshot && !isPlaying;
+
+  return (
+    <>
+      {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
+      {isEditing && <SaveDashboard dashboard={dashboard} />}
+      {!isPlaying && canEditDashboard && <EditDashboardSwitch dashboard={dashboard} />}
+      {isPlaying && (
+        <Button
+          variant="secondary"
+          onClick={() => playlistSrv.stop()}
+          data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
+        >
+          <Trans i18nKey="dashboard.toolbar.new.playlist-stop">Stop playlist</Trans>
+        </Button>
+      )}
+    </>
   );
 }
 
@@ -230,17 +272,26 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rightControls: css({
       display: 'flex',
-      justifyContent: 'flex-end',
       gap: theme.spacing(1),
-      marginBottom: theme.spacing(1),
       float: 'right',
       alignItems: 'center',
+      flexWrap: 'wrap',
+      maxWidth: '100%',
+      minWidth: 0,
     }),
     timeControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
+      order: 2,
+      marginLeft: 'auto',
+      flexShrink: 0,
+      alignSelf: 'flex-start',
+    }),
+    dashboardControlsButton: css({
+      order: 2,
+      marginLeft: 'auto',
     }),
     rightControlsWrap: css({
       flexWrap: 'wrap',

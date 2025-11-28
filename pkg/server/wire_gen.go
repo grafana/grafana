@@ -80,6 +80,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 	"github.com/grafana/grafana/pkg/registry/apps"
 	advisor2 "github.com/grafana/grafana/pkg/registry/apps/advisor"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	notifications2 "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
@@ -459,8 +460,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	ossDashboardStats := builders.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
-	databaseDatabase := database4.ProvideDatabase(sqlStore, tracer)
 	clockClock := clock.ProvideClock()
+	databaseDatabase := database4.ProvideDatabase(sqlStore, tracer)
 	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clockClock, databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
@@ -508,7 +509,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	secureValueService := service5.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, ossKeeperService, registerer)
+	secureValueService := service5.ProvideSecureValueService(tracer, accessClient, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, ossKeeperService, registerer)
 	inlineSecureValueSupport, err := inline.ProvideInlineSecureValueService(cfg, tracer, secureValueService, accessClient)
 	if err != nil {
 		return nil, err
@@ -668,7 +669,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	azurePromMigrationService := promtypemigration.ProvideAzurePromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
 	amazonPromMigrationService := promtypemigration.ProvideAmazonPromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
 	promTypeMigrationProviderImpl := promtypemigration.ProvidePromTypeMigrationProvider(serverLockService, featureToggles, azurePromMigrationService, amazonPromMigrationService)
-	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl)
+	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl, serverLockService)
 	if err != nil {
 		return nil, err
 	}
@@ -825,7 +826,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, appInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller)
+	alertingHistorianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, appInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, alertingHistorianAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
@@ -1107,8 +1112,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	ossDashboardStats := builders.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
-	databaseDatabase := database4.ProvideDatabase(sqlStore, tracer)
 	clockClock := clock.ProvideClock()
+	databaseDatabase := database4.ProvideDatabase(sqlStore, tracer)
 	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clockClock, databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
@@ -1156,7 +1161,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	secureValueService := service5.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, ossKeeperService, registerer)
+	secureValueService := service5.ProvideSecureValueService(tracer, accessClient, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, ossKeeperService, registerer)
 	inlineSecureValueSupport, err := inline.ProvideInlineSecureValueService(cfg, tracer, secureValueService, accessClient)
 	if err != nil {
 		return nil, err
@@ -1312,7 +1317,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	azurePromMigrationService := promtypemigration.ProvideAzurePromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
 	amazonPromMigrationService := promtypemigration.ProvideAmazonPromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
 	promTypeMigrationProviderImpl := promtypemigration.ProvidePromTypeMigrationProvider(serverLockService, featureToggles, azurePromMigrationService, amazonPromMigrationService)
-	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl)
+	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl, serverLockService)
 	if err != nil {
 		return nil, err
 	}
@@ -1475,7 +1480,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, appInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller)
+	alertingHistorianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, appInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, alertingHistorianAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {

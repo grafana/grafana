@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 import { ComboboxOption, MultiCombobox } from '@grafana/ui';
