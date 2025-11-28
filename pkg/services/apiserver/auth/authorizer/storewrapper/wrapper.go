@@ -70,9 +70,7 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (runtime.Object, bool, error) {
 	// Fetch the object first to authorize
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-	getOpts := &metaV1.GetOptions{
-		TypeMeta: options.TypeMeta,
-	}
+	getOpts := &metaV1.GetOptions{TypeMeta: options.TypeMeta}
 	if options.Preconditions != nil {
 		getOpts.ResourceVersion = *options.Preconditions.ResourceVersion
 	}

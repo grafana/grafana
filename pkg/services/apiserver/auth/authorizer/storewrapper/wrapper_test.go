@@ -55,65 +55,132 @@ func (f *fakeObject) DeepCopyObject() runtime.Object {
 	}
 }
 
+type testSetup struct {
+	mockStore *rest.MockStorage
+	mockAuth  *FakeAuthorizer
+	wrapper   *Wrapper
+	ctx       context.Context
+}
+
+func newTestSetup(t *testing.T) *testSetup {
+	mockStore := rest.NewMockStorage(t)
+	mockAuth := &FakeAuthorizer{}
+	wrapper := New(mockStore, mockAuth)
+
+	ctx := identity.WithRequester(
+		context.Background(),
+		&identity.StaticRequester{UserUID: "u001", Type: types.TypeUser},
+	)
+
+	return &testSetup{mockStore: mockStore, mockAuth: mockAuth, wrapper: wrapper, ctx: ctx}
+}
+
+func matchesOriginalUser() func(context.Context) bool {
+	return func(ctx context.Context) bool {
+		user, err := identity.GetRequester(ctx)
+		return err == nil && user.GetUID() == "user:u001"
+	}
+}
+
+func matchesServiceIdentity() func(context.Context) bool {
+	return func(ctx context.Context) bool {
+		return identity.IsServiceIdentity(ctx)
+	}
+}
+
 func TestWrapper_Create(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		mockStore := rest.NewMockStorage(t)
-		mockAuth := &FakeAuthorizer{}
-		wrapper := New(mockStore, mockAuth)
-
-		ctx := identity.WithRequester(
-			context.Background(),
-			&identity.StaticRequester{UserUID: "u001", Type: types.TypeUser},
-		)
+		setup := newTestSetup(t)
 
 		obj := &fakeObject{}
 		createOpts := &metaV1.CreateOptions{}
 		expectedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "created"}}
 
 		// Verify original user identity is used for authorization
-		mockAuth.On("BeforeCreate", mock.MatchedBy(func(ctx context.Context) bool {
-			user, err := identity.GetRequester(ctx)
-			return err == nil && user.GetUID() == "user:u001"
-		}), obj).Return(nil)
+		setup.mockAuth.On("BeforeCreate", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
 
 		// Verify service identity is used to call the underlying store
-		mockStore.On("Create", mock.MatchedBy(func(ctx context.Context) bool {
-			return identity.IsServiceIdentity(ctx)
-		}), obj, mock.Anything, createOpts).Return(expectedObj, nil)
+		setup.mockStore.On("Create", mock.MatchedBy(matchesServiceIdentity()), obj, mock.Anything, createOpts).Return(expectedObj, nil)
 
-		result, err := wrapper.Create(ctx, obj, nil, createOpts)
+		result, err := setup.wrapper.Create(setup.ctx, obj, nil, createOpts)
 
 		require.NoError(t, err)
 		assert.Equal(t, expectedObj, result)
 
 		// Assert expectations
-		mockAuth.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
 	})
 	t.Run("unauthorized", func(t *testing.T) {
-		mockStore := rest.NewMockStorage(t)
-		mockAuth := &FakeAuthorizer{}
-		wrapper := New(mockStore, mockAuth)
-
-		ctx := identity.WithRequester(
-			context.Background(),
-			&identity.StaticRequester{UserUID: "u001", Type: types.TypeUser},
-		)
+		setup := newTestSetup(t)
 
 		obj := &fakeObject{}
 		createOpts := &metaV1.CreateOptions{}
 
 		// Simulate unauthorized error from authorizer
-		mockAuth.On("BeforeCreate", mock.Anything, obj).Return(ErrUnauthorized)
+		setup.mockAuth.On("BeforeCreate", mock.MatchedBy(matchesOriginalUser()), obj).Return(ErrUnauthorized)
 
-		result, err := wrapper.Create(ctx, obj, nil, createOpts)
+		result, err := setup.wrapper.Create(setup.ctx, obj, nil, createOpts)
 
 		require.Error(t, err)
 		assert.Nil(t, result)
 		assert.Equal(t, ErrUnauthorized, err)
 
 		// Assert expectations
-		mockAuth.AssertExpectations(t)
-		mockStore.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertNotCalled(t, "Create")
+	})
+}
+
+func TestWrapper_Delete(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		setup := newTestSetup(t)
+		version := "1"
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "to-delete"}}
+		deleteOpts := &metaV1.DeleteOptions{Preconditions: &metaV1.Preconditions{ResourceVersion: &version}}
+		expectedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "deleted"}}
+
+		// Mock Get to fetch the object before deletion
+		setup.mockStore.On("Get", mock.MatchedBy(matchesServiceIdentity()), "to-delete", mock.Anything).Return(obj, nil)
+
+		// Verify original user identity is used for authorization
+		setup.mockAuth.On("BeforeDelete", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
+
+		// Verify service identity is used to call the underlying store
+		setup.mockStore.On("Delete", mock.MatchedBy(matchesServiceIdentity()), "to-delete", mock.Anything, deleteOpts).Return(expectedObj, true, nil)
+
+		result, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
+
+		require.NoError(t, err)
+		assert.Equal(t, expectedObj, result)
+		assert.True(t, deleted)
+
+		// Assert expectations
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
+	t.Run("unauthorized", func(t *testing.T) {
+		setup := newTestSetup(t)
+		version := "1"
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "to-delete"}}
+		deleteOpts := &metaV1.DeleteOptions{Preconditions: &metaV1.Preconditions{ResourceVersion: &version}}
+
+		// Mock Get to fetch the object before deletion
+		setup.mockStore.On("Get", mock.MatchedBy(matchesServiceIdentity()), "to-delete", mock.Anything).Return(obj, nil)
+
+		// Simulate unauthorized error from authorizer
+		setup.mockAuth.On("BeforeDelete", mock.MatchedBy(matchesOriginalUser()), obj).Return(ErrUnauthorized)
+
+		result, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.False(t, deleted)
+		assert.Equal(t, ErrUnauthorized, err)
+
+		// Assert expectations
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+		setup.mockStore.AssertNotCalled(t, "Delete")
 	})
 }
