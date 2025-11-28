@@ -104,7 +104,7 @@ export type TProps = {
   focusedSpanIdForSearch: string;
   showSpanFilterMatchesOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement | null>;
   headerHeight: number;
   criticalPath: CriticalPathSection[];
   traceFlameGraphs: TraceFlameGraphs;

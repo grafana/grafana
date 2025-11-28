@@ -103,7 +103,7 @@ DataLinkSuggestions.displayName = 'DataLinkSuggestions';
 interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   label: string;
   activeIndexOffset: number;
-  activeRef?: React.RefObject<HTMLDivElement>;
+  activeRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const DataLinkSuggestionsList = React.memo(

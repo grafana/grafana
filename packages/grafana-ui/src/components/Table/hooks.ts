@@ -14,8 +14,8 @@ import { GrafanaTableState } from './types';
   Select the scrollbar element from the VariableSizeList scope
  */
 export function useFixScrollbarContainer(
-  variableSizeListScrollbarRef: React.RefObject<HTMLDivElement>,
-  tableDivRef: React.RefObject<HTMLDivElement>
+  variableSizeListScrollbarRef: React.RefObject<HTMLDivElement | null>,
+  tableDivRef: React.RefObject<HTMLDivElement | null>
 ) {
   useEffect(() => {
     if (variableSizeListScrollbarRef.current && tableDivRef.current) {
