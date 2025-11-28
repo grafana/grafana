@@ -238,7 +238,7 @@ export const LogListContextProvider = ({
   });
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
   const [listStyle, setListStyleState] = useState(
-    listStyleProp ? listStyleProp : getLogListStyleFromOldProps(wrapLogMessage, prettifyJSON)
+    listStyleProp ? listStyleProp : getLogListStyleFromOldProps(wrapLogMessage, prettifyJSON, logOptionsStorageKey)
   );
 
   useEffect(() => {
@@ -345,7 +345,7 @@ export const LogListContextProvider = ({
         deprecationWarning('LogsPanel', 'prettifyJSON', 'listStyle');
         return listStyle;
       }
-      return getLogListStyleFromOldProps(wrapLogMessage, prettifyJSON);
+      return getLogListStyleFromOldProps(wrapLogMessage, prettifyJSON, undefined);
     });
   }, [wrapLogMessage, prettifyJSON]);
 
@@ -625,7 +625,7 @@ export function getDefaultControlsExpandedMode(container: HTMLDivElement | null)
   return width > 1200;
 }
 
-function getLogListStyleFromOldProps(
+export function getLogListStyleFromOldProps(
   wrapLogMessage: boolean | undefined,
   prettifyJSON: boolean | undefined,
   logOptionsStorageKey: string | undefined
@@ -641,6 +641,10 @@ function getLogListStyleFromOldProps(
     return LogListStyle.UnwrappedWithColumns;
   }
   return prettifyJSON ? LogListStyle.WrappedWithPrettyJSON : LogListStyle.Wrapped;
+}
+
+export function prettifyJSON(listStyle: LogListStyle) {
+  return listStyle === LogListStyle.WrappedWithPrettyJSON;
 }
 
 export function wrapLogMessage(listStyle: LogListStyle) {
