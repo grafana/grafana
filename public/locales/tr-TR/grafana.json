@@ -477,6 +477,7 @@
       "noOptionsMessage-no-datasources-found": "Veri kaynağı bulunamadı"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "Bağlantıyı kopyala",
       "duplicate": "Çoğalt",
       "export": "Dışa aktar",
@@ -3476,6 +3477,14 @@
         "label-negative-y": "Negatif Y"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Sağ tarafta boşluk bırakılmasını zorunlu kıl",
       "gaps-options": {
@@ -3520,6 +3529,10 @@
     },
     "name-show-unfilled-area": "Doldurulmamış alanı göster",
     "name-value-display": "Değer görüntüleme",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "Gizli",
       "label-text-color": "Metin rengi",
@@ -4172,6 +4185,7 @@
     "clear": "Temizle",
     "collapse": "Daralt",
     "disabled": "",
+    "discard": "",
     "edit": "Düzenle",
     "help": "Yardım",
     "loading": "Yükleniyor...",
@@ -4789,7 +4803,6 @@
         "variable": "{{type}} değişkeni",
         "variable-set": "Değişkenler"
       },
-      "open": "Seçenekler bölmesini aç",
       "row": {
         "header": {
           "hide": "Gizle",
@@ -5140,6 +5153,7 @@
       "title-matched_other": "{{totalCount}} seçenekten {{count}} tanesi eşleşti"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "Tekrar et",
       "tree-item": {
         "empty": "(boş)",
@@ -5351,6 +5365,32 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "Yapılandırma yükleniyor"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "Pano yükleniyor ve başlatılıyor",
       "title-not-found": "{{panelId}} kimliğine sahip panel bulunamadı"
@@ -5454,11 +5494,8 @@
           "tooltip": "Bu pano salt okunur olarak işaretlendi"
         },
         "export": {
-          "arrow": "Dışa aktar",
-          "title": "Dışa aktar",
           "tooltip": {
-            "as-code": "Kod olarak dışa aktar",
-            "json": "JSON olarak dışa aktar"
+            "as-code": "Kod olarak dışa aktar"
           }
         },
         "more-save-options": "Diğer kaydetme seçenekleri",
@@ -5510,6 +5547,9 @@
       "save-library-panel": "Kütüphane panelini kaydet",
       "settings": "Pano ayarları",
       "share-button": "Paylaş",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5838,9 +5878,6 @@
       "custom-options": "Özel seçenekler",
       "name-values-separated-comma": "Virgülle ayrılmış değerler",
       "selection-options": "Seçim ayarları"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "Ana hat"
     },
     "dashboard-link-form": {
       "back-to-list": "Listeye geri dön",
@@ -7824,6 +7861,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8118,13 +8156,6 @@
           "create-slo": "SLO oluştur",
           "enable-slo-alerting": "SLO uyarısını etkinleştir"
         }
-      }
-    }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "Geri dön"
       }
     }
   },
@@ -11085,6 +11116,10 @@
     "pie-chart-type-options": {
       "label-donut": "Halka",
       "label-pie": "Pasta"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -11668,13 +11703,6 @@
       "saving": "Kaydediliyor",
       "title-error-loading-file": "Dosya yüklenirken hata oluştu"
     },
-    "files-view": {
-      "columns": {
-        "history": "Geçmiş",
-        "view": "Görüntüle"
-      },
-      "placeholder-search": "Ara"
-    },
     "finish-step": {
       "description-enable-previews": "Çekme isteklerinde pano değişikliklerinin görsel ön izlemesini ekler. Grafana panolarınızın görselleri Git deponuzda paylaşılacak ve depo erişimi olan herkes tarafından görülebilecektir.",
       "description-generate-dashboard-previews": "Çekme istekleri için ön izleme bağlantıları oluşturun",
@@ -11885,9 +11913,6 @@
       "source-code": "Kaynak kodu"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Web kancası"
-      },
       "read-only-badge": "",
       "settings": "Ayarlar",
       "view": "Görüntüle"
@@ -11924,14 +11949,6 @@
       "webhook-last-event": "Son Olay:",
       "webhook-url": "Web Kancasını Görüntüle"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Geçmiş",
-        "view-dashboard": "Görüntüle",
-        "view-folder": "Görüntüle"
-      },
-      "placeholder-search": "Ara"
-    },
     "repository-status-page": {
       "back-to-repositories": "Depolara geri dön",
       "cleaning-up-resources": "Depo kaynakları temizleniyor",
@@ -11939,12 +11956,10 @@
       "not-found": "bulunamadı",
       "not-found-message": "Depo bulunamadı",
       "repository-config-exists-configuration": "Depo yapılandırmasının yapılandırma dosyasında mevcut olduğundan emin olun.",
-      "tab-files": "Dosyalar",
-      "tab-files-title": "Depodan ham dosya listesi",
       "tab-overview": "Genel Bakış",
       "tab-overview-title": "Depoya genel bakış",
       "tab-resources": "Kaynaklar",
-      "tab-resources-title": "Grafana veri tabanına kaydedilen kaynaklar",
+      "tab-resources-title": "",
       "title": "Depo Durumu",
       "title-legacy-storage": "Eski Depolama",
       "title-queued-for-deletion": "Silinmek üzere kuyruğa alındı"
@@ -11966,6 +11981,17 @@
       "local-description": "Dosya sağlamayı yapılandır",
       "pure-git": "Pure Git",
       "pure-git-description": "Herhangi bir Git deposuna bağlanın"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Temel",
@@ -13033,6 +13059,12 @@
       "label-same-as-value": "Değerle aynı",
       "label-standard": "Standart"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "Otomatik",
       "label-center": "Merkez"
@@ -13370,7 +13402,8 @@
       "forwards-time-aria-label": "Zaman aralığını ileri al",
       "to": "bitiş",
       "zoom-out-button": "Zaman aralığını büyüt",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "Zaman aralığını uygula",
@@ -13471,6 +13504,16 @@
         "label-never": "Hiçbir zaman",
         "label-threshold": "Eşik"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Zaman dilimi ekle",

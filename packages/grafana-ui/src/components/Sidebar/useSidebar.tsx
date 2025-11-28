@@ -16,8 +16,10 @@ export interface SidebarContextValue {
   bottomMargin: number;
   edgeMargin: number;
   contentMargin: number;
-  onDockChange: () => void;
+  onToggleDock: () => void;
   onResize: (diff: number) => void;
+  /** Called when pane is closed or clicked outside of (in undocked mode) */
+  onClosePane?: () => void;
 }
 
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
@@ -35,6 +37,8 @@ export interface UseSideBarOptions {
   edgeMargin?: number;
   /** defaults to 2 grid units (16px) */
   contentMargin?: number;
+  /** Called when pane is closed or clicked outside of (in undocked mode) */
+  onClosePane?: () => void;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -48,6 +52,7 @@ export function useSidebar({
   bottomMargin = 2,
   edgeMargin = 2,
   contentMargin = 2,
+  onClosePane,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
   const [isDocked, setIsDocked] = React.useState(false);
@@ -56,7 +61,7 @@ export function useSidebar({
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
 
-  const onDockChange = useCallback(() => setIsDocked((prev) => !prev), []);
+  const onToggleDock = useCallback(() => setIsDocked((prev) => !prev), []);
 
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
   const toolbarWidth =
@@ -98,7 +103,7 @@ export function useSidebar({
 
   return {
     isDocked,
-    onDockChange,
+    onToggleDock,
     onResize,
     outerWrapperProps,
     position,
@@ -109,5 +114,6 @@ export function useSidebar({
     edgeMargin,
     bottomMargin,
     contentMargin,
+    onClosePane,
   };
 }

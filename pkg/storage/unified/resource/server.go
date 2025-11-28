@@ -14,6 +14,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -220,6 +222,9 @@ type ResourceServerOptions struct {
 	// Search options
 	Search SearchOptions
 
+	// Quota service
+	OverridesService *OverridesService
+
 	// Diagnostics
 	Diagnostics resourcepb.DiagnosticsServer
 
@@ -342,6 +347,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
+		overridesService: opts.OverridesService,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -366,19 +372,20 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	log            log.Logger
-	backend        StorageBackend
-	blob           BlobSupport
-	secure         secrets.InlineSecureValueSupport
-	search         *searchSupport
-	diagnostics    resourcepb.DiagnosticsServer
-	access         claims.AccessClient
-	writeHooks     WriteAccessHooks
-	lifecycle      LifecycleHooks
-	now            func() int64
-	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics *StorageMetrics
-	indexMetrics   *BleveIndexMetrics
+	log              log.Logger
+	backend          StorageBackend
+	blob             BlobSupport
+	secure           secrets.InlineSecureValueSupport
+	search           *searchSupport
+	diagnostics      resourcepb.DiagnosticsServer
+	access           claims.AccessClient
+	writeHooks       WriteAccessHooks
+	lifecycle        LifecycleHooks
+	now              func() int64
+	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics   *StorageMetrics
+	indexMetrics     *BleveIndexMetrics
+	overridesService *OverridesService
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -409,6 +416,11 @@ func (s *server) Init(ctx context.Context) error {
 			if err != nil {
 				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
 			}
+		}
+
+		// initialize tenant overrides service
+		if s.initErr == nil && s.overridesService != nil {
+			s.initErr = s.overridesService.init(ctx)
 		}
 
 		// initialize the search index
@@ -442,6 +454,13 @@ func (s *server) Stop(ctx context.Context) error {
 
 	if s.search != nil {
 		s.search.stop()
+	}
+
+	if s.overridesService != nil {
+		if err := s.overridesService.stop(ctx); err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
+		}
 	}
 
 	// Stops the streaming
@@ -646,6 +665,13 @@ func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.Aut
 func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
+
+	// check quotas and log for now
+	s.checkQuota(ctx, NamespacedResource{
+		Namespace: req.Key.Namespace,
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+	})
 
 	if r := verifyRequestKey(req.Key); r != nil {
 		return nil, fmt.Errorf("invalid request key: %s", r.Message)
@@ -1548,4 +1574,32 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 	}
 
 	return s.search.RebuildIndexes(ctx, req)
+}
+
+func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
+	span := trace.SpanFromContext(ctx)
+	span.AddEvent("checkQuota", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
+
+	if s.overridesService == nil {
+		return
+	}
+
+	quota, err := s.overridesService.GetQuota(ctx, nsr)
+	if err != nil {
+		s.log.FromContext(ctx).Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		return
+	}
+
+	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	if err != nil {
+		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		return
+	}
+	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
+		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
+	}
 }
