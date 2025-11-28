@@ -348,8 +348,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         scopeId: id,
         // Only the first scope gets the scopeNodeId
         scopeNodeId: index === 0 ? scopeNodeId : undefined,
-        // Only the first scope gets the parentNodeId (for recent scopes when node isn't loaded yet)
-        parentNodeId: index === 0 ? parentNodeId : undefined,
+        parentNodeId,
       })),
       redirectOnApply
     );

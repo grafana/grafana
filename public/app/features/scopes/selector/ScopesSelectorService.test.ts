@@ -313,7 +313,7 @@ describe('ScopesSelectorService', () => {
       // Load mock node
       await service.updateNode('', true, '');
 
-      await service.changeScopes(['test-scope'], 'test-scope-node');
+      await service.changeScopes(['test-scope'], undefined, 'test-scope-node');
       expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope', scopeNodeId: 'test-scope-node' }]);
       expect(service.state.nodes).toEqual({ 'test-scope-node': mockNode });
       expect(storeValue[RECENT_SCOPES_KEY]).toEqual(JSON.stringify([[{ ...mockScope, parentNode: mockNode }]]));
