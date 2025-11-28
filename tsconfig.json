@@ -2,7 +2,6 @@
   "extends": "./scripts/tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "baseUrl": "public/",
     "outDir": "public/dist",
     "rootDirs": ["public/"],
     "allowJs": true,
@@ -14,7 +13,8 @@
     "moduleResolution": "bundler",
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
-      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
+      "@grafana/schema/dist/esm/*": ["./packages/grafana-schema/src/*"],
+      "*": ["./public/*"]
     }
   },
   "ts-node": {
