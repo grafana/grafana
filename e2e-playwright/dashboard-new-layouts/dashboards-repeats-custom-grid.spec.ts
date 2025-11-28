@@ -430,7 +430,7 @@ test.describe(
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
-      ).not.toBeAttached();
+      ).not.toBeVisible();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(1, 1)))
@@ -449,7 +449,7 @@ test.describe(
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
-      ).not.toBeAttached();
+      ).not.toBeVisible();
     });
 
     test('can view embedded panel in a repeated row', async ({ dashboardPage, selectors, page }) => {
@@ -474,7 +474,7 @@ test.describe(
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
-      ).not.toBeAttached();
+      ).not.toBeVisible();
     });
 
     // there is a bug in the Snapshot feature that prevents the next two tests from passing
@@ -510,7 +510,7 @@ test.describe(
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
-      ).not.toBeAttached();
+      ).not.toBeVisible();
     });
     test.skip('can view single panel in a repeated row inside snapshot', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
