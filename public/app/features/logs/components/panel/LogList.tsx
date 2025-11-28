@@ -313,7 +313,7 @@ const LogListComponent = ({
           ),
     [displayedFields, listStyle, processedLogs, showUniqueLabels, timestampResolution, virtualization]
   );
-  const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
+  const styles = useStyles2(getStyles, dimensions, displayedFields, { listStyle, showTime });
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -565,14 +565,14 @@ function getStyles(
   theme: GrafanaTheme2,
   dimensions: LogFieldDimension[],
   displayedFields: string[],
-  { showTime }: { showTime: boolean }
+  { listStyle, showTime }: { listStyle: LogListStyle; showTime: boolean; }
 ) {
   const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
       '& .unwrapped-log-line': {
-        display: 'grid',
-        gridTemplateColumns: getGridTemplateColumns(columns, displayedFields),
+        display: listStyle === LogListStyle.UnwrappedWithColumns ? 'grid' : 'flex',
+        gridTemplateColumns: listStyle === LogListStyle.UnwrappedWithColumns ? getGridTemplateColumns(columns, displayedFields) : undefined,
         '& .field': {
           overflow: 'hidden',
         },
