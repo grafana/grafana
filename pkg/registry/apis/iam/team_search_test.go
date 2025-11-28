@@ -68,34 +68,7 @@ func TestTeamSearchFallback(t *testing.T) {
 }
 
 func TestTeamSearchHandler(t *testing.T) {
-	t.Run("Multiple comma separated fields will be appended to default team search fields", func(t *testing.T) {
-		mockClient := &MockClient{}
-
-		features := featuremgmt.WithFeatures()
-		searchHandler := TeamSearchHandler{
-			log:      log.New("grafana-apiserver.teams.search"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
-		}
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/teams/search?field=field1&field=field2&field=field3", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoTeamSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		expectedFields := []string{"title", "email", "provisioned", "externalUID", "field1", "field2", "field3"}
-		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
-			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
-		}
-	})
-
-	t.Run("Passing no fields will search using default team search fields", func(t *testing.T) {
+	t.Run("search using default team search fields", func(t *testing.T) {
 		mockClient := &MockClient{}
 
 		features := featuremgmt.WithFeatures()
@@ -116,7 +89,7 @@ func TestTeamSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"title", "email", "provisioned", "externalUID"}
+		expectedFields := []string{"email", "provisioned", "externalUID"}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
