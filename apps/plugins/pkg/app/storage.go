@@ -16,8 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	claims "github.com/grafana/authlib/types"
-
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -40,14 +38,12 @@ type PluginMetaStorage struct {
 	clientOnce    sync.Once
 
 	gr             schema.GroupResource
-	namespacer     claims.NamespaceFormatter
 	tableConverter rest.TableConvertor
 }
 
 func NewPluginMetaStorage(
 	metaManager *meta.ProviderManager,
 	clientFactory func(context.Context) (*pluginsv0alpha1.PluginClient, error),
-	namespacer claims.NamespaceFormatter,
 ) *PluginMetaStorage {
 	gr := schema.GroupResource{
 		Group:    pluginsv0alpha1.APIGroup,
@@ -58,7 +54,6 @@ func NewPluginMetaStorage(
 		metaManager:    metaManager,
 		clientFactory:  clientFactory,
 		gr:             gr,
-		namespacer:     namespacer,
 		tableConverter: rest.NewDefaultTableConvertor(gr),
 	}
 }

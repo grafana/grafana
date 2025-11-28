@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
@@ -65,7 +64,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 		Terminator:   term,
 	})
 
-	ps, err := pluginstore.NewPluginStoreForTest(reg, l, sources.ProvideService(cfg, pCfg), installsyncfakes.NewFakeSyncer())
+	ps, err := pluginstore.NewPluginStoreForTest(reg, l, sources.ProvideService(cfg, pCfg))
 	require.NoError(t, err)
 
 	return &IntegrationTestCtx{
