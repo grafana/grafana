@@ -11653,13 +11653,6 @@
       "saving": "保存中",
       "title-error-loading-file": "ファイル読み込み時のエラー"
     },
-    "files-view": {
-      "columns": {
-        "history": "履歴",
-        "view": "表示"
-      },
-      "placeholder-search": "検索"
-    },
     "finish-step": {
       "description-enable-previews": "プルリクエストによるダッシュボードの変更の画像プレビューを追加します。Grafanaダッシュボードの画像はGitリポジトリで共有され、リポジトリにアクセスできる全ユーザーが閲覧できます。",
       "description-generate-dashboard-previews": "プルリクエストのプレビューリンクを作成する",
@@ -11868,9 +11861,6 @@
       "source-code": "ソースコード"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "読み取り専用",
       "settings": "設定",
       "view": "表示"
@@ -11907,14 +11897,6 @@
       "webhook-last-event": "最新イベント：",
       "webhook-url": "Webhookを表示"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "履歴",
-        "view-dashboard": "表示",
-        "view-folder": "表示"
-      },
-      "placeholder-search": "検索"
-    },
     "repository-status-page": {
       "back-to-repositories": "リポジトリに戻る",
       "cleaning-up-resources": "リポジトリリソースのクリーンアップ中",
@@ -11922,12 +11904,10 @@
       "not-found": "見つかりません",
       "not-found-message": "リポジトリが見つかりません",
       "repository-config-exists-configuration": "リポジトリ設定が設定ファイルに含まれていることを確認してください。",
-      "tab-files": "ファイル",
-      "tab-files-title": "リポジトリからのRawファイルリスト",
       "tab-overview": "概要",
       "tab-overview-title": "リポジトリの概要",
       "tab-resources": "リソース",
-      "tab-resources-title": "Grafanaデータベースに保存されたリソース",
+      "tab-resources-title": "",
       "title": "リポジトリの状態",
       "title-legacy-storage": "レガシーストレージ",
       "title-queued-for-deletion": "削除待ちリストに追加されました"
@@ -11949,6 +11929,17 @@
       "local-description": "ファイルのプロビジョニングを設定",
       "pure-git": "Pure Git",
       "pure-git-description": "任意のGitリポジトリに接続"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "ベース",
