@@ -132,7 +132,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 	l := log.New("ngalert.notifier")
 
-	dispatchTimer := GetDispatchTimer(ctx, featureToggles)
+	dispatchTimer := GetDispatchTimer(featureToggles)
 
 	var flushLogOptions maintenanceOptions
 	if dispatchTimer == alertingNotify.DispatchTimerSync {
