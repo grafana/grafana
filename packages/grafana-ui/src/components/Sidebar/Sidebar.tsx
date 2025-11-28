@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useContext, useRef } from 'react';
-import { useClickAway } from 'react-use';
+import { ReactNode, useContext } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,6 +12,7 @@ import { SidebarButton } from './SidebarButton';
 import { SidebarPaneHeader } from './SidebarPaneHeader';
 import { SidebarResizer } from './SidebarResizer';
 import { SIDE_BAR_WIDTH_ICON_ONLY, SIDE_BAR_WIDTH_WITH_TEXT, SidebarContext, SidebarContextValue } from './useSidebar';
+import { useCustomClickAway } from './useSidebarClickAway';
 
 export interface Props {
   children?: ReactNode;
@@ -22,7 +22,6 @@ export interface Props {
 export function SidebarComp({ children, contextValue }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const ref = useRef<HTMLDivElement>(null);
   const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin } = contextValue;
 
   const className = cx({
@@ -34,7 +33,7 @@ export function SidebarComp({ children, contextValue }: Props) {
 
   const style = { [position]: theme.spacing(edgeMargin), bottom: theme.spacing(bottomMargin) };
 
-  useClickAway(ref, (evt) => {
+  const ref = useCustomClickAway((evt) => {
     const portalContainer = getPortalContainer();
     // ignore clicks inside portal container
     if (evt.target instanceof Node && portalContainer && portalContainer.contains(evt.target)) {
