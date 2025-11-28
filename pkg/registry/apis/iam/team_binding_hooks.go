@@ -139,6 +139,9 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 			},
 		},
 	})
+	if len(operations) == 0 {
+		return func(ctx context.Context, success bool) {}
+	}
 
 	// Return a finish function that performs the zanzana write only on success
 	return func(ctx context.Context, success bool) {
@@ -176,7 +179,6 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 			defer cancel()
 
 			// Only make the request if there are deletes or writes
-			if len(operations) > 0 {
 				err := b.zClient.Mutate(ctx, &v1.MutateRequest{
 					Namespace:  newTB.Namespace,
 					Operations: operations,
