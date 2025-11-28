@@ -140,7 +140,8 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 		},
 	})
 	if len(operations) == 0 {
-		return func(ctx context.Context, success bool) {}
+		b.logger.Debug("no updates to team binding in zanzana", "namespace", newTB.Namespace, "name", newTB.Name)
+		return func(ctx context.Context, success bool) {}, nil
 	}
 
 	// Return a finish function that performs the zanzana write only on success
@@ -179,24 +180,21 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 			defer cancel()
 
 			// Only make the request if there are deletes or writes
-				err := b.zClient.Mutate(ctx, &v1.MutateRequest{
-					Namespace:  newTB.Namespace,
-					Operations: operations,
-				})
-				if err != nil {
-					status = "failure"
-					b.logger.Error("failed to update team binding in zanzana",
-						"err", err,
-						"namespace", newTB.Namespace,
-						"name", newTB.Name,
-					)
-				} else {
-					// Record successful tuple operations
-					hooksTuplesCounter.WithLabelValues("teambinding", "update", "delete").Inc()
-					hooksTuplesCounter.WithLabelValues("teambinding", "update", "write").Inc()
-				}
+			err := b.zClient.Mutate(ctx, &v1.MutateRequest{
+				Namespace:  newTB.Namespace,
+				Operations: operations,
+			})
+			if err != nil {
+				status = "failure"
+				b.logger.Error("failed to update team binding in zanzana",
+					"err", err,
+					"namespace", newTB.Namespace,
+					"name", newTB.Name,
+				)
 			} else {
-				b.logger.Debug("no updates to team binding in zanzana", "namespace", newTB.Namespace, "name", newTB.Name)
+				// Record successful tuple operations
+				hooksTuplesCounter.WithLabelValues("teambinding", "update", "delete").Inc()
+				hooksTuplesCounter.WithLabelValues("teambinding", "update", "write").Inc()
 			}
 		}()
 	}, nil
