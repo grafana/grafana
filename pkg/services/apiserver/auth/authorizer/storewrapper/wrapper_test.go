@@ -15,51 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type FakeAuthorizer struct {
-	mock.Mock
-}
-
-func (f *FakeAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
-	args := f.Called(ctx, obj)
-	return args.Error(0)
-}
-
-func (f *FakeAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
-	args := f.Called(ctx, obj)
-	return args.Error(0)
-}
-
-func (f *FakeAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
-	args := f.Called(ctx, obj)
-	return args.Error(0)
-}
-
-func (f *FakeAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
-	args := f.Called(ctx, obj)
-	return args.Error(0)
-}
-
-func (f *FakeAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
-	args := f.Called(ctx, list)
-	var res runtime.Object
-	if args.Get(0) != nil {
-		res = args.Get(0).(runtime.Object)
-	}
-	return res, args.Error(1)
-}
-
-type fakeObject struct {
-	metaV1.TypeMeta
-	metaV1.ObjectMeta
-}
-
-func (f *fakeObject) DeepCopyObject() runtime.Object {
-	return &fakeObject{
-		TypeMeta:   f.TypeMeta,
-		ObjectMeta: f.ObjectMeta,
-	}
-}
-
 type testSetup struct {
 	mockStore *rest.MockStorage
 	mockAuth  *FakeAuthorizer
@@ -379,6 +334,55 @@ func TestWrapper_PassthroughMethods(t *testing.T) {
 	})
 
 	setup.mockStore.AssertExpectations(t)
+}
+
+// -----
+// Fakes
+// -----
+
+type FakeAuthorizer struct {
+	mock.Mock
+}
+
+func (f *FakeAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+	args := f.Called(ctx, obj)
+	return args.Error(0)
+}
+
+func (f *FakeAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+	args := f.Called(ctx, obj)
+	return args.Error(0)
+}
+
+func (f *FakeAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
+	args := f.Called(ctx, obj)
+	return args.Error(0)
+}
+
+func (f *FakeAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
+	args := f.Called(ctx, obj)
+	return args.Error(0)
+}
+
+func (f *FakeAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
+	args := f.Called(ctx, list)
+	var res runtime.Object
+	if args.Get(0) != nil {
+		res = args.Get(0).(runtime.Object)
+	}
+	return res, args.Error(1)
+}
+
+type fakeObject struct {
+	metaV1.TypeMeta
+	metaV1.ObjectMeta
+}
+
+func (f *fakeObject) DeepCopyObject() runtime.Object {
+	return &fakeObject{
+		TypeMeta:   f.TypeMeta,
+		ObjectMeta: f.ObjectMeta,
+	}
 }
 
 // fakeUpdatedObjectInfo implements k8srest.UpdatedObjectInfo for testing
