@@ -728,25 +728,35 @@ describe('ScopesDashboardsService', () => {
       const testService = new ScopesDashboardsService(mockApiClient, ['', 'group1', 'subfolder']);
       expect(testService.state.expandedFolderPath).toEqual(['', 'group1', 'subfolder']);
 
+      // Set navigation scope for the first time (initial load from URL)
       await testService.setNavigationScope('navScope1');
 
-      // expandedFolderPath should be cleared to allow auto-expansion
+      // expandedFolderPath should be PRESERVED on initial load (from URL)
+      expect(testService.state.expandedFolderPath).toEqual(['', 'group1', 'subfolder']);
+
+      // Now change to a different navigation scope
+      await testService.setNavigationScope('navScope2');
+
+      // expandedFolderPath should NOW be cleared when scope changes
       expect(testService.state.expandedFolderPath).toEqual([]);
     });
 
     it('should auto-expand folders after clearing navigation scope and selecting new scope', async () => {
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' } as Location);
 
-      // Step 1: Set a navigation scope with nested folders
+      // Step 1: Set a navigation scope with nested folders (initial load)
       const testService = new ScopesDashboardsService(mockApiClient, ['', 'group1', 'subfolder']);
       mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
       await testService.setNavigationScope('navScope1');
 
-      // expandedFolderPath should be cleared
-      expect(testService.state.expandedFolderPath).toEqual([]);
+      // expandedFolderPath should be preserved on initial load
+      expect(testService.state.expandedFolderPath).toEqual(['', 'group1', 'subfolder']);
 
-      // Step 2: Clear navigation scope
+      // Step 2: Clear navigation scope (scope is changing)
       await testService.setNavigationScope(undefined);
+
+      // expandedFolderPath should NOW be cleared when scope changes
+      expect(testService.state.expandedFolderPath).toEqual([]);
 
       // Step 3: Select a new scope (without navigation scope) with a dashboard that matches current URL
       const mockNavigations: ScopeNavigation[] = [

@@ -6,7 +6,6 @@ import { config, locationService } from '@grafana/runtime';
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
-import { isCurrentPath } from './scopeNavgiationUtils';
 import { ScopeNavigation, SuggestedNavigationsFoldersMap, SuggestedNavigationsMap } from './types';
 
 interface ScopesDashboardsServiceState {
@@ -53,16 +52,23 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }
 
     const forScopeNames = navigationScope ? [navigationScope] : (fallbackScopeNames ?? []);
+
+    // Only clear expanded path if navigation scope was already set (scope is changing, not initial load)
+    // On initial load, preserve the expandedFolderPath from URL
+    const shouldClearExpandedPath = this.state.navigationScope !== undefined;
+
     this.updateState({
       navigationScope,
       drawerOpened: forScopeNames.length > 0,
-      // Clear the expanded folder path so auto-expansion can work for the new scope
-      expandedFolderPath: [],
+      // Clear the expanded folder path only when scope changes (not on initial load)
+      ...(shouldClearExpandedPath && { expandedFolderPath: [] }),
     });
 
     // Clear the navigation folder path from URL when the navigation scope changes
     // since the folder structure will be different
-    locationService.partial({ nav_scope_path: null });
+    if (shouldClearExpandedPath) {
+      locationService.partial({ nav_scope_path: null });
+    }
 
     await this.fetchDashboards(forScopeNames);
   };
@@ -213,8 +219,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }
 
     // Clear the expanded folder path when scopes change (unless this is initial load with path from URL)
-    // If we have an expandedFolderPath but forScopeNames is changing, the path is no longer valid
-    const shouldClearPath = this.state.expandedFolderPath.length > 0 && this.state.forScopeNames.length > 0;
+    // Only clear if we already had scopes loaded (not on initial load from empty state)
+    const shouldClearPath = this.state.forScopeNames.length > 0;
 
     this.updateState({
       forScopeNames,
@@ -281,7 +287,12 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         }
 
         if ('url' in navigation.spec && typeof navigation.spec.url === 'string') {
-          expanded = isCurrentPath(currentPath, navigation.spec.url);
+          // For auto-expansion, support prefix matching (not just exact matching)
+          // This allows folders to be expanded when viewing nested pages
+          const normalizedNavUrl = navigation.spec.url.split('?')[0].split('#')[0];
+          // Match if exact match OR if current path starts with nav URL followed by '/'
+          // This prevents false matches like /custom matching /custom-other
+          expanded = currentPath === normalizedNavUrl || currentPath.startsWith(normalizedNavUrl + '/');
         }
       }
 
