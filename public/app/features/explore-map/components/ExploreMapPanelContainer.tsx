@@ -28,6 +28,7 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
   const rndRef = useRef<Rnd>(null);
 
   const selectedPanelId = useSelector((state) => state.exploreMap.selectedPanelId);
+  const viewport = useSelector((state) => state.exploreMap.viewport);
   const isSelected = selectedPanelId === panel.id;
 
   const handleDragStop = useCallback(
@@ -94,6 +95,7 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
       ref={rndRef}
       position={{ x: panel.position.x, y: panel.position.y }}
       size={{ width: panel.position.width, height: panel.position.height }}
+      scale={viewport.zoom}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
       onMouseDown={handleMouseDown}
