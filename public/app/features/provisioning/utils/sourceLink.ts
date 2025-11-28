@@ -17,6 +17,20 @@ import { isValidRepoType } from '../guards';
 import { getHasTokenInstructions, getRepoFileUrl } from './git';
 
 /**
+ * Find and remove existing source links from the links array.
+ * A source link is identified by its tooltip matching the source link tooltip translation.
+ * Returns the links array with source links removed.
+ */
+export function removeExistingSourceLinks(links: DashboardLink[] | undefined): DashboardLink[] {
+  if (!links) {
+    return [];
+  }
+  // TODO This is a pretty hacky way to match the source links, needs a better alternative
+  const sourceLinkTooltip = t('dashboard.source-link.tooltip', 'View source file in repository');
+  return links.filter((link) => link.tooltip !== sourceLinkTooltip);
+}
+
+/**
  * Build a source link for a repo-managed dashboard.
  * Returns undefined if the dashboard is not repo-managed or if the repository is not a git provider.
  */

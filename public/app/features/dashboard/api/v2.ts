@@ -9,8 +9,8 @@ import {
   AnnoKeyFolder,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
-  AnnoKeyMessage,
   AnnoKeyGrantPermissions,
+  AnnoKeyMessage,
   DeprecatedInternalId,
   Resource,
   ResourceClient,
@@ -18,7 +18,7 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { buildSourceLink } from 'app/features/provisioning/utils/sourceLink';
+import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -79,7 +79,8 @@ export class K8sDashboardV2API
       // Inject source link for repo-managed dashboards
       const sourceLink = await buildSourceLink(dashboard.metadata.annotations);
       if (sourceLink) {
-        dashboard.spec.links = [sourceLink, ...(dashboard.spec.links || [])];
+        const linksWithoutSource = removeExistingSourceLinks(dashboard.spec.links);
+        dashboard.spec.links = [sourceLink, ...linksWithoutSource];
       }
 
       return dashboard;
