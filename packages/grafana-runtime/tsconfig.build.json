@@ -3,5 +3,8 @@
     "rootDir": "./src"
   },
   "exclude": ["dist", "node_modules", "**/*.test.ts*", "../../public/test/setupTests.ts"],
-  "extends": "./tsconfig.json"
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src"
+  }
 }

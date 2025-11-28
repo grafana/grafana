@@ -10,6 +10,7 @@
     "allowJs": true,
     "rootDir": "../../",
     "rootDirs": ["."],
+    "rootDir": "../..",
     "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
