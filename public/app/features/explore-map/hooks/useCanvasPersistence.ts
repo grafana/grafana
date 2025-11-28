@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 
 import { store } from '@grafana/data';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { loadCanvas } from '../state/exploreMapSlice';
@@ -108,9 +110,12 @@ export function useCanvasPersistence() {
       linkElement.setAttribute('href', dataUri);
       linkElement.setAttribute('download', exportFileDefaultName);
       linkElement.click();
+      dispatch(notifyApp(createSuccessNotification('Canvas exported successfully')));
     } catch (error) {
       console.error('Failed to export canvas:', error);
-      alert('Failed to export canvas. Check console for details.');
+      dispatch(
+        notifyApp(createErrorNotification('Failed to export canvas', 'Check console for details'))
+      );
     }
   };
 
@@ -138,10 +143,12 @@ export function useCanvasPersistence() {
             }
             const parsed: ExploreMapState = JSON.parse(result);
             dispatch(loadCanvas(parsed));
-            alert('Canvas imported successfully!');
+            dispatch(notifyApp(createSuccessNotification('Canvas imported successfully')));
           } catch (error) {
             console.error('Failed to parse imported canvas:', error);
-            alert('Failed to import canvas. Invalid file format.');
+            dispatch(
+              notifyApp(createErrorNotification('Failed to import canvas', 'Invalid file format'))
+            );
           }
         };
         reader.readAsText(file);
@@ -150,7 +157,9 @@ export function useCanvasPersistence() {
       input.click();
     } catch (error) {
       console.error('Failed to import canvas:', error);
-      alert('Failed to import canvas. Check console for details.');
+      dispatch(
+        notifyApp(createErrorNotification('Failed to import canvas', 'Check console for details'))
+      );
     }
   };
 
