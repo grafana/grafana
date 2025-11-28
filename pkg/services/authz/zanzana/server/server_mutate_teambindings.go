@@ -78,9 +78,7 @@ func (s *Server) getTeamBindingTuple(ctx context.Context, subject string, team s
 		return nil, errors.New("team name cannot be empty")
 	}
 
-	// Default to member if unknown permission
-	relation := zanzana.RelationTeamMember
-
+	relation := ""
 	switch permission {
 	case string(iamv0.TeamBindingTeamPermissionAdmin):
 		relation = zanzana.RelationTeamAdmin
