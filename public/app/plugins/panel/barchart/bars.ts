@@ -16,9 +16,11 @@ const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { getClustersFromArray } from './utils';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
+const clusterDistr = SPACE_BETWEEN;
 // min.max font size for value label
 const VALUE_MIN_FONT_SIZE = 8;
 const VALUE_MAX_FONT_SIZE = 30;
@@ -43,10 +45,13 @@ export interface BarsOptions {
   xOri: ScaleOrientation;
   xDir: ScaleDirection;
   groupWidth: number;
+  clusterWidth: number;
   barWidth: number;
   barRadius: number;
   showValue: VisibilityMode;
   stacking: StackingMode;
+  isClusteredStacked: boolean;
+  groupByField?: string;
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
   getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
   fillOpacity?: number;
@@ -116,7 +121,7 @@ function calculateFontSizeWithMetrics(
 /**
  * @internal
  */
-export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
+export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, groupByFieldIdx: number) {
   const {
     xOri,
     xDir: dir,
@@ -129,16 +134,21 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     xSpacing = 0,
     hoverMulti = false,
     timeZone = 'browser',
+    groupByField,
   } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
   const pctStacked = opts.stacking === StackingMode.Percent;
+  const isClusteredStacked = opts.isClusteredStacked;
+  let { clusterWidth, groupWidth, barWidth, barRadius = 0 } = opts;
 
-  let { groupWidth, barWidth, barRadius = 0 } = opts;
-
-  if (isStacked) {
+  if (isStacked || isClusteredStacked && groupByField) {
     [groupWidth, barWidth] = [barWidth, groupWidth];
+  }
+
+  if (!groupByField) {
+    clusterWidth = groupWidth;
   }
 
   let qt: Quadtree;
@@ -199,13 +209,17 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
     }
 
+    if (groupByField) { // use only distinct x-axis values when grouping is used.
+      splits = Array.from(new Set(u.data[0]))
+        .map(value => u.data[0].find(obj => obj === value))
+        .filter((v): v is number => v !== undefined);
+    }
     return splits.map((v) => (isXHorizontal ? formatShortValue(0, v) : formatValue(0, v)));
   };
 
   // this expands the distr: 2 scale so that the indicies of each data[0] land at the proper justified positions
   const xRange: Scale.Range = (u, min, max) => {
     min = 0;
-    max = Math.max(1, u.data[0].length - 1);
 
     let pctOffset = 0;
 
@@ -213,6 +227,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     distribute(u.data[0].length, groupWidth, groupDistr, 0, (di, lftPct, widPct) => {
       pctOffset = lftPct + widPct / 2;
     });
+    max = Math.max(1, u.data[0].length - 1);
 
     // expand scale range by equal amounts on both ends
     let rn = max - min;
@@ -230,37 +245,94 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     return [min, max];
   };
 
-  let distrTwo = (groupCount: number, barCount: number) => {
+
+  // Range for the x-axis values
+  const xAxisRange: Scale.Range = (u, min, max) => {    
+    min = 0;
+
+    let pctOffset = 0;
+
+    const clusters = getClustersFromArray(Array.from(u.data[groupByFieldIdx === -1 ? 0 : groupByFieldIdx]), groupByField);
+
+    if (!groupByField) {
+      // how far in is the first tick in % of full dimension
+      distribute(u.data[0].length, groupWidth, groupDistr, 0, (di, lftPct, widPct) => {
+        pctOffset = lftPct + widPct / 2;
+      });
+      max = Math.max(1, u.data[0].length - 1);
+    } else {
+      distribute(clusters.length, clusterWidth, clusterDistr, 0, (di, lftPct, widPct) => {
+        pctOffset = lftPct + widPct / 2;
+      });
+      max = Math.max(1, clusters.length - 1);
+    }
+
+    // expand scale range by equal amounts on both ends
+    let rn = max - min;
+
+    if (pctOffset === 0.5) {
+      min -= rn;
+    } else {
+      let upScale = 1 / (1 - pctOffset * 2);
+      let offset = (upScale * rn - rn) / 2;
+
+      min -= offset;
+      max += offset;
+    }
+
+    return [min, max];
+  };
+
+
+  let distrStacked = (groupCount: number, barCount: number, clusterCount: number, groupsPerCluster: number[]) => {
     let out = Array.from({ length: barCount }, () => ({
       offs: Array(groupCount).fill(0),
       size: Array(groupCount).fill(0),
     }));
-
-    distribute(groupCount, groupWidth, groupDistr, null, (groupIdx, groupOffPct, groupDimPct) => {
-      distribute(barCount, barWidth, barDistr, null, (barIdx, barOffPct, barDimPct) => {
-        out[barIdx].offs[groupIdx] = groupOffPct + groupDimPct * barOffPct;
-        out[barIdx].size[groupIdx] = groupDimPct * barDimPct;
+    let groupOffset = 0; 
+    // distribute clusters across the entire x-axis
+    distribute(clusterCount, clusterWidth, clusterDistr, null, (clusterIdx, clusterOffPct, clusterDimPct) => {
+      const groupsInCurrentCluster = groupsPerCluster[clusterIdx]; // number of groups in this cluster
+      const start = groupOffset;
+      const end = groupOffset + groupsInCurrentCluster;
+      groupOffset = end;
+      // distribute groups within cluster
+      distribute(groupsInCurrentCluster, groupWidth, groupDistr, null, (localGroupIdx, groupOffPct, groupDimPct) => {
+        const globalGroupIdx = start + localGroupIdx;
+        const offset = clusterOffPct + clusterDimPct * groupOffPct;
+        const size = clusterDimPct * groupDimPct;
+        // In stacked mode: all stacked bars share same offset and size.
+        for (let bar = 0; bar < barCount; bar++) {
+          out[bar].offs[globalGroupIdx] = offset; // fraction of total x-axis as left starting point
+          out[bar].size[globalGroupIdx] = size;
+        }
       });
     });
-
     return out;
   };
 
-  let distrOne = (groupCount: number, barCount: number) => {
+  // non-stacked distribution
+  let distrNonStacked = (groupCount: number, barCount: number, clusterCount: number, groupsPerCluster: number[]) => {
     let out = Array.from({ length: barCount }, () => ({
       offs: Array(groupCount).fill(0),
       size: Array(groupCount).fill(0),
     }));
-
-    distribute(groupCount, groupWidth, groupDistr, null, (groupIdx, groupOffPct, groupDimPct) => {
-      distribute(barCount, barWidth, barDistr, null, (barIdx, barOffPct, barDimPct) => {
-        out[barIdx].offs[groupIdx] = groupOffPct;
-        out[barIdx].size[groupIdx] = groupDimPct;
-      });
-    });
-
+        let groupOffset = 0;
+        distribute(clusterCount, clusterWidth, clusterDistr, null, (clusterIdx, clusterOffPct, clusterDimPct) => {
+          const groupsInCurrentCluster = groupsPerCluster[clusterIdx];
+          const start = groupOffset;
+          const end = groupOffset + groupsInCurrentCluster;
+          groupOffset = end;
+          distribute(groupsInCurrentCluster, groupWidth, groupDistr, null, (localGroupIdx, groupOffPct, groupDimPct) => {
+            const globalGroupIdx = start + localGroupIdx;    
+            distribute(barCount, barWidth, barDistr, null, (barIdx, barOffPct, barDimPct) => {
+              out[barIdx].offs[globalGroupIdx] = clusterOffPct + clusterDimPct * (groupOffPct + groupDimPct * barOffPct); 
+              out[barIdx].size[globalGroupIdx] = clusterDimPct * groupDimPct * barDimPct;
+            });
+          });
+        });
     return out;
-  };
+  }
 
   const LABEL_OFFSET_FACTOR = isXHorizontal ? LABEL_OFFSET_FACTOR_VT : LABEL_OFFSET_FACTOR_HZ;
   const LABEL_OFFSET_MAX = isXHorizontal ? LABEL_OFFSET_MAX_VT : LABEL_OFFSET_MAX_HZ;
@@ -524,10 +596,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       s._paths = null;
     });
 
-    if (isStacked) {
-      barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
+    const clusters = getClustersFromArray(Array.from(u.data[groupByFieldIdx === -1 ? 0 : groupByFieldIdx]), groupByField);
+
+
+    if (isStacked || isClusteredStacked) {
+      barsPctLayout = [null, ...distrStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)];
     } else {
-      barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];
+      barsPctLayout = [null, ...distrNonStacked(u.data[0].length, u.data.length - 1, clusters.length, clusters)]
     }
 
     if (useMappedColors) {
@@ -640,14 +715,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   function prepData(frames: DataFrame[], stackingGroups: StackingGroup[]) {
     alignedTotals = null;
-    return preparePlotData2(frames[0], stackingGroups, ({ totals }) => {
-      alignedTotals = totals;
-    });
+    return preparePlotData2(frames[0], stackingGroups, 
+      ({ totals }) => { alignedTotals = totals; });
   }
 
   return {
     cursor,
     // scale & axis opts
+    xAxisRange,
     xRange,
     xValues,
     xSplits,
