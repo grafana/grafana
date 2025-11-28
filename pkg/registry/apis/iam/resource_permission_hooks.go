@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,8 +13,6 @@ import (
 )
 
 var (
-	errEmptyName = errors.New("name cannot be empty")
-
 	defaultWriteTimeout = 15 * time.Second
 )
 
