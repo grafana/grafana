@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.TeamSearchResults, error) {
@@ -30,11 +31,11 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 		switch v.Name {
 		case resource.SEARCH_FIELD_TITLE:
 			titleIDX = i
-		case resource.SEARCH_FIELD_EMAIL:
+		case builders.TEAM_SEARCH_EMAIL:
 			emailIDX = i
-		case resource.SEARCH_FIELD_PROVISIONED:
+		case builders.TEAM_SEARCH_PROVISIONED:
 			provisionedIDX = i
-		case resource.SEARCH_FIELD_EXTERNAL_UID:
+		case builders.TEAM_SEARCH_EXTERNAL_UID:
 			externalUIDIDX = i
 		}
 	}

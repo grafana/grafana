@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const (
@@ -103,9 +104,9 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	return []*resourcepb.ResourceTableColumnDefinition{
 		searchFields.Field(res.SEARCH_FIELD_NAME),
 		searchFields.Field(res.SEARCH_FIELD_TITLE),
-		searchFields.Field("email"),
-		searchFields.Field("provisioned"),
-		searchFields.Field("externalUID"),
+		searchFields.Field(builders.TEAM_SEARCH_EMAIL),
+		searchFields.Field(builders.TEAM_SEARCH_PROVISIONED),
+		searchFields.Field(builders.TEAM_SEARCH_EXTERNAL_UID),
 	}
 }
 
