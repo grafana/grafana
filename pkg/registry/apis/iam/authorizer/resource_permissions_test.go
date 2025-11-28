@@ -1,4 +1,4 @@
-package storewrapper
+package authorizer
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,7 +93,7 @@ func TestResourcePermissions_List(t *testing.T) {
 	}
 
 	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
-	wrapper := New(inner, resPermAuthz)
+	wrapper := storewrapper.New(inner, resPermAuthz)
 
 	ctx := types.WithAuthInfo(context.Background(), user)
 	list, err := wrapper.List(ctx, &internalversion.ListOptions{Limit: 10})
@@ -149,7 +150,7 @@ func TestResourcePermissions_Get(t *testing.T) {
 		inner := &fakeInnerStore{getResponse: &fold1}
 		accessClient := &fakeAccessClient{checkFunc: checkFunc}
 		resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
-		wrapper := New(inner, resPermAuthz)
+		wrapper := storewrapper.New(inner, resPermAuthz)
 
 		obj, err := wrapper.Get(ctx, "folder.grafana.app/folders/fold-1", &metav1.GetOptions{})
 		require.NoError(t, err)
@@ -167,7 +168,7 @@ func TestResourcePermissions_Get(t *testing.T) {
 		inner := &fakeInnerStore{getResponse: &dash1}
 		accessClient := &fakeAccessClient{checkFunc: checkFunc}
 		resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
-		wrapper := New(inner, resPermAuthz)
+		wrapper := storewrapper.New(inner, resPermAuthz)
 
 		obj, err := wrapper.Get(ctx, "dashboard.grafana.app/dashboards/dash-1", &metav1.GetOptions{})
 		require.Error(t, err, "expected error when accessing unauthorized resource")
@@ -214,7 +215,7 @@ func TestResourcePermissions_Delete(t *testing.T) {
 		inner := &fakeInnerStore{getResponse: &fold1, deleteResponse: &fold1, deleteStatus: true}
 		accessClient := &fakeAccessClient{checkFunc: checkFunc}
 		resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
-		wrapper := New(inner, resPermAuthz)
+		wrapper := storewrapper.New(inner, resPermAuthz)
 
 		obj, deleted, err := wrapper.Delete(ctx, "folder.grafana.app/folders/fold-1", nil, &metaV1.DeleteOptions{})
 		require.NoError(t, err)
@@ -234,7 +235,7 @@ func TestResourcePermissions_Delete(t *testing.T) {
 		inner := &fakeInnerStore{getResponse: &dash1}
 		accessClient := &fakeAccessClient{checkFunc: checkFunc}
 		resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
-		wrapper := New(inner, resPermAuthz)
+		wrapper := storewrapper.New(inner, resPermAuthz)
 
 		obj, deleted, err := wrapper.Delete(ctx, "dashboard.grafana.app/dashboards/dash-1", nil, &metaV1.DeleteOptions{})
 		require.Error(t, err, "expected error when deleting unauthorized resource")
@@ -251,7 +252,7 @@ func TestResourcePermissions_Delete(t *testing.T) {
 // -----
 
 type fakeInnerStore struct {
-	K8sStorage
+	storewrapper.K8sStorage
 
 	listCalled   bool
 	listResponse runtime.Object

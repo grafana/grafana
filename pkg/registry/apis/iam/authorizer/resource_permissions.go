@@ -1,4 +1,4 @@
-package storewrapper
+package authorizer
 
 import (
 	"context"
@@ -10,14 +10,18 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
 // TODO: Logs, Metrics, Traces?
 
+// ResourcePermissionsAuthorizer
 type ResourcePermissionsAuthorizer struct {
 	accessClient types.AccessClient
 	// configProvider func(ctx context.Context) (*rest.Config, error)
 }
+
+var _ storewrapper.ResourceStorageAuthorizer = (*ResourcePermissionsAuthorizer)(nil)
 
 func NewResourcePermissionsAuthorizer(accessClient types.AccessClient) *ResourcePermissionsAuthorizer {
 	return &ResourcePermissionsAuthorizer{
@@ -44,7 +48,7 @@ func NewResourcePermissionsAuthorizer(accessClient types.AccessClient) *Resource
 func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
-		return errUnauthenticated
+		return storewrapper.ErrUnauthenticated
 	}
 	switch o := obj.(type) {
 	case *iamv0.ResourcePermission:
@@ -65,18 +69,18 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 			return err
 		}
 		if !res.Allowed {
-			return errUnauthorized
+			return storewrapper.ErrUnauthorized
 		}
 		return nil
 	default:
-		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, errUnexpectedType)
+		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, storewrapper.ErrUnexpectedType)
 	}
 }
 
 func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj runtime.Object) error {
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
-		return errUnauthenticated
+		return storewrapper.ErrUnauthenticated
 	}
 	switch o := obj.(type) {
 	case *iamv0.ResourcePermission:
@@ -97,11 +101,11 @@ func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj run
 			return err
 		}
 		if !res.Allowed {
-			return errUnauthorized
+			return storewrapper.ErrUnauthorized
 		}
 		return nil
 	default:
-		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, errUnexpectedType)
+		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, storewrapper.ErrUnexpectedType)
 	}
 }
 
@@ -124,7 +128,7 @@ func (r *ResourcePermissionsAuthorizer) BeforeUpdate(ctx context.Context, obj ru
 func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
-		return nil, errUnauthenticated
+		return nil, storewrapper.ErrUnauthenticated
 	}
 
 	switch l := list.(type) {
@@ -170,8 +174,6 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 		l.Items = filteredItems
 		return l, nil
 	default:
-		return nil, fmt.Errorf("expected ResourcePermissionList, got %T: %w", l, errUnexpectedType)
+		return nil, fmt.Errorf("expected ResourcePermissionList, got %T: %w", l, storewrapper.ErrUnexpectedType)
 	}
 }
-
-var _ ResourceStorageAuthorizer = (*ResourcePermissionsAuthorizer)(nil)

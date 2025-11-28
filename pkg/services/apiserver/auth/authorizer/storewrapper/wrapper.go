@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	errUnauthenticated = fmt.Errorf("unauthenticated")
-	errUnauthorized    = fmt.Errorf("unauthorized")
-	errUnexpectedType  = fmt.Errorf("unexpected object type")
+	ErrUnauthenticated = fmt.Errorf("unauthenticated")
+	ErrUnauthorized    = fmt.Errorf("unauthorized")
+	ErrUnexpectedType  = fmt.Errorf("unexpected object type")
 )
 
 // ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
@@ -27,7 +27,7 @@ type ResourceStorageAuthorizer interface {
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
 }
 
-// Wrapper is a registry.Store wrapper that enforces authorization based on ResourceStorageAuthorizer.
+// Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
 // It overrides the identity in the context to use service identity for the underlying store operations.
 // That way, the underlying store authorization is always successful, and the authorization is enforced by the wrapper.
 type Wrapper struct {
