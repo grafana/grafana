@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
-import * as React from 'react';
+import { useCallback, useId, useMemo } from 'react';
 import { TableInstance, useTable } from 'react-table';
-import { VariableSizeList as List } from 'react-window';
-import InfiniteLoader from 'react-window-infinite-loader';
+import { List, type RowComponentProps } from 'react-window';
+import { useInfiniteLoader } from 'react-window-infinite-loader';
 
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -45,6 +44,15 @@ const HEADER_HEIGHT = 36;
 const ROW_HEIGHT = 36;
 const DIVIDER_HEIGHT = 0; // Yes - make it appear as a border on the row rather than a row itself
 
+function getRowHeight(rowIndex: number, { items }: VirtualListRowProps) {
+  const row = items[rowIndex];
+  if (row.item.kind === 'ui' && row.item.uiKind === 'divider') {
+    return DIVIDER_HEIGHT;
+  }
+
+  return ROW_HEIGHT;
+}
+
 export function DashboardsTree({
   items,
   width,
@@ -59,23 +67,21 @@ export function DashboardsTree({
   permissions,
 }: DashboardsTreeProps) {
   const treeID = useId();
-
-  const infiniteLoaderRef = useRef<InfiniteLoader>(null);
-  const listRef = useRef<List | null>(null);
   const styles = useStyles2(getStyles);
 
-  useEffect(() => {
-    // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,
-    // especially after a refetch after a move/delete.
-    // Clear that cache, and check if we need to trigger another load
-    if (infiniteLoaderRef.current) {
-      infiniteLoaderRef.current.resetloadMoreItemsCache(true);
-    }
+  // TODO verify if we need this with v2
+  // useEffect(() => {
+  //   // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,
+  //   // especially after a refetch after a move/delete.
+  //   // Clear that cache, and check if we need to trigger another load
+  //   if (infiniteLoaderRef.current) {
+  //     infiniteLoaderRef.current.resetloadMoreItemsCache(true);
+  //   }
 
-    if (listRef.current) {
-      listRef.current.resetAfterIndex(0);
-    }
-  }, [items]);
+  //   if (listRef.current) {
+  //     listRef.current.resetAfterIndex(0);
+  //   }
+  // }, [items]);
 
   const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
@@ -111,20 +117,6 @@ export function DashboardsTree({
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;
 
-  const virtualData = useMemo(
-    () => ({
-      table,
-      isSelected,
-      onAllSelectionChange,
-      onItemSelectionChange,
-      treeID,
-      permissions,
-    }),
-    // we need this to rerender if items changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID, permissions]
-  );
-
   const handleIsItemLoaded = useCallback(
     (itemIndex: number) => {
       return isItemLoaded(itemIndex);
@@ -133,24 +125,18 @@ export function DashboardsTree({
   );
 
   const handleLoadMore = useCallback(
-    (startIndex: number, endIndex: number) => {
+    async (startIndex: number, endIndex: number) => {
       const { parentUID } = items[startIndex];
       requestLoadMore(parentUID);
     },
     [requestLoadMore, items]
   );
 
-  const getRowHeight = useCallback(
-    (rowIndex: number) => {
-      const row = items[rowIndex];
-      if (row.item.kind === 'ui' && row.item.uiKind === 'divider') {
-        return DIVIDER_HEIGHT;
-      }
-
-      return ROW_HEIGHT;
-    },
-    [items]
-  );
+  const onRowsRendered = useInfiniteLoader({
+    rowCount: items.length,
+    isRowLoaded: handleIsItemLoaded,
+    loadMoreRows: handleLoadMore,
+  });
 
   return (
     <div {...getTableProps()} role="table">
@@ -175,51 +161,50 @@ export function DashboardsTree({
       })}
 
       <div {...getTableBodyProps()} data-testid={selectors.pages.BrowseDashboards.table.body}>
-        <InfiniteLoader
-          ref={infiniteLoaderRef}
-          itemCount={items.length}
-          isItemLoaded={handleIsItemLoaded}
-          loadMoreItems={handleLoadMore}
-        >
-          {({ onItemsRendered, ref }) => (
-            <List
-              ref={(elem) => {
-                ref(elem);
-                listRef.current = elem;
-              }}
-              height={height - HEADER_HEIGHT}
-              width={width}
-              itemCount={items.length}
-              itemData={virtualData}
-              estimatedItemSize={ROW_HEIGHT}
-              itemSize={getRowHeight}
-              onItemsRendered={onItemsRendered}
-            >
-              {VirtualListRow}
-            </List>
-          )}
-        </InfiniteLoader>
+        <List
+          rowComponent={VirtualListRow}
+          rowCount={items.length}
+          rowHeight={getRowHeight}
+          rowProps={{
+            table,
+            isSelected,
+            onAllSelectionChange,
+            onItemSelectionChange,
+            treeID,
+            permissions,
+            items,
+          }}
+          onRowsRendered={onRowsRendered}
+          style={{
+            height: height - HEADER_HEIGHT,
+            width,
+          }}
+        />
       </div>
     </div>
   );
 }
 
 interface VirtualListRowProps {
-  index: number;
-  style: React.CSSProperties;
-  data: {
-    table: TableInstance<DashboardsTreeItem>;
-    isSelected: DashboardsTreeCellProps['isSelected'];
-    onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
-    onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
-    treeID: string;
-    permissions: BrowseDashboardsPermissions;
-  };
+  items: DashboardsTreeItem[];
+  table: TableInstance<DashboardsTreeItem>;
+  isSelected: DashboardsTreeCellProps['isSelected'];
+  onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
+  onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
+  treeID: string;
+  permissions: BrowseDashboardsPermissions;
 }
 
-function VirtualListRow({ index, style, data }: VirtualListRowProps) {
+function VirtualListRow({
+  index,
+  style,
+  table,
+  isSelected,
+  onItemSelectionChange,
+  treeID,
+  permissions,
+}: RowComponentProps<VirtualListRowProps>) {
   const styles = useStyles2(getStyles);
-  const { table, isSelected, onItemSelectionChange, treeID, permissions } = data;
   const { rows, prepareRow } = table;
 
   const row = rows[index];
