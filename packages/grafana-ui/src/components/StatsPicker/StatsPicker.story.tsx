@@ -1,45 +1,33 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
-import { PureComponent } from 'react';
+import { memo, useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
 import { Props, StatsPicker } from './StatsPicker';
 
-interface State {
-  stats: string[];
-}
+const WrapperWithState = memo<Props>(({ placeholder, allowMultiple, menuPlacement, width }) => {
+  const [stats, setStats] = useState<string[]>([]);
 
-class WrapperWithState extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      stats: [],
-    };
-  }
+  return (
+    <Field label="Pick stats">
+      <StatsPicker
+        inputId="stats-picker"
+        placeholder={placeholder}
+        allowMultiple={allowMultiple}
+        stats={stats}
+        onChange={(newStats: string[]) => {
+          action('Picked:')(newStats);
+          setStats(newStats);
+        }}
+        menuPlacement={menuPlacement}
+        width={width}
+      />
+    </Field>
+  );
+});
 
-  render() {
-    const { placeholder, allowMultiple, menuPlacement, width } = this.props;
-    const { stats } = this.state;
-
-    return (
-      <Field label="Pick stats">
-        <StatsPicker
-          inputId="stats-picker"
-          placeholder={placeholder}
-          allowMultiple={allowMultiple}
-          stats={stats}
-          onChange={(stats: string[]) => {
-            action('Picked:')(stats);
-            this.setState({ stats });
-          }}
-          menuPlacement={menuPlacement}
-          width={width}
-        />
-      </Field>
-    );
-  }
-}
+WrapperWithState.displayName = 'WrapperWithState';
 
 const meta: Meta<typeof StatsPicker> = {
   title: 'Pickers/StatsPicker',

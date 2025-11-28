@@ -1,6 +1,5 @@
 import { t } from '@grafana/i18n';
 
-import { withTheme2 } from '../../themes/ThemeContext';
 import { InlineField } from '../Forms/InlineField';
 import { InlineSwitch } from '../Switch/Switch';
 import { PopoverContentProps } from '../Tooltip/types';
@@ -36,4 +35,4 @@ export const SeriesColorPickerPopover = (props: SeriesColorPickerPopoverProps) =
 };
 
 // This component is to enable SeriesColorPickerPopover usage via series-color-picker-popover directive
-export const SeriesColorPickerPopoverWithTheme = withTheme2(SeriesColorPickerPopover);
+export const SeriesColorPickerPopoverWithTheme = SeriesColorPickerPopover;
