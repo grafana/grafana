@@ -146,8 +146,8 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 	require.Equal(t, "dash-2", filtered.Items[1].Spec.Resource.Name)
 }
 
-func TestResourcePermissions_BeforeDelete(t *testing.T) {
-	// In this test, we verify that BeforeDelete calls accessClient.Check with the correct parameters
+func TestResourcePermissions_beforeWrite(t *testing.T) {
+	// In this test, we verify that beforeWrite calls accessClient.Check with the correct parameters
 	fold1 := newResourcePermission("folder.grafana.app", "folders", "fold-1")
 
 	tests := []struct {
@@ -184,7 +184,7 @@ func TestResourcePermissions_BeforeDelete(t *testing.T) {
 			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
 			ctx := types.WithAuthInfo(context.Background(), user)
 
-			err := resPermAuthz.BeforeDelete(ctx, fold1)
+			err := resPermAuthz.beforeWrite(ctx, fold1)
 			if tt.shouldAllow {
 				require.NoError(t, err, "expected no error for allowed delete")
 			} else {
