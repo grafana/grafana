@@ -419,6 +419,54 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     }).not.toThrow();
   });
 
+  it('should preserve placement property when serializing dashboard links', () => {
+    const sceneWithPlacement = new DashboardScene({
+      title: 'Test Dashboard',
+      links: [
+        {
+          title: 'Link with placement',
+          url: 'http://test.com',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          type: 'link',
+          placement: 'inControlsMenu',
+        },
+        {
+          title: 'Link without placement',
+          url: 'http://test2.com',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          type: 'link',
+        },
+      ],
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({ children: [] }),
+      }),
+      $timeRange: new SceneTimeRange({
+        from: 'now-1h',
+        to: 'now',
+      }),
+      meta: {},
+      editPane: new DashboardEditPane(),
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithPlacement);
+
+    expect(result.links).toHaveLength(2);
+    expect(result.links![0].placement).toBe('inControlsMenu');
+    expect(result.links![1].placement).toBeUndefined();
+  });
+
   describe('getPersistedDSFor query', () => {
     it('should respect datasource reference mapping when determining query datasource', () => {
       // Setup test data
