@@ -771,6 +771,23 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 		}
 	}
 
+	if in.SwitchVariableKind != nil {
+		out.SwitchVariableKind = &dashv2alpha1.DashboardSwitchVariableKind{
+			Kind: in.SwitchVariableKind.Kind,
+			Spec: dashv2alpha1.DashboardSwitchVariableSpec{
+				Name:          in.SwitchVariableKind.Spec.Name,
+				Current:       in.SwitchVariableKind.Spec.Current,
+				EnabledValue:  in.SwitchVariableKind.Spec.EnabledValue,
+				DisabledValue: in.SwitchVariableKind.Spec.DisabledValue,
+				Label:         in.SwitchVariableKind.Spec.Label,
+				Hide:          dashv2alpha1.DashboardVariableHide(in.SwitchVariableKind.Spec.Hide),
+				SkipUrlSync:   in.SwitchVariableKind.Spec.SkipUrlSync,
+				Description:   in.SwitchVariableKind.Spec.Description,
+			},
+		}
+		return nil
+	}
+
 	return nil
 }
 

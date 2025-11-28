@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/atomic"
@@ -263,7 +264,11 @@ func (b *backend) Stop(_ context.Context) error {
 
 // GetResourceStats implements Backend.
 func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
 	defer span.End()
 
 	req := &sqlStatsRequest{

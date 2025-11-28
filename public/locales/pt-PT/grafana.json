@@ -11703,13 +11703,6 @@
       "saving": "A guardar",
       "title-error-loading-file": "Erro ao carregar o ficheiro"
     },
-    "files-view": {
-      "columns": {
-        "history": "Histórico",
-        "view": "Ver"
-      },
-      "placeholder-search": "Pesquisar"
-    },
     "finish-step": {
       "description-enable-previews": "Adicionar uma pré-visualização de imagem das alterações do painel de controlo nos pedidos de extração. As imagens dos seus painéis de controlo Grafana serão partilhadas no seu repositório Git e visíveis para qualquer pessoa com acesso ao repositório.",
       "description-generate-dashboard-previews": "Criar links de pré-visualização para pedidos de extração",
@@ -11920,9 +11913,6 @@
       "source-code": "Código-fonte"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Apenas para leitura",
       "settings": "Definições",
       "view": "Ver"
@@ -11959,14 +11949,6 @@
       "webhook-last-event": "Último evento:",
       "webhook-url": "Visualizar Webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Histórico",
-        "view-dashboard": "Ver",
-        "view-folder": "Ver"
-      },
-      "placeholder-search": "Pesquisar"
-    },
     "repository-status-page": {
       "back-to-repositories": "Voltar aos repositórios",
       "cleaning-up-resources": "A limpar recursos do repositório",
@@ -11974,12 +11956,10 @@
       "not-found": "não encontrado",
       "not-found-message": "Repositório não encontrado",
       "repository-config-exists-configuration": "Certifique-se de que a configuração do repositório existe no ficheiro de configuração.",
-      "tab-files": "Ficheiros",
-      "tab-files-title": "A lista de ficheiros sem processar do repositório",
       "tab-overview": "Visão geral",
       "tab-overview-title": "Vista geral do repositório",
       "tab-resources": "Recursos",
-      "tab-resources-title": "Recursos guardados na base de dados da Grafana",
+      "tab-resources-title": "",
       "title": "Estado do repositório",
       "title-legacy-storage": "Armazenamento herdado",
       "title-queued-for-deletion": "Em fila para eliminação"
@@ -12001,6 +11981,17 @@
       "local-description": "Configurar o provisionamento de ficheiros",
       "pure-git": "Git puro",
       "pure-git-description": "Ligar a qualquer repositório Git"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Base",
