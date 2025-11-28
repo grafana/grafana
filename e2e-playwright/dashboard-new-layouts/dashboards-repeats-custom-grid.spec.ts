@@ -1,5 +1,3 @@
-import { first } from 'lodash';
-
 import { test, expect } from '@grafana/plugin-e2e';
 
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
@@ -528,9 +526,7 @@ test.describe(
         JSON.stringify(testV2DashWithRowRepeats)
       );
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.title('single panel row 1'))
-        .hover();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('single panel row 1')).hover();
       // open panel snapshot
       await page.keyboard.press('p+s');
 
