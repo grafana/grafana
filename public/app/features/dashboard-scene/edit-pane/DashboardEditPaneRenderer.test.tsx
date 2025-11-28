@@ -63,9 +63,9 @@ describe('DashboardEditPaneRenderer', () => {
 
     act(() => screen.getByLabelText('Outline').click());
 
-    expect(await screen.findByTestId('sidebar-dock-toggle')).toBeInTheDocument();
+    expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
 
-    act(() => screen.getByTestId('sidebar-dock-toggle').click());
+    act(() => screen.getByTestId(selectors.components.Sidebar.dockToggle).click());
 
     expect(scene.state.editPane.state.isDocked).toBe(true);
   });

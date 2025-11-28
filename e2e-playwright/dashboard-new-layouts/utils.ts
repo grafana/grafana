@@ -50,6 +50,7 @@ export const flows = {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
     await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
     await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.dockToggle).click();
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
       .click();

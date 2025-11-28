@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
+import { ReactNode, useContext } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,23 +9,29 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
 import { Text } from '../Text/Text';
 
+import { SidebarContext } from './useSidebar';
+
 export interface Props {
   children?: ReactNode;
   title: string;
-  onClose?: () => void;
 }
 
-export function SidebarPaneHeader({ children, onClose, title }: Props) {
+export function SidebarPaneHeader({ children, title }: Props) {
   const styles = useStyles2(getStyles);
+  const context = useContext(SidebarContext);
+
+  if (!context) {
+    throw new Error('SidebarPaneHeader must be used within a Sidebar');
+  }
 
   return (
     <div className={styles.wrapper}>
-      {onClose && (
+      {context.onClosePane && (
         <IconButton
           variant="secondary"
           size="lg"
           name="times"
-          onClick={onClose}
+          onClick={context.onClosePane}
           aria-label={t('grafana-ui.sidebar.close', 'Close')}
           tooltip={t('grafana-ui.sidebar.close', 'Close')}
           data-testid={selectors.components.Sidebar.closePane}
