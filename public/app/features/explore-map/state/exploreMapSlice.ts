@@ -12,18 +12,33 @@ import {
   UserCursor,
 } from './types';
 
+interface AddPanelPayload {
+  position?: Partial<PanelPosition>;
+  viewportSize?: { width: number; height: number };
+}
+
 const exploreMapSlice = createSlice({
   name: 'exploreMap',
   initialState: initialExploreMapState,
   reducers: {
-    addPanel: (state, action: PayloadAction<{ position?: Partial<PanelPosition> }>) => {
+    addPanel: (state, action: PayloadAction<AddPanelPayload>) => {
       const panelId = uuidv4();
       const exploreId = generateExploreId();
+
+      // Calculate center of current viewport in canvas coordinates
+      const viewportSize = action.payload.viewportSize || { width: 1920, height: 1080 };
+      const canvasCenterX = (-state.viewport.panX + viewportSize.width / 2) / state.viewport.zoom;
+      const canvasCenterY = (-state.viewport.panY + viewportSize.height / 2) / state.viewport.zoom;
+
+      const panelWidth = 600;
+      const panelHeight = 400;
+      const offset = Object.keys(state.panels).length * 30;
+
       const defaultPosition: PanelPosition = {
-        x: 100 + Object.keys(state.panels).length * 50,
-        y: 100 + Object.keys(state.panels).length * 50,
-        width: 600,
-        height: 400,
+        x: canvasCenterX - panelWidth / 2 + offset,
+        y: canvasCenterY - panelHeight / 2 + offset,
+        width: panelWidth,
+        height: panelHeight,
         zIndex: state.nextZIndex,
       };
 

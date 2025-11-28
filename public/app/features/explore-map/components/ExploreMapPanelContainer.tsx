@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useRef } from 'react';
-import { DraggableData, Rnd, RndResizeCallback } from 'react-rnd';
+import { Rnd, RndDragCallback, RndResizeCallback } from 'react-rnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -32,8 +32,8 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
   const viewport = useSelector((state) => state.exploreMap.viewport);
   const isSelected = selectedPanelId === panel.id;
 
-  const handleDragStop = useCallback(
-    (_e: MouseEvent | TouchEvent, data: DraggableData) => {
+  const handleDragStop: RndDragCallback = useCallback(
+    (_e, data) => {
       dispatch(
         updatePanelPosition({
           panelId: panel.id,

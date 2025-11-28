@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useCallback, useRef } from 'react';
-import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
+import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -37,7 +37,7 @@ export function ExploreMapCanvas() {
   );
 
   const handleTransformChange = useCallback(
-    (ref: any) => {
+    (ref: ReactZoomPanPinchRef) => {
       dispatch(
         updateViewport({
           zoom: ref.state.scale,
@@ -52,7 +52,7 @@ export function ExploreMapCanvas() {
   return (
     <div className={styles.canvasWrapper}>
       <TransformWrapper
-        ref={contextTransformRef as any}
+        ref={contextTransformRef}
         initialScale={viewport.zoom}
         initialPositionX={viewport.panX}
         initialPositionY={viewport.panY}
@@ -69,7 +69,18 @@ export function ExploreMapCanvas() {
         wheel={{ step: 0.1 }}
       >
         <TransformComponent wrapperClass={styles.transformWrapper} contentClass={styles.transformContent}>
-          <div ref={canvasRef} className={styles.canvas} onClick={handleCanvasClick}>
+          <div
+            ref={canvasRef}
+            className={styles.canvas}
+            onClick={handleCanvasClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                dispatch(selectPanel({ panelId: undefined }));
+              }
+            }}
+            role="button"
+            tabIndex={0}
+          >
             {Object.values(panels).map((panel) => (
               <ExploreMapPanelContainer key={panel.id} panel={panel} />
             ))}
@@ -105,8 +116,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     canvas: css({
       position: 'relative',
-      width: '5000px',
-      height: '5000px',
+      width: '10000px',
+      height: '10000px',
       backgroundImage: `
         linear-gradient(${theme.colors.border.weak} 1px, transparent 1px),
         linear-gradient(90deg, ${theme.colors.border.weak} 1px, transparent 1px)

@@ -6,7 +6,7 @@ import { createErrorNotification, createSuccessNotification } from 'app/core/cop
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { loadCanvas } from '../state/exploreMapSlice';
-import { ExploreMapState, SerializedExploreState } from '../state/types';
+import { ExploreMapState, initialExploreMapState, SerializedExploreState } from '../state/types';
 
 const STORAGE_KEY = 'grafana.exploreMap.state';
 
@@ -73,6 +73,7 @@ export function useCanvasPersistence() {
       // Enrich with Explore state before exporting
       const enrichedState: ExploreMapState = {
         ...exploreMapState,
+        viewport: initialExploreMapState.viewport, // Don't export viewport state - use initial centered viewport
         cursors: {}, // Don't export cursor state - it's ephemeral
         panels: Object.fromEntries(
           Object.entries(exploreMapState.panels).map(([panelId, panel]) => {

@@ -50,8 +50,12 @@ export interface ExploreMapState {
 export const initialExploreMapState: ExploreMapState = {
   viewport: {
     zoom: 1,
-    panX: 0,
-    panY: 0,
+    // Center the viewport at canvas center (5000, 5000)
+    // The pan values are offsets, so we need to calculate based on viewport size
+    // At zoom 1, we want canvas position 5000 to be at screen center
+    // Initial position assumes typical viewport of ~1920x1080
+    panX: -4040, // -(5000 - 1920/2) = -4040
+    panY: -4460, // -(5000 - 1080/2) = -4460
   },
   panels: {},
   selectedPanelId: undefined,

@@ -21,7 +21,12 @@ export function ExploreMapToolbar() {
   const viewport = useSelector((state) => state.exploreMap.viewport);
 
   const handleAddPanel = useCallback(() => {
-    dispatch(addPanel({}));
+    dispatch(addPanel({
+      viewportSize: {
+        width: window.innerWidth,
+        height: window.innerHeight
+      }
+    }));
   }, [dispatch]);
 
   const handleResetCanvas = useCallback(() => {
@@ -47,8 +52,14 @@ export function ExploreMapToolbar() {
 
   const handleResetZoom = useCallback(() => {
     if (transformRef?.current) {
-      // Reset both scale and position to initial values
-      transformRef.current.setTransform(0, 0, 1, 200);
+      // Reset to center of canvas (5000, 5000)
+      // Calculate position to center the viewport
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const panX = -(5000 - viewportWidth / 2);
+      const panY = -(5000 - viewportHeight / 2);
+
+      transformRef.current.setTransform(panX, panY, 1, 200);
     }
   }, [transformRef]);
 
