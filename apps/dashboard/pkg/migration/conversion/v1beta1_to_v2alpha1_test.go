@@ -32,58 +32,6 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		validateV2alpha1 func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard)
 	}{
 		{
-			name: "panel datasource null with empty target datasource objects - sets default datasource",
-			createV1beta1: func() *dashv1.Dashboard {
-				return &dashv1.Dashboard{
-					Spec: dashv1.DashboardSpec{
-						Object: map[string]interface{}{
-							"title": "Test Dashboard",
-							"panels": []interface{}{
-								map[string]interface{}{
-									"id":   1,
-									"type": "bargauge",
-									// Panel datasource is null
-									"datasource": nil,
-									"targets": []interface{}{
-										map[string]interface{}{
-											"refId":      "A",
-											"scenarioId": "random_walk",
-											// Target datasource is empty object {}
-											"datasource": map[string]interface{}{},
-										},
-										map[string]interface{}{
-											"refId":      "B",
-											"scenarioId": "random_walk",
-											"datasource": map[string]interface{}{},
-										},
-									},
-								},
-							},
-						},
-					},
-				}
-			},
-			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
-				require.NotNil(t, v2alpha1.Spec.Elements["panel-1"])
-				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
-				require.NotNil(t, panel)
-
-				// Verify queries have datasource set (should inherit from panel default)
-				require.Len(t, panel.Spec.Data.Spec.Queries, 2)
-				for _, query := range panel.Spec.Data.Spec.Queries {
-					require.NotNil(t, query.Spec.Datasource, "Query should have datasource when panel datasource is null and targets have empty datasource objects")
-					// Should have default datasource type (prometheus in StandardTestConfig)
-					assert.NotNil(t, query.Spec.Datasource.Type)
-					assert.Equal(t, "prometheus", *query.Spec.Datasource.Type)
-					// Should have default datasource UID
-					assert.NotNil(t, query.Spec.Datasource.Uid)
-					assert.Equal(t, "default-ds-uid", *query.Spec.Datasource.Uid)
-					// Query kind should match datasource type
-					assert.Equal(t, "prometheus", query.Spec.Query.Kind)
-				}
-			},
-		},
-		{
 			name: "panel datasource type datasource with no UID - resolves to grafana UID",
 			createV1beta1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{

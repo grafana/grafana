@@ -1812,77 +1812,42 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 	var panelDatasource *dashv2alpha1.DashboardDataSourceRef
 	ds, dsExists := panelMap["datasource"]
 
-	// Check if any target has an empty datasource object {} (needed to decide if we should set default)
-	hasEmptyTargetDatasource := false
-	if len(targets) > 0 {
-		for _, target := range targets {
-			if targetMap, ok := target.(map[string]interface{}); ok {
-				if ds, ok := targetMap["datasource"].(map[string]interface{}); ok {
-					// Check if it's an empty object {}
-					if len(ds) == 0 {
-						hasEmptyTargetDatasource = true
-						break
-					}
+	if dsExists && ds != nil {
+		if dsMap, ok := ds.(map[string]interface{}); ok {
+			// Handle panel datasource as object
+			dsUID := schemaversion.GetStringValue(dsMap, "uid")
+			dsType := schemaversion.GetStringValue(dsMap, "type")
+
+			// Check if datasource object is effectively empty (no uid and no type)
+			// Empty objects {} should be preserved as empty, not converted to defaults
+			isEmpty := dsUID == "" && dsType == ""
+
+			// If we have a UID, use it to get the correct type from the datasource service
+			// BUT: Don't try to resolve types for template variables
+			if dsUID != "" && dsType == "" && !isTemplateVariable(dsUID) {
+				dsType = getDatasourceTypeByUID(ctx, dsUID, dsIndexProvider)
+			} else if !isEmpty && dsUID == "" && dsType == "" {
+				// Only set default if datasource is missing (not empty object)
+				// Empty objects {} should remain empty
+				dsType = getDefaultDatasourceType(ctx, dsIndexProvider)
+			}
+
+			// Resolve Grafana datasource UID when type is "datasource" and UID is empty
+			// Only resolve if we have a type (not for empty objects)
+			if !isEmpty {
+				dsUID = resolveGrafanaDatasourceUID(dsType, dsUID)
+			}
+
+			// Only create panelDatasource if it's not empty after resolution
+			// Empty objects {} should result in nil panelDatasource
+			// After resolution, check if we have a type or UID (not just the original isEmpty)
+			// This ensures that type: "datasource" with empty UID gets resolved to uid: "grafana"
+			// and panelDatasource is created
+			if dsType != "" || dsUID != "" {
+				panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
+					Type: &dsType,
+					Uid:  &dsUID,
 				}
-			}
-		}
-	}
-
-	// Handle null or missing panel datasource (matches v36 migration behavior)
-	// When panel datasource is null and panel has targets with empty datasource objects, set to default datasource
-	if !dsExists || ds == nil {
-		if hasEmptyTargetDatasource {
-			// Set to default datasource (matches frontend v36 migration behavior)
-			dsType := getDefaultDatasourceType(ctx, dsIndexProvider)
-			dsUID := ""
-			// Get default datasource UID from provider if available
-			if dsIndexProvider != nil {
-				dsIndex := dsIndexProvider.Index(ctx)
-				if defaultDS := dsIndex.GetDefault(); defaultDS != nil {
-					dsUID = defaultDS.UID
-				}
-			}
-			// Resolve Grafana datasource UID if default type is "datasource"
-			dsUID = resolveGrafanaDatasourceUID(dsType, dsUID)
-			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
-				Type: &dsType,
-				Uid:  &dsUID,
-			}
-		}
-	} else if dsMap, ok := ds.(map[string]interface{}); ok {
-		// Handle panel datasource as object
-		dsUID := schemaversion.GetStringValue(dsMap, "uid")
-		dsType := schemaversion.GetStringValue(dsMap, "type")
-
-		// Check if datasource object is effectively empty (no uid and no type)
-		// Empty objects {} should be preserved as empty, not converted to defaults
-		isEmpty := dsUID == "" && dsType == ""
-
-		// If we have a UID, use it to get the correct type from the datasource service
-		// BUT: Don't try to resolve types for template variables
-		if dsUID != "" && dsType == "" && !isTemplateVariable(dsUID) {
-			dsType = getDatasourceTypeByUID(ctx, dsUID, dsIndexProvider)
-		} else if !isEmpty && dsUID == "" && dsType == "" {
-			// Only set default if datasource is missing (not empty object)
-			// Empty objects {} should remain empty
-			dsType = getDefaultDatasourceType(ctx, dsIndexProvider)
-		}
-
-		// Resolve Grafana datasource UID when type is "datasource" and UID is empty
-		// Only resolve if we have a type (not for empty objects)
-		if !isEmpty {
-			dsUID = resolveGrafanaDatasourceUID(dsType, dsUID)
-		}
-
-		// Only create panelDatasource if it's not empty after resolution
-		// Empty objects {} should result in nil panelDatasource
-		// After resolution, check if we have a type or UID (not just the original isEmpty)
-		// This ensures that type: "datasource" with empty UID gets resolved to uid: "grafana"
-		// and panelDatasource is created
-		if dsType != "" || dsUID != "" {
-			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
-				Type: &dsType,
-				Uid:  &dsUID,
 			}
 		}
 	}
