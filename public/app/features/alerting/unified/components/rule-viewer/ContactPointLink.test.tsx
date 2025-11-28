@@ -1,8 +1,8 @@
 import { render, screen } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { backendSrv } from 'app/core/services/backend_srv';
+
+import { setupBackendSrv } from '../../mockApi';
 
 import { ContactPointLink } from './ContactPointLink';
 import {
@@ -11,8 +11,11 @@ import {
   listContactPointsScenario,
 } from './ContactPointLink.test.scenario';
 
-setBackendSrv(backendSrv);
 const server = setupMockServer();
+
+beforeAll(() => {
+  setupBackendSrv();
+});
 
 describe('render contact point link', () => {
   it('should render correctly', async () => {
