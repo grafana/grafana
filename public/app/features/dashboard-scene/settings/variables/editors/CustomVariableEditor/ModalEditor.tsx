@@ -38,7 +38,7 @@ export function ModalEditor(props: ModalEditorProps) {
           onClick={onCloseModal}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
         >
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.cancel">Cancel</Trans>
+          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.discard">Discard</Trans>
         </Button>
         <Button variant="primary" onClick={onSaveOptions}>
           <Trans i18nKey="dashboard.edit-pane.variable.custom-options.apply">Apply</Trans>
