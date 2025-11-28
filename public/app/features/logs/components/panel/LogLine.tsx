@@ -474,7 +474,9 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
   let maxContrast = theme.isDark
     ? tinycolor(theme.colors.text.maxContrast).darken(10).toRgbString()
     : tinycolor(theme.colors.text.maxContrast).lighten(10).toRgbString();
-  let colorDefault = theme.isDark ? theme.colors.text.primary : tinycolor(theme.colors.text.maxContrast).lighten(30).toRgbString();
+  let colorDefault = theme.isDark
+    ? theme.colors.text.primary
+    : tinycolor(theme.colors.text.maxContrast).lighten(30).toRgbString();
   const contrast1 = tinycolor.readability(base, maxContrast);
   const contrast2 = tinycolor.readability(base, colorDefault);
 
