@@ -92,9 +92,265 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"/notification/query": {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "createNotificationquery",
+
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"from": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"integer"},
+																		Description: "RFC3339Nano",
+																	},
+																},
+																"limit": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"integer"},
+																	},
+																},
+																"outcome": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationOutcome"),
+																	},
+																},
+																"receiver": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"string"},
+																	},
+																},
+																"ruleUID": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"string"},
+																	},
+																},
+																"status": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
+																	},
+																},
+																"to": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"integer"},
+																		Description: "RFC3339Nano",
+																	},
+																},
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"body": {
+																			SchemaProps: spec.SchemaProps{
+
+																				Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationQueryResult"),
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"body",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
 				},
 				Cluster: map[string]spec3.PathProps{},
-				Schemas: map[string]spec.Schema{},
+				Schemas: map[string]spec.Schema{
+					"createNotificationqueryNotificationEntry": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"alerts": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+									},
+								},
+								"duration": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"error": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"groupLabels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"outcome": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationOutcome"),
+									},
+								},
+								"pipelineTime": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"receiver": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"retry": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"status": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
+									},
+								},
+								"timestamp": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "RFC3339Nano",
+									},
+								},
+							},
+							Required: []string{
+								"timestamp",
+								"receiver",
+								"status",
+								"outcome",
+								"groupLabels",
+								"alerts",
+								"retry",
+								"duration",
+								"pipelineTime",
+							},
+						},
+					},
+					"createNotificationqueryNotificationEntryAlert": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"annotations": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"endsAt": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"startsAt": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"status": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"status",
+								"labels",
+								"annotations",
+								"startsAt",
+								"endsAt",
+							},
+						},
+					},
+					"createNotificationqueryNotificationOutcome": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"string"},
+							Enum: []interface{}{
+								"success",
+								"error",
+							},
+						},
+					},
+					"createNotificationqueryNotificationQueryResult": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"entries": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+									},
+								},
+							},
+							Required: []string{
+								"entries",
+							},
+						},
+					},
+					"createNotificationqueryNotificationStatus": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"string"},
+							Enum: []interface{}{
+								"firing",
+								"resolved",
+							},
+						},
+					},
+				},
 			},
 		},
 	},
@@ -120,7 +376,8 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/alertstate/history|GET": v0alpha1.GetAlertstatehistory{},
+	"v0alpha1||<namespace>/alertstate/history|GET":  v0alpha1.GetAlertstatehistory{},
+	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationquery{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -145,7 +402,9 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 	return goType, exists
 }
 
-var customRouteToGoRequestBodyType = map[string]any{}
+var customRouteToGoRequestBodyType = map[string]any{
+	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationqueryRequestBody{},
+}
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {

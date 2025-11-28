@@ -11,6 +11,7 @@ import (
 	historianAppConfig "github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,8 +38,19 @@ func RegisterAppInstaller(
 		historian: ng.Api.Historian,
 	}
 
+	nhCfg := cfg.UnifiedAlerting.NotificationHistory
+
+	lokiConfig, err := lokiconfig.NewLokiConfig(cfg.UnifiedAlerting.NotificationHistory.LokiSettings)
+	if err != nil {
+		return nil, err
+	}
+
 	appSpecificConfig := historianAppConfig.RuntimeConfig{
 		GetAlertStateHistoryHandler: handlers.GetAlertStateHistoryHandler,
+		Notification: historianAppConfig.NotificationConfig{
+			Enabled: nhCfg.Enabled,
+			Loki:    lokiConfig,
+		},
 	}
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), appSpecificConfig, historianApp.New)

@@ -25,8 +25,58 @@ v0alpha1: {
                     responseMetadata: typeMeta: false
                 }
             }
+
+            "/notification/query": {
+                "POST": {
+                    request: {
+                        body: #NotificationQuery
+                    }
+                    response: {
+                        body: #NotificationQueryResult
+                    }
+                    responseMetadata: typeMeta: false                
+                }
+            }
         }
     }
+}
+
+#NotificationStatus: "firing" | "resolved" @cog(kind="enum",memberNames="Firing|Resolved")
+#NotificationOutcome: "success" | "error" @cog(kind="enum",memberNames="Success|Error")
+
+#NotificationQuery: {
+    from?: int64 // RFC3339Nano
+    to?: int64 // RFC3339Nano
+    limit?: int64
+    receiver?: string
+    status?: #NotificationStatus
+    outcome?: #NotificationOutcome
+    ruleUID?: string
+}
+
+#NotificationQueryResult: {
+    entries: [...#NotificationEntry]
+}
+
+#NotificationEntry: {
+    timestamp: int64 // RFC3339Nano
+    receiver: string
+    status: #NotificationStatus
+    outcome: #NotificationOutcome
+    groupLabels: [string]: string
+    alerts: [...#NotificationEntryAlert]
+    retry: bool
+    error?: string
+    duration: int64
+    pipelineTime: int64
+}
+
+#NotificationEntryAlert: {
+    status: string
+    labels: [string]: string
+    annotations: [string]: string
+    startsAt: int64
+    endsAt: int64
 }
 
 dummyv0alpha1: {
