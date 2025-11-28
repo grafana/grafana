@@ -169,9 +169,7 @@ test.describe(
         )
       ).toBeVisible();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      await page.keyboard.press('Escape');
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
@@ -221,9 +219,7 @@ test.describe(
         )
       ).toBeVisible();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      await page.keyboard.press('Escape');
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
@@ -442,9 +438,7 @@ test.describe(
 
       const repeatedPanelUrl = page.url();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      await page.keyboard.press('Escape');
 
       // load view panel directly
       await page.goto(repeatedPanelUrl);
