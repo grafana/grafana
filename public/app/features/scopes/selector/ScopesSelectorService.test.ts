@@ -320,7 +320,7 @@ describe('ScopesSelectorService', () => {
     });
 
     it('should set scopeNodeId for the first scope only', async () => {
-      await service.changeScopes(['test-scope', 'test-scope-2'], 'scope-node-1', 'parent-node');
+      await service.changeScopes(['test-scope', 'test-scope-2'], 'parent-node', 'scope-node-1');
 
       expect(service.state.appliedScopes).toEqual([
         { scopeId: 'test-scope', scopeNodeId: 'scope-node-1', parentNodeId: 'parent-node' },
@@ -329,7 +329,7 @@ describe('ScopesSelectorService', () => {
     });
 
     it('should handle explicit parentNodeId for recent scopes', async () => {
-      await service.changeScopes(['test-scope'], undefined, 'parent-node');
+      await service.changeScopes(['test-scope'], 'parent-node');
 
       expect(service.state.appliedScopes).toEqual([
         { scopeId: 'test-scope', scopeNodeId: undefined, parentNodeId: 'parent-node' },
@@ -337,7 +337,7 @@ describe('ScopesSelectorService', () => {
     });
 
     it('should handle both scopeNodeId and parentNodeId', async () => {
-      await service.changeScopes(['test-scope'], 'scope-node', 'parent-node');
+      await service.changeScopes(['test-scope'], 'parent-node', 'scope-node');
 
       expect(service.state.appliedScopes).toEqual([
         { scopeId: 'test-scope', scopeNodeId: 'scope-node', parentNodeId: 'parent-node' },
@@ -385,7 +385,7 @@ describe('ScopesSelectorService', () => {
       });
 
       // Apply scope with scopeNodeId and parentNodeId set
-      await service.changeScopes(['scope-1'], 'child-1', 'parent-container');
+      await service.changeScopes(['scope-1'], 'parent-container', 'child-1');
 
       // Open the selector
       await service.open();
@@ -452,7 +452,7 @@ describe('ScopesSelectorService', () => {
         return Promise.resolve([]);
       });
 
-      await service.changeScopes(['scope-2'], 'child-2', 'parent-container');
+      await service.changeScopes(['scope-2'], 'parent-container', 'child-2');
       await service.open();
 
       // Verify all sibling nodes are loaded (not just the selected one)
@@ -496,7 +496,7 @@ describe('ScopesSelectorService', () => {
         return Promise.resolve([]);
       });
 
-      await service.changeScopes(['scope-1'], 'child-1', 'parent-container');
+      await service.changeScopes(['scope-1'], 'parent-container', 'child-1');
 
       // First open
       await service.open();

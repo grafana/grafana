@@ -134,7 +134,7 @@ export const ScopesSelector = () => {
                           toggleExpandedNode={toggleExpandedNode}
                           onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string) => {
                             // TOOD: Refactor to use scopeNodeId
-                            scopesSelectorService.changeScopes(scopeIds, undefined, parentNodeId);
+                            scopesSelectorService.changeScopes(scopeIds, parentNodeId);
                             scopesSelectorService.closeAndReset();
                           }}
                         />

@@ -342,7 +342,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   // TODO: Remove parentNodeId when refactoring recent scopes functionality
-  changeScopes = (scopeNames: string[], scopeNodeId?: string, parentNodeId?: string, redirectOnApply?: boolean) => {
+  changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string, redirectOnApply?: boolean) => {
     return this.applyScopes(
       scopeNames.map((id, index) => ({
         scopeId: id,

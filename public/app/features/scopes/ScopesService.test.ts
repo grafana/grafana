@@ -114,7 +114,7 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'node1', undefined, false);
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
     });
 
     it('should ignore scope_parent from URL (only used for recent scopes)', () => {
@@ -138,7 +138,7 @@ describe('ScopesService', () => {
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
       // Should only use scopeNodeId from URL, parentNodeId is undefined
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'node1', undefined, false);
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
       // Should preload node1
       expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith('node1', expect.anything());
     });
@@ -174,7 +174,7 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1', 'scope2'], 'node1', undefined, false);
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1', 'scope2'], undefined, 'node1', false);
     });
 
     it('should read navigation_scope from URL on init', () => {
@@ -197,7 +197,7 @@ describe('ScopesService', () => {
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
       expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1');
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'node1', undefined, false);
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
     });
 
     it('should not call setNavigationScope when navigation_scope is not in URL', () => {
