@@ -222,6 +222,10 @@ var (
 
 	// MStatTotalRepositories is a metric total amount of repositories
 	MStatTotalRepositories prometheus.Gauge
+
+	// MUnifiedStorageMigrationStatus is a metric indicating whether this instance would run unified storage migrations
+	// Value is 1 for instances that would run migrations, 0 for instances that would skip
+	MUnifiedStorageMigrationStatus *prometheus.GaugeVec
 )
 
 const (
@@ -691,6 +695,12 @@ func init() {
 		Help:      "total amount of repositories",
 		Namespace: ExporterName,
 	})
+
+	MUnifiedStorageMigrationStatus = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "unified_storage_migration_status",
+		Help:      "indicates whether this instance would run unified storage migrations (1=would run, 0=would skip)",
+		Namespace: ExporterName,
+	}, []string{"reason"})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -829,5 +839,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		MStatTotalRepositories,
 		MFolderIDsAPICount,
 		MFolderIDsServiceCount,
+		MUnifiedStorageMigrationStatus,
 	)
 }
