@@ -3777,11 +3777,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/cloudwatch/expressions.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/cloudwatch/guards.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3795,9 +3790,6 @@
   "public/app/plugins/datasource/cloudwatch/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 7
-    },
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/cloudwatch/utils/datalinks.ts": {
