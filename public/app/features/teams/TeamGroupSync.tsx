@@ -29,6 +29,7 @@ const mapDispatchToProps = {
 
 interface OwnProps {
   isReadOnly: boolean;
+  teamUid: string;
 }
 
 interface State {
@@ -52,7 +53,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   }
 
   async fetchTeamGroups() {
-    this.props.loadTeamGroups();
+    this.props.loadTeamGroups(this.props.teamUid);
   }
 
   onToggleAdding = () => {
@@ -65,12 +66,12 @@ export class TeamGroupSync extends PureComponent<Props, State> {
 
   onAddGroup: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
-    this.props.addTeamGroup(this.state.newGroupId);
+    this.props.addTeamGroup(this.props.teamUid, this.state.newGroupId);
     this.setState({ isAdding: false, newGroupId: '' });
   };
 
   onRemoveGroup = (group: TeamGroup) => {
-    this.props.removeTeamGroup(group.groupId);
+    this.props.removeTeamGroup(this.props.teamUid, group.groupId);
   };
 
   isNewGroupValid() {
