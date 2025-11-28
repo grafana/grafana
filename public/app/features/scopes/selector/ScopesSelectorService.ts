@@ -46,7 +46,7 @@ export interface ScopesSelectorServiceState {
 
   // Simple tree structure for the scopes categories. Each node in a tree has a scopeNodeId which keys the nodes cache
   // map.
-  tree: TreeNode | undefined;
+  tree: TreeNode;
 }
 
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
@@ -116,9 +116,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     scopeNodeId: string,
     tree: TreeNode
   ): Promise<{ path: ScopeNode[]; tree: TreeNode }> => {
-    if (!tree) {
-      throw new Error('Tree is required');
-    }
     const nodePath = await this.getNodePath(scopeNodeId);
     const newTree = insertPathNodesIntoTree(tree, nodePath);
 
@@ -133,7 +130,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     try {
       const path = getPathOfNode(scopeNodeId, this.state.nodes);
-      const nodeToToggle = treeNodeAtPath(this.state.tree!, path);
+      const nodeToToggle = treeNodeAtPath(this.state.tree, path);
 
       if (!nodeToToggle) {
         throw new Error(`Node ${scopeNodeId} not found in tree`);
@@ -143,7 +140,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
       }
 
-      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+      const newTree = modifyTreeNodeAtPath(this.state.tree, path, (treeNode) => {
         treeNode.expanded = !nodeToToggle.expanded;
         treeNode.query = '';
       });
@@ -152,7 +149,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // If we are collapsing, we need to make sure that all the parent's children are available
       if (nodeToToggle.expanded) {
         const parentPath = path.slice(0, -1);
-        const parentNode = treeNodeAtPath(this.state.tree!, parentPath);
+        const parentNode = treeNodeAtPath(this.state.tree, parentPath);
         if (parentNode) {
           await this.loadNodeChildren(parentPath, parentNode, parentNode.query);
         }
@@ -173,7 +170,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     try {
       const path = getPathOfNode(scopeNodeId, this.state.nodes);
-      const nodeToFilter = treeNodeAtPath(this.state.tree!, path);
+      const nodeToFilter = treeNodeAtPath(this.state.tree, path);
 
       if (!nodeToFilter) {
         throw new Error(`Trying to filter node at path or id ${scopeNodeId} not found`);
@@ -183,7 +180,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         throw new Error(`Trying to filter node at id ${scopeNodeId} that is not expandable`);
       }
 
-      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+      const newTree = modifyTreeNodeAtPath(this.state.tree, path, (treeNode) => {
         treeNode.expanded = true;
         treeNode.query = query;
       });
@@ -209,7 +206,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       newNodes[node.metadata.name] = node;
     }
 
-    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+    const newTree = modifyTreeNodeAtPath(this.state.tree, path, (treeNode) => {
       // Set parent query only when filtering within existing children
       treeNode.children = {};
       for (const node of childNodes) {
@@ -455,12 +452,12 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    * Opens the scopes selector drawer and loads the root nodes if they are not loaded yet.
    */
   public open = async () => {
-    if (!this.state.tree?.children || Object.keys(this.state.tree?.children).length === 0) {
+    if (!this.state.tree.children || Object.keys(this.state.tree.children).length === 0) {
       await this.filterNode('', '');
     }
 
     // First close all nodes
-    let newTree = closeNodes(this.state.tree!);
+    let newTree = closeNodes(this.state.tree);
 
     if (this.state.selectedScopes.length && this.state.selectedScopes[0].parentNodeId) {
       let path = getPathOfNode(this.state.selectedScopes[0].parentNodeId, this.state.nodes);
