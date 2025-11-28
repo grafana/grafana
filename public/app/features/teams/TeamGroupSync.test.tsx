@@ -49,7 +49,7 @@ describe('TeamGroupSync', () => {
   });
 
   it('should remove group', async () => {
-    const mockGroup: TeamGroup = { teamId: 1, groupId: 'someGroup' };
+    const mockGroup: TeamGroup = { teamId: 1, groupId: 'someGroup', uid: 'mapping-1' };
     const { user } = setup({ groups: [mockGroup] });
     await user.click(screen.getByRole('button', { name: 'Remove group someGroup' }));
 

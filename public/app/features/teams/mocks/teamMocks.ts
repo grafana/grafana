@@ -52,6 +52,7 @@ export const getMockTeamGroups = (amount: number): TeamGroup[] => {
     groups.push({
       groupId: `group-${i}`,
       teamId: 1,
+      uid: `mapping-${i}`,
     });
   }
 

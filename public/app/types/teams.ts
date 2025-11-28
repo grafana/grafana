@@ -71,6 +71,7 @@ export interface TeamMember {
 export interface TeamGroup {
   groupId: string;
   teamId: number;
+  uid: string;
 }
 
 export interface TeamsState {

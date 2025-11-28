@@ -70,7 +70,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   };
 
   onRemoveGroup = (group: TeamGroup) => {
-    this.props.removeTeamGroup(group.groupId);
+    this.props.removeTeamGroup(group.groupId, group.uid);
   };
 
   isNewGroupValid() {

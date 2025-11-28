@@ -1,13 +1,15 @@
 import { debounce } from 'lodash';
 
-import { getBackendSrv } from '@grafana/runtime';
+import { VersionsV0Alpha1Kinds7RoutesGroupsGetResponseExternalGroupMapping } from '@grafana/api-clients/rtkq/iam/v0alpha1';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { FetchDataArgs } from '@grafana/ui';
+import { iamAPIv0alpha1 } from 'app/api/clients/iam/v0alpha1';
 import { updateNavIndex } from 'app/core/actions';
 import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ThunkResult } from 'app/types/store';
-import { Team, TeamWithRoles } from 'app/types/teams';
+import { Team, TeamGroup, TeamWithRoles } from 'app/types/teams';
 
 import { buildNavModel } from './navModel';
 import {
@@ -111,24 +113,73 @@ export function updateTeam(name: string, email: string): ThunkResult<void> {
 export function loadTeamGroups(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    const response = await getBackendSrv().get(`/api/teams/${team.uid}/groups`);
-    dispatch(teamGroupsLoaded(response));
+
+    if (config.featureToggles.kubernetesExternalGroupMapping) {
+      const args = { name: team.uid };
+
+      const data = await dispatch(
+        iamAPIv0alpha1.endpoints.getTeamGroups.initiate(args, {
+          forceRefetch: true,
+        })
+      ).unwrap();
+
+      // Map to internal TeamGroup type
+      const groups: TeamGroup[] =
+        data?.items?.map((item: VersionsV0Alpha1Kinds7RoutesGroupsGetResponseExternalGroupMapping) => ({
+          groupId: item.externalGroup,
+          teamId: 0,
+          uid: item.name,
+        })) || [];
+
+      dispatch(teamGroupsLoaded(groups));
+    } else {
+      const response = await getBackendSrv().get(`/api/teams/${team.uid}/groups`);
+      dispatch(teamGroupsLoaded(response));
+    }
   };
 }
 
 export function addTeamGroup(groupId: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    await getBackendSrv().post(`/api/teams/${team.uid}/groups`, { groupId: groupId });
+
+    if (config.featureToggles.kubernetesExternalGroupMapping) {
+      await dispatch(
+        iamAPIv0alpha1.endpoints.createExternalGroupMapping.initiate({
+          externalGroupMapping: {
+            apiVersion: 'iam.grafana.app/v0alpha1',
+            kind: 'ExternalGroupMapping',
+            metadata: {
+              generateName: 'group-mapping-',
+            },
+            spec: {
+              externalGroupId: groupId,
+              teamRef: {
+                name: team.uid,
+              },
+            },
+          },
+        })
+      ).unwrap();
+    } else {
+      await getBackendSrv().post(`/api/teams/${team.uid}/groups`, { groupId: groupId });
+    }
+
     dispatch(loadTeamGroups());
   };
 }
 
-export function removeTeamGroup(groupId: string): ThunkResult<void> {
+export function removeTeamGroup(groupId: string, mappingUid: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    // need to use query parameter due to escaped characters in the request
-    await getBackendSrv().delete(`/api/teams/${team.uid}/groups?groupId=${encodeURIComponent(groupId)}`);
+
+    if (config.featureToggles.kubernetesExternalGroupMapping) {
+      await dispatch(iamAPIv0alpha1.endpoints.deleteExternalGroupMapping.initiate({ name: mappingUid })).unwrap();
+    } else {
+      // need to use query parameter due to escaped characters in the request
+      await getBackendSrv().delete(`/api/teams/${team.uid}/groups?groupId=${encodeURIComponent(groupId)}`);
+    }
+
     dispatch(loadTeamGroups());
   };
 }
