@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import uPlot from 'uplot';
 
 import { createTheme, FieldConfig, FieldSparkline, FieldType } from '@grafana/data';
 import { GraphFieldConfig } from '@grafana/schema';
@@ -36,10 +37,10 @@ describe('Sparkline', () => {
       const config: FieldConfig<GraphFieldConfig> = {
         custom: {
           interactionEnabled: true,
-        } as any,
+        } as GraphFieldConfig & { interactionEnabled?: boolean },
       };
 
-      const component = render(
+      const view = render(
         <Sparkline
           width={800}
           height={600}
@@ -51,7 +52,9 @@ describe('Sparkline', () => {
       );
 
       // Get the Sparkline instance to access the config builder
-      const instance = (component.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const instance = (view.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
       if (instance?.state?.configBuilder) {
         const builder = instance.state.configBuilder;
         const hooks = builder.getConfig().hooks;
@@ -63,7 +66,9 @@ describe('Sparkline', () => {
           const mockUPlot = {
             cursor: { idxs: [2, 2] },
             data: [mockSparkline.x!.values, mockSparkline.y.values],
-          };
+          } as Partial<uPlot>;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setLegendHook(mockUPlot as any);
 
           expect(onHover).toHaveBeenCalledWith(3, 2);
@@ -76,10 +81,10 @@ describe('Sparkline', () => {
       const config: FieldConfig<GraphFieldConfig> = {
         custom: {
           interactionEnabled: true,
-        } as any,
+        } as GraphFieldConfig & { interactionEnabled?: boolean },
       };
 
-      const component = render(
+      const view = render(
         <Sparkline
           width={800}
           height={600}
@@ -90,7 +95,8 @@ describe('Sparkline', () => {
         />
       );
 
-      const instance = (component.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const instance = (view.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
       if (instance?.state?.configBuilder) {
         const builder = instance.state.configBuilder;
         const hooks = builder.getConfig().hooks;
@@ -102,6 +108,7 @@ describe('Sparkline', () => {
             cursor: { idxs: [null, null] },
             data: [mockSparkline.x!.values, mockSparkline.y.values],
           };
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setLegendHook(mockUPlot as any);
 
           expect(onHover).toHaveBeenCalledWith(null, null);
@@ -114,10 +121,10 @@ describe('Sparkline', () => {
       const config: FieldConfig<GraphFieldConfig> = {
         custom: {
           interactionEnabled: false,
-        } as any,
+        } as GraphFieldConfig & { interactionEnabled?: boolean },
       };
 
-      const component = render(
+      const view = render(
         <Sparkline
           width={800}
           height={600}
@@ -128,7 +135,8 @@ describe('Sparkline', () => {
         />
       );
 
-      const instance = (component.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const instance = (view.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
       if (instance?.state?.configBuilder) {
         const builder = instance.state.configBuilder;
         const hooks = builder.getConfig().hooks;
@@ -142,10 +150,10 @@ describe('Sparkline', () => {
       const config: FieldConfig<GraphFieldConfig> = {
         custom: {
           interactionEnabled: true,
-        } as any,
+        } as GraphFieldConfig & { interactionEnabled?: boolean },
       };
 
-      const component = render(
+      const view = render(
         <Sparkline
           width={800}
           height={600}
@@ -155,7 +163,8 @@ describe('Sparkline', () => {
         />
       );
 
-      const instance = (component.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const instance = (view.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
       if (instance?.state?.configBuilder) {
         const builder = instance.state.configBuilder;
         const hooks = builder.getConfig().hooks;
@@ -168,10 +177,10 @@ describe('Sparkline', () => {
     it('should enable interaction by default when not explicitly configured', () => {
       const onHover = jest.fn();
       const config: FieldConfig<GraphFieldConfig> = {
-        custom: {} as any,
+        custom: {} as GraphFieldConfig & { interactionEnabled?: boolean },
       };
 
-      const component = render(
+      const view = render(
         <Sparkline
           width={800}
           height={600}
@@ -182,7 +191,8 @@ describe('Sparkline', () => {
         />
       );
 
-      const instance = (component.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const instance = (view.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
       if (instance?.state?.configBuilder) {
         const builder = instance.state.configBuilder;
         const hooks = builder.getConfig().hooks;
@@ -198,7 +208,7 @@ describe('Sparkline', () => {
       const config: FieldConfig<GraphFieldConfig> = {
         custom: {
           interactionEnabled: true,
-        } as any,
+        } as GraphFieldConfig & { interactionEnabled?: boolean },
       };
 
       const sparklineWithNaN: FieldSparkline = {
@@ -209,7 +219,7 @@ describe('Sparkline', () => {
         },
       };
 
-      const component = render(
+      const view = render(
         <Sparkline
           width={800}
           height={600}
@@ -220,7 +230,8 @@ describe('Sparkline', () => {
         />
       );
 
-      const instance = (component.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const instance = (view.container.firstChild as any)?.__reactFiber$?.return?.stateNode;
       if (instance?.state?.configBuilder) {
         const builder = instance.state.configBuilder;
         const hooks = builder.getConfig().hooks;
@@ -231,7 +242,8 @@ describe('Sparkline', () => {
           const mockUPlot1 = {
             cursor: { idxs: [1, 1] },
             data: [sparklineWithNaN.x!.values, sparklineWithNaN.y.values],
-          };
+          } as Partial<uPlot>;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setLegendHook(mockUPlot1 as any);
           expect(onHover).toHaveBeenCalledWith(null, null);
 
@@ -241,7 +253,8 @@ describe('Sparkline', () => {
           const mockUPlot3 = {
             cursor: { idxs: [3, 3] },
             data: [sparklineWithNaN.x!.values, sparklineWithNaN.y.values],
-          };
+          } as Partial<uPlot>;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setLegendHook(mockUPlot3 as any);
           expect(onHover).toHaveBeenCalledWith(null, null);
         }

@@ -112,8 +112,10 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     const builder = new UPlotConfigBuilder();
 
     // Check if interaction is enabled (default to true)
-    // Use type assertion since interactionEnabled is on TableSparklineCellOptions
-    const interactionEnabled = (config?.custom as any)?.interactionEnabled ?? true;
+    // interactionEnabled is on TableSparklineCellOptions which extends GraphFieldConfig
+    const customConfig = config?.custom;
+    const interactionEnabled =
+      customConfig && 'interactionEnabled' in customConfig ? customConfig.interactionEnabled : true;
 
     // X is the first field in the alligned frame
     const xField = data.fields[0];
@@ -214,11 +216,11 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         focus: {
           prox: 30, // proximity in CSS pixels for hover detection
         },
-      } as any); // Type assertion needed for cursor styling properties
+      });
 
       // Track cursor position and call onHover with the value at that position
       // Using setLegend hook which fires on hover (not just drag-to-select like setSelect)
-      builder.addHook('setLegend', (u) => {
+      builder.addHook('setLegend', (u: uPlot) => {
         const dataIdx = u.cursor.idxs?.[1]; // Get the data index from the cursor
         if (dataIdx != null) {
           const yData = u.data[1]; // Y-axis data (values)
@@ -250,12 +252,12 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     const { width, height } = this.props;
 
     // Style the vertical cursor bar to be more visible on small sparklines
-    const cursorStyles = css`
-      .u-cursor-x {
-        border-left: 2px solid !important;
-        opacity: 1 !important;
-      }
-    `;
+    const cursorStyles = css({
+      '.u-cursor-x': {
+        borderLeft: '2px solid !important',
+        opacity: '1 !important',
+      },
+    });
 
     return (
       <div className={cursorStyles}>
