@@ -616,12 +616,13 @@ export class DashboardModel implements TimeModel {
       this.panelInEdit.hasSavedPanelEditChange = this.panelInEdit.configRev > 0;
       this.panelInEdit.configRev = 0;
     }
-
-    this.originalDashboard = savedModel;
-    this.originalTemplating = savedModel.templating;
+    
+    this.originalDashboard = cloneDeep(savedModel);
+    this.originalTemplating = cloneDeep(savedModel.templating);
+    this.snapshot = cloneDeep(savedModel);
 
     if (options.saveTimerange) {
-      this.originalTime = savedModel.time;
+      this.originalTime = cloneDeep(savedModel.time);
     }
   }
 
