@@ -58,7 +58,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -96,7 +95,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -122,7 +120,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -168,7 +165,6 @@
               "uid": "${prom}"
             },
             "expr": "sum by (action) (app_jobs_processed_total{outcome=\"success\", cluster=\"$cluster\", namespace=\"default\"})\n/\nsum by (action) (app_jobs_processed_total{cluster=\"$cluster\", namespace=\"default\"})\n",
-            "hide": false,
             "legendFormat": "{{action}}",
             "refId": "A"
           }
@@ -198,7 +194,6 @@
               "uid": "${loki}"
             },
             "expr": "{namespace=\"default\", cluster=\"$cluster\", job=\"app-service\"} | logfmt | level=\"error\"",
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -227,7 +222,6 @@
               "uid": "${loki}"
             },
             "expr": "{namespace=\"default\", cluster=\"$cluster\", job=\"app-service\"} | logfmt",
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -253,7 +247,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -278,7 +271,6 @@
               "uid": "${prom}"
             },
             "expr": "max(app_worker_threads_active{cluster=\"$cluster\", namespace=\"default\"})",
-            "hide": false,
             "instant": true,
             "refId": "A"
           }
@@ -322,7 +314,6 @@
                 ]
               }
             ],
-            "hide": false,
             "query": "{name=\"app.operation.process\"}",
             "queryType": "traceqlSearch",
             "refId": "A"
@@ -371,7 +362,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.99, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) \u003e 0",
-            "hide": false,
             "legendFormat": "{{action}} q0.99 - size {{resources_changed_bucket}}",
             "refId": "B"
           },
@@ -381,7 +371,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.9, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) \u003e 0",
-            "hide": false,
             "legendFormat": "{{action}} q0.95 - size {{resources_changed_bucket}}",
             "refId": "C"
           },
@@ -391,7 +380,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.5, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) \u003e 0",
-            "hide": false,
             "legendFormat": "{{action}} q0.5 - size {{resources_changed_bucket}}",
             "refId": "D"
           },
@@ -401,7 +389,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.1, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) \u003e 0",
-            "hide": false,
             "legendFormat": "{{action}} q0.1 - size {{resources_changed_bucket}}",
             "refId": "E"
           }
@@ -454,7 +441,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.99, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
-            "hide": false,
             "legendFormat": "{{action}} q0.99 - size {{resources_changed_bucket}}",
             "refId": "B"
           },
@@ -464,7 +450,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.95, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
-            "hide": false,
             "legendFormat": "{{action}} q0.95 - size {{resources_changed_bucket}}",
             "refId": "C"
           },
@@ -474,7 +459,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.5, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
-            "hide": false,
             "legendFormat": "{{action}} q0.5 - size {{resources_changed_bucket}}",
             "refId": "D"
           },
@@ -484,7 +468,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.1, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
-            "hide": false,
             "legendFormat": "{{action}} q0.1 - size {{resources_changed_bucket}}",
             "refId": "E"
           }
@@ -510,7 +493,6 @@
               "uid": "${prom}"
             },
             "expr": "clamp_min(sum(app_operation_queue_size{cluster=\"$cluster\", namespace=\"default\"}), 0)",
-            "hide": false,
             "legendFormat": "Queue size",
             "refId": "A"
           }
@@ -540,7 +522,6 @@
               "uid": "${prom}"
             },
             "expr": "avg(histogram_quantile(0.5, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le)))",
-            "hide": false,
             "legendFormat": "Queue size",
             "refId": "A"
           }
@@ -567,7 +548,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.99, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
-            "hide": false,
             "legendFormat": "q0.99",
             "refId": "B"
           },
@@ -577,7 +557,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.95, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
-            "hide": false,
             "legendFormat": "q0.95",
             "refId": "C"
           },
@@ -587,7 +566,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.5, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
-            "hide": false,
             "legendFormat": "q0.5",
             "refId": "D"
           },
@@ -597,7 +575,6 @@
               "uid": "${prom}"
             },
             "expr": "histogram_quantile(0.1, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
-            "hide": false,
             "legendFormat": "q0.1",
             "refId": "E"
           }
@@ -624,7 +601,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -648,7 +624,6 @@
               "uid": "${prom}"
             },
             "expr": "count by (cluster, channel)(label_replace(label_replace(kube_pod_container_info{namespace=\"default\", container=\"app-worker\", pod=~\"app-worker.*\", cluster=~\"$cluster\"}, \"version\", \"$1\", \"image\", \".+:(.+)\"), \"channel\", \"$1\", \"container\", \".+-(.+)\"))",
-            "hide": false,
             "legendFormat": "{{cluster}}",
             "refId": "A"
           }
@@ -673,7 +648,6 @@
               "uid": "${prom}"
             },
             "expr": "max(kube_pod_container_resource_requests{namespace=\"default\", resource=\"memory\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker.*\"})",
-            "hide": false,
             "legendFormat": "Memory Request",
             "refId": "A"
           },
@@ -683,7 +657,6 @@
               "uid": "${prom}"
             },
             "expr": "max(kube_pod_container_resource_limits{namespace=\"default\", resource=\"memory\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker.*\"})",
-            "hide": false,
             "legendFormat": "Memory Limit",
             "refId": "B"
           },
@@ -693,7 +666,6 @@
               "uid": "${prom}"
             },
             "expr": "max(container_memory_usage_bytes{namespace=\"default\",cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker.*\"}) by (pod)",
-            "hide": false,
             "legendFormat": "Container usage {{pod}}",
             "refId": "C"
           }
@@ -718,7 +690,6 @@
               "uid": "${prom}"
             },
             "expr": "sum(irate(container_cpu_usage_seconds_total{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\"}[$__rate_interval])) by (pod, container, cpu)",
-            "hide": false,
             "legendFormat": "Usage {{pod}}",
             "refId": "A"
           },
@@ -728,7 +699,6 @@
               "uid": "${prom}"
             },
             "expr": "sum(irate(container_cpu_cfs_throttled_seconds_total{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\"}[$__rate_interval])) by (pod, container)",
-            "hide": false,
             "legendFormat": "Throttling {{pod}}",
             "refId": "B"
           },
@@ -738,7 +708,6 @@
               "uid": "${prom}"
             },
             "expr": "max(kube_pod_container_resource_limits{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\", resource=\"cpu\"})",
-            "hide": false,
             "legendFormat": "CPU limit",
             "refId": "C"
           },
@@ -748,7 +717,6 @@
               "uid": "${prom}"
             },
             "expr": "max(kube_pod_container_resource_requests{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\", resource=\"cpu\"})",
-            "hide": false,
             "legendFormat": "CPU request",
             "refId": "D"
           }

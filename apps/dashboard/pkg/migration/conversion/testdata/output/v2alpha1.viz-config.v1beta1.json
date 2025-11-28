@@ -66,7 +66,7 @@
           }
         },
         "gridPos": {
-          "h": 3,
+          "h": 9,
           "w": 8,
           "x": 0,
           "y": 0
@@ -92,7 +92,6 @@
               "type": "grafana-testdata-datasource",
               "uid": "gdev-testdata"
             },
-            "hide": false,
             "refId": "A",
             "scenarioId": "random_walk",
             "seriesCount": 3

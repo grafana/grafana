@@ -35,8 +35,10 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import {
@@ -82,20 +84,11 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       }
     }
   } else if (body instanceof RowsLayoutManager) {
-    // Handle RowsLayoutManager - iterate through rows and extract panels
+    // Handle RowsLayoutManager - convert to v1beta1 row panels
+    // Track absolute Y position across all rows (v2 has relative Y, v1 needs absolute)
+    let currentY = 0;
     for (const row of body.state.rows) {
-      const rowLayout = row.state.layout;
-      if (rowLayout instanceof DefaultGridLayoutManager) {
-        for (const child of rowLayout.state.grid.state.children) {
-          if (child instanceof DashboardGridItem) {
-            if (child.state.variableName) {
-              panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
-            } else {
-              panels.push(gridItemToPanel(child, isSnapshot));
-            }
-          }
-        }
-      }
+      currentY = rowItemToSaveModel(row, panels, isSnapshot, currentY);
     }
   }
 
@@ -302,7 +295,15 @@ function vizPanelDataToPanel(
   const queryRunner = getQueryRunnerFor(vizPanel);
 
   if (queryRunner) {
-    panel.targets = queryRunner.state.queries;
+    // Clean up targets by removing hide: false (it's the default value)
+    // This ensures consistency with Go backend which omits hide when false
+    panel.targets = queryRunner.state.queries.map((query) => {
+      if (query.hide === false) {
+        const { hide, ...rest } = query;
+        return rest;
+      }
+      return query;
+    });
     panel.maxDataPoints = queryRunner.state.maxDataPoints;
     // Only set panel-level datasource if explicitly specified
     if (queryRunner.state.datasource) {
@@ -471,6 +472,191 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
   } else {
     panelsArray.push(...panelsInsideRow);
   }
+}
+
+/**
+ * Converts a RowItem from RowsLayoutManager to v1beta1 row panel format.
+ * Handles Y position conversion from relative (v2) to absolute (v1) positions.
+ * Also handles nested rows by flattening them.
+ *
+ * @param row - The RowItem to convert
+ * @param panelsArray - The array to push panels to
+ * @param isSnapshot - Whether this is a snapshot
+ * @param currentY - The current absolute Y position in the dashboard
+ * @returns The next Y position after this row's content
+ */
+export function rowItemToSaveModel(
+  row: RowItem,
+  panelsArray: Array<Panel | RowPanel>,
+  isSnapshot = false,
+  currentY = 0
+): number {
+  const collapsed = Boolean(row.state.collapse);
+  const hideHeader = Boolean(row.state.hideHeader);
+  const rowLayout = row.state.layout;
+
+  // Calculate the max relative Y in this row's content to determine row height
+  const maxRelativeY = getMaxYFromLayout(rowLayout);
+
+  // If hideHeader is true, we don't create a row panel - just add the panels directly
+  // Go backend: for hidden header rows, panels keep their relative Y positions
+  // and currentRowY is NOT updated (stays the same for the next row)
+  if (hideHeader) {
+    if (rowLayout instanceof DefaultGridLayoutManager) {
+      for (const child of rowLayout.state.grid.state.children) {
+        if (child instanceof DashboardGridItem) {
+          const panel = child.state.variableName
+            ? panelRepeaterToPanels(child, isSnapshot)
+            : [gridItemToPanel(child, isSnapshot)];
+
+          // For hidden header rows, panels keep their relative Y positions (no adjustment)
+          // This matches Go backend behavior where isHiddenHeader skips Y adjustment
+          panelsArray.push(...panel);
+        }
+      }
+    } else if (rowLayout instanceof RowsLayoutManager) {
+      // Nested rows - flatten them
+      let nestedY = currentY;
+      for (const nestedRow of rowLayout.state.rows) {
+        nestedY = rowItemToSaveModel(nestedRow, panelsArray, isSnapshot, nestedY);
+      }
+      return nestedY;
+    }
+    // For hidden header rows, currentY is NOT updated (matches Go backend)
+    return currentY;
+  }
+
+  // Create the row panel with absolute Y position
+  const rowPanel: RowPanel = {
+    type: 'row',
+    id: -1, // Will be assigned by dashboard model TODO: CHECK
+    title: row.state.title ?? '',
+    gridPos: {
+      x: 0,
+      y: currentY,
+      w: 24,
+      h: 1,
+    },
+    collapsed,
+    panels: [],
+  };
+
+  // Handle row repeat variable
+  if (row.state.repeatByVariable) {
+    rowPanel.repeat = row.state.repeatByVariable;
+  }
+
+  panelsArray.push(rowPanel);
+
+  // The base Y position for panels in this row
+  // In Go backend: adjustedItem.Spec.Y = item.Spec.Y + currentRowY - 1
+  // Since we increment currentY after setting row Y, panelBaseY = currentY
+  // (i.e., panels start at the same Y as the row, not after it)
+  const panelBaseY = currentY;
+
+  // Extract panels from the row's layout
+  let panelsInsideRow: Panel[] = [];
+
+  if (rowLayout instanceof DefaultGridLayoutManager) {
+    for (const child of rowLayout.state.grid.state.children) {
+      if (child instanceof DashboardGridItem) {
+        if (child.state.variableName) {
+          panelsInsideRow = panelsInsideRow.concat(panelRepeaterToPanels(child, isSnapshot));
+        } else {
+          panelsInsideRow.push(gridItemToPanel(child, isSnapshot));
+        }
+      }
+    }
+  } else if (rowLayout instanceof RowsLayoutManager) {
+    // Nested rows - flatten them and collect panels
+    // For collapsed parent row, nested row panels should be stored inside
+    // For expanded parent row, nested content goes to top level
+    if (collapsed) {
+      // Flatten nested rows into panelsInsideRow (keep relative Y positions)
+      for (const nestedRow of rowLayout.state.rows) {
+        flattenRowItemToPanels(nestedRow, panelsInsideRow, isSnapshot);
+      }
+    } else {
+      // Process nested rows recursively with proper Y offset
+      let nestedY = panelBaseY;
+      for (const nestedRow of rowLayout.state.rows) {
+        nestedY = rowItemToSaveModel(nestedRow, panelsArray, isSnapshot, nestedY);
+      }
+      return nestedY;
+    }
+  }
+
+  // For collapsed rows, store panels inside the row (keep relative Y positions)
+  // For expanded rows, add panels after the row (convert to absolute Y positions)
+  if (collapsed) {
+    rowPanel.panels = panelsInsideRow;
+    // For collapsed rows, Go backend still updates currentRowY = maxY + 1
+    // even though panels are inside the row, not at the top level
+    return maxRelativeY + 1;
+  } else {
+    // Convert relative Y to absolute Y for expanded panels
+    for (const panel of panelsInsideRow) {
+      if (panel.gridPos) {
+        panel.gridPos.y = (panel.gridPos.y ?? 0) + panelBaseY;
+      }
+    }
+    panelsArray.push(...panelsInsideRow);
+    // Next row starts after all content in this row
+    // Go backend: currentRowY = maxRelativeY + 1
+    return maxRelativeY + 1;
+  }
+}
+
+/**
+ * Flattens a RowItem's panels into an array (for collapsed parent rows).
+ * Keeps relative Y positions.
+ */
+function flattenRowItemToPanels(row: RowItem, panelsArray: Panel[], isSnapshot = false) {
+  const rowLayout = row.state.layout;
+
+  if (rowLayout instanceof DefaultGridLayoutManager) {
+    for (const child of rowLayout.state.grid.state.children) {
+      if (child instanceof DashboardGridItem) {
+        if (child.state.variableName) {
+          panelsArray.push(...panelRepeaterToPanels(child, isSnapshot));
+        } else {
+          panelsArray.push(gridItemToPanel(child, isSnapshot));
+        }
+      }
+    }
+  } else if (rowLayout instanceof RowsLayoutManager) {
+    // Recursively flatten nested rows
+    for (const nestedRow of rowLayout.state.rows) {
+      flattenRowItemToPanels(nestedRow, panelsArray, isSnapshot);
+    }
+  }
+}
+
+/**
+ * Gets the maximum Y extent from a layout (relative to the layout's origin).
+ */
+function getMaxYFromLayout(layout: DashboardLayoutManager): number {
+  if (layout instanceof DefaultGridLayoutManager) {
+    let maxY = 0;
+    for (const child of layout.state.grid.state.children) {
+      if (child instanceof DashboardGridItem) {
+        const y = child.state.y ?? 0;
+        const h = child.state.height ?? 0;
+        maxY = Math.max(maxY, y + h);
+      }
+    }
+    return maxY;
+  } else if (layout instanceof RowsLayoutManager) {
+    let totalY = 0;
+    for (const row of layout.state.rows) {
+      totalY += getMaxYFromLayout(row.state.layout);
+      if (!row.state.hideHeader) {
+        totalY += 1; // Row header takes 1 unit
+      }
+    }
+    return totalY;
+  }
+  return 0;
 }
 
 export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: Dashboard, panel?: VizPanel) {

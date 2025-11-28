@@ -67,6 +67,11 @@ type DeepPartial<T> = T extends object
     }
   : T;
 
+/**
+ * Transform a DashboardScene to a v2beta1 DashboardSpec.
+ * @param scene - The DashboardScene to transform
+ * @param isSnapshot - Whether this is a snapshot transformation
+ */
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
   const sceneDash = scene.state;
   const timeRange = sceneDash.$timeRange!.state;
@@ -74,7 +79,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   const controlsState = sceneDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
 
-  const dsReferencesMapping: DSReferencesMapping = scene.serializer.getDSReferencesMapping();
+  const dsReferencesMapping = scene.serializer.getDSReferencesMapping();
 
   const timeSettingsDefaults = defaultTimeSettingsSpec();
 
@@ -164,7 +169,7 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(scene: DashboardScene, dsReferencesMapping: DSReferencesMapping) {
+function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMapping) {
   const panels = scene.state.body.getVizPanels() ?? [];
   const panelsArray = panels.map((vizPanel) => {
     return vizPanelToSchemaV2(vizPanel, dsReferencesMapping);

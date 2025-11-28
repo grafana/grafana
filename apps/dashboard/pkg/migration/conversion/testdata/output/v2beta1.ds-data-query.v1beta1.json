@@ -41,6 +41,10 @@
           }
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "enable": true,
           "hide": false,
           "iconColor": "blue",
@@ -69,6 +73,10 @@
           }
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "enable": true,
           "hide": false,
           "iconColor": "yellow",
@@ -223,7 +231,6 @@
             "editorMode": "builder",
             "expr": "rate(counters_requests[$__rate_interval])",
             "fullMetaSearch": false,
-            "hide": false,
             "includeNullMetadata": false,
             "instant": false,
             "legendFormat": "__auto",
@@ -320,7 +327,6 @@
             "editorMode": "builder",
             "expr": "rate(counters_requests[$__rate_interval])",
             "fullMetaSearch": false,
-            "hide": false,
             "includeNullMetadata": false,
             "instant": false,
             "legendFormat": "__auto",
@@ -380,7 +386,6 @@
         "pluginVersion": "12.1.0-pre",
         "targets": [
           {
-            "hide": false,
             "refId": "A",
             "scenarioId": "random_walk",
             "seriesCount": 4
@@ -470,7 +475,6 @@
               "type": "grafana-testdata-datasource",
               "uid": "gdev-testdata"
             },
-            "hide": false,
             "refId": "A",
             "scenarioId": "random_walk",
             "seriesCount": 3
@@ -564,7 +568,6 @@
             "editorMode": "builder",
             "expr": "rate(counters_requests{server=\"backend-01\"}[$__rate_interval])",
             "fullMetaSearch": false,
-            "hide": false,
             "includeNullMetadata": false,
             "legendFormat": "__auto",
             "range": true,
@@ -576,7 +579,6 @@
               "type": "grafana-testdata-datasource",
               "uid": "gdev-testdata"
             },
-            "hide": false,
             "refId": "B"
           }
         ],
@@ -664,7 +666,6 @@
             "editorMode": "builder",
             "expr": "rate(counters_requests{server=\"backend-01\"}[$__rate_interval])",
             "fullMetaSearch": false,
-            "hide": false,
             "includeNullMetadata": false,
             "legendFormat": "__auto",
             "range": true,
@@ -672,7 +673,6 @@
             "useBackend": false
           },
           {
-            "hide": false,
             "refId": "B"
           }
         ],
@@ -715,6 +715,10 @@
             "text": "",
             "value": ""
           },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "hide": 0,
           "includeAll": false,
           "multi": false,
@@ -736,6 +740,10 @@
             "text": "",
             "value": ""
           },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "hide": 0,
           "includeAll": false,
           "multi": false,
@@ -753,6 +761,10 @@
           "current": {
             "text": "",
             "value": ""
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "hide": 0,
           "includeAll": false,

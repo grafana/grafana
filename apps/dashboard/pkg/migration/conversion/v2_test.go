@@ -39,7 +39,7 @@ func TestV2alpha1ConversionErrorHandling(t *testing.T) {
 		}
 		target := &dashv1.Dashboard{}
 
-		err := Convert_V2alpha1_to_V1beta1(source, target, nil)
+		err := Convert_V2alpha1_to_V1beta1(source, target, nil, dsProvider)
 
 		// Convert_V2alpha1_to_V1beta1 doesn't return error, just sets status
 		require.NoError(t, err, "Convert_V2alpha1_to_V1beta1 doesn't return error")
@@ -112,7 +112,7 @@ func TestV2beta1ConversionErrorHandling(t *testing.T) {
 		}
 		target := &dashv1.Dashboard{}
 
-		err := Convert_V2beta1_to_V1beta1(source, target, nil)
+		err := Convert_V2beta1_to_V1beta1(source, target, nil, dsProvider)
 
 		// Convert_V2beta1_to_V1beta1 doesn't return error, just sets status
 		require.NoError(t, err, "Convert_V2beta1_to_V1beta1 doesn't return error")
@@ -143,7 +143,7 @@ func TestV2beta1ConversionErrorHandling(t *testing.T) {
 		}
 		target := &dashv1.Dashboard{}
 
-		err := Convert_V2beta1_to_V1beta1(source, target, nil)
+		err := Convert_V2beta1_to_V1beta1(source, target, nil, dsProvider)
 
 		// Convert_V2beta1_to_V1beta1 doesn't return error, just sets status
 		require.NoError(t, err, "Convert_V2beta1_to_V1beta1 doesn't return error")
@@ -173,7 +173,7 @@ func TestV2beta1ConversionErrorHandling(t *testing.T) {
 		}
 		target := &dashv1.Dashboard{}
 
-		err := Convert_V2beta1_to_V1beta1(source, target, nil)
+		err := Convert_V2beta1_to_V1beta1(source, target, nil, dsProvider)
 
 		// Should succeed if dashboard is valid
 		if err == nil {

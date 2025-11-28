@@ -122,7 +122,6 @@
               "uid": "gdev-prometheus"
             },
             "expr": "up{job=\"grafana\"}",
-            "hide": false,
             "refId": "A"
           }
         ],

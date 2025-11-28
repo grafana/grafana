@@ -1,6 +1,7 @@
 package conversion
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/conversion"
@@ -13,13 +14,21 @@ import (
 // ConvertDashboard_V2alpha1_to_V1beta1 converts a v2alpha1 dashboard to v1beta1 format.
 // The v1beta1 format uses an unstructured JSON structure, so we build a map[string]interface{}
 // that represents the v1 dashboard JSON format.
-func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+// The dsIndexProvider is used to resolve default datasources when queries/variables/annotations
+// don't have explicit datasource references.
+func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv1.APIVERSION
 	out.Kind = in.Kind // Preserve the Kind from input (should be "Dashboard")
 
+	// Get datasource index for resolving default datasources
+	var dsIndex *schemaversion.DatasourceIndex
+	if dsIndexProvider != nil {
+		dsIndex = dsIndexProvider.Index(context.Background())
+	}
+
 	// Convert the spec to v1beta1 unstructured format
-	dashboardJSON, err := convertDashboardSpec_V2alpha1_to_V1beta1(&in.Spec)
+	dashboardJSON, err := convertDashboardSpec_V2alpha1_to_V1beta1(&in.Spec, dsIndex)
 	if err != nil {
 		return fmt.Errorf("failed to convert dashboard spec: %w", err)
 	}
@@ -30,7 +39,7 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 	return nil
 }
 
-func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (map[string]interface{}, error) {
+func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec, dsIndex *schemaversion.DatasourceIndex) (map[string]interface{}, error) {
 	dashboard := make(map[string]interface{})
 
 	// Convert basic fields
@@ -63,12 +72,13 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 	}
 
 	// Convert panels from elements and layout
-	panels, err := convertPanelsFromElementsAndLayout(in.Elements, in.Layout)
+	panels, err := convertPanelsFromElementsAndLayout(in.Elements, in.Layout, dsIndex)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert panels: %w", err)
 	}
-	// Check the panels are not missed
-	if len(panels) < len(in.Elements) {
+	// Count total panels including those in collapsed rows
+	totalPanelsConverted := countTotalPanels(panels)
+	if totalPanelsConverted < len(in.Elements) {
 		return nil, fmt.Errorf("some panels were not converted from v2alpha1 to v1beta1")
 	}
 
@@ -77,7 +87,7 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 	}
 
 	// Convert variables
-	variables := convertVariablesToV1(in.Variables)
+	variables := convertVariablesToV1(in.Variables, dsIndex)
 	if len(variables) > 0 {
 		dashboard["templating"] = map[string]interface{}{
 			"list": variables,
@@ -85,7 +95,7 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 	}
 
 	// Convert annotations - always include even if empty to prevent DashboardModel from adding built-in
-	annotations := convertAnnotationsToV1(in.Annotations)
+	annotations := convertAnnotationsToV1(in.Annotations, dsIndex)
 	dashboard["annotations"] = map[string]interface{}{
 		"list": annotations,
 	}
@@ -197,9 +207,32 @@ func convertLinksToV1(links []dashv2alpha1.DashboardDashboardLink) []map[string]
 	return result
 }
 
-func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.DashboardElement, layout dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) ([]interface{}, error) {
+// countTotalPanels counts all panels including those nested in collapsed row panels.
+func countTotalPanels(panels []interface{}) int {
+	count := 0
+	for _, p := range panels {
+		panel, ok := p.(map[string]interface{})
+		if !ok {
+			count++
+			continue
+		}
+
+		// Check if this is a row panel with nested panels
+		if panelType, ok := panel["type"].(string); ok && panelType == "row" {
+			if nestedPanels, ok := panel["panels"].([]interface{}); ok {
+				count += len(nestedPanels)
+			}
+			// Don't count the row itself as a panel element
+		} else {
+			count++
+		}
+	}
+	return count
+}
+
+func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.DashboardElement, layout dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
 	if layout.GridLayoutKind != nil {
-		return convertGridLayoutToPanels(elements, layout.GridLayoutKind)
+		return convertGridLayoutToPanels(elements, layout.GridLayoutKind, dsIndex)
 	}
 
 	// TODO: Support nested rows layouts
@@ -210,7 +243,7 @@ func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.Dashboa
 	// We have different options: We handle it in the tests, or we add a fallback in the frontend transformer. This is going to be needed anyway for the Export as V1.
 	// At least we could map 1 to 1 what the frontend and backend reproduces.
 	if layout.RowsLayoutKind != nil {
-		return convertRowsLayoutToPanels(elements, layout.RowsLayoutKind)
+		return convertRowsLayoutToPanels(elements, layout.RowsLayoutKind, dsIndex)
 	}
 
 	// TODO: Support nested AutoGrid layouts
@@ -224,7 +257,7 @@ func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.Dashboa
 		// TODO: Improve the logic to fallback in a smart way
 		// For now, convert AutoGridLayout to a basic 3x3 grid layout
 		// This preserves all elements but loses the auto-grid layout information
-		return convertAutoGridLayoutToPanels(elements, layout.AutoGridLayoutKind)
+		return convertAutoGridLayoutToPanels(elements, layout.AutoGridLayoutKind, dsIndex)
 	}
 
 	// TODO: Support nested AutoGrid layouts
@@ -238,14 +271,14 @@ func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.Dashboa
 		// TODO: Improve the logic to fallback in a smart way
 		// For now, convert TabsLayout to a basic 3x3 grid layout
 		// This flattens all tabs into a single grid, losing tab structure
-		return convertTabsLayoutToPanels(elements, layout.TabsLayoutKind)
+		return convertTabsLayoutToPanels(elements, layout.TabsLayoutKind, dsIndex)
 	}
 
 	// No layout specified, return empty panels
 	return []interface{}{}, nil
 }
 
-func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, gridLayout *dashv2alpha1.DashboardGridLayoutKind) ([]interface{}, error) {
+func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, gridLayout *dashv2alpha1.DashboardGridLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
 	panels := make([]interface{}, 0, len(gridLayout.Spec.Items))
 
 	for _, item := range gridLayout.Spec.Items {
@@ -254,7 +287,7 @@ func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 			return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
 		}
 
-		panel, err := convertPanelFromElement(&element, &item)
+		panel, err := convertPanelFromElement(&element, &item, dsIndex)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
 		}
@@ -265,7 +298,7 @@ func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 }
 
 // FIXME: This is not supporting nested rows layouts
-func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind) ([]interface{}, error) {
+func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
 	panels := make([]interface{}, 0)
 	var currentRowY int64 = 0
 
@@ -285,6 +318,11 @@ func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 			}
 			if row.Spec.Collapse != nil {
 				rowPanel["collapsed"] = *row.Spec.Collapse
+			}
+
+			// Handle row repeat variable
+			if row.Spec.Repeat != nil && row.Spec.Repeat.Value != "" {
+				rowPanel["repeat"] = row.Spec.Repeat.Value
 			}
 
 			// Calculate row Y position from first panel in row
@@ -309,7 +347,7 @@ func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 						if !ok {
 							return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
 						}
-						panel, err := convertPanelFromElement(&element, &item)
+						panel, err := convertPanelFromElement(&element, &item, dsIndex)
 						if err != nil {
 							return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
 						}
@@ -324,27 +362,31 @@ func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 			panels = append(panels, rowPanel)
 		}
 
-		// Add panels from row layout
-		if row.Spec.Layout.GridLayoutKind != nil {
-			for _, item := range row.Spec.Layout.GridLayoutKind.Spec.Items {
-				element, ok := elements[item.Spec.Element.Name]
-				if !ok {
-					return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
-				}
+		// Add panels from row layout (only for expanded rows or hidden header rows)
+		// For collapsed rows, panels are already stored inside rowPanel["panels"]
+		isCollapsed := row.Spec.Collapse != nil && *row.Spec.Collapse
+		if !isCollapsed || isHiddenHeader {
+			if row.Spec.Layout.GridLayoutKind != nil {
+				for _, item := range row.Spec.Layout.GridLayoutKind.Spec.Items {
+					element, ok := elements[item.Spec.Element.Name]
+					if !ok {
+						return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
+					}
 
-				// Calculate absolute Y position for panels in rows
-				// Y in rows layout is relative to row start, need to add row Y offset
-				adjustedItem := item
-				if !isHiddenHeader {
-					// Adjust Y position relative to row
-					adjustedItem.Spec.Y = item.Spec.Y + currentRowY - 1
-				}
+					// Calculate absolute Y position for panels in rows
+					// Y in rows layout is relative to row start, need to add row Y offset
+					adjustedItem := item
+					if !isHiddenHeader {
+						// Adjust Y position relative to row
+						adjustedItem.Spec.Y = item.Spec.Y + currentRowY - 1
+					}
 
-				panel, err := convertPanelFromElement(&element, &adjustedItem)
-				if err != nil {
-					return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
+					panel, err := convertPanelFromElement(&element, &adjustedItem, dsIndex)
+					if err != nil {
+						return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
+					}
+					panels = append(panels, panel)
 				}
-				panels = append(panels, panel)
 			}
 		}
 
@@ -365,16 +407,46 @@ func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 	return panels, nil
 }
 
-// convertAutoGridLayoutToPanels converts AutoGridLayout to panels with basic 3x3 grid positioning
-// TODO: Improve the logic to fallback in a smart way
-func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, autoGridLayout *dashv2alpha1.DashboardAutoGridLayoutKind) ([]interface{}, error) {
+// convertAutoGridLayoutToPanels converts AutoGridLayout to panels with calculated grid positioning
+// Based on spec:
+// - Panel width: Math.floor(24 / maxColumnCount) (default: 8 for maxColumnCount=3)
+// - Panel height based on rowHeightMode/rowHeight:
+//   - short: 168px → 5 grid units
+//   - standard: 320px → 9 grid units (default)
+//   - tall: 512px → 14 grid units
+//   - custom: Uses rowHeight value in pixels, converted to grid units
+func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, autoGridLayout *dashv2alpha1.DashboardAutoGridLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
 	panels := make([]interface{}, 0, len(autoGridLayout.Spec.Items))
 
-	// Basic 3x3 grid: 3 columns, each panel is 8 units wide (out of 24)
-	// Standard panel height is 3 units
-	const gridWidth = 24
-	const panelWidth = 8 // 3 columns: 0-7, 8-15, 16-23
-	const panelHeight = 3
+	const gridWidth int64 = 24
+	const gridCellHeight float64 = 30 // GRID_CELL_HEIGHT in pixels
+	const gridCellVMargin float64 = 8 // GRID_CELL_VMARGIN in pixels
+	const defaultMaxColumnCount float64 = 3
+
+	// Calculate panel width based on maxColumnCount
+	maxColumnCount := defaultMaxColumnCount
+	if autoGridLayout.Spec.MaxColumnCount != nil && *autoGridLayout.Spec.MaxColumnCount > 0 {
+		maxColumnCount = *autoGridLayout.Spec.MaxColumnCount
+	}
+	panelWidth := int64(float64(gridWidth) / maxColumnCount)
+
+	// Calculate panel height based on rowHeightMode/rowHeight
+	var panelHeight int64 = 9 // default: standard (320px → 9 grid units)
+	switch autoGridLayout.Spec.RowHeightMode {
+	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeShort:
+		panelHeight = 5 // 168px → 5 grid units
+	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeStandard:
+		panelHeight = 9 // 320px → 9 grid units
+	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeTall:
+		panelHeight = 14 // 512px → 14 grid units
+	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeCustom:
+		// Convert rowHeight from pixels to grid units
+		if autoGridLayout.Spec.RowHeight != nil && *autoGridLayout.Spec.RowHeight > 0 {
+			rowHeightPx := *autoGridLayout.Spec.RowHeight
+			// Math.ceil(height / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN))
+			panelHeight = int64((rowHeightPx + gridCellHeight + gridCellVMargin - 1) / (gridCellHeight + gridCellVMargin))
+		}
+	}
 
 	var currentY int64 = 0
 	var currentX int64 = 0
@@ -403,13 +475,13 @@ func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardEle
 			},
 		}
 
-		panel, err := convertPanelFromElement(&element, &gridItem)
+		panel, err := convertPanelFromElement(&element, &gridItem, dsIndex)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
 		}
 		panels = append(panels, panel)
 
-		// Move to next position: 3 columns, then wrap to next row
+		// Move to next position: wrap to next row when exceeding maxColumnCount
 		currentX += panelWidth
 		if currentX >= gridWidth {
 			currentX = 0
@@ -420,67 +492,108 @@ func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardEle
 	return panels, nil
 }
 
-// convertTabsLayoutToPanels converts TabsLayout to panels with basic 3x3 grid positioning
-// TODO: Improve the logic to fallback in a smart way
-func convertTabsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind) ([]interface{}, error) {
+// convertTabsLayoutToPanels converts TabsLayout to row panels
+// Based on spec:
+// - Each tab converts to a RowPanel (type: 'row')
+// - Tabs are converted to expanded row panels at the top level
+// - Panels inside tabs are extracted to the top level (same as expanded rows)
+// - Tab row's panels array is empty ([])
+// - Tab order is preserved
+// - Nested rows within tabs are also flattened to top level
+func convertTabsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
 	panels := make([]interface{}, 0)
-
-	// Basic 3x3 grid: 3 columns, each panel is 8 units wide (out of 24)
-	// Standard panel height is 3 units
-	const gridWidth = 24
-	const panelWidth = 8 // 3 columns: 0-7, 8-15, 16-23
-	const panelHeight = 3
-
 	var currentY int64 = 0
-	var currentX int64 = 0
 
-	// Flatten all tabs into a single grid
 	for _, tab := range tabsLayout.Spec.Tabs {
+		// Create a row panel for this tab (expanded, with empty panels array)
+		rowPanel := map[string]interface{}{
+			"type":      "row",
+			"id":        -1, // Will be updated later if needed
+			"title":     tab.Spec.Title,
+			"collapsed": false, // Tabs are always expanded
+			"gridPos": map[string]interface{}{
+				"x": 0,
+				"y": currentY,
+				"w": 24,
+				"h": 1,
+			},
+			"panels": []interface{}{}, // Tab row's panels array is empty
+		}
+		panels = append(panels, rowPanel)
+		currentY++ // Row panel takes 1 unit of height
+
 		// Convert the tab's layout to panels
-		tabPanels, err := convertPanelsFromElementsAndLayout(elements, tab.Spec.Layout)
+		tabPanels, err := convertPanelsFromElementsAndLayout(elements, tab.Spec.Layout, dsIndex)
 		if err != nil {
-			// If conversion fails, skip this tab
+			// If conversion fails, skip this tab's panels
 			continue
 		}
 
-		// Reposition panels from this tab in the 3x3 grid
-		for _, p := range tabPanels {
-			panelMap, ok := p.(map[string]interface{})
-			if !ok {
-				continue
-			}
-
-			// Update grid position to 3x3 grid
-			if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
-				gridPos["x"] = currentX
-				gridPos["y"] = currentY
-				gridPos["w"] = panelWidth
-				gridPos["h"] = panelHeight
-			} else {
-				// Create gridPos if it doesn't exist
-				panelMap["gridPos"] = map[string]interface{}{
-					"x": currentX,
-					"y": currentY,
-					"w": panelWidth,
-					"h": panelHeight,
-				}
-			}
-
-			panels = append(panels, panelMap)
-
-			// Move to next position: 3 columns, then wrap to next row
-			currentX += panelWidth
-			if currentX >= gridWidth {
-				currentX = 0
-				currentY += panelHeight
-			}
-		}
+		// Flatten nested structures and adjust Y positions
+		flattenedPanels, newY := flattenTabPanels(tabPanels, currentY)
+		panels = append(panels, flattenedPanels...)
+		currentY = newY
 	}
 
 	return panels, nil
 }
 
-func convertPanelFromElement(element *dashv2alpha1.DashboardElement, layoutItem *dashv2alpha1.DashboardGridLayoutItemKind) (map[string]interface{}, error) {
+// flattenTabPanels flattens nested row structures and adjusts Y positions for panels within a tab
+// Returns the flattened panels and the new max Y position
+func flattenTabPanels(inputPanels []interface{}, startY int64) ([]interface{}, int64) {
+	result := make([]interface{}, 0)
+	currentY := startY
+
+	for _, p := range inputPanels {
+		panelMap, ok := p.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Check if this is a row panel (nested row within a tab)
+		panelType, _ := panelMap["type"].(string)
+		if panelType == "row" {
+			// Adjust row Y position
+			if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
+				gridPos["y"] = currentY
+			}
+			currentY++
+
+			// For nested rows within tabs, always treat as expanded
+			// Extract nested panels to top level
+			nestedPanels, _ := panelMap["panels"].([]interface{})
+			panelMap["panels"] = []interface{}{} // Clear nested panels (expanded row)
+			panelMap["collapsed"] = false        // Ensure it's expanded
+
+			result = append(result, panelMap)
+
+			// Recursively flatten nested panels
+			if len(nestedPanels) > 0 {
+				nested, newY := flattenTabPanels(nestedPanels, currentY)
+				result = append(result, nested...)
+				currentY = newY
+			}
+		} else {
+			// Regular panel: adjust Y position
+			if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
+				panelY, _ := gridPos["y"].(int64)
+				panelH, _ := gridPos["h"].(int64)
+				gridPos["y"] = panelY + startY
+
+				// Track max Y extent
+				newMaxY := panelY + startY + panelH
+				if newMaxY > currentY {
+					currentY = newMaxY
+				}
+			}
+			result = append(result, panelMap)
+		}
+	}
+
+	return result, currentY
+}
+
+func convertPanelFromElement(element *dashv2alpha1.DashboardElement, layoutItem *dashv2alpha1.DashboardGridLayoutItemKind, dsIndex *schemaversion.DatasourceIndex) (map[string]interface{}, error) {
 	panel := make(map[string]interface{})
 
 	// Set grid position
@@ -509,7 +622,7 @@ func convertPanelFromElement(element *dashv2alpha1.DashboardElement, layoutItem 
 	}
 
 	if element.PanelKind != nil {
-		return convertPanelKindToV1(element.PanelKind, panel)
+		return convertPanelKindToV1(element.PanelKind, panel, dsIndex)
 	}
 
 	if element.LibraryPanelKind != nil {
@@ -519,7 +632,7 @@ func convertPanelFromElement(element *dashv2alpha1.DashboardElement, layoutItem 
 	return nil, fmt.Errorf("element has neither PanelKind nor LibraryPanelKind")
 }
 
-func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[string]interface{}) (map[string]interface{}, error) {
+func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[string]interface{}, dsIndex *schemaversion.DatasourceIndex) (map[string]interface{}, error) {
 	spec := panelKind.Spec
 
 	panel["id"] = int(spec.Id)
@@ -561,7 +674,7 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	// Convert queries (targets)
 	targets := make([]map[string]interface{}, 0, len(spec.Data.Spec.Queries))
 	for _, query := range spec.Data.Spec.Queries {
-		target := convertPanelQueryToV1(&query)
+		target := convertPanelQueryToV1(&query, dsIndex)
 		targets = append(targets, target)
 	}
 	panel["targets"] = targets
@@ -611,7 +724,7 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	return panel, nil
 }
 
-func convertPanelQueryToV1(query *dashv2alpha1.DashboardPanelQueryKind) map[string]interface{} {
+func convertPanelQueryToV1(query *dashv2alpha1.DashboardPanelQueryKind, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
 	target := make(map[string]interface{})
 
 	// Copy query spec (excluding refId, hide, datasource which are handled separately)
@@ -627,25 +740,112 @@ func convertPanelQueryToV1(query *dashv2alpha1.DashboardPanelQueryKind) map[stri
 		target[key] = value
 	}
 
-	// Add refId and hide (always include hide to match frontend behavior)
+	// Add refId
 	target["refId"] = query.Spec.RefId
-	target["hide"] = query.Spec.Hidden
 
-	// Add datasource
-	if query.Spec.Datasource != nil {
-		datasource := make(map[string]interface{})
-		if query.Spec.Datasource.Uid != nil {
-			datasource["uid"] = *query.Spec.Datasource.Uid
-		}
-		if query.Spec.Datasource.Type != nil {
-			datasource["type"] = *query.Spec.Datasource.Type
-		}
-		if len(datasource) > 0 {
-			target["datasource"] = datasource
-		}
+	// Only include hide when true (hidden). This matches frontend behavior which omits falsy values.
+	if query.Spec.Hidden {
+		target["hide"] = true
+	}
+
+	// Resolve datasource - only add if explicit (for panel queries, we don't resolve to defaults)
+	datasource := resolveDatasourceForPanelQuery(query.Spec.Datasource)
+	if datasource != nil {
+		target["datasource"] = datasource
 	}
 
 	return target
+}
+
+// resolveDatasourceForPanelQuery resolves the datasource for a panel query.
+// If the query has an explicit datasource (with UID), it is used as-is.
+// If there's NO explicit datasource, no datasource is added to the output.
+// This matches the frontend behavior in panelQueryKindToSceneQuery which only adds
+// datasource when query.spec.query.datasource?.name exists.
+func resolveDatasourceForPanelQuery(explicitDS *dashv2alpha1.DashboardDataSourceRef) map[string]interface{} {
+	// If explicit datasource is provided (with UID), use it as-is
+	// This preserves the original datasource reference without trying to resolve it
+	// Note: In v2alpha1, the UID field contains the "name" from v2beta1 after conversion
+	if explicitDS != nil {
+		hasUID := explicitDS.Uid != nil && *explicitDS.Uid != ""
+
+		if hasUID {
+			datasource := make(map[string]interface{})
+			datasource["uid"] = *explicitDS.Uid
+			// Always include type field to match frontend behavior
+			// Frontend includes type even when empty because getDataSourceForQuery returns { uid, type }
+			if explicitDS.Type != nil {
+				datasource["type"] = *explicitDS.Type
+			}
+			return datasource
+		}
+	}
+
+	// No explicit datasource - don't add one to the output
+	// This matches the frontend behavior which only adds datasource when there's
+	// an explicit datasource.name in the input
+	return nil
+}
+
+// resolveDatasourceForVariable resolves the datasource for a variable (QueryVariable, AdhocVariable, GroupByVariable).
+// Unlike panel queries, variables ALWAYS resolve to a datasource, falling back to defaults.
+// This matches the frontend behavior in getRuntimeVariableDataSource/getDataSourceForQuery.
+func resolveDatasourceForVariable(explicitDS *dashv2alpha1.DashboardDataSourceRef, variableKind string, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
+	// If explicit datasource is provided (with UID), use it
+	if explicitDS != nil && explicitDS.Uid != nil && *explicitDS.Uid != "" {
+		datasource := make(map[string]interface{})
+		datasource["uid"] = *explicitDS.Uid
+		// Always include type to match frontend behavior (even if empty)
+		if explicitDS.Type != nil {
+			datasource["type"] = *explicitDS.Type
+		}
+		return datasource
+	}
+
+	// No explicit datasource - resolve based on variable kind (datasource type) or default
+	if dsIndex == nil {
+		return nil
+	}
+
+	// Try to find a datasource matching the variable kind (type)
+	if variableKind != "" {
+		// Look for a datasource with this type - prefer one that's also the default if available
+		var matchingDS *schemaversion.DataSourceInfo
+		for _, ds := range dsIndex.ByUID {
+			if ds.Type == variableKind {
+				if matchingDS == nil || ds.Default {
+					matchingDS = ds
+					if ds.Default {
+						break // Found default DS of this type, use it
+					}
+				}
+			}
+		}
+		if matchingDS != nil {
+			return map[string]interface{}{
+				"uid":  matchingDS.UID,
+				"type": matchingDS.Type,
+			}
+		}
+	}
+
+	// Fall back to default datasource
+	if dsIndex.DefaultDS != nil {
+		return map[string]interface{}{
+			"uid":  dsIndex.DefaultDS.UID,
+			"type": dsIndex.DefaultDS.Type,
+		}
+	}
+
+	return nil
+}
+
+// resolveDatasourceForAnnotation resolves the datasource for an annotation.
+// Like variables, annotations ALWAYS resolve to a datasource, falling back to defaults.
+// This matches the frontend behavior in transformV2ToV1AnnotationQuery which calls getRuntimePanelDataSource.
+func resolveDatasourceForAnnotation(explicitDS *dashv2alpha1.DashboardDataSourceRef, queryKind string, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
+	// Use the same resolution logic as variables
+	return resolveDatasourceForVariable(explicitDS, queryKind, dsIndex)
 }
 
 func convertLibraryPanelKindToV1(libPanelKind *dashv2alpha1.DashboardLibraryPanelKind, panel map[string]interface{}) (map[string]interface{}, error) {
@@ -664,7 +864,7 @@ func convertLibraryPanelKindToV1(libPanelKind *dashv2alpha1.DashboardLibraryPane
 	return panel, nil
 }
 
-func convertVariablesToV1(variables []dashv2alpha1.DashboardVariableKind) []map[string]interface{} {
+func convertVariablesToV1(variables []dashv2alpha1.DashboardVariableKind, dsIndex *schemaversion.DatasourceIndex) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(variables))
 
 	for _, variable := range variables {
@@ -672,7 +872,7 @@ func convertVariablesToV1(variables []dashv2alpha1.DashboardVariableKind) []map[
 		var err error
 
 		if variable.QueryVariableKind != nil {
-			varMap, err = convertQueryVariableToV1(variable.QueryVariableKind)
+			varMap, err = convertQueryVariableToV1(variable.QueryVariableKind, dsIndex)
 		} else if variable.DatasourceVariableKind != nil {
 			varMap, err = convertDatasourceVariableToV1(variable.DatasourceVariableKind)
 		} else if variable.CustomVariableKind != nil {
@@ -684,9 +884,9 @@ func convertVariablesToV1(variables []dashv2alpha1.DashboardVariableKind) []map[
 		} else if variable.TextVariableKind != nil {
 			varMap, err = convertTextVariableToV1(variable.TextVariableKind)
 		} else if variable.GroupByVariableKind != nil {
-			varMap, err = convertGroupByVariableToV1(variable.GroupByVariableKind)
+			varMap, err = convertGroupByVariableToV1(variable.GroupByVariableKind, dsIndex)
 		} else if variable.AdhocVariableKind != nil {
-			varMap, err = convertAdhocVariableToV1(variable.AdhocVariableKind)
+			varMap, err = convertAdhocVariableToV1(variable.AdhocVariableKind, dsIndex)
 		}
 
 		if err == nil && varMap != nil {
@@ -697,7 +897,7 @@ func convertVariablesToV1(variables []dashv2alpha1.DashboardVariableKind) []map[
 	return result
 }
 
-func convertQueryVariableToV1(variable *dashv2alpha1.DashboardQueryVariableKind) (map[string]interface{}, error) {
+func convertQueryVariableToV1(variable *dashv2alpha1.DashboardQueryVariableKind, dsIndex *schemaversion.DatasourceIndex) (map[string]interface{}, error) {
 	spec := variable.Spec
 	varMap := map[string]interface{}{
 		"name":        spec.Name,
@@ -743,18 +943,10 @@ func convertQueryVariableToV1(variable *dashv2alpha1.DashboardQueryVariableKind)
 		varMap["query"] = queryCopy
 	}
 
-	// Convert datasource
-	if spec.Datasource != nil {
-		datasource := make(map[string]interface{})
-		if spec.Datasource.Uid != nil {
-			datasource["uid"] = *spec.Datasource.Uid
-		}
-		if spec.Datasource.Type != nil {
-			datasource["type"] = *spec.Datasource.Type
-		}
-		if len(datasource) > 0 {
-			varMap["datasource"] = datasource
-		}
+	// Resolve datasource - use explicit datasource or resolve from query kind (datasource type)/default
+	datasource := resolveDatasourceForVariable(spec.Datasource, spec.Query.Kind, dsIndex)
+	if datasource != nil {
+		varMap["datasource"] = datasource
 	}
 
 	return varMap, nil
@@ -902,7 +1094,7 @@ func convertTextVariableToV1(variable *dashv2alpha1.DashboardTextVariableKind) (
 	return varMap, nil
 }
 
-func convertGroupByVariableToV1(variable *dashv2alpha1.DashboardGroupByVariableKind) (map[string]interface{}, error) {
+func convertGroupByVariableToV1(variable *dashv2alpha1.DashboardGroupByVariableKind, dsIndex *schemaversion.DatasourceIndex) (map[string]interface{}, error) {
 	spec := variable.Spec
 	varMap := map[string]interface{}{
 		"name":        spec.Name,
@@ -924,24 +1116,16 @@ func convertGroupByVariableToV1(variable *dashv2alpha1.DashboardGroupByVariableK
 		varMap["description"] = *spec.Description
 	}
 
-	// Convert datasource
-	if spec.Datasource != nil {
-		datasource := make(map[string]interface{})
-		if spec.Datasource.Uid != nil {
-			datasource["uid"] = *spec.Datasource.Uid
-		}
-		if spec.Datasource.Type != nil {
-			datasource["type"] = *spec.Datasource.Type
-		}
-		if len(datasource) > 0 {
-			varMap["datasource"] = datasource
-		}
+	// Resolve datasource - GroupBy variables don't have a query kind, so use empty string (will fall back to default)
+	datasource := resolveDatasourceForVariable(spec.Datasource, "", dsIndex)
+	if datasource != nil {
+		varMap["datasource"] = datasource
 	}
 
 	return varMap, nil
 }
 
-func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind) (map[string]interface{}, error) {
+func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind, dsIndex *schemaversion.DatasourceIndex) (map[string]interface{}, error) {
 	spec := variable.Spec
 	varMap := map[string]interface{}{
 		"name":        spec.Name,
@@ -959,18 +1143,10 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 	// Always include allowCustomValue for adhoc variables, including false values
 	varMap["allowCustomValue"] = spec.AllowCustomValue
 
-	// Convert datasource
-	if spec.Datasource != nil {
-		datasource := make(map[string]interface{})
-		if spec.Datasource.Uid != nil {
-			datasource["uid"] = *spec.Datasource.Uid
-		}
-		if spec.Datasource.Type != nil {
-			datasource["type"] = *spec.Datasource.Type
-		}
-		if len(datasource) > 0 {
-			varMap["datasource"] = datasource
-		}
+	// Resolve datasource - Adhoc variables don't have a query kind, so use empty string (will fall back to default)
+	datasource := resolveDatasourceForVariable(spec.Datasource, "", dsIndex)
+	if datasource != nil {
+		varMap["datasource"] = datasource
 	}
 
 	// Convert filters
@@ -1054,7 +1230,7 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 	return varMap, nil
 }
 
-func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryKind) []map[string]interface{} {
+func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryKind, dsIndex *schemaversion.DatasourceIndex) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(annotations))
 
 	for _, annotation := range annotations {
@@ -1072,18 +1248,14 @@ func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryK
 			annotationMap["type"] = "dashboard"
 		}
 
-		// Convert datasource
-		if annotation.Spec.Datasource != nil {
-			datasource := make(map[string]interface{})
-			if annotation.Spec.Datasource.Uid != nil {
-				datasource["uid"] = *annotation.Spec.Datasource.Uid
-			}
-			if annotation.Spec.Datasource.Type != nil {
-				datasource["type"] = *annotation.Spec.Datasource.Type
-			}
-			if len(datasource) > 0 {
-				annotationMap["datasource"] = datasource
-			}
+		// Resolve datasource - use explicit datasource or resolve from query kind (datasource type)/default
+		var queryKind string
+		if annotation.Spec.Query != nil {
+			queryKind = annotation.Spec.Query.Kind
+		}
+		datasource := resolveDatasourceForAnnotation(annotation.Spec.Datasource, queryKind, dsIndex)
+		if datasource != nil {
+			annotationMap["datasource"] = datasource
 		}
 
 		// Convert query to target

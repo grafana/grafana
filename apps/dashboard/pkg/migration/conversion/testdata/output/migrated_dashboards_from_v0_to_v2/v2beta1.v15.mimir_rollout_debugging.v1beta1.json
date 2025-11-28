@@ -20,6 +20,10 @@
           "type": "dashboard"
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "enable": true,
           "expr": "up",
           "hide": false,
@@ -155,7 +159,6 @@
             },
             "expr": "sum by (job, version) (up{job=~\".*\"})",
             "format": "table",
-            "hide": false,
             "instant": true,
             "legendFormat": "__auto",
             "refId": "A"
@@ -264,7 +267,6 @@
             },
             "expr": "sum by (deployment) (up{job=\"kube-state-metrics\"})",
             "format": "table",
-            "hide": false,
             "instant": true,
             "legendFormat": "__auto",
             "refId": "A"
@@ -366,7 +368,6 @@
             },
             "expr": "sum by (statefulset) (up{job=\"kube-state-metrics\"})",
             "format": "table",
-            "hide": false,
             "instant": true,
             "legendFormat": "__auto",
             "refId": "A"
@@ -462,7 +463,6 @@
             },
             "expr": "max by (pod) (up{job=\"mimir-aggregator\"})",
             "format": "time_series",
-            "hide": false,
             "legendFormat": "__auto",
             "refId": "A"
           }
@@ -550,7 +550,6 @@
             },
             "expr": "sum by (deployment) (up{job=\"kube-state-metrics\"})",
             "format": "table",
-            "hide": false,
             "instant": true,
             "legendFormat": "__auto",
             "refId": "A"
@@ -652,7 +651,6 @@
             },
             "expr": "sum by (statefulset) (up{job=\"kube-state-metrics\"})",
             "format": "table",
-            "hide": false,
             "instant": true,
             "legendFormat": "__auto",
             "refId": "A"
@@ -711,6 +709,10 @@
             "text": "prod",
             "value": "prod"
           },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "hide": 0,
           "includeAll": true,
           "label": "cluster",
@@ -729,6 +731,10 @@
           "current": {
             "text": "prod",
             "value": "prod"
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "hide": 0,
           "includeAll": false,

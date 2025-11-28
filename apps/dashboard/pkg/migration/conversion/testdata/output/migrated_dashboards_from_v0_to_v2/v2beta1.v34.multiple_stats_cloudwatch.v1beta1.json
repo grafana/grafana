@@ -306,7 +306,6 @@
             "dimensions": {
               "InstanceId": "i-123456"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "CPUUtilization",
             "metricQueryType": 0,
@@ -324,7 +323,6 @@
             "dimensions": {
               "InstanceId": "i-123456"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "CPUUtilization",
             "metricQueryType": 0,
@@ -342,7 +340,6 @@
             "dimensions": {
               "InstanceId": "i-123456"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "CPUUtilization",
             "metricQueryType": 0,
@@ -375,7 +372,6 @@
             "dimensions": {
               "LoadBalancer": "my-load-balancer"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "RequestCount",
             "metricQueryType": 0,
@@ -407,7 +403,6 @@
             "dimensions": {
               "DBInstanceIdentifier": "my-db"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "DatabaseConnections",
             "metricQueryType": 0,
@@ -439,7 +434,6 @@
             "dimensions": {
               "QueueName": "my-queue"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "ApproximateNumberOfMessages",
             "metricQueryType": 0,
@@ -454,7 +448,6 @@
               "uid": "prometheus"
             },
             "expr": "up",
-            "hide": false,
             "refId": "B"
           },
           {
@@ -465,7 +458,6 @@
             "dimensions": {
               "TopicName": "my-topic"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "NumberOfMessagesPublished",
             "metricQueryType": 0,
@@ -482,7 +474,6 @@
             "dimensions": {
               "QueueName": "my-queue"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "ApproximateNumberOfMessages",
             "metricQueryType": 0,
@@ -514,7 +505,6 @@
             "dimensions": {
               "BucketName": "my-bucket"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "BucketSizeBytes",
             "metricQueryType": 0,
@@ -545,7 +535,6 @@
             "dimensions": {
               "FunctionName": "my-function"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "Duration",
             "metricQueryType": 0,
@@ -562,7 +551,6 @@
             "dimensions": {
               "FunctionName": "my-function"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "Duration",
             "metricQueryType": 0,
@@ -579,7 +567,6 @@
             "dimensions": {
               "FunctionName": "my-function"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "Duration",
             "metricQueryType": 0,
@@ -595,7 +582,6 @@
             "dimensions": {
               "FunctionName": "my-function"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "Duration",
             "metricQueryType": 0,
@@ -612,7 +598,6 @@
             "dimensions": {
               "FunctionName": "my-function"
             },
-            "hide": false,
             "metricEditorMode": 0,
             "metricName": "Duration",
             "metricQueryType": 0,
@@ -654,7 +639,6 @@
                 "dimensions": {
                   "StreamName": "my-stream"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "IncomingRecords",
                 "metricQueryType": 0,
@@ -671,7 +655,6 @@
                 "dimensions": {
                   "StreamName": "my-stream"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "IncomingRecords",
                 "metricQueryType": 0,
@@ -688,7 +671,6 @@
                 "dimensions": {
                   "StreamName": "my-stream"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "IncomingRecords",
                 "metricQueryType": 0,
@@ -720,7 +702,6 @@
                 "dimensions": {
                   "ClusterName": "my-cluster"
                 },
-                "hide": false,
                 "metricEditorMode": 1,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 1,
@@ -738,7 +719,6 @@
                 "dimensions": {
                   "ClusterName": "my-cluster"
                 },
-                "hide": false,
                 "metricEditorMode": 1,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 1,
@@ -771,7 +751,6 @@
                 "dimensions": {
                   "InstanceId": "i-missing-fields"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -804,7 +783,6 @@
                   "InstanceId": "i-with-expression"
                 },
                 "expression": "SEARCH('{AWS/EC2,InstanceId} MetricName=\"CPUUtilization\"', 'Average', 300)",
-                "hide": false,
                 "metricEditorMode": 1,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -822,7 +800,6 @@
                   "InstanceId": "i-with-expression"
                 },
                 "expression": "SEARCH('{AWS/EC2,InstanceId} MetricName=\"CPUUtilization\"', 'Average', 300)",
-                "hide": false,
                 "metricEditorMode": 1,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -854,7 +831,6 @@
                 "dimensions": {
                   "InstanceId": "i-insights"
                 },
-                "hide": false,
                 "metricEditorMode": 1,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 1,
@@ -886,7 +862,6 @@
                 "dimensions": {
                   "InstanceId": "i-null-stats"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -902,7 +877,6 @@
                 "dimensions": {
                   "InstanceId": "i-null-stats"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -919,7 +893,6 @@
                 "dimensions": {
                   "InstanceId": "i-null-stats"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -936,7 +909,6 @@
                 "dimensions": {
                   "InstanceId": "i-null-stats"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -968,7 +940,6 @@
                 "dimensions": {
                   "InstanceId": "i-invalid-only"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -985,7 +956,6 @@
                 "dimensions": {
                   "InstanceId": "i-invalid-only"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -1002,7 +972,6 @@
                 "dimensions": {
                   "InstanceId": "i-invalid-only"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -1019,7 +988,6 @@
                 "dimensions": {
                   "InstanceId": "i-invalid-only"
                 },
-                "hide": false,
                 "metricEditorMode": 0,
                 "metricName": "CPUUtilization",
                 "metricQueryType": 0,
@@ -1049,7 +1017,6 @@
                   "uid": "prometheus"
                 },
                 "expr": "cpu_usage",
-                "hide": false,
                 "refId": "A"
               }
             ],
@@ -1059,427 +1026,6 @@
         ],
         "title": "Collapsed Row with CloudWatch",
         "type": "row"
-      },
-      {
-        "gridPos": {
-          "h": 3,
-          "w": 6,
-          "x": 0,
-          "y": 0
-        },
-        "id": 8,
-        "options": {},
-        "pluginVersion": "",
-        "targets": [
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "StreamName": "my-stream"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "IncomingRecords",
-            "metricQueryType": 0,
-            "namespace": "AWS/Kinesis",
-            "refId": "A",
-            "region": "us-east-1",
-            "statistic": "Sum"
-          },
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "StreamName": "my-stream"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "IncomingRecords",
-            "metricQueryType": 0,
-            "namespace": "AWS/Kinesis",
-            "refId": "B",
-            "region": "us-east-1",
-            "statistic": "Average"
-          },
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "StreamName": "my-stream"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "IncomingRecords",
-            "metricQueryType": 0,
-            "namespace": "AWS/Kinesis",
-            "refId": "C",
-            "region": "us-east-1",
-            "statistic": "Maximum"
-          }
-        ],
-        "title": "Nested CloudWatch Query Multiple Statistics",
-        "type": "timeseries"
-      },
-      {
-        "gridPos": {
-          "h": 3,
-          "w": 6,
-          "x": 0,
-          "y": 0
-        },
-        "id": 9,
-        "options": {},
-        "pluginVersion": "",
-        "targets": [
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "ClusterName": "my-cluster"
-            },
-            "hide": false,
-            "metricEditorMode": 1,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 1,
-            "namespace": "AWS/ECS",
-            "period": "300",
-            "refId": "A",
-            "region": "us-east-1",
-            "statistic": "Average"
-          },
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "ClusterName": "my-cluster"
-            },
-            "hide": false,
-            "metricEditorMode": 1,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 1,
-            "namespace": "AWS/ECS",
-            "period": "300",
-            "refId": "B",
-            "region": "us-east-1",
-            "statistic": "Maximum"
-          }
-        ],
-        "title": "CloudWatch Query with Existing Editor Mode",
-        "type": "timeseries"
-      },
-      {
-        "gridPos": {
-          "h": 3,
-          "w": 6,
-          "x": 0,
-          "y": 0
-        },
-        "id": 10,
-        "options": {},
-        "pluginVersion": "",
-        "targets": [
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-missing-fields"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "A",
-            "region": "us-east-1",
-            "statistic": "Average"
-          }
-        ],
-        "title": "CloudWatch Query Missing Editor Fields",
-        "type": "timeseries"
-      },
-      {
-        "gridPos": {
-          "h": 3,
-          "w": 6,
-          "x": 0,
-          "y": 0
-        },
-        "id": 11,
-        "options": {},
-        "pluginVersion": "",
-        "targets": [
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-with-expression"
-            },
-            "expression": "SEARCH('{AWS/EC2,InstanceId} MetricName=\"CPUUtilization\"', 'Average', 300)",
-            "hide": false,
-            "metricEditorMode": 1,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "A",
-            "region": "us-east-1",
-            "statistic": "Average"
-          },
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-with-expression"
-            },
-            "expression": "SEARCH('{AWS/EC2,InstanceId} MetricName=\"CPUUtilization\"', 'Average', 300)",
-            "hide": false,
-            "metricEditorMode": 1,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "B",
-            "region": "us-east-1",
-            "statistic": "Maximum"
-          }
-        ],
-        "title": "CloudWatch Query with Expression (Code Mode)",
-        "type": "timeseries"
-      },
-      {
-        "gridPos": {
-          "h": 3,
-          "w": 6,
-          "x": 0,
-          "y": 0
-        },
-        "id": 12,
-        "options": {},
-        "pluginVersion": "",
-        "targets": [
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-insights"
-            },
-            "hide": false,
-            "metricEditorMode": 1,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 1,
-            "namespace": "AWS/EC2",
-            "refId": "A",
-            "region": "us-east-1",
-            "statistic": "Average"
-          }
-        ],
-        "title": "CloudWatch Insights Query Missing Editor Mode",
-        "type": "timeseries"
-      },
-      {
-        "gridPos": {
-          "h": 3,
-          "w": 6,
-          "x": 0,
-          "y": 0
-        },
-        "id": 13,
-        "options": {},
-        "pluginVersion": "",
-        "targets": [
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-null-stats"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "A",
-            "region": "us-east-1"
-          },
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-null-stats"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "B",
-            "region": "us-east-1",
-            "statistic": "Average"
-          },
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-null-stats"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "C",
-            "region": "us-east-1",
-            "statistic": ""
-          },
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-null-stats"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "D",
-            "region": "us-east-1",
-            "statistic": "Maximum"
-          }
-        ],
-        "title": "CloudWatch Query with Null Statistics",
-        "type": "timeseries"
-      },
-      {
-        "gridPos": {
-          "h": 3,
-          "w": 6,
-          "x": 0,
-          "y": 0
-        },
-        "id": 14,
-        "options": {},
-        "pluginVersion": "",
-        "targets": [
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-invalid-only"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "A",
-            "region": "us-east-1",
-            "statistic": 123
-          },
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-invalid-only"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "B",
-            "region": "us-east-1",
-            "statistic": true
-          },
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-invalid-only"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "C",
-            "region": "us-east-1",
-            "statistic": {}
-          },
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "default-ds-uid"
-            },
-            "dimensions": {
-              "InstanceId": "i-invalid-only"
-            },
-            "hide": false,
-            "metricEditorMode": 0,
-            "metricName": "CPUUtilization",
-            "metricQueryType": 0,
-            "namespace": "AWS/EC2",
-            "refId": "D",
-            "region": "us-east-1",
-            "statistic": []
-          }
-        ],
-        "title": "CloudWatch Query with Only Invalid Statistics",
-        "type": "timeseries"
-      },
-      {
-        "gridPos": {
-          "h": 3,
-          "w": 6,
-          "x": 0,
-          "y": 0
-        },
-        "id": 15,
-        "options": {},
-        "pluginVersion": "",
-        "targets": [
-          {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "prometheus"
-            },
-            "expr": "cpu_usage",
-            "hide": false,
-            "refId": "A"
-          }
-        ],
-        "title": "Non-CloudWatch Panel",
-        "type": "timeseries"
       }
     ],
     "preload": false,

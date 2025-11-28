@@ -8,6 +8,7 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
@@ -29,13 +30,13 @@ func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, s
 	return nil
 }
 
-func Convert_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+func Convert_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv1.APIVERSION
 	out.Kind = in.Kind
 
 	// Convert the spec
-	if err := ConvertDashboard_V2alpha1_to_V1beta1(in, out, scope); err != nil {
+	if err := ConvertDashboard_V2alpha1_to_V1beta1(in, out, scope, dsIndexProvider); err != nil {
 		out.Status = dashv1.DashboardStatus{
 			Conversion: &dashv1.DashboardConversionStatus{
 				StoredVersion: ptr.To(dashv2alpha1.VERSION),
@@ -109,7 +110,7 @@ func Convert_V2beta1_to_V0(in *dashv2beta1.Dashboard, out *dashv0.Dashboard, sco
 	return nil
 }
 
-func Convert_V2beta1_to_V1beta1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+func Convert_V2beta1_to_V1beta1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv1.APIVERSION
 	out.Kind = in.Kind
@@ -133,7 +134,7 @@ func Convert_V2beta1_to_V1beta1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard
 	// Convert v2alpha1 → v1beta1
 	// Note: ConvertDashboard_V2alpha1_to_V1beta1 will set out.ObjectMeta from v2alpha1,
 	// but we've already set it from the original input, so it will be preserved
-	if err := ConvertDashboard_V2alpha1_to_V1beta1(v2alpha1, out, scope); err != nil {
+	if err := ConvertDashboard_V2alpha1_to_V1beta1(v2alpha1, out, scope, dsIndexProvider); err != nil {
 		out.Status = dashv1.DashboardStatus{
 			Conversion: &dashv1.DashboardConversionStatus{
 				StoredVersion: ptr.To(dashv2beta1.VERSION),

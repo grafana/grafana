@@ -42,7 +42,6 @@
               "uid": "default-ds-uid"
             },
             "expr": "up",
-            "hide": false,
             "refId": "A"
           },
           {
@@ -51,7 +50,6 @@
               "uid": "default-ds-uid"
             },
             "expr": "cpu_usage",
-            "hide": false,
             "refId": "B"
           }
         ],

@@ -54,7 +54,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -95,7 +94,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -138,7 +136,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -181,7 +178,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -206,7 +202,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],

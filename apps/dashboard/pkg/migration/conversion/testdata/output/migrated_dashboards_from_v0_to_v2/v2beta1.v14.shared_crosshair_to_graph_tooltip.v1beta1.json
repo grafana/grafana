@@ -42,7 +42,6 @@
               "uid": "default-ds-uid"
             },
             "expr": "cpu_usage",
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -66,7 +65,6 @@
               "uid": "default-ds-uid"
             },
             "expr": "memory_usage",
-            "hide": false,
             "refId": "B"
           }
         ],
@@ -84,6 +82,10 @@
           "current": {
             "text": "",
             "value": ""
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "hide": 0,
           "includeAll": false,

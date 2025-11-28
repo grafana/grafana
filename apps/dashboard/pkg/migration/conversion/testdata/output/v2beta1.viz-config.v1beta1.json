@@ -92,7 +92,6 @@
               "type": "grafana-testdata-datasource",
               "uid": "gdev-testdata"
             },
-            "hide": false,
             "refId": "A",
             "scenarioId": "random_walk",
             "seriesCount": 3

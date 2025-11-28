@@ -41,7 +41,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A",
             "target": "cpu.usage"
           }
@@ -65,7 +64,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A",
             "target": "memory.usage"
           }
@@ -89,7 +87,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -112,7 +109,6 @@
               "type": "prometheus",
               "uid": "default-ds-uid"
             },
-            "hide": false,
             "refId": "A",
             "target": "disk.io"
           }
@@ -131,6 +127,10 @@
           "current": {
             "text": "",
             "value": ""
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "hide": 0,
           "includeAll": false,

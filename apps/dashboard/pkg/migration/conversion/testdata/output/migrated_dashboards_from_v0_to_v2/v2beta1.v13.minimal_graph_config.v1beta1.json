@@ -43,7 +43,6 @@
             },
             "editorMode": "builder",
             "expr": "{\"a.utf8.metric 🤘\", job=\"prometheus-utf8\"}",
-            "hide": false,
             "instant": false,
             "legendFormat": "__auto",
             "range": true,

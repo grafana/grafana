@@ -42,7 +42,6 @@
               "uid": "default-ds-uid"
             },
             "expr": "up",
-            "hide": false,
             "refId": "A"
           }
         ],
@@ -64,6 +63,10 @@
             "value": [
               "A"
             ]
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "hide": 0,
           "includeAll": false,
@@ -89,6 +92,10 @@
               "C"
             ]
           },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "hide": 0,
           "includeAll": false,
           "multi": true,
@@ -106,6 +113,10 @@
           "current": {
             "text": "D",
             "value": "D"
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "hide": 0,
           "includeAll": false,
@@ -125,6 +136,10 @@
             "text": "E",
             "value": "E"
           },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "hide": 0,
           "includeAll": false,
           "multi": false,
@@ -142,6 +157,10 @@
           "current": {
             "text": "F",
             "value": "F"
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "hide": 0,
           "includeAll": false,
@@ -161,6 +180,10 @@
             "text": "",
             "value": ""
           },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "hide": 0,
           "includeAll": false,
           "multi": true,
@@ -178,6 +201,10 @@
           "current": {
             "text": "",
             "value": ""
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "hide": 0,
           "includeAll": false,

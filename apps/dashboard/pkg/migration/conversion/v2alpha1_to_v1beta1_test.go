@@ -289,7 +289,7 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
-	t.Run("AutoGridLayout converts to basic 3x3 grid", func(t *testing.T) {
+	t.Run("AutoGridLayout converts to calculated grid based on rowHeightMode", func(t *testing.T) {
 		// Create a simple AutoGridLayout with one element
 		elements := make(map[string]dashv2alpha1.DashboardElement)
 		elements["panel1"] = dashv2alpha1.DashboardElement{
@@ -323,6 +323,7 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 					AutoGridLayoutKind: &dashv2alpha1.DashboardAutoGridLayoutKind{
 						Kind: "AutoGridLayout",
 						Spec: dashv2alpha1.DashboardAutoGridLayoutSpec{
+							RowHeightMode: dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeStandard,
 							Items: []dashv2alpha1.DashboardAutoGridLayoutItemKind{
 								{
 									Kind: "AutoGridLayoutItem",
@@ -344,7 +345,7 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 		err := scheme.Convert(&v2alpha1, &v1beta1, nil)
 		require.NoError(t, err, "AutoGridLayout conversion should succeed")
 
-		// Verify panels were created with 3x3 grid positioning
+		// Verify panels were created with calculated grid positioning
 		// Dashboard JSON is directly at Spec.Object level (no "dashboard" wrapper)
 		dashboard := v1beta1.Spec.Object
 
@@ -360,11 +361,13 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 		assert.Equal(t, int64(0), gridPos["x"], "Panel should be at x=0 (first column)")
 		assert.Equal(t, int64(0), gridPos["y"], "Panel should be at y=0 (first row)")
 		// gridPos values can be int or int64 depending on JSON unmarshaling
-		assert.Equal(t, int64(8), int64(getIntValue(gridPos["w"])), "Panel should be width=8 (3 columns)")
-		assert.Equal(t, int64(3), int64(getIntValue(gridPos["h"])), "Panel should be height=3")
+		// Width: 24 / 3 (default maxColumnCount) = 8
+		assert.Equal(t, int64(8), int64(getIntValue(gridPos["w"])), "Panel should be width=8 (24/3 columns)")
+		// Height: standard mode = 9 grid units (320px)
+		assert.Equal(t, int64(9), int64(getIntValue(gridPos["h"])), "Panel should be height=9 (standard mode)")
 	})
 
-	t.Run("TabsLayout converts to basic 3x3 grid", func(t *testing.T) {
+	t.Run("TabsLayout converts tabs to row panels with extracted panels", func(t *testing.T) {
 		// Create a simple TabsLayout with one tab containing one panel
 		elements := make(map[string]dashv2alpha1.DashboardElement)
 		elements["panel1"] = dashv2alpha1.DashboardElement{
@@ -438,24 +441,41 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 		err := scheme.Convert(&v2alpha1, &v1beta1, nil)
 		require.NoError(t, err, "TabsLayout conversion should succeed")
 
-		// Verify panels were created with 3x3 grid positioning
+		// Verify: each tab becomes a row panel + extracted panels
 		// Dashboard JSON is directly at Spec.Object level (no "dashboard" wrapper)
 		dashboard := v1beta1.Spec.Object
 
 		panels, ok := dashboard["panels"].([]interface{})
 		require.True(t, ok, "Panels should exist")
-		require.Len(t, panels, 1, "Should have one panel")
+		require.Len(t, panels, 2, "Should have row panel + extracted panel")
 
-		panel, ok := panels[0].(map[string]interface{})
+		// First panel should be the row panel for the tab
+		rowPanel, ok := panels[0].(map[string]interface{})
+		require.True(t, ok, "Row panel should be a map")
+		assert.Equal(t, "row", rowPanel["type"], "First panel should be type 'row'")
+		assert.Equal(t, false, rowPanel["collapsed"], "Tab row should be expanded")
+		rowGridPos, ok := rowPanel["gridPos"].(map[string]interface{})
+		require.True(t, ok, "Row panel should have gridPos")
+		assert.Equal(t, int64(0), rowGridPos["y"], "Row panel should be at y=0")
+		assert.Equal(t, int64(24), int64(getIntValue(rowGridPos["w"])), "Row panel should be full width")
+		assert.Equal(t, int64(1), int64(getIntValue(rowGridPos["h"])), "Row panel should be height=1")
+		// Tab row's panels array should be empty (panels extracted to top level)
+		rowPanels, ok := rowPanel["panels"].([]interface{})
+		require.True(t, ok, "Row panel should have panels array")
+		assert.Len(t, rowPanels, 0, "Tab row's panels array should be empty")
+
+		// Second panel should be the extracted panel from the tab
+		panel, ok := panels[1].(map[string]interface{})
 		require.True(t, ok, "Panel should be a map")
+		assert.Equal(t, "Test Panel", panel["title"], "Panel title should match")
 
 		gridPos, ok := panel["gridPos"].(map[string]interface{})
 		require.True(t, ok, "Panel should have gridPos")
-		assert.Equal(t, int64(0), gridPos["x"], "Panel should be at x=0 (first column)")
-		assert.Equal(t, int64(0), gridPos["y"], "Panel should be at y=0 (first row)")
-		// gridPos values can be int or int64 depending on JSON unmarshaling
-		assert.Equal(t, int64(8), int64(getIntValue(gridPos["w"])), "Panel should be width=8 (3 columns)")
-		assert.Equal(t, int64(3), int64(getIntValue(gridPos["h"])), "Panel should be height=3")
+		assert.Equal(t, int64(0), gridPos["x"], "Panel should be at x=0")
+		// Y position should be offset by 1 (after the row panel)
+		assert.Equal(t, int64(1), int64(getIntValue(gridPos["y"])), "Panel should be at y=1 (after row)")
+		assert.Equal(t, int64(12), int64(getIntValue(gridPos["w"])), "Panel width should be preserved")
+		assert.Equal(t, int64(3), int64(getIntValue(gridPos["h"])), "Panel height should be preserved")
 	})
 }
 
