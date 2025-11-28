@@ -289,46 +289,44 @@ func TestWrapper_List(t *testing.T) {
 }
 
 func TestWrapper_Update(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
-		setup := newTestSetup(t)
+	setup := newTestSetup(t)
 
-		oldObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{
-			Name: "to-update", ResourceVersion: "2", Labels: map[string]string{"updated": "false"},
-		}}
-		objInfo := &fakeUpdatedObjectInfo{obj: oldObj}
-		updateOpts := &metaV1.UpdateOptions{}
+	oldObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{
+		Name: "to-update", ResourceVersion: "2", Labels: map[string]string{"updated": "false"},
+	}}
+	objInfo := &fakeUpdatedObjectInfo{obj: oldObj}
+	updateOpts := &metaV1.UpdateOptions{}
 
-		var authzInfo *authorizedUpdateInfo
+	var authzInfo *authorizedUpdateInfo
 
-		// Verify service identity is used to call the underlying store
-		setup.mockStore.On("Update",
-			mock.MatchedBy(matchesServiceIdentity()),
-			"to-update",
-			mock.MatchedBy(func(info *authorizedUpdateInfo) bool {
-				// Capture the authorizedUpdateInfo for later verification
-				authzInfo = info
-				return true
-			}),
-			mock.Anything,
-			mock.Anything,
-			false,
-			updateOpts).Return(oldObj, true, nil)
+	// Verify service identity is used to call the underlying store
+	setup.mockStore.On("Update",
+		mock.MatchedBy(matchesServiceIdentity()),
+		"to-update",
+		mock.MatchedBy(func(info *authorizedUpdateInfo) bool {
+			// Capture the authorizedUpdateInfo for later verification
+			authzInfo = info
+			return true
+		}),
+		mock.Anything,
+		mock.Anything,
+		false,
+		updateOpts).Return(oldObj, true, nil)
 
-		result, updated, err := setup.wrapper.Update(setup.ctx, "to-update", objInfo, nil, nil, false, updateOpts)
-		require.NoError(t, err)
-		assert.Equal(t, oldObj, result)
-		assert.True(t, updated)
+	result, updated, err := setup.wrapper.Update(setup.ctx, "to-update", objInfo, nil, nil, false, updateOpts)
+	require.NoError(t, err)
+	assert.Equal(t, oldObj, result)
+	assert.True(t, updated)
 
-		// Now verify that the authorization was performed inside UpdatedObject
-		setup.mockAuth.On("BeforeUpdate", mock.MatchedBy(matchesOriginalUser()), oldObj).Return(nil)
-		obj, err := authzInfo.UpdatedObject(context.Background(), oldObj)
-		require.NoError(t, err)
-		assert.Equal(t, oldObj, obj)
+	// Now verify that the authorization is performed inside UpdatedObject
+	setup.mockAuth.On("BeforeUpdate", mock.MatchedBy(matchesOriginalUser()), oldObj).Return(nil)
+	obj, err := authzInfo.UpdatedObject(context.Background(), oldObj)
+	require.NoError(t, err)
+	assert.Equal(t, oldObj, obj)
 
-		// Assert expectations
-		setup.mockAuth.AssertExpectations(t)
-		setup.mockStore.AssertExpectations(t)
-	})
+	// Assert expectations
+	setup.mockAuth.AssertExpectations(t)
+	setup.mockStore.AssertExpectations(t)
 }
 
 func TestWrapper_DeleteCollection(t *testing.T) {
