@@ -474,6 +474,7 @@
       "noOptionsMessage-no-datasources-found": "未找到資料來源"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "複製網址",
       "duplicate": "重複",
       "export": "匯出",
@@ -3464,6 +3465,14 @@
         "label-negative-y": "負 Y"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "需要在右側保留空間",
       "gaps-options": {
@@ -3508,6 +3517,10 @@
     },
     "name-show-unfilled-area": "顯示未填充區域",
     "name-value-display": "數值顯示",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "隱藏",
       "label-text-color": "文字色彩",
@@ -4152,6 +4165,7 @@
     "clear": "清除",
     "collapse": "收闔",
     "disabled": "",
+    "discard": "",
     "edit": "編輯",
     "help": "說明",
     "loading": "正在載入…",
@@ -4769,7 +4783,6 @@
         "variable": "{{type}}變數",
         "variable-set": "變量"
       },
-      "open": "開啟選項窗格",
       "row": {
         "header": {
           "hide": "隱藏",
@@ -5119,6 +5132,7 @@
       "title-matched_other": "匹配的 {{count}}/{{totalCount}} 個選項"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "重複",
       "tree-item": {
         "empty": "（空）",
@@ -5330,6 +5344,32 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "正在匯入設定"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "正在載入並初始化儀表板",
       "title-not-found": "未找到 ID 為 {{panelId}} 的面板"
@@ -5433,11 +5473,8 @@
           "tooltip": "此儀表板已標記為唯讀"
         },
         "export": {
-          "arrow": "匯出",
-          "title": "匯出",
           "tooltip": {
-            "as-code": "匯出為程式碼",
-            "json": "匯出為 JSON"
+            "as-code": "匯出為程式碼"
           }
         },
         "more-save-options": "更多儲存選項",
@@ -5489,6 +5526,9 @@
       "save-library-panel": "儲存資料庫面板",
       "settings": "儀表板設定",
       "share-button": "分享",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5816,9 +5856,6 @@
       "custom-options": "自訂選項",
       "name-values-separated-comma": "以逗號分隔的值",
       "selection-options": "選擇選項"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "外框"
     },
     "dashboard-link-form": {
       "back-to-list": "返回清單",
@@ -7798,6 +7835,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8092,13 +8130,6 @@
           "create-slo": "建立 SLO",
           "enable-slo-alerting": "啟用 SLO 警報"
         }
-      }
-    }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "返回"
       }
     }
   },
@@ -11038,6 +11069,10 @@
     "pie-chart-type-options": {
       "label-donut": "甜甜圈圖",
       "label-pie": "圓餅圖"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -11618,13 +11653,6 @@
       "saving": "正在儲存",
       "title-error-loading-file": "載入檔案時發生錯誤"
     },
-    "files-view": {
-      "columns": {
-        "history": "歷史紀錄",
-        "view": "檢視"
-      },
-      "placeholder-search": "搜尋"
-    },
     "finish-step": {
       "description-enable-previews": "在拉取請求中新增儀表板變更的圖片預覽。您的 Grafana 儀表板圖像將在您的 Git 儲存庫中共用，並且任何具有儲存庫存取權限者都可以看見。",
       "description-generate-dashboard-previews": "建立拉取請求的預覽連結",
@@ -11833,9 +11861,6 @@
       "source-code": "原始碼"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "唯讀",
       "settings": "設定",
       "view": "檢視"
@@ -11872,14 +11897,6 @@
       "webhook-last-event": "上次事件：",
       "webhook-url": "檢視 Webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "歷史紀錄",
-        "view-dashboard": "檢視",
-        "view-folder": "檢視"
-      },
-      "placeholder-search": "搜尋"
-    },
     "repository-status-page": {
       "back-to-repositories": "返回至儲存庫",
       "cleaning-up-resources": "清理儲存庫資源",
@@ -11887,12 +11904,10 @@
       "not-found": "找不到",
       "not-found-message": "找不到儲存庫",
       "repository-config-exists-configuration": "請確認儲存庫設定存在於設定檔案中。",
-      "tab-files": "檔案",
-      "tab-files-title": "儲存庫中的原始檔案清單",
       "tab-overview": "概覽",
       "tab-overview-title": "儲存庫概覽",
       "tab-resources": "資源",
-      "tab-resources-title": "資源儲存在 grafana 資料庫中",
+      "tab-resources-title": "",
       "title": "儲存庫狀態",
       "title-legacy-storage": "舊版儲存空間",
       "title-queued-for-deletion": "已排入刪除佇列"
@@ -11914,6 +11929,17 @@
       "local-description": "設定檔案佈建",
       "pure-git": "純 Git",
       "pure-git-description": "連接到任何 Git 儲存庫"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "基數",
@@ -12977,6 +13003,12 @@
       "label-same-as-value": "與值相同",
       "label-standard": "標準"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "自動",
       "label-center": "置中"
@@ -13313,7 +13345,8 @@
       "forwards-time-aria-label": "將時間範圍向前移動",
       "to": "至",
       "zoom-out-button": "縮小時間範圍",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "套用時間範圍",
@@ -13414,6 +13447,16 @@
         "label-never": "從不",
         "label-threshold": "閾值"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "新增時區",
