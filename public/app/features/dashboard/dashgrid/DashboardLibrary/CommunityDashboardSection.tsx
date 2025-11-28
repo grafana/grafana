@@ -6,7 +6,7 @@ import { useAsync, useAsyncFn, useDebounce } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterInput } from '@grafana/ui';
+import { Button, useStyles2, Stack, Grid, EmptyState, Alert, FilterInput } from '@grafana/ui';
 
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
@@ -32,7 +32,7 @@ interface Props {
 }
 
 // Constants for community dashboard pagination and API params
-const COMMUNITY_PAGE_SIZE = 9;
+const COMMUNITY_PAGE_SIZE = 51;
 const SEARCH_DEBOUNCE_MS = 500;
 const DEFAULT_SORT_ORDER = 'downloads';
 const DEFAULT_SORT_DIRECTION = 'desc';
@@ -246,42 +246,47 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
             )}
           </EmptyState>
         ) : (
-          <Grid
-            gap={4}
-            columns={{
-              xs: 1,
-              sm: dashboards.length >= 2 ? 2 : 1,
-              lg: dashboards.length >= 3 ? 3 : dashboards.length >= 2 ? 2 : 1,
-            }}
-          >
-            {dashboards.map((dashboard) => {
-              const thumbnailUrl = getThumbnailUrl(dashboard);
-              const logoUrl = getLogoUrl(dashboard);
-              const imageUrl = thumbnailUrl || logoUrl;
-              const isLogo = !thumbnailUrl;
-              const details = buildDashboardDetails(dashboard);
+          <Stack direction="column" gap={2}>
+            <Grid
+              gap={4}
+              columns={{
+                xs: 1,
+                sm: dashboards.length >= 2 ? 2 : 1,
+                lg: dashboards.length >= 3 ? 3 : dashboards.length >= 2 ? 2 : 1,
+              }}
+            >
+              {dashboards.map((dashboard) => {
+                const thumbnailUrl = getThumbnailUrl(dashboard);
+                const logoUrl = getLogoUrl(dashboard);
+                const imageUrl = thumbnailUrl || logoUrl;
+                const isLogo = !thumbnailUrl;
+                const details = buildDashboardDetails(dashboard);
 
-              return (
-                <DashboardCard
-                  key={dashboard.id}
-                  title={dashboard.name}
-                  imageUrl={imageUrl}
-                  dashboard={dashboard}
-                  onClick={() => onPreviewCommunityDashboard(dashboard)}
-                  isLogo={isLogo}
-                  details={details}
-                  kind="suggested_dashboard"
-                />
-              );
-            })}
-          </Grid>
+                return (
+                  <DashboardCard
+                    key={dashboard.id}
+                    title={dashboard.name}
+                    imageUrl={imageUrl}
+                    dashboard={dashboard}
+                    onClick={() => onPreviewCommunityDashboard(dashboard)}
+                    isLogo={isLogo}
+                    details={details}
+                    kind="suggested_dashboard"
+                  />
+                );
+              })}
+            </Grid>
+            <Stack justifyContent="end" gap={2}>
+              <Button
+                variant="secondary"
+                onClick={() => window.open('https://grafana.com/grafana/dashboards/', '_blank')}
+              >
+                <Trans i18nKey="dashboard-library.browse-grafana-com">Browse Grafana.com</Trans>
+              </Button>
+            </Stack>
+          </Stack>
         )}
       </div>
-      {totalPages > 1 && (
-        <div className={styles.paginationWrapper}>
-          <Pagination currentPage={currentPage} numberOfPages={totalPages} onNavigate={setCurrentPage} />
-        </div>
-      )}
     </Stack>
   );
 };
@@ -293,6 +298,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       flex: 1,
       overflow: 'auto',
+      paddingBottom: theme.spacing(2),
     }),
     paginationWrapper: css({
       position: 'sticky',

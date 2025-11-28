@@ -17,7 +17,7 @@ const PANEL_TYPE_FILTER_SLUGS = [
 ];
 
 // arbitrary value
-const MIN_DOWNLOADS_FILTER = 1000;
+const MIN_DOWNLOADS_FILTER = 10000;
 const MAX_PAGES_FILTER = 10;
 
 /**
@@ -87,7 +87,7 @@ export async function fetchCommunityDashboards(
   });
 
   if (result && Array.isArray(result.items)) {
-    const dashboards = filterNotSafeDashboards(result.items);
+    const dashboards = filterNonSafeDashboards(result.items);
 
     // We don't want to show more than MAX_PAGES_FILTER * PAGE_SIZE dashboards due to security reasons
     return {
@@ -130,7 +130,7 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
 
 // We only show dashboards with at least MIN_DOWNLOADS_FILTER downloads
 // They are already ordered by downloads amount
-const filterNotSafeDashboards = (dashboards: GnetDashboard[]): GnetDashboard[] => {
+const filterNonSafeDashboards = (dashboards: GnetDashboard[]): GnetDashboard[] => {
   return dashboards.filter((item: GnetDashboard) => {
     if (
       item.panelTypeSlugs?.some((slug: string) => PANEL_TYPE_FILTER_SLUGS.includes(slug)) ||
