@@ -101,51 +101,54 @@ export function getHasTokenInstructions(type: RepoType): type is InstructionAvai
   return type === 'github' || type === 'gitlab' || type === 'bitbucket';
 }
 
-export function getRepoFileUrl(spec?: RepositorySpec, filePath?: string) {
-  if (!spec || !spec.type || !filePath) {
+type GetRepoFileUrlParams = {
+  repoType: RepoType;
+  url: string | undefined;
+  branch?: string | undefined;
+  filePath: string | undefined;
+  pathPrefix?: string | null;
+};
+
+/**
+ * Build a URL to a specific source file in a repository.
+ * Only works for git providers (GitHub, GitLab, Bitbucket).
+ */
+export function getRepoFileUrl({
+  repoType,
+  url,
+  branch,
+  filePath,
+  pathPrefix,
+}: GetRepoFileUrlParams): string | undefined {
+  if (!url || !filePath) {
     return undefined;
   }
 
-  switch (spec.type) {
-    case 'github': {
-      const { url, branch, path } = spec.github ?? {};
-      if (!url) {
-        return undefined;
-      }
-      const fullPath = path ? `${path}${filePath}` : filePath;
+  const effectiveBranch = branch || 'main';
+  const fullPath = pathPrefix ? `${pathPrefix}${filePath}` : filePath;
+
+  switch (repoType) {
+    case 'github':
       return buildRepoUrl({
         baseUrl: url,
-        branch: branch || 'main',
+        branch: effectiveBranch,
         providerSegments: ['blob'],
         path: fullPath,
       });
-    }
-    case 'gitlab': {
-      const { url, branch, path } = spec.gitlab ?? {};
-      if (!url) {
-        return undefined;
-      }
-      const fullPath = path ? `${path}${filePath}` : filePath;
+    case 'gitlab':
       return buildRepoUrl({
         baseUrl: url,
-        branch: branch || 'main',
+        branch: effectiveBranch,
         providerSegments: ['-', 'blob'],
         path: fullPath,
       });
-    }
-    case 'bitbucket': {
-      const { url, branch, path } = spec.bitbucket ?? {};
-      if (!url) {
-        return undefined;
-      }
-      const fullPath = path ? `${path}${filePath}` : filePath;
+    case 'bitbucket':
       return buildRepoUrl({
         baseUrl: url,
-        branch: branch || 'main',
+        branch: effectiveBranch,
         providerSegments: ['src'],
         path: fullPath,
       });
-    }
     default:
       return undefined;
   }
