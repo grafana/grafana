@@ -443,6 +443,9 @@ export const versionedComponents = {
       PanelDataErrorMessage: {
         '10.4.0': 'data-testid Panel data error message',
       },
+      PanelGroupByHeaderAction: {
+        '12.4.0': 'data-testid Panel group by header action',
+      },
     },
     Visualization: {
       Graph: {
