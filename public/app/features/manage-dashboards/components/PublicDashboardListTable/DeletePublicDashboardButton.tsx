@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Button, ModalsController, ButtonProps } from '@grafana/ui';

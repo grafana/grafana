@@ -56,7 +56,9 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
         <div
-          ref={(ref) => dragProvided.innerRef(ref)}
+          ref={(ref) => {
+            dragProvided.innerRef(ref);
+          }}
           className={cx(dragSnapshot.isDragging && styles.dragging)}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}

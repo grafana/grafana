@@ -1,4 +1,4 @@
-import { default as React } from 'react';
+import { type JSX, default as React } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
 import { render, screen, waitFor, within } from 'test/test-utils';

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { type JSX, useCallback } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourcePicker, DataSourcePickerProps } from 'app/features/datasources/components/picker/DataSourcePicker';

@@ -1,5 +1,5 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
-import React from 'react';
+import React, { type JSX } from 'react';
 
 import {
   PluginContextProvider,

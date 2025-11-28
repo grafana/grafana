@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState, type JSX } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';

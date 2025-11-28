@@ -1,5 +1,5 @@
 import { Placement } from '@popperjs/core';
-import { Component } from 'react';
+import { Component, type JSX } from 'react';
 
 import { PopoverContent } from './types';
 
