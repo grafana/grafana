@@ -190,7 +190,7 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 		case "dashboard.grafana.app/dashboards":
 			migratorFuncs = append(migratorFuncs, m.MigrateDashboards)
 		case "playlist.grafana.app/playlists":
-			// migratorFuncs = append(migratorFuncs, m.MigratePlaylists)
+			migratorFuncs = append(migratorFuncs, m.MigratePlaylists)
 		default:
 			return nil, fmt.Errorf("unsupported resource: %s", res)
 		}

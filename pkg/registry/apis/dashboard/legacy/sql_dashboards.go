@@ -24,6 +24,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	playlistv0 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -37,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -90,6 +92,7 @@ type dashboardSqlAccess struct {
 
 	accessControl   accesscontrol.AccessControl
 	libraryPanelSvc librarypanels.Service // only used for save dashboard
+	playlistSvc     playlistsvc.Service   // only used for playlist migration
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -103,6 +106,7 @@ func ProvideMigratorDashboardAccessor(
 	sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
+	playlistSvc playlistsvc.Service,
 ) MigrationDashboardAccessor {
 	return &dashboardSqlAccess{
 		sql:                    sql,
@@ -111,6 +115,7 @@ func ProvideMigratorDashboardAccessor(
 		provisioning:           provisioning,
 		dashboardPermissionSvc: nil, // not needed for migration
 		libraryPanelSvc:        nil, // not needed for migration
+		playlistSvc:            playlistSvc,
 		accessControl:          accessControl,
 	}
 }
@@ -120,6 +125,7 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
 	libraryPanelSvc librarypanels.Service,
+	playlistSvc playlistsvc.Service,
 	sorter sort.Service,
 	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
@@ -134,6 +140,7 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 		dashboardSearchClient:  *dashboardSearchClient,
 		dashboardPermissionSvc: dashboardPermissionSvc,
 		libraryPanelSvc:        libraryPanelSvc,
+		playlistSvc:            playlistSvc,
 		accessControl:          accessControl,
 	}
 }
@@ -462,6 +469,71 @@ func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int
 		}
 	}
 	opts.Progress(-2, fmt.Sprintf("finished panels... (%d)", len(panels.Items)))
+	return nil, nil
+}
+
+// MigratePlaylists handles the playlist migration logic
+func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
+	opts.Progress(-1, "migrating playlists...")
+	playlists, err := a.playlistSvc.List(ctx, orgId)
+	if err != nil {
+		return nil, err
+	}
+	for i, pl := range playlists {
+		// Convert PlaylistDTO to v0alpha1.Playlist
+		playlist := &playlistv0.Playlist{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: playlistv0.GroupVersion.String(),
+				Kind:       "Playlist",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              pl.Uid,
+				Namespace:         opts.Namespace,
+				CreationTimestamp: metav1.NewTime(time.Unix(pl.CreatedAt, 0)),
+				ResourceVersion:   strconv.FormatInt(pl.UpdatedAt, 10),
+			},
+			Spec: playlistv0.PlaylistSpec{
+				Title:    pl.Name,
+				Interval: pl.Interval,
+				Items:    make([]playlistv0.PlaylistItem, len(pl.Items)),
+			},
+		}
+
+		// Convert items
+		for j, item := range pl.Items {
+			playlist.Spec.Items[j] = playlistv0.PlaylistItem{
+				Type:  playlistv0.PlaylistItemType(item.Type),
+				Value: item.Value,
+			}
+		}
+
+		body, err := json.Marshal(playlist)
+		if err != nil {
+			return nil, err
+		}
+
+		req := &resourcepb.BulkRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: opts.Namespace,
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Name:      pl.Uid,
+			},
+			Value:  body,
+			Action: resourcepb.BulkRequest_ADDED,
+		}
+
+		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", i, pl.Name, len(req.Value)))
+
+		err = stream.Send(req)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
+			return nil, err
+		}
+	}
+	opts.Progress(-2, fmt.Sprintf("finished playlists... (%d)", len(playlists)))
 	return nil, nil
 }
 
