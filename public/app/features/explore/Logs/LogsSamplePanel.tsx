@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useRef } from 'react';
+import { useRef, type JSX } from 'react';
 
 import {
   CoreApp,

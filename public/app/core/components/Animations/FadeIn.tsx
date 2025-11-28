@@ -1,4 +1,4 @@
-import { CSSProperties, useRef } from 'react';
+import { CSSProperties, useRef, type JSX } from 'react';
 import Transition, { ExitHandler } from 'react-transition-group/Transition';
 
 interface Props {

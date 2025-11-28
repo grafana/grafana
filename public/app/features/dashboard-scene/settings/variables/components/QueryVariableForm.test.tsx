@@ -178,7 +178,7 @@ describe('QueryVariableEditorForm', () => {
     await userEvent.click(screen.getByText(/prometheus/i));
 
     expect(mockOnDataSourceChange).toHaveBeenCalledTimes(1);
-    expect(mockOnDataSourceChange).toHaveBeenCalledWith(promDatasource, undefined);
+    expect(mockOnDataSourceChange).toHaveBeenCalledWith(promDatasource);
   });
 
   it('should call onQueryChange when changing the query', async () => {
