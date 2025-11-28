@@ -473,7 +473,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	// Parse continue token if provided
 	listOptions := ListRequestOptions{
-		StartKey: ListRequestKey{
+		Key: ListRequestKey{
 			Group:     req.Options.Key.Group,
 			Resource:  req.Options.Key.Resource,
 			Namespace: namespace,
@@ -487,7 +487,14 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if err != nil {
 			return 0, fmt.Errorf("invalid continue token: %w", err)
 		}
-		listOptions.StartKeyOffset = token.StartKeyOffset
+		if token.Name == "" {
+			return 0, fmt.Errorf("invalid continue token: name is required for list resources")
+		}
+		// Only use token namespace for cross-namespace queries (when request namespace is empty)
+		if req.Options.Key.Namespace == "" {
+			listOptions.ContinueNamespace = token.Namespace
+		}
+		listOptions.ContinueName = token.Name
 		listOptions.ResourceVersion = token.ResourceVersion
 	}
 
@@ -522,8 +529,9 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	defer stop()
 
 	iter := kvListIterator{
-		listRV: listRV,
-		next:   next,
+		listRV:           listRV,
+		isCrossNamespace: req.Options.Key.Namespace == "",
+		next:             next,
 	}
 	err := cb(&iter)
 	if err != nil {
@@ -535,8 +543,8 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 // kvListIterator implements ListIterator for KV storage
 type kvListIterator struct {
-	listRV         int64
-	startKeyOffset string
+	listRV           int64
+	isCrossNamespace bool // true when listing across all namespaces
 
 	// pull-style iterator
 	next func() (DataObj, error, bool)
@@ -573,12 +581,6 @@ func (i *kvListIterator) Next() bool {
 	}
 
 	i.nextDataObj, i.nextErr, i.hasMore = i.next()
-	i.startKeyOffset = ListRequestKey{
-		Group:     i.nextDataObj.Key.Group,
-		Namespace: i.nextDataObj.Key.Namespace,
-		Resource:  i.nextDataObj.Key.Resource,
-		Name:      i.nextDataObj.Key.Name,
-	}.Prefix()
 
 	return true
 }
@@ -588,10 +590,15 @@ func (i *kvListIterator) Error() error {
 }
 
 func (i *kvListIterator) ContinueToken() string {
-	return ContinueToken{
-		StartKeyOffset:  i.startKeyOffset,
+	token := ContinueToken{
+		Name:            i.nextDataObj.Key.Name,
 		ResourceVersion: i.listRV,
-	}.String()
+	}
+	// Only store namespace in token for cross-namespace queries
+	if i.isCrossNamespace {
+		token.Namespace = i.nextDataObj.Key.Namespace
+	}
+	return token.String()
 }
 
 func (i *kvListIterator) ResourceVersion() int64 {
