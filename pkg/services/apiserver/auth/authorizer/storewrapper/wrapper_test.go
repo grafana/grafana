@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -182,5 +183,103 @@ func TestWrapper_Delete(t *testing.T) {
 		setup.mockAuth.AssertExpectations(t)
 		setup.mockStore.AssertExpectations(t)
 		setup.mockStore.AssertNotCalled(t, "Delete")
+	})
+}
+
+func TestWrapper_Get(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "fetched"}}
+
+		// Verify service identity is used to call the underlying store
+		setup.mockStore.On("Get", mock.MatchedBy(matchesServiceIdentity()), "fetched", mock.Anything).Return(obj, nil)
+
+		// Verify original user identity is used for after-get authorization
+		setup.mockAuth.On("AfterGet", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
+
+		result, err := setup.wrapper.Get(setup.ctx, "fetched", &metaV1.GetOptions{})
+
+		require.NoError(t, err)
+		assert.Equal(t, obj, result)
+
+		// Assert expectations
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
+	t.Run("unauthorized", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "fetched"}}
+
+		// Verify service identity is used to call the underlying store
+		setup.mockStore.On("Get", mock.MatchedBy(matchesServiceIdentity()), "fetched", mock.Anything).Return(obj, nil)
+
+		// Simulate unauthorized error from after-get authorizer
+		setup.mockAuth.On("AfterGet", mock.MatchedBy(matchesOriginalUser()), obj).Return(ErrUnauthorized)
+
+		result, err := setup.wrapper.Get(setup.ctx, "fetched", &metaV1.GetOptions{})
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, ErrUnauthorized, err)
+
+		// Assert expectations
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
+}
+
+func TestWrapper_List(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		listObj := &metaV1.List{Items: []runtime.RawExtension{
+			{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item1"}}},
+			{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item2"}}},
+		}}
+
+		filteredListObj := &metaV1.List{Items: []runtime.RawExtension{
+			{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item1"}}},
+		}}
+
+		// Verify service identity is used to call the underlying store
+		setup.mockStore.On("List", mock.MatchedBy(matchesServiceIdentity()), mock.Anything).Return(listObj, nil)
+
+		// Verify original user identity is used for filtering the list
+		setup.mockAuth.On("FilterList", mock.MatchedBy(matchesOriginalUser()), listObj).Return(filteredListObj, nil)
+
+		result, err := setup.wrapper.List(setup.ctx, &internalversion.ListOptions{})
+
+		require.NoError(t, err)
+		assert.Equal(t, filteredListObj, result)
+
+		// Assert expectations
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
+	t.Run("unauthorized", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		listObj := &metaV1.List{Items: []runtime.RawExtension{
+			{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item1"}}},
+			{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item2"}}},
+		}}
+
+		// Verify service identity is used to call the underlying store
+		setup.mockStore.On("List", mock.MatchedBy(matchesServiceIdentity()), mock.Anything).Return(listObj, nil)
+
+		// Simulate unauthorized error from FilterList authorizer
+		setup.mockAuth.On("FilterList", mock.MatchedBy(matchesOriginalUser()), listObj).Return(nil, ErrUnauthorized)
+
+		result, err := setup.wrapper.List(setup.ctx, &internalversion.ListOptions{})
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, ErrUnauthorized, err)
+
+		// Assert expectations
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
 	})
 }
