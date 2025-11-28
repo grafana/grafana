@@ -1,3 +1,5 @@
+import { DataQuery, TimeRange, ExplorePanelsState } from '@grafana/data';
+
 export interface PanelPosition {
   x: number;
   y: number;
@@ -6,10 +8,20 @@ export interface PanelPosition {
   zIndex: number;
 }
 
+export interface SerializedExploreState {
+  queries: DataQuery[];
+  datasourceUid?: string;
+  range: TimeRange;
+  refreshInterval?: string;
+  panelsState?: ExplorePanelsState;
+  compact?: boolean;
+}
+
 export interface ExploreMapPanel {
   id: string;
   exploreId: string;
   position: PanelPosition;
+  exploreState?: SerializedExploreState;
 }
 
 export interface CanvasViewport {

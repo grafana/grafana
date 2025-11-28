@@ -1,43 +1,105 @@
 import { useEffect } from 'react';
 
+import { store } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { loadCanvas } from '../state/exploreMapSlice';
-import { ExploreMapState } from '../state/types';
+import { ExploreMapState, SerializedExploreState } from '../state/types';
 
 const STORAGE_KEY = 'grafana.exploreMap.state';
 
 export function useCanvasPersistence() {
   const dispatch = useDispatch();
   const exploreMapState = useSelector((state) => state.exploreMap);
+  const exploreState = useSelector((state) => state.explore);
 
-  // Load state from localStorage on mount
-  // Note: Explore state is not persisted here - each panel will re-initialize
-  // its Explore instance when ExploreMapPanelContent mounts
+  // Load state from storage on mount
   useEffect(() => {
     try {
-      const savedState = localStorage.getItem(STORAGE_KEY);
+      const savedState = store.get(STORAGE_KEY);
       if (savedState) {
         const parsed: ExploreMapState = JSON.parse(savedState);
         dispatch(loadCanvas(parsed));
       }
     } catch (error) {
-      console.error('Failed to load canvas state from localStorage:', error);
+      console.error('Failed to load canvas state from storage:', error);
     }
   }, [dispatch]);
 
-  // Save state to localStorage whenever it changes
+  // Save state to storage whenever it changes, including Explore state
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(exploreMapState));
+      // Enrich exploreMapState with current Explore state for each panel
+      const enrichedState: ExploreMapState = {
+        ...exploreMapState,
+        cursors: {}, // Don't persist cursor state - it's ephemeral
+        panels: Object.fromEntries(
+          Object.entries(exploreMapState.panels).map(([panelId, panel]) => {
+            const explorePane = exploreState.panes?.[panel.exploreId];
+
+            let exploreStateToSave: SerializedExploreState | undefined = undefined;
+            if (explorePane) {
+              exploreStateToSave = {
+                queries: explorePane.queries,
+                datasourceUid: explorePane.datasourceInstance?.uid,
+                range: explorePane.range,
+                refreshInterval: explorePane.refreshInterval,
+                panelsState: explorePane.panelsState,
+                compact: explorePane.compact,
+              };
+            }
+
+            return [
+              panelId,
+              {
+                ...panel,
+                exploreState: exploreStateToSave,
+              },
+            ];
+          })
+        ),
+      };
+
+      store.set(STORAGE_KEY, JSON.stringify(enrichedState));
     } catch (error) {
-      console.error('Failed to save canvas state to localStorage:', error);
+      console.error('Failed to save canvas state to storage:', error);
     }
-  }, [exploreMapState]);
+  }, [exploreMapState, exploreState]);
 
   const exportCanvas = () => {
     try {
-      const dataStr = JSON.stringify(exploreMapState, null, 2);
+      // Enrich with Explore state before exporting
+      const enrichedState: ExploreMapState = {
+        ...exploreMapState,
+        cursors: {}, // Don't export cursor state - it's ephemeral
+        panels: Object.fromEntries(
+          Object.entries(exploreMapState.panels).map(([panelId, panel]) => {
+            const explorePane = exploreState.panes?.[panel.exploreId];
+
+            let exploreStateToSave: SerializedExploreState | undefined = undefined;
+            if (explorePane) {
+              exploreStateToSave = {
+                queries: explorePane.queries,
+                datasourceUid: explorePane.datasourceInstance?.uid,
+                range: explorePane.range,
+                refreshInterval: explorePane.refreshInterval,
+                panelsState: explorePane.panelsState,
+                compact: explorePane.compact,
+              };
+            }
+
+            return [
+              panelId,
+              {
+                ...panel,
+                exploreState: exploreStateToSave,
+              },
+            ];
+          })
+        ),
+      };
+
+      const dataStr = JSON.stringify(enrichedState, null, 2);
       const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
 
       const exportFileDefaultName = `explore-map-${new Date().toISOString()}.json`;
@@ -59,7 +121,10 @@ export function useCanvasPersistence() {
       input.accept = 'application/json';
 
       input.onchange = (e: Event) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!(e.target instanceof HTMLInputElement)) {
+          return;
+        }
+        const file = e.target.files?.[0];
         if (!file) {
           return;
         }
@@ -67,8 +132,11 @@ export function useCanvasPersistence() {
         const reader = new FileReader();
         reader.onload = (event) => {
           try {
-            const content = event.target?.result as string;
-            const parsed: ExploreMapState = JSON.parse(content);
+            const result = event.target?.result;
+            if (typeof result !== 'string') {
+              throw new Error('Invalid file content');
+            }
+            const parsed: ExploreMapState = JSON.parse(result);
             dispatch(loadCanvas(parsed));
             alert('Canvas imported successfully!');
           } catch (error) {

@@ -3,7 +3,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { generateExploreId } from 'app/core/utils/explore';
 
-import { CanvasViewport, ExploreMapState, initialExploreMapState, PanelPosition, UserCursor } from './types';
+import {
+  CanvasViewport,
+  ExploreMapState,
+  initialExploreMapState,
+  PanelPosition,
+  SerializedExploreState,
+  UserCursor,
+} from './types';
 
 const exploreMapSlice = createSlice({
   name: 'exploreMap',
@@ -90,9 +97,20 @@ const exploreMapSlice = createSlice({
             y: sourcePanel.position.y + 30,
             zIndex: state.nextZIndex,
           },
+          exploreState: sourcePanel.exploreState,
         };
         state.nextZIndex++;
         state.selectedPanelId = newPanelId;
+      }
+    },
+
+    savePanelExploreState: (
+      state,
+      action: PayloadAction<{ panelId: string; exploreState: SerializedExploreState }>
+    ) => {
+      const panel = state.panels[action.payload.panelId];
+      if (panel) {
+        panel.exploreState = action.payload.exploreState;
       }
     },
 
@@ -119,6 +137,7 @@ export const {
   updateViewport,
   resetCanvas,
   duplicatePanel,
+  savePanelExploreState,
   loadCanvas,
   updateCursor,
   removeCursor,

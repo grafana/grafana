@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
 import { EventBusSrv, GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -15,6 +16,7 @@ interface ExploreMapPanelContentProps {
   height: number;
 }
 
+
 export function ExploreMapPanelContent({ exploreId }: ExploreMapPanelContentProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -26,17 +28,25 @@ export function ExploreMapPanelContent({ exploreId }: ExploreMapPanelContentProp
   // Check if the explore pane exists in Redux
   const explorePane = useSelector((state) => state.explore?.panes?.[exploreId]);
 
+  // Find the panel with this exploreId to get saved state
+  const panel = useSelector((state) =>
+    Object.values(state.exploreMap.panels).find((p) => p.exploreId === exploreId)
+  );
+
   // Initialize Explore pane on mount
   useEffect(() => {
     const initializePane = async () => {
+      // Use saved state if available, otherwise defaults
+      const savedState = panel?.exploreState;
+
       await dispatch(
         initializeExplore({
           exploreId,
-          datasource: undefined,
-          queries: [],
-          range: DEFAULT_RANGE,
+          datasource: savedState?.datasourceUid,
+          queries: savedState?.queries || [],
+          range: savedState?.range || DEFAULT_RANGE,
           eventBridge: eventBus,
-          compact: false,
+          compact: savedState?.compact || false,
         })
       );
       setIsInitialized(true);
@@ -48,13 +58,15 @@ export function ExploreMapPanelContent({ exploreId }: ExploreMapPanelContentProp
     return () => {
       eventBus.removeAllListeners();
     };
-  }, [dispatch, exploreId, eventBus]);
+  }, [dispatch, exploreId, eventBus, panel?.exploreState]);
 
   // Wait for Redux state to be initialized
   if (!isInitialized || !explorePane) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>Initializing Explore...</div>
+        <div className={styles.loading}>
+          <Trans i18nKey="explore-map.panel.initializing">Initializing Explore...</Trans>
+        </div>
       </div>
     );
   }
