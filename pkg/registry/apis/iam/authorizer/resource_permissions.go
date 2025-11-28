@@ -18,7 +18,6 @@ import (
 // ResourcePermissionsAuthorizer
 type ResourcePermissionsAuthorizer struct {
 	accessClient types.AccessClient
-	// configProvider func(ctx context.Context) (*rest.Config, error)
 }
 
 var _ storewrapper.ResourceStorageAuthorizer = (*ResourcePermissionsAuthorizer)(nil)
@@ -28,21 +27,6 @@ func NewResourcePermissionsAuthorizer(accessClient types.AccessClient) *Resource
 		accessClient: accessClient,
 	}
 }
-
-// TODO: This will be needed for checking parent folder permissions
-//       But this will probably require some configuration files to map groupResource to api urls and versions
-// func (r *ResourcePermissionsAuthorizer) client(ctx context.Context, namespace string, gr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
-// 	restConfig, err := r.configProvider(ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	client, err := dynamic.NewForConfig(restConfig)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return client.Resource(gr).Namespace(namespace), nil
-// }
 
 // AfterGet implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
