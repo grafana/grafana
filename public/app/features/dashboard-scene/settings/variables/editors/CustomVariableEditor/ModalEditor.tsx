@@ -41,7 +41,7 @@ export function ModalEditor(props: ModalEditorProps) {
           <Trans i18nKey="dashboard.edit-pane.variable.custom-options.cancel">Cancel</Trans>
         </Button>
         <Button variant="primary" onClick={onSaveOptions}>
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.save">Save</Trans>
+          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.apply">Apply</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>
