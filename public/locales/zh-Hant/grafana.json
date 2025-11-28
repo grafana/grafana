@@ -11653,13 +11653,6 @@
       "saving": "正在儲存",
       "title-error-loading-file": "載入檔案時發生錯誤"
     },
-    "files-view": {
-      "columns": {
-        "history": "歷史紀錄",
-        "view": "檢視"
-      },
-      "placeholder-search": "搜尋"
-    },
     "finish-step": {
       "description-enable-previews": "在拉取請求中新增儀表板變更的圖片預覽。您的 Grafana 儀表板圖像將在您的 Git 儲存庫中共用，並且任何具有儲存庫存取權限者都可以看見。",
       "description-generate-dashboard-previews": "建立拉取請求的預覽連結",
@@ -11868,9 +11861,6 @@
       "source-code": "原始碼"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "唯讀",
       "settings": "設定",
       "view": "檢視"
@@ -11907,14 +11897,6 @@
       "webhook-last-event": "上次事件：",
       "webhook-url": "檢視 Webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "歷史紀錄",
-        "view-dashboard": "檢視",
-        "view-folder": "檢視"
-      },
-      "placeholder-search": "搜尋"
-    },
     "repository-status-page": {
       "back-to-repositories": "返回至儲存庫",
       "cleaning-up-resources": "清理儲存庫資源",
@@ -11922,12 +11904,10 @@
       "not-found": "找不到",
       "not-found-message": "找不到儲存庫",
       "repository-config-exists-configuration": "請確認儲存庫設定存在於設定檔案中。",
-      "tab-files": "檔案",
-      "tab-files-title": "儲存庫中的原始檔案清單",
       "tab-overview": "概覽",
       "tab-overview-title": "儲存庫概覽",
       "tab-resources": "資源",
-      "tab-resources-title": "資源儲存在 grafana 資料庫中",
+      "tab-resources-title": "",
       "title": "儲存庫狀態",
       "title-legacy-storage": "舊版儲存空間",
       "title-queued-for-deletion": "已排入刪除佇列"
@@ -11949,6 +11929,17 @@
       "local-description": "設定檔案佈建",
       "pure-git": "純 Git",
       "pure-git-description": "連接到任何 Git 儲存庫"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "基數",
