@@ -66,6 +66,12 @@ func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts le
 				Group:     v1beta1.GROUP,
 				Resource:  v1beta1.DASHBOARD_RESOURCE,
 			})
+		case "playlist.grafana.app/playlists":
+			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
+				Namespace: opts.Namespace,
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+			})
 		}
 	}
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
@@ -102,6 +108,12 @@ func (b *bulkStoreClientStreamProvider) createStream(ctx context.Context, opts l
 				Namespace: opts.Namespace,
 				Group:     v1beta1.GROUP,
 				Resource:  v1beta1.DASHBOARD_RESOURCE,
+			})
+		case "playlist.grafana.app/playlists":
+			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
+				Namespace: opts.Namespace,
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
 			})
 		}
 	}
@@ -177,6 +189,8 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 			migratorFuncs = append(migratorFuncs, m.MigrateLibraryPanels)
 		case "dashboard.grafana.app/dashboards":
 			migratorFuncs = append(migratorFuncs, m.MigrateDashboards)
+		case "playlist.grafana.app/playlists":
+			// migratorFuncs = append(migratorFuncs, m.MigratePlaylists)
 		default:
 			return nil, fmt.Errorf("unsupported resource: %s", res)
 		}
