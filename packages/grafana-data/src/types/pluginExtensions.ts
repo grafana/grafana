@@ -98,15 +98,20 @@ export type PluginExtensionAddedFunctionConfig<Signature = unknown> = PluginExte
   fn: Signature;
 };
 
-export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Readonly<Context> | undefined) =>
-  | Partial<{
-      title: string;
-      description: string;
-      path: string;
-      onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
-      icon: IconName;
-      category: string;
-    }>
+export interface PluginExtensionLinkUpdate<Context extends object> {
+  title: string;
+  description: string;
+  path: string;
+  onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+  icon: IconName;
+  category: string;
+}
+
+export type PluginAddedLinksConfigureFunc<Context extends object> = (
+  context: Readonly<Context> | undefined
+) =>
+  | Partial<PluginExtensionLinkUpdate<Context>>
+  | Promise<Partial<PluginExtensionLinkUpdate<Context>> | undefined>
   | undefined;
 
 export type PluginExtensionAddedLinkConfig<Context extends object = object> = PluginExtensionConfigBase & {

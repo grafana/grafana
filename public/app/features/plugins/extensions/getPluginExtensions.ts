@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { combineLatest, map, Observable } from 'rxjs';
+import { catchError, combineLatest, lastValueFrom, from, map, merge, mergeMap, Observable, of, scan } from 'rxjs';
 
 import {
   PluginExtensionTypes,
@@ -9,13 +9,12 @@ import {
 } from '@grafana/data';
 import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
 
-import { log } from './logs/log';
+import { ExtensionsLog, log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { RegistryType } from './registry/Registry';
 import { pluginExtensionRegistries } from './registry/setup';
 import type { PluginExtensionRegistries } from './registry/types';
-import { GetExtensions, GetExtensionsOptions, GetPluginExtensions } from './types';
+import { GetExtensionsOptions, GetPluginExtensions } from './types';
 import {
   getReadOnlyProxy,
   generateExtensionId,
@@ -36,26 +35,15 @@ import {
 
 export const getObservablePluginExtensions = (
   options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
-): Observable<ReturnType<GetExtensions>> => {
+): Observable<{ extensions: PluginExtension[] }> => {
   const { extensionPointId } = options;
   const { addedComponentsRegistry, addedLinksRegistry } = pluginExtensionRegistries;
 
-  return combineLatest([
-    addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
-    addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
-  ]).pipe(
-    map(([components, links]) =>
-      getPluginExtensions({
-        ...options,
-        addedComponentsRegistry: {
-          [extensionPointId]: components,
-        },
-        addedLinksRegistry: {
-          [extensionPointId]: links,
-        },
-      })
-    )
-  );
+  return getPluginExtensions({
+    ...options,
+    addedComponentsRegistry: addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
+    addedLinksRegistry: addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
+  });
 };
 
 export const getObservablePluginLinks: GetObservablePluginLinks = (options) => {
@@ -71,124 +59,248 @@ export const getObservablePluginComponents: GetObservablePluginComponents = (opt
 };
 
 export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
-  let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
-  let addedLinksRegistry: RegistryType<Array<AddedLinkRegistryItem<object>>>;
+  return async (options) => {
+    const { extensionPointId } = options;
+    const observable = getPluginExtensions({
+      ...options,
+      addedComponentsRegistry: registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
+      addedLinksRegistry: registries.addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
+    });
 
-  // Create registry subscriptions to keep an copy of the registry state for use in the non-async
-  // plugin extensions getter.
-  registries.addedComponentsRegistry.asObservable().subscribe((componentsRegistry) => {
-    addedComponentsRegistry = componentsRegistry;
-  });
-
-  registries.addedLinksRegistry.asObservable().subscribe((linksRegistry) => {
-    addedLinksRegistry = linksRegistry;
-  });
-
-  return (options) => getPluginExtensions({ ...options, addedComponentsRegistry, addedLinksRegistry });
+    // Convert Observable to Promise by taking the last emitted value
+    // This will wait for all configure() functions to resolve and return the final state
+    return lastValueFrom(observable, { defaultValue: { extensions: [] } });
+  };
 }
 
-// Returns with a list of plugin extensions for the given extension point
-export const getPluginExtensions: GetExtensions = ({
+type LinkOverrideResult = {
+  id: string;
+  extension: PluginExtensionLink | null; // null means hide the extension
+};
+
+function getAddedComponentLog(registryItem: AddedComponentRegistryItem) {
+  return log.child({
+    title: registryItem.title,
+    description: registryItem.description ?? '',
+    pluginId: registryItem.pluginId,
+  });
+}
+
+function createPluginExtensionComponent({
+  extensionPointId,
+  registryItem,
+  log
+}: {
+  extensionPointId: string, 
+  registryItem: AddedComponentRegistryItem,
+  log?: ExtensionsLog
+}): PluginExtensionComponent {
+  return {
+    id: generateExtensionId(registryItem.pluginId, extensionPointId, registryItem.title),
+    type: PluginExtensionTypes.component,
+    pluginId: registryItem.pluginId,
+    title: registryItem.title,
+    description: registryItem.description ?? '',
+    component: wrapWithPluginContext({
+      pluginId: registryItem.pluginId,
+      extensionTitle: registryItem.title,
+      Component: registryItem.component,
+      log: log ?? getAddedComponentLog(registryItem),
+    }),
+  };
+}
+
+// Returns an observable that emits plugin extensions for the given extension point
+// Emits incrementally as configure() functions resolve for link extensions
+export function getPluginExtensions({
   context,
   extensionPointId,
   limitPerPlugin,
   addedLinksRegistry,
   addedComponentsRegistry,
-}) => {
+}: {
+  context?: object | Record<string | symbol, unknown>;
+  extensionPointId: string;
+  limitPerPlugin?: number;
+  addedLinksRegistry: Observable<AddedLinkRegistryItem[] | undefined>;
+  addedComponentsRegistry: Observable<AddedComponentRegistryItem[] | undefined>;
+}): Observable<{ extensions: PluginExtension[] }> {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
-  // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
-  const extensions: PluginExtension[] = [];
-  const extensionsByPlugin: Record<string, number> = {};
 
-  for (const addedLink of addedLinksRegistry?.[extensionPointId] ?? []) {
-    try {
-      const { pluginId } = addedLink;
-      // Only limit if the `limitPerPlugin` is set
-      if (limitPerPlugin && extensionsByPlugin[pluginId] >= limitPerPlugin) {
-        continue;
+  return combineLatest([addedComponentsRegistry, addedLinksRegistry]).pipe(
+    mergeMap(([addedComponents, addedLinks]) => {
+      // Process components immediately (they don't have async configure)
+      const componentExtensions: PluginExtensionComponent[] = [];
+      const extensionsByPlugin: Record<string, number> = {};
+
+      // ADDED COMPONENTS --------------------------------------------------- 
+      for (const registryItem of addedComponents ?? []) {
+        // Only limit if the `limitPerPlugin` is set
+        if (limitPerPlugin && extensionsByPlugin[registryItem.pluginId] >= limitPerPlugin) {
+          continue;
+        }
+
+        if (extensionsByPlugin[registryItem.pluginId] === undefined) {
+          extensionsByPlugin[registryItem.pluginId] = 0;
+        }
+
+        componentExtensions.push(createPluginExtensionComponent({
+          registryItem,
+          extensionPointId,
+        }));
+
+        extensionsByPlugin[registryItem.pluginId] += 1;
       }
 
-      if (extensionsByPlugin[pluginId] === undefined) {
-        extensionsByPlugin[pluginId] = 0;
+      // LINKS  -------------------------------------------------------------
+      const links = addedLinks ?? [];
+      const linksWithConfigure = links.filter((addedLink) => addedLink.configure);
+
+      if (linksWithConfigure.length === 0) {
+        // No links with configure, return components immediately
+        return of({ extensions: componentExtensions });
       }
 
-      const linkLog = log.child({
-        pluginId,
-        extensionPointId,
-        path: addedLink.path ?? '',
-        title: addedLink.title,
-        description: addedLink.description ?? '',
-        onClick: typeof addedLink.onClick,
-      });
-      // Run the configure() function with the current context, and apply the ovverides
-      const overrides = getLinkExtensionOverrides(pluginId, addedLink, linkLog, frozenContext);
-
-      // configure() returned an `undefined` -> hide the extension
-      if (addedLink.configure && overrides === undefined) {
-        continue;
-      }
-
-      const path = overrides?.path || addedLink.path;
-      const extension: PluginExtensionLink = {
-        id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
-        type: PluginExtensionTypes.link,
-        pluginId: pluginId,
-        onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
-
-        // Configurable properties
-        icon: overrides?.icon || addedLink.icon,
-        title: overrides?.title || addedLink.title,
-        description: overrides?.description || addedLink.description || '',
-        path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
-        category: overrides?.category || addedLink.category,
-      };
-
-      extensions.push(extension);
-      extensionsByPlugin[pluginId] += 1;
-    } catch (error) {
-      if (error instanceof Error) {
-        log.error(error.message, {
-          stack: error.stack ?? '',
-          message: error.message,
+      // Process links incrementally - emit as each configure() resolves
+      const linkObservables = linksWithConfigure.map((addedLink) => {
+        const { pluginId } = addedLink;
+        const linkLog = log.child({
+          pluginId,
+          extensionPointId,
+          path: addedLink.path ?? '',
+          title: addedLink.title,
+          description: addedLink.description ?? '',
+          onClick: typeof addedLink.onClick,
         });
+
+        const linkId = generateExtensionId(pluginId, extensionPointId, addedLink.title);
+
+        return from(getLinkExtensionOverrides(addedLink, linkLog, frozenContext)).pipe(
+          (map((overrides): LinkOverrideResult => {
+            // configure() returned an `undefined` -> hide the extension
+            if (overrides === undefined) {
+              return {
+                id: linkId,
+                extension: null,
+              };
+            }
+
+            const path = overrides?.path || addedLink.path;
+            const extension: PluginExtensionLink = {
+              id: linkId,
+              type: PluginExtensionTypes.link,
+              pluginId: pluginId,
+              onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
+
+              // Configurable properties
+              icon: overrides?.icon || addedLink.icon,
+              title: overrides?.title || addedLink.title,
+              description: overrides?.description || addedLink.description || '',
+              path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
+              category: overrides?.category || addedLink.category,
+            };
+
+            return {
+              id: linkId,
+              extension,
+            };
+          }),
+            catchError((error) => {
+              if (error instanceof Error) {
+                log.error(error.message, {
+                  stack: error.stack ?? '',
+                  message: error.message,
+                });
+              }
+              // On error, hide the extension
+              return of({
+                id: linkId,
+                extension: null,
+              });
+            }));
+        );
+      });
+
+      // Also include links without configure() function
+      const linksWithoutConfigure = links.filter((addedLink) => !addedLink.configure);
+      const staticLinkExtensions: PluginExtensionLink[] = [];
+
+      for (const addedLink of linksWithoutConfigure) {
+        const { pluginId } = addedLink;
+
+        // Only limit if the `limitPerPlugin` is set
+        if (limitPerPlugin && extensionsByPlugin[pluginId] >= limitPerPlugin) {
+          continue;
+        }
+
+        if (extensionsByPlugin[pluginId] === undefined) {
+          extensionsByPlugin[pluginId] = 0;
+        }
+
+        const linkLog = log.child({
+          pluginId,
+          extensionPointId,
+          path: addedLink.path ?? '',
+          title: addedLink.title,
+          description: addedLink.description ?? '',
+          onClick: typeof addedLink.onClick,
+        });
+
+        const extension: PluginExtensionLink = {
+          id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
+          type: PluginExtensionTypes.link,
+          pluginId: pluginId,
+          onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
+          icon: addedLink.icon,
+          title: addedLink.title,
+          description: addedLink.description || '',
+          path: isString(addedLink.path)
+            ? getLinkExtensionPathWithTracking(pluginId, addedLink.path, extensionPointId)
+            : undefined,
+          category: addedLink.category,
+        };
+
+        staticLinkExtensions.push(extension);
+        extensionsByPlugin[pluginId] += 1;
       }
-    }
-  }
 
-  const addedComponents = addedComponentsRegistry?.[extensionPointId] ?? [];
-  for (const addedComponent of addedComponents) {
-    // Only limit if the `limitPerPlugin` is set
-    if (limitPerPlugin && extensionsByPlugin[addedComponent.pluginId] >= limitPerPlugin) {
-      continue;
-    }
+      // Merge all link observables and accumulate results as they resolve
+      return merge(...linkObservables).pipe(
+        scan((acc: Map<string, LinkOverrideResult>, result: LinkOverrideResult) => {
+          // Update with new result
+          const newAcc = new Map(acc);
+          newAcc.set(result.id, result);
+          return newAcc;
+        }, new Map<string, LinkOverrideResult>()),
+        map((linkResultsMap) => {
+          // Build extensions array: components + static links + resolved links (excluding null/hidden ones)
+          const linkExtensions: PluginExtensionLink[] = [...staticLinkExtensions];
+          const linkExtensionsByPlugin: Record<string, number> = { ...extensionsByPlugin };
 
-    if (extensionsByPlugin[addedComponent.pluginId] === undefined) {
-      extensionsByPlugin[addedComponent.pluginId] = 0;
-    }
+          for (const result of linkResultsMap.values()) {
+            if (result.extension) {
+              const { pluginId } = result.extension;
 
-    const componentLog = log.child({
-      title: addedComponent.title,
-      description: addedComponent.description ?? '',
-      pluginId: addedComponent.pluginId,
-    });
+              // Only limit if the `limitPerPlugin` is set
+              if (limitPerPlugin && linkExtensionsByPlugin[pluginId] >= limitPerPlugin) {
+                continue;
+              }
 
-    const extension: PluginExtensionComponent = {
-      id: generateExtensionId(addedComponent.pluginId, extensionPointId, addedComponent.title),
-      type: PluginExtensionTypes.component,
-      pluginId: addedComponent.pluginId,
-      title: addedComponent.title,
-      description: addedComponent.description ?? '',
-      component: wrapWithPluginContext({
-        pluginId: addedComponent.pluginId,
-        extensionTitle: addedComponent.title,
-        Component: addedComponent.component,
-        log: componentLog,
-      }),
-    };
+              if (linkExtensionsByPlugin[pluginId] === undefined) {
+                linkExtensionsByPlugin[pluginId] = 0;
+              }
 
-    extensions.push(extension);
-    extensionsByPlugin[addedComponent.pluginId] += 1;
-  }
+              linkExtensions.push(result.extension);
+              linkExtensionsByPlugin[pluginId] += 1;
+            }
+          }
 
-  return { extensions };
-};
+          // Combine components and links
+          return {
+            extensions: [...componentExtensions, ...linkExtensions],
+          };
+        })
+      );
+    })
+  );
+}

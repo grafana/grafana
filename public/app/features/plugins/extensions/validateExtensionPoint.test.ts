@@ -1,7 +1,7 @@
 import { PluginContextType } from '@grafana/data';
 
 import * as errors from './errors';
-import { ExtensionsLog } from './logs/log';
+import { ExtensionsLog, log } from './logs/log';
 import { isGrafanaDevMode } from './utils';
 import { validateExtensionPoint } from './validateExtensionPoint';
 import * as validators from './validators';
@@ -37,8 +37,11 @@ const setup = ({
 };
 
 describe('getExtensionValidationResults', () => {
+  let extensionPointLog: ExtensionsLog;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    extensionPointLog = log.child({});
   });
 
   describe('when calling in production mode', () => {
@@ -53,10 +56,10 @@ describe('getExtensionValidationResults', () => {
         extensionPointId,
         isLoadingAppPlugins: true,
         pluginContext,
+        extensionPointLog,
       });
 
       expect(actual.result).toEqual({ isLoading: true });
-      expect(actual.pointLog).toBeDefined();
     });
 
     it('should return null when all validations pass', () => {
@@ -66,10 +69,10 @@ describe('getExtensionValidationResults', () => {
         extensionPointId,
         isLoadingAppPlugins: false,
         pluginContext,
+        extensionPointLog,
       });
 
       expect(actual.result).toBe(null);
-      expect(actual.pointLog).toBeDefined();
     });
   });
 
@@ -93,10 +96,10 @@ describe('getExtensionValidationResults', () => {
         extensionPointId,
         isLoadingAppPlugins: true,
         pluginContext,
+        extensionPointLog,
       });
 
       expect(actual.result).toEqual({ isLoading: false });
-      expect(actual.pointLog).toBeDefined();
       expect(spyisExtensionPointMetaInfoMissing).not.toHaveBeenCalled();
       expect(spyIsExtensionPointIdValid).toHaveBeenCalledTimes(1);
       expect(spyIsExtensionPointIdValid).toHaveBeenCalledWith({
@@ -117,10 +120,10 @@ describe('getExtensionValidationResults', () => {
         extensionPointId,
         isLoadingAppPlugins: true,
         pluginContext,
+        extensionPointLog,
       });
 
       expect(actual.result).toEqual({ isLoading: false });
-      expect(actual.pointLog).toBeDefined();
       expect(spyisExtensionPointMetaInfoMissing).toHaveBeenCalled();
       expect(spyisExtensionPointMetaInfoMissing).toHaveBeenCalledWith(extensionPointId, pluginContext);
       expect(errorSpy).toHaveBeenCalled();
@@ -137,10 +140,10 @@ describe('getExtensionValidationResults', () => {
         extensionPointId,
         isLoadingAppPlugins: false,
         pluginContext,
+        extensionPointLog,
       });
 
       expect(actual.result).toEqual(null);
-      expect(actual.pointLog).toBeDefined();
       expect(spyisExtensionPointMetaInfoMissing).not.toHaveBeenCalled();
       expect(errorSpy).not.toHaveBeenCalled();
     });
@@ -152,10 +155,10 @@ describe('getExtensionValidationResults', () => {
         extensionPointId,
         isLoadingAppPlugins: true,
         pluginContext,
+        extensionPointLog,
       });
 
       expect(actual.result).toEqual({ isLoading: true });
-      expect(actual.pointLog).toBeDefined();
     });
 
     it('should return null when all validations pass', () => {
@@ -165,10 +168,10 @@ describe('getExtensionValidationResults', () => {
         extensionPointId,
         isLoadingAppPlugins: false,
         pluginContext,
+        extensionPointLog,
       });
 
       expect(actual.result).toBe(null);
-      expect(actual.pointLog).toBeDefined();
     });
   });
 });

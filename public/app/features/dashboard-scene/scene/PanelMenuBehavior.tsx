@@ -302,7 +302,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     setupGetPluginExtensions();
 
-    const { extensions } = getPluginExtensions({
+    const { extensions } = await getPluginExtensions({
       extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
       context: createExtensionContext(panel, dashboard),
       limitPerPlugin: 3,

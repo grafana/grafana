@@ -6,6 +6,7 @@ import { useAsync } from 'react-use';
 import {
   type PluginExtensionEventHelpers,
   type PluginExtensionOpenModalOptions,
+  type IconName,
   isDateTime,
   dateTime,
   PluginContextProvider,
@@ -15,6 +16,7 @@ import {
   urlUtil,
   PluginExtensionPoints,
   ExtensionInfo,
+  usePluginContext,
 } from '@grafana/data';
 import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
@@ -32,7 +34,7 @@ import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaAp
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
+import { assertStringProps, isPromise } from './validators';
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
@@ -458,14 +460,23 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
   return subMenu;
 }
 
-export function getLinkExtensionOverrides(
-  pluginId: string,
+export async function getLinkExtensionOverrides(
   config: AddedLinkRegistryItem,
   log: ExtensionsLog,
   context?: object
-) {
+): Promise<
+  | {
+      title: string;
+      description?: string;
+      path?: string;
+      icon?: IconName;
+      category?: string;
+    }
+  | undefined
+> {
   try {
-    const overrides = config.configure?.(context);
+    const configureResult = config.configure?.(context);
+    const overrides = isPromise(configureResult) ? await configureResult : configureResult;
 
     // Hiding the extension
     if (overrides === undefined) {
@@ -480,11 +491,6 @@ export function getLinkExtensionOverrides(
       category = config.category,
       ...rest
     } = overrides;
-
-    assertIsNotPromise(
-      overrides,
-      `The configure() function for "${config.title}" returned a promise, skipping updates.`
-    );
 
     assertStringProps({ title, description }, ['title', 'description']);
 
@@ -724,4 +730,19 @@ export const getAppPluginsToPreload = () => {
   return Object.values(config.apps).filter((app) => {
     return isNotAwaited(app) && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
   });
+};
+
+export const createAddedLinkLog = (addedLink: AddedLinkRegistryItem, parentLog: ExtensionsLog) =>
+  parentLog.child({
+    path: addedLink.path ?? '',
+    title: addedLink.title,
+    description: addedLink.description ?? '',
+    onClick: typeof addedLink.onClick,
+  });
+
+export const useExtensionPointLog = (extensionPointId: string) => {
+  const pluginContext = usePluginContext();
+  const pluginId = pluginContext?.meta.id ?? '';
+
+  return React.useMemo(() => baseLog.child({ pluginId, extensionPointId }), [pluginId, extensionPointId]);
 };

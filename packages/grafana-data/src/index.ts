@@ -582,6 +582,7 @@ export {
   type PluginExtensionComponentMeta,
   type ComponentTypeWithExtensionMeta,
   type PluginExtensionFunction,
+  type PluginExtensionLinkUpdate,
   type PluginExtensionEventHelpers,
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
