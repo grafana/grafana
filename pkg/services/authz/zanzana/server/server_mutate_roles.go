@@ -6,7 +6,6 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
-	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -22,13 +21,13 @@ func (s *Server) mutateRoles(ctx context.Context, store *storeInfo, operations [
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_CreateRole:
-			tuples, err := getRoleTuples(op.CreateRole.RoleName, op.CreateRole.Permissions)
+			tuples, err := convertRoleToTuples(op.CreateRole.RoleName, op.CreateRole.Permissions)
 			if err != nil {
 				return err
 			}
 			writeTuples = append(writeTuples, tuples...)
 		case *authzextv1.MutateOperation_DeleteRole:
-			tuples, err := getRoleTuples(op.DeleteRole.RoleName, op.DeleteRole.Permissions)
+			tuples, err := convertRoleToTuples(op.DeleteRole.RoleName, op.DeleteRole.Permissions)
 			if err != nil {
 				return err
 			}
@@ -68,9 +67,9 @@ func (s *Server) mutateRoles(ctx context.Context, store *storeInfo, operations [
 	return nil
 }
 
-// convertRolePermissionsToTuples converts role permissions (action/scope) to v1 TupleKey format
+// convertRoleToTuples converts role and its permissions (action/scope) to v1 TupleKey format
 // using the shared zanzana.ConvertRolePermissionsToTuples utility and common.ToAuthzExtTupleKeys
-func convertRolePermissionsToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*openfgav1.TupleKey, error) {
+func convertRoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*openfgav1.TupleKey, error) {
 	// Convert to zanzana.RolePermission
 	rolePerms := make([]zanzana.RolePermission, 0, len(permissions))
 	for _, perm := range permissions {
