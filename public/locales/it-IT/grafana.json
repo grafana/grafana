@@ -11703,13 +11703,6 @@
       "saving": "Salvataggio in corso",
       "title-error-loading-file": "Errore nel caricamento del file"
     },
-    "files-view": {
-      "columns": {
-        "history": "Cronologia",
-        "view": "Visualizza"
-      },
-      "placeholder-search": "Cerca"
-    },
     "finish-step": {
       "description-enable-previews": "Aggiunge un'anteprima dell'immagine delle modifiche alla dashboard nelle richieste di pull. Le immagini delle dashboard Grafana verranno condivise nel repository Git e saranno visibili a chiunque abbia accesso al repository.",
       "description-generate-dashboard-previews": "Crea collegamenti di anteprima per le richieste di pull",
@@ -11920,9 +11913,6 @@
       "source-code": "Codice sorgente"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Solo lettura",
       "settings": "Impostazioni",
       "view": "Visualizza"
@@ -11959,14 +11949,6 @@
       "webhook-last-event": "Ultimo evento:",
       "webhook-url": "Visualizza webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Cronologia",
-        "view-dashboard": "Visualizza",
-        "view-folder": "Visualizza"
-      },
-      "placeholder-search": "Cerca"
-    },
     "repository-status-page": {
       "back-to-repositories": "Torna ai repository",
       "cleaning-up-resources": "Pulizia delle risorse del repository",
@@ -11974,12 +11956,10 @@
       "not-found": "non trovato",
       "not-found-message": "Repository non trovato",
       "repository-config-exists-configuration": "Assicurati che la configurazione del repository esista nel file di configurazione.",
-      "tab-files": "File",
-      "tab-files-title": "L'elenco dei file non elaborati dal repository",
       "tab-overview": "Panoramica",
       "tab-overview-title": "Panoramica del repository",
       "tab-resources": "Risorse",
-      "tab-resources-title": "Risorse salvate nel database di Grafana",
+      "tab-resources-title": "",
       "title": "Stato del repository",
       "title-legacy-storage": "Memoria esistente",
       "title-queued-for-deletion": "In coda per l'eliminazione"
@@ -12001,6 +11981,17 @@
       "local-description": "Configura il provisioning dei file",
       "pure-git": "Git puro",
       "pure-git-description": "Connetti a qualsiasi repository Git"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Base",

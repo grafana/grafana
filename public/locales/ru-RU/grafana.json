@@ -11803,13 +11803,6 @@
       "saving": "Сохранение",
       "title-error-loading-file": "Ошибка при загрузке файла"
     },
-    "files-view": {
-      "columns": {
-        "history": "История",
-        "view": "Просмотр"
-      },
-      "placeholder-search": "Поиск"
-    },
     "finish-step": {
       "description-enable-previews": "Обеспечивает возможность просмотра изображений с изменениями дашборда в запросах на включение изменений. Изображения дашбордов Grafana будут публиковаться в вашем репозитории Git и видны всем, у кого есть доступ к репозиторию.",
       "description-generate-dashboard-previews": "Создать ссылки для предварительного просмотра запросов на включение изменений",
@@ -12024,9 +12017,6 @@
       "source-code": "Исходный код"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Веб-перехватчик"
-      },
       "read-only-badge": "Только для чтения",
       "settings": "Параметры",
       "view": "Просмотр"
@@ -12063,14 +12053,6 @@
       "webhook-last-event": "Последнее событие:",
       "webhook-url": "Просмотр веб-перехватчика"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "История",
-        "view-dashboard": "Просмотр",
-        "view-folder": "Просмотр"
-      },
-      "placeholder-search": "Поиск"
-    },
     "repository-status-page": {
       "back-to-repositories": "Назад к репозиториям",
       "cleaning-up-resources": "Очистка ресурсов репозитория",
@@ -12078,12 +12060,10 @@
       "not-found": "не найдено",
       "not-found-message": "Репозиторий не найден",
       "repository-config-exists-configuration": "Убедитесь, что конфигурация репозитория существует в файле конфигурации.",
-      "tab-files": "Файлы",
-      "tab-files-title": "Список необработанных файлов из репозитория",
       "tab-overview": "Обзор",
       "tab-overview-title": "Обзор репозитория",
       "tab-resources": "Ресурсы",
-      "tab-resources-title": "Ресурсы, сохраненные в базе данных Grafana",
+      "tab-resources-title": "",
       "title": "Состояние репозитория",
       "title-legacy-storage": "Устаревшее хранилище",
       "title-queued-for-deletion": "В очереди на удаление"
@@ -12105,6 +12085,17 @@
       "local-description": "Настроить подготовку файлов",
       "pure-git": "Pure Git",
       "pure-git-description": "Подключиться к любому репозиторию Git"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Основа",
