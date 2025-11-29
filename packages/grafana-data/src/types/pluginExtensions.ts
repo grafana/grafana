@@ -30,6 +30,7 @@ export type PluginExtensionLink = PluginExtensionBase & {
   onClick?: (event?: React.MouseEvent) => void;
   icon?: IconName;
   category?: string;
+  buildPathAsync?: <Context extends object = object>(context: Context) => Promise<string | null>;
 };
 
 export type PluginExtensionComponentMeta = Omit<PluginExtensionComponent, 'component'>;
@@ -106,6 +107,7 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
       icon: IconName;
       category: string;
+      buildPathAsync: (context: Context) => Promise<string | null>;
     }>
   | undefined;
 
@@ -137,6 +139,9 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
 
   // (Optional) A category to be used when grouping the options in the ui
   category?: string;
+
+  // (Optional) An async function that builds a dynamic path based on context
+  buildPathAsync?: (context: Context) => Promise<string | null>;
 };
 
 export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionConfigBase & {
