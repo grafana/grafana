@@ -1,0 +1,76 @@
+views {
+  
+  view index {
+    title "Grafana Plugin System"
+    description "Multi-level architecture diagram of plugin loading and management"
+    
+    include 
+      grafana,
+      grafana.pluginStore,
+      grafana.pluginSources,
+      grafana.pluginLoader,
+      grafana.pluginInstaller,
+      grafana.pluginRegistry,
+      grafana.preinstaller,
+      pluginRepo,
+      filesystem
+  }
+  
+  view of grafana.pluginLoader {
+    title "Loading Pipeline"
+    description "4-stage pipeline: Discovery → Bootstrap → Validation → Initialization"
+    include *
+    
+    style grafana.pluginLoader.discoveryStage {
+      color blue
+    }
+    style grafana.pluginLoader.bootstrapStage {
+      color green
+    }
+    style grafana.pluginLoader.validationStage {
+      color red
+    }
+    style grafana.pluginLoader.initStage {
+      color amber
+    }
+  }
+  
+  view of grafana.pluginInstaller {
+    title "Runtime Installation"
+    description "Download, extract, and load plugins at runtime"
+    include *
+  }
+  
+  view {
+    title "Startup Flow"
+    description "Plugin loading during Grafana startup"
+    
+    include
+      grafana.pluginStore,
+      grafana.pluginSources,
+      grafana.pluginSources.*,
+      grafana.pluginLoader,
+      grafana.pluginLoader.*,
+      grafana.pluginRegistry,
+      grafana.preinstaller,
+      filesystem
+  }
+  
+  view {
+    title "Runtime Installation Flow"
+    description "Installing plugins via UI or API"
+    
+    include
+      grafana.pluginInstaller,
+      grafana.pluginInstaller.*,
+      grafana.pluginLoader,
+      grafana.pluginLoader.discoveryStage,
+      grafana.pluginLoader.bootstrapStage,
+      grafana.pluginLoader.validationStage,
+      grafana.pluginLoader.initStage,
+      grafana.pluginRegistry,
+      pluginRepo,
+      filesystem
+  }
+}
+
