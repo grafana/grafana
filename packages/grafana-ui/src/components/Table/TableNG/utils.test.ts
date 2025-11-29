@@ -532,6 +532,12 @@ describe('TableNG utils', () => {
       });
     });
 
+    it('should migrate non-selectable display modes to Auto', () => {
+      expect(migrateTableDisplayModeToCellOptions(TableCellDisplayMode.Geo)).toEqual({
+        type: TableCellDisplayMode.Auto,
+      });
+    });
+
     it('should handle other display modes', () => {
       const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.ColorText);
       expect(result).toEqual({ type: TableCellDisplayMode.ColorText });

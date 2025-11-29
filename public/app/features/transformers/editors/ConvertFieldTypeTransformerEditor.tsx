@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback } from 'react';
+import { ChangeEvent, useCallback, useId } from 'react';
 
 import {
   DataTransformerID,
@@ -36,6 +36,7 @@ export const ConvertFieldTypeTransformerEditor = ({
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
   const allTypes = getAllFieldTypeIconOptions().filter((v) => v.value !== FieldType.trace);
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
+  const id = useId();
 
   // Format timezone options
   const tzs = getTimeZones();
@@ -145,24 +146,35 @@ export const ConvertFieldTypeTransformerEditor = ({
         const shouldRenderJoinWith =
           c.joinWith?.length || (targetField?.type && [FieldType.other, FieldType.string].includes(targetField.type));
 
+        const fieldId = `${id}-${idx}-field`;
+        const asId = `${id}-${idx}-as`;
+
         return (
           <div key={`${c.targetField}-${idx}`}>
             <InlineFieldRow>
-              <InlineField label={t('transformers.convert-field-type-transformer-editor.label-field', 'Field')}>
+              <InlineField
+                htmlFor={fieldId}
+                label={t('transformers.convert-field-type-transformer-editor.label-field', 'Field')}
+              >
                 <FieldNamePicker
                   context={{ data: input }}
                   value={c.targetField ?? ''}
                   onChange={onSelectField(idx)}
                   item={fieldNamePickerSettings}
+                  id={fieldId}
                 />
               </InlineField>
-              <InlineField label={t('transformers.convert-field-type-transformer-editor.label-as', 'as')}>
+              <InlineField
+                htmlFor={asId}
+                label={t('transformers.convert-field-type-transformer-editor.label-as', 'as')}
+              >
                 <Select
                   options={allTypes}
                   value={c.destinationType}
                   placeholder={t('transformers.convert-field-type-transformer-editor.placeholder-type', 'Type')}
                   onChange={onSelectDestinationType(idx)}
                   width={18}
+                  inputId={asId}
                 />
               </InlineField>
               {c.destinationType === FieldType.time && (
