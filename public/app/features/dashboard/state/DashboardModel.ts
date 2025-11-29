@@ -154,7 +154,7 @@ export class DashboardModel implements TimeModel {
     this.tags = data.tags ?? [];
     this.timezone = data.timezone ?? '';
     this.weekStart = data.weekStart ?? '';
-    this.editable = data.editable ?? undefined;
+    this.editable = data.editable !== false;
     this.preload = data.preload;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
@@ -197,7 +197,8 @@ export class DashboardModel implements TimeModel {
   }
 
   addBuiltInAnnotationQuery() {
-    if (this.annotations.list.some((item) => item.name === 'Annotations & Alerts')) {
+    const found = this.annotations.list.some((item) => item.builtIn === 1);
+    if (found) {
       return;
     }
 

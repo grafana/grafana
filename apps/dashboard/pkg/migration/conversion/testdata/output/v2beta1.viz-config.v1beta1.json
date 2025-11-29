@@ -8,6 +8,7 @@
     "annotations": {
       "list": []
     },
+    "editable": true,
     "graphTooltip": 2,
     "liveNow": false,
     "panels": [

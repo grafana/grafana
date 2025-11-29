@@ -53,8 +53,11 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec, ds
 	dashboard["graphTooltip"] = transformCursorSyncFromEnum(in.CursorSync)
 	dashboard["schemaVersion"] = schemaversion.LATEST_VERSION
 	dashboard["preload"] = in.Preload
+	// Default editable to true if not explicitly set, matching frontend DashboardModel behavior
 	if in.Editable != nil {
 		dashboard["editable"] = *in.Editable
+	} else {
+		dashboard["editable"] = true
 	}
 	if in.LiveNow != nil {
 		dashboard["liveNow"] = *in.LiveNow

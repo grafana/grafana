@@ -484,6 +484,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
