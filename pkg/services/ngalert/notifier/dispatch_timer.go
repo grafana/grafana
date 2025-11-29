@@ -10,10 +10,11 @@ import (
 func GetDispatchTimer(features featuremgmt.FeatureToggles) (dt alertingNotify.DispatchTimer) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagAlertingSyncDispatchTimer)
-	log.New("ngalert.dispatchTimer").Info("GetDispatchTimer called", "enabled", enabled, "result", dt.String())
 
 	if enabled {
 		dt = alertingNotify.DispatchTimerSync
 	}
+
+	log.New("dispatchTimer.GetDispatchTimer").Info("GetDispatchTimer", "enabled", enabled, "dispatch_timer", dt.String())
 	return
 }
