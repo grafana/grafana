@@ -7,6 +7,7 @@ import {
   DataFrame,
   Field,
   FieldType,
+  createDataFrame,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -17,6 +18,7 @@ import {
   isInfinityActionWithAuth,
   getActions,
   INFINITY_DATASOURCE_TYPE,
+  getFieldActions,
 } from './utils';
 
 jest.mock('../query/state/PanelQueryRunner', () => ({
@@ -321,5 +323,60 @@ describe('getActions filtering', () => {
 
     expect(result).toHaveLength(expectedCount);
     expect(result.map((a) => a.title)).toEqual(expectedActionTitles);
+  });
+});
+
+describe('getFieldActions', () => {
+  it('does not return actions if scopedVars are not set on the state', () => {
+    const field: Field = {
+      name: 'field1',
+      type: FieldType.string,
+      values: ['foo', 'bar', 'baz'],
+      config: {
+        actions: [
+          {
+            title: 'Action',
+            type: ActionType.Fetch,
+            [ActionType.Fetch]: { url: '', method: HttpRequestMethod.GET },
+          },
+        ],
+      },
+      state: {},
+    };
+    const actions = getFieldActions(createDataFrame({ fields: [field] }), field, (str) => str, 0, 'table');
+
+    expect(actions).toHaveLength(0);
+  });
+
+  it('deduplicates actions based on title', () => {
+    const field: Field = {
+      name: 'field1',
+      type: FieldType.string,
+      values: ['foo', 'bar', 'baz'],
+      config: {
+        actions: [
+          {
+            title: 'Duplicate Action',
+            type: ActionType.Fetch,
+            [ActionType.Fetch]: { url: '', method: HttpRequestMethod.GET },
+          },
+          {
+            title: 'Duplicate Action',
+            type: ActionType.Infinity,
+            [ActionType.Infinity]: { url: '', method: HttpRequestMethod.GET, datasourceUid: 'uid' },
+          },
+        ],
+      },
+      state: {
+        scopedVars: {
+          var1: { text: 'value1', value: 'value1' },
+        },
+      },
+    };
+    const actions = getFieldActions(createDataFrame({ fields: [field] }), field, (str) => str, 0, 'table');
+
+    expect(actions).toHaveLength(1);
+    expect(actions[0].title).toBe('Duplicate Action');
+    expect(actions[0].type).toBe(ActionType.Fetch);
   });
 });

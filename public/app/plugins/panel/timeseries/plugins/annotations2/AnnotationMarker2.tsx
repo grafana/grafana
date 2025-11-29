@@ -9,7 +9,8 @@ import { ActionModel, DataFrame, GrafanaTheme2, InterpolateFunction, LinkModel }
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
 import { floatingUtils, useStyles2 } from '@grafana/ui';
-import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/utils';
+import { getFieldActions } from 'app/features/actions/utils';
+import { getDataLinks } from 'app/features/datalinks/utils';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
