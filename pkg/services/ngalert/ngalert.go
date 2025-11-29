@@ -215,7 +215,7 @@ func (ng *AlertNG) init() error {
 		}
 
 		dispatchTimer := notifier.GetDispatchTimer(ng.FeatureToggles)
-		ng.Log.Debug("(*AlertNG).init", "dispatch_timer", dispatchTimer.String())
+		ng.Log.Info("(*AlertNG).init", "dispatch_timer", dispatchTimer.String())
 
 		cfg := remote.AlertmanagerConfig{
 			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
