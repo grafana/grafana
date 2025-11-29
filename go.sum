@@ -1613,6 +1613,8 @@ github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5T
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/grafana/alerting v0.0.0-20251129022446-a54f39f01326 h1:hzdKqcH3EAvJO7G3m7s5+OhfxX1tsTBzrtrfMtb//Ow=
 github.com/grafana/alerting v0.0.0-20251129022446-a54f39f01326/go.mod h1:mreakanp6XZXHzAMQwG42q2QSE2nivthezhUUOWVCTU=
+github.com/grafana/alerting v0.0.0-20251129033620-d785e1b9f669 h1:lSp8llp/ZNLbSEopROdH0nu5LViIFTz+NXKJUe2NbHY=
+github.com/grafana/alerting v0.0.0-20251129033620-d785e1b9f669/go.mod h1:mreakanp6XZXHzAMQwG42q2QSE2nivthezhUUOWVCTU=
 github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f h1:Cbm6OKkOcJ+7CSZsGsEJzktC/SIa5bxVeYKQLuYK86o=
 github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f/go.mod h1:axY0cdOg3q0TZHwpHnIz5x16xZ8ZBxJHShsSHHXcHQg=
 github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4 h1:Muoy+FMGrHj3GdFbvsMzUT7eusgii9PKf9L1ZaXDDbY=
