@@ -38,8 +38,7 @@ export function transformV1ToV2AnnotationQuery(
   const result: AnnotationQueryKind = {
     kind: 'AnnotationQuery',
     spec: {
-      // Only set builtIn if it's explicitly set (1 or truthy), not if it's undefined or false
-      ...(annotation.builtIn === 1 || (annotation.builtIn !== undefined && Boolean(annotation.builtIn)) ? { builtIn: true } : {}),
+      ...(annotation.builtIn !== undefined ? { builtIn: annotation.builtIn === 1 || Boolean(annotation.builtIn) } : {}),
       name: annotation.name ?? defaultAnnotationQuerySpec().name,
       enable: Boolean(override?.enable) || Boolean(annotation.enable),
       hide: Boolean(override?.hide) || Boolean(annotation.hide),
@@ -104,9 +103,13 @@ export function transformV2ToV1AnnotationQuery(annotation: AnnotationQueryKind):
     };
   }
 
-  if (annotation.spec.builtIn) {
-    annoQuerySpec.type = 'dashboard';
-    annoQuerySpec.builtIn = 1;
+  if (annotation.spec.builtIn !== undefined) {
+    if (annotation.spec.builtIn) {
+      annoQuerySpec.type = 'dashboard';
+      annoQuerySpec.builtIn = 1;
+    } else {
+      annoQuerySpec.builtIn = 0;
+    }
   }
 
   if (annotation.spec.filter) {
