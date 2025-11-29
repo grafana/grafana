@@ -19,6 +19,7 @@ import { isLikelyAscendingVector } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {
   ScaleDistribution,
+  ScaleDistributionConfig,
   HeatmapCellLayout,
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
@@ -78,7 +79,7 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
 
 export interface HeatmapRowsCustomMeta {
   /** This provides the lookup values */
-  yOrdinalDisplay: string[];
+  yOrdinalDisplay?: string[];
   yOrdinalLabel?: string[];
   yMatchWithLabel?: string;
   yMinDisplay?: string;
@@ -115,6 +116,7 @@ export interface RowsHeatmapOptions {
   unit?: string;
   decimals?: number;
   layout?: HeatmapCellLayout;
+  yBucketScale?: ScaleDistributionConfig;
 }
 
 /** Given existing buckets, create a values style frame */
@@ -129,10 +131,16 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     throw new Error(t('heatmap.error.no-y-fields', 'No numeric fields found for heatmap'));
   }
 
+  // Determine if we should use linear scaling based on yBucketScale option
+  // Default to 'auto' behavior (ordinal) if not specified
+  const scaleType = opts.yBucketScale?.type;
+  const useLinearScale = scaleType === ScaleDistribution.Linear;
+
   // similar to initBins() below
   const len = xValues.length * yFields.length;
   const xs = new Array(len);
   const ys = new Array(len);
+  const ys2 = useLinearScale ? new Array(len) : undefined;
   const counts2 = new Array(len);
 
   const counts = yFields.map((field) => field.values.slice());
@@ -144,21 +152,8 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     }
   });
 
-  const bucketBounds = Array.from({ length: yFields.length }, (v, i) => i);
-
-  // fill flat/repeating array
-  for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
-    ys[i] = bucketBounds[yi];
-
-    if (yi === 0 && i >= bucketBounds.length) {
-      xi++;
-    }
-
-    xs[i] = xValues[xi];
-  }
-
   // this name determines whether cells are drawn above, below, or centered on the values
-  let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : 'y';
+  let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : yFields[0].labels?.ge != null ? 'yMin' : 'y';
   switch (opts.layout) {
     case HeatmapCellLayout.le:
       ordinalFieldName = 'yMax';
@@ -175,6 +170,47 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     yOrdinalDisplay: yFields.map((f) => getFieldDisplayName(f, opts.frame)),
     yMatchWithLabel: Object.keys(yFields[0].labels ?? {})[0],
   };
+
+  let bucketBounds: number[];
+  let bucketBoundsMax: number[] | undefined;
+
+  if (useLinearScale) {
+    // Linear mode: use numeric bucket values and calculate proportional heights
+    bucketBounds = Array.from({ length: yFields.length }, (v, i) => Number(custom.yOrdinalDisplay?.[i] ?? '0'));
+    bucketBoundsMax = bucketBounds.slice();
+    bucketBoundsMax.shift();
+
+    // Calculate the factor from adjacent buckets if possible
+    let factor = 1.07; // default factor
+    if (bucketBounds.length >= 2) {
+      const last = bucketBounds.at(-1)!;
+      const prev = bucketBounds.at(-2)!;
+      if (prev !== 0 && !Number.isNaN(last / prev) && last / prev > 0) {
+        factor = last / prev;
+      }
+    }
+
+    bucketBoundsMax.push(bucketBounds.at(-1)! * factor);
+    custom.yMatchWithLabel = undefined;
+  } else {
+    // Auto mode: use ordinal indices like the original main branch behavior
+    bucketBounds = Array.from({ length: yFields.length }, (v, i) => i);
+  }
+
+  // fill flat/repeating array
+  for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
+    ys[i] = bucketBounds[yi];
+    if (useLinearScale && ys2 && bucketBoundsMax) {
+      ys2[i] = bucketBoundsMax[yi];
+    }
+
+    if (yi === 0 && i >= bucketBounds.length) {
+      xi++;
+    }
+
+    xs[i] = xValues[xi];
+  }
+
   if (custom.yMatchWithLabel) {
     custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
     if (custom.yMatchWithLabel === 'le') {
@@ -189,7 +225,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     if (custom.yMinDisplay) {
       custom.yMinDisplay = formattedValueToString(fmt(0, opts.decimals));
     }
-    custom.yOrdinalDisplay = custom.yOrdinalDisplay.map((name) => {
+    custom.yOrdinalDisplay = custom.yOrdinalDisplay!.map((name) => {
       let num = +name;
 
       if (!Number.isNaN(num)) {
@@ -200,6 +236,11 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     });
   }
 
+  // Only clear yOrdinalDisplay when using linear scale
+  if (useLinearScale) {
+    custom.yOrdinalDisplay = undefined;
+  }
+
   const valueCfg = {
     ...yFields[0].config,
   };
@@ -208,6 +249,43 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     delete valueCfg.displayNameFromDS;
   }
 
+  // Build fields array - only include yMax in linear scale mode
+  const fields: Field[] = [
+    {
+      name: xField.type === FieldType.time ? 'xMax' : 'x',
+      type: xField.type,
+      values: xs,
+      config: xField.config,
+    },
+    {
+      name: ordinalFieldName,
+      type: FieldType.number,
+      values: ys,
+      config: {
+        unit: useLinearScale ? undefined : 'short', // ordinal lookup only in auto mode
+      },
+    },
+  ];
+
+  // Add yMax field only in linear scale mode
+  if (useLinearScale && ys2) {
+    fields.push({
+      name: 'yMax',
+      type: FieldType.number,
+      values: ys2,
+      config: {},
+    });
+  }
+
+  // Add value/count field
+  fields.push({
+    name: opts.value?.length ? opts.value : useLinearScale ? 'count' : 'Value',
+    type: FieldType.number,
+    values: counts2,
+    config: valueCfg,
+    display: yFields[0].display,
+  });
+
   return {
     length: xs.length,
     refId: opts.frame.refId,
@@ -215,29 +293,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       type: DataFrameType.HeatmapCells,
       custom,
     },
-    fields: [
-      {
-        name: xField.type === FieldType.time ? 'xMax' : 'x',
-        type: xField.type,
-        values: xs,
-        config: xField.config,
-      },
-      {
-        name: ordinalFieldName,
-        type: FieldType.number,
-        values: ys,
-        config: {
-          unit: 'short', // ordinal lookup
-        },
-      },
-      {
-        name: opts.value?.length ? opts.value : 'Value',
-        type: FieldType.number,
-        values: counts2,
-        config: valueCfg,
-        display: yFields[0].display,
-      },
-    ],
+    fields,
   };
 }
 

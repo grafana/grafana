@@ -154,6 +154,7 @@ const HeatmapPanelViz = ({
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
       selectionMode: options.selectionMode,
       xAxisConfig: getXAxisConfig(annotationsLength),
+      rowsFrame: options.rowsFrame,
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
