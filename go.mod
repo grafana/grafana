@@ -697,7 +697,7 @@ require (
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
 // Use our fork of the upstream Alertmanager.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20251128230140-f1e4653dc00e
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20251129022311-fe537b993049
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
