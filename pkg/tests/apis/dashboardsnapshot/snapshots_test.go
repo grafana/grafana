@@ -28,7 +28,8 @@ func TestIntegrationDashboardSnapshots(t *testing.T) {
 	})
 
 	t.Run("Check discovery client", func(t *testing.T) {
-		disco := helper.GetGroupVersionInfoJSON("dashboardsnapshot.grafana.app")
+		disco, err := helper.GetGroupVersionInfoJSON("dashboardsnapshot.grafana.app")
+		require.NoError(t, err)
 
 		// fmt.Printf("%s", disco)
 		require.JSONEq(t, `[
