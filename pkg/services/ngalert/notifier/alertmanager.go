@@ -134,9 +134,9 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 
 	dispatchTimer := GetDispatchTimer(featureToggles)
 
-	var flushLogOptions maintenanceOptions
+	var flushLogOptions *maintenanceOptions
 	if dispatchTimer == alertingNotify.DispatchTimerSync {
-		flushLogOptions = maintenanceOptions{
+		flushLogOptions = &maintenanceOptions{
 			initialState:         flushLog,
 			retention:            flushRetention,
 			maintenanceFrequency: maintenanceInterval,
