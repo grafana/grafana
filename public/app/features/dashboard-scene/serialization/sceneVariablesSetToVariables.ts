@@ -36,7 +36,6 @@ import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 import { DSReferencesMapping } from './DashboardSceneSerializer';
 import { getDataSourceForQuery } from './layoutSerializers/utils';
 import { getDataQueryKind, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
-import { transformVariableRefreshToEnumV1 } from './transformToV1TypesUtils';
 import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
@@ -85,7 +84,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         query: variable.state.query,
         definition: variable.state.definition,
         sort: variable.state.sort,
-        refresh: transformVariableRefreshToEnumV1(variable.state.refresh),
+        refresh: variable.state.refresh,
         regex: variable.state.regex,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
@@ -161,7 +160,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           value: variable.state.value,
         },
         query: intervals,
-        refresh: transformVariableRefreshToEnumV1(variable.state.refresh),
+        refresh: variable.state.refresh,
         options: variable.state.intervals.map((interval) => ({
           value: interval,
           text: interval,
