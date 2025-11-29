@@ -132,11 +132,11 @@ func TestIntegrationAPIServerRuntimeConfig(t *testing.T) {
 
 	t.Run("discovery with openfeature api false", func(t *testing.T) {
 		helper := setupHelper(t, false)
-		disco, err := helper.GetGroupVersionInfoJSON("features.grafana.app")
+		_, err := helper.GetGroupVersionInfoJSON("features.grafana.app")
 		require.Error(t, err, "expected error when openfeature api is disabled")
 
 		// plugins should still be discoverable
-		disco, err = helper.GetGroupVersionInfoJSON("plugins.grafana.app")
+		disco, err := helper.GetGroupVersionInfoJSON("plugins.grafana.app")
 		require.NoError(t, err)
 		require.JSONEq(t, pluginsDiscoveryJSON, disco)
 		require.NoError(t, err)
