@@ -548,6 +548,9 @@ export function getCellColorInlineStylesFactory(theme: GrafanaTheme2) {
     const result: CSSProperties = {};
     const displayValueColor = displayValue.color;
 
+    // The issue is that displayValue.color can be null or undefined when the value mapping
+    // does not apply a color, but the logic below assumes it's a valid color string.
+    // The fix is to check for falsy values, which includes null, undefined, and empty string.
     if (!displayValueColor) {
       return result;
     }
