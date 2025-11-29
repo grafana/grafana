@@ -160,7 +160,9 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           value: variable.state.value,
         },
         query: intervals,
-        refresh: variable.state.refresh,
+        // V2 schema mandates refresh: "onTimeRangeChanged" for interval variables,
+        // which maps to OldVariableRefresh.onTimeRangeChanged (2) in V1
+        refresh: variable.state.refresh ?? OldVariableRefresh.onTimeRangeChanged,
         options: variable.state.intervals.map((interval) => ({
           value: interval,
           text: interval,
