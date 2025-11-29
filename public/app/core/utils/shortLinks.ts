@@ -1,6 +1,6 @@
 import memoizeOne from 'memoize-one';
 
-import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
+import { AbsoluteTimeRange, dateTime, DateTime, isDateTime, LogRowModel, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
@@ -123,18 +123,74 @@ export const createAndCopyShareDashboardLink = async (
 
 export const createDashboardShareUrl = (dashboard: DashboardScene, opts: ShareLinkConfiguration, panel?: VizPanel) => {
   const location = locationService.getLocation();
-  const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
+  // Get the current time range from the scene graph - this is always up-to-date
+  // and reflects any changes the user has made to the dashboard time range
+  // We access the state directly each time to ensure we get the latest values
+  const timeRangeObj = sceneGraph.getTimeRange(panel ?? dashboard);
 
-  const urlParamsUpdate = getShareUrlParams(opts, timeRange, panel);
+  const urlParamsUpdate = getShareUrlParams(opts, timeRangeObj, panel);
+
+  // Remove time params from currentQueryParams to avoid conflicts with the time range from scene graph
+  // We always use the time range from the scene graph (or remove it if useAbsoluteTimeRange is false)
+  // Never use stale time params from location.search
+  let currentQueryParams = location.search;
+  // Always remove time params from currentQueryParams - we'll add them back if needed via updateQuery
+  const params = new URLSearchParams(currentQueryParams);
+  params.delete('from');
+  params.delete('to');
+  currentQueryParams = params.toString() ? `?${params.toString()}` : '';
 
   return getDashboardUrl({
     uid: dashboard.state.uid,
     slug: dashboard.state.meta.slug,
-    currentQueryParams: location.search,
+    currentQueryParams: currentQueryParams,
     updateQuery: urlParamsUpdate,
     absolute: !opts.useShortUrl,
   });
 };
+
+/**
+ * Converts a time value to relative format (e.g., now-24h, now) if it's an absolute timestamp.
+ * If it's already a string (relative format), returns it as-is.
+ * Only converts recent timestamps (within last 24 hours) to relative format.
+ */
+function convertToRelativeTime(timeValue: string | DateTime | number): string {
+  // If it's already a string, assume it's relative format
+  if (typeof timeValue === 'string') {
+    return timeValue;
+  }
+
+  // Convert to DateTime if it's a number (epoch milliseconds)
+  const dateTimeValue = typeof timeValue === 'number' ? dateTime(timeValue) : timeValue;
+
+  if (!isDateTime(dateTimeValue)) {
+    return String(timeValue);
+  }
+
+  const now = dateTime();
+  const diff = now.diff(dateTimeValue);
+
+  // Only convert recent timestamps (within last 24 hours) to relative format
+  // Older timestamps should stay as absolute
+  if (Math.abs(diff) > 24 * 60 * 60 * 1000) {
+    return dateTimeValue.toISOString();
+  }
+
+  // Calculate offset in minutes
+  const offsetMinutes = Math.round(diff / (60 * 1000));
+
+  if (offsetMinutes === 0) {
+    return 'now';
+  }
+
+  // Convert to relative format
+  if (Math.abs(offsetMinutes) < 60) {
+    return `now${offsetMinutes > 0 ? '-' : '+'}${Math.abs(offsetMinutes)}m`;
+  } else {
+    const hours = Math.round(offsetMinutes / 60);
+    return `now${hours > 0 ? '-' : '+'}${Math.abs(hours)}h`;
+  }
+}
 
 export const getShareUrlParams = (
   opts: { useAbsoluteTimeRange: boolean; theme: string },
@@ -147,14 +203,33 @@ export const getShareUrlParams = (
     urlParamsUpdate.viewPanel = panel.getPathId();
   }
 
+  // Access state.value directly to ensure we get the latest time range values
+  // Access the state synchronously at this exact moment to get the current time range
+  // Note: timeRange.state is reactive, so accessing .value here gets the current state
+  const currentTimeRange = timeRange.state.value;
+
   if (opts.useAbsoluteTimeRange) {
-    urlParamsUpdate.from = timeRange.state.value.from.toISOString();
-    urlParamsUpdate.to = timeRange.state.value.to.toISOString();
+    // Lock time range: use absolute ISO timestamps
+    // This converts relative time ranges (e.g., now-24h) to absolute timestamps
+    urlParamsUpdate.from = currentTimeRange.from.toISOString();
+    urlParamsUpdate.to = currentTimeRange.to.toISOString();
+  } else {
+    // Don't lock time range: use relative time format (e.g., now-24h, now)
+    // This preserves the current time range but as relative, so it updates when the dashboard is opened
+    const raw = currentTimeRange.raw;
+
+    // Convert to relative format if needed
+    urlParamsUpdate.from = convertToRelativeTime(raw.from);
+    urlParamsUpdate.to = convertToRelativeTime(raw.to);
   }
 
   if (opts.theme !== 'current') {
     urlParamsUpdate.theme = opts.theme;
   }
+
+  // Include lock time range state in URL to ensure different short URLs for locked vs unlocked
+  // This allows de-duplication within the same lock state, but different URLs for different states
+  urlParamsUpdate.lockTimeRange = opts.useAbsoluteTimeRange ? 'true' : 'false';
 
   return urlParamsUpdate;
 };

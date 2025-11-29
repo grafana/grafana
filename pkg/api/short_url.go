@@ -50,14 +50,14 @@ func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Respon
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("bad request data: %w", err))
 	}
-	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
+	hs.log.Debug("Received request to create short URL", "path", cmd.Path, "uid", cmd.UID)
 	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return response.Err(err)
 	}
 
 	shortURLDTO := hs.ShortURLService.ConvertShortURLToDTO(shortURL, hs.Cfg.AppURL)
-	c.Logger.Debug("Created short URL", "url", shortURLDTO.URL)
+	c.Logger.Debug("Created short URL", "url", shortURLDTO.URL, "uid", shortURL.Uid, "signature", shortURL.Signature)
 
 	return response.JSON(http.StatusOK, shortURLDTO)
 }
