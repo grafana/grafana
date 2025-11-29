@@ -5437,6 +5437,10 @@
       "loading-initializing-dashboard": "Wczytywanie i inicjowanie pulpitu",
       "title-not-found": "Nie znaleziono panelu o identyfikatorze {{panelId}}"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Zmienne szablonu"
     },
@@ -11184,6 +11188,12 @@
       "could-anything-matching-query": "Nie znaleziono wyników pasujących do Twojego zapytania"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Wyczyść typy",
     "select-aria-label": "Filtr typu panelu",
@@ -13387,6 +13397,7 @@
     "create-team": {
       "create": "Utwórz",
       "description-email": "Jest to ustawienie opcjonalne i służy przede wszystkim do zezwalania na niestandardowe awatary zespołu",
+      "failed-to-create": "",
       "label-email": "E-mail",
       "label-name": "Nazwa",
       "label-role": "Rola"
@@ -13418,6 +13429,7 @@
         "title-edit-team": "Edytuj zespół",
         "tooltip-edit-team": "Edytuj zespół"
       },
+      "loading-teams": "",
       "new-team": "Nowy zespół",
       "placeholder-search-teams": "Szukaj zespołów"
     },

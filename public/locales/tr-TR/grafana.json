@@ -5395,6 +5395,10 @@
       "loading-initializing-dashboard": "Pano yükleniyor ve başlatılıyor",
       "title-not-found": "{{panelId}} kimliğine sahip panel bulunamadı"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Şablon değişkenleri"
     },
@@ -11090,6 +11094,12 @@
       "could-anything-matching-query": "Sorgunuzla eşleşen hiçbir şey bulunamadı"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Türleri temizle",
     "select-aria-label": "Panel tipi filtresi",
@@ -13273,6 +13283,7 @@
     "create-team": {
       "create": "Oluştur",
       "description-email": "Bu isteğe bağlıdır ve esas olarak özel takım avatarlarına izin vermek için kullanılır",
+      "failed-to-create": "",
       "label-email": "E-posta",
       "label-name": "Ad",
       "label-role": "Rol"
@@ -13304,6 +13315,7 @@
         "title-edit-team": "Ekibi düzenle",
         "tooltip-edit-team": "Ekibi düzenle"
       },
+      "loading-teams": "",
       "new-team": "Yeni ekip",
       "placeholder-search-teams": "Ekip ara"
     },

@@ -5374,6 +5374,10 @@
       "loading-initializing-dashboard": "正在加载和初始化数据面板",
       "title-not-found": "未找到 ID 为 {{panelId}} 的面板"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "模板变量"
     },
@@ -11043,6 +11047,12 @@
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "清除类型",
     "select-aria-label": "面板类型筛选器",
@@ -13216,6 +13226,7 @@
     "create-team": {
       "create": "创建",
       "description-email": "这是可选项，主要用于允许自定义团队头像",
+      "failed-to-create": "",
       "label-email": "电子邮箱",
       "label-name": "名称",
       "label-role": "角色"
@@ -13247,6 +13258,7 @@
         "title-edit-team": "编辑团队",
         "tooltip-edit-team": "编辑团队"
       },
+      "loading-teams": "",
       "new-team": "新建团队",
       "placeholder-search-teams": "搜索团队"
     },

@@ -5395,6 +5395,10 @@
       "loading-initializing-dashboard": "Chargement et initialisation du tableau de bord",
       "title-not-found": "Panneau avec l’ID {{panelId}} introuvable"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Variables de modèle"
     },
@@ -11090,6 +11094,12 @@
       "could-anything-matching-query": "Impossible de trouver quoi que ce soit correspondant à votre requête"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Effacer les types",
     "select-aria-label": "Filtre par type de panneau",
@@ -13273,6 +13283,7 @@
     "create-team": {
       "create": "Créer",
       "description-email": "Ceci est facultatif et est principalement utilisé pour autoriser les avatars d’équipe personnalisés",
+      "failed-to-create": "",
       "label-email": "Adresse e-mail",
       "label-name": "Nom",
       "label-role": "Rôle"
@@ -13304,6 +13315,7 @@
         "title-edit-team": "Modifier l’équipe",
         "tooltip-edit-team": "Modifier l’équipe"
       },
+      "loading-teams": "",
       "new-team": "Nouvelle équipe",
       "placeholder-search-teams": "Rechercher les équipes"
     },

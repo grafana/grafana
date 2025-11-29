@@ -5374,6 +5374,10 @@
       "loading-initializing-dashboard": "ダッシュボードの読み込みと初期化",
       "title-not-found": "ID{{panelId}}のパネルが見つかりません"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "テンプレートの変数"
     },
@@ -11043,6 +11047,12 @@
       "could-anything-matching-query": "クエリに一致するものが見つかりませんでした"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "タイプをクリア",
     "select-aria-label": "パネルタイプフィルター",
@@ -13216,6 +13226,7 @@
     "create-team": {
       "create": "作成",
       "description-email": "これは任意であり、主にカスタムチームのアバターに使用されます",
+      "failed-to-create": "",
       "label-email": "メール",
       "label-name": "名前",
       "label-role": "ロール"
@@ -13247,6 +13258,7 @@
         "title-edit-team": "チームを編集",
         "tooltip-edit-team": "チームを編集"
       },
+      "loading-teams": "",
       "new-team": "新しいチーム",
       "placeholder-search-teams": "チームを検索"
     },
