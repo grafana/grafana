@@ -68,6 +68,12 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
   hideOpacity?: boolean;
 
   /**
+   * Indicates that this layer requires attribution to be shown by license
+   * When true, the attribution control will always be displayed regardless of user settings
+   */
+  requiresAttribution?: boolean;
+
+  /**
    * Function that configures transformation and returns a transformer
    * @param options
    */
