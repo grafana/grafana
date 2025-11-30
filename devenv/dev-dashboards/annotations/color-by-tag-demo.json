@@ -1,0 +1,202 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "red",
+        "name": "Critical",
+        "colorByTags": "critical",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": ["critical"],
+          "type": "tags"
+        }
+      },
+      {
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "orange",
+        "name": "Warning",
+        "colorByTags": "warning",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": ["warning"],
+          "type": "tags"
+        }
+      },
+      {
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "blue",
+        "name": "Info",
+        "colorByTags": "info",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": ["info"],
+          "type": "tags"
+        }
+      }
+    ]
+  },
+  "description": "Demonstrates the colorByTags feature with priority-based coloring",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "## Color by Tags Demo\n\nThis dashboard demonstrates the **colorByTags** feature with **priority-based coloring**.\n\n### How It Works\n\n1. Each annotation query **filters** by a specific tag (critical, warning, info)\n2. The `colorByTags` setting determines the color based on priority\n3. Toggle queries ON/OFF to show/hide annotations with that tag\n\n### Test Instructions\n\n1. Click on the time series panel and add 3 annotations:\n   - First: tag = `critical`\n   - Second: tag = `warning`\n   - Third: tag = `info`\n2. Each annotation should appear with its respective color\n3. Toggle the queries to show/hide each severity level\n\n### Priority Demo\n\nTo test priority, add an annotation with **multiple tags** (e.g., `critical, warning`):\n- It will appear in both Critical and Warning queries\n- Each query colors it by its highest priority matching tag",
+        "mode": "markdown"
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "title": "Instructions",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "title": "Add annotations here (click on the panel)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "tags": ["gdev", "annotations", "demo"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Color by Tags Demo",
+  "uid": "color-by-tag-demo",
+  "version": 1,
+  "weekStart": ""
+}
