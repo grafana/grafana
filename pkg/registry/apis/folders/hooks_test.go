@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 func TestFolderSyncHooks_Create(t *testing.T) {
@@ -21,7 +22,7 @@ func TestFolderSyncHooks_Create(t *testing.T) {
 		{
 			name:                   "folder at root does nothing",
 			expectedCallsToZanzana: 0,
-			folder:                 getFolderObj("foo", ""),
+			folder:                 getFolderObj("foo", "general"),
 			updateSuccessful:       true,
 		},
 		{

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -44,6 +45,11 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return err
+	}
+
+	// TODO? before v1 and v2 final -- this should be required
+	if meta.GetFolder() == "" {
+		meta.SetFolder(folder.GeneralFolderUID) // "general"
 	}
 
 	var migrationErr error
