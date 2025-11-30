@@ -1,10 +1,23 @@
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { dispatch } from 'app/types/store';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { MappingContext } from '../SuggestedDashboardsModal';
 import { fetchCommunityDashboard, GnetDashboardDependency } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../interactions';
+import {
+  CONTENT_KINDS,
+  ContentKind,
+  CREATION_ORIGINS,
+  DashboardLibraryInteractions,
+  EVENT_LOCATIONS,
+  EventLocation,
+  SOURCE_ENTRY_POINTS,
+} from '../interactions';
 import { GnetDashboard, Link } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
@@ -122,11 +135,76 @@ interface UseCommunityDashboardParams {
 }
 
 /**
+ * Check if a panel contains JavaScript code. This is not a perfect check, but good enough
+ */
+function canPanelContainJS(panel: { options?: Record<string, unknown> }): boolean {
+  const candidates: Array<{ keyPath: string; value: string }> = [];
+
+  function collect(obj: Object, path: string[]) {
+    if (!obj || typeof obj !== 'object') {
+      return;
+    }
+    for (const [key, value] of Object.entries(obj)) {
+      const nextPath = [...path, key];
+      if (typeof value === 'string') {
+        if (value.trim().length >= 4) {
+          candidates.push({ keyPath: nextPath.join('.'), value });
+        }
+      } else if (value && typeof value === 'object') {
+        collect(value, nextPath);
+      }
+    }
+  }
+
+  if (panel.options) {
+    collect(panel.options, ['options']);
+  }
+
+  const valuePatterns = [/<script\b/i, /\bon\w+="[^"]*"/i, /javascript:/i, /\bfunction\b/, /=>/, /\breturn\b/];
+  const keyPatterns = [
+    /\bscript\b/i,
+    /\bcode\b/i,
+    /\bjavascript\b/i,
+    /\bjs\b/i,
+    /\bonclick\b/i,
+    /\bbeforeRender\b/i,
+    /\bafterRender\b/i,
+    /\bhandler\b/i,
+  ];
+
+  return candidates.some(({ keyPath, value }) => {
+    if (valuePatterns.some((re) => re.test(value))) {
+      console.warn('Panel contains JavaScript code in value', value);
+      return true;
+    }
+    if (keyPatterns.some((re) => re.test(keyPath))) {
+      console.warn('Panel contains JavaScript code', keyPath);
+      return true;
+    }
+    return false;
+  });
+}
+
+/**
+ * Check if a dashboard contains JavaScript code. This is not a perfect check, but good enough
+ * Used as a second filter after the first filter of panel types (see api/dashboardLibraryApi.ts)
+ */
+const canDashboardContainJS = (dashboard: DashboardJson): boolean => {
+  return dashboard.panels?.some((panel) => {
+    if (panel && typeof panel === 'object' && 'options' in panel) {
+      return canPanelContainJS(panel);
+    }
+    return false;
+  });
+};
+
+/**
  * Handles the flow when a user selects a community dashboard:
  * 1. Tracks analytics
  * 2. Fetches full dashboard JSON with __inputs
- * 3. Attempts auto-mapping of datasources
- * 4. Either navigates directly or shows mapping form
+ * 3. Filters out dashboards that contain JavaScript code due to security reasons
+ * 4. Attempts auto-mapping of datasources
+ * 5. Either navigates directly or shows mapping form
  */
 export async function onUseCommunityDashboard({
   dashboard,
@@ -141,6 +219,18 @@ export async function onUseCommunityDashboard({
     // Fetch full dashboard from Gcom, this is the JSON with __inputs
     const fullDashboard = await fetchCommunityDashboard(dashboard.id);
     const dashboardJson = fullDashboard.json;
+
+    if (canDashboardContainJS(dashboardJson)) {
+      DashboardLibraryInteractions.communityDashboardFiltered({
+        libraryItemId: String(dashboard.id),
+        libraryItemTitle: dashboard.name,
+        panelTypeSlugs: dashboard.panelTypeSlugs || [],
+        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+        eventLocation: EVENT_LOCATIONS.COMMUNITY_DASHBOARD_LOADED,
+        reason: 'contains_javascript',
+      });
+      throw new Error(`Community dashboard ${dashboard.id} ${dashboard.name} contains JavaScript code`);
+    }
 
     // Parse datasource requirements from __inputs
     const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
@@ -199,6 +289,11 @@ export async function onUseCommunityDashboard({
     }
   } catch (err) {
     console.error('Error loading community dashboard:', err);
-    // TODO: Show error notification
+    dispatch(
+      notifyApp(
+        createErrorNotification(t('dashboard-library.community-error-title', 'Error loading community dashboard'))
+      )
+    );
+    throw err;
   }
 }
