@@ -105,10 +105,16 @@ func triggerAlwaysOnMigrations(cfg *setting.Cfg, l log.Logger, db db.DB) {
 		l.Debug("skipped dashboard UID startup migration")
 		return
 	}
-	err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName())
-	if err != nil {
-		l.Error("failed to populate dashboard_uid for annotations", "error", err)
-	}
+	// Run migration in a background goroutine to avoid blocking service startup
+	go func() {
+		l.Info("Starting annotation dashboard_uid migration in background")
+		err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName(), l)
+		if err != nil {
+			l.Error("failed to populate dashboard_uid for annotations", "error", err)
+		} else {
+			l.Info("Annotation dashboard_uid migration completed successfully")
+		}
+	}()
 }
 
 func (r *xormRepositoryImpl) Type() string {
