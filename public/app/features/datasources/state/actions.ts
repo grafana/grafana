@@ -21,7 +21,7 @@ import { updateNavIndex } from 'app/core/actions';
 import { appEvents } from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DatasourceAPIVersions } from 'app/features/apiserver/client';
+import { APIVersions } from 'app/features/apiserver/client';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
@@ -277,7 +277,7 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
   };
 }
 
-const dsApiVersions = new DatasourceAPIVersions();
+const dsApiVersions = new APIVersions();
 
 export function updateDataSource(dataSource: DataSourceSettings) {
   return async (

@@ -113,7 +113,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "shorturl.grafana.app",
 		Version: "v1beta1",
 	}, {
-		Group:   "testdata.datasource.grafana.app",
+		Group:   "grafana-testdata-datasource",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {
