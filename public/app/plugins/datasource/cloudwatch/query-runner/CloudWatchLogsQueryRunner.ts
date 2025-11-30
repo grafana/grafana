@@ -38,17 +38,14 @@ import { type CustomFormatterVariable } from '@grafana/scenes';
 import { GraphDrawStyle } from '@grafana/schema/dist/esm/index';
 import { TableCellDisplayMode } from '@grafana/ui';
 
+import { CloudWatchLogsQuery, LogsMode, CloudWatchLogsAnomaliesQuery, LogsQueryLanguage } from '../dataquery.gen';
 import {
   CloudWatchJsonData,
-  CloudWatchLogsAnomaliesQuery,
-  CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchLogsRequest,
   CloudWatchQuery,
   GetLogEventsRequest,
   LogAction,
-  LogsMode,
-  LogsQueryLanguage,
   QueryParam,
   StartQueryRequest,
 } from '../types';

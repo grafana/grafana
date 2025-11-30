@@ -4,9 +4,10 @@ import { useEffectOnce } from 'react-use';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineSelect } from '@grafana/plugin-ui';
 
+import { CloudWatchLogsQuery, LogsMode, LogsQueryLanguage } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
 import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_PPL_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../../defaultQueries';
-import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery, LogsMode, LogsQueryLanguage } from '../../../types';
+import { CloudWatchQuery, CloudWatchJsonData } from '../../../types';
 
 import { CloudWatchLink } from './CloudWatchLink';
 import { LogsAnomaliesQueryEditor } from './LogsAnomaliesQueryEditor';

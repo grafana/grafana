@@ -4,8 +4,9 @@ import { ReactNode, useCallback } from 'react';
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import { CloudWatchLogsQuery, LogsQueryLanguage } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
-import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery, LogsQueryLanguage } from '../../../types';
+import { CloudWatchJsonData, CloudWatchQuery } from '../../../types';
 import { LogGroupsFieldWrapper } from '../../shared/LogGroups/LogGroupsField';
 
 import { LogsQLCodeEditor } from './code-editors/LogsQLCodeEditor';

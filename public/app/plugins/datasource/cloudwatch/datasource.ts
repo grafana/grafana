@@ -15,6 +15,12 @@ import {
 import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
+import {
+  CloudWatchAnnotationQuery,
+  CloudWatchLogsAnomaliesQuery,
+  CloudWatchLogsQuery,
+  CloudWatchMetricsQuery,
+} from './dataquery.gen';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import {
   isCloudWatchAnnotationQuery,
@@ -42,14 +48,7 @@ import { CloudWatchAnnotationQueryRunner } from './query-runner/CloudWatchAnnota
 import { CloudWatchLogsQueryRunner } from './query-runner/CloudWatchLogsQueryRunner';
 import { CloudWatchMetricsQueryRunner } from './query-runner/CloudWatchMetricsQueryRunner';
 import { ResourcesAPI } from './resources/ResourcesAPI';
-import {
-  CloudWatchAnnotationQuery,
-  CloudWatchJsonData,
-  CloudWatchLogsAnomaliesQuery,
-  CloudWatchLogsQuery,
-  CloudWatchMetricsQuery,
-  CloudWatchQuery,
-} from './types';
+import { CloudWatchQuery, CloudWatchJsonData } from './types';
 import { CloudWatchVariableSupport } from './variables';
 
 export class CloudWatchDatasource

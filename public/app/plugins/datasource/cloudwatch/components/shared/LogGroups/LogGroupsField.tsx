@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 
 import { config } from '@grafana/runtime';
 
+import { LogGroup } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
 import { useAccountOptions } from '../../../hooks';
 import { DescribeLogGroupsRequest } from '../../../resources/types';
-import { LogGroup } from '../../../types';
 import { isTemplateVariable } from '../../../utils/templateVariableUtils';
 
 import { LegacyLogGroupSelection } from './LegacyLogGroupNamesSelection';
