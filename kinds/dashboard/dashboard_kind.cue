@@ -218,6 +218,8 @@ lineage: schemas: [{
 			// Optional field, if you want to extract part of a series name or metric node segment.
 			// Named capture groups can be used to separate the display text and value.
 			regex?: string
+      // Determine whether regex applies to variable value or display text
+      regexApplyTo?: #VariableRegexApplyTo
 			// Additional static options for query variable
 			staticOptions?: [...#VariableOption]
 			// Ordering of static options in relation to options returned from data source for query variable
@@ -244,6 +246,10 @@ lineage: schemas: [{
 		// Determine if the variable shows on dashboard
 		// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing), 3 (show under the controls dropdown menu).
 		#VariableHide: 0 | 1 | 2 | 3 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable|inControlsMenu") @grafana(TSVeneer="type")
+
+    // Determine whether regex applies to variable value or display text
+    // Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+    #VariableRegexApplyTo: 0 | 1  @cuetsy(kind="enum",memberNames="value|text")
 
 		// Sort variable options
 		// Accepted values are:
@@ -297,8 +303,8 @@ lineage: schemas: [{
 		// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 		#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
 
-		// Dashboard Link placement. Defines where the link should be displayed. 
-		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu 
+		// Dashboard Link placement. Defines where the link should be displayed.
+		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 		#DashboardLinkPlacement: "inControlsMenu" @cuetsy(kind="type")
 
 		// Annotation Query placement. Defines where the annotation query should be displayed.
@@ -314,7 +320,7 @@ lineage: schemas: [{
 			url: string
 			body?: string
 			// These are 2D arrays of strings, each representing a key-value pair
-			// We are defining this way because we can't generate a go struct that 
+			// We are defining this way because we can't generate a go struct that
 			// that would have exactly two strings in each sub-array
 			queryParams?: [...[...string]]
 			headers?: [...[...string]]
@@ -326,7 +332,7 @@ lineage: schemas: [{
 			url: string
 			body?: string
 			// These are 2D arrays of strings, each representing a key-value pair
-			// We are defining them this way because we can't generate a go struct that 
+			// We are defining them this way because we can't generate a go struct that
 			// that would have exactly two strings in each sub-array
 			queryParams?: [...[...string]]
 			headers?: [...[...string]]

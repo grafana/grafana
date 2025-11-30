@@ -117,7 +117,7 @@ DashboardLink: {
 	placement?: DashboardLinkPlacement
 }
 
-// Dashboard Link placement. Defines where the link should be displayed. 
+// Dashboard Link placement. Defines where the link should be displayed.
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 DashboardLinkPlacement: "inControlsMenu"
 
@@ -383,7 +383,7 @@ FetchOptions: {
 	url: string
 	body?: string
 	// These are 2D arrays of strings, each representing a key-value pair
-	// We are defining them this way because we can't generate a go struct that 
+	// We are defining them this way because we can't generate a go struct that
 	// that would have exactly two strings in each sub-array
 	queryParams?: [...[...string]]
 	headers?: [...[...string]]
@@ -393,7 +393,7 @@ InfinityOptions: FetchOptions & {
 	datasourceUid: string
 }
 
-HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" 
+HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH"
 
 // Action variable type
 ActionVariableType: "string"
@@ -752,6 +752,10 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu"
 
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+VariableRegexApplyTo: *"value" | "text"
+
 // Determine the origin of the adhoc variable filter
 FilterOrigin: "dashboard"
 
@@ -786,6 +790,7 @@ QueryVariableSpec: {
 	description?: string
 	query:        DataQueryKind
 	regex:        string | *""
+	regexApplyTo?: VariableRegexApplyTo
 	sort:         VariableSort
 	definition?:  string
 	options: [...VariableOption] | *[]

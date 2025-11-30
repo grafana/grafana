@@ -37,6 +37,7 @@ import { DSReferencesMapping } from './DashboardSceneSerializer';
 import { getDataSourceForQuery } from './layoutSerializers/utils';
 import { getDataQueryKind, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
+  transformVariableRegexApplyToToEnum,
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
   transformSortVariableToEnum,
@@ -84,6 +85,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         sort: variable.state.sort,
         refresh: variable.state.refresh,
         regex: variable.state.regex,
+        regexApplyTo: variable.state.regexApplyTo,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
         multi: variable.state.isMulti,
@@ -365,6 +367,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex ?? '',
+          regexApplyTo: transformVariableRegexApplyToToEnum(variable.state.regexApplyTo),
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
           multi: variable.state.isMulti || false,

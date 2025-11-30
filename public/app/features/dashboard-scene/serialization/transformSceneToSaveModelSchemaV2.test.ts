@@ -1,4 +1,4 @@
-import { VariableRefresh } from '@grafana/data';
+import { VariableRefresh, VariableRegexApplyTo } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -283,6 +283,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
             sort: VariableSortV1.alphabeticalDesc,
             refresh: VariableRefresh.onDashboardLoad,
             regex: 'regex1',
+            regexApplyTo: VariableRegexApplyTo.value,
             allValue: '*',
             includeAll: true,
             isMulti: true,

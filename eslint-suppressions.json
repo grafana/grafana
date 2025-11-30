@@ -2031,11 +2031,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/components/VariableTextAreaField.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/components/VariableTextField.tsx": {
     "no-restricted-syntax": {
       "count": 1

@@ -18,6 +18,7 @@ interface VariableTextAreaFieldProps {
   testId?: string;
   onBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
   description?: React.ReactNode;
+  noMargin?: boolean;
 }
 
 export function VariableTextAreaField({
@@ -31,13 +32,14 @@ export function VariableTextAreaField({
   ariaLabel,
   required,
   width,
+  noMargin,
   testId,
 }: PropsWithChildren<VariableTextAreaFieldProps>): ReactElement {
   const styles = useStyles2(getStyles);
   const id = useId();
 
   return (
-    <Field label={name} description={description} htmlFor={id}>
+    <Field label={name} description={description} htmlFor={id} noMargin={noMargin}>
       <TextArea
         id={id}
         rows={2}

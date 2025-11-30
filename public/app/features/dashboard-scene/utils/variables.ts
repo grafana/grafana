@@ -195,6 +195,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       sort: variable.sort,
       refresh: variable.refresh,
       regex: variable.regex,
+      regexApplyTo: variable.regexApplyTo,
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
       defaultToAll: Boolean(variable.includeAll),

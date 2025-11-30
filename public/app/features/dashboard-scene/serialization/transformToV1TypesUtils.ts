@@ -7,6 +7,7 @@ import {
   defaultDashboardCursorSync,
   MappingType as MappingTypeV1,
   ThresholdsMode as ThresholdsModeV1,
+  VariableRegexApplyTo as VariableRegexApplyToV1,
 } from '@grafana/schema';
 import {
   DashboardCursorSync,
@@ -16,7 +17,19 @@ import {
   FieldConfigSource,
   SpecialValueMatch,
   ThresholdsMode,
+  VariableRegexApplyTo,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
+export function transformVariableRegexApplyToToEnumV1(regexApplyTo?: VariableRegexApplyTo): VariableRegexApplyToV1 {
+  switch (regexApplyTo) {
+    case 'value':
+      return VariableRegexApplyToV1.value;
+    case 'text':
+      return VariableRegexApplyToV1.text;
+    default:
+      return VariableRegexApplyToV1.value;
+  }
+}
 
 export function transformVariableRefreshToEnumV1(refresh?: VariableRefresh): VariableRefreshV1 {
   switch (refresh) {
