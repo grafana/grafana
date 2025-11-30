@@ -1,6 +1,6 @@
 import { reportInteraction, config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
+import { getExternalUserMngLinkUrl, getUpgradeUrl } from 'app/features/users/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
 export const shouldRenderInviteUserButton = () =>
@@ -12,5 +12,14 @@ export const performInviteUserClick = (placement: string, cnt: string) => {
   });
 
   const url = getExternalUserMngLinkUrl(cnt);
+  window.open(url.toString(), '_blank');
+};
+
+export const performUpgradeClick = (placement: string, cnt: string) => {
+  reportInteraction('upgrade_user_button_clicked', {
+    placement,
+  });
+
+  const url = getUpgradeUrl(cnt);
   window.open(url.toString(), '_blank');
 };
