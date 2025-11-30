@@ -82,6 +82,7 @@ func RegisterMigrations(
 
 	// Register resource migrations
 	registerDashboardAndFolderMigration(mg, migrator, client)
+	registerPlaylistMigration(mg, migrator, client)
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
@@ -130,4 +131,25 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator
 		[]Validator{folderCountValidator, dashboardCountValidator, folderTreeValidator},
 	)
 	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
+}
+
+func registerPlaylistMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
+	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+	driverName := mg.Dialect.DriverName()
+
+	playlistCountValidator := NewCountValidator(
+		client,
+		playlists,
+		"playlist",
+		"org_id = ?",
+		driverName,
+	)
+
+	playlistsMigration := NewResourceMigration(
+		migrator,
+		[]schema.GroupResource{playlists},
+		"playlists",
+		[]Validator{playlistCountValidator},
+	)
+	mg.AddMigration("playlists migration", playlistsMigration)
 }

@@ -52,6 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -143,6 +144,7 @@ func RegisterAPIService(
 	userService user.Service,
 	libraryPanels libraryelements.Service,
 	publicDashboardService publicdashboards.Service,
+	playlistSvc playlistsvc.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -169,7 +171,7 @@ func RegisterAPIService(
 		publicDashboardService:       publicDashboardService,
 
 		legacy: &DashboardStorage{
-			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
+			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, playlistSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
 		},
 	}

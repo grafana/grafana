@@ -535,7 +535,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl)
+	playlistService := playlistimpl.ProvideService(sqlStore, tracingService)
+	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl, playlistService)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(migrationDashboardAccessor, resourceClient)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService)
@@ -726,7 +727,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	csrfCSRF := csrf.ProvideCSRFFilter(cfg)
-	playlistService := playlistimpl.ProvideService(sqlStore, tracingService)
 	secretsMigrator := migrator2.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
 	dataSourceSecretMigrationService := migrations3.ProvideDataSourceMigrationService(service15, kvStore, featureToggles)
 	secretMigrationProviderImpl := migrations3.ProvideSecretMigrationProvider(serverLockService, dataSourceSecretMigrationService)
@@ -866,7 +866,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	identitySynchronizer := authnimpl.ProvideIdentitySynchronizer(authnimplService)
 	ldapImpl := service12.ProvideService(cfg, featureToggles, ssosettingsimplService)
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
-	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl)
+	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl, playlistService)
 	snapshotsAPIBuilder := dashboardsnapshot.RegisterAPIService(serviceImpl, apiserverService, cfg, featureToggles, sqlStore, registerer)
 	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer, sourcesService)
 	if err != nil {
@@ -1187,7 +1187,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl)
+	playlistService := playlistimpl.ProvideService(sqlStore, tracingService)
+	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl, playlistService)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(migrationDashboardAccessor, resourceClient)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService)
@@ -1380,7 +1381,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	csrfCSRF := csrf.ProvideCSRFFilter(cfg)
-	playlistService := playlistimpl.ProvideService(sqlStore, tracingService)
 	secretsMigrator := migrator2.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
 	dataSourceSecretMigrationService := migrations3.ProvideDataSourceMigrationService(service15, kvStore, featureToggles)
 	secretMigrationProviderImpl := migrations3.ProvideSecretMigrationProvider(serverLockService, dataSourceSecretMigrationService)
@@ -1520,7 +1520,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	identitySynchronizer := authnimpl.ProvideIdentitySynchronizer(authnimplService)
 	ldapImpl := service12.ProvideService(cfg, featureToggles, ssosettingsimplService)
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
-	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl)
+	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl, playlistService)
 	snapshotsAPIBuilder := dashboardsnapshot.RegisterAPIService(serviceImpl, apiserverService, cfg, featureToggles, sqlStore, registerer)
 	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer, sourcesService)
 	if err != nil {
