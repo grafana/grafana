@@ -120,6 +120,44 @@ export function TraceQLEditor(props: Props) {
             errorTimeoutId.current = window.setTimeout(() => {
               setMarkers(monaco, model, errorNodes);
             }, 500);
+
+            if (changeEvent.changes.some((c) => c.text === '')) {
+              const model = editor.getModel();
+              const position = editor.getPosition();
+              const word = model?.getWordUntilPosition(position!);
+              if (word?.word?.length! > 0) {
+                //Get the quotes (" or ') from the string
+                const quoteMatches = editor.getValue().match(/["']/g);
+
+                // If no quotes present, run suggestions
+                if (!quoteMatches) {
+                  setTimeout(() => {
+                    editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+                  }, 20);
+                  return;
+                }
+                //If quotes present, but not equal to 2 (""), return
+                else if (quoteMatches.length !== 2) {
+                  return;
+                } else {
+                  //Get the starting and ending position of the quotes
+                  const start = editor.getValue().indexOf(quoteMatches[0]);
+                  const end = editor.getValue().lastIndexOf(quoteMatches[1]);
+
+                  //If start, end and position.column exists and the cursor is currently in
+                  //in between the quotations, then return and let normal suggestion flow take place
+                  if (start && end && position?.column) {
+                    if (position?.column >= start && position?.column - 1 <= end) {
+                      return;
+                    }
+                  }
+                }
+
+                setTimeout(() => {
+                  editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+                }, 20);
+              }
+            }
           });
         }}
       />
