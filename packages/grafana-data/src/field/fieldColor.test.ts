@@ -172,4 +172,40 @@ describe('getFieldSeriesColor', () => {
 
     expect(color.color).toEqual(calcFn(-10, 0));
   });
+
+  it('When color.seriesBy is mean use that to calc series color', () => {
+    field.config.color!.seriesBy = 'mean';
+    const color = getFieldSeriesColor(field, createTheme());
+    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
+
+    expect(color.color).toEqual(calcFn(2, 0.6));
+  });
+
+  it('When color.seriesBy is median use that to calc series color', () => {
+    field.config.color!.seriesBy = 'median';
+    const color = getFieldSeriesColor(field, createTheme());
+    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
+
+    expect(color.color).toEqual(calcFn(3.5, 0.675));
+  });
+
+  it('When color.seriesBy is p95 use that to calc series color', () => {
+    const testField = getTestField('continuous-GrYlRd');
+    testField.values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+    testField.config.color!.seriesBy = 'p95';
+
+    const color = getFieldSeriesColor(testField, createTheme());
+    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
+
+    const expectedPercent = (19 - 1) / (20 - 1);
+    expect(color.color).toEqual(calcFn(19, expectedPercent));
+  });
+
+  it('When color.seriesBy is first use that to calc series color', () => {
+    field.config.color!.seriesBy = 'first';
+    const color = getFieldSeriesColor(field, createTheme());
+    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
+
+    expect(color.color).toEqual(calcFn(0, 0.5));
+  });
 });
