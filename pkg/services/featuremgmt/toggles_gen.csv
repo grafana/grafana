@@ -17,7 +17,6 @@ logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true
 lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 individualCookiePreferences,experimental,@grafana/grafana-backend-group,false,false,false
-influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
 starsFromAPIServer,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 kubernetesStars,experimental,@grafana/grafana-app-platform-squad,false,true,false
 influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,false
