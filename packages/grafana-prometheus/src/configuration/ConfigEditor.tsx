@@ -1,10 +1,10 @@
-// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ConfigEditor.tsx
-
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { ConfigSection, DataSourceDescription, AdvancedHttpSettings } from '@grafana/plugin-ui';
+import { Switch } from '@grafana/ui';
 import { config } from '@grafana/runtime';
-import { Alert, useTheme2 } from '@grafana/ui';
+import { Alert, useTheme2, Field } from '@grafana/ui';
+import React from 'react';
 
 import { PromOptions } from '../types';
 
@@ -12,12 +12,24 @@ import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
 import { DataSourceHttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
 import { overhaulStyles } from './shared/utils';
+
 type PrometheusConfigProps = DataSourcePluginOptionsEditorProps<PromOptions>;
 
 export const ConfigEditor = (props: PrometheusConfigProps) => {
   const { options, onOptionsChange } = props;
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
+
+  const onHideWarningsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const hideWarnings = event.target.checked;
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        hideWarnings,
+      },
+    });
+  };
 
   return (
     <>
@@ -54,6 +66,20 @@ export const ConfigEditor = (props: PrometheusConfigProps) => {
         />
         <AlertingSettingsOverhaul<PromOptions> options={options} onOptionsChange={onOptionsChange} />
         <PromSettings options={options} onOptionsChange={onOptionsChange} />
+
+        {/* --- New toggle for hiding Prometheus warnings --- */}
+        <Field
+          label={t('grafana-prometheus.configuration.config-editor.hide-warnings', 'Hide Prometheus warnings')}
+          description={t(
+            'grafana-prometheus.configuration.config-editor.hide-warnings-description',
+            'When enabled, warnings returned by Prometheus will be hidden in Grafana panels.'
+          )}
+        >
+          <Switch
+            value={options.jsonData.hideWarnings ?? false}
+            onChange={onHideWarningsChange}
+          />
+        </Field>
       </ConfigSection>
     </>
   );
