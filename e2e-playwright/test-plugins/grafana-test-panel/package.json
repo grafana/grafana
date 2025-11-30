@@ -1,5 +1,5 @@
 {
-  "name": "@test-plugins/grafana-e2etest-datasource",
+  "name": "@test-plugins/grafana-e2etest-panel",
   "version": "12.4.0-pre",
   "private": true,
   "scripts": {
