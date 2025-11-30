@@ -30,7 +30,7 @@ describe('Panels smokescreen', () => {
           e2e.components.PanelEditor.toggleVizPicker().click();
           e2e.components.PluginVisualization.item(panel.name).scrollIntoView().should('be.visible').click();
 
-          e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain(panel.name));
+          e2e.components.PanelEditor.OptionsPane.content().should((e) => expect(e).to.contain(panel.name));
           // TODO: Come up with better check / better failure messaging to clearly indicate which panel failed
           cy.contains('An unexpected error happened').should('not.exist');
         }

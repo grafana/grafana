@@ -45,7 +45,9 @@ test.describe(
           await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item(panel.name)).click();
 
           // Verify panel type is selected
-          await expect(vizPicker).toHaveText(panel.name, { timeout: 10000 });
+          await expect(
+            dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header)
+          ).toHaveText(panel.name, { timeout: 10000 });
 
           // Wait for panel to finish rendering
           await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
