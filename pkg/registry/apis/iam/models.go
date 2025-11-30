@@ -80,6 +80,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual             dualwrite.Service
 	unified          resource.ResourceClient
 	userSearchClient resourcepb.ResourceIndexClient
+	teamSearch       *TeamSearchHandler
 
 	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
 

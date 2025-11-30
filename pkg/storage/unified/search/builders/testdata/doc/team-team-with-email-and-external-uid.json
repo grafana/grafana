@@ -1,0 +1,13 @@
+{
+    "apiVersion": "iam.grafana.app/v0alpha1",
+    "kind": "Team",
+    "metadata": {
+        "name": "team-with-email-and-external-uid"
+    },
+    "spec": {
+        "title": "Team With Email And External UID",
+        "email": "test@example.com",
+        "provisioned": true,
+        "externalUID": "external-uid"
+    }
+}
