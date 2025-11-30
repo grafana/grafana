@@ -63,6 +63,8 @@ TableSparklineCellOptions: {
 	GraphFieldConfig
 	type: TableCellDisplayMode & "sparkline"
   hideValue?: bool
+  // Enable interactive hover to inspect values along the sparkline
+  interactionEnabled?: bool | *true
 } @cuetsy(kind="interface")
 
 // Colored background cell options
