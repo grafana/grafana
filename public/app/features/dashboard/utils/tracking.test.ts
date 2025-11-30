@@ -20,9 +20,9 @@ describe('trackDashboardLoaded', () => {
       ],
       templating: {
         list: [
-          { type: 'query', name: 'Query 1' },
+          { type: 'query', name: 'Query 1', datasource: { type: 'prometheus' } },
           { type: 'interval', name: 'Interval 1' },
-          { type: 'query', name: 'Query 2' },
+          { type: 'query', name: 'Query 2', datasource: { type: 'cloudwatch' } },
         ],
       },
       timepicker: {
@@ -52,6 +52,10 @@ describe('trackDashboardLoaded', () => {
       panel_type_geomap_count: 2,
       settings_nowdelay: '1m',
       settings_livenow: true,
+      varsWithDataSource: [
+        { type: 'query', datasource: 'prometheus' },
+        { type: 'query', datasource: 'cloudwatch' },
+      ],
     });
   });
 });
