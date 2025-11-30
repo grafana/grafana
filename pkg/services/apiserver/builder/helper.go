@@ -22,6 +22,7 @@ import (
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
@@ -78,7 +79,9 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 			delegateHandler,
 			c.LoopbackClientConfig,
 			builders,
-			reg)
+			reg,
+			c.MergedResourceConfig,
+		)
 		if err != nil {
 			panic(fmt.Sprintf("could not build the request handler for specified API builders: %s", err.Error()))
 		}
@@ -105,6 +108,8 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 	}
 }
 
+// SetupConfig sets up the server config for the API server
+// specify isAggregator=true, if the chain is being constructed for kube-aggregator
 func SetupConfig(
 	scheme *runtime.Scheme,
 	serverConfig *genericapiserver.RecommendedConfig,
@@ -114,6 +119,7 @@ func SetupConfig(
 	gvs []schema.GroupVersion,
 	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
 	reg prometheus.Registerer,
+	apiResourceConfig *serverstorage.ResourceConfig,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
@@ -126,7 +132,7 @@ func SetupConfig(
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs)
+	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs, apiResourceConfig)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
 		meta := r.Metadata()
 		kind := ""
@@ -287,6 +293,7 @@ func InstallAPIs(
 	features featuremgmt.FeatureToggles,
 	dualWriterMetrics *grafanarest.DualWriterMetrics,
 	builderMetrics *BuilderMetrics,
+	apiResourceConfig *serverstorage.ResourceConfig,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
@@ -401,33 +408,8 @@ func InstallAPIs(
 	for group, buildersForGroup := range buildersGroupMap {
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
-			if err := b.UpdateAPIGroupInfo(&g, APIGroupOptions{
-				Scheme:              scheme,
-				OptsGetter:          optsGetter,
-				DualWriteBuilder:    dualWrite,
-				MetricsRegister:     reg,
-				StorageOptsRegister: optsregister,
-				StorageOpts:         storageOpts,
-			}); err != nil {
+			if err := installAPIGroupsForBuilder(&g, group, b, apiResourceConfig, scheme, optsGetter, dualWrite, reg, optsregister, storageOpts, features); err != nil {
 				return err
-			}
-			if len(g.PrioritizedVersions) < 1 {
-				continue
-			}
-
-			// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-				if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
-					for name := range resources {
-						if !allowRegisteringResourceByInfo(b.AllowedV0Alpha1Resources(), name) {
-							delete(resources, name)
-						}
-					}
-					if len(resources) == 0 {
-						delete(g.VersionedResourcesStorageMap, "v0alpha1")
-					}
-				}
 			}
 		}
 
@@ -439,6 +421,53 @@ func InstallAPIs(
 		err := server.InstallAPIGroup(&g)
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func installAPIGroupsForBuilder(g *genericapiserver.APIGroupInfo, group string, b APIGroupBuilder, apiResourceConfig *serverstorage.ResourceConfig, scheme *runtime.Scheme,
+	optsGetter generic.RESTOptionsGetter, dualWrite grafanarest.DualWriteBuilder, reg prometheus.Registerer, optsregister apistore.StorageOptionsRegister,
+	storageOpts *options.StorageOptions, features featuremgmt.FeatureToggles) error {
+	if err := b.UpdateAPIGroupInfo(g, APIGroupOptions{
+		Scheme:              scheme,
+		OptsGetter:          optsGetter,
+		DualWriteBuilder:    dualWrite,
+		MetricsRegister:     reg,
+		StorageOptsRegister: optsregister,
+		StorageOpts:         storageOpts,
+	}); err != nil {
+		return err
+	}
+	if len(g.PrioritizedVersions) < 1 {
+		return nil
+	}
+
+	// filter out api groups that are disabled in APIEnablementOptions
+	for version := range g.VersionedResourcesStorageMap {
+		gvr := schema.GroupVersionResource{
+			Group:   group,
+			Version: version,
+		}
+		if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gvr) {
+			klog.InfoS("Skipping storage for disabled resource", "gvr", gvr.String())
+			delete(g.VersionedResourcesStorageMap, version)
+		}
+	}
+
+	// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
+			for name := range resources {
+				if !allowRegisteringResourceByInfo(b.AllowedV0Alpha1Resources(), name) {
+					delete(resources, name)
+				}
+			}
+			if len(resources) == 0 {
+				delete(g.VersionedResourcesStorageMap, "v0alpha1")
+			}
 		}
 	}
 

@@ -9,6 +9,8 @@ import (
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
+	"k8s.io/klog/v2"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
@@ -76,6 +78,7 @@ func addBuilderRoutes(
 	targetGroupVersion schema.GroupVersion,
 	openAPISpec *spec3.OpenAPI,
 	apiGroupBuilders []APIGroupBuilder,
+	apiResourceConfig *serverstorage.ResourceConfig,
 ) (*spec3.OpenAPI, error) {
 	for _, apiGroupBuilder := range apiGroupBuilders {
 		// Optionally include raw http handlers for all builders
@@ -107,12 +110,24 @@ func addBuilderRoutes(
 			}
 		}
 	}
+
+	// filter out api groups that are disabled in APIEnablementOptions
+	for path := range openAPISpec.Paths.Paths {
+		if strings.HasPrefix(path, "/apis/"+targetGroupVersion.String()+"/") {
+			gv := targetGroupVersion.WithResource("")
+			if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gv) {
+				klog.InfoS("removing openapi routes for disabled resource", "gv", gv.String())
+				delete(openAPISpec.Paths.Paths, path)
+			}
+		}
+	}
+
 	return openAPISpec, nil
 }
 
 // Modify the OpenAPI spec to include the additional routes.
 // nolint:gocyclo
-func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []schema.GroupVersion) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []schema.GroupVersion, apiResourceConfig *serverstorage.ResourceConfig) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 		if s.Paths == nil {
 			return s, nil
@@ -227,7 +242,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						}
 					}
 				}
-				return addBuilderRoutes(gv, &copy, builders)
+				return addBuilderRoutes(gv, &copy, builders, apiResourceConfig)
 			}
 		}
 		return s, nil
