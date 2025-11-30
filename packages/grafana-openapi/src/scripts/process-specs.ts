@@ -175,12 +175,16 @@ function processDirectory(sourceDir: string, outputDir: string) {
 // Grafana root path - navigate up from this script's directory
 const basePath = path.resolve(import.meta.dirname, '../../../..');
 
-const sourceDirs = [
-  path.join(basePath, 'pkg/tests/apis/openapi_snapshots'),
-  path.join(basePath, 'pkg/extensions/apiserver/tests/openapi_snapshots'),
-];
-const outputDir = path.join(basePath, 'data/openapi');
+const oss = {
+  source: path.join(basePath, 'pkg/tests/apis/openapi_snapshots'),
+  output: path.join(import.meta.dirname, '../apis'),
+};
 
-for (const sourceDir of sourceDirs) {
-  processDirectory(sourceDir, outputDir);
+const enterprise = {
+  source: path.join(basePath, 'pkg/extensions/apiserver/tests/openapi_snapshots'),
+  output: path.join(basePath, 'data/openapi'),
+};
+
+for (const config of [oss, enterprise]) {
+  processDirectory(config.source, config.output);
 }
