@@ -500,6 +500,24 @@
     },
     {
       "metadata": {
+        "name": "alertingSyncDispatchTimer",
+        "resourceVersion": "1764342211090",
+        "creationTimestamp": "2025-11-19T19:22:33Z",
+        "deletionTimestamp": "2025-11-27T17:14:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-28 15:03:31.090159 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingTriage",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2025-07-31T22:56:50Z",
