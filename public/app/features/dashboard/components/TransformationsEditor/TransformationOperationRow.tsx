@@ -36,6 +36,8 @@ interface TransformationOperationRowProps {
   configs: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
   onChange: (index: number, config: DataTransformerConfig) => void;
+  isOpen?: boolean;
+  onOpenChanged: (isOpen: boolean) => void;
 }
 
 export const TransformationOperationRow = ({
@@ -46,6 +48,8 @@ export const TransformationOperationRow = ({
   configs,
   uiConfig,
   onChange,
+  isOpen,
+  onOpenChanged,
 }: TransformationOperationRowProps) => {
   const [showDeleteModal, setShowDeleteModal] = useToggle(false);
   const [showDebug, toggleShowDebug] = useToggle(false);
@@ -227,6 +231,9 @@ export const TransformationOperationRow = ({
         draggable
         actions={renderActions}
         disabled={disabled}
+        isOpen={isOpen}
+        onOpen={() => onOpenChanged(true)}
+        onClose={() => onOpenChanged(false)}
         expanderMessages={{
           close: 'Collapse transformation row',
           open: 'Expand transformation row',

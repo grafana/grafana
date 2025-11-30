@@ -24,6 +24,16 @@ import { testDashboard } from '../testfiles/testDashboard';
 
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
 
+// Mock getDashboardSceneFor to return a mock dashboard
+jest.mock('../../utils/utils', () => ({
+  ...jest.requireActual('../../utils/utils'),
+  getDashboardSceneFor: jest.fn(() => ({
+    state: {
+      uid: 'test-dashboard-uid',
+    },
+  })),
+}));
+
 function createModelMock(
   panelData: PanelData,
   transformations?: DataTransformerConfig[],
@@ -33,6 +43,15 @@ function createModelMock(
     getDataTransformer: () => new SceneDataTransformer({ data: panelData, transformations: transformations || [] }),
     getQueryRunner: () => new SceneQueryRunner({ queries: [], data: panelData }),
     onChangeTransformations: onChangeTransformationsMock,
+    state: {
+      panelRef: {
+        resolve: () => ({
+          state: {
+            key: 'test-panel-key',
+          },
+        }),
+      },
+    },
   } as unknown as PanelDataTransformationsTab;
 }
 

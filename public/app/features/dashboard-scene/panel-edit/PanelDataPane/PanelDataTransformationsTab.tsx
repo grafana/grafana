@@ -18,13 +18,14 @@ import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui'
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
+import { usePersistedTransformationState } from './usePersistedTransformationState';
 import { findSqlExpression, scrollToQueryRow } from './utils';
 
 const SET_TIMEOUT = 750;
@@ -73,6 +74,11 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
 
+  // Get dashboard and panel IDs for scoping session storage
+  const dashboard = getDashboardSceneFor(model);
+  const panel = model.state.panelRef.resolve();
+  const storageKey = `${dashboard.state.uid}-${panel.state.key || 'unknown'}`;
+
   // Type guard to ensure transformations are DataTransformerConfig[]
   const transformations = useMemo<DataTransformerConfig[]>(() => {
     return Array.isArray(transformsWrongType)
@@ -83,11 +89,13 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
       : [];
   }, [transformsWrongType]);
 
-  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
-  const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
+  const { isOpen: getRowCollapseState, setIsOpen: setRowCollapseState } = usePersistedTransformationState(storageKey);
 
-  const openDrawer = () => setDrawerOpen(true);
-  const closeDrawer = () => setDrawerOpen(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
+  const [pickerDrawerOpen, setPickerDrawerOpen] = useState<boolean>(false);
+
+  const openPickerDrawer = () => setPickerDrawerOpen(true);
+  const closePickerDrawer = () => setPickerDrawerOpen(false);
 
   const onGoToQueries = useCallback(() => {
     const parent = model.parent;
@@ -134,15 +142,15 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   const transformationsDrawer = (
     <TransformationsDrawer
-      onClose={closeDrawer}
+      onClose={closePickerDrawer}
       onTransformationAdd={(selected) => {
         if (selected.value === undefined) {
           return;
         }
         model.onChangeTransformations([...transformations, { id: selected.value, options: {} }]);
-        closeDrawer();
+        closePickerDrawer();
       }}
-      isOpen={drawerOpen}
+      isOpen={pickerDrawerOpen}
       series={data.series}
     />
   );
@@ -151,7 +159,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     return (
       <>
         <EmptyTransformationsMessage
-          onShowPicker={openDrawer}
+          onShowPicker={openPickerDrawer}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
         />
@@ -162,12 +170,18 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   return (
     <>
-      <TransformationsEditor data={sourceData.data} transformations={transformations} model={model} />
+      <TransformationsEditor
+        data={sourceData.data}
+        transformations={transformations}
+        model={model}
+        getIsOpen={getRowCollapseState}
+        setIsOpen={setRowCollapseState}
+      />
       <ButtonGroup>
         <Button
           icon="plus"
           variant="secondary"
-          onClick={openDrawer}
+          onClick={openPickerDrawer}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
           <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
@@ -212,9 +226,11 @@ interface TransformationEditorProps {
   transformations: DataTransformerConfig[];
   model: PanelDataTransformationsTab;
   data: PanelData;
+  getIsOpen: (id: string) => boolean | undefined;
+  setIsOpen: (id: string, isOpen: boolean) => void;
 }
 
-function TransformationsEditor({ transformations, model, data }: TransformationEditorProps) {
+function TransformationsEditor({ transformations, model, data, getIsOpen, setIsOpen }: TransformationEditorProps) {
   const transformationEditorRows = transformations.map((t, i) => ({ id: `${i} - ${t.id}`, transformation: t }));
 
   const onDragEnd = (result: DropResult) => {
@@ -252,6 +268,8 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
                 }}
                 configs={transformationEditorRows}
                 data={data}
+                getIsOpen={getIsOpen}
+                setIsOpen={setIsOpen}
               ></TransformationOperationRows>
               {provided.placeholder}
             </div>
