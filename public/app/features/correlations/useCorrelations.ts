@@ -3,6 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { getDataSourceSrv, FetchResponse, CorrelationData, CorrelationsData } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+//import { dispatch } from 'app/store/store';
 
 import {
   Correlation,
@@ -23,7 +24,7 @@ export interface CorrelationsResponse {
   totalCount: number;
 }
 
-const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
+export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
   const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
   const targetDatasource =
     correlation.type === 'query' ? getDataSourceSrv().getInstanceSettings(correlation.targetUID) : undefined;
@@ -90,23 +91,25 @@ export const useCorrelations = () => {
   const { backend } = useGrafana();
 
   const [getInfo, get] = useAsyncFn<(params: GetCorrelationsParams) => Promise<CorrelationsData>>(
-    (params) =>
-      lastValueFrom(
+    async (params) => {
+      return lastValueFrom(
         backend.fetch<CorrelationsResponse>({
           url: '/api/datasources/correlations',
-          params: { page: params.page },
+          params: { page: params.page, limit: 10 }, // todo this is to force pagination for testing, remove
           method: 'GET',
           showErrorAlert: false,
         })
       )
         .then(getData)
-        .then(toEnrichedCorrelationsData),
+        .then(toEnrichedCorrelationsData);
+    },
+
     [backend]
   );
 
   const [createInfo, create] = useAsyncFn<(params: CreateCorrelationParams) => Promise<CorrelationData>>(
-    ({ sourceUID, ...correlation }) =>
-      backend
+    async ({ sourceUID, ...correlation }) => {
+      return backend
         .post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
         .then((response) => {
           const enrichedCorrelation = toEnrichedCorrelationData(response.result);
@@ -115,7 +118,9 @@ export const useCorrelations = () => {
           } else {
             throw new Error('invalid sourceUID');
           }
-        }),
+        });
+      // }
+    },
     [backend]
   );
 
