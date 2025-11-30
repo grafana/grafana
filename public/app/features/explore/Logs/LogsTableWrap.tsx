@@ -7,11 +7,13 @@ import {
   ExploreLogsPanelState,
   GrafanaTheme2,
   Labels,
+  LogRowModel,
   LogsSortOrder,
   SelectableValue,
   SplitOpen,
   store,
   TimeRange,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -40,6 +42,11 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   datasourceType?: string;
+  exploreId?: string;
+  displayedFields?: string[];
+  visualisationType?: 'table' | 'logs';
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 type ActiveFieldMeta = {
@@ -512,6 +519,11 @@ export function LogsTableWrap(props: Props) {
               dataFrame={currentDataFrame}
               columnsWithMeta={columnsWithMeta}
               height={height}
+              displayedFields={props.displayedFields}
+              exploreId={props.exploreId}
+              visualisationType={props.visualisationType}
+              absoluteRange={props.absoluteRange}
+              logRows={props.logRows}
             />
           </div>
         </div>

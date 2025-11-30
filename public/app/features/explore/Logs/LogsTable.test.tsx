@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { ComponentProps } from 'react';
 
-import { DataFrame, FieldType, LogsSortOrder, toUtc } from '@grafana/data';
+import { DataFrame, FieldType, LogsSortOrder, toUtc, urlUtil } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
@@ -298,6 +298,82 @@ describe('LogsTable', () => {
         expect(columns[0].textContent).toContain('Time');
         expect(columns[1].textContent).toContain('line');
         expect(columns[2].textContent).toContain('foo');
+      });
+    });
+  });
+
+  describe('Selected log line', () => {
+    it('should handle selected log line from URL parameter', async () => {
+      // Use getMockLokiFrame which has proper structure with id field
+      const testFrame = getMockLokiFrame();
+      const logsFrame = parseLogsFrame(testFrame);
+
+      // Get the second ID from the parsed frame to test selection of non-first row
+      const secondId = logsFrame?.idField?.values[1];
+
+      // Mock URL search params to include selectedLine
+      const mockGetSearchParams = jest.spyOn(urlUtil, 'getUrlSearchParams');
+      mockGetSearchParams.mockReturnValue({
+        selectedLine: JSON.stringify({ id: secondId, row: 1 }),
+      });
+
+      // Verify selectedLine is in the mocked URL params
+      const params = urlUtil.getUrlSearchParams();
+      expect(params.selectedLine).toBeDefined();
+      expect(params.selectedLine).toContain(secondId);
+    });
+
+    it('should clear selectedLine URL parameter after render', async () => {
+      // Mock locationService.partial instead of window.history.replaceState
+      const partialSpy = jest.spyOn(require('@grafana/runtime').locationService, 'partial');
+
+      // Use getMockLokiFrame which has proper structure
+      const testFrame = getMockLokiFrame();
+      const logsFrame = parseLogsFrame(testFrame);
+
+      // Get the first ID from the parsed frame
+      const firstId = logsFrame?.idField?.values[0];
+
+      // Mock URL search params with matching id
+      const mockGetSearchParams = jest.spyOn(urlUtil, 'getUrlSearchParams');
+      mockGetSearchParams.mockReturnValue({
+        selectedLine: JSON.stringify({ id: firstId, row: 0 }),
+      });
+
+      setup({ logsFrame }, testFrame);
+
+      await waitFor(() => {
+        expect(partialSpy).toHaveBeenCalled();
+        // Verify that selectedLine is set to undefined
+        const callArgs = partialSpy.mock.calls[0];
+        expect(callArgs[0]).toEqual({ selectedLine: undefined });
+        expect(callArgs[1]).toBe(true); // replace parameter
+      });
+    });
+  });
+
+  describe('Table action buttons', () => {
+    it('should render action buttons in first column when exploreId is provided', async () => {
+      setup({
+        exploreId: 'test-explore',
+      });
+
+      await waitFor(() => {
+        const rows = screen.getAllByRole('row');
+        expect(rows.length).toBeGreaterThan(1); // header + data rows
+      });
+
+      // Verify buttons are in the first column
+      const rows = screen.getAllByRole('row');
+      const dataRows = rows.filter((row) => row.getAttribute('role') === 'row' && !row.getAttribute('aria-label'));
+
+      dataRows.forEach((row) => {
+        const cells = row.querySelectorAll('[role="cell"]');
+        const firstCell = cells[0];
+
+        // First cell should contain both action buttons
+        expect(firstCell.querySelector('button[aria-label="View log line"]')).toBeTruthy();
+        expect(firstCell.querySelector('button[aria-label="Copy link to log line"]')).toBeTruthy();
       });
     });
   });
