@@ -523,3 +523,17 @@ const addISODateTransformation: CustomTransformOperator = () => (source: Observa
     })
   );
 };
+
+/**
+ * Get the start and end timestamps from series.
+ */
+export function getLogsVisibleRange(logs: LogRowModel[]) {
+  let start = 0;
+  let end = 0;
+  if (logs.length > 1) {
+    const values = [logs[0].timeEpochMs, logs[logs.length - 1].timeEpochMs].sort();
+    start = values[0];
+    end = values[values.length - 1];
+  }
+  return { end, start };
+}
