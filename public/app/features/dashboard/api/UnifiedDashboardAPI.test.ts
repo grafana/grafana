@@ -58,7 +58,7 @@ describe('UnifiedDashboardAPI', () => {
       const result = await api.getDashboardDTO('123');
 
       expect(result).toBe(mockResponse);
-      expect(v1Client.getDashboardDTO).toHaveBeenCalledWith('123');
+      expect(v1Client.getDashboardDTO).toHaveBeenCalledWith('123', undefined);
       expect(v2Client.getDashboardDTO).not.toHaveBeenCalled();
     });
 
