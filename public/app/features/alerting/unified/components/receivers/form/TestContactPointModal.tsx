@@ -4,13 +4,15 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Label, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Label, Modal, RadioButtonGroup, Text, useStyles2 } from '@grafana/ui';
 import { Receiver, TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
 import { Annotations, Labels } from 'app/types/unified-alerting-dto';
 
 import { useTestIntegrationMutation } from '../../../api/receiversApi';
+import { GrafanaChannelValues } from '../../../types/receiver-form';
 import { defaultAnnotations } from '../../../utils/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
+import { hasPlaceholderEmail } from '../../../utils/receiver-form';
 import AnnotationsStep from '../../rule-editor/AnnotationsStep';
 import LabelsField from '../../rule-editor/labels/LabelsField';
 
@@ -19,6 +21,7 @@ interface Props {
   onDismiss: () => void;
   alertManagerSourceName: string;
   receivers: Receiver[];
+  channelValues?: GrafanaChannelValues;
 }
 
 type AnnoField = {
@@ -43,15 +46,23 @@ const defaultValues: FormFields = {
   labels: [{ key: '', value: '' }],
 };
 
-export const TestContactPointModal = ({ isOpen, onDismiss, alertManagerSourceName, receivers }: Props) => {
+export const TestContactPointModal = ({
+  isOpen,
+  onDismiss,
+  alertManagerSourceName,
+  receivers,
+  channelValues,
+}: Props) => {
   const [notificationType, setNotificationType] = useState<NotificationType>(NotificationType.predefined);
   const styles = useStyles2(getStyles);
   const formMethods = useForm<FormFields>({ defaultValues, mode: 'onBlur' });
   const [testIntegration, { isLoading, error, isSuccess }] = useTestIntegrationMutation();
 
+  // Check if email integration has placeholder addresses
+  const isPlaceholderEmail = hasPlaceholderEmail(channelValues);
+
   const onSubmit = async (data: FormFields) => {
     let alert: TestReceiversAlert | undefined;
-
     if (notificationType === NotificationType.custom) {
       alert = {
         annotations: data.annotations
@@ -93,6 +104,22 @@ export const TestContactPointModal = ({ isOpen, onDismiss, alertManagerSourceNam
         />
       )}
 
+      {isPlaceholderEmail && (
+        <div className={styles.section}>
+          <Alert
+            title={t(
+              'alerting.test-contact-point-modal.placeholder-warning-title',
+              'Configure a valid email address'
+            )}
+            severity="info"
+          >
+            <Trans i18nKey="alerting.test-contact-point-modal.placeholder-warning-body">
+              This contact point is using a placeholder email address (<Text variant="code">example@email.com</Text>).
+              Please update it with a valid email address before testing.
+            </Trans>
+          </Alert>
+        </div>
+      )}
       <div className={styles.section}>
         <Label>
           <Trans i18nKey="alerting.test-contact-point-modal.notification-message">Notification message</Trans>
@@ -132,7 +159,18 @@ export const TestContactPointModal = ({ isOpen, onDismiss, alertManagerSourceNam
           )}
 
           <Modal.ButtonRow>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={isLoading || isPlaceholderEmail}
+              tooltip={
+                isPlaceholderEmail
+                  ? t(
+                      'alerting.test-contact-point-modal.test-disabled-placeholder',
+                      'Please configure a valid email address before testing'
+                    )
+                  : undefined
+              }
+            >
               <Trans i18nKey="alerting.test-contact-point-modal.send-test-notification">Send test notification</Trans>
             </Button>
           </Modal.ButtonRow>

@@ -74,6 +74,11 @@ func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, ms
 	))
 	defer span.End()
 
+	// Skip sending if there are no recipients
+	if len(msg.To) == 0 {
+		return nil
+	}
+
 	m := sc.buildEmail(ctx, msg)
 
 	err := dialer.DialAndSend(m)
