@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -90,6 +91,7 @@ func ProvideFolderPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
 	license licensing.Licensing, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	restConfigProvider apiserver.RestConfigProvider,
 ) (*FolderPermissionsService, error) {
 	if err := registerFolderRoles(cfg, features, service); err != nil {
 		return nil, err
@@ -139,9 +141,10 @@ func ProvideFolderPermissions(
 			"Edit":  append(getDashboardEditActions(features), FolderEditActions...),
 			"Admin": append(getDashboardAdminActions(features), FolderAdminActions...),
 		},
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Folders",
+		ReaderRoleName:     "Permission reader",
+		WriterRoleName:     "Permission writer",
+		RoleGroup:          "Folders",
+		RestConfigProvider: restConfigProvider,
 	}
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, actionSetService)
 	if err != nil {
