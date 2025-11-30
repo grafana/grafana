@@ -55,6 +55,8 @@ func migrateV0Dashboard(ctx context.Context, dashboardObject map[string]interfac
 // in order to be able to convert between k8s versions (so that we have a guaranteed structure to convert between)
 func ConvertDashboard_V0_to_V1beta1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv1.APIVERSION
+	out.Kind = in.Kind
 
 	out.Spec.Object = in.Spec.Object
 

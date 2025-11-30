@@ -193,32 +193,49 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   });
 }
 
+/**
+ * Get panel-level datasource for a v2beta1 panel.
+ *
+ * In v2beta1 schema, there's NO panel-level datasource concept - each query has its own.
+ * However, we still need to set panel-level datasource to "mixed" when queries use
+ * different datasources, so the Scene can properly handle mixed datasource mode.
+ *
+ * This function returns:
+ * - Mixed datasource if queries use different datasources
+ * - undefined otherwise (each query has its own datasource)
+ *
+ * This ensures v2→Scene→v1 conversion produces the same output as the Go backend,
+ * which does NOT add panel-level datasource for non-mixed panels.
+ */
 function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   if (!panel.spec.data?.spec.queries?.length) {
     return undefined;
   }
 
-  let datasource: DataSourceRef | undefined = undefined;
+  let firstDatasource: DataSourceRef | undefined = undefined;
   let isMixedDatasource = false;
 
   panel.spec.data.spec.queries.forEach((query) => {
-    if (!datasource) {
-      if (!query.spec.query.datasource?.name) {
-        datasource = getRuntimePanelDataSource(query.spec.query);
-      } else {
-        datasource = {
-          uid: query.spec.query.datasource?.name,
-          type: query.spec.query.group,
-        };
-      }
-    } else if (datasource.uid !== query.spec.query.datasource?.name || datasource.type !== query.spec.query.group) {
+    const queryDs = query.spec.query.datasource?.name
+      ? { uid: query.spec.query.datasource.name, type: query.spec.query.group }
+      : getRuntimePanelDataSource(query.spec.query);
+
+    if (!firstDatasource) {
+      firstDatasource = queryDs;
+    } else if (firstDatasource.uid !== queryDs?.uid || firstDatasource.type !== queryDs?.type) {
       isMixedDatasource = true;
     }
   });
 
-  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : datasource;
+  // Only return mixed datasource - for non-mixed panels, each query already has its own datasource
+  // This matches the Go backend behavior which doesn't add panel.datasource for non-mixed panels
+  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
 }
 
+/**
+ * Get runtime datasource for a query variable.
+ * @param variable - The query variable
+ */
 export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
   const ds: DataSourceRef = {
     uid: variable.spec.query.datasource?.name,
@@ -227,6 +244,10 @@ export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataS
   return getDataSourceForQuery(ds, variable.spec.query.group);
 }
 
+/**
+ * Get runtime datasource for a panel query.
+ * @param query - The data query
+ */
 export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef | undefined {
   const ds: DataSourceRef = {
     uid: query.datasource?.name,
@@ -236,11 +257,15 @@ export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef |
 }
 
 /**
+ * Resolves a datasource reference for a query.
  * @param querySpecDS - The datasource specified in the query
- * @param queryKind - The kind of query being performed
+ * @param queryKind - The kind of query being performed (datasource type)
  * @returns The resolved DataSourceRef
  */
-export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | null, queryKind: string): DataSourceRef {
+export function getDataSourceForQuery(
+  querySpecDS: DataSourceRef | undefined | null,
+  queryKind: string
+): DataSourceRef | undefined {
   // If datasource is specified and has a uid, use it
   if (querySpecDS?.uid) {
     return querySpecDS;
@@ -292,11 +317,15 @@ export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | n
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
+  // Only add datasource if the query has an explicit datasource.name reference.
+  // This matches the Go backend behavior which only outputs datasource when present in input.
+  // Having just a group (datasource type) without a name shouldn't add a resolved datasource.
+  const hasExplicitDatasource = Boolean(query.spec.query.datasource?.name);
+
   return {
     refId: query.spec.refId,
     hide: query.spec.hidden,
-    // If the query has no group, it means it's a default empty query, so we don't need to set a datasource
-    ...(!query.spec.query.group ? {} : { datasource: getRuntimePanelDataSource(query.spec.query) }),
+    ...(hasExplicitDatasource ? { datasource: getRuntimePanelDataSource(query.spec.query) } : {}),
     ...query.spec.query.spec,
   };
 }

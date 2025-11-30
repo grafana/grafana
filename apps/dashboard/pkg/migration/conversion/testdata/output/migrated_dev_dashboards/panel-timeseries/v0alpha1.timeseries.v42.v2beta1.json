@@ -1,0 +1,4449 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "metadata": {
+    "name": "v0alpha1.timeseries.v42"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "",
+            "version": "v0",
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-19": {
+        "kind": "Panel",
+        "spec": {
+          "id": 19,
+          "title": "Single mode",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.2.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 10,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "color": {
+                        "mode": "palette-classic"
+                      },
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 5,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-20": {
+        "kind": "Panel",
+        "spec": {
+          "id": 20,
+          "title": "Multi mode",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.2.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "multi"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 10,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "color": {
+                        "mode": "palette-classic"
+                      },
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 5,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-21": {
+        "kind": "Panel",
+        "spec": {
+          "id": 21,
+          "title": "No tooltip",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.2.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 10,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "color": {
+                        "mode": "palette-classic"
+                      },
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 5,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-31": {
+        "kind": "Panel",
+        "spec": {
+          "id": 31,
+          "title": "Table",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "random_walk",
+                        "seriesCount": 8,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 200
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.2.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": true,
+                  "displayMode": "table",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "celsius",
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 40
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.2
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 5,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "B-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "fahrenheit"
+                      },
+                      {
+                        "id": "custom.axis.side",
+                        "value": 1
+                      },
+                      {
+                        "id": "custom.line.show",
+                        "value": true
+                      },
+                      {
+                        "id": "custom.axis.width",
+                        "value": 40
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-32": {
+        "kind": "Panel",
+        "spec": {
+          "id": 32,
+          "title": "List",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 100
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.2.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "celsius",
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 40
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.2
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 10,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 5,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "B-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "fahrenheit"
+                      },
+                      {
+                        "id": "custom.axis.side",
+                        "value": 1
+                      },
+                      {
+                        "id": "custom.line.show",
+                        "value": true
+                      },
+                      {
+                        "id": "custom.axis.width",
+                        "value": 40
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-35": {
+        "kind": "Panel",
+        "spec": {
+          "id": 35,
+          "title": "List legend to the right ",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "random_walk",
+                        "seriesCount": 3,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 100
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.2.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": false,
+                  "placement": "right",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "celsius",
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 40
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.2
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 10,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 5,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "B-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "fahrenheit"
+                      },
+                      {
+                        "id": "custom.axis.side",
+                        "value": 1
+                      },
+                      {
+                        "id": "custom.line.show",
+                        "value": true
+                      },
+                      {
+                        "id": "custom.axis.width",
+                        "value": 40
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-46": {
+        "kind": "Panel",
+        "spec": {
+          "id": 46,
+          "title": "React NG graph",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "E",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "annotations",
+                        "stringInput": ""
+                      }
+                    },
+                    "refId": "F",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 10,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "color": {
+                        "mode": "palette-classic"
+                      },
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-47": {
+        "kind": "Panel",
+        "spec": {
+          "id": 47,
+          "title": "Lines 500 data points",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "random_walk",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 500
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-48": {
+        "kind": "Panel",
+        "spec": {
+          "id": 48,
+          "title": "10 data points, points auto",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 20
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 8,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-51": {
+        "kind": "Panel",
+        "spec": {
+          "id": 51,
+          "title": "Table to the right",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "random_walk",
+                        "seriesCount": 8,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 200
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.2.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": true,
+                  "displayMode": "table",
+                  "isVisible": true,
+                  "placement": "right",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "celsius",
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 40
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.2
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 5,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "B-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "fahrenheit"
+                      },
+                      {
+                        "id": "custom.axis.side",
+                        "value": 1
+                      },
+                      {
+                        "id": "custom.line.show",
+                        "value": true
+                      },
+                      {
+                        "id": "custom.axis.width",
+                        "value": 40
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-52": {
+        "kind": "Panel",
+        "spec": {
+          "id": 52,
+          "title": "Interpolation: linear",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 10
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-53": {
+        "kind": "Panel",
+        "spec": {
+          "id": 53,
+          "title": "Interpolation: Smooth",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 10
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-54": {
+        "kind": "Panel",
+        "spec": {
+          "id": 54,
+          "title": "Interpolation: Step before",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 10
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "stepBefore",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-55": {
+        "kind": "Panel",
+        "spec": {
+          "id": 55,
+          "title": "20 data points, points never",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 20
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "never",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-56": {
+        "kind": "Panel",
+        "spec": {
+          "id": 56,
+          "title": "20 data points, points always",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "random_walk",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 90
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "always",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-57": {
+        "kind": "Panel",
+        "spec": {
+          "id": 57,
+          "title": "Interpolation: Step after",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 10
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "stepAfter",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-60": {
+        "kind": "Panel",
+        "spec": {
+          "id": 60,
+          "title": "Dashed lines",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "10,10"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "9,9"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "8,8"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "7,7"
+                      }
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "6,6"
+                      }
+                    },
+                    "refId": "E",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "5,5"
+                      }
+                    },
+                    "refId": "F",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.2.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "color": {
+                        "mode": "palette-classic"
+                      },
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineStyle": {
+                      "dash": [
+                        10,
+                        10
+                      ],
+                      "fill": "dash"
+                    },
+                    "lineWidth": 2,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 5,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "B-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            10,
+                            20
+                          ],
+                          "fill": "dash"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "C-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            10,
+                            30
+                          ],
+                          "fill": "dash"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "D-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            30,
+                            3,
+                            3
+                          ],
+                          "fill": "dash"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "E-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "F-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            0,
+                            10
+                          ],
+                          "fill": "dot"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-63": {
+        "kind": "Panel",
+        "spec": {
+          "id": 63,
+          "title": "Bars: no fill",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 10
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "bars",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-64": {
+        "kind": "Panel",
+        "spec": {
+          "id": 64,
+          "title": "Bars: Fill + hue gradient",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 10
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "bars",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": "hue",
+                    "fillOpacity": 100,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 0,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-65": {
+        "kind": "Panel",
+        "spec": {
+          "id": 65,
+          "title": "Points: Size 10",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 10
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "points",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": "hue",
+                    "fillOpacity": 100,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 0,
+                    "nullValues": "null",
+                    "pointSize": 10,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-66": {
+        "kind": "Panel",
+        "spec": {
+          "id": 66,
+          "title": "Points: size 4",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "random_walk",
+                        "seriesCount": 1,
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "1,20,50,30,5,0,20,40,90,50"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 100
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "points",
+                    "fill": {
+                      "alpha": 0.1
+                    },
+                    "fillGradient": "hue",
+                    "fillOpacity": 100,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 0,
+                    "nullValues": "null",
+                    "pointSize": 4,
+                    "points": {
+                      "radius": 4,
+                      "show": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-68": {
+        "kind": "Panel",
+        "spec": {
+          "id": 68,
+          "title": "Y-Axis with value mapping",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "csv_metric_values",
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": "0,1,2,1,0,1,1,0,2,1,01,1,1,0,0,0"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.4.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "max": 2,
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "0": {
+                          "text": "Normal"
+                        },
+                        "1": {
+                          "text": "Warning"
+                        },
+                        "2": {
+                          "text": "Critical"
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "drawStyle": "line",
+                    "fillGradient": "hue",
+                    "fillOpacity": 62,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "lineInterpolation": "stepBefore",
+                    "lineWidth": 1,
+                    "pointSize": 6,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "never",
+                    "spanNulls": true
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "A-series"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-70": {
+        "kind": "Panel",
+        "spec": {
+          "id": 70,
+          "title": "Fill below to",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "csvWave": {
+                          "timeStep": 60,
+                          "valuesCSV": "0,0,2,2,1,1"
+                        },
+                        "lines": 10,
+                        "points": [],
+                        "pulseWave": {
+                          "offCount": 3,
+                          "offValue": 1,
+                          "onCount": 3,
+                          "onValue": 2,
+                          "timeStep": 60
+                        },
+                        "scenarioId": "random_walk_table",
+                        "stream": {
+                          "bands": 1,
+                          "noise": 2.2,
+                          "speed": 250,
+                          "spread": 3.5,
+                          "type": "signal"
+                        },
+                        "stringInput": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 100
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.4.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "right",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "drawStyle": "line",
+                    "fillGradient": "hue",
+                    "fillOpacity": 0,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "pointSize": 6,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "never",
+                    "spanNulls": true
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Max"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.fillBelowTo",
+                        "value": "Min"
+                      },
+                      {
+                        "id": "custom.lineWidth",
+                        "value": 0
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Min"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineWidth",
+                        "value": 0
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Value"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "blue",
+                          "mode": "fixed"
+                        }
+                      },
+                      {
+                        "id": "custom.fillOpacity",
+                        "value": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Diff number of datapoints and multi series tooltip",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "1,20,90,30,5,0"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "10,25,40"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "7.2.0-pre",
+            "spec": {
+              "options": {
+                "legend": {
+                  "asTable": false,
+                  "displayMode": "list",
+                  "isVisible": true,
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "mode": "multi"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "celsius",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axis": {
+                      "grid": true,
+                      "label": "Temperature",
+                      "side": 3,
+                      "width": 60
+                    },
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "bars": {
+                      "show": false
+                    },
+                    "drawStyle": "line",
+                    "fill": {
+                      "alpha": 0
+                    },
+                    "fillGradient": {
+                      "label": "None"
+                    },
+                    "fillOpacity": 10,
+                    "hideFrom": {
+                      "graph": false,
+                      "legend": false,
+                      "tooltip": false
+                    },
+                    "line": {
+                      "color": {
+                        "mode": "palette-classic"
+                      },
+                      "show": true,
+                      "width": 1
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "nullValues": "null",
+                    "pointSize": 5,
+                    "points": {
+                      "radius": 8,
+                      "show": true
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "RowsLayout",
+      "spec": {
+        "rows": [
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Lines",
+              "collapse": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-47"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 6,
+                        "y": 0,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-48"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-55"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 18,
+                        "y": 0,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-56"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 6,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-52"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 6,
+                        "y": 6,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-53"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 6,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-54"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 18,
+                        "y": 6,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-57"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 12,
+                        "width": 12,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-60"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 12,
+                        "width": 12,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-70"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Bars and points",
+              "collapse": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-63"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 6,
+                        "y": 0,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-64"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-65"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 18,
+                        "y": 0,
+                        "width": 6,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-66"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Legend rendering",
+              "collapse": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 6,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-32"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 6,
+                        "y": 0,
+                        "width": 6,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-35"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 6,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-31"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 18,
+                        "y": 0,
+                        "width": 6,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-51"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Tooltip",
+              "collapse": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 6,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-19"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 6,
+                        "y": 0,
+                        "width": 6,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-20"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 6,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-21"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 18,
+                        "y": 0,
+                        "width": 6,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-9"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Annotations",
+              "collapse": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-46"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-68"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [
+      {
+        "title": "Graph Tests",
+        "type": "dashboards",
+        "icon": "external link",
+        "tooltip": "",
+        "tags": [
+          "gdev",
+          "graph-ng"
+        ],
+        "asDropdown": true,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": false
+      }
+    ],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "gdev",
+      "panel-tests",
+      "graph-ng"
+    ],
+    "timeSettings": {
+      "timezone": "",
+      "from": "now-30m",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Panel Tests - Graph NG",
+    "variables": []
+  },
+  "status": {}
+}

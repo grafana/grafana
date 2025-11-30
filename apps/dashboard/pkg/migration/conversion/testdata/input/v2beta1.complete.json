@@ -271,7 +271,7 @@
           },
           "label": "Prometheus Query",
           "hide": "dontHide",
-          "refresh": "time",
+          "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "description": "Shows all up metrics",
           "query": {

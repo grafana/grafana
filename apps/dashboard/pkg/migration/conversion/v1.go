@@ -13,6 +13,8 @@ import (
 
 func Convert_V1beta1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv0.APIVERSION
+	out.Kind = in.Kind
 
 	out.Spec.Object = in.Spec.Object
 

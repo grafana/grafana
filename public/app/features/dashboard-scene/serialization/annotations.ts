@@ -38,7 +38,7 @@ export function transformV1ToV2AnnotationQuery(
   const result: AnnotationQueryKind = {
     kind: 'AnnotationQuery',
     spec: {
-      builtIn: Boolean(annotation.builtIn),
+      ...(annotation.builtIn !== undefined ? { builtIn: annotation.builtIn === 1 || Boolean(annotation.builtIn) } : {}),
       name: annotation.name ?? defaultAnnotationQuerySpec().name,
       enable: Boolean(override?.enable) || Boolean(annotation.enable),
       hide: Boolean(override?.hide) || Boolean(annotation.hide),
@@ -103,6 +103,7 @@ export function transformV2ToV1AnnotationQuery(annotation: AnnotationQueryKind):
     };
   }
 
+  // Only include builtIn if it's true (outputs 1), otherwise omit it
   if (annotation.spec.builtIn) {
     annoQuerySpec.type = 'dashboard';
     annoQuerySpec.builtIn = 1;

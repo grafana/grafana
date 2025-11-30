@@ -20,10 +20,15 @@
           "annotations": [],
           "cursorSync": "",
           "elements": {},
-          "layout": null,
+          "layout": {
+            "kind": "RowsLayout",
+            "spec": {
+              "rows": []
+            }
+          },
           "links": [],
           "preload": false,
-          "tags": null,
+          "tags": [],
           "timeSettings": {
             "from": "",
             "to": "",
