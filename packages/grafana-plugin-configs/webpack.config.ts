@@ -312,6 +312,7 @@ const config = async (env: Env): Promise<Configuration> => {
 
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
+      conditionNames: ['@grafana-app/source', '...'],
       unsafeCache: true,
     },
 
