@@ -14,24 +14,57 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.FindScopeDashboardBindingsResults": schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.FindScopeNavigationsResults":       schema_pkg_apis_scope_v0alpha1_FindScopeNavigationsResults(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.FindScopeNodeChildrenResults":      schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.Scope":                             schema_pkg_apis_scope_v0alpha1_Scope(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBinding":             schema_pkg_apis_scope_v0alpha1_ScopeDashboardBinding(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingList":         schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingList(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingSpec":         schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingStatus":       schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeFilter":                       schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeList":                         schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigation":                   schema_pkg_apis_scope_v0alpha1_ScopeNavigation(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationList":               schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationSpec":               schema_pkg_apis_scope_v0alpha1_ScopeNavigationSpec(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationStatus":             schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNode":                         schema_pkg_apis_scope_v0alpha1_ScopeNode(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNodeList":                     schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNodeSpec":                     schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref),
-		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeSpec":                         schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.FindRedirectToScopedDashboardResults": schema_pkg_apis_scope_v0alpha1_FindRedirectToScopedDashboardResults(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.FindScopeDashboardBindingsResults":    schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.FindScopeNavigationsResults":          schema_pkg_apis_scope_v0alpha1_FindScopeNavigationsResults(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.FindScopeNodeChildrenResults":         schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.Scope":                                schema_pkg_apis_scope_v0alpha1_Scope(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBinding":                schema_pkg_apis_scope_v0alpha1_ScopeDashboardBinding(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingList":            schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingList(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingSpec":            schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingStatus":          schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeFilter":                          schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeList":                            schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigation":                      schema_pkg_apis_scope_v0alpha1_ScopeNavigation(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationList":                  schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationSpec":                  schema_pkg_apis_scope_v0alpha1_ScopeNavigationSpec(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationStatus":                schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNode":                            schema_pkg_apis_scope_v0alpha1_ScopeNode(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNodeList":                        schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNodeSpec":                        schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeSpec":                            schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_FindRedirectToScopedDashboardResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
