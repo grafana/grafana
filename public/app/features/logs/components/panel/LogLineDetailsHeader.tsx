@@ -235,6 +235,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
             tabIndex={0}
           />
         )}
+        <div className={`${styles.divider} ${styles.dividerMargin}`} />
         <IconButton
           name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
           tooltip={
@@ -244,9 +245,11 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
           }
           onClick={toggleDetailsMode}
         />
+        <div className={styles.divider} />
         <IconButton
           name="times"
           tooltip={t('logs.log-line-details.close', 'Close log details')}
+          variant="primary"
           onClick={closeDetails}
         />
       </div>
@@ -280,6 +283,7 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
     display: 'flex',
     gap: theme.spacing(1),
     paddingLeft: theme.spacing(1),
+    alignContent: 'center',
   }),
   copyLogButton: css({
     padding: 0,
@@ -292,5 +296,13 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
+  }),
+  divider: css({
+    width: 1,
+    borderRight: `solid 1px ${theme.colors.border.medium}`,
+    height: theme.spacing(2.25),
+  }),
+  dividerMargin: css({
+    marginRight: theme.spacing(0.5),
   }),
 });
