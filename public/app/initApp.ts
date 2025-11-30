@@ -1,4 +1,4 @@
-// See ./index.ts for why this is in a seperate file
+// See ./index.ts for why this is in a separate file
 
 // Trusted types must be initialised before the rest of the world is imported
 import './core/trustedTypePolicies';
