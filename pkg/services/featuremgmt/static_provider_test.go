@@ -22,7 +22,7 @@ func Test_StaticProvider(t *testing.T) {
 	t.Run("empty config loads standard flags", func(t *testing.T) {
 		setup(t, []byte(``))
 		// Check for one of the standard flags
-		feat, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, stFeatName, !stFeatValue, evalCtx)
+		feat, err := openfeature.NewClient("").BooleanValueDetails(ctx, stFeatName, !stFeatValue, evalCtx)
 		assert.NoError(t, err)
 		assert.True(t, stFeatValue == feat.Value)
 	})
