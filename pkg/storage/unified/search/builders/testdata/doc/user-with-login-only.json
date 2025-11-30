@@ -1,6 +1,6 @@
 {
     "metadata": {
-        "name": "user-with-login-only",
+        "name": "with-login-only",
         "namespace": "default"
     },
     "spec": {

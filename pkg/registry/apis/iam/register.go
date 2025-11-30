@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -42,8 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -68,7 +69,8 @@ func RegisterAPIService(
 	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
-	userService legacyuser.Service,
+	orgService org.Service,
+	tracer trace.Tracer,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -105,8 +107,10 @@ func RegisterAPIService(
 		dual:                        dual,
 		unified:                     unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-			unified, user.NewUserLegacySearchClient(userService), features),
+			unified, user.NewUserLegacySearchClient(orgService), features),
 	}
+	builder.userSearchHandler = user.NewSearchHandler(tracer, builder.userSearchClient, features)
+
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
@@ -469,7 +473,13 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	return b.display.GetAPIRoutes(defs)
+
+	var searchRoutes *builder.APIRoutes
+	if b.userSearchHandler != nil {
+		searchRoutes = b.userSearchHandler.GetAPIRoutes(defs)
+	}
+
+	return mergeAPIRoutes(b.display.GetAPIRoutes(defs), searchRoutes)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -576,4 +586,16 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 
 	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 	return store, err
+}
+
+func mergeAPIRoutes(routes ...*builder.APIRoutes) *builder.APIRoutes {
+	merged := &builder.APIRoutes{}
+	for _, r := range routes {
+		if r == nil {
+			continue
+		}
+		merged.Root = append(merged.Root, r.Root...)
+		merged.Namespace = append(merged.Namespace, r.Namespace...)
+	}
+	return merged
 }
