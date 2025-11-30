@@ -563,3 +563,97 @@ describe('hasSpecialMappedValue', () => {
     expect(hasSpecialMappedValue(field, valueMatch)).toEqual(expected);
   });
 });
+
+describe('prepareTimelineFields with hidden series', () => {
+  it('should return empty warn when all non-time fields are hidden via hideFrom.viz', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'value1',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            config: {
+              custom: {
+                hideFrom: { viz: true },
+              },
+            },
+          },
+          {
+            name: 'value2',
+            type: FieldType.string,
+            values: ['a', 'b', 'c'],
+            config: {
+              custom: {
+                hideFrom: { viz: true },
+              },
+            },
+          },
+        ],
+      }),
+    ];
+
+    const result = prepareTimelineFields(frames, true, { from: 0, to: 100 } as any, {} as any);
+
+    expect(result.warn).toBe('');
+    expect(result.frames).toBeUndefined();
+  });
+
+  it('should return frames when some fields are visible', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'value1',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            config: {
+              custom: {
+                hideFrom: { viz: true },
+              },
+            },
+          },
+          {
+            name: 'value2',
+            type: FieldType.string,
+            values: ['a', 'b', 'c'],
+            config: {
+              custom: {
+                hideFrom: { viz: false },
+              },
+            },
+          },
+        ],
+      }),
+    ];
+
+    const result = prepareTimelineFields(frames, true, { from: 0, to: 100 } as any, {} as any);
+
+    expect(result.warn).toBeUndefined();
+    expect(result.frames).toBeDefined();
+    expect(result.frames).toHaveLength(1);
+  });
+
+  it('should return frames when fields have no hideFrom config', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'value1',
+            type: FieldType.number,
+            values: [10, 20, 30],
+          },
+        ],
+      }),
+    ];
+
+    const result = prepareTimelineFields(frames, true, { from: 0, to: 100 } as any, {} as any);
+
+    expect(result.warn).toBeUndefined();
+    expect(result.frames).toBeDefined();
+    expect(result.frames).toHaveLength(1);
+  });
+});
