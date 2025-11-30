@@ -61,7 +61,7 @@ interface State {
 
 class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
   subscription?: Unsubscribable;
-  ref: RefObject<HTMLDivElement>;
+  ref: RefObject<HTMLDivElement | null>;
 
   constructor(props: TransformationsEditorProps) {
     super(props);

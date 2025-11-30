@@ -4,7 +4,7 @@
   "private": true,
   "version": "12.4.0-pre",
   "dependencies": {
-    "react": "18.3.1",
+    "react": "19.2.0",
     "terser-webpack-plugin": "5.3.14",
     "tslib": "2.8.1"
   },
@@ -15,7 +15,7 @@
     "@swc/helpers": "^0.5.0",
     "@swc/jest": "^0.2.26",
     "@types/eslint": "9.6.1",
-    "@types/react": "18.3.18",
+    "@types/react": "19.2.7",
     "@types/webpack-bundle-analyzer": "^4.7.0",
     "copy-webpack-plugin": "13.0.0",
     "eslint": "9.32.0",

@@ -212,7 +212,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
         <div className="slate-query-field" data-testid={selectors.components.QueryField.container}>
           <Editor
             ref={(editor) => {
-              this.editor = editor!;
+              this.editor = editor;
             }}
             schema={SCHEMA}
             autoCorrect={false}

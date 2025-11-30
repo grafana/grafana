@@ -74,7 +74,7 @@ export const ExplorePaneContainer = connector(ExplorePaneContainerUnconnected);
 
 function useStopQueries(exploreId: string) {
   const paneSelector = useMemo(() => getExploreItemSelector(exploreId), [exploreId]);
-  const paneRef = useRef<ReturnType<typeof paneSelector>>();
+  const paneRef = useRef<ReturnType<typeof paneSelector>>(null);
   paneRef.current = useSelector(paneSelector);
 
   useEffect(() => {
