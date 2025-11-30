@@ -390,7 +390,7 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
     panels: [],
   };
 
-  if (gridRow.state.$behaviors?.length) {
+  if (gridRow.state.$behaviors?.length && !isSnapshot) {
     const behavior = gridRow.state.$behaviors[0];
     if (behavior instanceof RowRepeaterBehavior) {
       rowPanel.repeat = behavior.state.variableName;
