@@ -782,7 +782,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	}
 
 	var res *authzv1.ListResponse
-	if strings.HasPrefix(req.Action, "folders:") {
+	if strings.HasPrefix(req.Action, "folders:") || strings.HasPrefix(req.Action, "folders.permissions:") {
 		res = buildFolderList(scopeMap, tree)
 	} else {
 		res = buildItemList(scopeMap, tree, t.Prefix())
