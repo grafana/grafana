@@ -1233,7 +1233,8 @@
     },
     "file-export-preview": {
       "copy-code": "Copy code",
-      "download": "Download"
+      "download": "Download",
+      "label-decrypt-values": "Show secret values"
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
@@ -1436,9 +1437,6 @@
       "text-loading": "Loading...."
     },
     "grafana-policies-exporter-preview": {
-      "text-loading": "Loading...."
-    },
-    "grafana-receiver-export-preview": {
       "text-loading": "Loading...."
     },
     "grafana-receiver-form": {
