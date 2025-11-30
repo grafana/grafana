@@ -91,7 +91,7 @@ describe('Selector', () => {
   it('Should initializae values from the URL', async () => {
     const mockLocation = {
       pathname: '/dashboard',
-      search: '?scopes=grafana&scope_parent=applications',
+      search: '?scopes=grafana',
       hash: '',
       key: 'test',
       state: null,

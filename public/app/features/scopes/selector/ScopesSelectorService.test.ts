@@ -156,12 +156,12 @@ describe('ScopesSelectorService', () => {
       sub.unsubscribe();
     });
 
-    it('should set parent node for recent scopes', async () => {
+    it('should set parent node for recent scopes when scopeNodeId is provided', async () => {
       // Load mock node
       await service.filterNode('', '');
 
-      await service.changeScopes(['test-scope'], 'test-scope-node');
-      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope', parentNodeId: 'test-scope-node' }]);
+      await service.changeScopes(['test-scope'], undefined, 'test-scope-node');
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope', scopeNodeId: 'test-scope-node' }]);
       expect(service.state.nodes).toEqual({ 'test-scope-node': mockNode });
       expect(storeValue[RECENT_SCOPES_KEY]).toEqual(JSON.stringify([[{ ...mockScope, parentNode: mockNode }]]));
     });
@@ -171,23 +171,23 @@ describe('ScopesSelectorService', () => {
 
       expect(service.state.appliedScopes).toEqual([
         { scopeId: 'test-scope', scopeNodeId: 'scope-node-1', parentNodeId: 'parent-node' },
-        { scopeId: 'test-scope-2', scopeNodeId: undefined, parentNodeId: 'parent-node' },
+        { scopeId: 'test-scope-2', scopeNodeId: undefined, parentNodeId: undefined },
       ]);
     });
 
-    it('should handle scopeNodeId without parentNodeId', async () => {
-      await service.changeScopes(['test-scope'], undefined, 'scope-node-1');
-
-      expect(service.state.appliedScopes).toEqual([
-        { scopeId: 'test-scope', scopeNodeId: 'scope-node-1', parentNodeId: undefined },
-      ]);
-    });
-
-    it('should maintain backward compatibility when only parentNodeId is provided', async () => {
+    it('should handle explicit parentNodeId for recent scopes', async () => {
       await service.changeScopes(['test-scope'], 'parent-node');
 
       expect(service.state.appliedScopes).toEqual([
         { scopeId: 'test-scope', scopeNodeId: undefined, parentNodeId: 'parent-node' },
+      ]);
+    });
+
+    it('should handle both scopeNodeId and parentNodeId', async () => {
+      await service.changeScopes(['test-scope'], 'parent-node', 'scope-node');
+
+      expect(service.state.appliedScopes).toEqual([
+        { scopeId: 'test-scope', scopeNodeId: 'scope-node', parentNodeId: 'parent-node' },
       ]);
     });
   });
@@ -196,6 +196,165 @@ describe('ScopesSelectorService', () => {
     it('should open the selector and load root nodes if not loaded', async () => {
       await service.open();
       expect(service.state.opened).toBe(true);
+    });
+
+    it('should use scopeNodeId to resolve path when opening selector', async () => {
+      const parentNode: ScopeNode = {
+        metadata: { name: 'parent-container' },
+        spec: {
+          linkId: '',
+          linkType: 'scope',
+          parentName: '',
+          nodeType: 'container',
+          title: 'Parent Container',
+        },
+      };
+
+      const childNode: ScopeNode = {
+        metadata: { name: 'child-1' },
+        spec: {
+          linkId: 'scope-1',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'leaf',
+          title: 'Child 1',
+        },
+      };
+
+      // Mock API responses
+      apiClient.fetchNodes.mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+        if (options.parent === '') {
+          return Promise.resolve([parentNode]);
+        } else if (options.parent === 'parent-container') {
+          return Promise.resolve([childNode]);
+        }
+        return Promise.resolve([]);
+      });
+
+      // Apply scope with scopeNodeId and parentNodeId set
+      await service.changeScopes(['scope-1'], 'parent-container', 'child-1');
+
+      // Open the selector
+      await service.open();
+
+      // Verify the tree is expanded to the selected scope's parent
+      // The key fix: it should resolve path using scopeNodeId (child-1), not parentNodeId
+      expect(service.state.tree?.expanded).toBe(true);
+      expect(service.state.tree?.children?.['parent-container']?.expanded).toBe(true);
+      expect(service.state.tree?.children?.['parent-container']?.children?.['child-1']).toBeDefined();
+    });
+
+    it('should load parent node children when opening to selected scope', async () => {
+      const parentNode: ScopeNode = {
+        metadata: { name: 'parent-container' },
+        spec: {
+          linkId: '',
+          linkType: 'scope',
+          parentName: '',
+          nodeType: 'container',
+          title: 'Parent Container',
+        },
+      };
+
+      const childNode1: ScopeNode = {
+        metadata: { name: 'child-1' },
+        spec: {
+          linkId: 'scope-1',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'leaf',
+          title: 'Child 1',
+        },
+      };
+
+      const childNode2: ScopeNode = {
+        metadata: { name: 'child-2' },
+        spec: {
+          linkId: 'scope-2',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'leaf',
+          title: 'Child 2',
+        },
+      };
+
+      const childNode3: ScopeNode = {
+        metadata: { name: 'child-3' },
+        spec: {
+          linkId: 'scope-3',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'leaf',
+          title: 'Child 3',
+        },
+      };
+
+      // Mock API responses
+      apiClient.fetchNodes.mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+        if (options.parent === '') {
+          return Promise.resolve([parentNode]);
+        } else if (options.parent === 'parent-container') {
+          return Promise.resolve([childNode1, childNode2, childNode3]);
+        }
+        return Promise.resolve([]);
+      });
+
+      await service.changeScopes(['scope-2'], 'parent-container', 'child-2');
+      await service.open();
+
+      // Verify all sibling nodes are loaded (not just the selected one)
+      expect(service.state.tree?.children?.['parent-container']?.children?.['child-1']).toBeDefined();
+      expect(service.state.tree?.children?.['parent-container']?.children?.['child-2']).toBeDefined();
+      expect(service.state.tree?.children?.['parent-container']?.children?.['child-3']).toBeDefined();
+
+      // Verify childrenLoaded flag is set on the parent
+      expect(service.state.tree?.children?.['parent-container']?.childrenLoaded).toBe(true);
+    });
+
+    it('should only load children if childrenLoaded is false', async () => {
+      const parentNode: ScopeNode = {
+        metadata: { name: 'parent-container' },
+        spec: {
+          linkId: '',
+          linkType: 'scope',
+          parentName: '',
+          nodeType: 'container',
+          title: 'Parent Container',
+        },
+      };
+
+      const childNode: ScopeNode = {
+        metadata: { name: 'child-1' },
+        spec: {
+          linkId: 'scope-1',
+          linkType: 'scope',
+          parentName: 'parent-container',
+          nodeType: 'leaf',
+          title: 'Child 1',
+        },
+      };
+
+      apiClient.fetchNodes.mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+        if (options.parent === '') {
+          return Promise.resolve([parentNode]);
+        } else if (options.parent === 'parent-container') {
+          return Promise.resolve([childNode]);
+        }
+        return Promise.resolve([]);
+      });
+
+      await service.changeScopes(['scope-1'], 'parent-container', 'child-1');
+
+      // First open
+      await service.open();
+
+      // Close and open again
+      service.closeAndReset();
+      await service.open();
+
+      // The key: childrenLoaded flag should prevent redundant fetches
+      // Verify the flag is set correctly
+      expect(service.state.tree?.children?.['parent-container']?.childrenLoaded).toBe(true);
     });
   });
 

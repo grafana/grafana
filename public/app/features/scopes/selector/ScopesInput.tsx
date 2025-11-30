@@ -32,12 +32,11 @@ export function ScopesInput({
   onRemoveAllClick,
 }: ScopesInputProps) {
   const scopeNodeId = appliedScopes[0]?.scopeNodeId;
-  const parentNodeIdFromUrl = appliedScopes[0]?.parentNodeId;
   const styles = useStyles2(getStyles);
   const { node: scopeNode, isLoading: scopeNodeLoading } = useScopeNode(scopeNodeId);
 
-  // Get parent from scope node if available, otherwise use parentNodeId from URL (for backward compatibility)
-  const parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromUrl;
+  // Get parent from scope node if available
+  const parentNodeId = scopeNode?.spec.parentName;
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
 
   // Prioritize scope node subtitle over parent node title

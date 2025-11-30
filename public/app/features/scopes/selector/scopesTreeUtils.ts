@@ -134,8 +134,10 @@ export const insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
         query: '',
         children: undefined,
       };
+      treeNode.childrenLoaded = false;
       return treeNode;
     });
   }
+  newTree.childrenLoaded = true;
   return newTree;
 };

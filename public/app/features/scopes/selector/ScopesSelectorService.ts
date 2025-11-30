@@ -218,6 +218,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           children: undefined,
         };
       }
+      treeNode.childrenLoaded = true;
     });
 
     // TODO: we might not want to update the tree as a side effect of this function
@@ -256,7 +257,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     const selectedScope = {
       scopeId: scopeNode.spec.linkId,
       scopeNodeId: scopeNode.metadata.name,
-      parentNodeId: parentNode?.metadata.name,
     };
 
     // if something is selected we look at parent and see if we are selecting in the same category or not. As we
@@ -349,10 +349,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
 
-      // If parentNodeId is provided, use it directly as the parent node
       // If not provided, try to get the parent from the scope node
       // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
-      const parentNodeId = scopes[0]?.parentNodeId || scopeNode?.spec.parentName;
+      const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
       const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
 
       this.addRecentScopes(fetchedScopes, parentNode);
@@ -459,8 +458,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // First close all nodes
     let newTree = closeNodes(this.state.tree);
 
-    if (this.state.selectedScopes.length && this.state.selectedScopes[0].parentNodeId) {
-      let path = getPathOfNode(this.state.selectedScopes[0].parentNodeId, this.state.nodes);
+    if (this.state.selectedScopes.length && this.state.selectedScopes[0].scopeNodeId) {
+      let path = getPathOfNode(this.state.selectedScopes[0].scopeNodeId, this.state.nodes);
 
       // Get node at path, and request it's children if they don't exist yet
       let nodeAtPath = treeNodeAtPath(newTree, path);
@@ -468,16 +467,20 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // In the cases where nodes are not in the tree yet
       if (!nodeAtPath) {
         try {
-          newTree = (await this.resolvePathToRoot(this.state.selectedScopes[0].parentNodeId, newTree)).tree;
+          newTree = (await this.resolvePathToRoot(this.state.selectedScopes[0].scopeNodeId, newTree)).tree;
           nodeAtPath = treeNodeAtPath(newTree, path);
         } catch (error) {
           console.error('Failed to resolve path to root', error);
         }
       }
 
-      if (nodeAtPath && !nodeAtPath.children) {
+      // We have resolved to root, which means the parent node should be available
+      let parentPath = path.slice(0, -1);
+      let parentNodeAtPath = treeNodeAtPath(newTree, parentPath);
+
+      if (parentNodeAtPath && !parentNodeAtPath.childrenLoaded) {
         // This will update the tree with the children
-        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, nodeAtPath, '');
+        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, parentNodeAtPath, '');
         newTree = newTreeWithChildren;
       }
 
