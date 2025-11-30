@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Pie chart",
   "id": "piechart",
-
+  "suggestions": true,
   "info": {
     "description": "The new core pie chart visualization",
     "author": {

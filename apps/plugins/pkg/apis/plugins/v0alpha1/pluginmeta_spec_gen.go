@@ -40,6 +40,7 @@ type PluginMetaJSONData struct {
 	SkipDataQuery *bool                    `json:"skipDataQuery,omitempty"`
 	State         *PluginMetaJSONDataState `json:"state,omitempty"`
 	Streaming     *bool                    `json:"streaming,omitempty"`
+	Suggestions   *bool                    `json:"suggestions,omitempty"`
 	Tracing       *bool                    `json:"tracing,omitempty"`
 	Iam           *PluginMetaIAM           `json:"iam,omitempty"`
 	// +listType=atomic

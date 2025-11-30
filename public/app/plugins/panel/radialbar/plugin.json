@@ -3,6 +3,7 @@
   "name": "New Gauge",
   "id": "radialbar",
   "state": "alpha",
+  "suggestions": false,
   "info": {
     "description": "Standard gauge visualization",
     "author": {

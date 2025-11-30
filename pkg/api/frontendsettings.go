@@ -164,6 +164,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
 			BaseURL:         panel.BaseURL,
 			SkipDataQuery:   panel.SkipDataQuery,
+			Suggestions:     panel.Suggestions,
 			HideFromList:    panel.HideFromList,
 			ReleaseState:    string(panel.State),
 			Signature:       string(panel.Signature),

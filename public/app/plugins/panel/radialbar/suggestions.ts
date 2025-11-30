@@ -1,11 +1,6 @@
 import { defaultsDeep } from 'lodash';
 
-import {
-  FieldColorModeId,
-  FieldType,
-  VisualizationSuggestion,
-  VisualizationSuggestionsSupplierFn,
-} from '@grafana/data';
+import { FieldColorModeId, FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphFieldConfig } from '@grafana/ui';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
@@ -40,7 +35,7 @@ const withDefaults = (
 
 const MAX_GAUGES = 10;
 
-export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, GraphFieldConfig> = (
+export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (
   dataSummary
 ) => {
   if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {

@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
 
-import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplierFn } from '@grafana/data';
+import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
 
@@ -24,7 +24,7 @@ const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggest
     },
   } satisfies VisualizationSuggestion<Options>);
 
-export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (ds) => {
+export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (ds) => {
   if (!ds.hasData) {
     return;
   }
