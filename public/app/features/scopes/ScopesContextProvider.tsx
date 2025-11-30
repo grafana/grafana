@@ -4,7 +4,7 @@ import { config, locationService, ScopesContext } from '@grafana/runtime';
 
 import { ScopesApiClient } from './ScopesApiClient';
 import { ScopesService } from './ScopesService';
-import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
+import { deserializeFolderPath, ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { ScopesSelectorService } from './selector/ScopesSelectorService';
 
 type Services = {
@@ -33,7 +33,11 @@ interface ScopesContextProviderProps {
 
 export function defaultScopesServices() {
   const client = new ScopesApiClient();
-  const dashboardService = new ScopesDashboardsService(client);
+  // Read initial expanded path from URL
+  const queryParams = new URLSearchParams(locationService.getLocation().search);
+  const initialExpandedPath = deserializeFolderPath(queryParams.get('nav_scope_path'));
+
+  const dashboardService = new ScopesDashboardsService(client, initialExpandedPath);
   const selectorService = new ScopesSelectorService(client, dashboardService);
   return {
     scopesService: new ScopesService(selectorService, dashboardService, locationService),

@@ -17,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   locationService: {
     push: jest.fn(),
+    partial: jest.fn(),
   },
 }));
 
@@ -63,7 +64,7 @@ describe('ScopesNavigationTreeLink', () => {
   });
 
   it('renders link with correct props', () => {
-    renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" />);
+    renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" folderPath={['']} />);
 
     const link = screen.getByTestId('scopes-dashboards-test-id');
     expect(link).toBeInTheDocument();
@@ -75,7 +76,7 @@ describe('ScopesNavigationTreeLink', () => {
   it('sets aria-current when path matches', () => {
     mockUseLocation.mockReturnValue({ pathname: '/test-path' });
 
-    renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" />);
+    renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" folderPath={['']} />);
 
     const link = screen.getByTestId('scopes-dashboards-test-id');
     expect(link).toHaveAttribute('aria-current', 'page');
@@ -84,7 +85,7 @@ describe('ScopesNavigationTreeLink', () => {
   it('does not set aria-current when path does not match', () => {
     mockUseLocation.mockReturnValue({ pathname: '/different-path' });
 
-    renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" />);
+    renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" folderPath={['']} />);
 
     const link = screen.getByTestId('scopes-dashboards-test-id');
     expect(link).not.toHaveAttribute('aria-current');
@@ -93,7 +94,9 @@ describe('ScopesNavigationTreeLink', () => {
   it('handles dashboard paths correctly', () => {
     mockUseLocation.mockReturnValue({ pathname: '/d/dashboard1/some-details' });
 
-    renderWithRouter(<ScopesNavigationTreeLink to="/d/dashboard1" title="Dashboard Link" id="dashboard-id" />);
+    renderWithRouter(
+      <ScopesNavigationTreeLink to="/d/dashboard1" title="Dashboard Link" id="dashboard-id" folderPath={['']} />
+    );
 
     const link = screen.getByTestId('scopes-dashboards-dashboard-id');
     expect(link).toHaveAttribute('aria-current', 'page');
@@ -102,7 +105,7 @@ describe('ScopesNavigationTreeLink', () => {
   it('does not match when path is just the start of another path', () => {
     mockUseLocation.mockReturnValue({ pathname: '/test-path/extra' });
 
-    renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" />);
+    renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" folderPath={['']} />);
 
     const link = screen.getByTestId('scopes-dashboards-test-id');
     expect(link).not.toHaveAttribute('aria-current');
@@ -113,8 +116,8 @@ describe('ScopesNavigationTreeLink', () => {
 
     renderWithRouter(
       <>
-        <ScopesNavigationTreeLink to="/test-path" title="Matching Link" id="matching-id" />
-        <ScopesNavigationTreeLink to="/test-path-extra" title="Other Link" id="other-id" />
+        <ScopesNavigationTreeLink to="/test-path" title="Matching Link" id="matching-id" folderPath={['']} />
+        <ScopesNavigationTreeLink to="/test-path-extra" title="Other Link" id="other-id" folderPath={['']} />
       </>
     );
 
@@ -132,8 +135,13 @@ describe('ScopesNavigationTreeLink', () => {
 
     renderWithRouter(
       <>
-        <ScopesNavigationTreeLink to="/test-path?param1=value1&param2=value2" title="Matching Link" id="matching-id" />
-        <ScopesNavigationTreeLink to="/test-path-other" title="Other Link" id="other-id" />
+        <ScopesNavigationTreeLink
+          to="/test-path?param1=value1&param2=value2"
+          title="Matching Link"
+          id="matching-id"
+          folderPath={['']}
+        />
+        <ScopesNavigationTreeLink to="/test-path-other" title="Other Link" id="other-id" folderPath={['']} />
       </>
     );
 
@@ -150,6 +158,7 @@ describe('ScopesNavigationTreeLink', () => {
         to="/a/grafana-metricsdrilldown-app?from=now-1h&to=now"
         title="Metrics Drilldown"
         id="metrics-drilldown"
+        folderPath={['']}
       />
     );
 
@@ -163,7 +172,12 @@ describe('ScopesNavigationTreeLink', () => {
 
   it('shows correct icon for grafana-metricsdrilldown-app without trailing slash', () => {
     renderWithRouter(
-      <ScopesNavigationTreeLink to="/a/grafana-metricsdrilldown-app" title="Metrics Drilldown" id="metrics-drilldown" />
+      <ScopesNavigationTreeLink
+        to="/a/grafana-metricsdrilldown-app"
+        title="Metrics Drilldown"
+        id="metrics-drilldown"
+        folderPath={['']}
+      />
     );
 
     const link = screen.getByTestId('scopes-dashboards-metrics-drilldown');
@@ -187,7 +201,13 @@ describe('ScopesNavigationTreeLink', () => {
       const user = userEvent.setup();
 
       renderWithRouter(
-        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" subScope="subScope1" />
+        <ScopesNavigationTreeLink
+          to="/test-path"
+          title="Test Link"
+          id="test-id"
+          subScope="subScope1"
+          folderPath={['', 'group1']}
+        />
       );
 
       const link = screen.getByTestId('scopes-dashboards-test-id');
@@ -203,7 +223,13 @@ describe('ScopesNavigationTreeLink', () => {
       mockScopesSelectorService.state.appliedScopes = [{ scopeId: 'currentScope' }];
 
       renderWithRouter(
-        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" subScope="subScope1" />
+        <ScopesNavigationTreeLink
+          to="/test-path"
+          title="Test Link"
+          id="test-id"
+          subScope="subScope1"
+          folderPath={['', 'group1']}
+        />
       );
 
       const link = screen.getByTestId('scopes-dashboards-test-id');
@@ -217,7 +243,13 @@ describe('ScopesNavigationTreeLink', () => {
       mockScopesSelectorService.state.appliedScopes = [{ scopeId: 'currentScope' }];
 
       renderWithRouter(
-        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" subScope="subScope1" />
+        <ScopesNavigationTreeLink
+          to="/test-path"
+          title="Test Link"
+          id="test-id"
+          subScope="subScope1"
+          folderPath={['', 'group1']}
+        />
       );
 
       const link = screen.getByTestId('scopes-dashboards-test-id');
@@ -229,7 +261,13 @@ describe('ScopesNavigationTreeLink', () => {
 
     it('should call changeScopes with subScope', async () => {
       renderWithRouter(
-        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" subScope="subScope1" />
+        <ScopesNavigationTreeLink
+          to="/test-path"
+          title="Test Link"
+          id="test-id"
+          subScope="subScope1"
+          folderPath={['', 'group1']}
+        />
       );
 
       const link = screen.getByTestId('scopes-dashboards-test-id');
@@ -240,7 +278,13 @@ describe('ScopesNavigationTreeLink', () => {
 
     it('should navigate to URL with updated query params', async () => {
       renderWithRouter(
-        <ScopesNavigationTreeLink to="/test-path?existing=param" title="Test Link" id="test-id" subScope="subScope1" />
+        <ScopesNavigationTreeLink
+          to="/test-path?existing=param"
+          title="Test Link"
+          id="test-id"
+          subScope="subScope1"
+          folderPath={['', 'group1']}
+        />
       );
 
       const link = screen.getByTestId('scopes-dashboards-test-id');
@@ -260,6 +304,7 @@ describe('ScopesNavigationTreeLink', () => {
           title="Test Link"
           id="test-id"
           subScope="subScope1"
+          folderPath={['', 'group1']}
         />
       );
 
@@ -272,17 +317,42 @@ describe('ScopesNavigationTreeLink', () => {
       expect(pushedUrl).not.toContain('scope_parent');
     });
 
-    it('should allow normal navigation when subScope is not provided', async () => {
+    it('should set nav_scope_path in URL when navigating with subScope', async () => {
+      renderWithRouter(
+        <ScopesNavigationTreeLink
+          to="/test-path"
+          title="Test Link"
+          id="test-id"
+          subScope="subScope1"
+          folderPath={['', 'group1', 'subfolder']}
+        />
+      );
+
+      const link = screen.getByTestId('scopes-dashboards-test-id');
+      await userEvent.click(link);
+
+      expect(mockLocationServicePush).toHaveBeenCalled();
+      const pushedUrl = mockLocationServicePush.mock.calls[0][0];
+      // Root folder ('') should be excluded from the path
+      expect(pushedUrl).toContain('nav_scope_path=group1%2Csubfolder');
+    });
+
+    it('should set nav_scope_path in URL for regular navigation', async () => {
       const user = userEvent.setup();
 
-      renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" />);
+      renderWithRouter(
+        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" folderPath={['', 'group1']} />
+      );
 
       const link = screen.getByTestId('scopes-dashboards-test-id');
       await user.click(link);
 
-      // Should not call changeScopes or locationService.push when subScope is not provided
+      // Should not call changeScopes or push when subScope is not provided
       expect(mockScopesSelectorService.changeScopes).not.toHaveBeenCalled();
       expect(mockLocationServicePush).not.toHaveBeenCalled();
+
+      // Should call partial to set nav_scope_path
+      expect(locationService.partial).toHaveBeenCalledWith({ nav_scope_path: 'group1' });
     });
 
     it('should handle URL with existing query params correctly', async () => {
@@ -296,6 +366,7 @@ describe('ScopesNavigationTreeLink', () => {
           title="Test Link"
           id="test-id"
           subScope="subScope1"
+          folderPath={['', 'group1']}
         />
       );
 
