@@ -294,6 +294,7 @@ exports[`Given a scene with custom quick ranges should save quick ranges to save
         "options": [],
         "query": "a, b, c",
         "type": "custom",
+        "valuesFormat": "csv",
       },
       {
         "current": {
@@ -679,6 +680,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "options": [],
         "query": "A,B,C,D,E,F,E,G,H,I,J,K,L",
         "type": "custom",
+        "valuesFormat": "csv",
       },
       {
         "current": {
@@ -697,6 +699,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "options": [],
         "query": "Bob : 1, Rob : 2,Sod : 3, Hod : 4, Cod : 5",
         "type": "custom",
+        "valuesFormat": "csv",
       },
     ],
   },
@@ -1019,6 +1022,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "options": [],
         "query": "a, b, c",
         "type": "custom",
+        "valuesFormat": "csv",
       },
       {
         "current": {
@@ -1378,6 +1382,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "options": [],
         "query": "a, b, c",
         "type": "custom",
+        "valuesFormat": "csv",
       },
       {
         "current": {
