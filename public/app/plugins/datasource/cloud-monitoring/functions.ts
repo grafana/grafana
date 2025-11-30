@@ -4,8 +4,8 @@ import { rangeUtil } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { AGGREGATIONS, ALIGNMENTS, SYSTEM_LABELS } from './constants';
+import { AlignmentTypes, PreprocessorType, TimeSeriesList, MetricKind, ValueTypes } from './dataquery.gen';
 import CloudMonitoringDatasource from './datasource';
-import { AlignmentTypes, PreprocessorType, TimeSeriesList, MetricKind, ValueTypes } from './types/query';
 import { CustomMetaData, MetricDescriptor } from './types/types';
 
 export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
