@@ -20,7 +20,13 @@ import { ControlledLogsTable } from './ControlledLogsTable';
 import { InfiniteScroll } from './InfiniteScroll';
 import { LogRows, Props } from './LogRows';
 import { LogListOptions } from './panel/LogList';
-import { LogListContextProvider, useLogListContext } from './panel/LogListContext';
+import {
+  getLogListStyleFromOldProps,
+  LogListContextProvider,
+  prettifyJSON,
+  useLogListContext,
+  wrapLogMessage,
+} from './panel/LogListContext';
 import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';
 
@@ -29,7 +35,7 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   logsMeta?: LogsMetaItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
-  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[] | number) => void;
   range: TimeRange;
   filterLevels?: LogLevel[];
 
@@ -81,15 +87,14 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         filterLevels={filterLevels}
         fontSize="default"
         logOptionsStorageKey={logOptionsStorageKey}
+        listStyle={getLogListStyleFromOldProps(wrapLogMessage, prettifyLogMessage, logOptionsStorageKey)}
         logs={deduplicatedRows ?? []}
         logsMeta={logsMeta}
-        prettifyJSON={prettifyLogMessage}
         showControls
         showTime={showTime}
         showUniqueLabels={showLabels}
         sortOrder={logsSortOrder || LogsSortOrder.Descending}
         onLogOptionsChange={onLogOptionsChange}
-        wrapLogMessage={wrapLogMessage}
       >
         {rest.visualisationType === 'logs' && (
           <LogRowsComponent ref={ref} {...rest} deduplicatedRows={deduplicatedRows} />
@@ -114,17 +119,8 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
     }: LogRowsComponentProps,
     ref
   ) => {
-    const {
-      app,
-      dedupStrategy,
-      filterLevels,
-      forceEscape,
-      prettifyJSON,
-      sortOrder,
-      showTime,
-      showUniqueLabels,
-      wrapLogMessage,
-    } = useLogListContext();
+    const { app, dedupStrategy, filterLevels, forceEscape, listStyle, sortOrder, showTime, showUniqueLabels } =
+      useLogListContext();
     const eventBus = useMemo(() => new EventBusSrv(), []);
     const scrollElementRef = useRef<HTMLDivElement | null>(null);
 
@@ -190,11 +186,11 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
               logRows={filteredLogs}
               logsSortOrder={sortOrder}
               scrollElement={scrollElementRef.current}
-              prettifyLogMessage={Boolean(prettifyJSON)}
+              prettifyLogMessage={prettifyJSON(listStyle)}
               scrollIntoView={scrollIntoView}
               showLabels={Boolean(showUniqueLabels)}
               showTime={showTime}
-              wrapLogMessage={wrapLogMessage}
+              wrapLogMessage={wrapLogMessage(listStyle)}
             />
           </InfiniteScroll>
         </div>

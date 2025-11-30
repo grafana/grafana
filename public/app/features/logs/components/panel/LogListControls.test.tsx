@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, EventBusSrv, LogLevel, LogListStyle, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { downloadLogs } from '../../utils';
@@ -63,12 +63,12 @@ const contextProps = {
   displayedFields: [],
   enableLogDetails: false,
   fontSize,
+  listStyle: LogListStyle.UnwrappedWithColumns,
   logs: [],
   showControls: true,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: false,
-  wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
 };

@@ -13,7 +13,7 @@ import {
 import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
-import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange } from '@grafana/data';
+import { findHighlightChunksInText, GrafanaTheme2, LogListStyle, LogsDedupStrategy, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
@@ -26,7 +26,7 @@ import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { useLogDetailsContext } from './LogDetailsContext';
 import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
-import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
+import { useLogIsPermalinked, useLogIsPinned, useLogListContext, wrapLogMessage } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { getNormalizedFieldName, LogListModel } from './processing';
 import {
@@ -40,6 +40,7 @@ import {
 export interface Props {
   displayedFields: string[];
   index: number;
+  listStyle: LogListStyle;
   log: LogListModel;
   logs: LogListModel[];
   showTime: boolean;
@@ -51,12 +52,12 @@ export interface Props {
   onOverflow?: (index: number, id: string, height?: number) => void;
   variant?: 'infinite-scroll';
   virtualization?: LogLineVirtualization;
-  wrapLogMessage: boolean;
 }
 
 export const LogLine = ({
   displayedFields,
   index,
+  listStyle,
   log,
   logs,
   style,
@@ -68,14 +69,14 @@ export const LogLine = ({
   timeZone,
   variant,
   virtualization,
-  wrapLogMessage,
 }: Props) => {
   return (
-    <div style={wrapLogMessage ? style : { ...style, width: 'max-content', minWidth: '100%' }}>
+    <div style={wrapLogMessage(listStyle) ? style : { ...style, width: 'max-content', minWidth: '100%' }}>
       <LogLineComponent
         displayedFields={displayedFields}
         height={style.height}
         index={index}
+        listStyle={listStyle}
         log={log}
         logs={logs}
         styles={styles}
@@ -86,7 +87,6 @@ export const LogLine = ({
         timeZone={timeZone}
         variant={variant}
         virtualization={virtualization}
-        wrapLogMessage={wrapLogMessage}
       />
     </div>
   );
@@ -101,6 +101,7 @@ const LogLineComponent = memo(
     displayedFields,
     height,
     index,
+    listStyle,
     log,
     logs,
     styles,
@@ -111,7 +112,6 @@ const LogLineComponent = memo(
     timeZone,
     variant,
     virtualization,
-    wrapLogMessage,
   }: LogLineComponentProps) => {
     const {
       dedupStrategy,
@@ -124,7 +124,7 @@ const LogLineComponent = memo(
     } = useLogListContext();
     const { currentLog, detailsDisplayed, detailsMode, enableLogDetails } = useLogDetailsContext();
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
-      wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
+      wrapLogMessage(listStyle) && log.collapsed !== undefined ? log.collapsed : undefined
     );
     const logLineRef = useRef<HTMLDivElement | null>(null);
     const pinned = useLogIsPinned(log);
@@ -167,14 +167,14 @@ const LogLineComponent = memo(
     }, [handleLogLineResize]);
 
     useEffect(() => {
-      if (!wrapLogMessage) {
+      if (!wrapLogMessage(listStyle)) {
         setCollapsed(undefined);
       } else if (collapsed === undefined && log.collapsed !== undefined) {
         setCollapsed(log.collapsed);
       } else if (collapsed !== undefined && log.collapsed === undefined) {
         setCollapsed(log.collapsed);
       }
-    }, [collapsed, log.collapsed, wrapLogMessage]);
+    }, [collapsed, listStyle, log.collapsed]);
 
     const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
 
@@ -249,7 +249,7 @@ const LogLineComponent = memo(
             </div>
           )}
           <div
-            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
+            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${wrapLogMessage(listStyle) ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
             style={
               collapsed && virtualization
                 ? { maxHeight: `${virtualization.getTruncationLineCount() * virtualization.getLineHeight()}px` }
@@ -259,12 +259,12 @@ const LogLineComponent = memo(
             <Log
               collapsed={collapsed}
               displayedFields={displayedFields}
+              listStyle={listStyle}
               log={log}
               showTime={showTime}
               showUniqueLabels={showUniqueLabels}
               styles={styles}
               timestampResolution={timestampResolution}
-              wrapLogMessage={wrapLogMessage}
             />
           </div>
         </div>
@@ -314,16 +314,16 @@ export type LogLineTimestampResolution = 'ms' | 'ns';
 interface LogProps {
   collapsed?: boolean;
   displayedFields: string[];
+  listStyle: LogListStyle;
   log: LogListModel;
   showTime: boolean;
   showUniqueLabels?: boolean;
   styles: LogLineStyles;
   timestampResolution: LogLineTimestampResolution;
-  wrapLogMessage: boolean;
 }
 
 const Log = memo(
-  ({ displayedFields, log, showTime, showUniqueLabels, styles, timestampResolution, wrapLogMessage }: LogProps) => {
+  ({ displayedFields, listStyle, log, showTime, showUniqueLabels, styles, timestampResolution }: LogProps) => {
     const handleLabelsToggle = useCallback(
       (expanded: boolean) => {
         log.uniqueLabelsExpanded = expanded;
@@ -340,7 +340,7 @@ const Log = memo(
         {
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
-        {(log.displayLevel || !wrapLogMessage) && (
+        {(log.displayLevel || !wrapLogMessage(listStyle)) && (
           <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
         )}
         {showUniqueLabels && log.uniqueLabels && (

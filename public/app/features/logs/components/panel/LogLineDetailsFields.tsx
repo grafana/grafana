@@ -15,7 +15,7 @@ import { FieldDef } from '../logParser';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { useLogListContext } from './LogListContext';
+import { prettifyJSON, useLogListContext } from './LogListContext';
 import { LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
@@ -142,6 +142,7 @@ export const LogLineDetailsField = ({
     app,
     displayedFields,
     isLabelFilterActive,
+    listStyle,
     noInteractions,
     onClickFilterLabel,
     onClickFilterOutLabel,
@@ -149,7 +150,6 @@ export const LogLineDetailsField = ({
     onClickHideField,
     onPinLine,
     pinLineButtonTooltipTitle,
-    prettifyJSON,
   } = useLogListContext();
   const { closeDetails } = useLogDetailsContext();
 
@@ -323,7 +323,7 @@ export const LogLineDetailsField = ({
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
-              <SingleValue value={values[0]} prettifyJSON={prettifyJSON} />
+              <SingleValue value={values[0]} prettifyJSON={prettifyJSON(listStyle)} />
             ) : (
               <MultipleValue showCopy={true} values={values} />
             )}

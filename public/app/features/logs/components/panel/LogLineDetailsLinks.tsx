@@ -9,7 +9,7 @@ import { FieldDef } from '../logParser';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { filterFields, MultipleValue, SingleValue } from './LogLineDetailsFields';
-import { useLogListContext } from './LogListContext';
+import { prettifyJSON, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface LogLineDetailsLinksProps {
@@ -54,7 +54,7 @@ interface LogLineDetailsFieldProps {
 }
 
 export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
-  const { onPinLine, pinLineButtonTooltipTitle, prettifyJSON } = useLogListContext();
+  const { onPinLine, pinLineButtonTooltipTitle, listStyle } = useLogListContext();
   const { closeDetails } = useLogDetailsContext();
 
   const styles = useStyles2(getFieldStyles);
@@ -67,14 +67,14 @@ export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) =>
       <div className={styles.value}>
         <div className={styles.valueContainer}>
           {singleValue ? (
-            <SingleValue value={field.values[0]} prettifyJSON={prettifyJSON} />
+            <SingleValue value={field.values[0]} prettifyJSON={prettifyJSON(listStyle)} />
           ) : (
             <MultipleValue showCopy={true} values={field.values} />
           )}
         </div>
       </div>
     ),
-    [field.values, singleValue, styles.value, styles.valueContainer, prettifyJSON]
+    [field.values, listStyle, singleValue, styles.value, styles.valueContainer]
   );
 
   return (

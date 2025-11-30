@@ -2,7 +2,7 @@ import { ReactNode, useCallback, useEffect, useRef, useState, MouseEvent } from 
 import { usePrevious } from 'react-use';
 import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
 
-import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, LogListStyle, LogsSortOrder, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
@@ -28,6 +28,7 @@ export interface Props {
   infiniteScrollMode: InfiniteScrollMode;
   loading?: boolean;
   loadMore?: LoadMoreLogsType;
+  listStyle: LogListStyle;
   logs: LogListModel[];
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   scrollElement: HTMLDivElement | null;
@@ -37,7 +38,6 @@ export interface Props {
   timeRange: TimeRange;
   timeZone: string;
   virtualization: LogLineVirtualization;
-  wrapLogMessage: boolean;
 }
 
 type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll-top' | 'pre-scroll-bottom' | 'loading';
@@ -51,6 +51,7 @@ export const InfiniteScroll = ({
   displayedFields,
   handleOverflow,
   infiniteScrollMode,
+  listStyle,
   loading,
   loadMore,
   logs,
@@ -62,7 +63,6 @@ export const InfiniteScroll = ({
   timeRange,
   timeZone,
   virtualization,
-  wrapLogMessage,
 }: Props) => {
   const [infiniteLoaderState, setInfiniteLoaderState] = useState<InfiniteLoaderState>('idle');
   const [autoScroll, setAutoScroll] = useState(false);
@@ -216,6 +216,7 @@ export const InfiniteScroll = ({
         <LogLine
           displayedFields={displayedFields}
           index={index}
+          listStyle={listStyle}
           log={logs[index]}
           logs={logs}
           onClick={onClick}
@@ -226,7 +227,6 @@ export const InfiniteScroll = ({
           timeZone={timeZone}
           variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
           virtualization={virtualization}
-          wrapLogMessage={wrapLogMessage}
           onOverflow={handleOverflow}
         />
       );
@@ -236,6 +236,7 @@ export const InfiniteScroll = ({
       handleOverflow,
       infiniteLoaderState,
       loadMoreBottom,
+      listStyle,
       logs,
       onClick,
       showTime,
@@ -244,7 +245,6 @@ export const InfiniteScroll = ({
       timeRange,
       timeZone,
       virtualization,
-      wrapLogMessage,
     ]
   );
 

@@ -11,7 +11,7 @@ import { getSidebarWidth } from '../fieldSelector/FieldSelector';
 
 import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
-import { useLogListContext } from './LogListContext';
+import { useLogListContext, wrapLogMessage } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
@@ -72,7 +72,7 @@ LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
-    const { app, noInteractions, wrapLogMessage } = useLogListContext();
+    const { app, noInteractions, listStyle } = useLogListContext();
     const { currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
 
     const styles = useStyles2(getStyles, 'sidebar');
@@ -80,7 +80,7 @@ const LogLineDetailsTabs = memo(
     useEffect(() => {
       // When wrapping is enabled and details is in sidebar mode, the logs panel width changes and the
       // user may lose focus of the log line, so we scroll to it.
-      if (wrapLogMessage && currentLog) {
+      if (wrapLogMessage(listStyle) && currentLog) {
         focusLogLine(currentLog);
       }
       if (!noInteractions) {
