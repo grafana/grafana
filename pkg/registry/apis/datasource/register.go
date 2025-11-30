@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"slices"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/hardcoded"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -45,6 +47,7 @@ type DataSourceAPIBuilder struct {
 	contextProvider      PluginContextWrapper
 	accessControl        accesscontrol.AccessControl
 	queryTypes           *queryV0.QueryTypeDefinitionList
+	schemaProvider       func() (*datasourceV0.DataSourceOpenAPIExtension, error)
 	configCrudUseNewApis bool
 }
 
@@ -59,8 +62,14 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil
+	explicitPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
+
+	// Requires dev-mode
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	configCrudUseNewApis := features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)
+
+	if !explicitPluginList && !configCrudUseNewApis {
+		return nil, nil // skip registration unless opting into experimental apis
 	}
 
 	var err error
@@ -68,27 +77,47 @@ func RegisterAPIService(
 
 	pluginJSONs, err := getDatasourcePlugins(pluginSources)
 	if err != nil {
-		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
+		return nil, err
+	}
+
+	// This client can talk to any plugin
+	client, ok := pluginClient.(PluginClient)
+	if !ok {
+		return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
+	}
+
+	ids := []string{
+		"grafana-testdata-datasource",
+		"prometheus",
+		"graphite",
 	}
 
 	for _, pluginJSON := range pluginJSONs {
-		client, ok := pluginClient.(PluginClient)
-		if !ok {
-			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
+		if explicitPluginList && !slices.Contains(ids, pluginJSON.ID) {
+			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(
-			pluginJSON,
+		if !pluginJSON.Backend && !configCrudUseNewApis {
+			continue // skip frontend only plugins when backend is disabled
+		}
+
+		builder, err = NewDataSourceAPIBuilder(pluginJSON,
 			client,
 			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			false,
+			configCrudUseNewApis,
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		// Hardcoded schemas for testdata
+		// NOTE: this will be driven by the pluginJSON/manifest soon
+		if pluginJSON.ID == "grafana-testdata-datasource" && configCrudUseNewApis {
+			builder.schemaProvider = hardcoded.TestdataOpenAPIExtension
 		}
 
 		apiRegistrar.RegisterAPI(builder)
