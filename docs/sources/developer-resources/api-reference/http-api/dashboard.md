@@ -628,6 +628,14 @@ Status Codes:
 - **403** – Access denied
 - **404** – Not Found
 
+### Retrieve additional access information
+
+`GET /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/:uid/dto`
+
+Retrieves a dashboard with additional access information.
+
+The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the dashboard permissions (admin, editor) of the user who made the request.
+
 ## List Dashboards
 
 `GET /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards`
