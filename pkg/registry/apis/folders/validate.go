@@ -10,6 +10,7 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	utils2 "github.com/grafana/grafana/pkg/registry/apis/preferences/utils" // TODO, will be moved into utils
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -23,6 +24,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	if slices.Contains([]string{
 		folder.GeneralFolderUID,
 		folder.SharedWithMeFolderUID,
+		// "namespace" is not valid based on owner parsing
 	}, id) {
 		return dashboards.ErrFolderInvalidUID
 	}
@@ -30,6 +32,29 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	meta, err := utils.MetaAccessor(f)
 	if err != nil {
 		return fmt.Errorf("unable to read metadata from object: %w", err)
+	}
+
+	owner, ok := utils2.ParseOwnerFromName(id)
+	if ok {
+		if owner.Owner == utils2.NamespaceResourceOwner {
+			return fmt.Errorf("folder may not be a namespace")
+		}
+		if meta.GetFolder() != "" {
+			return fmt.Errorf("%s folder must be a root", owner.Owner)
+		}
+		if meta.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
+			return fmt.Errorf("%s folders do not support: %s", owner.Owner, utils.AnnoKeyGrantPermissions)
+		}
+
+		if err = owner.Validate(meta); err != nil {
+			return err
+		}
+
+		// The title will be based on the team/user so we should not save a value in the folder
+		if f.Spec.Title != "" {
+			return fmt.Errorf("folder title must be empty when creating a %s folder", owner.Owner)
+		}
+		return nil
 	}
 
 	if !util.IsValidShortUID(id) {
@@ -81,6 +106,19 @@ func validateOnUpdate(ctx context.Context,
 	oldFolder, err := utils.MetaAccessor(old)
 	if err != nil {
 		return err
+	}
+
+	name, ok := utils2.ParseOwnerFromName(obj.Name)
+	if ok {
+		if err = name.Validate(folderObj); err != nil {
+			return err
+		}
+
+		// The title will be based on the team/user so we should not save a value in the folder
+		if obj.Spec.Title != "" {
+			return fmt.Errorf("folder title must be empty")
+		}
+		return nil
 	}
 
 	if obj.Spec.Title == "" {
