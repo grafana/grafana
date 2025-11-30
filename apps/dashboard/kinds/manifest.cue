@@ -5,5 +5,6 @@ manifest: {
 	groupOverride: "dashboard.grafana.app"
 	kinds: [
 		dashboard,
+		snapshot,
 	]
 }

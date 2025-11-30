@@ -3,7 +3,6 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
@@ -180,8 +179,8 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
     }
   };
 
-  public onSnapshotDelete = async (url: string) => {
-    const response = await getBackendSrv().get(url);
+  public onSnapshotDelete = async (key: string) => {
+    const response = await getDashboardSnapshotSrv().deleteSnapshot(key);
     dispatch(
       notifyApp(createSuccessNotification(t('snapshot.share.success-delete', 'Your snapshot has been deleted')))
     );
@@ -196,8 +195,8 @@ function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTa
     return model.onSnapshotCreate(external);
   });
 
-  const [deleteSnapshotResult, deleteSnapshot] = useAsyncFn(async (url: string) => {
-    return await getBackendSrv().get(url);
+  const [deleteSnapshotResult, deleteSnapshot] = useAsyncFn(async (key: string) => {
+    return await getDashboardSnapshotSrv().deleteSnapshot(key);
   });
 
   // If snapshot has been deleted - show message and allow to close modal
@@ -306,7 +305,7 @@ function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTa
               size="md"
               variant="destructive"
               onClick={() => {
-                deleteSnapshot(snapshotResult.value!.deleteUrl);
+                deleteSnapshot(snapshotResult.value!.key);
               }}
             >
               <Trans i18nKey="share-modal.snapshot.delete-button">Delete snapshot.</Trans>
