@@ -107,9 +107,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
         !provisioned && (
           <DeleteButton
             aria-label={t('correlations.list.delete', 'delete correlation')}
-            onConfirm={() =>
-              handleDelete({ sourceUID, uid }, page.current > 1 && index === 0 && data?.correlations.length === 1)
-            }
+            onConfirm={() => handleDelete({ sourceUID, uid }, page.current > 1 && index === 0 && corrData.length === 1)}
             closeOnConfirm
           />
         )
@@ -150,9 +148,9 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     [RowActions, canWriteCorrelations]
   );
 
-  const data = useMemo(() => correlations, [correlations]);
-  const showEmptyListCTA = data?.correlations.length === 0 && !isAdding && !error;
-  const addButton = canWriteCorrelations && data?.correlations?.length !== 0 && data !== undefined && !isAdding && (
+  const corrData = correlations?.correlations ?? [];
+  const showEmptyListCTA = corrData.length === 0 && !isAdding && !error;
+  const addButton = canWriteCorrelations && corrData.length !== 0 && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
       <Trans i18nKey="correlations.add-new">Add new</Trans>
     </Button>
@@ -175,7 +173,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     >
       <Page.Contents>
         <div>
-          {!data && isLoading && (
+          {isLoading && (
             <div className={loaderWrapper}>
               <LoadingPlaceholder text={t('correlations.list.loading', 'loading...')} />
             </div>
@@ -204,7 +202,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
 
           {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
 
-          {data && data.correlations.length >= 1 && (
+          {correlations && corrData.length >= 1 && (
             <>
               <InteractiveTable
                 renderExpandedRow={(correlation) => (
@@ -215,12 +213,12 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
                   />
                 )}
                 columns={columns}
-                data={data.correlations}
+                data={corrData}
                 getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
               />
               <Pagination
                 currentPage={page.current}
-                numberOfPages={Math.ceil(data.totalCount / data.limit)}
+                numberOfPages={Math.ceil(correlations?.totalCount / correlations?.limit)}
                 onNavigate={(toPage: number) => {
                   fetchCorrelations({ page: (page.current = toPage) });
                 }}

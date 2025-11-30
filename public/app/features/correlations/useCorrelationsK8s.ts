@@ -60,42 +60,16 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
   }
 };
 
-export const useCorrelationsK8s = () => {
-  //const { data, isLoading, error } = correlationAPIv0alpha1.endpoints.listCorrelation.useQuery({ limit: 10 });
-  const { data, isLoading, error } = useListCorrelationQuery({ limit: 10 });
+export const useCorrelationsK8s = (props: { limit: number }) => {
+  const { currentData, isLoading, error } = useListCorrelationQuery({ limit: props.limit });
   const enrichedCorrelations =
-    data !== undefined
-      ? data.items.map((item) => toEnrichedCorrelationDataK8s(item)).filter((i) => i !== undefined)
+    currentData !== undefined
+      ? currentData.items.map((item) => toEnrichedCorrelationDataK8s(item)).filter((i) => i !== undefined)
       : [];
-  // todo returning bad response data, how to fix?
 
   return {
-    get: {
-      execute: () => {},
-      value: { correlations: enrichedCorrelations, page: 0, limit: 1000, totalCount: enrichedCorrelations.length },
-      loading: isLoading,
-      error,
-    },
+    currentData: enrichedCorrelations,
+    isLoading,
+    error,
   };
 };
-
-/*
-       if (config.featureToggles.kubernetesCorrelations) {
-        const result = await dispatch(
-          correlationAPIv0alpha1.endpoints.createCorrelation.initiate({
-            correlation: {
-              apiVersion: 'correlations.grafana.app/v0alpha1',
-              kind: 'Correlations',
-              metadata: {},
-              spec: {
-                ...correlation,
-                label: correlation.label ?? '',
-                source: { name: sourceUID, group: '' },
-                config: { ...correlation.config, transformations: [] },
-              },
-            },
-          })
-        );
-        return result;
-      } else { 
-*/
