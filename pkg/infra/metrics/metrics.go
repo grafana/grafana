@@ -697,7 +697,7 @@ func init() {
 	})
 
 	MUnifiedStorageMigrationStatus = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "unified_storage_migration_status",
+		Name:      "unified_storage_migration_status_total",
 		Help:      "indicates whether this instance would run unified storage migrations (0=undefined, 1=migration disabled, 2=would run)",
 		Namespace: ExporterName,
 	})
