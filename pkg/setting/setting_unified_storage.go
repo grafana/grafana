@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
+// nolint:unused
 var migratedUnifiedResources = []string{
 	//"playlists.playlist.grafana.app",
 	"folders.folder.grafana.app",
