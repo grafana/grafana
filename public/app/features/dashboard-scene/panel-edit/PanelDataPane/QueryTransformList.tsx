@@ -114,12 +114,16 @@ export const QueryTransformList = memo(
                   ))}
                 </div>
               )}
+
+              <div className={styles.addButton}>
+                <AddDataItemMenu
+                  onAddQuery={onAddQuery}
+                  onAddTransform={onAddTransform}
+                  onAddExpression={onAddExpression}
+                />
+              </div>
             </div>
           </ScrollContainer>
-        </div>
-
-        <div className={styles.actions}>
-          <AddDataItemMenu onAddQuery={onAddQuery} onAddTransform={onAddTransform} onAddExpression={onAddExpression} />
         </div>
       </div>
     );
@@ -151,11 +155,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         marginTop: theme.spacing(2),
       },
     }),
-    actions: css({
-      padding: theme.spacing(2),
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.canvas,
-      flexShrink: 0,
+    addButton: css({
+      marginTop: theme.spacing(2),
+      paddingTop: theme.spacing(2),
     }),
   };
 };
