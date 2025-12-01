@@ -488,6 +488,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     container: css({
+      height: '100%',
       position: 'relative',
     }),
     panel: css({
