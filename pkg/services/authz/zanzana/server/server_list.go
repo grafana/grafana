@@ -13,6 +13,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -28,6 +29,8 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 
 	res, err := s.list(ctx, r)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("failed to perform list request", "error", err, "namespace", r.GetNamespace())
 		return nil, errors.New("failed to perform list request")
 	}
