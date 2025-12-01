@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 env:
-  TARGET_URL: https://ephemeral15111821114646titoli.grafana-dev.net
+  TARGET_URL: https://ephemeral15111821114646titoli.grafana-dev.net/a/grafana-setupguide-app/home
   OUTPUT_TEXT_PATH: usability-review.txt
   SCREENSHOT_PATH: usability-screenshot.png
 
