@@ -1214,13 +1214,16 @@
     {
       "metadata": {
         "name": "elasticsearchImprovedParsing",
-        "resourceVersion": "1763734583253",
-        "creationTimestamp": "2025-01-15T17:05:54Z"
+        "resourceVersion": "1764260048941",
+        "creationTimestamp": "2025-01-15T17:05:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-27 16:14:08.941633 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables less memory intensive Elasticsearch result parsing",
         "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources"
+        "codeowner": "@grafana/partner-datasources"
       }
     },
     {
@@ -1378,6 +1381,20 @@
         "description": "Automatic service account and token setup for plugins",
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "externalVizSuggestions",
+        "resourceVersion": "1763498528748",
+        "creationTimestamp": "2025-11-18T20:42:08Z"
+      },
+      "spec": {
+        "description": "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -1792,6 +1809,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAlertingHistorian",
+        "resourceVersion": "1764257713773",
+        "creationTimestamp": "2025-11-27T15:35:13Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes alerting historian APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAlertingRules",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2025-07-31T22:56:50Z",
@@ -1909,6 +1939,18 @@
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesDashboardsV2",
+        "resourceVersion": "1764236054307",
+        "creationTimestamp": "2025-11-27T09:34:14Z"
+      },
+      "spec": {
+        "description": "Use the v2 kubernetes API in the frontend for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {
@@ -2482,6 +2524,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "panelGroupBy",
+        "resourceVersion": "1764257043719",
+        "creationTimestamp": "2025-11-27T15:24:03Z"
+      },
+      "spec": {
+        "description": "Enabled a group by action per panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {
@@ -3545,6 +3600,22 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "v2DashboardAPIVersion",
+        "resourceVersion": "1762457740470",
+        "creationTimestamp": "2025-11-06T19:22:05Z",
+        "deletionTimestamp": "2025-11-27T09:34:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-06 19:35:40.470587 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the v2 dashboard API version",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {
