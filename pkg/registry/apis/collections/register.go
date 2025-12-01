@@ -56,7 +56,8 @@ func RegisterAPIService(
 	builder := &APIBuilder{
 		authorizer: &utils.AuthorizeFromName{
 			Resource: map[string][]utils.ResourceOwner{
-				"stars": {utils.UserResourceOwner},
+				"stars":       {utils.UserResourceOwner},
+				"datasources": {utils.UserResourceOwner},
 			},
 		},
 	}
@@ -110,15 +111,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[starsResource.StoragePath()] = stars
 	storage[starsResource.StoragePath("update")] = &starsREST{store: stars}
 
-	// Configure Datasources dual writer
-	datasourcesResource := collections.DatasourcesResourceInfo
-	var datasources grafanarest.Storage
-	datasources, err = grafanaregistry.NewRegistryStore(opts.Scheme, datasourcesResource, opts.OptsGetter)
+	// no need for dual writer for a kind that does not exist in the legacy database
+	resourceInfo := collections.DatasourcesResourceInfo
+	datasourcesStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
-	datasources = &datasourceStorage{Storage: datasources} // wrap List so we only return one value
-	storage[datasourcesResource.StoragePath()] = datasources
+	storage[resourceInfo.StoragePath()] = datasourcesStorage
 
 	apiGroupInfo.VersionedResourcesStorageMap[collections.APIVersion] = storage
 	return nil
