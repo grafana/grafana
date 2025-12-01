@@ -20,14 +20,9 @@ import { ControlledLogsTable } from './ControlledLogsTable';
 import { InfiniteScroll } from './InfiniteScroll';
 import { LogRows, Props } from './LogRows';
 import { LogListOptions } from './panel/LogList';
-import {
-  getLogListStyleFromOldProps,
-  LogListContextProvider,
-  prettifyJSON,
-  useLogListContext,
-  wrapLogMessage,
-} from './panel/LogListContext';
+import { LogListContextProvider, useLogListContext } from './panel/LogListContext';
 import { LogListControls } from './panel/LogListControls';
+import { getLogListStyleFromOldProps, prettifyJSON, wrapLogMessage } from './panel/panel';
 import { ScrollToLogsEvent } from './panel/virtualization';
 
 export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {

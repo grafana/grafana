@@ -26,8 +26,9 @@ import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { useLogDetailsContext } from './LogDetailsContext';
 import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
-import { useLogIsPermalinked, useLogIsPinned, useLogListContext, wrapLogMessage } from './LogListContext';
+import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
+import { wrapLogMessage } from './panel';
 import { getNormalizedFieldName, LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,

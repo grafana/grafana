@@ -37,6 +37,7 @@ import { LogLineTimestampResolution } from './LogLine';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListOptions, LogListFontSize } from './LogList';
 import { reportInteractionOnce } from './analytics';
+import { getLogListStyleFromOldProps, prettifyJSON, wrapLogMessage } from './panel';
 import { LogListModel } from './processing';
 
 export interface LogListContextData
@@ -342,9 +343,13 @@ export const LogListContextProvider = ({
   // Sync prettifyJSON and wrapLogMessage
   useEffect(() => {
     setListStyleState((listStyle) => {
-      if (listStyle) {
-        deprecationWarning('LogsPanel', 'wrapLogMessage', 'listStyle');
-        deprecationWarning('LogsPanel', 'prettifyJSON', 'listStyle');
+      if (listStyle && (wrapLogMessageProp || prettifyJSONProp)) {
+        if (wrapLogMessageProp) {
+          deprecationWarning('LogsPanel', 'wrapLogMessage', 'listStyle');
+        }
+        if (prettifyJSONProp) {
+          deprecationWarning('LogsPanel', 'prettifyJSON', 'listStyle');
+        }
         return listStyle;
       }
       return getLogListStyleFromOldProps(wrapLogMessageProp, prettifyJSONProp, undefined);
@@ -410,10 +415,10 @@ export const LogListContextProvider = ({
   const setListStyle = useCallback(
     (newStyle: LogListStyle) => {
       setListStyleState((prevStyle: LogListStyle) => {
-        if (!wrapLogMessage(prevStyle) !== wrapLogMessage(newStyle)) {
+        if (wrapLogMessage(prevStyle) !== wrapLogMessage(newStyle)) {
           onLogOptionsChange?.('wrapLogMessage', wrapLogMessage(newStyle));
         }
-        if (!prettifyJSON(prevStyle) !== prettifyJSON(newStyle)) {
+        if (prettifyJSON(prevStyle) !== prettifyJSON(newStyle)) {
           onLogOptionsChange?.('prettifyLogMessage', prettifyJSON(newStyle));
         }
         return newStyle;
@@ -633,30 +638,4 @@ ${log.entry.replaceAll('`', '\\`')}
 export function getDefaultControlsExpandedMode(container: HTMLDivElement | null): boolean {
   const width = container?.clientWidth ?? window.innerWidth;
   return width > 1200;
-}
-
-export function getLogListStyleFromOldProps(
-  wrapLogMessage: boolean | undefined,
-  prettifyJSON: boolean | undefined,
-  logOptionsStorageKey: string | undefined
-) {
-  if (wrapLogMessage === undefined) {
-    wrapLogMessage = store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, false);
-  }
-  if (wrapLogMessage === undefined) {
-    prettifyJSON = store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true);
-  }
-
-  if (!wrapLogMessage) {
-    return LogListStyle.UnwrappedWithColumns;
-  }
-  return prettifyJSON ? LogListStyle.WrappedWithPrettyJSON : LogListStyle.Wrapped;
-}
-
-export function prettifyJSON(listStyle: LogListStyle) {
-  return listStyle === LogListStyle.WrappedWithPrettyJSON;
-}
-
-export function wrapLogMessage(listStyle: LogListStyle) {
-  return listStyle === LogListStyle.Wrapped || listStyle === LogListStyle.WrappedWithPrettyJSON;
 }

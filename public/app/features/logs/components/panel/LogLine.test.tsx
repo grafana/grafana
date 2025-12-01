@@ -1,7 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import {
+  CoreApp,
+  createTheme,
+  getDefaultTimeRange,
+  LogListStyle,
+  LogsDedupStrategy,
+  LogsSortOrder,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
@@ -39,7 +46,7 @@ const contextProps = {
   showControls: false,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
-  wrapLogMessage: false,
+  listStyle: LogListStyle.UnwrappedWithColumns,
 };
 const fontSizes: LogListFontSize[] = ['default', 'small'];
 
@@ -63,7 +70,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       styles: styles,
       timeRange: getDefaultTimeRange(),
       timeZone: 'browser',
-      wrapLogMessage: true,
+      listStyle: LogListStyle.Wrapped,
     };
   });
 
@@ -354,7 +361,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           <LogLine
             {...defaultProps}
             // Unwrapped logs
-            wrapLogMessage={false}
+            listStyle={LogListStyle.UnwrappedWithColumns}
           />
         </LogListContextProvider>
       );
@@ -433,7 +440,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
 
       rerender(
         <LogListContextProvider {...contextProps}>
-          <LogLine {...defaultProps} log={log} wrapLogMessage={false} />
+          <LogLine {...defaultProps} log={log} listStyle={LogListStyle.UnwrappedWithColumns} />
         </LogListContextProvider>
       );
 

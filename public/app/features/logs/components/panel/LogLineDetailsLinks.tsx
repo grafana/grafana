@@ -9,7 +9,8 @@ import { FieldDef } from '../logParser';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { filterFields, MultipleValue, SingleValue } from './LogLineDetailsFields';
-import { prettifyJSON, useLogListContext } from './LogListContext';
+import { useLogListContext } from './LogListContext';
+import { prettifyJSON } from './panel';
 import { LogListModel } from './processing';
 
 interface LogLineDetailsLinksProps {

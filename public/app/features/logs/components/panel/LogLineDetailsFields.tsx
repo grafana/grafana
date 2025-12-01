@@ -15,7 +15,8 @@ import { FieldDef } from '../logParser';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { prettifyJSON, useLogListContext } from './LogListContext';
+import { useLogListContext } from './LogListContext';
+import { prettifyJSON } from './panel';
 import { LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {

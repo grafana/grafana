@@ -11,7 +11,8 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsMode } from './LogLineDetails';
-import { useLogIsPinned, useLogListContext, wrapLogMessage } from './LogListContext';
+import { useLogIsPinned, useLogListContext } from './LogListContext';
+import { wrapLogMessage } from './panel';
 import { LogListModel } from './processing';
 
 interface Props {

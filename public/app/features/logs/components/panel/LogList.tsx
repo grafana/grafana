@@ -31,10 +31,11 @@ import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsCon
 import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListContextProvider, LogListState, useLogListContext, wrapLogMessage } from './LogListContext';
+import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
+import { getLogListStyle, wrapLogMessage } from './panel';
 import { preProcessLogs, LogListModel, getLevelsFromLogs } from './processing';
 import { useKeyBindings } from './useKeyBindings';
 import { usePopoverMenu } from './usePopoverMenu';
@@ -147,7 +148,7 @@ export const LogList = ({
   infiniteScrollMode,
   initialScrollPosition = 'top',
   isLabelFilterActive,
-  listStyle = LogListStyle.UnwrappedWithColumns,
+  listStyle = getLogListStyle(logOptionsStorageKey),
   loading,
   loadMore,
   logLineMenuCustomItems,
@@ -565,14 +566,17 @@ function getStyles(
   theme: GrafanaTheme2,
   dimensions: LogFieldDimension[],
   displayedFields: string[],
-  { listStyle, showTime }: { listStyle: LogListStyle; showTime: boolean; }
+  { listStyle, showTime }: { listStyle: LogListStyle; showTime: boolean }
 ) {
   const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
       '& .unwrapped-log-line': {
         display: listStyle === LogListStyle.UnwrappedWithColumns ? 'grid' : 'flex',
-        gridTemplateColumns: listStyle === LogListStyle.UnwrappedWithColumns ? getGridTemplateColumns(columns, displayedFields) : undefined,
+        gridTemplateColumns:
+          listStyle === LogListStyle.UnwrappedWithColumns
+            ? getGridTemplateColumns(columns, displayedFields)
+            : undefined,
         '& .field': {
           overflow: 'hidden',
         },

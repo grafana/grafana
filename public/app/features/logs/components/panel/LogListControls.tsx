@@ -20,9 +20,10 @@ import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
 
-import { prettifyJSON, useLogListContext, wrapLogMessage } from './LogListContext';
+import { useLogListContext } from './LogListContext';
 import { LogListControlsOption, LogListControlsSelectOption } from './LogListControlsOption';
 import { useLogListSearchContext } from './LogListSearchContext';
+import { prettifyJSON, wrapLogMessage } from './panel';
 import { LOG_LIST_CONTROLS_WIDTH, ScrollToLogsEvent } from './virtualization';
 
 type Props = {
@@ -407,7 +408,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   size="lg"
                 />
               )}
-              {prettifyJSON !== undefined && !config.featureToggles.newLogsPanel && (
+              {!config.featureToggles.newLogsPanel && (
                 <LogListControlsOption
                   expanded={controlsExpanded}
                   name="brackets-curly"

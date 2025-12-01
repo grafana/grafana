@@ -38,6 +38,7 @@ import { LoadingIndicator } from '../LoadingIndicator';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineMenuCustomItem } from './LogLineMenu';
 import { LogList } from './LogList';
+import { getLogListStyle, wrapLogMessage } from './panel';
 import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
 
@@ -287,7 +288,7 @@ export const LogLineContext = memo(
       setInitialized(false);
     }, [updateContextQuery]);
 
-    const wrapLogMessage = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, true) : true;
+    const listStyle = getLogListStyle(logOptionsStorageKey);
     const syntaxHighlighting = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true)
       : true;
@@ -300,9 +301,9 @@ export const LogLineContext = memo(
           : new LogListModel(log, {
               escape: false,
               timeZone,
-              wrapLogMessage,
+              wrapLogMessage: wrapLogMessage(listStyle),
             }),
-      [log, timeZone, wrapLogMessage]
+      [log, timeZone, listStyle]
     );
 
     useEffect(() => {
@@ -408,10 +409,8 @@ export const LogLineContext = memo(
                 showFieldSelector={false}
                 showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
                 sortOrder={sortOrder}
-                syntaxHighlighting={syntaxHighlighting}
                 timeRange={timeRange}
                 timeZone={timeZone}
-                wrapLogMessage={wrapLogMessage}
               />
             )}
           </div>

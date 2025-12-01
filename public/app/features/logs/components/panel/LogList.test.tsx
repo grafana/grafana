@@ -6,6 +6,7 @@ import {
   FieldType,
   getDefaultTimeRange,
   LogLevel,
+  LogListStyle,
   LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
@@ -65,13 +66,13 @@ describe('LogList', () => {
       displayedFields: [],
       dataFrames: [],
       enableLogDetails: true,
+      listStyle: LogListStyle.UnwrappedWithColumns,
       logs,
       showControls: false,
       showTime: false,
       sortOrder: LogsSortOrder.Descending,
       timeRange: getDefaultTimeRange(),
       timeZone: 'browser',
-      wrapLogMessage: false,
     };
   });
 

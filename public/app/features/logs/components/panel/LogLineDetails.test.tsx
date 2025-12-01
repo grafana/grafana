@@ -15,6 +15,7 @@ import {
   DataFrame,
   ScopedVars,
   dateTime,
+  LogListStyle,
 } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
@@ -550,7 +551,7 @@ describe('LogLineDetails', () => {
       setup(
         undefined,
         { labels: { label1: 'value of label1', label2: '{"key1":"value1", "key2": "value2"}' } },
-        { prettifyJSON: false }
+        { listStyle: LogListStyle.Wrapped }
       );
 
       expect(screen.getByText('label1')).toBeInTheDocument();
@@ -563,7 +564,7 @@ describe('LogLineDetails', () => {
       setup(
         undefined,
         { labels: { label1: 'value of label1', label2: '{"key1":"value1", "key2": "value2"}' } },
-        { prettifyJSON: true }
+        { listStyle: LogListStyle.WrappedWithPrettyJSON }
       );
 
       expect(screen.getByText('label1')).toBeInTheDocument();

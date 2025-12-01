@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 
-import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, LogListStyle, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
 import { LogListContextData, Props } from '../LogListContext';
@@ -24,24 +24,23 @@ export const LogListContext = createContext<LogListContextData>({
   fontSize: 'default',
   forceEscape: false,
   hasUnescapedContent: false,
+  listStyle: LogListStyle.UnwrappedWithColumns,
   setDedupStrategy: () => {},
   setFilterLevels: () => {},
   setFontSize: () => {},
   setForceEscape: () => {},
+  setListStyle: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
-  setPrettifyJSON: () => {},
   setShowTime: () => {},
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setTimestampResolution: () => {},
-  setWrapLogMessage: () => {},
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
   timestampResolution: 'ns',
-  wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
   controlsExpanded: false,
@@ -72,15 +71,14 @@ export const defaultValue: LogListContextData = {
   setFilterLevels: jest.fn(),
   setFontSize: jest.fn(),
   setForceEscape: jest.fn(),
+  setListStyle: jest.fn(),
   setLogListState: jest.fn(),
   setPinnedLogs: jest.fn(),
   setShowTime: jest.fn(),
   setShowUniqueLabels: jest.fn(),
   setSortOrder: jest.fn(),
-  setPrettifyJSON: jest.fn(),
   setSyntaxHighlighting: jest.fn(),
   setTimestampResolution: jest.fn(),
-  setWrapLogMessage: jest.fn(),
   downloadLogs: jest.fn(),
   filterLevels: [],
   fontSize: 'default',
@@ -91,12 +89,12 @@ export const defaultValue: LogListContextData = {
   displayedFields: [],
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
-  wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: jest.fn(),
   timestampResolution: 'ns',
   controlsExpanded: false,
   setControlsExpanded: jest.fn(),
+  listStyle: LogListStyle.UnwrappedWithColumns,
 };
 
 export const defaultProps: Props = {
@@ -107,6 +105,7 @@ export const defaultProps: Props = {
   filterLevels: [],
   fontSize: 'default',
   getRowContextQuery: jest.fn(),
+  listStyle: LogListStyle.Wrapped,
   logSupportsContext: jest.fn(),
   logs: [],
   onPermalinkClick: jest.fn(),
@@ -119,7 +118,6 @@ export const defaultProps: Props = {
   sortOrder: LogsSortOrder.Descending,
   syntaxHighlighting: true,
   timestampResolution: 'ms',
-  wrapLogMessage: true,
 };
 
 export const LogListContextProvider = ({
@@ -129,6 +127,7 @@ export const LogListContextProvider = ({
   displayedFields = [],
   filterLevels = [],
   getRowContextQuery = jest.fn(),
+  listStyle = LogListStyle.Wrapped,
   logLineMenuCustomItems = undefined,
   logs = [],
   logSupportsContext = jest.fn(),
@@ -143,7 +142,6 @@ export const LogListContextProvider = ({
   sortOrder = LogsSortOrder.Descending,
   syntaxHighlighting = true,
   timestampResolution = 'ms',
-  wrapLogMessage = true,
 }: Partial<Props>) => {
   const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
   const hasSampledLogs = logs.some((log) => !!checkLogsSampled(log));
@@ -160,6 +158,7 @@ export const LogListContextProvider = ({
         hasSampledLogs,
         filterLevels,
         getRowContextQuery,
+        listStyle,
         logLineMenuCustomItems,
         logSupportsContext,
         onLogLineHover,
@@ -173,19 +172,17 @@ export const LogListContextProvider = ({
         setFilterLevels: jest.fn(),
         setFontSize: jest.fn(),
         setForceEscape: jest.fn(),
+        setListStyle: jest.fn(),
         setLogListState: jest.fn(),
         setPinnedLogs: jest.fn(),
-        setPrettifyJSON: jest.fn(),
         setShowTime: jest.fn(),
         setShowUniqueLabels: jest.fn(),
         setSortOrder: jest.fn(),
         setSyntaxHighlighting: jest.fn(),
-        setWrapLogMessage: jest.fn(),
         showTime,
         sortOrder,
         syntaxHighlighting,
         timestampResolution,
-        wrapLogMessage,
       }}
     >
       {children}

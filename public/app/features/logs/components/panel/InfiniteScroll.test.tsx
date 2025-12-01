@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { VariableSizeList } from 'react-window';
 
-import { createTheme, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
+import { createTheme, dateTimeForTimeZone, LogListStyle, rangeUtil } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
 
 import { ScrollDirection, SCROLLING_THRESHOLD } from '../InfiniteScroll';
@@ -37,7 +37,7 @@ const defaultProps: Omit<Props, 'children' | 'scrollElement'> = {
   setInitialScrollPosition: jest.fn(),
   showTime: false,
   virtualization,
-  wrapLogMessage: false,
+  listStyle: LogListStyle.UnwrappedWithColumns,
 };
 
 function setup(

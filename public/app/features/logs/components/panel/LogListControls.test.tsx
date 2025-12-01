@@ -19,6 +19,7 @@ const OLDEST_LOGS_LABEL_COPY = 'Oldest logs first';
 const DEDUPE_LABEL_COPY = 'Deduplication';
 const SHOW_TIMESTAMP_LABEL_COPY = 'Show timestamps';
 const WRAP_LINES_LABEL_COPY = 'Wrap lines';
+const NEW_WRAP_LINES_LABEL_COPY = 'Wrap lines';
 const WRAP_JSON_TOOLTIP_COPY = 'Enable line wrapping and prettify JSON';
 const WRAP_JSON_LABEL_COPY = 'Wrap JSON';
 const WRAP_DISABLE_LABEL_COPY = 'Disable line wrapping';
@@ -95,15 +96,15 @@ describe('LogListControls', () => {
     expect(screen.getByLabelText(WRAP_LINES_LABEL_COPY)).toBeInTheDocument();
     expect(screen.getByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY)).toBeInTheDocument();
     expect(screen.getByLabelText(SCROLL_TOP_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.queryByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).toBeInTheDocument();
     expect(screen.queryByLabelText(SHOW_UNIQUE_LABELS_LABEL_COPY)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(ESCAPE_NEWLINES_TOOLTIP_COPY)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(REMOVE_ESCAPE_NEWLINES_LABEL_COPY)).not.toBeInTheDocument();
   });
 
   test('Renders legacy controls', () => {
     render(
-      <LogListContextProvider {...contextProps} app={CoreApp.Explore} showUniqueLabels={false} prettifyJSON={false}>
+      <LogListContextProvider {...contextProps} app={CoreApp.Explore} showUniqueLabels={false}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
@@ -144,8 +145,8 @@ describe('LogListControls', () => {
     expect(screen.getByLabelText(WRAP_LINES_LABEL_COPY)).toBeInTheDocument();
     expect(screen.getByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY)).toBeInTheDocument();
     expect(screen.getByLabelText(SCROLL_TOP_LABEL_COPY)).toBeInTheDocument();
+    expect(screen.queryByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).toBeInTheDocument();
     expect(screen.queryByLabelText(SHOW_UNIQUE_LABELS_LABEL_COPY)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(ESCAPE_NEWLINES_TOOLTIP_COPY)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(REMOVE_ESCAPE_NEWLINES_LABEL_COPY)).not.toBeInTheDocument();
   });
@@ -294,13 +295,14 @@ describe('LogListControls', () => {
   test('Controls line wrapping', async () => {
     const onLogOptionsChange = jest.fn();
     render(
-      <LogListContextProvider {...contextProps} wrapLogMessage={false} onLogOptionsChange={onLogOptionsChange}>
+      <LogListContextProvider {...contextProps} onLogOptionsChange={onLogOptionsChange}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText(WRAP_LINES_LABEL_COPY));
-    expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('listStyle', LogListStyle.Wrapped);
   });
 
   test('Controls line wrapping and prettify JSON', async () => {
@@ -311,39 +313,40 @@ describe('LogListControls', () => {
     render(
       <LogListContextProvider
         {...contextProps}
-        wrapLogMessage={false}
+        listStyle={LogListStyle.UnwrappedWithColumns}
         onLogOptionsChange={onLogOptionsChange}
-        prettifyJSON={false}
       >
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
 
-    await userEvent.click(screen.getByLabelText('Wrap disabled'));
+    await userEvent.click(screen.getByLabelText('Unwrapped columns'));
     await userEvent.click(screen.getByText('Enable line wrapping'));
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
-    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', false);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('listStyle', LogListStyle.Wrapped);
 
-    await userEvent.click(screen.getByLabelText(WRAP_LINES_LABEL_COPY));
+    await userEvent.click(screen.getByLabelText(NEW_WRAP_LINES_LABEL_COPY));
     await userEvent.click(screen.getByText(WRAP_JSON_TOOLTIP_COPY));
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(4);
     expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', true);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('listStyle', LogListStyle.WrappedWithPrettyJSON);
 
     await userEvent.click(screen.getByLabelText(WRAP_JSON_LABEL_COPY));
     await userEvent.click(screen.getByText(WRAP_DISABLE_LABEL_COPY));
 
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', false);
     expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', false);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('listStyle', LogListStyle.UnwrappedWithColumns);
 
-    expect(onLogOptionsChange).toHaveBeenCalledTimes(6);
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(7);
 
     config.featureToggles.newLogsPanel = originalFlagState;
   });
 
-  test('Controls line wrapping and prettify JSON', async () => {
+  test('Controls timestamps', async () => {
     const originalFlagState = config.featureToggles.newLogsPanel;
     config.featureToggles.newLogsPanel = true;
 
@@ -403,7 +406,7 @@ describe('LogListControls', () => {
 
   test('Controls Expand JSON logs', async () => {
     const { rerender } = render(
-      <LogListContextProvider {...contextProps} prettifyJSON={false}>
+      <LogListContextProvider {...contextProps}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );

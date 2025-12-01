@@ -11,7 +11,8 @@ import { getSidebarWidth } from '../fieldSelector/FieldSelector';
 
 import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
-import { useLogListContext, wrapLogMessage } from './LogListContext';
+import { useLogListContext } from './LogListContext';
+import { wrapLogMessage } from './panel';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
