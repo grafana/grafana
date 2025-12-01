@@ -29,7 +29,6 @@ interface QueryDetailViewProps {
 
 export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewProps) {
   const styles = useStyles2(getStyles);
-  const [data, setData] = useState<PanelData | undefined>();
   const [datasourceRef, setDatasourceRef] = useState(query.datasource);
 
   let initialDsSettings: DataSourceInstanceSettings | undefined = useMemo(() => {
@@ -59,19 +58,18 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
   }, [datasourceRef]);
 
   // Subscribe to panel data
-  useEffect(() => {
+  const data = useMemo(() => {
     if (!queryRunnerState?.data) {
       return;
     }
     // Filter data for this specific query
     const panelData = queryRunnerState.data;
     const filteredSeries = panelData.series.filter((s) => s.refId === query.refId);
-    const filteredData = {
+    return {
       ...panelData,
       series: filteredSeries,
       error: panelData.errors?.find((e) => e.refId === query.refId),
     };
-    setData(filteredData);
   }, [queryRunnerState?.data, query.refId]);
 
   useEffect(() => {
@@ -91,9 +89,10 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
         return q;
       });
 
-      console.log(newQueries);
-
-      queryRunner.setState({ queries: newQueries });
+      queryRunner.setState({
+        datasource: { uid: datasource.uid, type: datasource.type },
+        queries: newQueries,
+      });
       queryRunner.runQueries();
     }
   }, [datasource, queryIndex, queryRunner]);
