@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 env:
-  TEST_URL: https://play.grafana.org/
+  TARGET_URL: https://play.grafana.org/
   OUTPUT_TEXT_PATH: usability-review.txt
   SCREENSHOT_PATH: usability-screenshot.png
 
@@ -147,7 +147,7 @@ jobs:
       - name: Run usability review agent
         uses: ./.github/actions/usability-review-agent
         with:
-          target_url: ${{ env.TEST_URL }}
+          target_url: ${{ env.TARGET_URL }}
           openai_api_key: ${{ env.OPENAI_API_KEY }}
           workflow_name: "the application interface"
           prompt_file: "dynamic_prompt.txt"
@@ -176,7 +176,7 @@ jobs:
 
           echo "## 🔍 Usability Review Results" > "$COMMENT_FILE"
           echo "" >> "$COMMENT_FILE"
-          echo "**Test URL:** ${{ env.TEST_URL }}" >> "$COMMENT_FILE"
+          echo "**Target URL:** ${{ env.TARGET_URL }}" >> "$COMMENT_FILE"
           echo "" >> "$COMMENT_FILE"
           echo "---" >> "$COMMENT_FILE"
           echo "" >> "$COMMENT_FILE"
