@@ -10056,6 +10056,13 @@
     "name-enable-log-details": "Enable log details",
     "name-enable-logs-highlighting": "Enable logs highlighting",
     "name-font-size": "Font size",
+    "name-list-style": {
+      "name-grid-lines": "Log list style",
+      "unwrapped-columns": "Inline with colums",
+      "unwrapped-no-columns": "Inline without columns",
+      "wrapped": "Wrap lines",
+      "wrapped-json": "Wrap lines and prettify JSON"
+    },
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
     "name-show-controls": "Show controls",
