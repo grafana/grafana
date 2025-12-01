@@ -1234,11 +1234,9 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	saved := make([]DataKey, 0)
 	rollback := func() {
 		// we don't have transactions in the kv store, so we simply delete everything we created
-		for _, val := range saved {
-			err = b.dataStore.Delete(ctx, val)
-			if err != nil {
-				b.log.Error("failed to delete during rollback: %s", err)
-			}
+		err = b.dataStore.batchDelete(ctx, saved)
+		if err != nil {
+			b.log.Error("failed to delete during rollback: %s", err)
 		}
 	}
 
