@@ -52,8 +52,19 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
         # Navigate to target URL from environment variable, or use docs page as fallback
         target_url = os.environ.get("TARGET_URL", "https://grafana.com/docs/")
         print(f"Navigating to: {target_url}")
-        page.goto(target_url, wait_until="networkidle", timeout=60000)
-        print(f"Navigation complete, final URL: {page.url}")
+
+        # Use domcontentloaded since Grafana has continuous network activity
+        page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
+        print(f"Initial navigation complete, final URL: {page.url}")
+
+        # Wait for Grafana to finish loading by checking for main app container
+        try:
+            # Wait for the main Grafana app container (found in AppChrome.tsx)
+            page.wait_for_selector('.main-view, #pageContent', timeout=30000)
+            print("Grafana app loaded successfully")
+        except Exception as e:
+            print(f"Warning: Could not detect Grafana app loaded state: {e}")
+            # Continue anyway - the page might still be functional
 
         return browser, page
 
