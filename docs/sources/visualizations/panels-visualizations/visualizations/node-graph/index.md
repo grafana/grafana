@@ -22,7 +22,7 @@ weight: 100
 
 # Node graph
 
-Node graphs are useful when you need to visualize elements that are related to each other. This is done by displaying circles&mdash;or _nodes_&mdash;for each element you want to visualize, connected by lines&mdash;or _edges_. The visualization uses a directed force layout that positions the nodes into a network of connected circles.
+Node graphs are useful when you need to visualize elements that are related to each other. This is done by displaying circles&mdash;or _nodes_&mdash;for each element you want to visualize, connected by lines&mdash;or _edges_. By default, the visualization uses a [layered layout](#layout-algorithm) that positions the nodes into a network of connected circles.
 
 Node graphs display useful information about each node, as well as the relationships between them, allowing you to visualize complex infrastructure maps, hierarchies, or execution diagrams.
 
@@ -123,25 +123,31 @@ You can pan the view by clicking outside any node or edge and dragging your mous
 
 Use the buttons in the lower right corner to zoom in or out. You can also use the mouse wheel or touchpad scroll, together with either Ctrl or Cmd key to do so.
 
+### Switch layouts
+
+Switch quickly between displaying the visualization in graph or grid [layout](#layout-algorithm).
+
+Click a node and select either **Show in Grid layout** or **Show in Graph layout**, depending on the current layout of the visualization:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid-menu.png" max-width="750px" alt="Node graph in grid layout with node menu open" >}}
+
+In grid layout, you can sort nodes by clicking on the stats inside the legend.
+The marker next to the stat name shows which stat is currently used for sorting and the sorting direction:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-node-graph-legend-sort.png" max-width="550px" alt="Node graph legend sorting" >}}
+
+Switching between grid and other layouts this way only changes the layout temporarily.
+The visualization maintains the layout algorithm selected in the panel editor, and reverts to it when the dashboard refreshes.
+
+For more information about layouts, refer to [Layout algorithm](#layout-algorithm).
+
+<!-- if you have the panel in grid layout and switch it to graph, is it switching to layered? -->
+
 ### Hidden nodes
 
 The number of nodes shown at a given time is limited to maintain a reasonable visualization performance. Nodes that are not currently visible are hidden behind clickable markers that show an approximate number of hidden nodes that are connected by a particular edge. You can click on the marker to expand the graph around that node.
 
 ![Node graph exploration](/media/docs/grafana/panels-visualizations/node-graph-exploration-8.0-2.png 'Node graph exploration')
-
-### Grid view
-
-You can switch to the grid view to have a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
-
-![Node graph grid](/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid-v11.3.png 'Node graph grid')
-
-To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
-
-![Node graph legend](/media/docs/grafana/panels-visualizations/screenshot-node-graph-legend-v11.3.png 'Node graph legend')
-
-Click on the node and select "Show in Graph layout" option to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
-
-![Node graph grid to default](/media/docs/grafana/panels-visualizations/screenshot-node-graph-view-v11.3.png 'Node graph grid to default')
 
 ## Configuration options
 
@@ -155,7 +161,24 @@ Click on the node and select "Show in Graph layout" option to switch back to gra
 
 Use the following options to refine your node graph visualization.
 
-- **Zoom mode** - Choose how the node graph should handle zoom and scroll events.
+#### Zoom mode
+
+Choose how the node graph should handle zoom and scroll events:
+
+- **Cooperative** - Allows you to scroll the visualization normally.
+- **Greedy** - Reacts to all zoom gestures.
+
+#### Layout algorithm
+
+Choose how the visualization layout is generated:
+
+- **Layered** - Default. Creates a predictable and orderly layout, especially useful for service graphs.
+- **Force** - Uses a physics-based force layout algorithm that's useful with a large number of nodes (500+).
+- **Grid** - Arranges nodes into a grid format to provide a better overview of the most interesting nodes in the graph. This layout shows nodes in a grid without edges and can be sorted by the stats shown inside the node or by the ones represented by the a colored border of the nodes.
+
+  {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid.png" max-width="650px" alt="Node graph in grid layout" >}}
+
+  For more information about using the graph in grid layout, refer to [Switch layouts](#switch-layouts).
 
 ### Nodes options
 
@@ -239,6 +262,6 @@ Optional fields:
 | arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`.                                                                                                                                                                           |
 | detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                                                                                                                                                                                                         |
 | color         | string/number | Can be used to specify a single color instead of using the `arc__` fields to specify color sections. It can be either a string which should then be an acceptable HTML color string or it can be a number in which case the behavior depends on `field.config.color.mode` setting. This can be for example used to create gradient colors controlled by the field value. |
-| icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana [built in icons](https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview)) are allowed.                                                                                                                                                     |
+| icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana [built in icons](https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview) are allowed.                                                                                                                                                      |
 | nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                        |
 | highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                      |
