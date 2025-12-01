@@ -65,11 +65,8 @@ func TestIntegrationUserSearch(t *testing.T) {
 
 			t.Run("search by email", func(t *testing.T) {
 				res := searchUsers(t, helper, "charlie@example.com")
-				// Mode 3+ email search seems to be flaky or broken in test environment
-				if mode < rest.Mode3 {
-					require.Len(t, res.Hits, 1)
-					require.Equal(t, "charlie@example.com", res.Hits[0].Email)
-				}
+				require.Len(t, res.Hits, 1)
+				require.Equal(t, "charlie@example.com", res.Hits[0].Email)
 			})
 		})
 	}
@@ -111,17 +108,17 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 				{
 					field:     "title",
 					extractor: func(h iamv0.UserHit) string { return h.Title },
-					expected:  []string{"TestUser Alice", "TestUser Bob", "TestUser Charlie"},
+					expected:  []string{"TestUser Alice", "TestUser Bob", "TestUser Charlie", "TestUser Editor", "TestUser Viewer"},
 				},
 				{
 					field:     "login",
 					extractor: func(h iamv0.UserHit) string { return h.Login },
-					expected:  []string{"alice", "bob", "charlie"},
+					expected:  []string{"alice", "bob", "charlie", "testuser-editor", "testuser-viewer"},
 				},
 				{
 					field:     "email",
 					extractor: func(h iamv0.UserHit) string { return h.Email },
-					expected:  []string{"alice@example.com", "bob@example.com", "charlie@example.com"},
+					expected:  []string{"alice@example.com", "bob@example.com", "charlie@example.com", "testuser-editor@example.com", "testuser-viewer@example.com"},
 				},
 			}
 
@@ -129,12 +126,12 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 				t.Run("sort by "+tc.field, func(t *testing.T) {
 					// ASC
 					res := searchUsersWithSort(t, helper, "TestUser", tc.field)
-					require.GreaterOrEqual(t, len(res.Hits), 3)
+					require.GreaterOrEqual(t, len(res.Hits), 5)
 					verifyOrder(t, res.Hits, tc.expected, tc.extractor)
 
 					// DESC
 					res = searchUsersWithSort(t, helper, "TestUser", "-"+tc.field)
-					require.GreaterOrEqual(t, len(res.Hits), 3)
+					require.GreaterOrEqual(t, len(res.Hits), 5)
 
 					// Reverse expected
 					reversed := make([]string, len(tc.expected))
@@ -146,13 +143,17 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 
 			t.Run("sort by lastSeenAt", func(t *testing.T) {
 				// Populate lastSeenAt
-				// Alice: 1 hour ago
-				// Bob: 2 hours ago
-				// Charlie: 3 hours ago
-				now := time.Now()
-				updateLastSeenAt(t, helper, "alice", now.Add(-1*time.Hour), mode)
-				updateLastSeenAt(t, helper, "bob", now.Add(-2*time.Hour), mode)
-				updateLastSeenAt(t, helper, "charlie", now.Add(-3*time.Hour), mode)
+				// Alice: 30 minutes ago
+				// Bob: 1 minute ago
+				// Charlie: 2 hours ago
+				// Editor: 40 minutes ago
+				// Viewer: 1h 30 mins ago
+				now := time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)
+				updateLastSeenAt(t, helper, "alice", now.Add(-30*time.Minute), mode)
+				updateLastSeenAt(t, helper, "bob", now.Add(-1*time.Minute), mode)
+				updateLastSeenAt(t, helper, "charlie", now.Add(-2*time.Hour), mode)
+				updateLastSeenAt(t, helper, "testuser-editor", now.Add(-40*time.Minute), mode)
+				updateLastSeenAt(t, helper, "testuser-viewer", now.Add(-90*time.Minute), mode)
 
 				if mode >= rest.Mode3 {
 					t.Skip("Skipping lastSeenAt sort test for Mode >= 3: API does not persist status.lastSeenAt")
@@ -160,12 +161,12 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 
 				// lastSeenAt ASC means oldest date first to match legacy behavior
 				res := searchUsersWithSort(t, helper, "TestUser", "lastSeenAt")
-				require.GreaterOrEqual(t, len(res.Hits), 3)
-				verifyOrder(t, res.Hits, []string{"charlie", "bob", "alice"}, func(h iamv0.UserHit) string { return h.Login })
+				require.GreaterOrEqual(t, len(res.Hits), 5)
+				verifyOrder(t, res.Hits, []string{"charlie", "testuser-viewer", "testuser-editor", "alice", "bob"}, func(h iamv0.UserHit) string { return h.Login })
 
 				res = searchUsersWithSort(t, helper, "TestUser", "-lastSeenAt")
-				require.GreaterOrEqual(t, len(res.Hits), 3)
-				verifyOrder(t, res.Hits, []string{"alice", "bob", "charlie"}, func(h iamv0.UserHit) string { return h.Login })
+				require.GreaterOrEqual(t, len(res.Hits), 5)
+				verifyOrder(t, res.Hits, []string{"bob", "alice", "testuser-editor", "testuser-viewer", "charlie"}, func(h iamv0.UserHit) string { return h.Login })
 			})
 		})
 	}
@@ -200,10 +201,12 @@ func TestIntegrationUserSearch_SortCompareLegacy(t *testing.T) {
 			setupUsers(t, helper)
 
 			// Populate lastSeenAt for sorting comparison
-			now := time.Now()
-			updateLastSeenAt(t, helper, "alice", now.Add(-1*time.Hour), mode)
-			updateLastSeenAt(t, helper, "bob", now.Add(-2*time.Hour), mode)
-			updateLastSeenAt(t, helper, "charlie", now.Add(-3*time.Hour), mode)
+			now := time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)
+			updateLastSeenAt(t, helper, "alice", now.Add(-30*time.Minute), mode)
+			updateLastSeenAt(t, helper, "bob", now.Add(-1*time.Minute), mode)
+			updateLastSeenAt(t, helper, "charlie", now.Add(-2*time.Hour), mode)
+			updateLastSeenAt(t, helper, "testuser-editor", now.Add(-40*time.Minute), mode)
+			updateLastSeenAt(t, helper, "testuser-viewer", now.Add(-90*time.Minute), mode)
 
 			fields := []string{"login", "email", "name", "lastSeenAt"}
 			for _, field := range fields {
@@ -245,6 +248,28 @@ func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 
 	users := []iamv0.User{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testuser-editor",
+			},
+			Spec: iamv0.UserSpec{
+				Title: "TestUser Editor",
+				Login: "testuser-editor",
+				Email: "testuser-editor@example.com",
+				Role:  "Editor",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testuser-viewer",
+			},
+			Spec: iamv0.UserSpec{
+				Title: "TestUser Viewer",
+				Login: "testuser-viewer",
+				Email: "testuser-viewer@example.com",
+				Role:  "Viewer",
+			},
+		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "alice",
@@ -371,9 +396,11 @@ func verifyOrder(t *testing.T, hits []iamv0.UserHit, expectedValues []string, ex
 }
 
 func updateLastSeenAt(t *testing.T, helper *apis.K8sTestHelper, login string, lastSeen time.Time, mode rest.DualWriterMode) {
-	if mode <= rest.Mode3 {
+	if mode < rest.Mode3 {
 		err := helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			_, err := sess.Exec("UPDATE user SET last_seen_at = ? WHERE login = ?", lastSeen, login)
+			_, err := sess.Table("user").Where("login = ?", login).Update(map[string]interface{}{
+				"last_seen_at": lastSeen,
+			})
 			return err
 		})
 		require.NoError(t, err)
