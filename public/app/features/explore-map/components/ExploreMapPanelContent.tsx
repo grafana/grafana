@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { ExplorePaneContainer } from '../../explore/ExplorePaneContainer';
 import { DEFAULT_RANGE } from '../../explore/state/constants';
 import { initializeExplore } from '../../explore/state/explorePane';
+import { usePanelStateSync } from '../hooks/usePanelStateSync';
 // import { useExploreStateReceiver } from '../hooks/useExploreStateReceiver';
 // import { useExploreStateSync } from '../hooks/useExploreStateSync';
 import { selectPanels } from '../state/selectors';
@@ -84,6 +85,12 @@ export function ExploreMapPanelContent({ panelId, exploreId, width, height }: Ex
 
   // Create scoped event bus for this panel
   const eventBus = useMemo(() => new EventBusSrv(), []);
+
+  // Sync panel state when deselected (outgoing)
+  usePanelStateSync({
+    panelId,
+    exploreId,
+  });
 
   // TODO: Re-enable once we fix the re-rendering issue
   // Sync Explore state changes to CRDT (outgoing)

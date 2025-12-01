@@ -22,6 +22,7 @@ export interface ExploreMapPanel {
   exploreId: string;
   position: PanelPosition;
   exploreState?: SerializedExploreState;
+  remoteVersion?: number; // Increments only on remote explore state updates
 }
 
 export interface CanvasViewport {
@@ -47,6 +48,7 @@ export interface ExploreMapState {
   selectedPanelIds: string[];
   nextZIndex: number;
   cursors: Record<string, UserCursor>;
+  crdtState?: any; // Raw CRDT state JSON for proper sync
 }
 
 export const initialExploreMapState: ExploreMapState = {

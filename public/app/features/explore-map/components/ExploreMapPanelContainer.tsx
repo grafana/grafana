@@ -73,33 +73,38 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
         const deltaX = data.x - dragStartPos.x;
         const deltaY = data.y - dragStartPos.y;
 
-        // Final position update for all panels
-        if (isSelected && selectedPanelIds.length > 1) {
-          // Update other panels with the remaining delta
-          dispatch(
-            updateMultiplePanelPositions({
-              panelId: panel.id,
-              deltaX,
-              deltaY,
-            })
-          );
-          // Update the dragged panel's position in Redux
-          dispatch(
-            updatePanelPosition({
-              panelId: panel.id,
-              x: data.x,
-              y: data.y,
-            })
-          );
-        } else {
-          // Single panel drag
-          dispatch(
-            updatePanelPosition({
-              panelId: panel.id,
-              x: data.x,
-              y: data.y,
-            })
-          );
+        // Only update position if there was actual movement
+        const hasMoved = Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5;
+
+        if (hasMoved) {
+          // Final position update for all panels
+          if (isSelected && selectedPanelIds.length > 1) {
+            // Update other panels with the remaining delta
+            dispatch(
+              updateMultiplePanelPositions({
+                panelId: panel.id,
+                deltaX,
+                deltaY,
+              })
+            );
+            // Update the dragged panel's position in Redux
+            dispatch(
+              updatePanelPosition({
+                panelId: panel.id,
+                x: data.x,
+                y: data.y,
+              })
+            );
+          } else {
+            // Single panel drag
+            dispatch(
+              updatePanelPosition({
+                panelId: panel.id,
+                x: data.x,
+                y: data.y,
+              })
+            );
+          }
         }
       }
       setDragStartPos(null);

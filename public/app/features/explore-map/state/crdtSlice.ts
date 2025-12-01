@@ -7,10 +7,12 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
+
 import { generateExploreId } from 'app/core/utils/explore';
 
 import { CRDTStateManager } from '../crdt/state';
 import { CRDTOperation } from '../crdt/types';
+
 import { CanvasViewport, SerializedExploreState, UserCursor } from './types';
 
 /**
@@ -347,6 +349,21 @@ const crdtSlice = createSlice({
      */
     bringPanelToFront: (state, action: PayloadAction<{ panelId: string }>) => {
       const manager = getCRDTManager(state);
+
+      // Check if panel is already at the front
+      const currentPanel = manager.getPanelForUI(action.payload.panelId);
+      if (!currentPanel) {
+        return;
+      }
+
+      // Get all panels and find the max z-index
+      const allPanels = manager.getAllPanelsForUI();
+      const maxZIndex = Math.max(...Object.values(allPanels).map((p) => p.position.zIndex));
+
+      // Only update if this panel isn't already at the front
+      if (currentPanel.position.zIndex >= maxZIndex) {
+        return;
+      }
 
       const operation = manager.createUpdatePanelZIndexOperation(action.payload.panelId);
       if (!operation) {

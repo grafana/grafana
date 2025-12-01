@@ -28,6 +28,9 @@ export interface CRDTPanelData {
 
   // CRDT-replicated explore state
   exploreState: LWWRegister<SerializedExploreState | undefined>;
+
+  // Local counter incremented only for remote explore state updates
+  remoteVersion: number;
 }
 
 /**
@@ -88,6 +91,7 @@ export interface CRDTExploreMapStateJSON {
     height: { value: number; timestamp: HLCTimestamp };
     zIndex: { value: number; timestamp: HLCTimestamp };
     exploreState: { value: SerializedExploreState | undefined; timestamp: HLCTimestamp };
+    remoteVersion?: number;
   }>;
   zIndexCounter: {
     increments: Record<string, number>;

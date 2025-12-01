@@ -111,6 +111,7 @@ export class CRDTStateManager {
         zIndex: data.zIndex.get(),
       },
       exploreState: data.exploreState.get(),
+      remoteVersion: data.remoteVersion,
     };
   }
 
@@ -355,6 +356,7 @@ export class CRDTStateManager {
         height: new LWWRegister(position.height, operation.timestamp),
         zIndex: new LWWRegister(zIndex, operation.timestamp),
         exploreState: new LWWRegister(undefined, operation.timestamp),
+        remoteVersion: 0,
       });
     }
 
@@ -433,6 +435,11 @@ export class CRDTStateManager {
 
     const updated = panelData.exploreState.set(exploreState, operation.timestamp);
 
+    // Increment remoteVersion only for remote operations
+    if (updated && operation.nodeId !== this.nodeId) {
+      panelData.remoteVersion++;
+    }
+
     return {
       success: true,
       applied: updated,
@@ -495,6 +502,7 @@ export class CRDTStateManager {
           height: otherPanelData.height.clone(),
           zIndex: otherPanelData.zIndex.clone(),
           exploreState: otherPanelData.exploreState.clone(),
+          remoteVersion: otherPanelData.remoteVersion,
         });
       } else {
         // Merge each LWW register
@@ -527,6 +535,7 @@ export class CRDTStateManager {
         height: data.height.toJSON(),
         zIndex: data.zIndex.toJSON(),
         exploreState: data.exploreState.toJSON(),
+        remoteVersion: data.remoteVersion,
       };
     }
 
@@ -561,6 +570,7 @@ export class CRDTStateManager {
         height: LWWRegister.fromJSON(data.height),
         zIndex: LWWRegister.fromJSON(data.zIndex),
         exploreState: LWWRegister.fromJSON(data.exploreState),
+        remoteVersion: data.remoteVersion || 0,
       });
     }
 

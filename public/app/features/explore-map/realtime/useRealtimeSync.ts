@@ -10,7 +10,6 @@ import { Unsubscribable } from 'rxjs';
 
 import { LiveChannelAddress, LiveChannelScope, isLiveChannelMessageEvent } from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
-
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { CRDTOperation } from '../crdt/types';
@@ -193,11 +192,15 @@ export function useRealtimeSync(options: RealtimeSyncOptions): RealtimeSyncStatu
 
     const channelAddress = channelAddressRef.current;
 
+    console.log('[CRDT] Broadcasting', pendingOperations.length, 'pending operations');
+
     // Broadcast each pending operation
     for (const operation of pendingOperations) {
       try {
         // Mark as applied locally
         appliedOpsRef.current.add(operation.operationId);
+
+        console.log('[CRDT] Broadcasting operation:', operation.type, operation.operationId);
 
         // Publish to channel
         liveService.publish(channelAddress, operation).catch((error) => {

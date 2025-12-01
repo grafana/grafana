@@ -6,7 +6,7 @@ import { createErrorNotification, createSuccessNotification } from 'app/core/cop
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { exploreMapApi } from '../api/exploreMapApi';
-import { initializeFromLegacyState } from '../state/crdtSlice';
+import { initializeFromLegacyState, loadState as loadCRDTState } from '../state/crdtSlice';
 import { loadCanvas } from '../state/exploreMapSlice';
 import { selectPanels, selectMapTitle, selectViewport } from '../state/selectors';
 import { ExploreMapState, initialExploreMapState, SerializedExploreState } from '../state/types';
@@ -29,6 +29,7 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadDone = useRef(false);
+  const lastSavedCRDTStateRef = useRef<string | null | undefined>(null);
 
   // Helper to enrich state with Explore pane data
   const enrichStateWithExploreData = useCallback(
@@ -101,12 +102,19 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
           dispatch(loadCanvas(parsed));
 
           // Initialize CRDT state from loaded data
-          dispatch(initializeFromLegacyState({
-            uid: parsed.uid,
-            title: parsed.title,
-            panels: parsed.panels || {},
-            viewport: parsed.viewport || initialExploreMapState.viewport,
-          }));
+          // If CRDT state is available, use it directly. Otherwise, initialize from legacy panels.
+          if (parsed.crdtState) {
+            // Load the saved CRDT state which includes proper OR-Set metadata
+            dispatch(loadCRDTState({ crdtState: parsed.crdtState }));
+          } else {
+            // Fallback to legacy initialization for backward compatibility
+            dispatch(initializeFromLegacyState({
+              uid: parsed.uid,
+              title: parsed.title,
+              panels: parsed.panels || {},
+              viewport: parsed.viewport || initialExploreMapState.viewport,
+            }));
+          }
         } catch (error) {
           console.error('Failed to load map from API:', error);
           dispatch(
@@ -132,12 +140,19 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
             dispatch(loadCanvas(parsed));
 
             // Initialize CRDT state from loaded data
-            dispatch(initializeFromLegacyState({
-              uid: parsed.uid,
-              title: parsed.title,
-              panels: parsed.panels,
-              viewport: parsed.viewport,
-            }));
+            // If CRDT state is available, use it directly. Otherwise, initialize from legacy panels.
+            if (parsed.crdtState) {
+              // Load the saved CRDT state which includes proper OR-Set metadata
+              dispatch(loadCRDTState({ crdtState: parsed.crdtState }));
+            } else {
+              // Fallback to legacy initialization for backward compatibility
+              dispatch(initializeFromLegacyState({
+                uid: parsed.uid,
+                title: parsed.title,
+                panels: parsed.panels,
+                viewport: parsed.viewport,
+              }));
+            }
           }
         } catch (error) {
           console.error('Failed to load canvas state from storage:', error);
@@ -166,6 +181,13 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
       return;
     }
 
+    // Check if CRDT state has actually changed (ignore local UI state like selection)
+    const currentCRDTStateStr = crdtState.crdtStateJSON;
+    if (currentCRDTStateStr === lastSavedCRDTStateRef.current) {
+      // No changes to persist
+      return;
+    }
+
     // Clear any pending save
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -174,8 +196,9 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
     const saveState = async () => {
       // CRDT panels already contain exploreState from savePanelExploreState actions
       // We don't need to enrich them with live Explore pane data
-      console.log('[Persistence] Saving panels:', panels);
+      // console.log('[Persistence] Saving panels:', panels);
 
+      // Save both legacy format (for backward compat) and CRDT state
       const enrichedState: ExploreMapState = {
         uid,
         title: mapTitle,
@@ -184,6 +207,8 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
         selectedPanelIds: [],
         nextZIndex: 1,
         cursors: {},
+        // Store the raw CRDT state for proper sync across sessions
+        crdtState: crdtState.crdtStateJSON ? JSON.parse(crdtState.crdtStateJSON) : undefined,
       };
 
       if (uid) {
@@ -197,6 +222,8 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
               data: enrichedState,
             });
             setLastSaved(new Date());
+            // Update last saved state ref to prevent duplicate saves
+            lastSavedCRDTStateRef.current = currentCRDTStateStr;
           } catch (error) {
             console.error('Failed to save map to API:', error);
             dispatch(notifyApp(createErrorNotification('Failed to save explore map', 'Changes may not be persisted')));
@@ -208,6 +235,8 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
         // Save to localStorage immediately (legacy mode)
         try {
           store.set(STORAGE_KEY, JSON.stringify(enrichedState));
+          // Update last saved state ref to prevent duplicate saves
+          lastSavedCRDTStateRef.current = currentCRDTStateStr;
         } catch (error) {
           console.error('Failed to save canvas state to storage:', error);
         }
@@ -276,12 +305,19 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
             dispatch(loadCanvas(parsed));
 
             // Initialize CRDT state from imported data
-            dispatch(initializeFromLegacyState({
-              uid: parsed.uid,
-              title: parsed.title,
-              panels: parsed.panels,
-              viewport: parsed.viewport,
-            }));
+            // If CRDT state is available, use it directly. Otherwise, initialize from legacy panels.
+            if (parsed.crdtState) {
+              // Load the saved CRDT state which includes proper OR-Set metadata
+              dispatch(loadCRDTState({ crdtState: parsed.crdtState }));
+            } else {
+              // Fallback to legacy initialization for backward compatibility
+              dispatch(initializeFromLegacyState({
+                uid: parsed.uid,
+                title: parsed.title,
+                panels: parsed.panels,
+                viewport: parsed.viewport,
+              }));
+            }
 
             dispatch(notifyApp(createSuccessNotification('Canvas imported successfully')));
           } catch (error) {
