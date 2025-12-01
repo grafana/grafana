@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { sortBy } from 'lodash';
 import { ChangeEvent } from 'react';
 import * as React from 'react';
-import { FixedSizeList } from 'react-window';
+import { List } from 'react-window';
 
 import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -505,18 +505,19 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                       onClick={this.onClickLabel}
                     />
                   </div>
-                  <FixedSizeList
-                    height={200}
-                    itemCount={label.values?.length || 0}
-                    itemSize={28}
-                    itemKey={(i) => label.values?.[i].name ?? i}
-                    width={200}
+                  <List
+                    rowCount={label.values?.length || 0}
+                    rowHeight={28}
+                    rowProps={{}}
+                    style={{
+                      height: 200,
+                      width: 200,
+                    }}
                     className={styles.valueList}
-                  >
-                    {({ index, style }) => {
+                    rowComponent={({ index, style }) => {
                       const value = label.values?.[index];
                       if (!value) {
-                        return null;
+                        return <></>;
                       }
                       return (
                         <div style={style}>
@@ -531,7 +532,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                         </div>
                       );
                     }}
-                  </FixedSizeList>
+                  />
                 </div>
               ))}
             </div>
