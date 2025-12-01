@@ -12,7 +12,7 @@ export const performInviteUserClick = (placement: string, cnt: string) => {
   });
 
   const url = getExternalUserMngLinkUrl(cnt);
-  window.open(url.toString(), '_blank');
+  window.open(url, '_blank');
 };
 
 export const performUpgradeClick = (placement: string, cnt: string) => {
@@ -21,5 +21,5 @@ export const performUpgradeClick = (placement: string, cnt: string) => {
   });
 
   const url = getUpgradeUrl(cnt);
-  window.open(url.toString(), '_blank');
+  window.open(url, '_blank');
 };
