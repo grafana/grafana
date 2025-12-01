@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type mockPluginPreinstall struct {
@@ -240,6 +243,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 		require.Empty(t, svc.availableUpdates["test-core-panel"])
 	})
 }
+
 func TestPluginUpdateChecker_updateAll(t *testing.T) {
 	t.Run("update is available", func(t *testing.T) {
 		pluginsFakeStore := map[string]string{}
@@ -289,6 +293,7 @@ type fakeHTTPClient struct {
 	fakeResp string
 
 	requestURL string
+	onRequest  func() // called when Do is invoked
 }
 
 func (c *fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
@@ -298,5 +303,113 @@ func (c *fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
 		Body: io.NopCloser(strings.NewReader(c.fakeResp)),
 	}
 
+	if c.onRequest != nil {
+		c.onRequest()
+	}
+
 	return resp, nil
+}
+
+func TestPluginsService_PluginsAutoUpdateFlag(t *testing.T) {
+	updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
+
+	tests := []struct {
+		name         string
+		flagEnabled  bool
+		expectUpdate bool
+	}{
+		{
+			name:         "pluginsAutoUpdate enabled calls updateAll",
+			flagEnabled:  true,
+			expectUpdate: true,
+		},
+		{
+			name:         "pluginsAutoUpdate disabled does not call updateAll",
+			flagEnabled:  false,
+			expectUpdate: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupOpenFeatureProvider(t, tt.flagEnabled)
+
+			updateCallCount := 0
+			// Run() does checkForUpdates and updateAll synchronously before entering its ticker loop
+			initialWorkDone := make(chan struct{})
+			availableUpdates := map[string]availableUpdate{
+				"test-plugin": {
+					localVersion:     "0.9.0",
+					availableVersion: "1.0.0",
+				},
+			}
+
+			httpClient := &fakeHTTPClient{
+				fakeResp: `[]`,
+				onRequest: func() {
+					// Signal that checkForUpdates has completed, when the HTTP request is made
+					select {
+					case <-initialWorkDone:
+					default:
+						close(initialWorkDone)
+					}
+				},
+			}
+
+			svc := &PluginsService{
+				availableUpdates: availableUpdates,
+				pluginStore:      &pluginstore.FakePluginStore{PluginList: []pluginstore.Plugin{}},
+				httpClient:       httpClient,
+				log:              log.NewNopLogger(),
+				tracer:           tracing.InitializeTracerForTest(),
+				updateCheckURL:   updateCheckURL,
+				updateChecker:    pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+				pluginInstaller: &pluginfakes.FakePluginInstaller{
+					AddFunc: func(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
+						updateCallCount++
+						return nil
+					},
+				},
+				grafanaVersion: "10.0.0",
+			}
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			go svc.Run(ctx)
+
+			// Wait for initial work (checkForUpdates + potentially updateAll) to complete before making assertions
+			<-initialWorkDone
+
+			if tt.expectUpdate {
+				require.Greater(t, updateCallCount, 0, "updateAll should be called when flag is enabled")
+			} else {
+				require.Equal(t, 0, updateCallCount, "updateAll should not be called when flag is disabled")
+			}
+		})
+	}
+}
+
+var openfeatureTestMutex sync.Mutex
+
+func setupOpenFeatureProvider(t *testing.T, flagValue bool) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+
+	err := featuremgmt.InitOpenFeature(featuremgmt.OpenFeatureConfig{
+		ProviderType: setting.StaticProviderType,
+		StaticFlags: map[string]bool{
+			featuremgmt.FlagPluginsAutoUpdate: flagValue,
+		},
+	})
+	require.NoError(t, err)
+
+	unlocked := false
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		if !unlocked {
+			openfeatureTestMutex.Unlock()
+			unlocked = true
+		}
+	})
 }
