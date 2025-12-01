@@ -150,6 +150,10 @@ func (s *syncer) running(ctx context.Context) error {
 }
 
 func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugins []pluginstore.Plugin) error {
+	if s.IsDisabled() {
+		return nil
+	}
+
 	if len(installedPlugins) == 0 {
 		return nil
 	}
