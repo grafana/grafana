@@ -32,8 +32,10 @@ jobs:
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0
         with:
+          vault_instance: "dev"
           repo_secrets: |
             OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
+            GRAFANA_SERVICE_ACCOUNT_TOKEN=usability-review-agent:SERVICE_ACCOUNT_TOKEN
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -149,6 +151,7 @@ jobs:
         with:
           target_url: ${{ env.TARGET_URL }}
           openai_api_key: ${{ env.OPENAI_API_KEY }}
+          grafana_service_account_token: ${{ env.GRAFANA_SERVICE_ACCOUNT_TOKEN }}
           workflow_name: "the application interface"
           prompt_file: "dynamic_prompt.txt"
           output_text_path: ${{ env.OUTPUT_TEXT_PATH }}
