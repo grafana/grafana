@@ -220,6 +220,19 @@ const exploreMapSlice = createSlice({
     removeCursor: (state, action: PayloadAction<{ userId: string }>) => {
       delete state.cursors[action.payload.userId];
     },
+
+    setMapMetadata: (state, action: PayloadAction<{ uid?: string; title?: string }>) => {
+      state.uid = action.payload.uid;
+      state.title = action.payload.title;
+    },
+
+    updateMapTitle: (state, action: PayloadAction<{ title: string }>) => {
+      state.title = action.payload.title;
+    },
+
+    clearMap: () => {
+      return initialExploreMapState;
+    },
   },
 });
 
@@ -238,6 +251,9 @@ export const {
   loadCanvas,
   updateCursor,
   removeCursor,
+  setMapMetadata,
+  updateMapTitle,
+  clearMap,
 } = exploreMapSlice.actions;
 
 export const exploreMapReducer = exploreMapSlice.reducer;

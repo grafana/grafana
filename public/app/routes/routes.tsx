@@ -171,7 +171,17 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/explore-map',
+      path: '/explore-maps',
+      pageClass: 'page-explore-maps',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
+      component: SafeDynamicImport(() =>
+        config.exploreEnabled
+          ? import(/* webpackChunkName: "explore-map-list" */ 'app/features/explore-map/ExploreMapListPage')
+          : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
+      ),
+    },
+    {
+      path: '/explore-maps/:uid',
       pageClass: 'page-explore-map',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(() =>

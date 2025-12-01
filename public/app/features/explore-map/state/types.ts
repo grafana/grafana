@@ -40,6 +40,8 @@ export interface UserCursor {
 }
 
 export interface ExploreMapState {
+  uid?: string;
+  title?: string;
   viewport: CanvasViewport;
   panels: Record<string, ExploreMapPanel>;
   selectedPanelIds: string[];
@@ -48,6 +50,8 @@ export interface ExploreMapState {
 }
 
 export const initialExploreMapState: ExploreMapState = {
+  uid: undefined,
+  title: undefined,
   viewport: {
     zoom: 1,
     // Center the viewport at canvas center (5000, 5000)

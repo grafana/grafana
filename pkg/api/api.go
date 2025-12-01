@@ -502,6 +502,9 @@ func (hs *HTTPServer) registerRoutes() {
 		// Playlist
 		hs.registerPlaylistAPI(apiRoute)
 
+		// Explore Maps
+		hs.registerExploreMapAPI(apiRoute, hs.exploreMapService)
+
 		// Search
 		apiRoute.Get("/search/sorting", routing.Wrap(hs.ListSortOptions))
 		apiRoute.Get("/search/", routing.Wrap(hs.Search))

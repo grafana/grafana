@@ -1,24 +1,45 @@
 import { css } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { ButtonGroup, ConfirmModal, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, ConfirmModal, Input, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { useTransformContext } from '../context/TransformContext';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
-import { resetCanvas } from '../state/exploreMapSlice';
+import { resetCanvas, updateMapTitle } from '../state/exploreMapSlice';
 
-export function ExploreMapToolbar() {
+interface ExploreMapToolbarProps {
+  uid?: string;
+}
+
+export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const { exportCanvas, importCanvas } = useCanvasPersistence();
+  const { exportCanvas, importCanvas, saving, lastSaved } = useCanvasPersistence({ uid });
   const { transformRef } = useTransformContext();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const panelCount = useSelector((state) => Object.keys(state.exploreMap.panels).length);
   const viewport = useSelector((state) => state.exploreMap.viewport);
+  const mapTitle = useSelector((state) => state.exploreMap.title);
+
+  useEffect(() => {
+    if (mapTitle) {
+      setTitleValue(mapTitle);
+    }
+  }, [mapTitle]);
+
+  useEffect(() => {
+    if (editingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [editingTitle]);
 
   const handleResetCanvas = useCallback(() => {
     setShowResetConfirm(true);
@@ -62,15 +83,88 @@ export function ExploreMapToolbar() {
     importCanvas();
   }, [importCanvas]);
 
+  const handleTitleClick = useCallback(() => {
+    if (uid) {
+      // Only allow editing in API mode
+      setEditingTitle(true);
+    }
+  }, [uid]);
+
+  const handleTitleBlur = useCallback(() => {
+    setEditingTitle(false);
+    if (titleValue.trim() && titleValue !== mapTitle) {
+      dispatch(updateMapTitle({ title: titleValue.trim() }));
+    } else {
+      setTitleValue(mapTitle || '');
+    }
+  }, [dispatch, mapTitle, titleValue]);
+
+  const handleTitleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleTitleBlur();
+      } else if (e.key === 'Escape') {
+        setTitleValue(mapTitle || '');
+        setEditingTitle(false);
+      }
+    },
+    [handleTitleBlur, mapTitle]
+  );
+
+  const getSaveStatus = () => {
+    if (!uid) {
+      return null; // No status in localStorage mode
+    }
+    if (saving) {
+      return <span className={styles.saveStatus}>Saving...</span>;
+    }
+    if (lastSaved) {
+      const secondsAgo = Math.floor((Date.now() - lastSaved.getTime()) / 1000);
+      if (secondsAgo < 5) {
+        return <span className={styles.saveStatus}>Saved</span>;
+      }
+    }
+    return null;
+  };
+
   return (
     <>
       <div className={styles.toolbar}>
         <div className={styles.toolbarSection}>
-          <span className={styles.panelCount}>
-            <Trans i18nKey="explore-map.toolbar.panel-count" values={{ count: panelCount }}>
-              {{ count: panelCount }} panels
-            </Trans>
-          </span>
+          {uid && (
+            <Button
+              icon="arrow-left"
+              variant="secondary"
+              size="sm"
+              onClick={() => (window.location.href = '/explore-maps')}
+              tooltip="Back to maps list"
+              fill="text"
+            />
+          )}
+          {uid && mapTitle !== undefined ? (
+            editingTitle ? (
+              <Input
+                ref={titleInputRef}
+                value={titleValue}
+                onChange={(e) => setTitleValue(e.currentTarget.value)}
+                onBlur={handleTitleBlur}
+                onKeyDown={handleTitleKeyDown}
+                className={styles.titleInput}
+              />
+            ) : (
+              <div className={styles.titleDisplay} onClick={handleTitleClick}>
+                <h2 className={styles.title}>{mapTitle || 'Untitled Map'}</h2>
+                <span className="fa fa-pencil" />
+              </div>
+            )
+          ) : (
+            <span className={styles.panelCount}>
+              <Trans i18nKey="explore-map.toolbar.panel-count" values={{ count: panelCount }}>
+                {{ count: panelCount }} panels
+              </Trans>
+            </span>
+          )}
+          {getSaveStatus()}
         </div>
 
         <div className={styles.toolbarSection}>
@@ -145,6 +239,39 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       marginLeft: theme.spacing(1),
+    }),
+    titleDisplay: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: theme.spacing(0.5, 1),
+      cursor: 'pointer',
+      borderRadius: theme.shape.radius.default,
+      transition: 'background-color 0.2s',
+      '&:hover': {
+        backgroundColor: theme.colors.background.primary,
+        '& .fa-pencil': {
+          opacity: 1,
+        },
+      },
+      '& .fa-pencil': {
+        opacity: 0.5,
+        fontSize: theme.typography.bodySmall.fontSize,
+        color: theme.colors.text.secondary,
+      },
+    }),
+    title: css({
+      margin: 0,
+      fontSize: theme.typography.h4.fontSize,
+      fontWeight: theme.typography.h4.fontWeight,
+    }),
+    titleInput: css({
+      width: '300px',
+    }),
+    saveStatus: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      fontStyle: 'italic',
     }),
   };
 };

@@ -80,6 +80,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/exploremap"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
@@ -198,6 +199,7 @@ type HTTPServer struct {
 	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
 	playlistService              playlist.Service
+	exploreMapService            exploremap.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
@@ -265,7 +267,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
-	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
+	playlistService playlist.Service, exploreMapService exploremap.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsService secrets.Service,
 	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
@@ -353,6 +355,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardVersionService:      dashboardVersionService,
 		starService:                  starService,
 		playlistService:              playlistService,
+		exploreMapService:            exploreMapService,
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
