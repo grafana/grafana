@@ -2,8 +2,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t, Trans } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
-import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
+import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { CONNECT_URL, DEFAULT_REPOSITORY_TYPES } from '../constants';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
@@ -78,11 +77,8 @@ export function getConfigureRepoTooltip({
 
   if (maxReposReached) {
     return t(
-      'provisioning.connect-repository-button.repository-limit-reached-tooltip',
-      'Repository limit reached {{count}}',
-      {
-        count,
-      }
+      'provisioning.connect-repository-button.free-tier-limit-tooltip',
+      'Free-tier accounts are restricted to one connection'
     );
   }
 

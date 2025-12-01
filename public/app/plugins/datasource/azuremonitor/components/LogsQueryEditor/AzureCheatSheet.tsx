@@ -18,7 +18,8 @@ import {
 } from '@grafana/ui';
 
 import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
-import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
+import { AzureQueryType } from '../../dataquery.gen';
+import { AzureMonitorQuery } from '../../types/query';
 import { Category, CheatsheetQueries, CheatsheetQuery, DropdownCategories } from '../../types/types';
 
 import { RawQuery } from './RawQuery';
@@ -186,7 +187,6 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                 return (
                   <Collapse
                     label={category + ' ' + `(${visibleQueries[category]!.length})`}
-                    collapsible={true}
                     isOpen={areDropdownsOpen[category]}
                     onToggle={(isOpen) => setAreDropdownsOpen({ ...areDropdownsOpen, [category]: isOpen })}
                     key={category}

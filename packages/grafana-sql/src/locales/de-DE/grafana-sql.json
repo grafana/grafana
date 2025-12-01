@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Auto. max. inaktiv",
-        "content-auto-max-idle": "Wenn dies aktiviert ist, wird die Anzahl der <1>Maximalen inaktiven Verbindungen</1> automatisch auf den gleichen Wert der<3> Maximalen offenen Verbindungen</3> festgelegt. Wenn die Anzahl der maximalen offenen Verbindungen nicht festgelegt ist, wird sie auf den Standardwert ({{defaultMaxIdle}}) eingestellt.",
-        "content-max-idle": "Die maximale Anzahl der Verbindungen im Pool der inaktiven Verbindungen. Wenn <1>Maximale offene Verbindungen</1> größer ist als 0, aber kleiner als die Anzahl der <3>Maximalen inaktiven Verbindungen</3>, werden die <5>Maximalen inaktiven Verbindungen</5> verringert, um der Grenze für die Anzahl der <8>Maximalen offenen Verbindungen</8> zu entsprechen. Wenn der Wert auf 0 eingestellt ist, werden keine inaktiven Verbindungen beibehalten.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "Die maximale Zeitdauer der Wiederverwendung einer Verbindung in Sekunden. Bei einer Einstellung auf 0 werden Verbindungen immer wiederverwendet.",
-        "content-max-open": "Die maximale Anzahl offener Verbindungen zur Datenbank. Wenn <1>Maximale inaktive Verbindungen</1> größer als 0 ist und die Anzahl der <3>Maximalen offenen Verbindungen</3> kleiner als die Anzahl der <5>Maximalen inaktiven Verbindungen</5> ist, werden die <7>Maximalen inaktiven Verbindungen</7> bis zur Grenze für <9>Maximale offene Verbindungen</9> verringert. Wenn 0 festgelegt ist, gibt es keine Begrenzung der Anzahl offener Verbindungen.",
+        "content-max-open": "",
         "max-idle": "Max. inaktiv",
         "max-lifetime": "Max. Lebensdauer",
         "max-open": "Max. offen",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Ihre Abfrage ist ungültig. Weitere Informationen finden Sie unten. <1></1>Sie können diese Abfrage aber trotzdem ausführen.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "Builder",
           "label-code": "Code"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Formatabfrage"
       },
       "query-validator": {
-        "query-will-process": "<0></0> Diese Abfrage verarbeitet <2>{{bytes}}</2>, wenn sie ausgeführt wird.",
+        "query-will-process": "",
         "validating-query": "Abfrage wird validiert …"
       },
       "raw-editor": {

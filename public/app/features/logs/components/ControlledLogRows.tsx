@@ -13,7 +13,6 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { LogsVisualisationType } from '../../explore/Logs/Logs';
 
@@ -79,7 +78,6 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         app={rest.app || CoreApp.Unknown}
         displayedFields={[]}
         dedupStrategy={dedupStrategy}
-        enableLogDetails={false}
         filterLevels={filterLevels}
         fontSize="default"
         logOptionsStorageKey={logOptionsStorageKey}
@@ -151,7 +149,7 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
       if (ref) {
         return styles.forwardedScrollableLogRows;
       }
-      return config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows;
+      return styles.scrollableLogRows;
     }, [ref]);
 
     const scrollIntoView = useCallback(

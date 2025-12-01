@@ -7,10 +7,14 @@ use (
 	. // skip:golangci-lint
 	./apps/advisor
 	./apps/alerting/alertenrichment
+	./apps/alerting/historian
 	./apps/alerting/notifications
 	./apps/alerting/rules
+	./apps/annotation
+	./apps/collections
 	./apps/correlations
 	./apps/dashboard
+	./apps/example
 	./apps/folder
 	./apps/iam
 	./apps/investigations

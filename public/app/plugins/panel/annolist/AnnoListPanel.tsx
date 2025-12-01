@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { createRef, PureComponent } from 'react';
+import { createRef, PureComponent, type JSX } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
@@ -16,7 +16,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, ScrollContainer, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/internal';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { AnnotationListItem } from './AnnotationListItem';

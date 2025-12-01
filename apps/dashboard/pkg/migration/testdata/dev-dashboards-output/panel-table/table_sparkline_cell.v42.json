@@ -183,6 +183,24 @@
       },
       "fieldConfig": {
         "defaults": {
+          "actions": [
+            {
+              "fetch": {
+                "body": "{}",
+                "headers": [
+                  [
+                    "Content-Type",
+                    "application/json"
+                  ]
+                ],
+                "method": "GET",
+                "queryParams": [],
+                "url": "/api/health"
+              },
+              "title": "Get instance health",
+              "type": "fetch"
+            }
+          ],
           "color": {
             "fixedColor": "blue",
             "mode": "shades"
@@ -195,6 +213,13 @@
             },
             "inspect": false
           },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Google Grafana",
+              "url": "https://google.com/search?q=grafana"
+            }
+          ],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",

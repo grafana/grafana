@@ -321,4 +321,9 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
   }
 }
 
+/**
+ * The cascader component is a Select with a cascading flyout menu. When you have lots of options in your select, they can be hard to navigate from a regular dropdown list. In that case you can use the cascader to organize your options into groups hierarchically. Just like in the Select component, the cascader input doubles as a search field to quickly jump to a selection without navigating the list.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-cascader--docs
+ */
 export const Cascader = withTheme2(UnthemedCascader);

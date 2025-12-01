@@ -153,7 +153,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
 			preinstallPluginsAsync["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
 		}
-		if cfg.IsFeatureToggleEnabled("grafanaPathfinder") { // Use literal string to avoid circular dependency
+		if cfg.IsFeatureToggleEnabled("interactiveLearning") { // Use literal string to avoid circular dependency
 			preinstallPluginsAsync["grafana-pathfinder-app"] = InstallPlugin{"grafana-pathfinder-app", "", ""}
 		}
 		cfg.processPreinstallPlugins(rawInstallPluginsAsync, preinstallPluginsAsync)
@@ -185,6 +185,8 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 			}
 			cfg.PreinstallPluginsAsync = nil
 		}
+
+		cfg.PreinstallAutoUpdate = pluginsSection.Key("preinstall_auto_update").MustBool(true)
 	}
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")

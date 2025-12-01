@@ -20,8 +20,9 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
   const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
-  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
-    useIsConditionallyHidden(model);
+  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
+    model.state.conditionalRendering
+  );
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const title = useInterpolatedTitle(model);
   const { rows } = model.getParentLayout().useState();
@@ -50,6 +51,29 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   if (soloPanelContext) {
     return <layout.Component model={layout} />;
   }
+
+  const titleElement = (
+    <span
+      className={cx(
+        styles.rowTitle,
+        isHeaderHidden && styles.rowTitleHidden,
+        !isTopLevel && styles.rowTitleNested,
+        isCollapsed && styles.rowTitleCollapsed
+      )}
+    >
+      {!model.hasUniqueTitle() && (
+        <Tooltip content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}>
+          <Icon name="exclamation-triangle" />
+        </Tooltip>
+      )}
+      {title}
+      {isHeaderHidden && (
+        <Tooltip content={t('dashboard.rows-layout.header-hidden-tooltip', 'Row header only visible in edit mode')}>
+          <Icon name="eye-slash" />
+        </Tooltip>
+      )}
+    </span>
+  );
 
   return (
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
@@ -110,31 +134,9 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 data-testid={selectors.components.DashboardRow.title(title!)}
               >
                 <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
-                <span
-                  className={cx(
-                    styles.rowTitle,
-                    isHeaderHidden && styles.rowTitleHidden,
-                    !isTopLevel && styles.rowTitleNested,
-                    isCollapsed && styles.rowTitleCollapsed
-                  )}
-                >
-                  {!model.hasUniqueTitle() && (
-                    <Tooltip
-                      content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}
-                    >
-                      <Icon name="exclamation-triangle" />
-                    </Tooltip>
-                  )}
-                  {title}
-                  {isHeaderHidden && (
-                    <Tooltip
-                      content={t('dashboard.rows-layout.header-hidden-tooltip', 'Row header only visible in edit mode')}
-                    >
-                      <Icon name="eye-slash" />
-                    </Tooltip>
-                  )}
-                </span>
+                {!isEditing && titleElement}
               </button>
+              {isEditing && titleElement}
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}

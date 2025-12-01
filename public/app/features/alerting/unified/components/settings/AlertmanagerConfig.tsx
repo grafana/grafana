@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -165,11 +165,11 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
 
       {isLoadingSuccessful && (
         <div className={styles.content}>
-          <AutoSizer>
-            {({ height, width }) => (
+          <AutoSizer disableWidth>
+            {({ height }) => (
               <CodeEditor
                 language="json"
-                width={width}
+                width="100%"
                 height={height}
                 showLineNumbers={true}
                 monacoOptions={{

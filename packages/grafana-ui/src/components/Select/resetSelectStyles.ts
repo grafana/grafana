@@ -51,7 +51,7 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
   return useMemo(() => {
     return {
       ...resetSelectStyles(theme),
-      menuPortal: (base: any) => {
+      menuPortal: (base: CSSObjectWithLabel) => {
         // Would like to correct top position when menu is placed bottom, but have props are not sent to this style function.
         // Only state is. https://github.com/JedWatson/react-select/blob/master/packages/react-select/src/components/Menu.tsx#L605
         return {
@@ -60,7 +60,7 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
         };
       },
       //These are required for the menu positioning to function
-      menu: ({ top, bottom, position }: any) => {
+      menu: ({ top, bottom, position }: CSSObjectWithLabel) => {
         return {
           top,
           bottom,
@@ -73,7 +73,7 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
         width: width ? theme.spacing(width) : '100%',
         display: width === 'auto' ? 'inline-flex' : 'flex',
       }),
-      option: (provided: any, state: any) => ({
+      option: (provided: CSSObjectWithLabel, state: any) => ({
         ...provided,
         opacity: state.isDisabled ? 0.5 : 1,
       }),

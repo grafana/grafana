@@ -74,7 +74,7 @@ func TestIntegrationTeamBindings(t *testing.T) {
 }
 
 func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper, team *unstructured.Unstructured, user *unstructured.Unstructured) {
-	t.Run("should create/get team binding using the new APIs", func(t *testing.T) {
+	t.Run("should create/update/get/delete team binding using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 
 		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -110,9 +110,45 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.Equal(t, team.GetName(), fetchedSpec["teamRef"].(map[string]interface{})["name"])
 		require.Equal(t, "admin", fetchedSpec["permission"])
 		require.Equal(t, false, fetchedSpec["external"])
-
 		require.Equal(t, createdUID, fetched.GetName())
-		require.Equal(t, "default", fetched.GetNamespace())
+
+		// Update the team binding
+		toUpdate := toCreate.DeepCopy()
+		toUpdate.Object["spec"].(map[string]interface{})["permission"] = "member"
+		updated, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+
+		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		require.Equal(t, createdUID, updated.GetName())
+		require.Equal(t, user.GetName(), updatedSpec["subject"].(map[string]interface{})["name"])
+		require.Equal(t, team.GetName(), updatedSpec["teamRef"].(map[string]interface{})["name"])
+		require.Equal(t, "member", updatedSpec["permission"])
+		require.Equal(t, false, updatedSpec["external"])
+
+		// Get the team binding
+		fetched, err = teamBindingClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, fetched)
+
+		fetchedSpec = fetched.Object["spec"].(map[string]interface{})
+		require.Equal(t, user.GetName(), fetchedSpec["subject"].(map[string]interface{})["name"])
+		require.Equal(t, team.GetName(), fetchedSpec["teamRef"].(map[string]interface{})["name"])
+		require.Equal(t, "member", fetchedSpec["permission"])
+		require.Equal(t, false, fetchedSpec["external"])
+		require.Equal(t, createdUID, fetched.GetName())
+
+		// Delete the team binding
+		err = teamBindingClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		// Verify the team binding is deleted
+		_, err = teamBindingClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "not found")
 	})
 
 	t.Run("should not be able to create team binding when using a user with insufficient permissions", func(t *testing.T) {
@@ -195,6 +231,152 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		toCreate.Object["spec"].(map[string]interface{})["permission"] = "invalid"
 
 		_, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "invalid permission")
+	})
+
+	t.Run("should not be able to update team binding with insufficient permissions", func(t *testing.T) {
+		for _, u := range []apis.User{
+			helper.Org1.Editor,
+			helper.Org1.Viewer,
+		} {
+			t.Run(fmt.Sprintf("with basic role_%s", u.Identity.GetOrgRole()), func(t *testing.T) {
+				ctx := context.Background()
+				teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+					User:      u,
+					Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+					GVR:       gvrTeamBindings,
+				})
+
+				toUpdate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+				toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
+				toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+				toUpdate.Object["spec"].(map[string]interface{})["permission"] = "member"
+				_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+				require.Error(t, err)
+
+				var statusErr *errors.StatusError
+				require.ErrorAs(t, err, &statusErr)
+				require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+			})
+		}
+	})
+
+	t.Run("should not be able to update team binding if the team binding does not exist", func(t *testing.T) {
+		ctx := context.Background()
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+
+		toUpdate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+		toUpdate.Object["metadata"].(map[string]interface{})["name"] = "invalid-team-binding-name"
+		toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
+		toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "not found")
+	})
+
+	t.Run("should not be able to update team binding with teamRef change", func(t *testing.T) {
+		ctx := context.Background()
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+
+		// Create the team binding if it doesn't already exist
+		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
+		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+
+		toUpdate := toCreate.DeepCopy()
+		toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = "test-team-2"
+		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "teamRef is immutable")
+	})
+
+	t.Run("should not be able to update team binding with subject change", func(t *testing.T) {
+		ctx := context.Background()
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+
+		// Create the team binding if it doesn't already exist
+		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
+		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+
+		toUpdate := toCreate.DeepCopy()
+		toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = "test-user-2"
+
+		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "subject is immutable")
+	})
+
+	t.Run("should not be able to update team binding with external change", func(t *testing.T) {
+		ctx := context.Background()
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+
+		// Create the team binding if it doesn't already exist
+		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
+		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+
+		toUpdate := toCreate.DeepCopy()
+		toUpdate.Object["spec"].(map[string]interface{})["external"] = true
+		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "external is immutable")
+	})
+
+	t.Run("should not be able to update team binding with invalid permission", func(t *testing.T) {
+		ctx := context.Background()
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+
+		// Create the team binding if it doesn't already exist
+		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
+		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+
+		toUpdate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+		toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
+		toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		toUpdate.Object["spec"].(map[string]interface{})["permission"] = "invalid"
+		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)

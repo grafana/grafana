@@ -2,11 +2,10 @@ import { css } from '@emotion/css';
 import { isArray, sumBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import * as React from 'react';
-import { FC, Fragment, ReactNode, useState } from 'react';
+import { FC, Fragment, type JSX, ReactNode, useState } from 'react';
 import { useToggle } from 'react-use';
 
-import { InheritableProperties } from '@grafana/alerting/internal';
-import { AlertLabel, getInheritedProperties } from '@grafana/alerting/unstable';
+import { AlertLabel, getInheritedProperties } from '@grafana/alerting';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -54,6 +53,8 @@ import { RoutesMatchingFilters } from './NotificationPoliciesList';
 import { TimingOptions } from './timingOptions';
 
 const POLICIES_PER_PAGE = 20;
+
+type InheritableProperties = ReturnType<typeof getInheritedProperties>;
 
 interface PolicyComponentProps {
   receivers?: Receiver[];

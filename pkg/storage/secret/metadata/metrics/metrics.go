@@ -12,8 +12,9 @@ const (
 	namespace = "grafana_secrets_manager"
 	subsystem = "storage"
 	// labels
-	successLabel = "success"
-	resultLabel  = "result"
+	successLabel   = "success"
+	resultLabel    = "result"
+	decrypterLabel = "decrypter"
 )
 
 // StorageMetrics is a struct that contains all the metrics for all operations of secrets storage.
@@ -132,7 +133,7 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "decrypt_duration_seconds",
 			Help:      "Duration of decrypt operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{resultLabel}),
+		}, []string{resultLabel, decrypterLabel}),
 	}
 }
 

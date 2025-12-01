@@ -26,7 +26,7 @@ const (
 type check struct {
 	DatasourceSvc             datasources.DataSourceService
 	PluginStore               pluginstore.Store
-	PluginContextProvider     pluginContextProvider
+	PluginContextProvider     PluginContextProvider
 	PluginClient              plugins.Client
 	PluginRepo                repo.Service
 	GrafanaVersion            string
@@ -37,7 +37,7 @@ type check struct {
 func New(
 	datasourceSvc datasources.DataSourceService,
 	pluginStore pluginstore.Store,
-	pluginContextProvider pluginContextProvider,
+	pluginContextProvider PluginContextProvider,
 	pluginClient plugins.Client,
 	pluginRepo repo.Service,
 	grafanaVersion string,
@@ -54,7 +54,13 @@ func New(
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
-	dss, err := c.DatasourceSvc.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	dss, err := c.DatasourceSvc.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
+		OrgID: requester.GetOrgID(),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -162,6 +168,6 @@ func (c *check) canBeInstalled(ctx context.Context, pluginType string) (bool, er
 	return isAvailableInRepo, nil
 }
 
-type pluginContextProvider interface {
+type PluginContextProvider interface {
 	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }

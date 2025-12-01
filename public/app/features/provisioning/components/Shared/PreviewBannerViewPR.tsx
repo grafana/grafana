@@ -1,25 +1,33 @@
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Icon, Stack } from '@grafana/ui';
-import { RepoTypeDisplay, RepoType } from 'app/features/provisioning/Wizard/types';
+import { Alert, Box, Icon, Stack, TextLink } from '@grafana/ui';
+import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
+import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { commonAlertProps } from '../Dashboards/DashboardPreviewBanner';
-
-// TODO: We have this https://github.com/grafana/git-ui-sync-project/issues/166 to add more details about the PR.
+import { getBranchUrl } from '../utils/url';
 
 interface Props {
   prParam?: string;
   isNewPr?: boolean;
   behindBranch?: boolean;
   repoUrl?: string;
+  branchInfo?: PreviewBranchInfo;
 }
+
+export type PreviewBranchInfo = {
+  targetBranch?: string;
+  configuredBranch?: string;
+  repoBaseUrl?: string;
+};
 
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }: Props) {
+export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
   const { repoType } = usePullRequestParam();
+  const { targetBranch, configuredBranch, repoBaseUrl } = branchInfo || {};
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
 
@@ -96,13 +104,25 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
         The rest of Grafana users in your organization will still see the current version saved to configured default
         branch until this branch is merged
       </Trans>
+
+      {/* when repo type is not local, we show branch information */}
+      {showBranchInfo(repoType, branchInfo) && (
+        <Box marginTop={1}>
+          <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.branch-text">branch:</Trans>{' '}
+          <TextLink href={getBranchUrl(repoBaseUrl!, targetBranch!, repoType)} external>
+            {targetBranch}
+          </TextLink>{' '}
+          {'\u2192'}{' '}
+          <TextLink href={getBranchUrl(repoBaseUrl!, configuredBranch!, repoType)} external>
+            {configuredBranch}
+          </TextLink>
+        </Box>
+      )}
     </Alert>
   );
 }
 
-export function isValidRepoType(repoType: string | undefined): repoType is RepoType {
-  if (typeof repoType !== 'string') {
-    return false;
-  }
-  return repoType in RepoTypeDisplay;
+function showBranchInfo(repoType: string | undefined, branchInfo?: PreviewBranchInfo): boolean {
+  const { targetBranch, configuredBranch, repoBaseUrl } = branchInfo || {};
+  return repoType !== 'local' && !!targetBranch && !!configuredBranch && !!repoBaseUrl;
 }

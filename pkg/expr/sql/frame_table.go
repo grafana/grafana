@@ -30,7 +30,7 @@ func (ft *FrameTable) String() string {
 	return ft.Name()
 }
 
-func schemaFromFrame(frame *data.Frame) mysql.Schema {
+func SchemaFromFrame(frame *data.Frame) mysql.Schema {
 	schema := make(mysql.Schema, len(frame.Fields))
 
 	for i, field := range frame.Fields {
@@ -48,7 +48,7 @@ func schemaFromFrame(frame *data.Frame) mysql.Schema {
 // Schema implements the mysql.Table interface
 func (ft *FrameTable) Schema() mysql.Schema {
 	if ft.schema == nil {
-		ft.schema = schemaFromFrame(ft.Frame)
+		ft.schema = SchemaFromFrame(ft.Frame)
 	}
 	return ft.schema
 }
@@ -182,7 +182,7 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 		return types.Boolean
 	case data.FieldTypeTime, data.FieldTypeNullableTime:
 		return types.Timestamp
-	case data.FieldTypeJSON, data.FieldTypeNullableJSON:
+	case data.FieldTypeJSON, data.FieldTypeNullableJSON: //nolint:staticcheck
 		return types.JSON
 	default:
 		fmt.Printf("------- Unsupported field type: %v", fieldType)

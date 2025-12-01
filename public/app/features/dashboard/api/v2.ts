@@ -2,15 +2,15 @@ import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
-  AnnoKeyMessage,
   AnnoKeyGrantPermissions,
+  AnnoKeyMessage,
   DeprecatedInternalId,
   Resource,
   ResourceClient,
@@ -18,6 +18,7 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -59,7 +60,7 @@ export class K8sDashboardV2API
       // load folder info if available
       if (dashboard.metadata.annotations && dashboard.metadata.annotations[AnnoKeyFolder]) {
         try {
-          const folder = await backendSrv.getFolderByUid(dashboard.metadata.annotations[AnnoKeyFolder]);
+          const folder = await getFolderByUidFacade(dashboard.metadata.annotations[AnnoKeyFolder]);
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
         } catch (e) {
@@ -73,6 +74,13 @@ export class K8sDashboardV2API
         // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
         // AnnoKeyFolder undefined -> top-level dashboard -> empty string
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
+      }
+
+      // Inject source link for repo-managed dashboards
+      const sourceLink = await buildSourceLink(dashboard.metadata.annotations);
+      if (sourceLink) {
+        const linksWithoutSource = removeExistingSourceLinks(dashboard.spec.links);
+        dashboard.spec.links = [sourceLink, ...linksWithoutSource];
       }
 
       return dashboard;

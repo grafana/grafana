@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { AlertLabels, RouteMatchResult, RouteWithID } from '@grafana/alerting/unstable';
+import { AlertLabels, RouteMatchResult, RouteWithID } from '@grafana/alerting';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';

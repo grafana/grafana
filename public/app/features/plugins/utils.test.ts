@@ -1,3 +1,5 @@
+import { range } from 'lodash';
+
 import { NavModelItem } from '@grafana/data';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
@@ -9,31 +11,28 @@ describe('buildPluginSectionNav', () => {
     id: 'plugin-page-app1',
     url: '/a/plugin1',
     children: [
-      {
-        text: 'page1',
-        url: '/a/plugin1/page1',
-      },
-      {
-        text: 'page2',
-        url: '/a/plugin1/page2',
-      },
-      {
-        text: 'page3',
-        url: '/a/plugin1/page3',
-        children: [
-          {
-            text: 'page4',
-            url: '/a/plugin1/page3/page4',
-          },
-        ],
-      },
+      { text: 'page1', url: '/a/plugin1/page1' },
+      { text: 'page2', url: '/a/plugin1/page2' },
+      { text: 'page3', url: '/a/plugin1/page3', children: [{ text: 'page4', url: '/a/plugin1/page3/page4' }] },
     ],
   };
 
   const appsSection = {
     text: 'apps',
     id: 'apps',
-    children: [app1],
+    children: [
+      app1,
+      ...range(10).map((index): NavModelItem => {
+        const n = index + 2;
+        const url = `/a/plugin${n}`;
+        return {
+          text: `App${n}`,
+          id: `plugin-page-app${n}`,
+          url,
+          children: [{ text: `page1 of app ${n}`, url: `${url}/page1` }],
+        };
+      }),
+    ],
   };
 
   const home = {
@@ -91,5 +90,12 @@ describe('buildPluginSectionNav', () => {
     const result = buildPluginSectionNav('/a/plugin1/page3/page4', appsSection);
     expect(result?.main.children![0].children![2].children![0].active).toBe(true);
     expect(result?.node.text).toBe('page4');
+  });
+
+  it('Should set nested active page with many siblings', () => {
+    // Making sure we correctly account for the depth limit and not apply it to sibling items
+    const result = buildPluginSectionNav('/a/plugin11/page1', appsSection);
+    expect(result?.main.children![10].children![0].active).toBe(true);
+    expect(result?.node.text).toBe('page1 of app 11');
   });
 });

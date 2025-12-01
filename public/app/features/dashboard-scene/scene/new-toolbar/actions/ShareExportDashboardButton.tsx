@@ -2,7 +2,7 @@ import { ReactElement, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Button, ButtonGroup, Dropdown } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ToolbarActionProps } from '../types';
@@ -60,7 +60,7 @@ export const ShareExportDashboardButton = ({
         }
       }}
     >
-      <Button data-testid={buttonTestId} size="sm" tooltip={buttonTooltip} variant={variant} onClick={onButtonClick}>
+      <Button data-testid={buttonTestId} size="md" tooltip={buttonTooltip} variant={variant} onClick={onButtonClick}>
         {buttonLabel}
       </Button>
       <Dropdown
@@ -79,7 +79,7 @@ export const ShareExportDashboardButton = ({
         <Button
           aria-label={arrowLabel}
           data-testid={arrowTestId}
-          size="sm"
+          size="md"
           icon={isOpen ? 'angle-up' : 'angle-down'}
           variant={variant}
         />
