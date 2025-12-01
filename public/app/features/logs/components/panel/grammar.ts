@@ -1,6 +1,6 @@
 import { Grammar } from 'prismjs';
 
-import { escapeRegex, parseFlags } from '@grafana/data';
+import { CustomHighlight, escapeRegex, parseFlags } from '@grafana/data';
 
 import { LogListModel } from './processing';
 
@@ -85,4 +85,43 @@ export const generateTextMatchGrammar = (highlightWords: string[] | undefined = 
 
 const cleanNeedle = (needle: string): string => {
   return needle.replace(/[[{(][\w,.\/:;<=>?:*+]+$/, '');
+};
+
+export const generateCustomHighlightGrammar = (highlights: CustomHighlight[]): Grammar => {
+  if (!highlights.length) {
+    return {};
+  }
+
+  const grammar: Grammar = {};
+
+  // Create separate token types for each color index
+  // This allows different CSS classes for different colors
+  highlights.forEach((highlight) => {
+    const tokenName = `log-search-match log-custom-highlight-${highlight.colorIndex}`;
+    const escapedText = escapeRegex(highlight.text);
+
+    try {
+      // Case-sensitive matching (using 'g' flag only, not 'gi')
+      const regex = new RegExp(escapedText, 'g');
+
+      // Cast grammar to allow string indexing
+      const grammarRecord = grammar as Record<string, RegExp | RegExp[]>;
+
+      // If token already exists for this color, add to array
+      if (grammarRecord[tokenName]) {
+        const existing = grammarRecord[tokenName];
+        if (Array.isArray(existing)) {
+          existing.push(regex);
+        } else {
+          grammarRecord[tokenName] = [existing, regex];
+        }
+      } else {
+        grammarRecord[tokenName] = regex;
+      }
+    } catch (e) {
+      console.error(`generateCustomHighlightGrammar: cannot generate regular expression from /${escapedText}/g`, e);
+    }
+  });
+
+  return grammar;
 };

@@ -507,6 +507,7 @@ export type {
   ExploreCorrelationHelperData,
   ExploreTracePanelState,
   ExploreLogsPanelState,
+  CustomHighlight,
   SplitOpenOptions,
   SplitOpen,
   TraceSearchProps,
