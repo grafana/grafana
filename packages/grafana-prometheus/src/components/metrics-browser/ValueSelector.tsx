@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FixedSizeList } from 'react-window';
+import { List } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -78,15 +78,16 @@ export function ValueSelector() {
                 <div className={styles.valueTitle}>
                   <PromLabel name={lk} active={true} hidden={false} facets={lv.length} onClick={onLabelKeyClick} />
                 </div>
-                <FixedSizeList
-                  height={Math.min(200, LIST_ITEM_SIZE * (lv.length || 0))}
-                  itemCount={lv.length || 0}
-                  itemSize={28}
-                  itemKey={(i) => lv[i]}
-                  width={200}
+                <List
+                  rowProps={{}}
+                  rowCount={lv.length || 0}
+                  rowHeight={28}
+                  style={{
+                    height: Math.min(200, LIST_ITEM_SIZE * (lv.length || 0)),
+                    width: 200,
+                  }}
                   className={styles.valueList}
-                >
-                  {({ index, style }) => {
+                  rowComponent={({ index, style }) => {
                     const value = lv[index];
                     const isSelected = selectedLabelValues[lk]?.includes(value);
                     return (
@@ -101,7 +102,7 @@ export function ValueSelector() {
                       </div>
                     );
                   }}
-                </FixedSizeList>
+                />
               </div>
             );
           })}
