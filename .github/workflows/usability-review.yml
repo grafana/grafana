@@ -9,6 +9,7 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  id-token: write
 
 env:
   TEST_URL: https://play.grafana.org/
@@ -26,6 +27,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0
+        with:
+          repo_secrets: |
+            OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
 
       - name: Get PR details
         id: pr-details
@@ -53,8 +61,7 @@ jobs:
       - name: Generate PR summary
         id: pr-summary
         env:
-          OPENAI_API_KEY: ${{ secrets.CUA_DEMO }}
-          OPENAI_ORG: ${{ secrets.ORG_ID }}
+          OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
         run: |
           python - <<'PY'
           import os
@@ -131,8 +138,7 @@ jobs:
         uses: ./.github/actions/usability-review-agent
         with:
           target_url: ${{ env.TEST_URL }}
-          openai_api_key: ${{ secrets.CUA_DEMO }}
-          openai_org: ${{ secrets.ORG_ID }}
+          openai_api_key: ${{ env.OPENAI_API_KEY }}
           workflow_name: "the application interface"
           prompt_file: "dynamic_prompt.txt"
           output_text_path: ${{ env.OUTPUT_TEXT_PATH }}
