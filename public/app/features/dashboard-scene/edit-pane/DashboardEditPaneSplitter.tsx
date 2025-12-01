@@ -69,6 +69,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     hasOpenPane: Boolean(openPane),
     contentMargin: 1,
     position: 'right',
+    persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
   });
 

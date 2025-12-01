@@ -1,6 +1,8 @@
 import { clamp } from 'lodash';
 import React, { useCallback } from 'react';
 
+import { store } from '@grafana/data';
+
 import { useTheme2 } from '../../themes/ThemeContext';
 
 export type SidebarPosition = 'left' | 'right';
@@ -30,7 +32,10 @@ export interface UseSideBarOptions {
   hasOpenPane?: boolean;
   position?: SidebarPosition;
   tabsMode?: boolean;
-  compactDefault?: boolean;
+  /** Initial state for compact mode */
+  defaultToCompact?: boolean;
+  /** Initial state for docked mode */
+  defaultToDocked?: boolean;
   /** defaults to 2 grid units (16px) */
   bottomMargin?: number;
   /** defaults to 2 grid units (16px) */
@@ -39,6 +44,11 @@ export interface UseSideBarOptions {
   contentMargin?: number;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  /**
+   * Optional key to use for persisting sidebar state (docked / compact / size)
+   * Can only be app name as the final local storag key will be `grafana.ui.sidebar.{persistanceKey}.{docked|compact|size}`
+   */
+  persistanceKey?: string;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -48,21 +58,30 @@ export function useSidebar({
   hasOpenPane,
   position = 'right',
   tabsMode,
-  compactDefault = true,
+  defaultToCompact = true,
+  defaultToDocked = false,
   bottomMargin = 2,
   edgeMargin = 2,
   contentMargin = 2,
+  persistanceKey,
   onClosePane,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
-  const [isDocked, setIsDocked] = React.useState(false);
-  const [paneWidth, setPaneWidth] = React.useState(280);
-  const [compact, setCompact] = React.useState(compactDefault);
+
+  const [isDocked, setIsDocked] = useSidebarSavedState(persistanceKey, 'docked', defaultToDocked);
+  const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
+  const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 280);
+
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
 
-  const onToggleDock = useCallback(() => setIsDocked((prev) => !prev), []);
+  const onToggleDock = useCallback(() => {
+    setIsDocked((prev) => {
+      return !prev;
+    });
+  }, [setIsDocked]);
 
+  // Calculate how much space the outer wrapper needs to reserve for the sidebar toolbar + pane (if docked)
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
   const toolbarWidth =
     ((compact ? SIDE_BAR_WIDTH_ICON_ONLY : SIDE_BAR_WIDTH_WITH_TEXT) + edgeMargin + contentMargin) *
@@ -82,10 +101,10 @@ export function useSidebar({
           setCompactDrag((prevDrag) => {
             const newDrag = prevDrag + diff;
             if (newDrag < -20 && !compact) {
-              setCompact(true);
+              setCompact(() => true);
               return 0;
             } else if (newDrag > 20 && compact) {
-              setCompact(false);
+              setCompact(() => false);
               return 0;
             }
 
@@ -98,7 +117,7 @@ export function useSidebar({
         return clamp(prevWidth + diff, 100, 500);
       });
     },
-    [hasOpenPane, compact]
+    [hasOpenPane, setCompact, setPaneWidth, compact]
   );
 
   return {
@@ -116,4 +135,54 @@ export function useSidebar({
     contentMargin,
     onClosePane,
   };
+}
+
+function useSidebarSavedState<T = number | boolean>(
+  persistanceKey: string | undefined,
+  subKey: string,
+  defaultValue: T
+) {
+  const [state, setState] = React.useState<T>(() => {
+    if (!persistanceKey) {
+      return defaultValue;
+    }
+
+    if (typeof defaultValue === 'boolean') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return store.getBool(`grafana.ui.sidebar.${persistanceKey}.${subKey}`, defaultValue) as T;
+    }
+
+    if (typeof defaultValue === 'number') {
+      const value = Number.parseInt(store.get(`grafana.ui.sidebar.${persistanceKey}.${subKey}`), 10);
+      if (Number.isNaN(value)) {
+        return defaultValue;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return value as T;
+    }
+
+    return defaultValue;
+  });
+
+  const setPersisted = useCallback(
+    (cb: (prevState: T) => T) => {
+      setState((prevState) => {
+        const newState = cb(prevState);
+
+        if (!persistanceKey) {
+          return newState;
+        }
+
+        if (persistanceKey) {
+          store.set(`grafana.ui.sidebar.${persistanceKey}.${subKey}`, String(newState));
+        }
+
+        return newState;
+      });
+    },
+    [persistanceKey, subKey]
+  );
+
+  return [state, setPersisted] as const;
 }

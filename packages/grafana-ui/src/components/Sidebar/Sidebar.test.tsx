@@ -23,13 +23,32 @@ describe('Sidebar', () => {
     // Verify pane is closed
     expect(screen.queryByTestId('sidebar-pane-header-title')).not.toBeInTheDocument();
   });
+
+  it('Can persist docked state', async () => {
+    const { unmount } = render(<TestSetup persistanceKey="test" />);
+
+    act(() => screen.getByLabelText('Settings').click());
+    act(() => screen.getByLabelText('Dock').click());
+
+    unmount();
+
+    render(<TestSetup persistanceKey="test" />);
+
+    act(() => screen.getByLabelText('Settings').click());
+    expect(screen.getByLabelText('Undock')).toBeInTheDocument();
+  });
 });
 
-function TestSetup() {
+interface TestSetupProps {
+  persistanceKey?: string;
+}
+
+function TestSetup({ persistanceKey }: TestSetupProps) {
   const [openPane, setOpenPane] = React.useState('');
   const contextValue = useSidebar({
     position: 'right',
     hasOpenPane: openPane !== '',
+    persistanceKey,
     onClosePane: () => setOpenPane(''),
   });
 
