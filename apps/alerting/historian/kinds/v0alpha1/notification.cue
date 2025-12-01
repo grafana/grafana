@@ -1,14 +1,18 @@
 package v0alpha1
 
+import (
+    "time"
+)
+
 #NotificationStatus: "firing" | "resolved" @cog(kind="enum",memberNames="Firing|Resolved")
 
 #NotificationOutcome: "success" | "error" @cog(kind="enum",memberNames="Success|Error")
 
 #NotificationQuery: {
-    // From is the starting timestamp for the query in RFC3339Nano format.
-    from?: int64
-    // To is the starting timestamp for the query in RFC3339Nano format.
-    to?: int64
+    // From is the starting timestamp for the query.
+    from?: time.Time
+    // To is the starting timestamp for the query.
+    to?: time.Time
     // Limit is the maximum number of entries to return.
     limit?: int64    
     // Receiver optionally filters the entries by receiver title (contact point).
@@ -20,7 +24,7 @@ package v0alpha1
     // RuleUID optionally filters the entries to a specific alert rule.
     ruleUID?: string
     // GroupLabels optionally filters the entries by matching group labels.
-    groupLabels: #Matchers
+    groupLabels?: #Matchers
 }
 
 #NotificationQueryResult: {
@@ -28,11 +32,11 @@ package v0alpha1
 }
 
 #NotificationEntry: {
-    // Timestamp is the time at which the notification attempt completed in RFC3339Nano format.
-    timestamp: int64
+    // Timestamp is the time at which the notification attempt completed.
+    timestamp: time.Time
     // Receiver is the receiver (contact point) title.
     receiver: string
-    // Status indicates if the notification was for alerts firing or alerts resolving.
+    // Status indicates if the notification contains one or more firing alerts.
     status: #NotificationStatus
     // Outcome indicaes if the notificaion attempt was successful or if it failed.
     outcome: #NotificationOutcome
@@ -45,9 +49,9 @@ package v0alpha1
     // Error is the message returned by the contact point if delivery failed.
     error?: string
     // Duration is the length of time the notification attempt took in nanoseconds.
-    duration: int64
+    duration: int
     // PipelineTime is the time at which the flush began.
-    pipelineTime: int64
+    pipelineTime: time.Time
     // GroupKey uniquely idenifies the dispatcher alert group.
     groupKey: string
 }
@@ -56,6 +60,6 @@ package v0alpha1
     status: string
     labels: [string]: string
     annotations: [string]: string
-    startsAt: int64
-    endsAt: int64
+    startsAt: time.Time
+    endsAt: time.Time
 }

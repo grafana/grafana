@@ -101,7 +101,6 @@ var appManifestData = app.ManifestData{
 								RequestBody: &spec3.RequestBody{
 									RequestBodyProps: spec3.RequestBodyProps{
 
-										Required: true,
 										Content: map[string]*spec3.MediaType{
 											"application/json": {
 												MediaTypeProps: spec3.MediaTypeProps{
@@ -111,8 +110,9 @@ var appManifestData = app.ManifestData{
 															Properties: map[string]spec.Schema{
 																"from": {
 																	SchemaProps: spec.SchemaProps{
-																		Type:        []string{"integer"},
-																		Description: "From is the starting timestamp for the query in RFC3339Nano format.",
+																		Type:        []string{"string"},
+																		Format:      "date-time",
+																		Description: "From is the starting timestamp for the query.",
 																	},
 																},
 																"groupLabels": {
@@ -156,13 +156,11 @@ var appManifestData = app.ManifestData{
 																},
 																"to": {
 																	SchemaProps: spec.SchemaProps{
-																		Type:        []string{"integer"},
-																		Description: "To is the starting timestamp for the query in RFC3339Nano format.",
+																		Type:        []string{"string"},
+																		Format:      "date-time",
+																		Description: "To is the starting timestamp for the query.",
 																	},
 																},
-															},
-															Required: []string{
-																"groupLabels",
 															},
 														}},
 												}},
@@ -289,7 +287,8 @@ var appManifestData = app.ManifestData{
 								},
 								"pipelineTime": {
 									SchemaProps: spec.SchemaProps{
-										Type:        []string{"integer"},
+										Type:        []string{"string"},
+										Format:      "date-time",
 										Description: "PipelineTime is the time at which the flush began.",
 									},
 								},
@@ -308,14 +307,15 @@ var appManifestData = app.ManifestData{
 								"status": {
 									SchemaProps: spec.SchemaProps{
 
-										Description: "Status indicates if the notification was for alerts firing or alerts resolving.",
+										Description: "Status indicates if the notification contains one or more firing alerts.",
 										Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
 									},
 								},
 								"timestamp": {
 									SchemaProps: spec.SchemaProps{
-										Type:        []string{"integer"},
-										Description: "Timestamp is the time at which the notification attempt completed in RFC3339Nano format.",
+										Type:        []string{"string"},
+										Format:      "date-time",
+										Description: "Timestamp is the time at which the notification attempt completed.",
 									},
 								},
 							},
@@ -351,7 +351,8 @@ var appManifestData = app.ManifestData{
 								},
 								"endsAt": {
 									SchemaProps: spec.SchemaProps{
-										Type: []string{"integer"},
+										Type:   []string{"string"},
+										Format: "date-time",
 									},
 								},
 								"labels": {
@@ -368,7 +369,8 @@ var appManifestData = app.ManifestData{
 								},
 								"startsAt": {
 									SchemaProps: spec.SchemaProps{
-										Type: []string{"integer"},
+										Type:   []string{"string"},
+										Format: "date-time",
 									},
 								},
 								"status": {

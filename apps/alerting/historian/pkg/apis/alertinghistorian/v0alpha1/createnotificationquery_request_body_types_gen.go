@@ -2,6 +2,10 @@
 
 package v0alpha1
 
+import (
+	time "time"
+)
+
 type CreateNotificationqueryRequestNotificationStatus string
 
 const (
@@ -30,10 +34,10 @@ func NewCreateNotificationqueryRequestMatcher() *CreateNotificationqueryRequestM
 }
 
 type CreateNotificationqueryRequestBody struct {
-	// From is the starting timestamp for the query in RFC3339Nano format.
-	From *int64 `json:"from,omitempty"`
-	// To is the starting timestamp for the query in RFC3339Nano format.
-	To *int64 `json:"to,omitempty"`
+	// From is the starting timestamp for the query.
+	From *time.Time `json:"from,omitempty"`
+	// To is the starting timestamp for the query.
+	To *time.Time `json:"to,omitempty"`
 	// Limit is the maximum number of entries to return.
 	Limit *int64 `json:"limit,omitempty"`
 	// Receiver optionally filters the entries by receiver title (contact point).
@@ -45,7 +49,7 @@ type CreateNotificationqueryRequestBody struct {
 	// RuleUID optionally filters the entries to a specific alert rule.
 	RuleUID *string `json:"ruleUID,omitempty"`
 	// GroupLabels optionally filters the entries by matching group labels.
-	GroupLabels CreateNotificationqueryRequestMatchers `json:"groupLabels"`
+	GroupLabels *CreateNotificationqueryRequestMatchers `json:"groupLabels,omitempty"`
 }
 
 // NewCreateNotificationqueryRequestBody creates a new CreateNotificationqueryRequestBody object.

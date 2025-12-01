@@ -2,13 +2,17 @@
 
 package v0alpha1
 
+import (
+	time "time"
+)
+
 // +k8s:openapi-gen=true
 type NotificationEntry struct {
-	// Timestamp is the time at which the notification attempt completed in RFC3339Nano format.
-	Timestamp int64 `json:"timestamp"`
+	// Timestamp is the time at which the notification attempt completed.
+	Timestamp time.Time `json:"timestamp"`
 	// Receiver is the receiver (contact point) title.
 	Receiver string `json:"receiver"`
-	// Status indicates if the notification was for alerts firing or alerts resolving.
+	// Status indicates if the notification contains one or more firing alerts.
 	Status NotificationStatus `json:"status"`
 	// Outcome indicaes if the notificaion attempt was successful or if it failed.
 	Outcome NotificationOutcome `json:"outcome"`
@@ -23,7 +27,7 @@ type NotificationEntry struct {
 	// Duration is the length of time the notification attempt took in nanoseconds.
 	Duration int64 `json:"duration"`
 	// PipelineTime is the time at which the flush began.
-	PipelineTime int64 `json:"pipelineTime"`
+	PipelineTime time.Time `json:"pipelineTime"`
 	// GroupKey uniquely idenifies the dispatcher alert group.
 	GroupKey string `json:"groupKey"`
 }
@@ -57,8 +61,8 @@ type NotificationEntryAlert struct {
 	Status      string            `json:"status"`
 	Labels      map[string]string `json:"labels"`
 	Annotations map[string]string `json:"annotations"`
-	StartsAt    int64             `json:"startsAt"`
-	EndsAt      int64             `json:"endsAt"`
+	StartsAt    time.Time         `json:"startsAt"`
+	EndsAt      time.Time         `json:"endsAt"`
 }
 
 // NewNotificationEntryAlert creates a new NotificationEntryAlert object.
