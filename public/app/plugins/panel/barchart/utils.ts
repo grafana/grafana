@@ -46,6 +46,7 @@ import { BarsOptions, getConfig } from './bars';
 import { PreparedMarker, MarkerGroup } from './markerTypes';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 // import { isLegendOrdered } from './utils';
+import color from 'tinycolor2';
 
 interface BarSeries {
   series: DataFrame[];
@@ -619,12 +620,14 @@ export function prepMarkers(
 
     const fi = markerFields[i];
 
-    //Color overrides
-    const colorMode = getFieldColorModeForField(fi);
-    const scaleColor = getFieldSeriesColor(fi, theme);
-    var seriesColor = scaleColor.color;
+    
+    let fieldColor = m.opts.color
+    //Color override
+    if(fi.config.custom?.color) fieldColor = fi.config.custom.color
 
-    if(fi.config.custom?.color?.mode === FieldColorModeId.Fixed ) seriesColor = m.opts.color
+    // const colorMode = getFieldColorModeForField(fi);
+    // const scaleColor = getFieldSeriesColor(fi, theme);
+    // var seriesColor = scaleColor.color;
 
     const targetIdx = vizFields.findIndex((f) => f.name === m.targetField);
 
@@ -636,7 +639,7 @@ export function prepMarkers(
             yValue: fi.values[j],
             seriesIdx: targetIdx,
             yScaleKey: fi.config.unit || FIXED_UNIT,
-            opts: {...m.opts, color: seriesColor},
+            opts: {...m.opts, color: fieldColor},
           };
 
           prepMarkerList.push(pm);
@@ -654,7 +657,7 @@ export function prepMarkers(
             yValue: yTotal + fi.values[j],
             seriesIdx: targetIdx,
             yScaleKey: fi.config.unit || FIXED_UNIT,
-            opts: {...m.opts, color: seriesColor},
+            opts: {...m.opts, color: fieldColor},
           };
 
           prepMarkerList.push(pm);
@@ -680,7 +683,7 @@ export function prepMarkers(
             yValue: val === 0 ? 0 : val / yTotal,
             seriesIdx: targetIdx,
             yScaleKey: fi.config.unit || FIXED_UNIT,
-            opts: {...m.opts, color: seriesColor},
+            opts: {...m.opts, color: fieldColor},
           };
 
           prepMarkerList.push(pm);

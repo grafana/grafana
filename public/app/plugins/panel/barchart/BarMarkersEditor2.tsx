@@ -82,7 +82,7 @@ export const barMarkersEditor2 = (builder: PanelOptionsEditorBuilder<Markers>, c
       }
     });
 
-    markers.forEach((marker: MarkerGroup, i: number) => {
+    markers.forEach((_ , i: number) => {
 
       builder.addTextInput({
         path: `.markerGroups[${i}].opts.label`,
@@ -123,8 +123,8 @@ export const barMarkersEditor2 = (builder: PanelOptionsEditorBuilder<Markers>, c
         showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
         settings: {
           min: 0,
-          max: 1,
-          step: 0.01,
+          max: 100,
+          step: 1,
           defaultValue: 0.1,
         }
       });
@@ -161,7 +161,6 @@ export const barMarkersEditor2 = (builder: PanelOptionsEditorBuilder<Markers>, c
           max: 10,
         }
       })
-
     });
   
 } 
@@ -182,7 +181,7 @@ export const addMarkerEditor = ({ context, onChange, value }: StandardEditorProp
         label: `Marker ${markers.length + 1}`,
         color: 'rgb(184, 119, 217)',
         shape: 'cross',
-        size: 0.3,
+        size: 30,
         opacity: 1,
         fill: false,
         strokeWidth: 3,

@@ -731,7 +731,7 @@ export function populateMarkerList(
       const m: MarkerDrawingArgs = {
         x: markerX!,
         y: resolvedY,
-        opts: { ...marker.opts, size: marker.opts.size * wid },
+        opts: { ...marker.opts, size: marker.opts.size/2 },
         isRotated: false,
       };
       resolvedMarkerList.push(m);
@@ -748,7 +748,7 @@ export function populateMarkerList(
       const m: MarkerDrawingArgs = {
         x: resolvedX!,
         y: markerY!,
-        opts: { ...marker.opts, size: marker.opts.size * hgt },
+        opts: { ...marker.opts, size: marker.opts.size/2 },
         isRotated: true,
       };
       resolvedMarkerList.push(m);

@@ -14,17 +14,8 @@ export function drawBarMarkers(markers: MarkerDrawingArgs[]) {
     ctx.save();
 
     for (const marker of markers) {
-      if (!marker.opts) {
-        continue;
-      }
-      const { size, shape, color, fill, strokeWidth: strokeThickness } = marker.opts;
-      const x = marker.x;
-      const y = marker.y;
-      const isRotated = marker.isRotated;
-
-      if (typeof x !== 'number' || typeof y !== 'number') {
-        continue;
-      }
+      const { size, shape, color, fill, strokeWidth: strokeWidth } = marker.opts;
+      const{ x, y, isRotated } = marker
 
       ctx.beginPath();
 
@@ -32,7 +23,7 @@ export function drawBarMarkers(markers: MarkerDrawingArgs[]) {
       switch (shape) {
         case 'line': {
           ctx.strokeStyle = color;
-          ctx.lineWidth = strokeThickness;
+          ctx.lineWidth = strokeWidth;
           if (isRotated) {
             ctx.moveTo(x, y - size / 2);
             ctx.lineTo(x, y + size / 2);
@@ -52,7 +43,7 @@ export function drawBarMarkers(markers: MarkerDrawingArgs[]) {
             ctx.fill();
           } else {
             ctx.strokeStyle = color;
-            ctx.lineWidth = strokeThickness;
+            ctx.lineWidth = strokeWidth;
             ctx.stroke();
           }
           break;
@@ -74,14 +65,14 @@ export function drawBarMarkers(markers: MarkerDrawingArgs[]) {
             ctx.fill();
           } else {
             ctx.strokeStyle = color;
-            ctx.lineWidth = strokeThickness;
+            ctx.lineWidth = strokeWidth;
             ctx.stroke();
           }
           break;
         }
         case 'cross': {
           ctx.strokeStyle = color;
-          ctx.lineWidth = strokeThickness;
+          ctx.lineWidth = strokeWidth;
           ctx.moveTo(x - size / 2, y - size / 2);
           ctx.lineTo(x + size / 2, y + size / 2);
           ctx.moveTo(x + size / 2, y - size / 2);
