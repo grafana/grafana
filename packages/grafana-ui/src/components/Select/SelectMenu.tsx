@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { max } from 'lodash';
-import { RefCallback, useLayoutEffect, useMemo, useRef, type JSX } from 'react';
+import { RefCallback, useLayoutEffect, useMemo, type JSX } from 'react';
 import * as React from 'react';
-import { FixedSizeList as List } from 'react-window';
+import { List, useListRef } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -101,14 +101,13 @@ interface VirtualSelectMenuProps<T> {
 export const VirtualizedSelectMenu = ({
   children,
   maxHeight,
-  innerRef: scrollRef,
   options,
   selectProps,
   focusedOption,
 }: VirtualSelectMenuProps<SelectableValue>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
-  const listRef = useRef<List>(null);
+  const listRef = useListRef(null);
   const { toggleAllOptions, components } = selectProps;
 
   const optionComponent = components?.Option ?? SelectMenuOptions;
@@ -126,8 +125,10 @@ export const VirtualizedSelectMenu = ({
     (option: SelectableValue<unknown>) => option.value === focusedOption?.value
   );
   useLayoutEffect(() => {
-    listRef.current?.scrollToItem(focusedIndex);
-  }, [focusedIndex]);
+    listRef.current?.scrollToRow({
+      index: focusedIndex,
+    });
+  }, [focusedIndex, listRef]);
 
   if (!Array.isArray(children)) {
     return null;
@@ -180,17 +181,20 @@ export const VirtualizedSelectMenu = ({
 
   return (
     <List
-      outerRef={scrollRef}
-      ref={listRef}
+      rowComponent={({ index, style }) => (
+        <div style={{ ...style, overflow: 'hidden' }}>{flattenedChildren[index]}</div>
+      )}
+      rowCount={flattenedChildren.length}
+      rowHeight={VIRTUAL_LIST_ITEM_HEIGHT}
+      rowProps={{}}
+      listRef={listRef}
       className={styles.menu}
-      height={heightEstimate}
-      width={widthEstimate}
+      style={{
+        height: heightEstimate,
+        width: widthEstimate,
+      }}
       aria-label={t('grafana-ui.select.menu-label', 'Select options menu')}
-      itemCount={flattenedChildren.length}
-      itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
-    >
-      {({ index, style }) => <div style={{ ...style, overflow: 'hidden' }}>{flattenedChildren[index]}</div>}
-    </List>
+    />
   );
 };
 
