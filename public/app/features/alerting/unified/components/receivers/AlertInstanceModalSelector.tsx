@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { CSSProperties, useCallback, useMemo, useState } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -235,7 +235,7 @@ export function AlertInstanceModalSelector({
 
             {!loading && (
               <AutoSizer>
-                {({ height, width }) => (
+                {({ height, width }: Size) => (
                   <FixedSizeList itemSize={50} height={height} width={width} itemCount={filteredRulesKeys.length}>
                     {RuleRow}
                   </FixedSizeList>
@@ -263,7 +263,7 @@ export function AlertInstanceModalSelector({
 
             {selectedRule && rulesWithInstances[selectedRule].length && !loading && (
               <AutoSizer>
-                {({ width, height }) => (
+                {({ width, height }: Size) => (
                   <FixedSizeList
                     itemSize={32}
                     height={height}
