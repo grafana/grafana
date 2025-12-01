@@ -176,7 +176,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
       reportInteraction('logs_log_list_controls_wrap_clicked', {
         state,
       });
-      setListStyle(state ? LogListStyle.Wrapped : LogListStyle.UnwrappedWithColumns);
+      setListStyle(state ? LogListStyle.Wrapped : LogListStyle.InlineWithColumns);
     },
     [listStyle, setListStyle]
   );
@@ -662,16 +662,16 @@ const WrapLogMessageButton = ({ expanded }: LogSelectOptionProps) => {
   const { listStyle, setListStyle } = useLogListContext();
 
   const unwrapWithColumns = useCallback(() => {
-    setListStyle(LogListStyle.UnwrappedWithColumns);
+    setListStyle(LogListStyle.InlineWithColumns);
     reportInteraction('logs_log_list_controls_wrap_clicked', {
-      style: LogListStyle.UnwrappedWithColumns,
+      style: LogListStyle.InlineWithColumns,
     });
   }, [setListStyle]);
 
   const unwrapWithoutColumns = useCallback(() => {
-    setListStyle(LogListStyle.UnwrappedWithoutColumns);
+    setListStyle(LogListStyle.Inline);
     reportInteraction('logs_log_list_controls_wrap_clicked', {
-      style: LogListStyle.UnwrappedWithoutColumns,
+      style: LogListStyle.Inline,
     });
   }, [setListStyle]);
 
@@ -694,12 +694,12 @@ const WrapLogMessageButton = ({ expanded }: LogSelectOptionProps) => {
       <Menu>
         <Menu.Item
           label={t('logs.logs-controls.line-wrapping.disable', 'Disable line wrapping')}
-          className={listStyle === LogListStyle.UnwrappedWithColumns ? styles.menuItemActive : undefined}
+          className={listStyle === LogListStyle.InlineWithColumns ? styles.menuItemActive : undefined}
           onClick={unwrapWithColumns}
         />
         <Menu.Item
           label={t('logs.logs-controls.line-wrapping.disable-no-columns', 'Disable line wrapping and columns')}
-          className={listStyle === LogListStyle.UnwrappedWithoutColumns ? styles.menuItemActive : undefined}
+          className={listStyle === LogListStyle.Inline ? styles.menuItemActive : undefined}
           onClick={unwrapWithoutColumns}
         />
         <Menu.Item
@@ -718,10 +718,10 @@ const WrapLogMessageButton = ({ expanded }: LogSelectOptionProps) => {
   );
 
   const wrapStateText = useMemo(() => {
-    if (listStyle === LogListStyle.UnwrappedWithColumns) {
+    if (listStyle === LogListStyle.InlineWithColumns) {
       return t('logs.logs-controls.line-wrapping.state.unwrapped-columns', 'Unwrapped columns');
     }
-    if (listStyle === LogListStyle.UnwrappedWithoutColumns) {
+    if (listStyle === LogListStyle.Inline) {
       return t('logs.logs-controls.line-wrapping.state.unwrapped-inline', 'Unwrapped inline');
     }
     if (listStyle === LogListStyle.Wrapped) {

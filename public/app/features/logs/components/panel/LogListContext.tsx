@@ -78,7 +78,7 @@ export const LogListContext = createContext<LogListContextData>({
   forceEscape: false,
   fontSize: 'default',
   hasUnescapedContent: false,
-  listStyle: LogListStyle.UnwrappedWithColumns,
+  listStyle: LogListStyle.InlineWithColumns,
   noInteractions: false,
   setControlsExpanded: () => {},
   setDedupStrategy: () => {},

@@ -13,16 +13,24 @@ export function getLogListStyleFromOldProps(
   }
 
   if (!wrapLogMessage) {
-    return LogListStyle.UnwrappedWithColumns;
+    return LogListStyle.InlineWithColumns;
   }
   return prettifyJSON ? LogListStyle.WrappedWithPrettyJSON : LogListStyle.Wrapped;
 }
 
 export function getLogListStyle(logOptionsStorageKey?: string) {
-  return logOptionsStorageKey
-    ? parseInt(store.getObject<string>(`${logOptionsStorageKey}.listStyle`) ?? '', 10) ||
-        LogListStyle.UnwrappedWithColumns
-    : LogListStyle.UnwrappedWithColumns;
+  const stored = logOptionsStorageKey
+    ? store.getObject<string>(`${logOptionsStorageKey}.listStyle`)
+    : LogListStyle.Inline;
+  if (stored === LogListStyle.InlineWithColumns) {
+    return LogListStyle.InlineWithColumns;
+  } else if (stored === LogListStyle.Wrapped) {
+    return LogListStyle.Wrapped;
+  } else if (stored === LogListStyle.WrappedWithPrettyJSON) {
+    return LogListStyle.WrappedWithPrettyJSON;
+  }
+
+  return LogListStyle.Inline;
 }
 
 export function prettifyJSON(listStyle: LogListStyle) {

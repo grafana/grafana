@@ -304,7 +304,7 @@ const LogListComponent = ({
   const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
   const dimensions = useMemo(
     () =>
-      listStyle !== LogListStyle.UnwrappedWithColumns
+      listStyle !== LogListStyle.InlineWithColumns
         ? []
         : virtualization.calculateFieldDimensions(
             processedLogs,
@@ -572,11 +572,9 @@ function getStyles(
   return {
     logList: css({
       '& .unwrapped-log-line': {
-        display: listStyle === LogListStyle.UnwrappedWithColumns ? 'grid' : 'flex',
+        display: listStyle === LogListStyle.InlineWithColumns ? 'grid' : 'flex',
         gridTemplateColumns:
-          listStyle === LogListStyle.UnwrappedWithColumns
-            ? getGridTemplateColumns(columns, displayedFields)
-            : undefined,
+          listStyle === LogListStyle.InlineWithColumns ? getGridTemplateColumns(columns, displayedFields) : undefined,
         '& .field': {
           overflow: 'hidden',
         },

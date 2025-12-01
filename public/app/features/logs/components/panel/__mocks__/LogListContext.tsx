@@ -24,7 +24,7 @@ export const LogListContext = createContext<LogListContextData>({
   fontSize: 'default',
   forceEscape: false,
   hasUnescapedContent: false,
-  listStyle: LogListStyle.UnwrappedWithColumns,
+  listStyle: LogListStyle.InlineWithColumns,
   setDedupStrategy: () => {},
   setFilterLevels: () => {},
   setFontSize: () => {},
@@ -94,7 +94,7 @@ export const defaultValue: LogListContextData = {
   timestampResolution: 'ns',
   controlsExpanded: false,
   setControlsExpanded: jest.fn(),
-  listStyle: LogListStyle.UnwrappedWithColumns,
+  listStyle: LogListStyle.InlineWithColumns,
 };
 
 export const defaultProps: Props = {

@@ -66,7 +66,7 @@ describe('LogList', () => {
       displayedFields: [],
       dataFrames: [],
       enableLogDetails: true,
-      listStyle: LogListStyle.UnwrappedWithColumns,
+      listStyle: LogListStyle.InlineWithColumns,
       logs,
       showControls: false,
       showTime: false,

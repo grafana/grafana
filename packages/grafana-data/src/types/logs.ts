@@ -114,10 +114,10 @@ export interface LogsModel {
 }
 
 export enum LogListStyle {
-  UnwrappedWithColumns = 1,
-  UnwrappedWithoutColumns = 2,
-  Wrapped = 3,
-  WrappedWithPrettyJSON = 4,
+  InlineWithColumns = 'inline-columns',
+  Inline = 'inline',
+  Wrapped = 'wrapped',
+  WrappedWithPrettyJSON = 'wrapped-json',
 }
 
 export interface LogLabelStatsModel {

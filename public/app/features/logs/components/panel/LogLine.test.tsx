@@ -46,7 +46,7 @@ const contextProps = {
   showControls: false,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
-  listStyle: LogListStyle.UnwrappedWithColumns,
+  listStyle: LogListStyle.InlineWithColumns,
 };
 const fontSizes: LogListFontSize[] = ['default', 'small'];
 
@@ -361,7 +361,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           <LogLine
             {...defaultProps}
             // Unwrapped logs
-            listStyle={LogListStyle.UnwrappedWithColumns}
+            listStyle={LogListStyle.InlineWithColumns}
           />
         </LogListContextProvider>
       );
@@ -440,7 +440,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
 
       rerender(
         <LogListContextProvider {...contextProps}>
-          <LogLine {...defaultProps} log={log} listStyle={LogListStyle.UnwrappedWithColumns} />
+          <LogLine {...defaultProps} log={log} listStyle={LogListStyle.InlineWithColumns} />
         </LogListContextProvider>
       );
 

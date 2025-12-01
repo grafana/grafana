@@ -37,7 +37,7 @@ const defaultProps: Omit<Props, 'children' | 'scrollElement'> = {
   setInitialScrollPosition: jest.fn(),
   showTime: false,
   virtualization,
-  listStyle: LogListStyle.UnwrappedWithColumns,
+  listStyle: LogListStyle.InlineWithColumns,
 };
 
 function setup(

@@ -64,7 +64,7 @@ const contextProps = {
   displayedFields: [],
   enableLogDetails: false,
   fontSize,
-  listStyle: LogListStyle.UnwrappedWithColumns,
+  listStyle: LogListStyle.InlineWithColumns,
   logs: [],
   showControls: true,
   showTime: false,
@@ -313,7 +313,7 @@ describe('LogListControls', () => {
     render(
       <LogListContextProvider
         {...contextProps}
-        listStyle={LogListStyle.UnwrappedWithColumns}
+        listStyle={LogListStyle.InlineWithColumns}
         onLogOptionsChange={onLogOptionsChange}
       >
         <LogListControls eventBus={new EventBusSrv()} />
@@ -339,7 +339,7 @@ describe('LogListControls', () => {
 
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', false);
     expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', false);
-    expect(onLogOptionsChange).toHaveBeenCalledWith('listStyle', LogListStyle.UnwrappedWithColumns);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('listStyle', LogListStyle.InlineWithColumns);
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(7);
 
