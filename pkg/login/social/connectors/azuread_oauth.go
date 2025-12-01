@@ -249,7 +249,7 @@ func (s *AzureADTokenSource) Token() (*oauth2.Token, error) {
 		return s.token, nil
 	}
 
-	// exchange auth code to a valid token
+	// refresh the expired token using the refresh token
 	federatedToken, err := os.ReadFile(s.workloadIdentityTokenFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read workload identity token file: %w", err)

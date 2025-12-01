@@ -1452,7 +1452,7 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 	}
 }
 
-func TestSocialAzureAD_TokenSource_ManagedIdentity(t *testing.T) {
+func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 	info := &social.OAuthInfo{
 		ClientId:                    "client-id",
 		ClientAuthentication:        social.WorkloadIdentity,
