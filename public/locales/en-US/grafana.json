@@ -9995,12 +9995,14 @@
         "show-search": "Search logs"
       },
       "line-wrapping": {
+        "disable": "Disable line wrapping",
+        "disable-no-columns": "Disable line wrapping and columns",
         "enable": "Enable line wrapping",
         "enable-prettify": "Enable line wrapping and prettify JSON",
-        "hide": "Disable line wrapping",
         "state": {
-          "hide": "Wrap disabled",
           "json": "Wrap JSON",
+          "unwrapped-columns": "Unwrapped columns",
+          "unwrapped-inline": "Unwrapped inline",
           "wrap": "Wrap lines"
         },
         "tooltip": "Set line wrap"
