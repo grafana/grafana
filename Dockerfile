@@ -111,6 +111,7 @@ COPY apps/iam apps/iam
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/alertenrichment apps/alerting/alertenrichment
+COPY apps/alerting/historian apps/alerting/historian
 COPY apps/alerting/notifications apps/alerting/notifications
 COPY apps/alerting/rules apps/alerting/rules
 COPY pkg/codegen pkg/codegen

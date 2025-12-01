@@ -7,6 +7,7 @@ import (
 	"time"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"go.opentelemetry.io/otel/codes"
 )
 
 type OperationGroup string
@@ -16,6 +17,8 @@ const (
 	OperationGroupPermission  OperationGroup = "permission"
 	OperationGroupUserOrgRole OperationGroup = "user_org_role"
 	OperationGroupRoleBinding OperationGroup = "role_binding"
+	OperationGroupTeamBinding OperationGroup = "team_binding"
+	OperationGroupRole        OperationGroup = "role"
 )
 
 func (s *Server) Mutate(ctx context.Context, req *authzextv1.MutateRequest) (*authzextv1.MutateResponse, error) {
@@ -28,6 +31,8 @@ func (s *Server) Mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 
 	res, err := s.mutate(ctx, req)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("failed to perform mutate request", "error", err, "namespace", req.GetNamespace())
 		return nil, errors.New("failed to perform mutate request")
 	}
@@ -68,6 +73,14 @@ func (s *Server) mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 			if err := s.mutateRoleBindings(ctx, storeInf, operations); err != nil {
 				return nil, fmt.Errorf("failed to mutate role bindings: %w", err)
 			}
+		case OperationGroupTeamBinding:
+			if err := s.mutateTeamBindings(ctx, storeInf, operations); err != nil {
+				return nil, fmt.Errorf("failed to mutate team bindings: %w", err)
+			}
+		case OperationGroupRole:
+			if err := s.mutateRoles(ctx, storeInf, operations); err != nil {
+				return nil, fmt.Errorf("failed to mutate roles: %w", err)
+			}
 		default:
 			s.logger.Warn("unsupported operation group", "operationGroup", operationGroup)
 		}
@@ -86,6 +99,10 @@ func getOperationGroup(operation *authzextv1.MutateOperation) (OperationGroup, e
 		return OperationGroupUserOrgRole, nil
 	case *authzextv1.MutateOperation_CreateRoleBinding, *authzextv1.MutateOperation_DeleteRoleBinding:
 		return OperationGroupRoleBinding, nil
+	case *authzextv1.MutateOperation_CreateTeamBinding, *authzextv1.MutateOperation_DeleteTeamBinding:
+		return OperationGroupTeamBinding, nil
+	case *authzextv1.MutateOperation_CreateRole, *authzextv1.MutateOperation_DeleteRole:
+		return OperationGroupRole, nil
 	}
 	return OperationGroup(""), errors.New("unsupported mutate operation type")
 }

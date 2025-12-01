@@ -29,7 +29,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
   const styles = useStyles2(getStyles);
   const pointerDistance = usePointerDistance();
-  const [isConditionallyHidden] = useIsConditionallyHidden(model);
+  const [isConditionallyHidden] = useIsConditionallyHidden(model.state.conditionalRendering);
   const isClone = isRepeatCloneOrChildOf(model);
   const soloPanelContext = useSoloPanelContext();
 
@@ -56,7 +56,9 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
         <div
-          ref={(ref) => dragProvided.innerRef(ref)}
+          ref={(ref) => {
+            dragProvided.innerRef(ref);
+          }}
           className={cx(dragSnapshot.isDragging && styles.dragging)}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
@@ -116,7 +118,9 @@ interface TabItemLayoutRendererProps {
 export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererProps) {
   const { layout, key } = tab.useState();
   const styles = useStyles2(getStyles);
-  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(tab);
+  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
+    tab.state.conditionalRendering
+  );
 
   return (
     <TabContent
