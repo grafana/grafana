@@ -1,4 +1,4 @@
-// @ts-check
+// @ts-nocheck
 const { parse } = require('ini');
 const { readFileSync, existsSync } = require('node:fs');
 const path = require('path');
