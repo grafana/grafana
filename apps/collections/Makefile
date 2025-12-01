@@ -7,4 +7,4 @@ generate: install-app-sdk update-app-sdk
 		--gogenpath=./pkg/apis \
 		--grouping=group \
 		--genoperatorstate=false \
-		--defencoding=none
+		--defencoding=none 

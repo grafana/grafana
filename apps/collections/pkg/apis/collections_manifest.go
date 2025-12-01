@@ -10,19 +10,22 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
+	v1alpha1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 )
 
 var (
-	rawSchemaStarsv1alpha1     = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
-	versionSchemaStarsv1alpha1 app.VersionSchema
-	_                          = json.Unmarshal(rawSchemaStarsv1alpha1, &versionSchemaStarsv1alpha1)
+	rawSchemaStarsv1alpha1           = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
+	versionSchemaStarsv1alpha1       app.VersionSchema
+	_                                = json.Unmarshal(rawSchemaStarsv1alpha1, &versionSchemaStarsv1alpha1)
+	rawSchemaDatasourcesv1alpha1     = []byte(`{"DataSourceRef":{"additionalProperties":false,"properties":{"name":{"description":"grafana data source uid","type":"string"}},"required":["name"],"type":"object"},"DataSourceTemplateSpec":{"additionalProperties":false,"properties":{"group":{"description":"type","type":"string"},"name":{"description":"variable name / display name","type":"string"}},"required":["group","name"],"type":"object"},"Datasources":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"Mode":{"additionalProperties":false,"properties":{"definition":{"$ref":"#/components/schemas/ModeSpec"},"name":{"type":"string"},"uid":{"type":"string"}},"required":["name","uid","definition"],"type":"object"},"ModeSpec":{"additionalProperties":{"$ref":"#/components/schemas/DataSourceRef"},"type":"object"},"TemplateSpec":{"additionalProperties":{"$ref":"#/components/schemas/DataSourceTemplateSpec"},"type":"object"},"spec":{"additionalProperties":false,"properties":{"modes":{"items":{"$ref":"#/components/schemas/Mode"},"type":"array"},"template":{"$ref":"#/components/schemas/TemplateSpec"}},"required":["template","modes"],"type":"object"}}`)
+	versionSchemaDatasourcesv1alpha1 app.VersionSchema
+	_                                = json.Unmarshal(rawSchemaDatasourcesv1alpha1, &versionSchemaDatasourcesv1alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -49,6 +52,14 @@ var appManifestData = app.ManifestData{
 					},
 					Schema: &versionSchemaStarsv1alpha1,
 				},
+
+				{
+					Kind:       "Datasources",
+					Plural:     "Datasource",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Schema:     &versionSchemaDatasourcesv1alpha1,
+				},
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
@@ -68,7 +79,8 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Stars/v1alpha1": v1alpha1.StarsKind(),
+	"Stars/v1alpha1":       v1alpha1.StarsKind(),
+	"Datasources/v1alpha1": v1alpha1.DatasourcesKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

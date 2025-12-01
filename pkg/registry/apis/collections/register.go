@@ -94,21 +94,31 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage := map[string]rest.Storage{}
 
 	// Configure Stars Dual writer
-	resource := collections.StarsResourceInfo
+	starsResource := collections.StarsResourceInfo
 	var stars grafanarest.Storage
-	stars, err := grafanaregistry.NewRegistryStore(opts.Scheme, resource, opts.OptsGetter)
+	stars, err := grafanaregistry.NewRegistryStore(opts.Scheme, starsResource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
 	stars = &starStorage{Storage: stars} // wrap List so we only return one value
 	if b.legacyStars != nil && opts.DualWriteBuilder != nil {
-		stars, err = opts.DualWriteBuilder(resource.GroupResource(), b.legacyStars, stars)
+		stars, err = opts.DualWriteBuilder(starsResource.GroupResource(), b.legacyStars, stars)
 		if err != nil {
 			return err
 		}
 	}
-	storage[resource.StoragePath()] = stars
-	storage[resource.StoragePath("update")] = &starsREST{store: stars}
+	storage[starsResource.StoragePath()] = stars
+	storage[starsResource.StoragePath("update")] = &starsREST{store: stars}
+
+	// Configure Datasources dual writer
+	datasourcesResource := collections.DatasourcesResourceInfo
+	var datasources grafanarest.Storage
+	datasources, err = grafanaregistry.NewRegistryStore(opts.Scheme, datasourcesResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	datasources = &datasourceStorage{Storage: datasources} // wrap List so we only return one value
+	storage[datasourcesResource.StoragePath()] = datasources
 
 	apiGroupInfo.VersionedResourcesStorageMap[collections.APIVersion] = storage
 	return nil

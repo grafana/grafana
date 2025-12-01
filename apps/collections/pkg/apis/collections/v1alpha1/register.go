@@ -32,6 +32,19 @@ var StarsResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
 	},
 )
 
+var DatasourcesResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
+	"datasources", "datasource", "Datasources",
+	func() runtime.Object { return &Datasources{} },
+	func() runtime.Object { return &DatasourcesList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+		},
+		// TODO: Reader?
+	},
+)
+
 var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
@@ -48,6 +61,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(schemeGroupVersion,
 		&Stars{},
 		&StarsList{},
+		&Datasources{},
+		&DatasourcesList{},
 	)
 	metav1.AddToGroupVersion(scheme, schemeGroupVersion)
 	return nil

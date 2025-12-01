@@ -14,10 +14,241 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.Stars":         schema_pkg_apis_collections_v1alpha1_Stars(ref),
-		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsList":     schema_pkg_apis_collections_v1alpha1_StarsList(ref),
-		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsResource": schema_pkg_apis_collections_v1alpha1_StarsResource(ref),
-		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsSpec":     schema_pkg_apis_collections_v1alpha1_StarsSpec(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.Datasources":                       schema_pkg_apis_collections_v1alpha1_Datasources(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesDataSourceRef":          schema_pkg_apis_collections_v1alpha1_DatasourcesDataSourceRef(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesDataSourceTemplateSpec": schema_pkg_apis_collections_v1alpha1_DatasourcesDataSourceTemplateSpec(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesList":                   schema_pkg_apis_collections_v1alpha1_DatasourcesList(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesMode":                   schema_pkg_apis_collections_v1alpha1_DatasourcesMode(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesSpec":                   schema_pkg_apis_collections_v1alpha1_DatasourcesSpec(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.Stars":                             schema_pkg_apis_collections_v1alpha1_Stars(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsList":                         schema_pkg_apis_collections_v1alpha1_StarsList(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsResource":                     schema_pkg_apis_collections_v1alpha1_StarsResource(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsSpec":                         schema_pkg_apis_collections_v1alpha1_StarsSpec(ref),
+	}
+}
+
+func schema_pkg_apis_collections_v1alpha1_Datasources(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec is the spec of the Datasources",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesSpec"),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_collections_v1alpha1_DatasourcesDataSourceRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "grafana data source uid",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_collections_v1alpha1_DatasourcesDataSourceTemplateSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "type",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "variable name / display name",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"group", "name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_collections_v1alpha1_DatasourcesList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.Datasources"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.Datasources", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_collections_v1alpha1_DatasourcesMode(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"definition": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesDataSourceRef"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"name", "uid", "definition"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesDataSourceRef"},
+	}
+}
+
+func schema_pkg_apis_collections_v1alpha1_DatasourcesSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"template": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesDataSourceTemplateSpec"),
+									},
+								},
+							},
+						},
+					},
+					"modes": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesMode"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"template", "modes"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesDataSourceTemplateSpec", "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.DatasourcesMode"},
 	}
 }
 
