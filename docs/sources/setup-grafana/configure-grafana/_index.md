@@ -818,6 +818,22 @@ Set to `true` to execute the CSRF check even if the login cookie is not in a req
 
 Comma-separated list of plugins IDs to load inside the frontend sandbox.
 
+### `[security.encryption]`
+
+Configure encryption-related cache settings for data encryption keys used by Grafana.
+
+#### `data_keys_cache_ttl`
+
+Defines the time-to-live (TTL) for decrypted data encryption keys stored in memory. Default: `15m`.
+
+#### `data_keys_cache_cleanup_interval`
+
+Sets how often Grafana cleans up the encryption key cache, removing entries that reached the TTL. Default: `1m`.
+
+{{< admonition type="note" >}}
+Small TTL values can impact performance due to frequent decryption operations.
+{{< /admonition >}}
+
 ### `[snapshots]`
 
 #### `enabled`
@@ -2017,6 +2033,86 @@ For example: `disabled_labels=grafana_folder`
 
 <hr>
 
+### `[unified_alerting.state_history]`
+
+Configure state history for Unified Alerting. Previous alert rule states can be queried in panels and viewed in the UI.
+
+#### `enabled`
+
+Enable or disable the state history functionality. Default: `true`.
+
+#### `backend`
+
+Select the backend for state history. Options: `annotations`, `loki`, `prometheus`, `multiple`. Default: `annotations`.
+
+The backends provide different storage and query characteristics:
+
+- **annotations:** Stores alert state transitions as Grafana annotations in the local database.
+- **loki:** Writes alert state history to an external Loki instance. Requires Loki connection configuration in this section.
+- **prometheus:** Emits alert state as `GRAFANA_ALERTS` metrics to a Prometheus-compatible data source. Requires Prometheus target configuration in this section.
+- **multiple:** Writes state history to more than one backend at the same time. Use `primary` to select which backend serves queries, and `secondaries` for additional write targets.
+
+Backend-specific configuration requirements:
+
+- When `backend = annotations`, no additional keys in this section are required.
+- When a Loki backend is used in any capacity (for example, `backend = loki`, or `backend = multiple` with Loki as `primary` or present in `secondaries`) you must set either `loki_remote_url` or both `loki_remote_read_url` and `loki_remote_write_url`.
+- When a Prometheus backend is used in any capacity (for example, `backend = prometheus`, or `backend = multiple` with Prometheus present in `secondaries`) you must set `prometheus_target_datasource_uid`.
+- When `backend = multiple`, set `primary` and `secondaries`.
+
+#### `primary`
+
+For `multiple` backend only. Sets the primary backend used to serve queries. Options: `annotations`, `loki`.
+
+#### `secondaries`
+
+For `multiple` backend only. Comma-separated list of additional backends to write state history to.
+
+#### `loki_remote_url`
+
+For `loki` backend. URL of the external Loki instance.
+
+#### `loki_remote_read_url`
+
+For `loki` backend. Read URL when Loki read/write endpoints are separated.
+
+#### `loki_remote_write_url`
+
+For `loki` backend. Write URL when Loki read/write endpoints are separated.
+
+#### `loki_tenant_id`
+
+For `loki` backend. Optional tenant ID to attach to requests.
+
+#### `loki_basic_auth_username`
+
+For `loki` backend. Optional username for basic authentication.
+
+#### `loki_basic_auth_password`
+
+For `loki` backend. Optional password for basic authentication.
+
+#### `loki_max_query_length`
+
+For `loki` backend. Maximum query length duration. Default: `721h`.
+
+#### `loki_max_query_size`
+
+For `loki` backend. Maximum query size in bytes. Default: `65536`.
+
+#### `prometheus_target_datasource_uid`
+
+For `prometheus` backend. Target datasource UID for writing `GRAFANA_ALERTS` metrics.
+
+#### `prometheus_metric_name`
+
+For `prometheus` backend. Metric name for `GRAFANA_ALERTS`. Default: `GRAFANA_ALERTS`.
+
+#### `prometheus_write_timeout`
+
+For `prometheus` backend. Timeout for writing `GRAFANA_ALERTS` metrics. Default: `10s`.
+
+<hr>
+
 ### `[unified_alerting.state_history.annotations]`
 
 This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
@@ -2031,6 +2127,36 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 <hr>
 
+### `[unified_alerting.notification_history]`
+
+Enable storage of Alertmanager notification logs in Loki.
+
+#### `enabled`
+
+Enable or disable the notification history functionality. Default: `false`.
+
+#### `loki_remote_url`
+
+URL of the Loki instance used to store logs.
+
+#### `loki_tenant_id`
+
+Optional tenant ID to attach to requests sent to Loki.
+
+#### `loki_basic_auth_username`
+
+Optional username for basic authentication to Loki.
+
+#### `loki_basic_auth_password`
+
+Optional password for basic authentication to Loki.
+
+### `[unified_alerting.notification_history.external_labels]`
+
+Optional extra labels to attach to outbound notification history records or log streams. Provide any number of label key-value pairs.
+
+<hr>
+
 ### `[unified_alerting.prometheus_conversion]`
 
 This section applies only to rules imported as Grafana-managed rules. For more information about the import process, refer to [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
@@ -2038,6 +2164,52 @@ This section applies only to rules imported as Grafana-managed rules. For more i
 #### `rule_query_offset`
 
 Set the query offset to imported Grafana-managed rules when `query_offset` is not defined in the original rule group configuration. The default value is `1m`.
+
+<hr>
+
+### `[recording_rules]`
+
+Configure recording rules.
+
+#### `enabled`
+
+Enable recording rules. Default: `true`.
+
+#### `timeout`
+
+Request timeout for recording rule writes. Default: `10s`.
+
+#### `default_datasource_uid`
+
+Default data source UID to write to if not specified in the rule definition.
+
+### `[recording_rules.custom_headers]`
+
+Optional custom headers to include in recording rule write requests.
+
+### `[remote.alertmanager]`
+
+Configure a remote Alertmanager to replace the internal one.
+
+#### `url`
+
+Root URL of the remote Alertmanager. Grafana automatically appends `/alertmanager` for certain HTTP calls.
+
+#### `tenant`
+
+Tenant ID used in requests. Also used as basic auth username if a password is configured.
+
+#### `password`
+
+Optional password for basic authentication. If not present, the tenant ID will be set in the X-Scope-OrgID header.
+
+#### `sync_interval`
+
+Interval for syncing with the Alertmanager. Default: `5m`.
+
+#### `timeout`
+
+Timeout for the HTTP client. Default: `30s`.
 
 <hr>
 
