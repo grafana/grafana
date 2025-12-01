@@ -474,6 +474,7 @@
       "noOptionsMessage-no-datasources-found": "未找到数据源"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "复制链接",
       "duplicate": "复制",
       "export": "导出",
@@ -3464,6 +3465,14 @@
         "label-negative-y": "负 Y"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "需要右侧的空间",
       "gaps-options": {
@@ -3508,6 +3517,10 @@
     },
     "name-show-unfilled-area": "显示未填充区域",
     "name-value-display": "值显示",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "隐藏",
       "label-text-color": "文字颜色",
@@ -4152,6 +4165,7 @@
     "clear": "清除",
     "collapse": "收起",
     "disabled": "",
+    "discard": "",
     "edit": "编辑",
     "help": "帮助",
     "loading": "加载中...",
@@ -4769,7 +4783,6 @@
         "variable": "{{type}} 变量",
         "variable-set": "变量"
       },
-      "open": "打开选项窗格",
       "row": {
         "header": {
           "hide": "隐藏",
@@ -5119,6 +5132,7 @@
       "title-matched_other": "匹配了 {{count}}/{{totalCount}} 个选项"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "重复",
       "tree-item": {
         "empty": "（空缺）",
@@ -5330,9 +5344,39 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "载入配置"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "正在加载和初始化数据面板",
       "title-not-found": "未找到 ID 为 {{panelId}} 的面板"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "模板变量"
@@ -5433,11 +5477,8 @@
           "tooltip": "此数据面板已被标记为只读"
         },
         "export": {
-          "arrow": "导出",
-          "title": "导出",
           "tooltip": {
-            "as-code": "导出为代码",
-            "json": "导出为 JSON"
+            "as-code": "导出为代码"
           }
         },
         "more-save-options": "更多保存选项",
@@ -5489,6 +5530,9 @@
       "save-library-panel": "保存库面板",
       "settings": "仪表板设置",
       "share-button": "分享",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5816,9 +5860,6 @@
       "custom-options": "自定义选项",
       "name-values-separated-comma": "以逗号分隔的值",
       "selection-options": "选择内容选项"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "轮廓"
     },
     "dashboard-link-form": {
       "back-to-list": "回到列表",
@@ -7798,6 +7839,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8092,13 +8134,6 @@
           "create-slo": "创建 SLO",
           "enable-slo-alerting": "启用 SLO 警报"
         }
-      }
-    }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "返回"
       }
     }
   },
@@ -11012,6 +11047,12 @@
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "清除类型",
     "select-aria-label": "面板类型筛选器",
@@ -11038,6 +11079,10 @@
     "pie-chart-type-options": {
       "label-donut": "圆环图",
       "label-pie": "饼图"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -11618,13 +11663,6 @@
       "saving": "正在保存",
       "title-error-loading-file": "加载文件时出错"
     },
-    "files-view": {
-      "columns": {
-        "history": "历史记录",
-        "view": "查看"
-      },
-      "placeholder-search": "搜索"
-    },
     "finish-step": {
       "description-enable-previews": "在拉取请求中添加数据面板更改的图像预览。Grafana 数据面板的图像将在 Git 存储库中共享，并对具有存储库访问权限的任何人可见。",
       "description-generate-dashboard-previews": "创建拉取请求的预览链接",
@@ -11833,9 +11871,6 @@
       "source-code": "源代码"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "只读",
       "settings": "设置",
       "view": "查看"
@@ -11872,14 +11907,6 @@
       "webhook-last-event": "最后一个事件：",
       "webhook-url": "查看 Webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "历史记录",
-        "view-dashboard": "查看",
-        "view-folder": "查看"
-      },
-      "placeholder-search": "搜索"
-    },
     "repository-status-page": {
       "back-to-repositories": "回到存储库",
       "cleaning-up-resources": "清理存储库资源",
@@ -11887,12 +11914,10 @@
       "not-found": "找不到",
       "not-found-message": "找不到存储库",
       "repository-config-exists-configuration": "确保存储库配置存在于配置文件中。",
-      "tab-files": "文件",
-      "tab-files-title": "来自存储库的原始文件列表",
       "tab-overview": "概述",
       "tab-overview-title": "存储库概览",
       "tab-resources": "资源",
-      "tab-resources-title": "保存在 Grafana 数据库中的资源",
+      "tab-resources-title": "",
       "title": "存储库状态",
       "title-legacy-storage": "传统存储",
       "title-queued-for-deletion": "已进入队列等待删除"
@@ -11914,6 +11939,17 @@
       "local-description": "配置文件预置",
       "pure-git": "纯 Git",
       "pure-git-description": "连接到任何 Git 存储库"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "基本",
@@ -12977,6 +13013,12 @@
       "label-same-as-value": "与值相同",
       "label-standard": "标准"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "自动",
       "label-center": "中心"
@@ -13184,6 +13226,7 @@
     "create-team": {
       "create": "创建",
       "description-email": "这是可选项，主要用于允许自定义团队头像",
+      "failed-to-create": "",
       "label-email": "电子邮箱",
       "label-name": "名称",
       "label-role": "角色"
@@ -13215,6 +13258,7 @@
         "title-edit-team": "编辑团队",
         "tooltip-edit-team": "编辑团队"
       },
+      "loading-teams": "",
       "new-team": "新建团队",
       "placeholder-search-teams": "搜索团队"
     },
@@ -13313,7 +13357,8 @@
       "forwards-time-aria-label": "向前移动时间范围",
       "to": "至",
       "zoom-out-button": "缩放时间范围",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "应用时间范围",
@@ -13414,6 +13459,16 @@
         "label-never": "从不",
         "label-threshold": "阈值"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "添加时区",

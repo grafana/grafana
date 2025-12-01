@@ -176,8 +176,13 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {!hideDashboardControls && model.hasDashboardControls() && <DashboardControlsButton dashboard={dashboard} />}
+        {!hideDashboardControls && model.hasDashboardControls() && (
+          <div className={styles.dashboardControlsButton}>
+            <DashboardControlsButton dashboard={dashboard} />
+          </div>
+        )}
         {config.featureToggles.dashboardNewLayouts && <DashboardControlActions dashboard={dashboard} />}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
       {!hideVariableControls && (
         <>
@@ -185,7 +190,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}
-      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
@@ -268,17 +272,26 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rightControls: css({
       display: 'flex',
-      justifyContent: 'flex-end',
       gap: theme.spacing(1),
-      marginBottom: theme.spacing(1),
       float: 'right',
       alignItems: 'center',
+      flexWrap: 'wrap',
+      maxWidth: '100%',
+      minWidth: 0,
     }),
     timeControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
+      order: 2,
+      marginLeft: 'auto',
+      flexShrink: 0,
+      alignSelf: 'flex-start',
+    }),
+    dashboardControlsButton: css({
+      order: 2,
+      marginLeft: 'auto',
     }),
     rightControlsWrap: css({
       flexWrap: 'wrap',

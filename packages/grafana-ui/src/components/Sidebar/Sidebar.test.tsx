@@ -30,6 +30,7 @@ function TestSetup() {
   const contextValue = useSidebar({
     position: 'right',
     hasOpenPane: openPane !== '',
+    onClosePane: () => setOpenPane(''),
   });
 
   return (
@@ -37,7 +38,7 @@ function TestSetup() {
       <Sidebar contextValue={contextValue}>
         {openPane === 'settings' && (
           <Sidebar.OpenPane>
-            <Sidebar.PaneHeader title="Settings" onClose={() => setOpenPane('')} />
+            <Sidebar.PaneHeader title="Settings" />
           </Sidebar.OpenPane>
         )}
         <Sidebar.Toolbar>
