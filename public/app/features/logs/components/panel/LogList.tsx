@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { Grammar } from 'prismjs';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, MouseEvent } from 'react';
-import { Align, VariableSizeList } from 'react-window';
+import { Align, List, ListImperativeAPI, useListRef } from 'react-window';
 
 import {
   CoreApp,
@@ -282,10 +282,9 @@ const LogListComponent = ({
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(getListHeight(containerElement, app));
   const theme = useTheme2();
-  const listRef = useRef<VariableSizeList | null>(null);
+  const listRef = useListRef(null);
   const widthRef = useRef(containerElement.clientWidth);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
   const dimensions = useMemo(
     () =>
@@ -329,25 +328,29 @@ const LogListComponent = ({
 
   // When log lines report size discrepancies, we debounce the calculation reset to give time to
   // use the smallest log index to reset the heights.
-  const debouncedResetAfterIndex = useMemo(() => {
-    return debounce((index: number) => {
-      listRef.current?.resetAfterIndex(index);
-      overflowIndexRef.current = Infinity;
-    }, 0);
-  }, []);
+  // TODO do we need this?
+  // const debouncedResetAfterIndex = useMemo(() => {
+  //   return debounce((index: number) => {
+  //     listRef.current?.resetAfterIndex(index);
+  //     overflowIndexRef.current = Infinity;
+  //   }, 0);
+  // }, []);
 
   const debouncedScrollToItem = useMemo(() => {
     return debounce((index: number, align?: Align) => {
-      listRef.current?.scrollToItem(index, align);
+      listRef.current?.scrollToRow({
+        index,
+        align,
+      });
     }, 250);
-  }, []);
+  }, [listRef]);
 
   useEffect(() => {
     const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) =>
       handleScrollToEvent(e, filteredLogs, listRef.current)
     );
     return () => subscription.unsubscribe();
-  }, [eventBus, filteredLogs]);
+  }, [eventBus, filteredLogs, listRef]);
 
   useEffect(() => {
     setProcessedLogs(
@@ -366,11 +369,13 @@ const LogListComponent = ({
       )
     );
     virtualization.resetLogLineSizes();
-    listRef.current?.resetAfterIndex(0);
+    // TODO do we need this?
+    // listRef.current?.resetAfterIndex(0);
   }, [forceEscape, getFieldLinks, grammar, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
-    listRef.current?.resetAfterIndex(0);
+    // TODO do we need this?
+    // listRef.current?.resetAfterIndex(0);
   }, [wrapLogMessage, showDetails, displayedFields, dedupStrategy]);
 
   useLayoutEffect(() => {
@@ -399,9 +404,10 @@ const LogListComponent = ({
         return;
       }
       overflowIndexRef.current = index < overflowIndexRef.current ? index : overflowIndexRef.current;
-      debouncedResetAfterIndex(overflowIndexRef.current);
+      // TODO do we need this?
+      // debouncedResetAfterIndex(overflowIndexRef.current);
     },
-    [debouncedResetAfterIndex, virtualization, widthContainer]
+    [virtualization, widthContainer]
   );
 
   const handleScrollPosition = useCallback(
@@ -410,13 +416,13 @@ const LogListComponent = ({
       if (scrollToUID) {
         const index = processedLogs.findIndex((log) => log.uid === scrollToUID);
         if (index >= 0) {
-          listRef.current?.scrollToItem(index, 'start');
+          listRef.current?.scrollToRow({ index, align: 'start' });
           return;
         }
       }
-      listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
+      listRef.current?.scrollToRow({ index: initialScrollPosition === 'top' ? 0 : processedLogs.length - 1 });
     },
-    [initialScrollPosition, permalinkedLogId, processedLogs]
+    [initialScrollPosition, permalinkedLogId, processedLogs, listRef]
   );
 
   const handleLogLineClick = useCallback(
@@ -503,7 +509,7 @@ const LogListComponent = ({
           logs={filteredLogs}
           loadMore={loadMore}
           onClick={handleLogLineClick}
-          scrollElement={scrollRef.current}
+          scrollElement={listRef.current?.element ?? null}
           showTime={showTime}
           sortOrder={sortOrder}
           timeRange={timeRange}
@@ -512,12 +518,25 @@ const LogListComponent = ({
           virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
         >
-          {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
-            <VariableSizeList
+          {({ itemCount, onItemsRendered, Renderer }) => (
+            <List
               className={styles.logList}
-              height={listHeight}
-              itemCount={itemCount}
-              itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
+              style={
+                wrapLogMessage
+                  ? {
+                      height: listHeight,
+                      width: '100%',
+                      overflowY: 'scroll',
+                    }
+                  : {
+                      height: listHeight,
+                      width: '100%',
+                      overflow: 'scroll',
+                    }
+              }
+              rowProps={{}}
+              rowCount={itemCount}
+              rowHeight={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
                 detailsMode,
                 hasLogsWithErrors,
                 hasSampledLogs,
@@ -526,17 +545,11 @@ const LogListComponent = ({
                 showTime,
                 wrap: wrapLogMessage,
               })}
-              itemKey={getItemKey}
-              layout="vertical"
-              onItemsRendered={onItemsRendered}
-              outerRef={scrollRef}
+              rowComponent={Renderer}
+              onRowsRendered={onItemsRendered}
               overscanCount={5}
-              ref={listRef}
-              style={wrapLogMessage ? { overflowY: 'scroll' } : { overflow: 'scroll' }}
-              width="100%"
-            >
-              {Renderer}
-            </VariableSizeList>
+              listRef={listRef}
+            />
           )}
         </InfiniteScroll>
       </div>
@@ -586,16 +599,23 @@ function getStyles(
   };
 }
 
-function handleScrollToEvent(event: ScrollToLogsEvent, logs: LogListModel[], list: VariableSizeList | null) {
+function handleScrollToEvent(event: ScrollToLogsEvent, logs: LogListModel[], list: ListImperativeAPI | null) {
   if (event.payload.scrollTo === 'top') {
-    list?.scrollTo(0);
+    list?.scrollToRow({
+      index: 0,
+    });
   } else if (event.payload.scrollTo === 'bottom') {
-    list?.scrollToItem(logs.length - 1);
+    list?.scrollToRow({
+      index: logs.length - 1,
+    });
   } else {
     // uid
     const index = logs.findIndex((log) => log.uid === event.payload.scrollTo);
     if (index >= 0) {
-      list?.scrollToItem(index, 'center');
+      list?.scrollToRow({
+        index,
+        align: 'center',
+      });
     }
   }
 }

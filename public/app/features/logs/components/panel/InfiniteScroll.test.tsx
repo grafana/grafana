@@ -1,5 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
-import { VariableSizeList } from 'react-window';
+import { List } from 'react-window';
 
 import { createTheme, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
@@ -89,19 +89,19 @@ function setup(
       loadMore={loadMoreMock}
       infiniteScrollMode={infiniteScrollMode}
     >
-      {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
-        <VariableSizeList
-          height={100}
-          itemCount={itemCount}
-          itemSize={() => virtualization.getLineHeight()}
-          itemKey={getItemKey}
-          layout="vertical"
-          onItemsRendered={onItemsRendered}
-          style={{ overflow: 'scroll' }}
-          width="100%"
-        >
-          {Renderer}
-        </VariableSizeList>
+      {({ itemCount, onItemsRendered, Renderer }) => (
+        <List
+          rowComponent={Renderer}
+          rowCount={itemCount}
+          rowProps={{}}
+          rowHeight={() => virtualization.getLineHeight()}
+          onRowsRendered={onItemsRendered}
+          style={{
+            overflow: 'scroll',
+            height: 100,
+            width: '100%',
+          }}
+        />
       )}
     </InfiniteScroll>
   );
