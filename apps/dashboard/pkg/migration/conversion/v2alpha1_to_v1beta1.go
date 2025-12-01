@@ -135,25 +135,18 @@ func convertTimeSettingsToV1(timeSettings *dashv2alpha1.DashboardTimeSettingsSpe
 		"to":   to,
 	}
 
-	// Convert timezone
 	if timeSettings.Timezone != nil {
 		dashboard["timezone"] = *timeSettings.Timezone
 	}
 
-	// Convert refresh - always include to match Scene's default behavior
 	dashboard["refresh"] = timeSettings.AutoRefresh
 
-	// Convert fiscalYearStartMonth
-	if timeSettings.FiscalYearStartMonth != 0 {
-		dashboard["fiscalYearStartMonth"] = timeSettings.FiscalYearStartMonth
-	}
+	dashboard["fiscalYearStartMonth"] = timeSettings.FiscalYearStartMonth
 
-	// Convert weekStart
 	if timeSettings.WeekStart != nil {
 		dashboard["weekStart"] = string(*timeSettings.WeekStart)
 	}
 
-	// Convert timepicker settings
 	timepicker := make(map[string]interface{})
 	hasTimepicker := false
 
@@ -1210,75 +1203,52 @@ func convertPanelQueryToV1(query *dashv2alpha1.DashboardPanelQueryKind, dsIndex 
 		target["hide"] = true
 	}
 
-	// Resolve datasource - only add if explicit (for panel queries, we don't resolve to defaults)
-	datasource := resolveDatasourceForPanelQuery(query.Spec.Datasource)
-	if datasource != nil {
+	// Resolve datasource - only add if explicit (panel-level datasource handles defaults)
+	// This differs from variables/annotations which need resolved datasources
+	if query.Spec.Datasource != nil && query.Spec.Datasource.Uid != nil && *query.Spec.Datasource.Uid != "" {
+		datasource := map[string]interface{}{
+			"uid": *query.Spec.Datasource.Uid,
+		}
+		if query.Spec.Datasource.Type != nil {
+			datasource["type"] = *query.Spec.Datasource.Type
+		}
 		target["datasource"] = datasource
 	}
 
 	return target
 }
 
-// resolveDatasourceForPanelQuery resolves the datasource for a panel query.
-// If the query has an explicit datasource (with UID), it is used as-is.
-// If there's NO explicit datasource, no datasource is added to the output.
-// This matches the frontend behavior in panelQueryKindToSceneQuery which only adds
-// datasource when query.spec.query.datasource?.name exists.
-func resolveDatasourceForPanelQuery(explicitDS *dashv2alpha1.DashboardDataSourceRef) map[string]interface{} {
-	// If explicit datasource is provided (with UID), use it as-is
-	// This preserves the original datasource reference without trying to resolve it
-	// Note: In v2alpha1, the UID field contains the "name" from v2beta1 after conversion
-	if explicitDS != nil {
-		hasUID := explicitDS.Uid != nil && *explicitDS.Uid != ""
-
-		if hasUID {
-			datasource := make(map[string]interface{})
-			datasource["uid"] = *explicitDS.Uid
-			// Always include type field to match frontend behavior
-			// Frontend includes type even when empty because getDataSourceForQuery returns { uid, type }
-			if explicitDS.Type != nil {
-				datasource["type"] = *explicitDS.Type
-			}
-			return datasource
-		}
-	}
-
-	// No explicit datasource - don't add one to the output
-	// This matches the frontend behavior which only adds datasource when there's
-	// an explicit datasource.name in the input
-	return nil
-}
-
-// resolveDatasourceForVariable resolves the datasource for a variable (QueryVariable, AdhocVariable, GroupByVariable).
-// Unlike panel queries, variables ALWAYS resolve to a datasource, falling back to defaults.
-// This matches the frontend behavior in getRuntimeVariableDataSource/getDataSourceForQuery.
-func resolveDatasourceForVariable(explicitDS *dashv2alpha1.DashboardDataSourceRef, variableKind string, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
+// getDataSourceForQuery resolves a datasource reference, matching frontend's getDataSourceForQuery.
+// Resolution order:
+// 1. If explicit datasource with UID is provided, use it
+// 2. Otherwise, find a datasource matching the queryKind (type)
+// 3. Fall back to the default datasource
+// Used for variables and annotations. Panel queries handle datasource inline (only explicit ones).
+func getDataSourceForQuery(explicitDS *dashv2alpha1.DashboardDataSourceRef, queryKind string, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
 	// If explicit datasource is provided (with UID), use it
 	if explicitDS != nil && explicitDS.Uid != nil && *explicitDS.Uid != "" {
 		datasource := make(map[string]interface{})
 		datasource["uid"] = *explicitDS.Uid
-		// Always include type to match frontend behavior (even if empty)
 		if explicitDS.Type != nil {
 			datasource["type"] = *explicitDS.Type
 		}
 		return datasource
 	}
 
-	// No explicit datasource - resolve based on variable kind (datasource type) or default
+	// No explicit datasource - resolve based on queryKind (datasource type) or default
 	if dsIndex == nil {
 		return nil
 	}
 
-	// Try to find a datasource matching the variable kind (type)
-	if variableKind != "" {
-		// Look for a datasource with this type - prefer one that's also the default if available
+	// Try to find a datasource matching the query kind (type)
+	if queryKind != "" {
 		var matchingDS *schemaversion.DataSourceInfo
 		for _, ds := range dsIndex.ByUID {
-			if ds.Type == variableKind {
+			if ds.Type == queryKind {
 				if matchingDS == nil || ds.Default {
 					matchingDS = ds
 					if ds.Default {
-						break // Found default DS of this type, use it
+						break
 					}
 				}
 			}
@@ -1300,14 +1270,6 @@ func resolveDatasourceForVariable(explicitDS *dashv2alpha1.DashboardDataSourceRe
 	}
 
 	return nil
-}
-
-// resolveDatasourceForAnnotation resolves the datasource for an annotation.
-// Like variables, annotations ALWAYS resolve to a datasource, falling back to defaults.
-// This matches the frontend behavior in transformV2ToV1AnnotationQuery which calls getRuntimePanelDataSource.
-func resolveDatasourceForAnnotation(explicitDS *dashv2alpha1.DashboardDataSourceRef, queryKind string, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
-	// Use the same resolution logic as variables
-	return resolveDatasourceForVariable(explicitDS, queryKind, dsIndex)
 }
 
 // detectMixedDatasource checks if panel queries use different datasources.
@@ -1499,7 +1461,7 @@ func convertQueryVariableToV1(variable *dashv2alpha1.DashboardQueryVariableKind,
 	}
 
 	// Resolve datasource - use explicit datasource or resolve from query kind (datasource type)/default
-	datasource := resolveDatasourceForVariable(spec.Datasource, spec.Query.Kind, dsIndex)
+	datasource := getDataSourceForQuery(spec.Datasource, spec.Query.Kind, dsIndex)
 	if datasource != nil {
 		varMap["datasource"] = datasource
 	}
@@ -1672,7 +1634,7 @@ func convertGroupByVariableToV1(variable *dashv2alpha1.DashboardGroupByVariableK
 	}
 
 	// Resolve datasource - GroupBy variables don't have a query kind, so use empty string (will fall back to default)
-	datasource := resolveDatasourceForVariable(spec.Datasource, "", dsIndex)
+	datasource := getDataSourceForQuery(spec.Datasource, "", dsIndex)
 	if datasource != nil {
 		varMap["datasource"] = datasource
 	}
@@ -1699,7 +1661,7 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind,
 	varMap["allowCustomValue"] = spec.AllowCustomValue
 
 	// Resolve datasource - Adhoc variables don't have a query kind, so use empty string (will fall back to default)
-	datasource := resolveDatasourceForVariable(spec.Datasource, "", dsIndex)
+	datasource := getDataSourceForQuery(spec.Datasource, "", dsIndex)
 	if datasource != nil {
 		varMap["datasource"] = datasource
 	}
@@ -1808,7 +1770,7 @@ func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryK
 		if annotation.Spec.Query != nil {
 			queryKind = annotation.Spec.Query.Kind
 		}
-		datasource := resolveDatasourceForAnnotation(annotation.Spec.Datasource, queryKind, dsIndex)
+		datasource := getDataSourceForQuery(annotation.Spec.Datasource, queryKind, dsIndex)
 		if datasource != nil {
 			annotationMap["datasource"] = datasource
 		}

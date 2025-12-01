@@ -419,7 +419,6 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
   } else if (variable.kind === defaultConstantVariableKind().kind) {
     return new ConstantVariable({
       ...commonProperties,
-      type: 'constant', // Explicitly set to ensure correct type identification
       value: variable.spec.query,
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),

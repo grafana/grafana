@@ -23,6 +23,7 @@
     },
     "description": "Sample monitoring dashboard for testing purposes.",
     "editable": false,
+    "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
     "links": [
       {

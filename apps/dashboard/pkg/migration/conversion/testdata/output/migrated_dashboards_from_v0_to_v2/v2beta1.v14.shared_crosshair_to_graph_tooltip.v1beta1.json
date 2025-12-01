@@ -22,6 +22,7 @@
       ]
     },
     "editable": true,
+    "fiscalYearStartMonth": 0,
     "graphTooltip": 1,
     "liveNow": false,
     "panels": [

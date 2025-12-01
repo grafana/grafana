@@ -49,6 +49,7 @@
     },
     "description": "This dashboard demonstrates all features that need to be converted from v2alpha1 to v2beta1",
     "editable": true,
+    "fiscalYearStartMonth": 0,
     "graphTooltip": 2,
     "liveNow": true,
     "panels": [
