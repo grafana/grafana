@@ -1,4 +1,4 @@
-import { Grammar } from 'prismjs';
+import { Grammar, GrammarValue } from 'prismjs';
 
 import { CustomHighlight, escapeRegex, parseFlags } from '@grafana/data';
 
@@ -92,7 +92,7 @@ export const generateCustomHighlightGrammar = (highlights: CustomHighlight[]): G
     return {};
   }
 
-  const grammar: Grammar = {};
+  const grammar: Record<string, GrammarValue> = {};
 
   // Create separate token types for each color index
   // This allows different CSS classes for different colors
