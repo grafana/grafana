@@ -207,6 +207,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       gap: theme.spacing(2),
       padding: theme.spacing(2),
+      width: '100%',
     }),
     datasourceSection: css({
       paddingBottom: theme.spacing(2),

@@ -3,7 +3,7 @@ import { memo } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { SceneDataQuery } from '@grafana/scenes';
-import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, Stack, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { AddDataItemMenu } from './AddDataItemMenu';
@@ -50,79 +50,54 @@ export const QueryTransformList = memo(
   }: QueryTransformListProps) => {
     const styles = useStyles2(getStyles);
 
-    const queries = items.filter((item) => item.type === 'query');
-    const expressions = items.filter((item) => item.type === 'expression');
-    const transforms = items.filter((item) => item.type === 'transform');
+    const getHandlers = (item: QueryTransformItem) => {
+      switch (item.type) {
+        case 'query':
+          return {
+            onDuplicate: onDuplicateQuery ? () => onDuplicateQuery(item.index) : undefined,
+            onRemove: onRemoveQuery ? () => onRemoveQuery(item.index) : undefined,
+            onToggleVisibility: onToggleQueryVisibility ? () => onToggleQueryVisibility(item.index) : undefined,
+          };
+        case 'expression':
+          return {
+            onDuplicate: onDuplicateExpression ? () => onDuplicateExpression(item.index) : undefined,
+            onRemove: onRemoveExpression ? () => onRemoveExpression(item.index) : undefined,
+            onToggleVisibility: onToggleExpressionVisibility
+              ? () => onToggleExpressionVisibility(item.index)
+              : undefined,
+          };
+        case 'transform':
+          return {
+            onDuplicate: undefined,
+            onRemove: onRemoveTransform ? () => onRemoveTransform(item.index) : undefined,
+            onToggleVisibility: undefined,
+          };
+      }
+    };
 
     return (
       <div className={styles.container}>
         <div className={styles.scrollContainer}>
           <ScrollContainer>
-            <div className={styles.content}>
-              {queries.length > 0 && (
-                <div className={styles.section}>
-                  {queries.map((item) => (
-                    <QueryTransformCard
-                      key={item.id}
-                      item={item.data}
-                      type="query"
-                      index={item.index}
-                      isSelected={selectedId === item.id}
-                      onClick={() => onSelect(item.id)}
-                      onDuplicate={onDuplicateQuery ? () => onDuplicateQuery(item.index) : undefined}
-                      onRemove={onRemoveQuery ? () => onRemoveQuery(item.index) : undefined}
-                      onToggleVisibility={
-                        onToggleQueryVisibility ? () => onToggleQueryVisibility(item.index) : undefined
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-
-              {expressions.length > 0 && (
-                <div className={styles.section}>
-                  {expressions.map((item) => (
-                    <QueryTransformCard
-                      key={item.id}
-                      item={item.data}
-                      type="expression"
-                      index={item.index}
-                      isSelected={selectedId === item.id}
-                      onClick={() => onSelect(item.id)}
-                      onDuplicate={onDuplicateExpression ? () => onDuplicateExpression(item.index) : undefined}
-                      onRemove={onRemoveExpression ? () => onRemoveExpression(item.index) : undefined}
-                      onToggleVisibility={
-                        onToggleExpressionVisibility ? () => onToggleExpressionVisibility(item.index) : undefined
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-
-              {transforms.length > 0 && (
-                <div className={styles.section}>
-                  {transforms.map((item) => (
-                    <QueryTransformCard
-                      key={item.id}
-                      item={item.data}
-                      type="transform"
-                      index={item.index}
-                      isSelected={selectedId === item.id}
-                      onClick={() => onSelect(item.id)}
-                      onRemove={onRemoveTransform ? () => onRemoveTransform(item.index) : undefined}
-                    />
-                  ))}
-                </div>
-              )}
-
-              <div className={styles.addButton}>
-                <AddDataItemMenu
-                  onAddQuery={onAddQuery}
-                  onAddTransform={onAddTransform}
-                  onAddExpression={onAddExpression}
+            <Stack direction="column" gap={2}>
+              {items.map((item) => (
+                <QueryTransformCard
+                  key={item.id}
+                  item={item.data}
+                  type={item.type}
+                  index={item.index}
+                  isSelected={selectedId === item.id}
+                  onClick={() => onSelect(item.id)}
+                  {...getHandlers(item)}
                 />
-              </div>
-            </div>
+              ))}
+
+              <AddDataItemMenu
+                onAddQuery={onAddQuery}
+                onAddTransform={onAddTransform}
+                onAddExpression={onAddExpression}
+              />
+            </Stack>
           </ScrollContainer>
         </div>
       </div>
@@ -138,26 +113,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      background: theme.colors.background.primary,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
+      width: '100%',
       overflow: 'hidden',
     }),
     scrollContainer: css({
+      padding: theme.spacing(2),
       flex: 1,
       minHeight: 0,
       overflow: 'auto',
-    }),
-    content: css({
-      padding: theme.spacing(2),
-    }),
-    section: css({
-      '&:not(:first-child)': {
-        marginTop: theme.spacing(2),
-      },
-    }),
-    addButton: css({
-      marginTop: theme.spacing(2),
-      paddingTop: theme.spacing(2),
     }),
   };
 };

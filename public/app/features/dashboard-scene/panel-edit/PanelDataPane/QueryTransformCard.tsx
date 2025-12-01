@@ -149,11 +149,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css({
       cursor: 'pointer',
-      marginBottom: theme.spacing(1),
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       overflow: 'hidden',
       background: theme.colors.background.primary,
+      width: '100%',
       [`&:hover .${actionsClass}`]: {
         opacity: 1,
       },

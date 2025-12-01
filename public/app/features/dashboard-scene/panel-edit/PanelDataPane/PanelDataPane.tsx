@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -13,7 +13,7 @@ import {
   VizPanel,
   SceneDataTransformer,
 } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useSplitter } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
@@ -398,30 +398,34 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const sourceData = queryRunner?.useState();
   const series = sourceData?.data?.series || [];
 
+  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
+    direction: 'row',
+    initialSize: 0.2,
+  });
+
   return (
     <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
-      <div className={styles.unifiedLayout}>
-        <div className={styles.splitLayout}>
-          <div className={styles.leftPanel}>
-            <QueryTransformList
-              items={items}
-              selectedId={effectiveSelectedId}
-              onSelect={handleSelect}
-              onAddQuery={handleAddQuery}
-              onAddTransform={handleAddTransform}
-              onAddExpression={handleAddExpression}
-              onDuplicateQuery={handleDuplicateQuery}
-              onRemoveQuery={handleRemoveQuery}
-              onToggleQueryVisibility={handleToggleQueryVisibility}
-              onDuplicateExpression={handleDuplicateExpression}
-              onRemoveExpression={handleRemoveExpression}
-              onToggleExpressionVisibility={handleToggleExpressionVisibility}
-              onRemoveTransform={handleRemoveTransform}
-            />
-          </div>
-          <div className={styles.rightPanel}>
-            <DetailView selectedItem={selectedItem} panel={panel} tabs={tabs} />
-          </div>
+      <div {...containerProps} className={cx(containerProps.className, styles.unifiedLayout)}>
+        <div {...primaryProps}>
+          <QueryTransformList
+            items={items}
+            selectedId={effectiveSelectedId}
+            onSelect={handleSelect}
+            onAddQuery={handleAddQuery}
+            onAddTransform={handleAddTransform}
+            onAddExpression={handleAddExpression}
+            onDuplicateQuery={handleDuplicateQuery}
+            onRemoveQuery={handleRemoveQuery}
+            onToggleQueryVisibility={handleToggleQueryVisibility}
+            onDuplicateExpression={handleDuplicateExpression}
+            onRemoveExpression={handleRemoveExpression}
+            onToggleExpressionVisibility={handleToggleExpressionVisibility}
+            onRemoveTransform={handleRemoveTransform}
+          />
+        </div>
+        <div {...splitterProps} className={cx(splitterProps.className, styles.splitter)} />
+        <div {...secondaryProps}>
+          <DetailView selectedItem={selectedItem} panel={panel} tabs={tabs} />
         </div>
       </div>
       <TransformationsDrawer
@@ -468,22 +472,18 @@ function getStyles(theme: GrafanaTheme2) {
       borderTopRightRadius: theme.shape.radius.default,
       overflow: 'hidden',
     }),
-    splitLayout: css({
-      display: 'flex',
-      height: '100%',
-      width: '100%',
-    }),
-    leftPanel: css({
-      width: '25%',
-      minWidth: '200px',
-      maxWidth: '400px',
-      flexShrink: 0,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
-    }),
-    rightPanel: css({
-      flex: 1,
-      minWidth: 0,
-      overflow: 'hidden',
+    splitter: css({
+      position: 'relative',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: '50%',
+        top: 0,
+        bottom: 0,
+        width: '1px',
+        background: theme.colors.border.weak,
+        transform: 'translateX(-50%)',
+      },
     }),
   };
 }

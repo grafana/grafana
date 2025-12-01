@@ -78,6 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
+      width: '100%',
       background: theme.colors.background.primary,
     }),
     emptyState: css({
