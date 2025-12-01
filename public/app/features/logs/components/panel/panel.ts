@@ -1,4 +1,4 @@
-import { LogListStyle, store } from "@grafana/data";
+import { LogListStyle, store } from '@grafana/data';
 
 export function getLogListStyleFromOldProps(
   wrapLogMessage: boolean | undefined,
