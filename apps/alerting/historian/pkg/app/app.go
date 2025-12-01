@@ -1,8 +1,13 @@
 package app
 
 import (
+	"context"
+	"net/http"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis/alertinghistorian/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
@@ -21,6 +26,11 @@ func New(cfg app.Config) (app.App, error) {
 					Path:       "/alertstate/history",
 					Method:     "GET",
 				}: runtimeConfig.GetAlertStateHistoryHandler,
+				{
+					Namespaced: true,
+					Path:       "/notification/query",
+					Method:     "POST",
+				}: UnimplementedHandler,
 			},
 		},
 		// TODO: Remove when SDK is fixed.
@@ -42,4 +52,14 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
+}
+
+func UnimplementedHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+	return &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusUnprocessableEntity,
+			Message: "unimplemented",
+		},
+	}
 }
