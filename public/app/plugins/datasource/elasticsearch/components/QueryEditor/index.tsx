@@ -115,6 +115,12 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
           <QueryTypeSelector />
         </div>
       </div>
+            <div className={styles.root}>
+        <InlineLabel width={17}>Query type</InlineLabel>
+        <div className={styles.queryItem}>
+          hello 
+        </div>
+      </div>
 
       {isRawDSL && rawDSLFeatureEnabled && (
         <RawQueryEditor

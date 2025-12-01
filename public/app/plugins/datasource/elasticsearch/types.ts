@@ -66,6 +66,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
 }
 
 export type QueryType = 'metrics' | 'logs' | 'raw_data' | 'raw_document' | 'raw_dsl';
+export type EditorType = 'code' | 'builder';
 
 interface MetricConfiguration<T extends MetricAggregationType> {
   label: string;
