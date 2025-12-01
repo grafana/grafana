@@ -4,6 +4,8 @@ export type BarMarkerOpts = {
   color: string;
   shape: string;
   opacity: number;
+  fill: boolean;
+  strokeWidth: number
 };
 
 // Group of markers as they are defined in the panels settings.
@@ -32,4 +34,7 @@ export interface MarkerDrawingArgs {
   isRotated?: boolean;
 }
 
-export default {};
+export interface Markers {
+  select?: string;
+  markerGroups: MarkerGroup[];
+}

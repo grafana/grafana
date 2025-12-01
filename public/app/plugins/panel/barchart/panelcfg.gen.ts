@@ -32,45 +32,59 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * Controls the width of groups. 1 = max with, 0 = min width.
    */
   groupWidth: number;
-  /**
-   * Sets visual markers on each bar of a targeted field, based on y values provided by the data field
-   */
-  markerGroups: Array<{
+  markers: {
     /**
-     * Ids the marker group, generated automatically
+     * keeps track of which marker is being edited
      */
-    id: number;
+    select?: string;
     /**
-     * Sets the field on which the markers will appear
+     * Sets visual markers on each bar of a targeted field, based on y values provided by the data field
      */
-    targetField: string;
-    /**
-     * Sets the field which provides the values for each marker. This field will no longer be shown in the chart
-     */
-    dataField: string;
-    /**
-     * Options for visual representation
-     */
-    opts: {
-      label: string;
+    markerGroups: Array<{
       /**
-       * Sets the color of the marker group
+       * Ids the marker group, generated automatically
        */
-      color: string;
+      id: number;
       /**
-       * Controls the size of the marker group
+       * Sets the field on which the markers will appear
        */
-      size: number;
+      targetField: string;
       /**
-       * Sets the shape of the marker group
+       * Sets the field which provides the values for each marker. This field will no longer be shown in the chart
        */
-      shape: string;
+      dataField: string;
       /**
-       * Sets the opacity of the marker group
+       * Options for visual representation
        */
-      opacity: number;
-    };
-  }>;
+      opts: {
+        label: string;
+        /**
+         * Sets the color of the marker group
+         */
+        color: string;
+        /**
+         * Controls the size of the marker group
+         */
+        size: number;
+        /**
+         * Sets the shape of the marker group
+         */
+        shape: string;
+        /**
+         * Sets the opacity of the marker group
+         */
+        opacity: number;
+        /**
+         * Picks if the marker is filled; only applicable to 'star' and 'circle'
+         */
+        fill: boolean;
+        /**
+         * Sets the width of the strokes
+         */
+        strokeWidth: number;
+      };
+    }>;
+  };
   /**
    * Controls the orientation of the bar chart, either vertical or horizontal.
    */
@@ -107,7 +121,6 @@ export const defaultOptions: Partial<Options> = {
   barWidth: 0.97,
   fullHighlight: false,
   groupWidth: 0.7,
-  markerGroups: [],
   orientation: common.VizOrientation.Auto,
   showValue: common.VisibilityMode.Auto,
   stacking: common.StackingMode.None,

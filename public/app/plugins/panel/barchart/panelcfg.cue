@@ -52,27 +52,35 @@ composableKinds: PanelCfg: {
 					showValue: common.VisibilityMode & (*"auto" | _)
 					// Controls the width of bars. 1 = Max width, 0 = Min width.
 					barWidth: float64 & >=0 & <=1 | *0.97
-					// Sets visual markers on each bar of a targeted field, based on y values provided by the data field
-					markerGroups: [...{
-						// Ids the marker group, generated automatically
-						id: number
-						// Sets the field on which the markers will appear
-						targetField: string
-						// Sets the field which provides the values for each marker. This field will no longer be shown in the chart
-						dataField: string
-						// Options for visual representation
-						opts: {
-							label: string
-							// Sets the color of the marker group
-							color: string
-							// Controls the size of the marker group
-							size: float 
-							// Sets the shape of the marker group
-							shape: string 
-							// Sets the opacity of the marker group
-							opacity: number
-						}
-					}]
+					markers: {
+						// keeps track of which marker is being edited
+						select?: string
+						// Sets visual markers on each bar of a targeted field, based on y values provided by the data field
+						markerGroups: [...{
+							// Ids the marker group, generated automatically
+							id: number
+							// Sets the field on which the markers will appear
+							targetField: string
+							// Sets the field which provides the values for each marker. This field will no longer be shown in the chart
+							dataField: string
+							// Options for visual representation
+							opts: {
+								label: string
+								// Sets the color of the marker group
+								color: string
+								// Controls the size of the marker group
+								size: number 
+								// Sets the shape of the marker group
+								shape: string 
+								// Sets the opacity of the marker group
+								opacity: number
+								// Picks if the marker is filled; only applicable to 'star' and 'circle'
+								fill: bool
+								// Sets the width of the strokes
+								strokeWidth: number
+							}
+						}]
+					}
 					// Controls the width of groups. 1 = max with, 0 = min width.
 					groupWidth: float64 & >=0 & <=1 | *0.7
 					// Enables mode which highlights the entire bar area and shows tooltip when cursor
