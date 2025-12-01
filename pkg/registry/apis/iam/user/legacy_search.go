@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
@@ -26,18 +25,17 @@ const (
 
 var (
 	_               resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
-	fieldLogin                                     = fmt.Sprintf("%s%s", res.SEARCH_FIELD_PREFIX, builders.USER_LOGIN)
-	fieldEmail                                     = fmt.Sprintf("%s%s", res.SEARCH_FIELD_PREFIX, builders.USER_EMAIL)
-	fieldLastSeenAt                                = fmt.Sprintf("%s%s", res.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
-	fieldRole                                      = fmt.Sprintf("%s%s", res.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
+	fieldLogin                                     = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LOGIN)
+	fieldEmail                                     = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_EMAIL)
+	fieldLastSeenAt                                = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
+	fieldRole                                      = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
 )
 
 // UserLegacySearchClient is a client for searching for users in the legacy search engine.
 type UserLegacySearchClient struct {
 	resourcepb.ResourceIndexClient
 	orgService org.Service
-	// userService user.Service
-	log *slog.Logger
+	log        *slog.Logger
 }
 
 // NewUserLegacySearchClient creates a new UserLegacySearchClient.
@@ -50,7 +48,6 @@ func NewUserLegacySearchClient(orgService org.Service) *UserLegacySearchClient {
 
 // Search searches for users in the legacy search engine.
 // It only supports exact matching for title, login, or email.
-// FIXME: This implementation only supports a single field query and will be extended in the future.
 func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -91,7 +88,7 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 			c.log.Warn("only single value fields are supported for legacy search, using first value", "field", field.Key, "values", vals)
 		}
 		switch field.Key {
-		case res.SEARCH_FIELD_TITLE:
+		case resource.SEARCH_FIELD_TITLE:
 			title = vals[0]
 		case fieldLogin:
 			login = vals[0]
@@ -158,11 +155,11 @@ func getResourceKey(item *org.OrgUserDTO, namespace string) *resourcepb.Resource
 
 func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
-	standardSearchFields := res.StandardSearchFields()
+	standardSearchFields := resource.StandardSearchFields()
 	for _, field := range fields {
 		switch field {
-		case res.SEARCH_FIELD_TITLE:
-			cols = append(cols, standardSearchFields.Field(res.SEARCH_FIELD_TITLE))
+		case resource.SEARCH_FIELD_TITLE:
+			cols = append(cols, standardSearchFields.Field(resource.SEARCH_FIELD_TITLE))
 		case fieldLastSeenAt:
 			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_LAST_SEEN_AT])
 		case fieldRole:
@@ -180,7 +177,7 @@ func createCells(u *org.OrgUserDTO, fields []string) [][]byte {
 	cells := make([][]byte, 0, len(fields))
 	for _, field := range fields {
 		switch field {
-		case res.SEARCH_FIELD_TITLE:
+		case resource.SEARCH_FIELD_TITLE:
 			cells = append(cells, []byte(u.Name))
 		case fieldEmail:
 			cells = append(cells, []byte(u.Email))
@@ -203,7 +200,7 @@ func convertToSortOptions(sortBy []*resourcepb.ResourceSearchRequest_Sort) []mod
 		switch field {
 		case fieldLastSeenAt:
 			field = "lastSeenAtAge"
-		case res.SEARCH_FIELD_TITLE:
+		case resource.SEARCH_FIELD_TITLE:
 			field = "name"
 		}
 

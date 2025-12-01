@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -301,12 +300,4 @@ func toUserItem(u *common.UserWithRole, ns string) iamv0alpha1.User {
 	obj.SetUpdatedTimestamp(&u.Updated)
 	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
 	return *item
-}
-
-func formatTime(v *time.Time) string {
-	txt := ""
-	if v != nil && v.Unix() != 0 {
-		txt = v.UTC().Format(time.RFC3339)
-	}
-	return txt
 }
