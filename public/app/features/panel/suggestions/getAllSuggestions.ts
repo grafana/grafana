@@ -9,7 +9,7 @@ import {
   VisualizationSuggestionScore,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
+import { importPanelPlugin, isBuiltInPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { getAllPanelPluginMeta } from '../state/util';
 
@@ -68,19 +68,14 @@ const mapPreferredVisualisationTypeToPlugin = (type: string): PreferredVisualisa
  * given a list of suggestions, sort them in place based on score and preferred visualisation type
  */
 export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[], dataSummary: PanelDataSummary) {
-  const panelPluginsAsMap = getAllPanelPluginMeta().reduce<Record<string, PanelPluginMeta>>((acc, panel) => {
-    acc[panel.id] = panel;
-    return acc;
-  }, {});
-
   suggestions.sort((a, b) => {
-    // if one of these suggestions is from a core panel and the other isn't, prioritize the core panel.
-    const pluginMetaA = panelPluginsAsMap[a.pluginId];
-    const pluginMetaB = panelPluginsAsMap[b.pluginId];
-    if (pluginMetaA?.module?.startsWith('core:') && !pluginMetaB?.module?.startsWith('core:')) {
+    // if one of these suggestions is from a built-in panel and the other isn't, prioritize the core panel.
+    const isPluginABuiltIn = isBuiltInPlugin(a.pluginId);
+    const isPluginBBuiltIn = isBuiltInPlugin(b.pluginId);
+    if (isPluginABuiltIn && !isPluginBBuiltIn) {
       return -1;
     }
-    if (pluginMetaB?.module?.startsWith('core:') && !pluginMetaA?.module?.startsWith('core:')) {
+    if (isPluginBBuiltIn && !isPluginABuiltIn) {
       return 1;
     }
 
