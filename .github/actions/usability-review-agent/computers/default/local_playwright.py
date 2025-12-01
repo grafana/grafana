@@ -30,6 +30,14 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
             timezone_id="UTC"
         )
 
+        # Inject service account token if provided
+        service_account_token = os.environ.get("GRAFANA_SERVICE_ACCOUNT_TOKEN")
+        if service_account_token:
+            print("Injecting Grafana service account token into Authorization header")
+            context.set_extra_http_headers({
+                "Authorization": f"Bearer {service_account_token}"
+            })
+
         # Add event listeners for page creation and closure
         context.on("page", self._handle_new_page)
 

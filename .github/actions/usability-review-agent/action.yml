@@ -11,6 +11,9 @@ inputs:
   openai_org:
     description: OpenAI organization ID
     required: false
+  grafana_service_account_token:
+    description: Grafana service account token for authentication
+    required: false
   workflow_name:
     description: The workflow or feature to test
     required: false
@@ -62,6 +65,7 @@ runs:
         OPENAI_API_KEY: ${{ inputs.openai_api_key }}
         OPENAI_ORG: ${{ inputs.openai_org }}
         TARGET_URL: ${{ inputs.target_url }}
+        GRAFANA_SERVICE_ACCOUNT_TOKEN: ${{ inputs.grafana_service_account_token }}
         OUTPUT_TEXT_PATH: ${{ github.workspace }}/${{ inputs.output_text_path }}
         SCREENSHOT_PATH: ${{ github.workspace }}/${{ inputs.screenshot_path }}
         PROMPT_FILE: ${{ github.action_path }}/${{ inputs.prompt_file }}
