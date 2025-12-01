@@ -171,7 +171,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     >
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
-          <div className={styles.timeControls}>
+          <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </div>
@@ -181,7 +181,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <DashboardControlsButton dashboard={dashboard} />
           </div>
         )}
-        {config.featureToggles.dashboardNewLayouts && <DashboardControlActions dashboard={dashboard} />}
+        {config.featureToggles.dashboardNewLayouts && (
+          <div className={styles.fixedControls}>
+            <DashboardControlActions dashboard={dashboard} />
+          </div>
+        )}
         {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
       {!hideVariableControls && (
@@ -274,12 +278,12 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: theme.spacing(1),
       float: 'right',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       flexWrap: 'wrap',
       maxWidth: '100%',
       minWidth: 0,
     }),
-    timeControls: css({
+    fixedControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
