@@ -7,6 +7,7 @@ import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rt
 import { legacyAPI } from 'app/api/clients/legacy';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
+import { createOperationMiddleware } from 'app/features/explore-map/state/middleware';
 import { StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
@@ -45,6 +46,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
         browseDashboardsAPI.middleware,
         legacyAPI.middleware,
         ...allApiClientMiddleware,
+        // CRDT operation middleware for Explore Maps
+        createOperationMiddleware(),
         ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',

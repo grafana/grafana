@@ -6,7 +6,9 @@ import { createErrorNotification, createSuccessNotification } from 'app/core/cop
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { exploreMapApi } from '../api/exploreMapApi';
+import { initializeFromLegacyState } from '../state/crdtSlice';
 import { loadCanvas } from '../state/exploreMapSlice';
+import { selectPanels, selectMapTitle, selectViewport } from '../state/selectors';
 import { ExploreMapState, initialExploreMapState, SerializedExploreState } from '../state/types';
 
 const STORAGE_KEY = 'grafana.exploreMap.state';
@@ -20,6 +22,7 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
   const { uid } = options;
   const dispatch = useDispatch();
   const exploreMapState = useSelector((state) => state.exploreMap);
+  const crdtState = useSelector((state) => state.exploreMapCRDT);
   const exploreState = useSelector((state) => state.explore);
   const [loading, setLoading] = useState(!!uid);
   const [saving, setSaving] = useState(false);
@@ -77,11 +80,33 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
         try {
           setLoading(true);
           const mapData = await exploreMapApi.getExploreMap(uid);
-          const parsed: ExploreMapState = JSON.parse(mapData.data);
-          // Use title from DB column, not from JSON data
-          parsed.uid = mapData.uid;
-          parsed.title = mapData.title;
+
+          // Handle empty or missing data (new maps)
+          let parsed: ExploreMapState;
+          if (!mapData.data || mapData.data.trim() === '') {
+            // Initialize with default empty state for new maps
+            parsed = {
+              ...initialExploreMapState,
+              uid: mapData.uid,
+              title: mapData.title,
+            };
+          } else {
+            parsed = JSON.parse(mapData.data);
+            // Use title from DB column, not from JSON data
+            parsed.uid = mapData.uid;
+            parsed.title = mapData.title;
+          }
+
+          // Load into legacy state (for backward compatibility)
           dispatch(loadCanvas(parsed));
+
+          // Initialize CRDT state from loaded data
+          dispatch(initializeFromLegacyState({
+            uid: parsed.uid,
+            title: parsed.title,
+            panels: parsed.panels || {},
+            viewport: parsed.viewport || initialExploreMapState.viewport,
+          }));
         } catch (error) {
           console.error('Failed to load map from API:', error);
           dispatch(
@@ -102,7 +127,17 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
           const savedState = store.get(STORAGE_KEY);
           if (savedState) {
             const parsed: ExploreMapState = JSON.parse(savedState);
+
+            // Load into legacy state
             dispatch(loadCanvas(parsed));
+
+            // Initialize CRDT state from loaded data
+            dispatch(initializeFromLegacyState({
+              uid: parsed.uid,
+              title: parsed.title,
+              panels: parsed.panels,
+              viewport: parsed.viewport,
+            }));
           }
         } catch (error) {
           console.error('Failed to load canvas state from storage:', error);
@@ -115,14 +150,19 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
 
   // Auto-save to API or localStorage
   useEffect(() => {
-    // Don't persist an empty canvas; this avoids removing a previously saved
-    // non-empty canvas when the in-memory state is still at its initial value.
-    if (!exploreMapState || Object.keys(exploreMapState.panels || {}).length === 0) {
+    // Skip auto-save during initial load
+    if (!initialLoadDone.current || loading) {
       return;
     }
 
-    // Skip auto-save during initial load
-    if (!initialLoadDone.current || loading) {
+    // Get current CRDT state as panels
+    const panels = selectPanels(crdtState);
+    const mapTitle = selectMapTitle(crdtState);
+    const viewport = selectViewport(crdtState);
+
+    // Don't persist an empty canvas; this avoids removing a previously saved
+    // non-empty canvas when the in-memory state is still at its initial value.
+    if (Object.keys(panels || {}).length === 0) {
       return;
     }
 
@@ -132,23 +172,29 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
     }
 
     const saveState = async () => {
-      const enrichedState = enrichStateWithExploreData(exploreMapState);
+      // CRDT panels already contain exploreState from savePanelExploreState actions
+      // We don't need to enrich them with live Explore pane data
+      console.log('[Persistence] Saving panels:', panels);
+
+      const enrichedState: ExploreMapState = {
+        uid,
+        title: mapTitle,
+        viewport,
+        panels: panels, // Already contains exploreState from CRDT
+        selectedPanelIds: [],
+        nextZIndex: 1,
+        cursors: {},
+      };
 
       if (uid) {
         // Save to API with debounce
         saveTimeoutRef.current = setTimeout(async () => {
           try {
             setSaving(true);
-            const titleToSave = exploreMapState.title || 'Untitled Map';
-            // Ensure data also has the correct title
-            const dataToSave = {
-              ...enrichedState,
-              uid: exploreMapState.uid,
-              title: titleToSave,
-            };
+            const titleToSave = mapTitle || 'Untitled Map';
             await exploreMapApi.updateExploreMap(uid, {
               title: titleToSave,
-              data: dataToSave,
+              data: enrichedState,
             });
             setLastSaved(new Date());
           } catch (error) {
@@ -176,7 +222,7 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [exploreMapState, exploreState, enrichStateWithExploreData, dispatch, loading, uid]);
+  }, [crdtState, dispatch, loading, uid]);
 
   const exportCanvas = useCallback(() => {
     try {
@@ -225,7 +271,18 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
               throw new Error('Invalid file content');
             }
             const parsed: ExploreMapState = JSON.parse(result);
+
+            // Load into legacy state
             dispatch(loadCanvas(parsed));
+
+            // Initialize CRDT state from imported data
+            dispatch(initializeFromLegacyState({
+              uid: parsed.uid,
+              title: parsed.title,
+              panels: parsed.panels,
+              viewport: parsed.viewport,
+            }));
+
             dispatch(notifyApp(createSuccessNotification('Canvas imported successfully')));
           } catch (error) {
             console.error('Failed to parse imported canvas:', error);

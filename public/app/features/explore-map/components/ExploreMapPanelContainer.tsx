@@ -15,7 +15,9 @@ import {
   selectPanel,
   updateMultiplePanelPositions,
   updatePanelPosition,
-} from '../state/exploreMapSlice';
+  updatePanelSize,
+} from '../state/crdtSlice';
+import { selectSelectedPanelIds, selectViewport } from '../state/selectors';
 import { ExploreMapPanel } from '../state/types';
 
 import { ExploreMapPanelContent } from './ExploreMapPanelContent';
@@ -30,8 +32,8 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
   const rndRef = useRef<Rnd>(null);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
 
-  const selectedPanelIds = useSelector((state) => state.exploreMap.selectedPanelIds || []);
-  const viewport = useSelector((state) => state.exploreMap.viewport);
+  const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
+  const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
   const isSelected = selectedPanelIds.includes(panel.id);
 
   const handleDragStart: RndDragCallback = useCallback(
@@ -85,7 +87,8 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
           dispatch(
             updatePanelPosition({
               panelId: panel.id,
-              position: { x: data.x, y: data.y },
+              x: data.x,
+              y: data.y,
             })
           );
         } else {
@@ -93,7 +96,8 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
           dispatch(
             updatePanelPosition({
               panelId: panel.id,
-              position: { x: data.x, y: data.y },
+              x: data.x,
+              y: data.y,
             })
           );
         }
@@ -108,15 +112,21 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
       const newWidth = ref.offsetWidth;
       const newHeight = ref.offsetHeight;
 
+      // Update position
       dispatch(
         updatePanelPosition({
           panelId: panel.id,
-          position: {
-            x: position.x,
-            y: position.y,
-            width: newWidth,
-            height: newHeight,
-          },
+          x: position.x,
+          y: position.y,
+        })
+      );
+
+      // Update size
+      dispatch(
+        updatePanelSize({
+          panelId: panel.id,
+          width: newWidth,
+          height: newHeight,
         })
       );
 
@@ -134,7 +144,6 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
       // If this panel is already selected and we're not multi-selecting,
       // don't change selection (allows dragging multiple selected panels)
       if (isSelected && !isMultiSelect) {
-        // Just bring to front, don't change selection
         dispatch(bringPanelToFront({ panelId: panel.id }));
         return;
       }
@@ -212,6 +221,7 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
         </div>
         <div className={styles.panelContent}>
           <ExploreMapPanelContent
+            panelId={panel.id}
             exploreId={panel.exploreId}
             width={panel.position.width}
             height={panel.position.height - 36}

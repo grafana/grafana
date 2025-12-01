@@ -8,7 +8,8 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { useTransformContext } from '../context/TransformContext';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
-import { resetCanvas, updateMapTitle } from '../state/exploreMapSlice';
+import { updateMapTitle } from '../state/crdtSlice';
+import { selectPanelCount, selectViewport, selectMapTitle } from '../state/selectors';
 
 interface ExploreMapToolbarProps {
   uid?: string;
@@ -24,9 +25,9 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
   const [titleValue, setTitleValue] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
 
-  const panelCount = useSelector((state) => Object.keys(state.exploreMap.panels).length);
-  const viewport = useSelector((state) => state.exploreMap.viewport);
-  const mapTitle = useSelector((state) => state.exploreMap.title);
+  const panelCount = useSelector((state) => selectPanelCount(state.exploreMapCRDT));
+  const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
+  const mapTitle = useSelector((state) => selectMapTitle(state.exploreMapCRDT));
 
   useEffect(() => {
     if (mapTitle) {
@@ -46,7 +47,9 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
   }, []);
 
   const confirmResetCanvas = useCallback(() => {
-    dispatch(resetCanvas());
+    // TODO: Implement resetCanvas for CRDT state
+    // dispatch(resetCanvas());
+    console.warn('Reset canvas not yet implemented for CRDT state');
     setShowResetConfirm(false);
   }, [dispatch]);
 

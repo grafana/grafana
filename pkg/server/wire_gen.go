@@ -727,7 +727,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	csrfCSRF := csrf.ProvideCSRFFilter(cfg)
 	playlistService := playlistimpl.ProvideService(sqlStore, tracingService)
-	exploremapService := exploremapimpl.ProvideService(sqlStore, tracingService)
+	exploremapService := exploremapimpl.ProvideService(sqlStore, tracingService, grafanaLive)
 	secretsMigrator := migrator2.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
 	dataSourceSecretMigrationService := migrations3.ProvideDataSourceMigrationService(service15, kvStore, featureToggles)
 	secretMigrationProviderImpl := migrations3.ProvideSecretMigrationProvider(serverLockService, dataSourceSecretMigrationService)
@@ -1378,7 +1378,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	csrfCSRF := csrf.ProvideCSRFFilter(cfg)
 	playlistService := playlistimpl.ProvideService(sqlStore, tracingService)
-	exploremapService := exploremapimpl.ProvideService(sqlStore, tracingService)
+	exploremapService := exploremapimpl.ProvideService(sqlStore, tracingService, grafanaLive)
 	secretsMigrator := migrator2.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
 	dataSourceSecretMigrationService := migrations3.ProvideDataSourceMigrationService(service15, kvStore, featureToggles)
 	secretMigrationProviderImpl := migrations3.ProvideSecretMigrationProvider(serverLockService, dataSourceSecretMigrationService)

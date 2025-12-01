@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 
@@ -15,6 +15,7 @@ import { ExploreMapFloatingToolbar } from './components/ExploreMapFloatingToolba
 import { ExploreMapToolbar } from './components/ExploreMapToolbar';
 import { TransformProvider } from './context/TransformContext';
 import { useCanvasPersistence } from './hooks/useCanvasPersistence';
+import { useRealtimeSync } from './realtime/useRealtimeSync';
 
 export default function ExploreMapPage(props: GrafanaRouteComponentProps<{ uid?: string }>) {
   const styles = useStyles2(getStyles);
@@ -25,6 +26,28 @@ export default function ExploreMapPage(props: GrafanaRouteComponentProps<{ uid?:
 
   // Initialize canvas persistence (with uid if available)
   const { loading } = useCanvasPersistence({ uid });
+
+  // Stable callback references for realtime sync
+  const handleConnected = useCallback(() => {
+    // Connected to real-time sync
+  }, []);
+
+  const handleDisconnected = useCallback(() => {
+    // Disconnected from real-time sync
+  }, []);
+
+  const handleError = useCallback((error: Error) => {
+    console.error('CRDT sync error:', error);
+  }, []);
+
+  // Enable real-time CRDT synchronization when uid is available
+  useRealtimeSync({
+    mapUid: uid || '',
+    enabled: !!uid,
+    onConnected: handleConnected,
+    onDisconnected: handleDisconnected,
+    onError: handleError,
+  });
 
   useEffect(() => {
     chrome.update({

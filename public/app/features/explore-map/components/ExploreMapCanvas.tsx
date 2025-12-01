@@ -8,7 +8,8 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { useTransformContext } from '../context/TransformContext';
 import { useMockCursors } from '../hooks/useMockCursors';
-import { selectMultiplePanels, selectPanel, updateViewport } from '../state/exploreMapSlice';
+import { selectPanel as selectPanelCRDT, updateViewport as updateViewportCRDT, selectMultiplePanels as selectMultiplePanelsCRDT } from '../state/crdtSlice';
+import { selectPanels, selectViewport, selectCursors, selectSelectedPanelIds } from '../state/selectors';
 
 import { ExploreMapPanelContainer } from './ExploreMapPanelContainer';
 import { UserCursor } from './UserCursor';
@@ -29,9 +30,10 @@ export function ExploreMapCanvas() {
   const [isSelecting, setIsSelecting] = useState(false);
   const justCompletedSelectionRef = useRef(false);
 
-  const panels = useSelector((state) => state.exploreMap.panels);
-  const viewport = useSelector((state) => state.exploreMap.viewport);
-  const cursors = useSelector((state) => state.exploreMap.cursors);
+  const panels = useSelector((state) => selectPanels(state.exploreMapCRDT));
+  const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
+  const cursors = useSelector((state) => selectCursors(state.exploreMapCRDT));
+  const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
 
   // Initialize mock cursors
   useMockCursors();
@@ -44,12 +46,12 @@ export function ExploreMapCanvas() {
         return;
       }
 
-      // Only deselect if clicking directly on canvas (not on panels)
-      if (e.target === e.currentTarget) {
-        dispatch(selectPanel({ panelId: undefined }));
+      // Only deselect if clicking directly on canvas (not on panels) and there are panels to deselect
+      if (e.target === e.currentTarget && selectedPanelIds.length > 0) {
+        dispatch(selectPanelCRDT({ panelId: undefined }));
       }
     },
-    [dispatch]
+    [dispatch, selectedPanelIds]
   );
 
   const handleCanvasMouseDown = useCallback(
@@ -133,12 +135,12 @@ export function ExploreMapCanvas() {
       if (selectedPanelIds.length > 0) {
         // Select all panels at once
         console.log('Dispatching selectMultiplePanels with:', { panelIds: selectedPanelIds, addToSelection: isAdditive });
-        dispatch(selectMultiplePanels({ panelIds: selectedPanelIds, addToSelection: isAdditive }));
+        dispatch(selectMultiplePanelsCRDT({ panelIds: selectedPanelIds, addToSelection: isAdditive }));
         console.log('After dispatch');
         justCompletedSelectionRef.current = true;
       } else if (!isAdditive) {
         // Clear selection if no panels selected and not holding modifier
-        dispatch(selectPanel({ panelId: undefined }));
+        dispatch(selectPanelCRDT({ panelId: undefined }));
       }
 
       setSelectionRect(null);
@@ -150,7 +152,7 @@ export function ExploreMapCanvas() {
   const handleTransformChange = useCallback(
     (ref: ReactZoomPanPinchRef) => {
       dispatch(
-        updateViewport({
+        updateViewportCRDT({
           zoom: ref.state.scale,
           panX: ref.state.positionX,
           panY: ref.state.positionY,
@@ -230,7 +232,7 @@ export function ExploreMapCanvas() {
             onMouseUp={handleCanvasMouseUp}
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
-                dispatch(selectPanel({ panelId: undefined }));
+                dispatch(selectPanelCRDT({ panelId: undefined }));
               }
             }}
             role="button"

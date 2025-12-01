@@ -9,8 +9,12 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { ExplorePaneContainer } from '../../explore/ExplorePaneContainer';
 import { DEFAULT_RANGE } from '../../explore/state/constants';
 import { initializeExplore } from '../../explore/state/explorePane';
+// import { useExploreStateReceiver } from '../hooks/useExploreStateReceiver';
+// import { useExploreStateSync } from '../hooks/useExploreStateSync';
+import { selectPanels } from '../state/selectors';
 
 interface ExploreMapPanelContentProps {
+  panelId: string;
   exploreId: string;
   width: number;
   height: number;
@@ -73,7 +77,7 @@ function patchGetBoundingClientRect() {
   isPatched = true;
 }
 
-export function ExploreMapPanelContent({ exploreId, width, height }: ExploreMapPanelContentProps) {
+export function ExploreMapPanelContent({ panelId, exploreId, width, height }: ExploreMapPanelContentProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -81,24 +85,39 @@ export function ExploreMapPanelContent({ exploreId, width, height }: ExploreMapP
   // Create scoped event bus for this panel
   const eventBus = useMemo(() => new EventBusSrv(), []);
 
+  // TODO: Re-enable once we fix the re-rendering issue
+  // Sync Explore state changes to CRDT (outgoing)
+  // useExploreStateSync({
+  //   panelId,
+  //   exploreId,
+  //   enabled: isInitialized,
+  // });
+
+  // Receive and apply Explore state changes from CRDT (incoming)
+  // useExploreStateReceiver({
+  //   panelId,
+  //   exploreId,
+  //   enabled: isInitialized,
+  // });
+
   // Patch getBoundingClientRect on mount
   useEffect(() => {
     patchGetBoundingClientRect();
   }, []);
 
-  // Check if the explore pane exists in Redux
-  const explorePane = useSelector((state) => state.explore?.panes?.[exploreId]);
-
-  // Find the panel with this exploreId to get saved state
-  const panel = useSelector((state) =>
-    Object.values(state.exploreMap.panels).find((p) => p.exploreId === exploreId)
-  );
+  // Get panel from CRDT state (which has the latest exploreState)
+  const panel = useSelector((state) => {
+    const panels = selectPanels(state.exploreMapCRDT);
+    return panels[panelId];
+  });
 
   // Initialize Explore pane on mount
   useEffect(() => {
     const initializePane = async () => {
       // Use saved state if available, otherwise defaults
       const savedState = panel?.exploreState;
+
+      console.log('[ExploreMapPanelContent] Initializing with saved state:', savedState);
 
       await dispatch(
         initializeExplore({
@@ -119,10 +138,11 @@ export function ExploreMapPanelContent({ exploreId, width, height }: ExploreMapP
     return () => {
       eventBus.removeAllListeners();
     };
-  }, [dispatch, exploreId, eventBus, panel?.exploreState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, exploreId, eventBus]);
 
   // Wait for Redux state to be initialized
-  if (!isInitialized || !explorePane) {
+  if (!isInitialized) {
     return (
       <div className={styles.container}>
         <div className={styles.loading}>

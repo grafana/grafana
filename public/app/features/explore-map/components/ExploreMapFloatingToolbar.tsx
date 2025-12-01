@@ -6,7 +6,7 @@ import { Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types/store';
 
-import { addPanel } from '../state/exploreMapSlice';
+import { addPanel } from '../state/crdtSlice';
 
 export function ExploreMapFloatingToolbar() {
   const styles = useStyles2(getStyles);
