@@ -21,6 +21,7 @@ import { DownloadFormat } from '../../utils';
 
 import { useLogListContext } from './LogListContext';
 import { LogListControlsOption, LogListControlsSelectOption } from './LogListControlsOption';
+import { useLogListHighlightContext } from './LogListHighlightContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { LOG_LIST_CONTROLS_WIDTH, ScrollToLogsEvent } from './virtualization';
 
@@ -77,6 +78,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     wrapLogMessage,
   } = useLogListContext();
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
+  const { hasHighlights, resetHighlights } = useLogListHighlightContext();
 
   const styles = useStyles2(getStyles, controlsExpanded);
 
@@ -355,6 +357,23 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   size="lg"
                 />
               </Dropdown>
+              {hasHighlights && (
+                <>
+                  <div className={styles.divider} />
+                  <LogListControlsOption
+                    expanded={controlsExpanded}
+                    name="times-circle"
+                    className={styles.controlButtonActive}
+                    onClick={() => {
+                      resetHighlights();
+                      reportInteraction('logs_log_list_controls_reset_highlights_clicked');
+                    }}
+                    label={t('logs.logs-controls.reset-highlights', 'Reset highlights')}
+                    tooltip={t('logs.logs-controls.tooltip.reset-highlights', 'Clear all custom highlights')}
+                    size="lg"
+                  />
+                </>
+              )}
               <div className={styles.divider} />
               {config.featureToggles.newLogsPanel ? (
                 <TimestampResolutionButton expanded={controlsExpanded} />
