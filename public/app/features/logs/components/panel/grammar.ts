@@ -104,19 +104,16 @@ export const generateCustomHighlightGrammar = (highlights: CustomHighlight[]): G
       // Case-sensitive matching (using 'g' flag only, not 'gi')
       const regex = new RegExp(escapedText, 'g');
 
-      // Cast grammar to allow string indexing
-      const grammarRecord = grammar as Record<string, RegExp | RegExp[]>;
-
       // If token already exists for this color, add to array
-      if (grammarRecord[tokenName]) {
-        const existing = grammarRecord[tokenName];
+      if (grammar[tokenName]) {
+        const existing = grammar[tokenName];
         if (Array.isArray(existing)) {
           existing.push(regex);
         } else {
-          grammarRecord[tokenName] = [existing, regex];
+          grammar[tokenName] = [existing, regex];
         }
       } else {
-        grammarRecord[tokenName] = regex;
+        grammar[tokenName] = regex;
       }
     } catch (e) {
       console.error(`generateCustomHighlightGrammar: cannot generate regular expression from /${escapedText}/g`, e);

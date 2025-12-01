@@ -561,7 +561,7 @@ export const getStyles = (
         '.log-search-match': {
           color: theme.components.textHighlight.text,
           backgroundColor: theme.components.textHighlight.background,
-          borderRadius: '2px',
+          borderRadius: theme.shape.radius.default,
           padding: '0 1px',
         },
         '&.log-line-body': {
