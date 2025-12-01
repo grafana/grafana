@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math"
 	"os"
 	"path/filepath"
@@ -33,6 +32,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -71,7 +71,7 @@ type BleveOptions struct {
 
 	BuildVersion string
 
-	Logger *slog.Logger
+	Logger log.Logger
 
 	// Minimum time between index updates.
 	IndexMinUpdateInterval time.Duration
@@ -84,7 +84,7 @@ type BleveOptions struct {
 
 type bleveBackend struct {
 	tracer trace.Tracer
-	log    *slog.Logger
+	log    log.Logger
 	opts   BleveOptions
 
 	// set from opts.OwnsIndex, always non-nil
@@ -125,9 +125,9 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		}
 	}
 
-	log := opts.Logger
-	if log == nil {
-		log = slog.Default().With("logger", "bleve-backend")
+	l := opts.Logger
+	if l == nil {
+		l = log.New("bleve-backend")
 	}
 
 	ownFn := opts.OwnsIndex
@@ -137,7 +137,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 	}
 
 	be := &bleveBackend{
-		log:          log,
+		log:          l,
 		tracer:       tracer,
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
@@ -381,7 +381,7 @@ func (b *bleveBackend) BuildIndex(
 		return nil, err
 	}
 
-	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "reason", indexBuildReason)
+	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "reason", indexBuildReason)
 
 	// Close the newly created/opened index by default.
 	closeIndex := true
@@ -462,7 +462,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Batch all the changes
-	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater, b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
+	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
 
 	if build {
 		if b.indexMetrics != nil {
@@ -714,7 +714,7 @@ type bleveIndex struct {
 	// The values returned with all
 	allFields []*resourcepb.ResourceTableColumnDefinition
 	tracing   trace.Tracer
-	logger    *slog.Logger
+	logger    log.Logger
 
 	updaterFn         resource.UpdateFn
 	minUpdateInterval time.Duration
@@ -741,7 +741,7 @@ func (b *bleveBackend) newBleveIndex(
 	allFields []*resourcepb.ResourceTableColumnDefinition,
 	standardSearchFields resource.SearchableDocumentFields,
 	updaterFn resource.UpdateFn,
-	logger *slog.Logger,
+	logger log.Logger,
 ) *bleveIndex {
 	bi := &bleveIndex{
 		key:               key,
@@ -866,7 +866,7 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 	}, nil
 }
 
-func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *resource.SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
 	if req.NextPageToken != "" {
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
@@ -881,6 +881,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		}, nil
 	}
 
+	start := time.Now()
 	q := bleve.NewBooleanQuery()
 	q.AddMust(&query.TermQuery{
 		Term:     req.Kind,
@@ -890,6 +891,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		Term:     req.Id,
 		FieldVal: resource.SEARCH_FIELD_MANAGER_ID,
 	})
+	stats.AddResultsConversionTime(time.Since(start))
 
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: q,
@@ -915,6 +917,10 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 	if err != nil {
 		return nil, err
 	}
+
+	stats.AddTotalHits(int(found.Total))
+	stats.AddSearchTime(found.Took)
+	stats.AddReturnedDocuments(len(found.Hits))
 
 	asString := func(v any) string {
 		if v == nil {
@@ -947,6 +953,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		return 0
 	}
 
+	start = time.Now()
 	rsp := &resourcepb.ListManagedObjectsResponse{}
 	for _, hit := range found.Hits {
 		item := &resourcepb.ListManagedObjectsResponse_Item{
@@ -963,10 +970,11 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		}
 		rsp.Items = append(rsp.Items, item)
 	}
+	stats.AddResultsConversionTime(time.Since(start))
 	return rsp, nil
 }
 
-func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
+func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: bleve.NewMatchAllQuery(),
 		Size:  0,
@@ -977,6 +985,11 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resourcepb.Cou
 	if err != nil {
 		return nil, err
 	}
+
+	stats.AddSearchTime(found.Took)
+	stats.AddTotalHits(int(found.Total))
+	stats.AddReturnedDocuments(len(found.Hits))
+
 	vals := make([]*resourcepb.CountManagedObjectsResponse_ResourceCount, 0)
 	f, ok := found.Facets["count"]
 	if ok && f.Terms != nil {
@@ -1003,6 +1016,7 @@ func (b *bleveIndex) Search(
 	access authlib.AccessClient,
 	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
+	stats *resource.SearchStats,
 ) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"Search")
 	defer span.End()
@@ -1026,6 +1040,7 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
+	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
 	searchrequest, e := b.toBleveSearchRequest(ctx, req, access)
 	if e != nil {
@@ -1050,6 +1065,7 @@ func (b *bleveIndex) Search(
 			}
 		}
 	}
+	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	res, err := index.SearchInContext(ctx, searchrequest)
 	if err != nil {
@@ -1059,7 +1075,11 @@ func (b *bleveIndex) Search(
 	response.TotalHits = int64(res.Total)
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
+	stats.AddSearchTime(res.Took)
+	stats.AddTotalHits(int(res.Total))
+	stats.AddReturnedDocuments(len(res.Hits))
 
+	resultsConversionStart := time.Now()
 	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, req.Explain)
 	if err != nil {
 		return nil, err
@@ -1073,10 +1093,11 @@ func (b *bleveIndex) Search(
 		}
 		response.Facet[k] = f
 	}
+	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
 	return response, nil
 }
 
-func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error) {
+func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resource.SearchStats) (int64, error) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"DocCount")
 	defer span.End()
 
@@ -1096,6 +1117,10 @@ func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error)
 	rsp, err := b.index.SearchInContext(ctx, req)
 	if rsp == nil {
 		return 0, err
+	}
+	if stats != nil {
+		stats.AddTotalHits(int(rsp.Total))
+		stats.AddSearchTime(rsp.Took)
 	}
 	return int64(rsp.Total), err
 }
@@ -1154,10 +1179,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
 	}
 
-	// Convert resource-specific fields to bleve fields (just considers dashboard fields for now)
+	// Convert resource-specific fields to bleve fields.
+	// TODO: use b.fields.Field(f) instead of builders.DashboardFields() to avoid dashboard-specific code in search server.
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
-		if slices.Contains(DashboardFields(), f) {
+		if slices.Contains(builders.DashboardFields(), f) {
 			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
@@ -1510,7 +1536,8 @@ func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
 			input = field
 		}
 
-		if slices.Contains(DashboardFields(), input) {
+		// TODO: pass fields parameter and use fields.Field(input) instead of builders.DashboardFields() to avoid dashboard-specific code.
+		if slices.Contains(builders.DashboardFields(), input) {
 			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 

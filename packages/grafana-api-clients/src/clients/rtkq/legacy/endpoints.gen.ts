@@ -555,7 +555,7 @@ const injectedRtkApi = api
             'x-grafana-alerting-alert-rules-paused': queryArg['x-grafana-alerting-alert-rules-paused'],
             'x-grafana-alerting-target-datasource-uid': queryArg['x-grafana-alerting-target-datasource-uid'],
             'x-grafana-alerting-folder-uid': queryArg['x-grafana-alerting-folder-uid'],
-            'x-grafana-alerting-notification-receiver': queryArg['x-grafana-alerting-notification-receiver'],
+            'x-grafana-alerting-notification-settings': queryArg['x-grafana-alerting-notification-settings'],
           },
         }),
         invalidatesTags: ['convert_prometheus'],
@@ -622,7 +622,7 @@ const injectedRtkApi = api
             'x-grafana-alerting-alert-rules-paused': queryArg['x-grafana-alerting-alert-rules-paused'],
             'x-grafana-alerting-target-datasource-uid': queryArg['x-grafana-alerting-target-datasource-uid'],
             'x-grafana-alerting-folder-uid': queryArg['x-grafana-alerting-folder-uid'],
-            'x-grafana-alerting-notification-receiver': queryArg['x-grafana-alerting-notification-receiver'],
+            'x-grafana-alerting-notification-settings': queryArg['x-grafana-alerting-notification-settings'],
           },
         }),
         invalidatesTags: ['convert_prometheus'],
@@ -655,10 +655,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['dashboards', 'snapshots'],
-      }),
-      calculateDashboardDiff: build.mutation<CalculateDashboardDiffApiResponse, CalculateDashboardDiffApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/calculate-diff`, method: 'POST', body: queryArg.body }),
-        invalidatesTags: ['dashboards'],
       }),
       postDashboard: build.mutation<PostDashboardApiResponse, PostDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/db`, method: 'POST', body: queryArg.saveDashboardCommand }),
@@ -1648,7 +1644,12 @@ const injectedRtkApi = api
         invalidatesTags: ['teams'],
       }),
       getTeamById: build.query<GetTeamByIdApiResponse, GetTeamByIdApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.teamId}` }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.teamId}`,
+          params: {
+            accesscontrol: queryArg.accesscontrol,
+          },
+        }),
         providesTags: ['teams'],
       }),
       updateTeam: build.mutation<UpdateTeamApiResponse, UpdateTeamApiArg>({
@@ -2498,7 +2499,7 @@ export type RouteConvertPrometheusCortexPostRuleGroupApiArg = {
   'x-grafana-alerting-alert-rules-paused'?: boolean;
   'x-grafana-alerting-target-datasource-uid'?: string;
   'x-grafana-alerting-folder-uid'?: string;
-  'x-grafana-alerting-notification-receiver'?: string;
+  'x-grafana-alerting-notification-settings'?: string;
   prometheusRuleGroup: PrometheusRuleGroup;
 };
 export type RouteConvertPrometheusCortexDeleteRuleGroupApiResponse =
@@ -2535,7 +2536,7 @@ export type RouteConvertPrometheusPostRuleGroupApiArg = {
   'x-grafana-alerting-alert-rules-paused'?: boolean;
   'x-grafana-alerting-target-datasource-uid'?: string;
   'x-grafana-alerting-folder-uid'?: string;
-  'x-grafana-alerting-notification-receiver'?: string;
+  'x-grafana-alerting-notification-settings'?: string;
   prometheusRuleGroup: PrometheusRuleGroup;
 };
 export type RouteConvertPrometheusDeleteRuleGroupApiResponse =
@@ -2555,18 +2556,6 @@ export type SearchDashboardSnapshotsApiArg = {
   query?: string;
   /** Limit the number of returned results */
   limit?: number;
-};
-export type CalculateDashboardDiffApiResponse = /** status 200 (empty) */ number[];
-export type CalculateDashboardDiffApiArg = {
-  body: {
-    base?: CalculateDiffTarget;
-    /** The type of diff to return
-        Description:
-        `basic`
-        `json` */
-    diffType?: 'basic' | 'json';
-    new?: CalculateDiffTarget;
-  };
 };
 export type PostDashboardApiResponse = /** status 200 (empty) */ {
   /** FolderUID The unique identifier (uid) of the folder the dashboard belongs to. */
@@ -3490,6 +3479,7 @@ export type DeleteTeamByIdApiArg = {
 export type GetTeamByIdApiResponse = /** status 200 (empty) */ TeamDto;
 export type GetTeamByIdApiArg = {
   teamId: string;
+  accesscontrol?: boolean;
 };
 export type UpdateTeamApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -4399,11 +4389,6 @@ export type DashboardSnapshotDto = {
   key?: string;
   name?: string;
   updated?: string;
-};
-export type CalculateDiffTarget = {
-  dashboardId?: number;
-  unsavedDashboard?: Json;
-  version?: number;
 };
 export type SaveDashboardCommand = {
   UpdatedAt?: string;
@@ -6060,6 +6045,7 @@ export type TeamGroupDto = {
   groupId?: string;
   orgId?: number;
   teamId?: number;
+  uid?: string;
 };
 export type TeamGroupMapping = {
   groupId?: string;
@@ -6071,10 +6057,8 @@ export type SearchTeamGroupsQueryResult = {
   totalCount?: number;
 };
 export type UpdateTeamCommand = {
-  Email?: string;
-  ExternalUID?: string;
-  ID?: number;
-  Name?: string;
+  email?: string;
+  name?: string;
 };
 export type TeamMemberDto = {
   auth_module?: string;
@@ -6636,7 +6620,6 @@ export const {
   useLazyRouteConvertPrometheusGetRuleGroupQuery,
   useSearchDashboardSnapshotsQuery,
   useLazySearchDashboardSnapshotsQuery,
-  useCalculateDashboardDiffMutation,
   usePostDashboardMutation,
   useGetHomeDashboardQuery,
   useLazyGetHomeDashboardQuery,

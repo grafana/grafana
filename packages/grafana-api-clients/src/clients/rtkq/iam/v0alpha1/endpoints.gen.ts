@@ -561,6 +561,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Team'],
       }),
+      getTeamGroups: build.query<GetTeamGroupsApiResponse, GetTeamGroupsApiArg>({
+        query: (queryArg) => ({ url: `/teams/${queryArg.name}/groups` }),
+        providesTags: ['Team'],
+      }),
       getTeamMembers: build.query<GetTeamMembersApiResponse, GetTeamMembersApiArg>({
         query: (queryArg) => ({ url: `/teams/${queryArg.name}/members` }),
         providesTags: ['Team'],
@@ -1461,6 +1465,11 @@ export type UpdateTeamApiArg = {
   force?: boolean;
   patch: Patch;
 };
+export type GetTeamGroupsApiResponse = /** status 200 OK */ GetGroups;
+export type GetTeamGroupsApiArg = {
+  /** name of the GetGroups */
+  name: string;
+};
 export type GetTeamMembersApiResponse = /** status 200 OK */ TeamMemberList;
 export type GetTeamMembersApiArg = {
   /** name of the TeamMemberList */
@@ -1978,6 +1987,17 @@ export type TeamList = {
   kind?: string;
   metadata: ListMeta;
 };
+export type VersionsV0Alpha1Kinds7RoutesGroupsGetResponseExternalGroupMapping = {
+  externalGroup: string;
+  name: string;
+};
+export type GetGroups = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: VersionsV0Alpha1Kinds7RoutesGroupsGetResponseExternalGroupMapping[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+};
 export type TeamMember = {
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
@@ -2100,6 +2120,8 @@ export const {
   useReplaceTeamMutation,
   useDeleteTeamMutation,
   useUpdateTeamMutation,
+  useGetTeamGroupsQuery,
+  useLazyGetTeamGroupsQuery,
   useGetTeamMembersQuery,
   useLazyGetTeamMembersQuery,
   useListUserQuery,

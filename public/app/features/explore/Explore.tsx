@@ -475,7 +475,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onStopScanning={this.onStopScanning}
           eventBus={this.logsEventBus}
           splitOpenFn={this.splitOpenFnLogs}
-          scrollElement={this.scrollElement}
           isFilterLabelActive={this.isFilterLabelActive}
           onClickFilterString={this.onClickFilterString}
           onClickFilterOutString={this.onClickFilterOutString}
@@ -641,7 +640,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}
-              ref={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
+              ref={(scrollElement) => {
+                this.scrollElement = scrollElement || undefined;
+              }}
             >
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (

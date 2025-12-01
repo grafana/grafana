@@ -57,6 +57,14 @@ export const versionedComponents = {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
   },
+  Sidebar: {
+    closePane: {
+      '12.4.0': 'data-testid Sidebar close pane',
+    },
+    dockToggle: {
+      '12.4.0': 'data-testid sidebar-dock-toggle',
+    },
+  },
   EditPaneHeader: {
     deleteButton: {
       '12.1.0': 'data-testid EditPaneHeader delete panel',
@@ -69,9 +77,6 @@ export const versionedComponents = {
     },
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
-    },
-    backButton: {
-      '12.1.0': 'data-testid EditPaneHeader back',
     },
   },
   TimePicker: {
@@ -426,6 +431,9 @@ export const versionedComponents = {
       loadingBar: {
         '10.0.0': () => `Panel loading bar`,
       },
+      PanelNonApplicableDrilldownsSubHeader: {
+        '12.4.0': 'Panel non-applicable drilldowns subheader',
+      },
       HoverWidget: {
         container: {
           '10.1.0': 'data-testid hover-header-container',
@@ -437,6 +445,9 @@ export const versionedComponents = {
       },
       PanelDataErrorMessage: {
         '10.4.0': 'data-testid Panel data error message',
+      },
+      PanelGroupByHeaderAction: {
+        '12.4.0': 'data-testid Panel group by header action',
       },
     },
     Visualization: {

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { FC } from 'react';
+import { FC, type JSX } from 'react';
 
 import { colorManipulator } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
