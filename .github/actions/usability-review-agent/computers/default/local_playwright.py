@@ -42,8 +42,10 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
         # Navigate to target URL from environment variable, or use docs page as fallback
         target_url = os.environ.get("TARGET_URL", "https://grafana.com/docs/")
         print(f"Navigating to: {target_url}")
-        page.goto(target_url, wait_until="networkidle", timeout=30000)
+        page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
         print(f"Navigation complete, final URL: {page.url}")
+        # Give extra time for SPA to initialize
+        page.wait_for_timeout(3000)
 
         return browser, page
 
