@@ -30,14 +30,6 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
             timezone_id="UTC"
         )
 
-        # Inject service account token if provided
-        service_account_token = os.environ.get("GRAFANA_SERVICE_ACCOUNT_TOKEN")
-        if service_account_token:
-            print("Injecting Grafana service account token into Authorization header")
-            context.set_extra_http_headers({
-                "Authorization": f"Bearer {service_account_token}"
-            })
-
         # Add event listeners for page creation and closure
         context.on("page", self._handle_new_page)
 
@@ -45,12 +37,31 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
         page.set_viewport_size({"width": width, "height": height})
         page.on("close", self._handle_page_close)
 
+        # Inject service account token only for Grafana instance requests, not external CDNs
+        service_account_token = os.environ.get("GRAFANA_SERVICE_ACCOUNT_TOKEN")
+        target_url = os.environ.get("TARGET_URL", "https://grafana.com/docs/")
+
+        if service_account_token:
+            from urllib.parse import urlparse
+            grafana_domain = urlparse(target_url).netloc
+            print(f"Will inject Authorization header only for requests to: {grafana_domain}")
+
+            def handle_route(route):
+                request_domain = urlparse(route.request.url).netloc
+                headers = route.request.headers
+
+                # Only add Authorization header for requests to the Grafana instance
+                if request_domain == grafana_domain:
+                    headers["Authorization"] = f"Bearer {service_account_token}"
+
+                route.continue_(headers=headers)
+
+            page.route("**/*", handle_route)
+
         # Add logging for debugging
         page.on("console", lambda msg: print(f"Browser console: {msg.text}"))
         page.on("pageerror", lambda err: print(f"Page error: {err}"))
 
-        # Navigate to target URL from environment variable, or use docs page as fallback
-        target_url = os.environ.get("TARGET_URL", "https://grafana.com/docs/")
         print(f"Navigating to: {target_url}")
 
         # Use domcontentloaded since Grafana has continuous network activity
