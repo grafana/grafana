@@ -48,13 +48,16 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
 
             def handle_route(route):
                 request_domain = urlparse(route.request.url).netloc
-                headers = route.request.headers
 
                 # Only add Authorization header for requests to the Grafana instance
                 if request_domain == grafana_domain:
-                    headers["Authorization"] = f"Bearer {service_account_token}"
-
-                route.continue_(headers=headers)
+                    # Create a new headers dict with the Authorization header
+                    headers = dict(route.request.headers)
+                    headers["authorization"] = f"Bearer {service_account_token}"
+                    route.continue_(headers=headers)
+                else:
+                    # For other domains, continue without modification
+                    route.continue_()
 
             page.route("**/*", handle_route)
 
