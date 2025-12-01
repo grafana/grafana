@@ -35,6 +35,16 @@ jobs:
           repo_secrets: |
             OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install OpenAI package
+        run: |
+          python -m pip install -U pip
+          pip install openai
+
       - name: Get PR details
         id: pr-details
         env:
