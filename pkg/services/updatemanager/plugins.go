@@ -96,13 +96,18 @@ func (s *PluginsService) IsDisabled() bool {
 	return !s.enabled
 }
 
-func (s *PluginsService) Run(ctx context.Context) error {
+// checkAndUpdate checks for updates and applies them if auto-update is enabled.
+func (s *PluginsService) checkAndUpdate(ctx context.Context) {
 	s.instrumentedCheckForUpdates(ctx)
 	ofClient := openfeature.NewDefaultClient()
 	enabled := ofClient.Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
 	if enabled {
 		s.updateAll(ctx)
 	}
+}
+
+func (s *PluginsService) Run(ctx context.Context) error {
+	s.checkAndUpdate(ctx)
 
 	ticker := time.NewTicker(time.Minute * 10)
 	run := true
@@ -110,11 +115,7 @@ func (s *PluginsService) Run(ctx context.Context) error {
 	for run {
 		select {
 		case <-ticker.C:
-			s.instrumentedCheckForUpdates(ctx)
-			enabled := ofClient.Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
-			if enabled {
-				s.updateAll(ctx)
-			}
+			s.checkAndUpdate(ctx)
 		case <-ctx.Done():
 			run = false
 		}

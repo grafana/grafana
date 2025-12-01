@@ -293,7 +293,6 @@ type fakeHTTPClient struct {
 	fakeResp string
 
 	requestURL string
-	onRequest  func() // called when Do is invoked
 }
 
 func (c *fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
@@ -301,10 +300,6 @@ func (c *fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
 
 	resp := &http.Response{
 		Body: io.NopCloser(strings.NewReader(c.fakeResp)),
-	}
-
-	if c.onRequest != nil {
-		c.onRequest()
 	}
 
 	return resp, nil
@@ -335,8 +330,7 @@ func TestPluginsService_PluginsAutoUpdateFlag(t *testing.T) {
 			setupOpenFeatureProvider(t, tt.flagEnabled)
 
 			updateCallCount := 0
-			// Run() does checkForUpdates and updateAll synchronously before entering its ticker loop
-			initialWorkDone := make(chan struct{})
+
 			availableUpdates := map[string]availableUpdate{
 				"test-plugin": {
 					localVersion:     "0.9.0",
@@ -344,26 +338,16 @@ func TestPluginsService_PluginsAutoUpdateFlag(t *testing.T) {
 				},
 			}
 
-			httpClient := &fakeHTTPClient{
-				fakeResp: `[]`,
-				onRequest: func() {
-					// Signal that checkForUpdates has completed, when the HTTP request is made
-					select {
-					case <-initialWorkDone:
-					default:
-						close(initialWorkDone)
-					}
-				},
-			}
-
 			svc := &PluginsService{
 				availableUpdates: availableUpdates,
-				pluginStore:      &pluginstore.FakePluginStore{PluginList: []pluginstore.Plugin{}},
-				httpClient:       httpClient,
-				log:              log.NewNopLogger(),
-				tracer:           tracing.InitializeTracerForTest(),
-				updateCheckURL:   updateCheckURL,
-				updateChecker:    pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+				httpClient: &fakeHTTPClient{
+					fakeResp: `[]`,
+				},
+				log:            log.NewNopLogger(),
+				tracer:         tracing.InitializeTracerForTest(),
+				updateCheckURL: updateCheckURL,
+				updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+				pluginStore:    &pluginstore.FakePluginStore{PluginList: []pluginstore.Plugin{}},
 				pluginInstaller: &pluginfakes.FakePluginInstaller{
 					AddFunc: func(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
 						updateCallCount++
@@ -373,13 +357,9 @@ func TestPluginsService_PluginsAutoUpdateFlag(t *testing.T) {
 				grafanaVersion: "10.0.0",
 			}
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-
-			go svc.Run(ctx)
-
-			// Wait for initial work (checkForUpdates + potentially updateAll) to complete before making assertions
-			<-initialWorkDone
+			ctx := context.Background()
+			// Test the synchronous initialization work directly, without the long-running ticker loop
+			svc.checkAndUpdate(ctx)
 
 			if tt.expectUpdate {
 				require.Greater(t, updateCallCount, 0, "updateAll should be called when flag is enabled")
@@ -404,12 +384,8 @@ func setupOpenFeatureProvider(t *testing.T, flagValue bool) {
 	})
 	require.NoError(t, err)
 
-	unlocked := false
 	t.Cleanup(func() {
 		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
-		if !unlocked {
-			openfeatureTestMutex.Unlock()
-			unlocked = true
-		}
+		openfeatureTestMutex.Unlock()
 	})
 }
