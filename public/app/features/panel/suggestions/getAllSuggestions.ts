@@ -3,7 +3,6 @@ import {
   PanelData,
   PanelDataSummary,
   PanelPlugin,
-  PanelPluginMeta,
   PanelPluginVisualizationSuggestion,
   PreferredVisualisationType,
   VisualizationSuggestionScore,
