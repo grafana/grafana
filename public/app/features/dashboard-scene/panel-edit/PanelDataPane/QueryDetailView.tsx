@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import {
   CoreApp,
   DataQuery,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
   GrafanaTheme2,
@@ -29,34 +29,34 @@ interface QueryDetailViewProps {
 
 export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewProps) {
   const styles = useStyles2(getStyles);
-  const [datasource, setDatasource] = useState<DataSourceApi | null>(null);
-  const [dsSettings, setDsSettings] = useState<DataSourceInstanceSettings | null>(null);
   const [data, setData] = useState<PanelData | undefined>();
+  const [datasourceRef, setDatasourceRef] = useState(query.datasource);
+
+  let initialDsSettings: DataSourceInstanceSettings | undefined = useMemo(() => {
+    try {
+      return getDataSourceSrv().getInstanceSettings(query.datasource);
+    } catch {
+      return getDataSourceSrv().getInstanceSettings(null);
+    }
+    // we want to run this on mount and then never again
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [dsSettings, setDsSettings] = useState<DataSourceInstanceSettings | undefined>(initialDsSettings);
 
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
   const timeRange: TimeRange | undefined = queryRunner?.state.$timeRange?.state.value;
 
   // Load datasource
-  useEffect(() => {
-    const loadDatasource = async () => {
-      try {
-        const ds = await getDataSourceSrv().get(query.datasource);
-        const settings = getDataSourceSrv().getInstanceSettings(query.datasource);
-        setDatasource(ds);
-        setDsSettings(settings || null);
-      } catch (error) {
-        console.error('Failed to load datasource:', error);
-        // Fallback to default datasource
-        const defaultDs = await getDataSourceSrv().get();
-        const defaultSettings = getDataSourceSrv().getInstanceSettings(null);
-        setDatasource(defaultDs);
-        setDsSettings(defaultSettings || null);
-      }
-    };
-
-    loadDatasource();
-  }, [query.datasource]);
+  // FIXME: handle loading and error cases
+  const { value: datasource } = useAsync(async () => {
+    try {
+      return await getDataSourceSrv().get(datasourceRef);
+    } catch {
+      return await getDataSourceSrv().get();
+    }
+  }, [datasourceRef]);
 
   // Subscribe to panel data
   useEffect(() => {
@@ -74,39 +74,38 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
     setData(filteredData);
   }, [queryRunnerState?.data, query.refId]);
 
-  const handleDataSourceChange = useCallback(
-    async (newDsSettings: DataSourceInstanceSettings) => {
-      try {
-        const newDs = await getDataSourceSrv().get(newDsSettings.uid);
-        setDatasource(newDs);
-        setDsSettings(newDsSettings);
-
-        // Update the query with the new datasource
-        if (queryRunner) {
-          const queries = queryRunner.state.queries || [];
-          const newQueries = queries.map((q, idx) => {
-            if (idx === queryIndex) {
-              // Get default query for new datasource
-              const defaultQuery = newDs.getDefaultQuery?.(CoreApp.PanelEditor) || {};
-              return {
-                ...defaultQuery,
-                ...q,
-                datasource: { uid: newDsSettings.uid, type: newDsSettings.type },
-                refId: q.refId,
-              };
-            }
-            return q;
-          });
-
-          queryRunner.setState({ queries: newQueries });
-          queryRunner.runQueries();
+  useEffect(() => {
+    // Update the query with the new datasource
+    if (queryRunner && datasource) {
+      const queries = queryRunner.state.queries || [];
+      const newQueries = queries.map((q, idx) => {
+        if (idx === queryIndex) {
+          // Get default query for new datasource
+          const defaultQuery = datasource.getDefaultQuery?.(CoreApp.PanelEditor) || {};
+          return {
+            ...defaultQuery,
+            datasource: { uid: datasource.uid, type: datasource.type },
+            refId: q.refId,
+          };
         }
-      } catch (error) {
-        console.error('Failed to change datasource:', error);
-      }
-    },
-    [queryRunner, queryIndex]
-  );
+        return q;
+      });
+
+      console.log(newQueries);
+
+      queryRunner.setState({ queries: newQueries });
+      queryRunner.runQueries();
+    }
+  }, [datasource, queryIndex, queryRunner]);
+
+  const handleDataSourceChange = useCallback(async (newDsSettings: DataSourceInstanceSettings) => {
+    setDatasourceRef({
+      // FIXME: apiVersion isn't on the datasources we looked at.
+      uid: newDsSettings.uid,
+      type: newDsSettings.type,
+    });
+    setDsSettings(newDsSettings);
+  }, []);
 
   const handleQueryChange = useCallback(
     (updatedQuery: DataQuery) => {

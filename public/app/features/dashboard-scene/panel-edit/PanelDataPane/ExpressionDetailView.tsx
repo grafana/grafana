@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useAsync } from 'react-use';
 
 import {
   CoreApp,
   DataSourceApi,
-  DataSourceInstanceSettings,
+  DataSourceJsonData,
   DataSourcePluginContextProvider,
   GrafanaTheme2,
-  PanelData,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -27,32 +27,29 @@ interface ExpressionDetailViewProps {
 
 export function ExpressionDetailView({ panel, expression, expressionIndex }: ExpressionDetailViewProps) {
   const styles = useStyles2(getStyles);
-  const [datasource, setDatasource] = useState<DataSourceApi | null>(null);
-  const [dsSettings, setDsSettings] = useState<DataSourceInstanceSettings | null>(null);
-  const [data, setData] = useState<PanelData | undefined>();
 
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
   const allQueries = queryRunnerState?.queries || [];
 
-  // Load expression datasource
-  useEffect(() => {
-    const loadDatasource = async () => {
-      try {
-        const ds = await getDataSourceSrv().get(ExpressionDatasourceUID);
-        const settings = getDataSourceSrv().getInstanceSettings(ExpressionDatasourceUID);
-        setDatasource(ds);
-        setDsSettings(settings || null);
-      } catch (error) {
-        console.error('Failed to load expression datasource:', error);
-      }
-    };
+  const dsSettings = useMemo(() => getDataSourceSrv().getInstanceSettings(ExpressionDatasourceUID), []);
 
-    loadDatasource();
-  }, []);
+  // Load expression datasource
+  // FIXME: handle loading and error cases
+  const { value: datasource } = useAsync(
+    async (): Promise<DataSourceApi<ExpressionQuery, DataSourceJsonData, {}>> =>
+      // NOTE: getDataSourceSrv().get() does not correctly support generics.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      (await getDataSourceSrv().get(ExpressionDatasourceUID)) as unknown as DataSourceApi<
+        ExpressionQuery,
+        DataSourceJsonData,
+        {}
+      >,
+    []
+  );
 
   // Subscribe to panel data
-  useEffect(() => {
+  const data = useMemo(() => {
     if (!queryRunnerState?.data) {
       return;
     }
@@ -64,7 +61,7 @@ export function ExpressionDetailView({ panel, expression, expressionIndex }: Exp
       series: filteredSeries,
       error: panelData.errors?.find((e) => e.refId === expression.refId),
     };
-    setData(filteredData);
+    return filteredData;
   }, [queryRunnerState?.data, expression.refId]);
 
   const handleExpressionChange = useCallback(
@@ -110,7 +107,6 @@ export function ExpressionDetailView({ panel, expression, expressionIndex }: Exp
               <ExpressionQueryEditor
                 query={expression}
                 queries={allQueries}
-                // @ts-ignore - Expression datasource is compatible at runtime
                 datasource={datasource}
                 onChange={handleExpressionChange}
                 onRunQuery={handleRunQuery}
