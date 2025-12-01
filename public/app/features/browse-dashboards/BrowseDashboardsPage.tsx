@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -183,7 +183,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
         <div className={styles.subView}>
           <AutoSizer>
-            {({ width, height }) =>
+            {({ width, height }: Size) =>
               isSearching ? (
                 <SearchView
                   permissions={permissions}
