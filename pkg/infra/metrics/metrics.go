@@ -225,7 +225,7 @@ var (
 
 	// MUnifiedStorageMigrationStatus indicates the migration status for unified storage in this instance.
 	// Possible values: 0 (default/undefined), 1 (migration disabled), 2 (migration would run).
-	MUnifiedStorageMigrationStatus prometheus.Counter
+	MUnifiedStorageMigrationStatus prometheus.Gauge
 )
 
 const (
@@ -696,8 +696,8 @@ func init() {
 		Namespace: ExporterName,
 	})
 
-	MUnifiedStorageMigrationStatus = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "unified_storage_migration_status_total",
+	MUnifiedStorageMigrationStatus = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "unified_storage_migration_status",
 		Help:      "indicates whether this instance would run unified storage migrations (0=undefined, 1=migration disabled, 2=would run)",
 		Namespace: ExporterName,
 	})
