@@ -35,9 +35,15 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
         page.set_viewport_size({"width": width, "height": height})
         page.on("close", self._handle_page_close)
 
+        # Add logging for debugging
+        page.on("console", lambda msg: print(f"Browser console: {msg.text}"))
+        page.on("pageerror", lambda err: print(f"Page error: {err}"))
+
         # Navigate to target URL from environment variable, or use docs page as fallback
         target_url = os.environ.get("TARGET_URL", "https://grafana.com/docs/")
+        print(f"Navigating to: {target_url}")
         page.goto(target_url, wait_until="networkidle", timeout=30000)
+        print(f"Navigation complete, final URL: {page.url}")
 
         return browser, page
 

@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 env:
-  TARGET_URL: https://play.grafana.org/d/to6j8mh/grafana-play-home?orgId=1&from=now-6h&to=now&timezone=utc
+  TARGET_URL: https://play.grafana.org/
   OUTPUT_TEXT_PATH: usability-review.txt
   SCREENSHOT_PATH: usability-screenshot.png
 
