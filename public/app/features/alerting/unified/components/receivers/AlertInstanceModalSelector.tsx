@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { FixedSizeList } from 'react-window';
+import { List, type RowComponentProps } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -95,10 +95,7 @@ export function AlertInstanceModalSelector({
 
   const filteredRulesKeys = Object.keys(filteredRules || []);
 
-  const RuleRow = ({ index, style }: { index: number; style?: CSSProperties }) => {
-    if (!filteredRules) {
-      return null;
-    }
+  const RuleRow = ({ index, style }: RowComponentProps) => {
     const ruleName = filteredRulesKeys[index];
 
     const isSelected = ruleName === selectedRule;
@@ -133,7 +130,7 @@ export function AlertInstanceModalSelector({
     return tags;
   };
 
-  const InstanceRow = ({ index, style }: { index: number; style: CSSProperties }) => {
+  const InstanceRow = ({ index, style }: RowComponentProps) => {
     const alerts = useMemo(() => (selectedRule ? rulesWithInstances[selectedRule] : []), []);
     const alert = alerts[index];
     const isSelected = selectedInstances?.includes(alert);
@@ -236,9 +233,16 @@ export function AlertInstanceModalSelector({
             {!loading && (
               <AutoSizer>
                 {({ height, width }) => (
-                  <FixedSizeList itemSize={50} height={height} width={width} itemCount={filteredRulesKeys.length}>
-                    {RuleRow}
-                  </FixedSizeList>
+                  <List
+                    rowComponent={RuleRow}
+                    rowCount={filteredRulesKeys.length}
+                    rowHeight={50}
+                    rowProps={{}}
+                    style={{
+                      height,
+                      width,
+                    }}
+                  />
                 )}
               </AutoSizer>
             )}
@@ -264,14 +268,16 @@ export function AlertInstanceModalSelector({
             {selectedRule && rulesWithInstances[selectedRule].length && !loading && (
               <AutoSizer>
                 {({ width, height }) => (
-                  <FixedSizeList
-                    itemSize={32}
-                    height={height}
-                    width={width}
-                    itemCount={rulesWithInstances[selectedRule].length || 0}
-                  >
-                    {InstanceRow}
-                  </FixedSizeList>
+                  <List
+                    rowComponent={InstanceRow}
+                    rowCount={rulesWithInstances[selectedRule].length || 0}
+                    rowHeight={32}
+                    rowProps={{}}
+                    style={{
+                      height,
+                      width,
+                    }}
+                  />
                 )}
               </AutoSizer>
             )}
