@@ -33,7 +33,9 @@ composableKinds: PanelCfg: {
 					showLogContextToggle:     bool
 					showControls?:            bool
 					controlsStorageKey?:      string
+					// @deprecated use listStyle
 					wrapLogMessage:           bool
+					// @deprecated use listStyle
 					prettifyLogMessage:       bool
 					enableLogDetails:         bool
 					syntaxHighlighting?:      bool
@@ -45,6 +47,7 @@ composableKinds: PanelCfg: {
 					fontSize?:                "default" | "small"                  @cuetsy(kind="enum", memberNames="default|small")
 					detailsMode?:             "inline" | "sidebar"                  @cuetsy(kind="enum", memberNames="inline|sidebar")
 					timestampResolution?:     "ms" | "ns"                  @cuetsy(kind="enum", memberNames="ms|ns")
+					listStyle?:               "inline-columns" | "inline" | "wrapped" | "wrapped-json"                  @cuetsy(kind="enum")
 					// TODO: figure out how to define callbacks
 					onClickFilterLabel?:     _
 					onClickFilterOutLabel?:  _

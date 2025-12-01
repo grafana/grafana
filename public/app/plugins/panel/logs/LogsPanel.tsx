@@ -155,6 +155,7 @@ export const LogsPanel = ({
     showTime,
     wrapLogMessage,
     showCommonLabels,
+     * @deprecated use listStyle
     prettifyLogMessage,
     sortOrder,
     dedupStrategy,
