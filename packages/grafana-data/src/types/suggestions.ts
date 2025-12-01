@@ -1,7 +1,11 @@
+import { defaultsDeep } from 'lodash';
+
 import { DataTransformerConfig } from '@grafana/schema';
 
-import { PanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
+import { PanelPlugin } from '../panel/PanelPlugin';
+import { getPanelDataSummary, PanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
 
+import { DataFrame } from './dataFrame';
 import { FieldConfigSource } from './fieldOverrides';
 
 /**
@@ -132,11 +136,30 @@ export interface VisualizationSuggestionsSupplierDeprecated {
 /**
  * @deprecated use VisualizationSuggestionsSupplier
  */
-export interface VisualizationSuggestionsBuilder {
-  dataSummary: PanelDataSummary;
-  getListAppender: <Options extends unknown, FieldConfig extends {}>(
-    suggestion: Omit<PanelPluginVisualizationSuggestion<Options, FieldConfig>, 'hash'>
-  ) => {
-    append: (suggestion: VisualizationSuggestion<Options, FieldConfig>) => void;
-  };
+export class VisualizationSuggestionsBuilder {
+  public dataSummary: PanelDataSummary;
+  public list: PanelPluginVisualizationSuggestion[] = [];
+
+  constructor(dataFrames: DataFrame[]) {
+    this.dataSummary = getPanelDataSummary(dataFrames);
+  }
+
+  getList(): PanelPluginVisualizationSuggestion[] {
+    return this.list;
+  }
+
+  getListAppender(suggestionDefaults: Omit<PanelPluginVisualizationSuggestion, 'hash'>) {
+    const withDefaults = (suggestion: VisualizationSuggestion): PanelPluginVisualizationSuggestion => {
+      const s = defaultsDeep({}, suggestion, suggestionDefaults);
+      return {
+        ...s,
+        hash: getSuggestionHash(s),
+      };
+    };
+    return {
+      append: (suggestion: VisualizationSuggestion) => {
+        this.list.push(withDefaults(suggestion));
+      },
+    };
+  }
 }

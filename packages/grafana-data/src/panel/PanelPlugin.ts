@@ -20,6 +20,7 @@ import {
   VisualizationSuggestion,
   VisualizationSuggestionsSupplierDeprecated,
   VisualizationSuggestionsSupplier,
+  VisualizationSuggestionsBuilder,
 } from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
@@ -420,6 +421,34 @@ export class PanelPlugin<
         return Object.assign(suggestionWithDefaults, { hash: getSuggestionHash(suggestionWithDefaults) });
       }
     );
+  }
+
+  /**
+   * @deprecated use getSuggestions
+   * we have to keep this method intact to support cloud-onboarding plugin.
+   */
+  getSuggestionsSupplier() {
+    const withDefaults = (
+      suggestion: VisualizationSuggestion<TOptions, TFieldConfigOptions>
+    ): Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>, 'hash'> =>
+      defaultsDeep(suggestion, {
+        pluginId: this.meta.id,
+        name: this.meta.name,
+        options: {},
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      } satisfies Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>, 'hash'>);
+
+    return {
+      getSuggestionsForData: (builder: VisualizationSuggestionsBuilder) => {
+        deprecationWarning('PanelPlugin', 'getSuggestionsSupplier()', 'getSuggestions(panelDataSummary)');
+        this.suggestionsSupplier?.(builder.dataSummary)?.forEach((s) => {
+          builder.getListAppender(withDefaults(s)).append(s);
+        });
+      },
+    };
   }
 
   hasPluginId(pluginId: string) {
