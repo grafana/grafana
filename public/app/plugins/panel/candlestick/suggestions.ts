@@ -1,10 +1,10 @@
-import { FieldType, VisualizationSuggestionScore, VisualizationSuggestionsSupplierFn } from '@grafana/data';
+import { FieldType, VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { prepareCandlestickFields } from './fields';
 import { defaultOptions, Options } from './types';
 
-export const candlestickSuggestionSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
+export const candlestickSuggestionSupplier: VisualizationSuggestionsSupplier<Options> = (dataSummary) => {
   if (
     !dataSummary.rawFrames ||
     !dataSummary.hasData ||

@@ -25,7 +25,7 @@ const MIN_COLUMN_SIZE = 260;
 
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
-  const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
+  const { value: suggestions } = useAsync(async () => await getAllSuggestions(data), [data]);
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);

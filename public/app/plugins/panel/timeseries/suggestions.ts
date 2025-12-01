@@ -7,7 +7,7 @@ import {
   PanelPluginVisualizationSuggestion,
   VisualizationSuggestion,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplierFn,
+  VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
@@ -83,7 +83,7 @@ const barChart = (name: string, stacking?: StackingMode) => ({
 
 // TODO: all "gradient color scheme" suggestions have been removed. they will be re-added as part of the "styles" feature.
 
-export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, GraphFieldConfig> = (
+export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (
   dataSummary
 ) => {
   if (
