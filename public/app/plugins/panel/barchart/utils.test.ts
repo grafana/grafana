@@ -17,6 +17,7 @@ import {
   SortOrder,
   defaultTimeZone,
 } from '@grafana/schema';
+import { useTheme, useTheme2 } from '@grafana/ui';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
 import { prepSeries, prepConfig, PrepConfigOpts, prepMarkers, seperateMarkerSeries } from './utils';
@@ -122,7 +123,9 @@ describe('BarChart utils', () => {
           valueSize: 10,
         },
         fullHighlight: false,
-        markerGroups: [],
+        markers: {
+          markerGroups: [],
+        },
       },
       preparedMarkers: [],
       markerData: [],
@@ -279,24 +282,24 @@ describe('BarChart utils', () => {
           id: 1,
           dataField: 'marker1_data',
           targetField: 'series1',
-          opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1 },
+          opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1, fill: false, strokeWidth: 3 },
         },
         {
           id: 2,
           dataField: 'marker2_data',
           targetField: 'series2',
-          opts: { label: 'jane', shape: 'circle', color: 'blue', size: 1, opacity: 1 },
+          opts: { label: 'jane', shape: 'circle', color: 'red', size: 1, opacity: 1, fill: false, strokeWidth: 3 },
         },
         {
           id: 3,
           dataField: 'fake_name',
           targetField: 'series2',
-          opts: { label: 'jane', shape: 'circle', color: 'blue', size: 1, opacity: 1 },
+          opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1, fill: false, strokeWidth: 3 },
         },
       ];
 
       it('should prepare markers for StackingMode.None', () => {
-        const result = prepMarkers(vizFields, markerFields, markers, StackingMode.None);
+        const result = prepMarkers(vizFields, markerFields, markers, StackingMode.None, useTheme2());
         expect(result).toHaveLength(6);
         expect(result).toEqual(
           expect.arrayContaining([
@@ -311,7 +314,7 @@ describe('BarChart utils', () => {
       });
 
       it('should prepare markers for StackingMode.Normal', () => {
-        const result = prepMarkers(vizFields, markerFields, markers, StackingMode.Normal);
+        const result = prepMarkers(vizFields, markerFields, markers, StackingMode.Normal, useTheme2());
         expect(result).toHaveLength(6);
         expect(result).toEqual(
           expect.arrayContaining([
@@ -328,7 +331,7 @@ describe('BarChart utils', () => {
       });
 
       it('should prepare markers for StackingMode.Percent', () => {
-        const result = prepMarkers(vizFields, markerFields, markers, StackingMode.Percent);
+        const result = prepMarkers(vizFields, markerFields, markers, StackingMode.Percent, useTheme2());
         expect(result).toHaveLength(6);
         expect(result).toEqual(
           expect.arrayContaining([
@@ -361,7 +364,7 @@ describe('BarChart utils', () => {
               id: 1,
               dataField: 'marker',
               targetField: 'series1',
-              opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1 },
+              opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1, fill: false, strokeWidth: 3 },
             },
           ];
 
@@ -398,13 +401,13 @@ describe('BarChart utils', () => {
               id: 1,
               dataField: 'markerA',
               targetField: 'metric',
-              opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1 },
+              opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1, fill: false, strokeWidth: 3 },
             },
             {
               id: 3,
               dataField: 'markerA',
               targetField: 'none_existent',
-              opts: { label: 'jane', shape: 'circle', color: 'blue', size: 1, opacity: 1 },
+              opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1, fill: false, strokeWidth: 3 },
             },
           ];
 

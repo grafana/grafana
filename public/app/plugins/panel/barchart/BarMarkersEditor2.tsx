@@ -37,22 +37,6 @@ import { NIL } from 'uuid';
 export const barMarkersEditor2 = (builder: PanelOptionsEditorBuilder<Markers>, ctx: StandardEditorContext<Markers> ) => {
     let markers : MarkerGroup[] = ctx.options?.markerGroups || [];
 
-      // const fields = ctx?.data[0]?.fields ?? [];
-      // const xAxis = ctx?.options?.xField;
-      // let xFieldIdx = 0;
-      // if (xAxis) {
-      //   xFieldIdx = fields.findIndex((f) => f.name === xAxis);
-      // }
-      // let yFieldOptions: Array<ComboboxOption<string | number>> = [];
-      // for (let i = 0; i < fields.length; i++) {
-      //   if (i === xFieldIdx) {
-      //     continue;
-      //   }
-      //   if (fields) {
-      //     yFieldOptions.push({ label: fields[i].name ?? `Field ${i}`, value: fields[i].name ?? i });
-      //   }
-      // }
-    
       const shapeOptions: Array<ComboboxOption<string>> = [
         { label: 'Circle', value: 'circle' },
         { label: 'Cross', value: 'cross' },
@@ -207,7 +191,7 @@ export const addMarkerEditor = ({ context, onChange, value }: StandardEditorProp
           },
         })}
       >
-        {t('barchart.barmarkers-editor.add-marker', '+ Add marker')}
+        {t('barchart.barmarkers-editor.add-marker', 'Add marker +')}
       </Button>
       </div>
   )
@@ -234,7 +218,7 @@ export const removeMarkerEditor = ({onChange, value, context}: StandardEditorPro
           },
         })}
       >
-        {t('barchart.barmarkers-editor.add-marker', '+ Remove marker')}
+        {t('barchart.barmarkers-editor.add-marker', 'Remove marker')}
       </Button>
       </div>
   )

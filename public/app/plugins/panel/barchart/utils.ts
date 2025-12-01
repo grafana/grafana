@@ -621,9 +621,11 @@ export function prepMarkers(
     const fi = markerFields[i];
 
     
-    let fieldColor = m.opts.color
+    let fieldColor = theme.visualization.getColorByName(m.opts.color)
     //Color override
-    if(fi.config.custom?.color) fieldColor = fi.config.custom.color
+    if(fi.config.custom?.color) fieldColor = theme.visualization.getColorByName(fi.config.custom.color)
+
+    
 
     // const colorMode = getFieldColorModeForField(fi);
     // const scaleColor = getFieldSeriesColor(fi, theme);
