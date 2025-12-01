@@ -24,6 +24,7 @@ export interface QueryOperationRowProps {
   collapsable?: boolean;
   disabled?: boolean;
   expanderMessages?: ExpanderMessages;
+  hideHeader?: boolean;
 }
 
 export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
@@ -48,9 +49,10 @@ export function QueryOperationRow({
   index,
   id,
   expanderMessages,
+  hideHeader = false,
 }: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
-  const styles = useStyles2(getQueryOperationRowStyles);
+  const styles = useStyles2(getQueryOperationRowStyles, hideHeader);
   const onRowToggle = useCallback(() => {
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
@@ -113,22 +115,24 @@ export function QueryOperationRow({
           return (
             <>
               <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
-                <div>
-                  <QueryOperationRowHeader
-                    id={id}
-                    actionsElement={actionsElement}
-                    disabled={disabled}
-                    draggable
-                    collapsable={collapsable}
-                    dragHandleProps={provided.dragHandleProps}
-                    headerElement={headerElementRendered}
-                    isContentVisible={isContentVisible}
-                    onRowToggle={onRowToggle}
-                    reportDragMousePosition={reportDragMousePosition}
-                    title={title}
-                    expanderMessages={expanderMessages}
-                  />
-                </div>
+                {!hideHeader && (
+                  <div>
+                    <QueryOperationRowHeader
+                      id={id}
+                      actionsElement={actionsElement}
+                      disabled={disabled}
+                      draggable
+                      collapsable={collapsable}
+                      dragHandleProps={provided.dragHandleProps}
+                      headerElement={headerElementRendered}
+                      isContentVisible={isContentVisible}
+                      onRowToggle={onRowToggle}
+                      reportDragMousePosition={reportDragMousePosition}
+                      title={title}
+                      expanderMessages={expanderMessages}
+                    />
+                  </div>
+                )}
                 {isContentVisible && <div className={styles.content}>{children}</div>}
               </div>
             </>
@@ -140,32 +144,34 @@ export function QueryOperationRow({
 
   return (
     <div className={styles.wrapper}>
-      <QueryOperationRowHeader
-        id={id}
-        actionsElement={actionsElement}
-        disabled={disabled}
-        draggable={false}
-        collapsable={collapsable}
-        headerElement={headerElementRendered}
-        isContentVisible={isContentVisible}
-        onRowToggle={onRowToggle}
-        reportDragMousePosition={reportDragMousePosition}
-        title={title}
-        expanderMessages={expanderMessages}
-      />
+      {!hideHeader && (
+        <QueryOperationRowHeader
+          id={id}
+          actionsElement={actionsElement}
+          disabled={disabled}
+          draggable={false}
+          collapsable={collapsable}
+          headerElement={headerElementRendered}
+          isContentVisible={isContentVisible}
+          onRowToggle={onRowToggle}
+          reportDragMousePosition={reportDragMousePosition}
+          title={title}
+          expanderMessages={expanderMessages}
+        />
+      )}
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>
   );
 }
 
-const getQueryOperationRowStyles = (theme: GrafanaTheme2) => {
+const getQueryOperationRowStyles = (theme: GrafanaTheme2, hideHeader?: boolean) => {
   return {
     wrapper: css({
       marginBottom: theme.spacing(2),
     }),
     content: css({
-      marginTop: theme.spacing(0.5),
-      marginLeft: theme.spacing(3),
+      marginTop: hideHeader ? 0 : theme.spacing(0.5),
+      marginLeft: hideHeader ? 0 : theme.spacing(3),
     }),
   };
 };

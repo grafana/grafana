@@ -6180,6 +6180,9 @@
       "text-loading-rules": "Loading rules...",
       "title-dashboard-not-saved": "Dashboard not saved"
     },
+    "panel-data-pane": {
+      "empty-state": "Select a query or transformation to edit"
+    },
     "panel-data-queries-tab": {
       "tab-label": "Queries"
     },
@@ -6189,13 +6192,6 @@
     },
     "panel-data-transformations-tab": {
       "tab-label": "Transformations"
-    },
-    "panel-data-transformations-tab-rendered": {
-      "add-another-transformation": "Add another transformation",
-      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen.",
-      "confirmText-delete-all": "Delete all",
-      "delete-all-transformations": "Delete all transformations",
-      "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",
@@ -6241,6 +6237,17 @@
     },
     "query-editor": {
       "query": "Query"
+    },
+    "query-transform-card": {
+      "duplicate": "Duplicate query",
+      "hide-response": "Hide response",
+      "remove-query": "Remove query",
+      "remove-transform": "Remove transformation",
+      "show-response": "Show response"
+    },
+    "query-transform-list": {
+      "add-query": "Add query",
+      "add-transformation": "Add transformation"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
@@ -6351,6 +6358,11 @@
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
       "title-validation-failed": "Dashboard title validation failed."
+    },
+    "scene-query-detail-view": {
+      "loading": "Loading data source...",
+      "no-editor": "This data source does not have a query editor",
+      "select-datasource": "Select data source"
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",

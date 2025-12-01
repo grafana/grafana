@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
+import { useCallback, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -10,16 +12,22 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   VizPanel,
+  SceneDataTransformer,
 } from '@grafana/scenes';
-import { Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Container, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
+import { getQueryRunnerFor } from '../../utils/utils';
+
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
-import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
+import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
+import { QueryTransformList, QueryTransformItem } from './QueryTransformList';
+import { SceneQueryDetailView } from './SceneQueryDetailView';
+import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId } from './types';
 
 export interface PanelDataPaneState extends SceneObjectState {
@@ -63,33 +71,291 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       return;
     }
     if (typeof values.tab === 'string') {
-      this.setState({ tab: values.tab as TabId });
+      const tabValue = values.tab;
+      // Check if the value is a valid TabId
+      if (tabValue === TabId.Queries || tabValue === TabId.Transformations || tabValue === TabId.Alert) {
+        this.setState({ tab: tabValue });
+      }
     }
   }
 }
 
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
-  const { tab, tabs } = model.useState();
+  const { tabs, panelRef } = model.useState();
   const styles = useStyles2(getStyles);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [transformDrawerOpen, setTransformDrawerOpen] = useState(false);
 
-  if (!tabs || !tabs.length) {
-    return;
-  }
+  const panel = panelRef.resolve();
 
-  const currentTab = tabs.find((t) => t.tabId === tab);
+  // Subscribe to query runner state changes
+  const queryRunner = getQueryRunnerFor(panel);
+  const queryRunnerState = queryRunner?.useState();
+
+  // Subscribe to data transformer state changes
+  const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
+  const transformerState = dataTransformer?.useState();
+
+  // Build combined items list
+  const items: QueryTransformItem[] = useMemo(() => {
+    const result: QueryTransformItem[] = [];
+
+    // Add queries
+    const queries = queryRunnerState?.queries || [];
+    queries.forEach((query, index) => {
+      if ('refId' in query) {
+        result.push({
+          id: `query-${query.refId}`,
+          type: 'query',
+          data: query,
+          index,
+        });
+      }
+    });
+
+    // Add transformations
+    const rawTransformations = transformerState?.transformations || [];
+    const transformations = Array.isArray(rawTransformations)
+      ? rawTransformations.filter(
+          (t): t is DataTransformerConfig =>
+            t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
+        )
+      : [];
+    transformations.forEach((transform, index) => {
+      result.push({
+        id: `transform-${index}`,
+        type: 'transform',
+        data: transform,
+        index,
+      });
+    });
+
+    return result;
+  }, [queryRunnerState?.queries, transformerState?.transformations]);
+
+  // Auto-select first item if nothing is selected
+  const effectiveSelectedId = useMemo(() => {
+    if (selectedId === null && items.length > 0) {
+      return items[0].id;
+    }
+    return selectedId;
+  }, [selectedId, items]);
+
+  const selectedItem = useMemo(() => {
+    return items.find((item) => item.id === effectiveSelectedId);
+  }, [items, effectiveSelectedId]);
+
+  const handleSelect = useCallback((id: string) => {
+    setSelectedId(id);
+  }, []);
+
+  const handleAddQuery = useCallback(() => {
+    const queriesTab = tabs.find((t) => t.tabId === TabId.Queries);
+    if (queriesTab instanceof PanelDataQueriesTab) {
+      queriesTab.addQueryClick();
+      // Select the new query after a short delay
+      setTimeout(() => {
+        const newQueries = getQueryRunnerFor(panel)?.state.queries || [];
+        if (newQueries.length > 0) {
+          setSelectedId(`query-${newQueries[newQueries.length - 1].refId}`);
+        }
+      }, 100);
+    }
+  }, [tabs, panel]);
+
+  const handleAddTransform = useCallback(() => {
+    setTransformDrawerOpen(true);
+  }, []);
+
+  const handleTransformationAdd = useCallback(
+    (selected: SelectableValue<string>) => {
+      if (!selected.value) {
+        return;
+      }
+
+      const transformsTab = tabs.find((t) => t.tabId === TabId.Transformations);
+      if (transformsTab instanceof PanelDataTransformationsTab) {
+        const transformer = transformsTab.getDataTransformer();
+        const rawTransformations = transformer.state.transformations || [];
+        const transformations = Array.isArray(rawTransformations)
+          ? rawTransformations.filter(
+              (t): t is DataTransformerConfig =>
+                t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
+            )
+          : [];
+
+        const newTransformation: DataTransformerConfig = {
+          id: selected.value,
+          options: {},
+        };
+
+        transformsTab.onChangeTransformations([...transformations, newTransformation]);
+        setTransformDrawerOpen(false);
+
+        // Select the newly added transformation
+        setTimeout(() => {
+          setSelectedId(`transform-${transformations.length}`);
+        }, 100);
+      }
+    },
+    [tabs]
+  );
+
+  const handleDuplicateQuery = useCallback(
+    (index: number) => {
+      if (queryRunner) {
+        const queries = queryRunner.state.queries || [];
+        const queryToDuplicate = queries[index];
+        if (queryToDuplicate) {
+          // Create a copy with a new refId
+          const existingRefIds = queries.map((q) => q.refId);
+          let newRefId = queryToDuplicate.refId;
+          let counter = 1;
+          while (existingRefIds.includes(newRefId)) {
+            newRefId = `${queryToDuplicate.refId}_${counter}`;
+            counter++;
+          }
+
+          const duplicatedQuery = {
+            ...queryToDuplicate,
+            refId: newRefId,
+          };
+
+          const newQueries = [...queries, duplicatedQuery];
+          queryRunner.setState({ queries: newQueries });
+          queryRunner.runQueries();
+
+          // Select the new query
+          setSelectedId(`query-${newRefId}`);
+        }
+      }
+    },
+    [queryRunner]
+  );
+
+  const handleRemoveQuery = useCallback(
+    (index: number) => {
+      if (queryRunner) {
+        const queries = queryRunner.state.queries || [];
+        const newQueries = queries.filter((_, i) => i !== index);
+        queryRunner.setState({ queries: newQueries });
+        queryRunner.runQueries();
+
+        // Clear selection if removing the selected query
+        if (selectedId === `query-${queries[index]?.refId}`) {
+          setSelectedId(null);
+        }
+      }
+    },
+    [queryRunner, selectedId]
+  );
+
+  const handleToggleQueryVisibility = useCallback(
+    (index: number) => {
+      if (queryRunner) {
+        const queries = queryRunner.state.queries || [];
+        const newQueries = queries.map((q, i) => (i === index ? { ...q, hide: !q.hide } : q));
+        queryRunner.setState({ queries: newQueries });
+        queryRunner.runQueries();
+      }
+    },
+    [queryRunner]
+  );
+
+  const handleRemoveTransform = useCallback(
+    (index: number) => {
+      const transformsTab = tabs.find((t) => t.tabId === TabId.Transformations);
+      if (transformsTab instanceof PanelDataTransformationsTab) {
+        const transformer = transformsTab.getDataTransformer();
+        const rawTransformations = transformer.state.transformations || [];
+        const transformations = Array.isArray(rawTransformations)
+          ? rawTransformations.filter(
+              (t): t is DataTransformerConfig =>
+                t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
+            )
+          : [];
+        const newTransformations = transformations.filter((_, i) => i !== index);
+        transformsTab.onChangeTransformations(newTransformations);
+
+        // Clear selection if removing the selected transformation
+        if (selectedId === `transform-${index}`) {
+          setSelectedId(null);
+        }
+      }
+    },
+    [tabs, selectedId]
+  );
+
+  const renderDetailPanel = useCallback(() => {
+    if (!selectedItem) {
+      return (
+        <div className={styles.emptyState}>
+          <p>
+            <Trans i18nKey="dashboard-scene.panel-data-pane.empty-state">
+              Select a query or transformation to edit
+            </Trans>
+          </p>
+        </div>
+      );
+    }
+
+    if (selectedItem.type === 'query' && 'refId' in selectedItem.data) {
+      const query = selectedItem.data;
+      return (
+        <div className={styles.detailContent}>
+          <ScrollContainer>
+            <SceneQueryDetailView panel={panel} query={query} queryIndex={selectedItem.index} />
+          </ScrollContainer>
+        </div>
+      );
+    } else {
+      const transformsTab = tabs.find((t) => t.tabId === TabId.Transformations);
+      if (transformsTab instanceof PanelDataTransformationsTab && 'id' in selectedItem.data) {
+        return (
+          <div className={styles.detailContent}>
+            <ScrollContainer>
+              <Container>
+                <PanelDataTransformationsTabRendered model={transformsTab} />
+              </Container>
+            </ScrollContainer>
+          </div>
+        );
+      }
+    }
+
+    return null;
+  }, [selectedItem, tabs, styles, panel]);
+
+  // Get data for transformations drawer
+  const sourceData = queryRunner?.useState();
+  const series = sourceData?.data?.series || [];
 
   return (
     <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
-      <TabsBar hideBorder className={styles.tabsBar}>
-        {tabs.map((t) => t.renderTab({ active: t.tabId === tab, onChangeTab: () => model.onChangeTab(t) }))}
-      </TabsBar>
-      <div className={styles.tabBorder}>
-        <ScrollContainer>
-          <TabContent className={styles.tabContent}>
-            <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
-          </TabContent>
-        </ScrollContainer>
+      <div className={styles.unifiedLayout}>
+        <div className={styles.splitLayout}>
+          <div className={styles.leftPanel}>
+            <QueryTransformList
+              items={items}
+              selectedId={effectiveSelectedId}
+              onSelect={handleSelect}
+              onAddQuery={handleAddQuery}
+              onAddTransform={handleAddTransform}
+              onDuplicateQuery={handleDuplicateQuery}
+              onRemoveQuery={handleRemoveQuery}
+              onToggleQueryVisibility={handleToggleQueryVisibility}
+              onRemoveTransform={handleRemoveTransform}
+            />
+          </div>
+          <div className={styles.rightPanel}>{renderDetailPanel()}</div>
+        </div>
       </div>
+      <TransformationsDrawer
+        isOpen={transformDrawerOpen}
+        onClose={() => setTransformDrawerOpen(false)}
+        onTransformationAdd={handleTransformationAdd}
+        series={series}
+      />
     </div>
   );
 }
@@ -118,22 +384,67 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
     }),
-    tabBorder: css({
+    unifiedLayout: css({
+      flex: 1,
+      minHeight: 0,
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderLeft: 'none',
       borderBottom: 'none',
       borderTopRightRadius: theme.shape.radius.default,
-      flexGrow: 1,
       overflow: 'hidden',
     }),
-    tabContent: css({
-      padding: theme.spacing(2),
+    splitLayout: css({
+      display: 'flex',
       height: '100%',
+      width: '100%',
     }),
-    tabsBar: css({
+    leftPanel: css({
+      width: '25%',
+      minWidth: '200px',
+      maxWidth: '400px',
       flexShrink: 0,
-      paddingLeft: theme.spacing(2),
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+    }),
+    rightPanel: css({
+      flex: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+    }),
+    detailContent: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      background: theme.colors.background.primary,
+    }),
+    detailHeader: css({
+      padding: theme.spacing(2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.secondary,
+      '& h3': {
+        margin: 0,
+        marginBottom: theme.spacing(0.5),
+        fontSize: theme.typography.h4.fontSize,
+        fontWeight: theme.typography.fontWeightMedium,
+      },
+    }),
+    detailHeaderSubtext: css({
+      margin: 0,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    detailBody: css({
+      flex: 1,
+      overflow: 'auto',
+      minHeight: 0,
+    }),
+    emptyState: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.h5.fontSize,
     }),
   };
 }

@@ -3,8 +3,7 @@ import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
 import { useCallback, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -14,7 +13,7 @@ import {
   VizPanel,
   SceneObjectState,
 } from '@grafana/scenes';
-import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
+import { Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
@@ -69,7 +68,6 @@ export class PanelDataTransformationsTab
 }
 
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
-  const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
 
@@ -84,7 +82,6 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   }, [transformsWrongType]);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
-  const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
@@ -163,46 +160,6 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   return (
     <>
       <TransformationsEditor data={sourceData.data} transformations={transformations} model={model} />
-      <ButtonGroup>
-        <Button
-          icon="plus"
-          variant="secondary"
-          onClick={openDrawer}
-          data-testid={selectors.components.Transforms.addTransformationButton}
-        >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
-            Add another transformation
-          </Trans>
-        </Button>
-        <Button
-          data-testid={selectors.components.Transforms.removeAllTransformationsButton}
-          className={styles.removeAll}
-          icon="times"
-          variant="secondary"
-          onClick={() => setConfirmModalOpen(true)}
-        >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
-            Delete all transformations
-          </Trans>
-        </Button>
-      </ButtonGroup>
-      <ConfirmModal
-        isOpen={confirmModalOpen}
-        title={t(
-          'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
-          'Delete all transformations?'
-        )}
-        body={t(
-          'dashboard-scene.panel-data-transformations-tab-rendered.body-delete-all-transformations',
-          'By deleting all transformations, you will go back to the main selection screen.'
-        )}
-        confirmText={t('dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all', 'Delete all')}
-        onConfirm={() => {
-          model.onChangeTransformations([]);
-          setConfirmModalOpen(false);
-        }}
-        onDismiss={() => setConfirmModalOpen(false)}
-      />
       {transformationsDrawer}
     </>
   );
@@ -216,6 +173,7 @@ interface TransformationEditorProps {
 
 function TransformationsEditor({ transformations, model, data }: TransformationEditorProps) {
   const transformationEditorRows = transformations.map((t, i) => ({ id: `${i} - ${t.id}`, transformation: t }));
+  const styles = useStyles2(getStyles);
 
   const onDragEnd = (result: DropResult) => {
     if (!result || !result.destination) {
@@ -234,37 +192,39 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId="transformations-list" direction="vertical">
-        {(provided) => {
-          return (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              <TransformationOperationRows
-                onChange={(index, transformation) => {
-                  const newTransformations = transformations.slice();
-                  newTransformations[index] = transformation;
-                  model.onChangeTransformations(newTransformations);
-                }}
-                onRemove={(index) => {
-                  const newTransformations = transformations.slice();
-                  newTransformations.splice(index, 1);
-                  model.onChangeTransformations(newTransformations);
-                }}
-                configs={transformationEditorRows}
-                data={data}
-              ></TransformationOperationRows>
-              {provided.placeholder}
-            </div>
-          );
-        }}
-      </Droppable>
-    </DragDropContext>
+    <div className={styles.container}>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="transformations-list" direction="vertical">
+          {(provided) => {
+            return (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                <TransformationOperationRows
+                  onChange={(index, transformation) => {
+                    const newTransformations = transformations.slice();
+                    newTransformations[index] = transformation;
+                    model.onChangeTransformations(newTransformations);
+                  }}
+                  onRemove={(index) => {
+                    const newTransformations = transformations.slice();
+                    newTransformations.splice(index, 1);
+                    model.onChangeTransformations(newTransformations);
+                  }}
+                  configs={transformationEditorRows}
+                  data={data}
+                ></TransformationOperationRows>
+                {provided.placeholder}
+              </div>
+            );
+          }}
+        </Droppable>
+      </DragDropContext>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  removeAll: css({
-    marginLeft: theme.spacing(2),
+  container: css({
+    padding: theme.spacing(2),
   }),
 });
 
