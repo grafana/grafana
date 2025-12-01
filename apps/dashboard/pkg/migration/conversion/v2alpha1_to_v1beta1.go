@@ -233,47 +233,27 @@ func countTotalPanels(panels []interface{}) int {
 	return count
 }
 
+// convertPanelsFromElementsAndLayout converts V2 layout structures to V1 panel arrays.
+// V1 only supports a flat array of panels with row panels for grouping.
+// This function dispatches to the appropriate converter based on layout type:
+//   - GridLayout: Direct 1:1 mapping to V1 panels with gridPos
+//   - RowsLayout: Rows become row panels; nested structures are flattened
+//   - AutoGridLayout: Calculates gridPos based on column count and row height
+//   - TabsLayout: Tabs become expanded row panels; content is flattened
 func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.DashboardElement, layout dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
 	if layout.GridLayoutKind != nil {
 		return convertGridLayoutToPanels(elements, layout.GridLayoutKind, dsIndex)
 	}
 
-	// TODO: Support nested rows layouts
-	// Steps:
-	// 1. Add nested row panels to testdata/input/layouts/rows
-	// 2. Run the tests to convert output
-	// Warning: If we create an scene with nested row layouts and then we transfrom scene to V1 model, it will break.
-	// We have different options: We handle it in the tests, or we add a fallback in the frontend transformer. This is going to be needed anyway for the Export as V1.
-	// At least we could map 1 to 1 what the frontend and backend reproduces.
 	if layout.RowsLayoutKind != nil {
 		return convertRowsLayoutToPanels(elements, layout.RowsLayoutKind, dsIndex)
 	}
 
-	// TODO: Support nested AutoGrid layouts
-	// Steps:
-	// 1. We should map sizes to the grid layout items
-	// 2. Run the tests to convert output
-	// Warning: If we create an scene with autgrid layouts and then we transfrom scene to V1 model, it will break.
-	// We have different options: We handle it in the tests, or we add a fallback in the frontend transformer. This is going to be needed anyway for the Export as V1.
-	// At least we could map 1 to 1 what the frontend and backend reproduces.
 	if layout.AutoGridLayoutKind != nil {
-		// TODO: Improve the logic to fallback in a smart way
-		// For now, convert AutoGridLayout to a basic 3x3 grid layout
-		// This preserves all elements but loses the auto-grid layout information
 		return convertAutoGridLayoutToPanels(elements, layout.AutoGridLayoutKind, dsIndex)
 	}
 
-	// TODO: Support nested AutoGrid layouts
-	// Steps:
-	// 1. We should map sizes to the grid layout items
-	// 2. Run the tests to convert output
-	// Warning: If we create an scene with autgrid layouts and then we transfrom scene to V1 model, it will break.
-	// We have different options: We handle it in the tests, or we add a fallback in the frontend transformer. This is going to be needed anyway for the Export as V1.
-	// At least we could map 1 to 1 what the frontend and backend reproduces.
 	if layout.TabsLayoutKind != nil {
-		// TODO: Improve the logic to fallback in a smart way
-		// For now, convert TabsLayout to a basic 3x3 grid layout
-		// This flattens all tabs into a single grid, losing tab structure
 		return convertTabsLayoutToPanels(elements, layout.TabsLayoutKind, dsIndex)
 	}
 
@@ -300,124 +280,690 @@ func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 	return panels, nil
 }
 
-// FIXME: This is not supporting nested rows layouts
+// convertRowsLayoutToPanels converts a RowsLayout to V1 panels.
+// All nested structures (rows within rows, tabs within rows) are flattened to the root level.
+// Each row becomes a row panel, and nested content is added sequentially after it.
 func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
+	return convertNestedLayoutToPanels(elements, rowsLayout, nil, dsIndex, 0)
+}
+
+// convertNestedLayoutToPanels handles arbitrary nesting of RowsLayout and TabsLayout.
+// It processes each row/tab in order, tracking Y position to ensure panels don't overlap.
+// The function recursively flattens nested structures to produce a flat V1 panel array.
+func convertNestedLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind, dsIndex *schemaversion.DatasourceIndex, yOffset int64) ([]interface{}, error) {
 	panels := make([]interface{}, 0)
-	var currentRowY int64 = 0
+	currentY := yOffset
 
-	for _, row := range rowsLayout.Spec.Rows {
-		// Check if this is a hidden header row (panels before first explicit row)
-		isHiddenHeader := row.Spec.HideHeader != nil && *row.Spec.HideHeader
-
-		if !isHiddenHeader {
-			// Create a row panel for explicit rows
-			rowPanel := map[string]interface{}{
-				"type": "row",
-				"id":   -1, // Will be updated later if needed
+	// Process RowsLayout
+	if rowsLayout != nil {
+		for _, row := range rowsLayout.Spec.Rows {
+			rowPanels, newY, err := processRowItem(elements, &row, dsIndex, currentY)
+			if err != nil {
+				return nil, err
 			}
-
-			if row.Spec.Title != nil {
-				rowPanel["title"] = *row.Spec.Title
-			}
-			if row.Spec.Collapse != nil {
-				rowPanel["collapsed"] = *row.Spec.Collapse
-			}
-
-			// Handle row repeat variable
-			if row.Spec.Repeat != nil && row.Spec.Repeat.Value != "" {
-				rowPanel["repeat"] = row.Spec.Repeat.Value
-			}
-
-			// Calculate row Y position from first panel in row
-			if row.Spec.Layout.GridLayoutKind != nil && len(row.Spec.Layout.GridLayoutKind.Spec.Items) > 0 {
-				// In rows layout, Y is relative to row, so we need to calculate absolute Y
-				// For now, use a simple incrementing approach
-				rowPanel["gridPos"] = map[string]interface{}{
-					"x": 0,
-					"y": currentRowY,
-					"w": 24,
-					"h": 1,
-				}
-				currentRowY++
-			}
-
-			// Add collapsed panels if row is collapsed
-			if row.Spec.Collapse != nil && *row.Spec.Collapse {
-				if row.Spec.Layout.GridLayoutKind != nil {
-					collapsedPanels := make([]interface{}, 0)
-					for _, item := range row.Spec.Layout.GridLayoutKind.Spec.Items {
-						element, ok := elements[item.Spec.Element.Name]
-						if !ok {
-							return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
-						}
-						panel, err := convertPanelFromElement(&element, &item, dsIndex)
-						if err != nil {
-							return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
-						}
-						collapsedPanels = append(collapsedPanels, panel)
-					}
-					if len(collapsedPanels) > 0 {
-						rowPanel["panels"] = collapsedPanels
-					}
-				}
-			}
-
-			panels = append(panels, rowPanel)
+			panels = append(panels, rowPanels...)
+			currentY = newY
 		}
+	}
 
-		// Add panels from row layout (only for expanded rows or hidden header rows)
-		// For collapsed rows, panels are already stored inside rowPanel["panels"]
-		isCollapsed := row.Spec.Collapse != nil && *row.Spec.Collapse
-		if !isCollapsed || isHiddenHeader {
-			if row.Spec.Layout.GridLayoutKind != nil {
-				for _, item := range row.Spec.Layout.GridLayoutKind.Spec.Items {
-					element, ok := elements[item.Spec.Element.Name]
-					if !ok {
-						return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
-					}
-
-					// Calculate absolute Y position for panels in rows
-					// Y in rows layout is relative to row start, need to add row Y offset
-					adjustedItem := item
-					if !isHiddenHeader {
-						// Adjust Y position relative to row
-						adjustedItem.Spec.Y = item.Spec.Y + currentRowY - 1
-					}
-
-					panel, err := convertPanelFromElement(&element, &adjustedItem, dsIndex)
-					if err != nil {
-						return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
-					}
-					panels = append(panels, panel)
-				}
+	// Process TabsLayout (tabs are converted to rows)
+	if tabsLayout != nil {
+		for _, tab := range tabsLayout.Spec.Tabs {
+			tabPanels, newY, err := processTabItem(elements, &tab, dsIndex, currentY)
+			if err != nil {
+				return nil, err
 			}
-		}
-
-		// Update currentRowY for next row
-		if row.Spec.Layout.GridLayoutKind != nil {
-			maxY := int64(0)
-			for _, item := range row.Spec.Layout.GridLayoutKind.Spec.Items {
-				if item.Spec.Y+item.Spec.Height > maxY {
-					maxY = item.Spec.Y + item.Spec.Height
-				}
-			}
-			if !isHiddenHeader {
-				currentRowY = maxY + 1
-			}
+			panels = append(panels, tabPanels...)
+			currentY = newY
 		}
 	}
 
 	return panels, nil
 }
 
-// convertAutoGridLayoutToPanels converts AutoGridLayout to panels with calculated grid positioning
-// Based on spec:
-// - Panel width: Math.floor(24 / maxColumnCount) (default: 8 for maxColumnCount=3)
-// - Panel height based on rowHeightMode/rowHeight:
-//   - short: 168px → 5 grid units
-//   - standard: 320px → 9 grid units (default)
-//   - tall: 512px → 14 grid units
-//   - custom: Uses rowHeight value in pixels, converted to grid units
+// processRowItem converts a single V2 row to V1 panels.
+// Behavior depends on row configuration:
+//   - Hidden header (hideHeader=true): No row panel created; panels added directly
+//   - Explicit row (hideHeader=false): Row panel created at currentY; content follows
+//   - Collapsed row: Panels stored inside row.panels with absolute Y positions
+//   - Expanded row: Panels added to top level after the row panel
+//   - Nested layouts: Parent row is preserved; nested content is flattened after it
+func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dashv2alpha1.DashboardRowsLayoutRowKind, dsIndex *schemaversion.DatasourceIndex, startY int64) ([]interface{}, int64, error) {
+	panels := make([]interface{}, 0)
+	currentY := startY
+
+	isHiddenHeader := row.Spec.HideHeader != nil && *row.Spec.HideHeader
+
+	// Handle nested RowsLayout - keep parent row, then flatten nested rows
+	if row.Spec.Layout.RowsLayoutKind != nil {
+		// Create parent row panel first (if not hidden header)
+		if !isHiddenHeader {
+			rowPanel := map[string]interface{}{
+				"type": "row",
+				"id":   -1,
+				"gridPos": map[string]interface{}{
+					"x": 0,
+					"y": currentY,
+					"w": 24,
+					"h": 1,
+				},
+			}
+			if row.Spec.Title != nil {
+				rowPanel["title"] = *row.Spec.Title
+			}
+			rowPanel["collapsed"] = false
+			rowPanel["panels"] = []interface{}{}
+			panels = append(panels, rowPanel)
+			currentY++
+		}
+
+		// Then process nested rows
+		nestedPanels, err := convertNestedLayoutToPanels(elements, row.Spec.Layout.RowsLayoutKind, nil, dsIndex, currentY)
+		if err != nil {
+			return nil, 0, err
+		}
+		panels = append(panels, nestedPanels...)
+		currentY = getMaxYFromPanels(nestedPanels, currentY)
+		return panels, currentY, nil
+	}
+
+	// Handle nested TabsLayout - keep parent row, then flatten tabs
+	if row.Spec.Layout.TabsLayoutKind != nil {
+		// Create parent row panel first (if not hidden header)
+		if !isHiddenHeader {
+			rowPanel := map[string]interface{}{
+				"type": "row",
+				"id":   -1,
+				"gridPos": map[string]interface{}{
+					"x": 0,
+					"y": currentY,
+					"w": 24,
+					"h": 1,
+				},
+			}
+			if row.Spec.Title != nil {
+				rowPanel["title"] = *row.Spec.Title
+			}
+			rowPanel["collapsed"] = false
+			rowPanel["panels"] = []interface{}{}
+			panels = append(panels, rowPanel)
+			currentY++
+		}
+
+		// Then process nested tabs
+		nestedPanels, err := convertNestedLayoutToPanels(elements, nil, row.Spec.Layout.TabsLayoutKind, dsIndex, currentY)
+		if err != nil {
+			return nil, 0, err
+		}
+		panels = append(panels, nestedPanels...)
+		currentY = getMaxYFromPanels(nestedPanels, currentY)
+		return panels, currentY, nil
+	}
+
+	// Create row panel for explicit rows (not hidden header)
+	isCollapsed := row.Spec.Collapse != nil && *row.Spec.Collapse
+
+	if !isHiddenHeader {
+		rowPanel := map[string]interface{}{
+			"type": "row",
+			"id":   -1,
+		}
+
+		if row.Spec.Title != nil {
+			rowPanel["title"] = *row.Spec.Title
+		}
+		if row.Spec.Collapse != nil {
+			rowPanel["collapsed"] = *row.Spec.Collapse
+		}
+		if row.Spec.Repeat != nil && row.Spec.Repeat.Value != "" {
+			rowPanel["repeat"] = row.Spec.Repeat.Value
+		}
+
+		// Set row gridPos - always set for collapsed rows, otherwise only if has content
+		hasContent := (row.Spec.Layout.GridLayoutKind != nil && len(row.Spec.Layout.GridLayoutKind.Spec.Items) > 0) ||
+			row.Spec.Layout.AutoGridLayoutKind != nil
+		if hasContent || isCollapsed {
+			rowPanel["gridPos"] = map[string]interface{}{
+				"x": 0,
+				"y": currentY,
+				"w": 24,
+				"h": 1,
+			}
+		}
+
+		// Add collapsed panels if row is collapsed (panels use absolute Y positions)
+		if isCollapsed {
+			collapsedPanels, err := extractCollapsedPanelsWithAbsoluteY(elements, &row.Spec.Layout, dsIndex, currentY+1)
+			if err != nil {
+				return nil, 0, err
+			}
+			if len(collapsedPanels) > 0 {
+				rowPanel["panels"] = collapsedPanels
+			}
+		}
+
+		panels = append(panels, rowPanel)
+		currentY++ // Row panel takes 1 grid unit
+	}
+
+	// Add panels from row layout (only for expanded rows or hidden header rows)
+	if !isCollapsed || isHiddenHeader {
+		rowPanels, newY, err := extractExpandedPanels(elements, &row.Spec.Layout, dsIndex, currentY, isHiddenHeader, startY)
+		if err != nil {
+			return nil, 0, err
+		}
+		panels = append(panels, rowPanels...)
+		currentY = newY
+	}
+
+	return panels, currentY, nil
+}
+
+// processTabItem converts a V2 tab to V1 panels.
+// Each tab becomes an expanded row panel (collapsed=false) with an empty panels array.
+// The tab's content is flattened and added to the top level after the row panel.
+// Nested layouts within the tab are recursively processed.
+func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dashv2alpha1.DashboardTabsLayoutTabKind, dsIndex *schemaversion.DatasourceIndex, startY int64) ([]interface{}, int64, error) {
+	panels := make([]interface{}, 0)
+	currentY := startY
+
+	// Create a row panel for this tab (tabs become expanded rows)
+	rowPanel := map[string]interface{}{
+		"type":      "row",
+		"id":        -1,
+		"collapsed": false,
+		"panels":    []interface{}{},
+	}
+
+	if tab.Spec.Title != nil {
+		rowPanel["title"] = *tab.Spec.Title
+	}
+
+	rowPanel["gridPos"] = map[string]interface{}{
+		"x": 0,
+		"y": currentY,
+		"w": 24,
+		"h": 1,
+	}
+	panels = append(panels, rowPanel)
+	currentY++
+
+	// Handle nested layouts inside the tab
+	if tab.Spec.Layout.RowsLayoutKind != nil {
+		// Nested RowsLayout inside tab
+		nestedPanels, err := convertNestedLayoutToPanels(elements, tab.Spec.Layout.RowsLayoutKind, nil, dsIndex, currentY)
+		if err != nil {
+			return nil, 0, err
+		}
+		panels = append(panels, nestedPanels...)
+		currentY = getMaxYFromPanels(nestedPanels, currentY)
+	} else if tab.Spec.Layout.TabsLayoutKind != nil {
+		// Nested TabsLayout inside tab
+		nestedPanels, err := convertNestedLayoutToPanels(elements, nil, tab.Spec.Layout.TabsLayoutKind, dsIndex, currentY)
+		if err != nil {
+			return nil, 0, err
+		}
+		panels = append(panels, nestedPanels...)
+		currentY = getMaxYFromPanels(nestedPanels, currentY)
+	} else if tab.Spec.Layout.GridLayoutKind != nil {
+		// GridLayout inside tab
+		for _, item := range tab.Spec.Layout.GridLayoutKind.Spec.Items {
+			element, ok := elements[item.Spec.Element.Name]
+			if !ok {
+				return nil, 0, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
+			}
+
+			adjustedItem := item
+			adjustedItem.Spec.Y = item.Spec.Y + currentY
+
+			panel, err := convertPanelFromElement(&element, &adjustedItem, dsIndex)
+			if err != nil {
+				return nil, 0, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
+			}
+			panels = append(panels, panel)
+
+			panelEndY := adjustedItem.Spec.Y + item.Spec.Height
+			if panelEndY > currentY {
+				currentY = panelEndY
+			}
+		}
+	} else if tab.Spec.Layout.AutoGridLayoutKind != nil {
+		// AutoGridLayout inside tab - convert with Y offset
+		autoGridPanels, err := convertAutoGridLayoutToPanelsWithOffset(elements, tab.Spec.Layout.AutoGridLayoutKind, dsIndex, currentY)
+		if err != nil {
+			return nil, 0, err
+		}
+		panels = append(panels, autoGridPanels...)
+		currentY = getMaxYFromPanels(autoGridPanels, currentY)
+	}
+
+	return panels, currentY, nil
+}
+
+// extractCollapsedPanelsWithAbsoluteY extracts panels for a collapsed row.
+// Panels are positioned with absolute Y coordinates (baseY + relative Y).
+// This matches V1 behavior where collapsed row panels store their children
+// with Y positions as if the row were expanded at that location.
+func extractCollapsedPanelsWithAbsoluteY(elements map[string]dashv2alpha1.DashboardElement, layout *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, dsIndex *schemaversion.DatasourceIndex, baseY int64) ([]interface{}, error) {
+	panels := make([]interface{}, 0)
+
+	if layout.GridLayoutKind != nil {
+		for _, item := range layout.GridLayoutKind.Spec.Items {
+			element, ok := elements[item.Spec.Element.Name]
+			if !ok {
+				return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
+			}
+			// Create a copy with adjusted Y position
+			adjustedItem := item
+			adjustedItem.Spec.Y = item.Spec.Y + baseY
+			panel, err := convertPanelFromElement(&element, &adjustedItem, dsIndex)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
+			}
+			panels = append(panels, panel)
+		}
+	}
+	// Handle AutoGridLayout for collapsed rows with Y offset
+	if layout.AutoGridLayoutKind != nil {
+		autoGridPanels, err := convertAutoGridLayoutToPanelsWithOffset(elements, layout.AutoGridLayoutKind, dsIndex, baseY)
+		if err != nil {
+			return nil, err
+		}
+		panels = append(panels, autoGridPanels...)
+	}
+	// For nested rows/tabs in collapsed state, recursively extract all panels
+	if layout.RowsLayoutKind != nil {
+		currentY := baseY
+		for _, row := range layout.RowsLayoutKind.Spec.Rows {
+			nestedPanels, err := extractCollapsedPanelsWithAbsoluteY(elements, &row.Spec.Layout, dsIndex, currentY)
+			if err != nil {
+				return nil, err
+			}
+			panels = append(panels, nestedPanels...)
+			currentY += getLayoutHeight(&row.Spec.Layout)
+		}
+	}
+	if layout.TabsLayoutKind != nil {
+		currentY := baseY
+		for _, tab := range layout.TabsLayoutKind.Spec.Tabs {
+			nestedPanels, err := extractCollapsedPanelsFromTabLayoutWithAbsoluteY(elements, &tab.Spec.Layout, dsIndex, currentY)
+			if err != nil {
+				return nil, err
+			}
+			panels = append(panels, nestedPanels...)
+			currentY += getLayoutHeightFromTab(&tab.Spec.Layout)
+		}
+	}
+
+	return panels, nil
+}
+
+// extractCollapsedPanelsFromTabLayoutWithAbsoluteY extracts panels from a tab layout with absolute Y.
+// Similar to extractCollapsedPanelsWithAbsoluteY but handles the tab-specific layout type.
+func extractCollapsedPanelsFromTabLayoutWithAbsoluteY(elements map[string]dashv2alpha1.DashboardElement, layout *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, dsIndex *schemaversion.DatasourceIndex, baseY int64) ([]interface{}, error) {
+	panels := make([]interface{}, 0)
+
+	if layout.GridLayoutKind != nil {
+		for _, item := range layout.GridLayoutKind.Spec.Items {
+			element, ok := elements[item.Spec.Element.Name]
+			if !ok {
+				return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
+			}
+			adjustedItem := item
+			adjustedItem.Spec.Y = item.Spec.Y + baseY
+			panel, err := convertPanelFromElement(&element, &adjustedItem, dsIndex)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
+			}
+			panels = append(panels, panel)
+		}
+	}
+	if layout.AutoGridLayoutKind != nil {
+		autoGridPanels, err := convertAutoGridLayoutToPanelsWithOffset(elements, layout.AutoGridLayoutKind, dsIndex, baseY)
+		if err != nil {
+			return nil, err
+		}
+		panels = append(panels, autoGridPanels...)
+	}
+	if layout.RowsLayoutKind != nil {
+		currentY := baseY
+		for _, row := range layout.RowsLayoutKind.Spec.Rows {
+			nestedPanels, err := extractCollapsedPanelsWithAbsoluteY(elements, &row.Spec.Layout, dsIndex, currentY)
+			if err != nil {
+				return nil, err
+			}
+			panels = append(panels, nestedPanels...)
+			currentY += getLayoutHeight(&row.Spec.Layout)
+		}
+	}
+	if layout.TabsLayoutKind != nil {
+		currentY := baseY
+		for _, tab := range layout.TabsLayoutKind.Spec.Tabs {
+			nestedPanels, err := extractCollapsedPanelsFromTabLayoutWithAbsoluteY(elements, &tab.Spec.Layout, dsIndex, currentY)
+			if err != nil {
+				return nil, err
+			}
+			panels = append(panels, nestedPanels...)
+			currentY += getLayoutHeightFromTab(&tab.Spec.Layout)
+		}
+	}
+
+	return panels, nil
+}
+
+// getLayoutHeightFromTab calculates the height of a tab's content.
+// Similar to getLayoutHeight but handles the tab-specific layout type.
+func getLayoutHeightFromTab(layout *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) int64 {
+	var maxY int64 = 0
+
+	if layout.GridLayoutKind != nil {
+		for _, item := range layout.GridLayoutKind.Spec.Items {
+			if item.Spec.Y+item.Spec.Height > maxY {
+				maxY = item.Spec.Y + item.Spec.Height
+			}
+		}
+	}
+	if layout.AutoGridLayoutKind != nil {
+		// Calculate based on item count and default row height
+		itemCount := len(layout.AutoGridLayoutKind.Spec.Items)
+		maxCols := 3
+		if layout.AutoGridLayoutKind.Spec.MaxColumnCount != nil {
+			maxCols = int(*layout.AutoGridLayoutKind.Spec.MaxColumnCount)
+		}
+		rowCount := (itemCount + maxCols - 1) / maxCols
+		maxY = int64(rowCount * 9) // default standard height
+	}
+
+	return maxY
+}
+
+// extractCollapsedPanels extracts panels for a collapsed row with relative Y positions.
+// This is used when V1 normalization will later adjust Y positions.
+// Recursively extracts panels from nested RowsLayout and TabsLayout.
+func extractCollapsedPanels(elements map[string]dashv2alpha1.DashboardElement, layout *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
+	panels := make([]interface{}, 0)
+
+	if layout.GridLayoutKind != nil {
+		for _, item := range layout.GridLayoutKind.Spec.Items {
+			element, ok := elements[item.Spec.Element.Name]
+			if !ok {
+				return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
+			}
+			panel, err := convertPanelFromElement(&element, &item, dsIndex)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
+			}
+			panels = append(panels, panel)
+		}
+	}
+	// Handle AutoGridLayout for collapsed rows
+	if layout.AutoGridLayoutKind != nil {
+		autoGridPanels, err := convertAutoGridLayoutToPanels(elements, layout.AutoGridLayoutKind, dsIndex)
+		if err != nil {
+			return nil, err
+		}
+		panels = append(panels, autoGridPanels...)
+	}
+	// For nested rows/tabs in collapsed state, recursively extract all panels
+	if layout.RowsLayoutKind != nil {
+		for _, row := range layout.RowsLayoutKind.Spec.Rows {
+			nestedPanels, err := extractCollapsedPanels(elements, &row.Spec.Layout, dsIndex)
+			if err != nil {
+				return nil, err
+			}
+			panels = append(panels, nestedPanels...)
+		}
+	}
+	if layout.TabsLayoutKind != nil {
+		for _, tab := range layout.TabsLayoutKind.Spec.Tabs {
+			nestedPanels, err := extractCollapsedPanelsFromTabLayout(elements, &tab.Spec.Layout, dsIndex)
+			if err != nil {
+				return nil, err
+			}
+			panels = append(panels, nestedPanels...)
+		}
+	}
+
+	return panels, nil
+}
+
+// extractCollapsedPanelsFromTabLayout extracts panels from a tab layout for collapsed state.
+// Similar to extractCollapsedPanels but handles the tab-specific layout type.
+func extractCollapsedPanelsFromTabLayout(elements map[string]dashv2alpha1.DashboardElement, layout *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
+	panels := make([]interface{}, 0)
+
+	if layout.GridLayoutKind != nil {
+		for _, item := range layout.GridLayoutKind.Spec.Items {
+			element, ok := elements[item.Spec.Element.Name]
+			if !ok {
+				return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
+			}
+			panel, err := convertPanelFromElement(&element, &item, dsIndex)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
+			}
+			panels = append(panels, panel)
+		}
+	}
+	// Handle AutoGridLayout for collapsed tabs
+	if layout.AutoGridLayoutKind != nil {
+		autoGridPanels, err := convertAutoGridLayoutToPanels(elements, layout.AutoGridLayoutKind, dsIndex)
+		if err != nil {
+			return nil, err
+		}
+		panels = append(panels, autoGridPanels...)
+	}
+	if layout.RowsLayoutKind != nil {
+		for _, row := range layout.RowsLayoutKind.Spec.Rows {
+			nestedPanels, err := extractCollapsedPanels(elements, &row.Spec.Layout, dsIndex)
+			if err != nil {
+				return nil, err
+			}
+			panels = append(panels, nestedPanels...)
+		}
+	}
+	if layout.TabsLayoutKind != nil {
+		for _, tab := range layout.TabsLayoutKind.Spec.Tabs {
+			nestedPanels, err := extractCollapsedPanelsFromTabLayout(elements, &tab.Spec.Layout, dsIndex)
+			if err != nil {
+				return nil, err
+			}
+			panels = append(panels, nestedPanels...)
+		}
+	}
+
+	return panels, nil
+}
+
+// extractExpandedPanels extracts panels for an expanded row, adding them to the top level.
+// Y position handling:
+//   - Hidden header: Keep original relative Y (no adjustment)
+//   - Explicit row: Add (currentY - 1) to relative Y for absolute positioning
+//
+// Returns the panels and the new Y position for the next row.
+func extractExpandedPanels(elements map[string]dashv2alpha1.DashboardElement, layout *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, dsIndex *schemaversion.DatasourceIndex, currentY int64, isHiddenHeader bool, startY int64) ([]interface{}, int64, error) {
+	panels := make([]interface{}, 0)
+	// For hidden headers, don't track Y changes (matches original behavior)
+	maxY := startY
+
+	if layout.GridLayoutKind != nil {
+		var localMaxY int64 = 0
+		for _, item := range layout.GridLayoutKind.Spec.Items {
+			element, ok := elements[item.Spec.Element.Name]
+			if !ok {
+				return nil, 0, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
+			}
+
+			adjustedItem := item
+			if !isHiddenHeader {
+				// For explicit rows: Y = item.Spec.Y + currentY - 1
+				// currentY has been incremented after row panel, so currentY - 1 gives offset
+				adjustedItem.Spec.Y = item.Spec.Y + currentY - 1
+			}
+			// For hidden headers: don't adjust Y, keep item.Spec.Y as-is
+
+			panel, err := convertPanelFromElement(&element, &adjustedItem, dsIndex)
+			if err != nil {
+				return nil, 0, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
+			}
+			panels = append(panels, panel)
+
+			// Track max extent within this row's panels using ABSOLUTE Y positions
+			panelEndY := adjustedItem.Spec.Y + item.Spec.Height
+			if panelEndY > localMaxY {
+				localMaxY = panelEndY
+			}
+		}
+
+		// Return maxY for next row position (applies to both explicit rows and hidden headers)
+		maxY = localMaxY
+	}
+
+	// Handle AutoGridLayout
+	if layout.AutoGridLayoutKind != nil {
+		// Calculate Y offset for panels
+		yOffset := startY
+		if !isHiddenHeader {
+			yOffset = currentY - 1
+		}
+
+		autoGridPanels, err := convertAutoGridLayoutToPanelsWithOffset(elements, layout.AutoGridLayoutKind, dsIndex, yOffset)
+		if err != nil {
+			return nil, 0, err
+		}
+		panels = append(panels, autoGridPanels...)
+
+		// Update maxY based on panels added (applies to both explicit rows and hidden headers)
+		maxY = getMaxYFromPanels(autoGridPanels, yOffset)
+	}
+
+	return panels, maxY, nil
+}
+
+// getMaxYFromPanels finds the maximum Y extent (y + h) from a list of panels.
+// Used to determine where the next row should start to avoid overlap.
+func getMaxYFromPanels(panels []interface{}, currentY int64) int64 {
+	maxY := currentY
+	for _, p := range panels {
+		if pm, ok := p.(map[string]interface{}); ok {
+			if gridPos, ok := pm["gridPos"].(map[string]interface{}); ok {
+				var y, h int64
+				// Handle both int and int64 types for Y
+				switch yVal := gridPos["y"].(type) {
+				case int64:
+					y = yVal
+				case int:
+					y = int64(yVal)
+				}
+				// Handle both int and int64 types for H
+				switch hVal := gridPos["h"].(type) {
+				case int64:
+					h = hVal
+				case int:
+					h = int64(hVal)
+				}
+				if y+h > maxY {
+					maxY = y + h
+				}
+			}
+		}
+	}
+	return maxY
+}
+
+// getLayoutHeight calculates the total height of a layout's content.
+// Used for Y position tracking when processing collapsed rows with nested content.
+func getLayoutHeight(layout *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) int64 {
+	var maxY int64 = 0
+
+	if layout.GridLayoutKind != nil {
+		for _, item := range layout.GridLayoutKind.Spec.Items {
+			if item.Spec.Y+item.Spec.Height > maxY {
+				maxY = item.Spec.Y + item.Spec.Height
+			}
+		}
+	}
+
+	return maxY
+}
+
+// convertAutoGridLayoutToPanelsWithOffset converts AutoGridLayout with a Y offset.
+// Same as convertAutoGridLayoutToPanels but starts at yOffset instead of 0.
+// Used when AutoGridLayout appears inside rows or tabs.
+func convertAutoGridLayoutToPanelsWithOffset(elements map[string]dashv2alpha1.DashboardElement, autoGridLayout *dashv2alpha1.DashboardAutoGridLayoutKind, dsIndex *schemaversion.DatasourceIndex, yOffset int64) ([]interface{}, error) {
+	panels := make([]interface{}, 0, len(autoGridLayout.Spec.Items))
+
+	const gridWidth int64 = 24
+	const gridCellHeight float64 = 30
+	const gridCellVMargin float64 = 8
+	const defaultMaxColumnCount float64 = 3
+
+	maxColumnCount := defaultMaxColumnCount
+	if autoGridLayout.Spec.MaxColumnCount != nil && *autoGridLayout.Spec.MaxColumnCount > 0 {
+		maxColumnCount = *autoGridLayout.Spec.MaxColumnCount
+	}
+	panelWidth := int64(float64(gridWidth) / maxColumnCount)
+
+	var panelHeight int64 = 9
+	switch autoGridLayout.Spec.RowHeightMode {
+	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeShort:
+		panelHeight = 5
+	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeStandard:
+		panelHeight = 9
+	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeTall:
+		panelHeight = 14
+	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeCustom:
+		if autoGridLayout.Spec.RowHeight != nil && *autoGridLayout.Spec.RowHeight > 0 {
+			rowHeightPx := *autoGridLayout.Spec.RowHeight
+			panelHeight = int64((rowHeightPx + gridCellHeight + gridCellVMargin - 1) / (gridCellHeight + gridCellVMargin))
+		}
+	}
+
+	var currentY int64 = yOffset
+	var currentX int64 = 0
+
+	for _, item := range autoGridLayout.Spec.Items {
+		element, ok := elements[item.Spec.Element.Name]
+		if !ok {
+			return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
+		}
+
+		gridItem := dashv2alpha1.DashboardGridLayoutItemKind{
+			Kind: "GridLayoutItem",
+			Spec: dashv2alpha1.DashboardGridLayoutItemSpec{
+				X:      currentX,
+				Y:      currentY,
+				Width:  panelWidth,
+				Height: panelHeight,
+				Element: dashv2alpha1.DashboardElementReference{
+					Kind: item.Spec.Element.Kind,
+					Name: item.Spec.Element.Name,
+				},
+			},
+		}
+
+		panel, err := convertPanelFromElement(&element, &gridItem, dsIndex)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
+		}
+		panels = append(panels, panel)
+
+		currentX += panelWidth
+		if currentX >= gridWidth {
+			currentX = 0
+			currentY += panelHeight
+		}
+	}
+
+	return panels, nil
+}
+
+// convertAutoGridLayoutToPanels converts V2 AutoGridLayout to V1 panels with calculated gridPos.
+// AutoGridLayout arranges panels automatically; V1 requires explicit x/y/w/h coordinates.
+// Calculation:
+//   - Width: 24 / maxColumnCount (default 3 columns = 8 units wide)
+//   - Height: Based on rowHeightMode (short=5, standard=9, tall=14 grid units)
+//   - Position: Panels flow left-to-right, wrapping to next row when full
 func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, autoGridLayout *dashv2alpha1.DashboardAutoGridLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
 	panels := make([]interface{}, 0, len(autoGridLayout.Spec.Items))
 
@@ -495,105 +1041,12 @@ func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardEle
 	return panels, nil
 }
 
-// convertTabsLayoutToPanels converts TabsLayout to row panels
-// Based on spec:
-// - Each tab converts to a RowPanel (type: 'row')
-// - Tabs are converted to expanded row panels at the top level
-// - Panels inside tabs are extracted to the top level (same as expanded rows)
-// - Tab row's panels array is empty ([])
-// - Tab order is preserved
-// - Nested rows within tabs are also flattened to top level
+// convertTabsLayoutToPanels converts V2 TabsLayout to V1 row panels.
+// V1 has no native tab concept, so tabs are converted to expanded row panels.
+// Each tab becomes a row panel (collapsed=false, panels=[]) with its content
+// flattened to the top level. Tab order is preserved in the output.
 func convertTabsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
-	panels := make([]interface{}, 0)
-	var currentY int64 = 0
-
-	for _, tab := range tabsLayout.Spec.Tabs {
-		// Create a row panel for this tab (expanded, with empty panels array)
-		rowPanel := map[string]interface{}{
-			"type":      "row",
-			"id":        -1, // Will be updated later if needed
-			"title":     tab.Spec.Title,
-			"collapsed": false, // Tabs are always expanded
-			"gridPos": map[string]interface{}{
-				"x": 0,
-				"y": currentY,
-				"w": 24,
-				"h": 1,
-			},
-			"panels": []interface{}{}, // Tab row's panels array is empty
-		}
-		panels = append(panels, rowPanel)
-		currentY++ // Row panel takes 1 unit of height
-
-		// Convert the tab's layout to panels
-		tabPanels, err := convertPanelsFromElementsAndLayout(elements, tab.Spec.Layout, dsIndex)
-		if err != nil {
-			// If conversion fails, skip this tab's panels
-			continue
-		}
-
-		// Flatten nested structures and adjust Y positions
-		flattenedPanels, newY := flattenTabPanels(tabPanels, currentY)
-		panels = append(panels, flattenedPanels...)
-		currentY = newY
-	}
-
-	return panels, nil
-}
-
-// flattenTabPanels flattens nested row structures and adjusts Y positions for panels within a tab
-// Returns the flattened panels and the new max Y position
-func flattenTabPanels(inputPanels []interface{}, startY int64) ([]interface{}, int64) {
-	result := make([]interface{}, 0)
-	currentY := startY
-
-	for _, p := range inputPanels {
-		panelMap, ok := p.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		// Check if this is a row panel (nested row within a tab)
-		panelType, _ := panelMap["type"].(string)
-		if panelType == "row" {
-			// Adjust row Y position
-			if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
-				gridPos["y"] = currentY
-			}
-			currentY++
-
-			// For nested rows within tabs, always treat as expanded
-			// Extract nested panels to top level
-			nestedPanels, _ := panelMap["panels"].([]interface{})
-			panelMap["panels"] = []interface{}{} // Clear nested panels (expanded row)
-			panelMap["collapsed"] = false        // Ensure it's expanded
-
-			result = append(result, panelMap)
-
-			// Recursively flatten nested panels
-			if len(nestedPanels) > 0 {
-				nested, newY := flattenTabPanels(nestedPanels, currentY)
-				result = append(result, nested...)
-				currentY = newY
-			}
-		} else {
-			// Regular panel: adjust Y position
-			if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
-				panelY, _ := gridPos["y"].(int64)
-				panelH, _ := gridPos["h"].(int64)
-				gridPos["y"] = panelY + startY
-
-				// Track max Y extent
-				newMaxY := panelY + startY + panelH
-				if newMaxY > currentY {
-					currentY = newMaxY
-				}
-			}
-			result = append(result, panelMap)
-		}
-	}
-
-	return result, currentY
+	return convertNestedLayoutToPanels(elements, nil, tabsLayout, dsIndex, 0)
 }
 
 func convertPanelFromElement(element *dashv2alpha1.DashboardElement, layoutItem *dashv2alpha1.DashboardGridLayoutItemKind, dsIndex *schemaversion.DatasourceIndex) (map[string]interface{}, error) {

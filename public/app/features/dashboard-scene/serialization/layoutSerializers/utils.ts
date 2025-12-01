@@ -248,7 +248,7 @@ export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataS
  * Get runtime datasource for a panel query.
  * @param query - The data query
  */
-export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef | undefined {
+export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef {
   const ds: DataSourceRef = {
     uid: query.datasource?.name,
     type: query.group,
@@ -262,10 +262,7 @@ export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef |
  * @param queryKind - The kind of query being performed (datasource type)
  * @returns The resolved DataSourceRef
  */
-export function getDataSourceForQuery(
-  querySpecDS: DataSourceRef | undefined | null,
-  queryKind: string
-): DataSourceRef | undefined {
+export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | null, queryKind: string): DataSourceRef {
   // If datasource is specified and has a uid, use it
   if (querySpecDS?.uid) {
     return querySpecDS;

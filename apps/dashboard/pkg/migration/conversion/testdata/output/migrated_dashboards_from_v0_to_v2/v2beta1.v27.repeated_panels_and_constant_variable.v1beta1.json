@@ -53,7 +53,7 @@
           "h": 1,
           "w": 24,
           "x": 0,
-          "y": 0
+          "y": 3
         },
         "id": -1,
         "title": "Row with repeated panels",
@@ -64,7 +64,7 @@
           "h": 3,
           "w": 6,
           "x": 0,
-          "y": 0
+          "y": 3
         },
         "id": 6,
         "options": {},

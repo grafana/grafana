@@ -275,6 +275,7 @@ function loadAndSerializeV1SaveModel(dashboard: Dashboard): Dashboard {
       version: 1,
     },
   });
+
   const backendOutputAfterLoadedByScene = transformSceneToSaveModel(sceneBackend, false);
 
   return backendOutputAfterLoadedByScene;

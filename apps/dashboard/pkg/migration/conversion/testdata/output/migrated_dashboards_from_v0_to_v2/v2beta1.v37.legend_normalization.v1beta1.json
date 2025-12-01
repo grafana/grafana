@@ -187,7 +187,7 @@
           "h": 1,
           "w": 24,
           "x": 0,
-          "y": 0
+          "y": 3
         },
         "id": -1,
         "title": "Row with Nested Panels Having Various Legend Configs",
@@ -198,7 +198,7 @@
           "h": 3,
           "w": 6,
           "x": 0,
-          "y": 0
+          "y": 3
         },
         "id": 11,
         "options": {
@@ -214,7 +214,7 @@
           "h": 3,
           "w": 6,
           "x": 0,
-          "y": 0
+          "y": 3
         },
         "id": 12,
         "options": {
@@ -233,7 +233,7 @@
           "h": 3,
           "w": 6,
           "x": 0,
-          "y": 0
+          "y": 3
         },
         "id": 13,
         "options": {

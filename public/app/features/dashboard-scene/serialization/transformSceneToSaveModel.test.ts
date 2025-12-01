@@ -1120,20 +1120,19 @@ describe('rowItemToSaveModel', () => {
     const rowPanel = panelsArray[0] as RowPanel;
     expect(rowPanel.type).toBe('row');
     expect(rowPanel.title).toBe('Test Row');
-    expect(rowPanel.gridPos.y).toBe(5);
-    expect(rowPanel.gridPos.h).toBe(1);
+    expect(rowPanel.gridPos?.y).toBe(5);
+    expect(rowPanel.gridPos?.h).toBe(1);
     expect(rowPanel.collapsed).toBe(false);
 
-    // Content panel should be at Y=5 (same as row - this is Grafana's v1 behavior where
-    // expanded row panels and their content share the same Y position)
+    // Content panel should be at Y=6 (panelStartY = currentY + 1)
+    // Panel at relative Y=0 gets absolute Y = 0 + 6 = 6
     const contentPanel = panelsArray[1] as Panel;
     expect(contentPanel.title).toBe('Test Panel');
-    expect(contentPanel.gridPos?.y).toBe(5);
+    expect(contentPanel.gridPos?.y).toBe(6);
     expect(contentPanel.gridPos?.h).toBe(8);
 
-    // Next Y should be after all content (relative maxY + 1)
-    // Panel at relative Y=0 with H=8 means maxRelativeY = 8
-    expect(nextY).toBe(9);
+    // Next Y should be panelStartY + maxRelativeY = 6 + 8 = 14
+    expect(nextY).toBe(14);
   });
 
   it('should convert a collapsed row with panels stored inside the row panel', () => {
@@ -1169,15 +1168,17 @@ describe('rowItemToSaveModel', () => {
     const rowPanel = panelsArray[0] as RowPanel;
     expect(rowPanel.type).toBe('row');
     expect(rowPanel.title).toBe('Collapsed Row');
-    expect(rowPanel.gridPos.y).toBe(10);
+    expect(rowPanel.gridPos?.y).toBe(10);
     expect(rowPanel.collapsed).toBe(true);
 
-    // Collapsed panels should be stored inside the row
+    // Collapsed panels should be stored inside the row with absolute Y
+    // panelStartY = 10 + 1 = 11, panel Y = 0 + 11 = 11
     expect(rowPanel.panels).toHaveLength(1);
     expect(rowPanel.panels![0].title).toBe('Collapsed Panel');
+    expect(rowPanel.panels![0].gridPos?.y).toBe(11);
 
-    // Next Y should still advance based on max relative Y
-    expect(nextY).toBe(9);
+    // Next Y should be panelStartY + maxRelativeY = 11 + 8 = 19
+    expect(nextY).toBe(19);
   });
 
   it('should handle hidden header rows without creating a row panel', () => {
@@ -1216,8 +1217,10 @@ describe('rowItemToSaveModel', () => {
     // Hidden header rows keep relative Y positions (no adjustment)
     expect(contentPanel.gridPos?.y).toBe(0);
 
-    // For hidden header rows, currentY is NOT updated
-    expect(nextY).toBe(3);
+    // For hidden header rows with DefaultGridLayoutManager, currentY IS updated
+    // based on panel heights so next row starts after this content
+    // Panel at y=0 with h=8 means max extent = 8
+    expect(nextY).toBe(8);
   });
 
   it('should handle row with repeat variable', () => {
@@ -1305,24 +1308,26 @@ describe('rowItemToSaveModel', () => {
     const panelsArray: Array<Panel | RowPanel> = [];
 
     // Process first row starting at Y=0
+    // Row 1 at Y=0, panel at panelStartY=1, nextY = 1 + 8 = 9
     let nextY = rowItemToSaveModel(rowItem1, panelsArray, false, 0);
-    expect(nextY).toBe(9); // maxRelativeY (8) + 1
+    expect(nextY).toBe(9);
 
-    // Process second row starting at the returned Y
+    // Process second row starting at the returned Y=9
+    // Row 2 at Y=9, panel at panelStartY=10, nextY = 10 + 4 = 14
     nextY = rowItemToSaveModel(rowItem2, panelsArray, false, nextY);
-    expect(nextY).toBe(5); // maxRelativeY (4) + 1
+    expect(nextY).toBe(14);
 
     // Should have 4 items total: 2 row panels + 2 content panels
     expect(panelsArray).toHaveLength(4);
 
     // First row at Y=0
-    expect((panelsArray[0] as RowPanel).gridPos.y).toBe(0);
-    // First panel at Y=0 (same as row - v1 behavior)
-    expect((panelsArray[1] as Panel).gridPos?.y).toBe(0);
+    expect((panelsArray[0] as RowPanel).gridPos?.y).toBe(0);
+    // First panel at panelStartY = 0 + 1 = 1
+    expect((panelsArray[1] as Panel).gridPos?.y).toBe(1);
     // Second row at Y=9
-    expect((panelsArray[2] as RowPanel).gridPos.y).toBe(9);
-    // Second panel at Y=9 (same as row - v1 behavior)
-    expect((panelsArray[3] as Panel).gridPos?.y).toBe(9);
+    expect((panelsArray[2] as RowPanel).gridPos?.y).toBe(9);
+    // Second panel at panelStartY = 9 + 1 = 10
+    expect((panelsArray[3] as Panel).gridPos?.y).toBe(10);
   });
 
   it('should handle expanded parent row with nested rows (flattening to top level)', () => {
@@ -1370,21 +1375,22 @@ describe('rowItemToSaveModel', () => {
     const parentRowPanel = panelsArray[0] as RowPanel;
     expect(parentRowPanel.type).toBe('row');
     expect(parentRowPanel.title).toBe('Parent Row');
-    expect(parentRowPanel.gridPos.y).toBe(0);
+    expect(parentRowPanel.gridPos?.y).toBe(0);
 
-    // Nested row at Y=0 (same as parent - v1 behavior)
+    // Nested row at Y=1 (currentY + 1 after parent row)
     const nestedRowPanel = panelsArray[1] as RowPanel;
     expect(nestedRowPanel.type).toBe('row');
     expect(nestedRowPanel.title).toBe('Nested Row');
-    expect(nestedRowPanel.gridPos.y).toBe(0);
+    expect(nestedRowPanel.gridPos?.y).toBe(1);
 
-    // Nested panel at Y=0 (same as nested row - v1 behavior)
+    // Nested panel at Y=2 (panelStartY = 1 + 1 = 2)
     const nestedPanel = panelsArray[2] as Panel;
     expect(nestedPanel.title).toBe('Nested Panel');
-    expect(nestedPanel.gridPos?.y).toBe(0);
+    expect(nestedPanel.gridPos?.y).toBe(2);
 
     // Next Y should be after all nested content
-    expect(nextY).toBe(7); // maxRelativeY (6) + 1
+    // Nested row: panelStartY=2, maxRelativeY=6, nextY = 2 + 6 = 8
+    expect(nextY).toBe(8);
   });
 
   it('should handle collapsed parent row with nested rows (storing inside parent)', () => {
@@ -1422,7 +1428,7 @@ describe('rowItemToSaveModel', () => {
     });
 
     const panelsArray: Array<Panel | RowPanel> = [];
-    const nextY = rowItemToSaveModel(parentRow, panelsArray, false, 5);
+    rowItemToSaveModel(parentRow, panelsArray, false, 5);
 
     // For collapsed parent with nested rows, only the parent row panel is added
     // Nested content is flattened and stored inside parent's panels array
@@ -1431,7 +1437,7 @@ describe('rowItemToSaveModel', () => {
     const parentRowPanel = panelsArray[0] as RowPanel;
     expect(parentRowPanel.type).toBe('row');
     expect(parentRowPanel.title).toBe('Collapsed Parent Row');
-    expect(parentRowPanel.gridPos.y).toBe(5);
+    expect(parentRowPanel.gridPos?.y).toBe(5);
     expect(parentRowPanel.collapsed).toBe(true);
 
     // Nested panels should be stored inside the parent row
@@ -1490,12 +1496,107 @@ describe('rowItemToSaveModel', () => {
     // Should have: outer row + middle row + inner row + inner panel
     expect(panelsArray).toHaveLength(4);
 
+    // Outer Row at Y=0
     expect((panelsArray[0] as RowPanel).title).toBe('Outer Row');
+    expect((panelsArray[0] as RowPanel).gridPos?.y).toBe(0);
+    // Middle Row at Y=1 (after outer)
     expect((panelsArray[1] as RowPanel).title).toBe('Middle Row');
+    expect((panelsArray[1] as RowPanel).gridPos?.y).toBe(1);
+    // Inner Row at Y=2 (after middle)
     expect((panelsArray[2] as RowPanel).title).toBe('Inner Row');
+    expect((panelsArray[2] as RowPanel).gridPos?.y).toBe(2);
+    // Inner Panel at Y=3 (panelStartY = 2 + 1)
     expect((panelsArray[3] as Panel).title).toBe('Inner Panel');
+    expect((panelsArray[3] as Panel).gridPos?.y).toBe(3);
 
     // Next Y should be after all content
-    expect(nextY).toBe(5); // maxRelativeY (4) + 1
+    // Inner row: panelStartY=3, maxRelativeY=4, nextY = 3 + 4 = 7
+    expect(nextY).toBe(7);
+  });
+
+  it('should handle hidden header row with multiple panels and update currentY correctly', () => {
+    // Create two panels at different Y positions
+    const gridItem1 = new DashboardGridItem({
+      key: 'griditem-1',
+      x: 0,
+      y: 0,
+      width: 12,
+      height: 8,
+      body: new VizPanel({
+        key: 'panel-1',
+        title: 'Panel 1',
+        pluginId: 'timeseries',
+      }),
+    });
+
+    const gridItem2 = new DashboardGridItem({
+      key: 'griditem-2',
+      x: 0,
+      y: 8,
+      width: 12,
+      height: 6,
+      body: new VizPanel({
+        key: 'panel-2',
+        title: 'Panel 2',
+        pluginId: 'timeseries',
+      }),
+    });
+
+    const hiddenHeaderRow = new RowItem({
+      title: '',
+      collapse: false,
+      hideHeader: true,
+      layout: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [gridItem1, gridItem2],
+        }),
+      }),
+    });
+
+    // Following row to verify Y progression
+    const gridItem3 = new DashboardGridItem({
+      key: 'griditem-3',
+      x: 0,
+      y: 0,
+      width: 12,
+      height: 4,
+      body: new VizPanel({
+        key: 'panel-3',
+        title: 'Panel 3',
+        pluginId: 'timeseries',
+      }),
+    });
+
+    const followingRow = new RowItem({
+      title: 'Following Row',
+      collapse: false,
+      layout: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [gridItem3],
+        }),
+      }),
+    });
+
+    const panelsArray: Array<Panel | RowPanel> = [];
+
+    // Process hidden header row starting at Y=0
+    let nextY = rowItemToSaveModel(hiddenHeaderRow, panelsArray, false, 0);
+
+    // Hidden header row panels keep relative Y, but currentY advances
+    // Panel 1: y=0, h=8
+    // Panel 2: y=8, h=6 -> max extent = 14
+    expect(nextY).toBe(14);
+    expect(panelsArray).toHaveLength(2);
+    expect((panelsArray[0] as Panel).gridPos?.y).toBe(0);
+    expect((panelsArray[1] as Panel).gridPos?.y).toBe(8);
+
+    // Process following row - should start at Y=14
+    nextY = rowItemToSaveModel(followingRow, panelsArray, false, nextY);
+
+    expect(panelsArray).toHaveLength(4); // 2 from hidden header + row panel + panel
+    const followingRowPanel = panelsArray[2] as RowPanel;
+    expect(followingRowPanel.type).toBe('row');
+    expect(followingRowPanel.title).toBe('Following Row');
+    expect(followingRowPanel.gridPos?.y).toBe(14); // Starts after hidden header content
   });
 });

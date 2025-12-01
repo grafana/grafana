@@ -333,7 +333,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       useQueriesAsFilterForOptions: true,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
       supportsMultiValueOperators: Boolean(
-        getDataSourceSrv().getInstanceSettings({ type: ds.type })?.meta.multiValueFilterOperators
+        getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
     };
     if (variable.spec.allowCustomValue !== undefined) {
@@ -540,7 +540,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             useQueriesAsFilterForOptions: true,
             layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
             supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings({ type: ds.type })?.meta.multiValueFilterOperators
+              getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
             ),
           });
         }
