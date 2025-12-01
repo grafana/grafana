@@ -201,9 +201,16 @@ const exploreMapSlice = createSlice({
 
     loadCanvas: (state, action: PayloadAction<ExploreMapState>) => {
       const loadedState = action.payload;
-      // Clear any selection state from loaded data
-      loadedState.selectedPanelIds = [];
-      return loadedState;
+
+      // Merge with initial state to ensure we always have required defaults
+      // and to avoid persisting ephemeral state like selection and cursors.
+      return {
+        ...initialExploreMapState,
+        ...loadedState,
+        panels: loadedState.panels || {},
+        selectedPanelIds: [],
+        cursors: {},
+      };
     },
 
     updateCursor: (state, action: PayloadAction<UserCursor>) => {

@@ -30,6 +30,12 @@ export function useCanvasPersistence() {
 
   // Save state to storage whenever it changes, including Explore state
   useEffect(() => {
+    // Don't persist an empty canvas; this avoids removing a previously saved
+    // non-empty canvas when the in-memory state is still at its initial value.
+    if (!exploreMapState || Object.keys(exploreMapState.panels || {}).length === 0) {
+      return;
+    }
+
     try {
       // Enrich exploreMapState with current Explore state for each panel
       const enrichedState: ExploreMapState = {
