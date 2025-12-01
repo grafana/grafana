@@ -243,7 +243,7 @@ export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2
 
 export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage) {
   await page.getByLabel('Expand Panel layout category').click();
-  await page.getByLabel('Auto grid').click();
+  await page.getByLabel('layout-selection-option-Auto grid').click();
   // confirm layout change if applicable
   const confirmModal = dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete);
   if (confirmModal) {
