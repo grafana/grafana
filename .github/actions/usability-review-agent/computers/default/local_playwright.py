@@ -37,7 +37,7 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
 
         # Navigate to target URL from environment variable, or use docs page as fallback
         target_url = os.environ.get("TARGET_URL", "https://grafana.com/docs/")
-        page.goto(target_url)
+        page.goto(target_url, wait_until="networkidle", timeout=30000)
 
         return browser, page
 
