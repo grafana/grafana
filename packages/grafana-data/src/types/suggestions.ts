@@ -2,7 +2,6 @@ import { defaultsDeep } from 'lodash';
 
 import { DataTransformerConfig } from '@grafana/schema';
 
-import { PanelPlugin } from '../panel/PanelPlugin';
 import { getPanelDataSummary, PanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
 
 import { DataFrame } from './dataFrame';

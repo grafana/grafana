@@ -3,6 +3,7 @@ import {
   PanelData,
   PanelDataSummary,
   PanelPlugin,
+  PanelPluginMeta,
   PanelPluginVisualizationSuggestion,
   PreferredVisualisationType,
   VisualizationSuggestionScore,
@@ -12,25 +13,7 @@ import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { getAllPanelPluginMeta } from '../state/util';
 
-export const panelsToCheckFirst = [
-  'timeseries',
-  'barchart',
-  'gauge',
-  'stat',
-  'piechart',
-  'bargauge',
-  'table',
-  'state-timeline',
-  'status-history',
-  'logs',
-  'candlestick',
-  'flamegraph',
-  'traces',
-  'nodeGraph',
-  'heatmap',
-  'histogram',
-  'geomap',
-];
+import { panelsToCheckFirst } from './consts';
 
 /**
  * gather and cache the plugins which provide visualization suggestions so they can be invoked to build suggestions
@@ -84,8 +67,24 @@ const mapPreferredVisualisationTypeToPlugin = (type: string): PreferredVisualisa
 /**
  * given a list of suggestions, sort them in place based on score and preferred visualisation type
  */
-function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[], dataSummary: PanelDataSummary) {
+export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[], dataSummary: PanelDataSummary) {
+  const panelPluginsAsMap = getAllPanelPluginMeta().reduce<Record<string, PanelPluginMeta>>((acc, panel) => {
+    acc[panel.id] = panel;
+    return acc;
+  }, {});
+
   suggestions.sort((a, b) => {
+    // if one of these suggestions is from a core panel and the other isn't, prioritize the core panel.
+    const pluginMetaA = panelPluginsAsMap[a.pluginId];
+    const pluginMetaB = panelPluginsAsMap[b.pluginId];
+    if (pluginMetaA?.module?.startsWith('core:') && !pluginMetaB?.module?.startsWith('core:')) {
+      return -1;
+    }
+    if (pluginMetaB?.module?.startsWith('core:') && !pluginMetaA?.module?.startsWith('core:')) {
+      return 1;
+    }
+
+    // if a preferred visualisation type matches the data, prioritize it
     const mappedA = mapPreferredVisualisationTypeToPlugin(a.pluginId);
     if (mappedA && dataSummary.hasPreferredVisualisationType(mappedA)) {
       return -1;
@@ -94,6 +93,8 @@ function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[], data
     if (mappedB && dataSummary.hasPreferredVisualisationType(mappedB)) {
       return 1;
     }
+
+    // compare scores directly if there are no other factors
     return (b.score ?? VisualizationSuggestionScore.OK) - (a.score ?? VisualizationSuggestionScore.OK);
   });
 }
