@@ -1,3 +1,4 @@
+import os
 from playwright.sync_api import Browser, Page
 from ..shared.base_playwright import BasePlaywrightComputer
 
@@ -32,8 +33,9 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
         page.set_viewport_size({"width": width, "height": height})
         page.on("close", self._handle_page_close)
 
-        # Start with a blank page instead of navigating to Bing
-        page.goto("https://grafana.com/docs/")
+        # Navigate to target URL from environment variable, or use docs page as fallback
+        target_url = os.environ.get("TARGET_URL", "https://grafana.com/docs/")
+        page.goto(target_url)
 
         return browser, page
 
