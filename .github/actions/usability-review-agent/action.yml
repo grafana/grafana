@@ -51,6 +51,9 @@ runs:
         python -m pip install -U pip
         pip install -r requirements.txt
         python -m playwright install --with-deps chromium
+        echo "System info:"
+        free -h || echo "free command not available"
+        df -h | head -5
 
     - name: Run usability review agent
       shell: bash
