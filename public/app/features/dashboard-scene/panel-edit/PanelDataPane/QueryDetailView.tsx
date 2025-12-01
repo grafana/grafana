@@ -8,7 +8,6 @@ import {
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
   GrafanaTheme2,
-  PanelData,
   TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -42,6 +41,7 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
   }, []);
 
   const [dsSettings, setDsSettings] = useState<DataSourceInstanceSettings | undefined>(initialDsSettings);
+  const [needsQueryRun, setNeedsQueryRun] = useState(false);
 
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
@@ -82,6 +82,7 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
           const defaultQuery = datasource.getDefaultQuery?.(CoreApp.PanelEditor) || {};
           return {
             ...defaultQuery,
+            ...q,
             datasource: { uid: datasource.uid, type: datasource.type },
             refId: q.refId,
           };
@@ -93,18 +94,28 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
         datasource: { uid: datasource.uid, type: datasource.type },
         queries: newQueries,
       });
-      queryRunner.runQueries();
-    }
-  }, [datasource, queryIndex, queryRunner]);
 
-  const handleDataSourceChange = useCallback(async (newDsSettings: DataSourceInstanceSettings) => {
-    setDatasourceRef({
-      // FIXME: apiVersion isn't on the datasources we looked at.
-      uid: newDsSettings.uid,
-      type: newDsSettings.type,
-    });
-    setDsSettings(newDsSettings);
-  }, []);
+      if (needsQueryRun) {
+        queryRunner.runQueries();
+        setNeedsQueryRun(false);
+      }
+    }
+  }, [datasource, queryIndex, queryRunner, needsQueryRun]);
+
+  const handleDataSourceChange = useCallback(
+    async (newDsSettings: DataSourceInstanceSettings) => {
+      setDatasourceRef({
+        // FIXME: apiVersion isn't on the datasources we looked at.
+        uid: newDsSettings.uid,
+        type: newDsSettings.type,
+      });
+      setDsSettings(newDsSettings);
+      if (newDsSettings.uid !== dsSettings?.uid) {
+        setNeedsQueryRun(true);
+      }
+    },
+    [dsSettings]
+  );
 
   const handleQueryChange = useCallback(
     (updatedQuery: DataQuery) => {
