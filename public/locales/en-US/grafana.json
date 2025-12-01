@@ -6235,6 +6235,11 @@
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-cannot-delete-provisioned-dashboard": "Cannot delete provisioned dashboard"
     },
+    "query-detail-view": {
+      "loading": "Loading data source...",
+      "no-editor": "This data source does not have a query editor",
+      "select-datasource": "Select data source"
+    },
     "query-editor": {
       "query": "Query"
     },
@@ -6358,11 +6363,6 @@
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
       "title-validation-failed": "Dashboard title validation failed."
-    },
-    "scene-query-detail-view": {
-      "loading": "Loading data source...",
-      "no-editor": "This data source does not have a query editor",
-      "select-datasource": "Select data source"
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",

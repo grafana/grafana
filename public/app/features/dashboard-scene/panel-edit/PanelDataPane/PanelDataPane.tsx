@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -14,7 +13,7 @@ import {
   VizPanel,
   SceneDataTransformer,
 } from '@grafana/scenes';
-import { Container, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
@@ -22,11 +21,11 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
+import { DetailView } from './DetailView';
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
-import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
+import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
 import { QueryTransformList, QueryTransformItem } from './QueryTransformList';
-import { SceneQueryDetailView } from './SceneQueryDetailView';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId } from './types';
 
@@ -286,46 +285,6 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     [tabs, selectedId]
   );
 
-  const renderDetailPanel = useCallback(() => {
-    if (!selectedItem) {
-      return (
-        <div className={styles.emptyState}>
-          <p>
-            <Trans i18nKey="dashboard-scene.panel-data-pane.empty-state">
-              Select a query or transformation to edit
-            </Trans>
-          </p>
-        </div>
-      );
-    }
-
-    if (selectedItem.type === 'query' && 'refId' in selectedItem.data) {
-      const query = selectedItem.data;
-      return (
-        <div className={styles.detailContent}>
-          <ScrollContainer>
-            <SceneQueryDetailView panel={panel} query={query} queryIndex={selectedItem.index} />
-          </ScrollContainer>
-        </div>
-      );
-    } else {
-      const transformsTab = tabs.find((t) => t.tabId === TabId.Transformations);
-      if (transformsTab instanceof PanelDataTransformationsTab && 'id' in selectedItem.data) {
-        return (
-          <div className={styles.detailContent}>
-            <ScrollContainer>
-              <Container>
-                <PanelDataTransformationsTabRendered model={transformsTab} />
-              </Container>
-            </ScrollContainer>
-          </div>
-        );
-      }
-    }
-
-    return null;
-  }, [selectedItem, tabs, styles, panel]);
-
   // Get data for transformations drawer
   const sourceData = queryRunner?.useState();
   const series = sourceData?.data?.series || [];
@@ -347,7 +306,9 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
               onRemoveTransform={handleRemoveTransform}
             />
           </div>
-          <div className={styles.rightPanel}>{renderDetailPanel()}</div>
+          <div className={styles.rightPanel}>
+            <DetailView selectedItem={selectedItem} panel={panel} tabs={tabs} />
+          </div>
         </div>
       </div>
       <TransformationsDrawer
@@ -410,41 +371,6 @@ function getStyles(theme: GrafanaTheme2) {
       flex: 1,
       minWidth: 0,
       overflow: 'hidden',
-    }),
-    detailContent: css({
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      background: theme.colors.background.primary,
-    }),
-    detailHeader: css({
-      padding: theme.spacing(2),
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.secondary,
-      '& h3': {
-        margin: 0,
-        marginBottom: theme.spacing(0.5),
-        fontSize: theme.typography.h4.fontSize,
-        fontWeight: theme.typography.fontWeightMedium,
-      },
-    }),
-    detailHeaderSubtext: css({
-      margin: 0,
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
-    }),
-    detailBody: css({
-      flex: 1,
-      overflow: 'auto',
-      minHeight: 0,
-    }),
-    emptyState: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.h5.fontSize,
     }),
   };
 }

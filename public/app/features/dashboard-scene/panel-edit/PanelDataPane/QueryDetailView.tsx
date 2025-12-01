@@ -21,13 +21,13 @@ import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
-interface SceneQueryDetailViewProps {
+interface QueryDetailViewProps {
   panel: VizPanel;
   query: SceneDataQuery;
   queryIndex: number;
 }
 
-export function SceneQueryDetailView({ panel, query, queryIndex }: SceneQueryDetailViewProps) {
+export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewProps) {
   const styles = useStyles2(getStyles);
   const [datasource, setDatasource] = useState<DataSourceApi | null>(null);
   const [dsSettings, setDsSettings] = useState<DataSourceInstanceSettings | null>(null);
@@ -129,7 +129,7 @@ export function SceneQueryDetailView({ panel, query, queryIndex }: SceneQueryDet
     if (!datasource || !dsSettings) {
       return (
         <div className={styles.noEditor}>
-          <Trans i18nKey="dashboard-scene.scene-query-detail-view.loading">Loading data source...</Trans>
+          <Trans i18nKey="dashboard-scene.query-detail-view.loading">Loading data source...</Trans>
         </div>
       );
     }
@@ -138,7 +138,7 @@ export function SceneQueryDetailView({ panel, query, queryIndex }: SceneQueryDet
     if (!QueryEditor) {
       return (
         <div className={styles.noEditor}>
-          <Trans i18nKey="dashboard-scene.scene-query-detail-view.no-editor">
+          <Trans i18nKey="dashboard-scene.query-detail-view.no-editor">
             This data source does not have a query editor
           </Trans>
         </div>
@@ -170,7 +170,7 @@ export function SceneQueryDetailView({ panel, query, queryIndex }: SceneQueryDet
         <DataSourcePicker
           current={dsSettings?.uid || query.datasource}
           onChange={handleDataSourceChange}
-          placeholder={t('dashboard-scene.scene-query-detail-view.select-datasource', 'Select data source')}
+          placeholder={t('dashboard-scene.query-detail-view.select-datasource', 'Select data source')}
         />
       </div>
 
