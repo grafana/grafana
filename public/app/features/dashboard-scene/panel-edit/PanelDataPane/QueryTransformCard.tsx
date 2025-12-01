@@ -9,7 +9,7 @@ import { Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 interface QueryTransformCardProps {
   item: SceneDataQuery | DataTransformerConfig;
-  type: 'query' | 'transform';
+  type: 'query' | 'transform' | 'expression';
   index: number;
   isSelected: boolean;
   onClick: () => void;
@@ -23,8 +23,8 @@ export const QueryTransformCard = memo(
     const styles = useStyles2(getStyles);
 
     const getName = (): string => {
-      if (type === 'query' && 'refId' in item) {
-        return item.refId || `Query ${index + 1}`;
+      if ((type === 'query' || type === 'expression') && 'refId' in item) {
+        return item.refId || `${type === 'expression' ? 'Expression' : 'Query'} ${index + 1}`;
       } else if ('id' in item) {
         return item.id.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
       }
@@ -39,13 +39,16 @@ export const QueryTransformCard = memo(
         } catch {
           return 'Unknown datasource';
         }
+      } else if (type === 'expression' && 'type' in item && typeof item.type === 'string') {
+        // Show expression type (Math, Reduce, etc.)
+        return item.type.charAt(0).toUpperCase() + item.type.slice(1);
       }
       return '';
     };
 
-    const isHidden = type === 'query' && 'hide' in item && item.hide;
-    const icon = type === 'query' ? 'database' : 'process';
-    const typeLabel = type === 'query' ? 'Query' : 'Transformation';
+    const isHidden = (type === 'query' || type === 'expression') && 'hide' in item && item.hide;
+    const icon = type === 'query' ? 'database' : type === 'expression' ? 'calculator-alt' : 'process';
+    const typeLabel = type === 'query' ? 'Query' : type === 'expression' ? 'Expression' : 'Transformation';
     const name = getName();
     const datasourceName = getDatasourceName();
 
@@ -71,14 +74,22 @@ export const QueryTransformCard = memo(
         data-testid={`${type}-card-${index}`}
       >
         {/* Header with type and action icons */}
-        <div className={type === 'query' ? styles.headerQuery : styles.headerTransform}>
+        <div
+          className={
+            type === 'query'
+              ? styles.headerQuery
+              : type === 'expression'
+                ? styles.headerExpression
+                : styles.headerTransform
+          }
+        >
           <div className={styles.headerLeft}>
             <Icon name={icon} className={styles.headerIcon} />
             <span className={styles.typeLabel}>{typeLabel}</span>
           </div>
           <div className={`${styles.actions} ${styles.actionsClass}`}>
             <Stack gap={0.5}>
-              {type === 'query' && onToggleVisibility && (
+              {(type === 'query' || type === 'expression') && onToggleVisibility && (
                 <IconButton
                   name={isHidden ? 'eye-slash' : 'eye'}
                   size="sm"
@@ -92,7 +103,7 @@ export const QueryTransformCard = memo(
                   className={styles.actionButton}
                 />
               )}
-              {type === 'query' && onDuplicate && (
+              {(type === 'query' || type === 'expression') && onDuplicate && (
                 <IconButton
                   name="copy"
                   size="sm"
@@ -170,6 +181,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.isDark
         ? `${theme.visualization.getColorByName('orange')}20`
         : `${theme.visualization.getColorByName('orange')}15`,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    headerExpression: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing(1, 1.5),
+      background: theme.isDark
+        ? `${theme.visualization.getColorByName('purple')}20`
+        : `${theme.visualization.getColorByName('purple')}15`,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     headerLeft: css({

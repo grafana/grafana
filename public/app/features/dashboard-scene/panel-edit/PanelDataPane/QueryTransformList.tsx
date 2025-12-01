@@ -2,15 +2,16 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
 import { SceneDataQuery } from '@grafana/scenes';
-import { Button, ScrollContainer, Stack, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 
+import { AddDataItemMenu } from './AddDataItemMenu';
 import { QueryTransformCard } from './QueryTransformCard';
 
 export interface QueryTransformItem {
   id: string;
-  type: 'query' | 'transform';
+  type: 'query' | 'transform' | 'expression';
   data: SceneDataQuery | DataTransformerConfig;
   index: number;
 }
@@ -21,9 +22,13 @@ interface QueryTransformListProps {
   onSelect: (id: string) => void;
   onAddQuery: () => void;
   onAddTransform: () => void;
+  onAddExpression: (type: ExpressionQueryType) => void;
   onDuplicateQuery?: (index: number) => void;
   onRemoveQuery?: (index: number) => void;
   onToggleQueryVisibility?: (index: number) => void;
+  onDuplicateExpression?: (index: number) => void;
+  onRemoveExpression?: (index: number) => void;
+  onToggleExpressionVisibility?: (index: number) => void;
   onRemoveTransform?: (index: number) => void;
 }
 
@@ -34,14 +39,19 @@ export const QueryTransformList = memo(
     onSelect,
     onAddQuery,
     onAddTransform,
+    onAddExpression,
     onDuplicateQuery,
     onRemoveQuery,
     onToggleQueryVisibility,
+    onDuplicateExpression,
+    onRemoveExpression,
+    onToggleExpressionVisibility,
     onRemoveTransform,
   }: QueryTransformListProps) => {
     const styles = useStyles2(getStyles);
 
     const queries = items.filter((item) => item.type === 'query');
+    const expressions = items.filter((item) => item.type === 'expression');
     const transforms = items.filter((item) => item.type === 'transform');
 
     return (
@@ -69,6 +79,26 @@ export const QueryTransformList = memo(
                 </div>
               )}
 
+              {expressions.length > 0 && (
+                <div className={styles.section}>
+                  {expressions.map((item) => (
+                    <QueryTransformCard
+                      key={item.id}
+                      item={item.data}
+                      type="expression"
+                      index={item.index}
+                      isSelected={selectedId === item.id}
+                      onClick={() => onSelect(item.id)}
+                      onDuplicate={onDuplicateExpression ? () => onDuplicateExpression(item.index) : undefined}
+                      onRemove={onRemoveExpression ? () => onRemoveExpression(item.index) : undefined}
+                      onToggleVisibility={
+                        onToggleExpressionVisibility ? () => onToggleExpressionVisibility(item.index) : undefined
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+
               {transforms.length > 0 && (
                 <div className={styles.section}>
                   {transforms.map((item) => (
@@ -89,14 +119,7 @@ export const QueryTransformList = memo(
         </div>
 
         <div className={styles.actions}>
-          <Stack direction="column" gap={1}>
-            <Button icon="plus" variant="secondary" onClick={onAddQuery} fullWidth>
-              <Trans i18nKey="dashboard-scene.query-transform-list.add-query">Add query</Trans>
-            </Button>
-            <Button icon="plus" variant="secondary" onClick={onAddTransform} fullWidth>
-              <Trans i18nKey="dashboard-scene.query-transform-list.add-transformation">Add transformation</Trans>
-            </Button>
-          </Stack>
+          <AddDataItemMenu onAddQuery={onAddQuery} onAddTransform={onAddTransform} onAddExpression={onAddExpression} />
         </div>
       </div>
     );

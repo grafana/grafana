@@ -5798,6 +5798,18 @@
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-allow-custom-values": "Allow custom values"
     },
+    "add-data-item-menu": {
+      "add-button": "Add",
+      "add-query": "Query",
+      "add-transformation": "Transformation",
+      "expression-classic": "Classic condition",
+      "expression-math": "Math",
+      "expression-reduce": "Reduce",
+      "expression-resample": "Resample",
+      "expression-sql": "SQL",
+      "expression-threshold": "Threshold",
+      "expressions-group": "Expression"
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Could not navigate to the selected dashboard. Please try again.",
@@ -5987,6 +5999,9 @@
       "show-more": "Show more",
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
+    },
+    "expression-detail-view": {
+      "loading": "Loading expression editor..."
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -6249,10 +6264,6 @@
       "remove-query": "Remove query",
       "remove-transform": "Remove transformation",
       "show-response": "Show response"
-    },
-    "query-transform-list": {
-      "add-query": "Add query",
-      "add-transformation": "Add transformation"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",

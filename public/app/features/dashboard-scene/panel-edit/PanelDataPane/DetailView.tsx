@@ -5,7 +5,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Container, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
+import { ExpressionDetailView } from './ExpressionDetailView';
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
 import { QueryDetailView } from './QueryDetailView';
 import { QueryTransformItem } from './QueryTransformList';
@@ -40,6 +42,15 @@ export const DetailView = memo(({ selectedItem, panel, tabs }: DetailViewProps) 
           <QueryDetailView panel={panel} query={query} queryIndex={selectedItem.index} />
         </ScrollContainer>
       );
+    } else if (selectedItem.type === 'expression' && 'refId' in selectedItem.data) {
+      const data = selectedItem.data;
+      if (isExpressionQuery(data)) {
+        return (
+          <ScrollContainer>
+            <ExpressionDetailView panel={panel} expression={data} expressionIndex={selectedItem.index} />
+          </ScrollContainer>
+        );
+      }
     } else {
       const transformsTab = tabs.find((t) => t.tabId === TabId.Transformations);
       if (transformsTab instanceof PanelDataTransformationsTab && 'id' in selectedItem.data) {

@@ -19,6 +19,9 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
+import { isExpressionQuery } from '../../../expressions/guards';
+import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from '../../../expressions/types';
+import { getDefaults } from '../../../expressions/utils/expressionTypes';
 import { getQueryRunnerFor } from '../../utils/utils';
 
 import { DetailView } from './DetailView';
@@ -99,16 +102,25 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const items: QueryTransformItem[] = useMemo(() => {
     const result: QueryTransformItem[] = [];
 
-    // Add queries
+    // Add queries and expressions (using actual array index)
     const queries = queryRunnerState?.queries || [];
-    queries.forEach((query, index) => {
+    queries.forEach((query, actualIndex) => {
       if ('refId' in query) {
-        result.push({
-          id: `query-${query.refId}`,
-          type: 'query',
-          data: query,
-          index,
-        });
+        if (isExpressionQuery(query)) {
+          result.push({
+            id: `expression-${query.refId}`,
+            type: 'expression',
+            data: query,
+            index: actualIndex, // Store actual index in queries array
+          });
+        } else {
+          result.push({
+            id: `query-${query.refId}`,
+            type: 'query',
+            data: query,
+            index: actualIndex, // Store actual index in queries array
+          });
+        }
       }
     });
 
@@ -165,6 +177,42 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const handleAddTransform = useCallback(() => {
     setTransformDrawerOpen(true);
   }, []);
+
+  const handleAddExpression = useCallback(
+    (type: ExpressionQueryType) => {
+      if (queryRunner) {
+        const queries = queryRunner.state.queries || [];
+
+        // Get next available refId
+        const existingRefIds = queries.map((q) => q.refId);
+        let nextRefId = 'A';
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        for (let i = 0; i < alphabet.length; i++) {
+          if (!existingRefIds.includes(alphabet[i])) {
+            nextRefId = alphabet[i];
+            break;
+          }
+        }
+
+        // Create new expression with defaults
+        const newExpression: ExpressionQuery = getDefaults({
+          refId: nextRefId,
+          type,
+          datasource: { uid: ExpressionDatasourceUID, type: '__expr__' },
+        });
+
+        // Add to queries
+        const newQueries = [...queries, newExpression];
+        queryRunner.setState({ queries: newQueries });
+        queryRunner.runQueries();
+
+        // Select the new expression
+        setSelectedId(`expression-${nextRefId}`);
+      }
+    },
+    [queryRunner]
+  );
 
   const handleTransformationAdd = useCallback(
     (selected: SelectableValue<string>) => {
@@ -261,6 +309,67 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     [queryRunner]
   );
 
+  // Expression handlers (use actual index in queries array)
+  const handleDuplicateExpression = useCallback(
+    (index: number) => {
+      if (queryRunner) {
+        const queries = queryRunner.state.queries || [];
+        const expressionToDuplicate = queries[index];
+
+        if (expressionToDuplicate && isExpressionQuery(expressionToDuplicate)) {
+          const existingRefIds = queries.map((q) => q.refId);
+          let newRefId = expressionToDuplicate.refId;
+          let counter = 1;
+          while (existingRefIds.includes(newRefId)) {
+            newRefId = `${expressionToDuplicate.refId}_${counter}`;
+            counter++;
+          }
+
+          const duplicatedExpression = {
+            ...expressionToDuplicate,
+            refId: newRefId,
+          };
+
+          const newQueries = [...queries, duplicatedExpression];
+          queryRunner.setState({ queries: newQueries });
+          queryRunner.runQueries();
+
+          setSelectedId(`expression-${newRefId}`);
+        }
+      }
+    },
+    [queryRunner]
+  );
+
+  const handleRemoveExpression = useCallback(
+    (index: number) => {
+      if (queryRunner) {
+        const queries = queryRunner.state.queries || [];
+        const newQueries = queries.filter((_, i) => i !== index);
+        queryRunner.setState({ queries: newQueries });
+        queryRunner.runQueries();
+
+        const expressionToRemove = queries[index];
+        if (expressionToRemove && selectedId === `expression-${expressionToRemove.refId}`) {
+          setSelectedId(null);
+        }
+      }
+    },
+    [queryRunner, selectedId]
+  );
+
+  const handleToggleExpressionVisibility = useCallback(
+    (index: number) => {
+      if (queryRunner) {
+        const queries = queryRunner.state.queries || [];
+        const newQueries = queries.map((q, i) => (i === index ? { ...q, hide: !q.hide } : q));
+        queryRunner.setState({ queries: newQueries });
+        queryRunner.runQueries();
+      }
+    },
+    [queryRunner]
+  );
+
   const handleRemoveTransform = useCallback(
     (index: number) => {
       const transformsTab = tabs.find((t) => t.tabId === TabId.Transformations);
@@ -300,9 +409,13 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
               onSelect={handleSelect}
               onAddQuery={handleAddQuery}
               onAddTransform={handleAddTransform}
+              onAddExpression={handleAddExpression}
               onDuplicateQuery={handleDuplicateQuery}
               onRemoveQuery={handleRemoveQuery}
               onToggleQueryVisibility={handleToggleQueryVisibility}
+              onDuplicateExpression={handleDuplicateExpression}
+              onRemoveExpression={handleRemoveExpression}
+              onToggleExpressionVisibility={handleToggleExpressionVisibility}
               onRemoveTransform={handleRemoveTransform}
             />
           </div>
