@@ -34,8 +34,8 @@ jobs:
         with:
           vault_instance: "dev"
           repo_secrets: |
-            OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
-            GRAFANA_SERVICE_ACCOUNT_TOKEN=usability-review-agent:SERVICE_ACCOUNT_TOKEN
+            OPENAI_API_KEY=usability-review-agent:OPENAI_API_KEY
+            GRAFANA_SERVICE_ACCOUNT_TOKEN=usability-review-agent:GRAFANA_SERVICE_ACCOUNT_TOKEN
 
       - name: Set up Python
         uses: actions/setup-python@v5
