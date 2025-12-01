@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 import { AccessoryButton } from '@grafana/plugin-ui';
 
 import { DEFAULT_POLICY } from '../../../../../types';
