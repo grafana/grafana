@@ -31,7 +31,7 @@ export function VisualizationSuggestionCard({
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: cx(className, styles.vizBox, isSelected && styles.selectedBox),
+    className: cx(className, styles.vizBox),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
     ...restProps,
@@ -114,9 +114,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         background: theme.colors.background.secondary,
       },
-    }),
-    selectedBox: css({
-      boxShadow: `inset 0 0 2px 2px ${theme.colors.primary.main}`,
     }),
     imgBox: css({
       display: 'flex',

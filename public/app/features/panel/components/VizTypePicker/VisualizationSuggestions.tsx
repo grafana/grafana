@@ -15,6 +15,7 @@ import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { getAllPanelPluginMeta } from '../../state/util';
+import { MIN_MULTI_COLUMN_SIZE } from '../../suggestions/constants';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
@@ -26,9 +27,6 @@ export interface Props {
   data?: PanelData;
   panel?: PanelModel;
 }
-
-const MIN_COLUMN_SIZE = 220;
-const IMAGE_SIZE = 22;
 
 export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
@@ -213,7 +211,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     grid: css({
       display: 'grid',
       gridGap: theme.spacing(1),
-      gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_COLUMN_SIZE}px, 1fr))`,
+      gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_MULTI_COLUMN_SIZE}px, 1fr))`,
       marginBottom: theme.spacing(1),
       justifyContent: 'space-evenly',
     }),
@@ -243,8 +241,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     vizTypeLogo: css({
       filter: 'grayscale(100%)',
-      maxHeight: IMAGE_SIZE,
-      width: IMAGE_SIZE,
+      maxHeight: theme.typography.body.lineHeight,
+      width: theme.typography.body.lineHeight,
       alignItems: 'center',
       display: 'inline-block',
       marginRight: theme.spacing(1),
