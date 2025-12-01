@@ -147,13 +147,18 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                       <Button
                         variant="primary"
                         size={'md'}
-                        onClick={() => applySuggestion(suggestion)}
                         className={styles.applySuggestionButton}
                         aria-label={t(
                           'panel.visualization-suggestions.apply-suggestion-aria-label',
                           'Apply {{suggestionName}} visualization',
                           { suggestionName: suggestion.name }
                         )}
+                        onClick={() =>
+                          onChange({
+                            pluginId: suggestion.pluginId,
+                            withModKey: false,
+                          })
+                        }
                       >
                         {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
                       </Button>
@@ -241,8 +246,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     vizTypeLogo: css({
       filter: 'grayscale(100%)',
-      maxHeight: theme.typography.body.lineHeight,
-      width: theme.typography.body.lineHeight,
+      maxHeight: `${theme.typography.body.lineHeight}em`,
+      width: `${theme.typography.body.lineHeight}em`,
       alignItems: 'center',
       display: 'inline-block',
       marginRight: theme.spacing(1),
