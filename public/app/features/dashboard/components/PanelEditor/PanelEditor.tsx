@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
 import {
@@ -207,7 +207,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         {this.renderPanelToolbar(styles)}
         <div className={styles.panelWrapper}>
           <AutoSizer>
-            {({ width, height }) => {
+            {({ width, height }: Size) => {
               if (width < 3 || height < 3) {
                 return null;
               }
