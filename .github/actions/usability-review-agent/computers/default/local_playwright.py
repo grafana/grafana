@@ -24,7 +24,9 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
             env={"DISPLAY": ":0"},
         )
 
-        context = browser.new_context()
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
 
         # Add event listeners for page creation and closure
         context.on("page", self._handle_new_page)
