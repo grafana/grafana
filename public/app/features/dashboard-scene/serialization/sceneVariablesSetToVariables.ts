@@ -66,9 +66,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
 
     if (sceneUtils.isQueryVariable(variable)) {
       let options: VariableOption[] = [];
-      // Not sure if we actually have to still support this option given
-      // that it's not exposed in the UI
-      if (transformVariableRefreshToEnum(variable.state.refresh) === 'never' || keepQueryOptions) {
+      if (keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
       const datasource = getElementDatasource(set, variable, 'variable');
@@ -111,7 +109,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           // @ts-expect-error
           value: variable.state.value,
         },
-        options: variableValueOptionsToVariableOptions(variable.state),
+        options: [],
         query: variable.state.query,
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
@@ -329,9 +327,7 @@ export function sceneVariablesSetToSchemaV2Variables(
 
     // Query variable
     if (sceneUtils.isQueryVariable(variable)) {
-      // Not sure if we actually have to still support this option given
-      // that it's not exposed in the UI
-      if (transformVariableRefreshToEnum(variable.state.refresh) === 'never' || keepQueryOptions) {
+      if (keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
       const query = variable.state.query;
@@ -395,13 +391,12 @@ export function sceneVariablesSetToSchemaV2Variables(
 
       // Custom variable
     } else if (sceneUtils.isCustomVariable(variable)) {
-      options = variableValueOptionsToVariableOptions(variable.state);
       const customVariable: CustomVariableKind = {
         kind: 'CustomVariable',
         spec: {
           ...commonProperties,
           current: currentVariableOption,
-          options,
+          options: [],
           query: variable.state.query,
           multi: variable.state.isMulti || false,
           allValue: variable.state.allValue,

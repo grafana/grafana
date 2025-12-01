@@ -1644,7 +1644,12 @@ const injectedRtkApi = api
         invalidatesTags: ['teams'],
       }),
       getTeamById: build.query<GetTeamByIdApiResponse, GetTeamByIdApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.teamId}` }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.teamId}`,
+          params: {
+            accesscontrol: queryArg.accesscontrol,
+          },
+        }),
         providesTags: ['teams'],
       }),
       updateTeam: build.mutation<UpdateTeamApiResponse, UpdateTeamApiArg>({
@@ -3474,6 +3479,7 @@ export type DeleteTeamByIdApiArg = {
 export type GetTeamByIdApiResponse = /** status 200 (empty) */ TeamDto;
 export type GetTeamByIdApiArg = {
   teamId: string;
+  accesscontrol?: boolean;
 };
 export type UpdateTeamApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -6039,6 +6045,7 @@ export type TeamGroupDto = {
   groupId?: string;
   orgId?: number;
   teamId?: number;
+  uid?: string;
 };
 export type TeamGroupMapping = {
   groupId?: string;
@@ -6050,10 +6057,8 @@ export type SearchTeamGroupsQueryResult = {
   totalCount?: number;
 };
 export type UpdateTeamCommand = {
-  Email?: string;
-  ExternalUID?: string;
-  ID?: number;
-  Name?: string;
+  email?: string;
+  name?: string;
 };
 export type TeamMemberDto = {
   auth_module?: string;
