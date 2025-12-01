@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { FC, useCallback, useMemo, useRef } from 'react';
+import { FC, useCallback, useMemo } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
@@ -126,25 +126,18 @@ export function useCombinedLabels(
     !labelsPluginInstalled || loadingLabelsPlugin
   );
 
-  // Use a ref to cache ops label values across renders
-  const opsValuesCache = useRef<Record<string, Set<string>>>({});
-
   // Lazy query for fetching label values on demand
   const [fetchLabelValues] = labelsApi.endpoints.getLabelValues.useLazyQuery();
 
-  //------ Convert the labelsOpsKeys to the same format as the labelsByKeyFromExisingAlerts
-  const labelsByKeyOps = useMemo(() => {
-    return labelsOpsKeys.reduce((acc: Record<string, Set<string>>, label) => {
-      // Preserve cached values if they exist
-      acc[label.name] = opsValuesCache.current[label.name] || new Set();
-      return acc;
-    }, {});
+  //------ Convert the labelsOpsKeys to a Set for quick lookup
+  const opsLabelKeysSet = useMemo(() => {
+    return new Set(labelsOpsKeys.map((label) => label.name));
   }, [labelsOpsKeys]);
 
   //------- Convert the keys from the ops labels to options for the dropdown
   const keysFromGopsLabels = useMemo(() => {
-    return mapLabelsToOptions(Object.keys(labelsByKeyOps).filter(isKeyAllowed), labelsInSubform);
-  }, [labelsByKeyOps, labelsInSubform]);
+    return mapLabelsToOptions(Array.from(opsLabelKeysSet).filter(isKeyAllowed), labelsInSubform);
+  }, [opsLabelKeysSet, labelsInSubform]);
 
   //------- Convert the keys from the existing alerts to options for the dropdown
   const keysFromExistingAlerts = useMemo(() => {
@@ -180,26 +173,15 @@ export function useCombinedLabels(
 
         // Collect values from ops labels (if plugin is installed)
         let opsValues: string[] = [];
-        if (labelsPluginInstalled) {
-          // Check if this key has already fetched values from ops (cached)
-          const cachedValues = opsValuesCache.current[key];
-          if (cachedValues && cachedValues.size > 0) {
-            opsValues = Array.from(cachedValues);
-          } else {
-            // Check if this is an ops label key and fetch values
-            const isOpsKey = labelsByKeyOps[key] !== undefined;
-            if (isOpsKey) {
-              try {
-                const result = await fetchLabelValues({ key }).unwrap();
-                if (result?.values?.length) {
-                  opsValues = result.values.map((value) => value.name);
-                  // Cache the fetched values
-                  opsValuesCache.current[key] = new Set(opsValues);
-                }
-              } catch (error) {
-                console.error('Failed to fetch label values for key:', key, error);
-              }
+        if (labelsPluginInstalled && opsLabelKeysSet.has(key)) {
+          try {
+            // RTK Query handles caching automatically
+            const result = await fetchLabelValues({ key }, true).unwrap();
+            if (result?.values?.length) {
+              opsValues = result.values.map((value) => value.name);
             }
+          } catch (error) {
+            console.error('Failed to fetch label values for key:', key, error);
           }
         }
 
@@ -209,7 +191,7 @@ export function useCombinedLabels(
         return mapLabelsToOptions(combinedValues);
       };
     },
-    [labelsByKeyFromExisingAlerts, labelsPluginInstalled, labelsByKeyOps, fetchLabelValues]
+    [labelsByKeyFromExisingAlerts, labelsPluginInstalled, opsLabelKeysSet, fetchLabelValues]
   );
 
   return {
