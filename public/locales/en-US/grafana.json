@@ -10006,6 +10006,7 @@
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
       "prettify-json": "Expand JSON logs",
       "remove-escaping": "Remove escaping",
+      "reset-highlights": "Reset highlights",
       "resolution-ms": "ms",
       "resolution-ns": "ns",
       "scroll-bottom": "Scroll to bottom",
@@ -10027,7 +10028,8 @@
         "disable-highlighting": "Disable highlighting",
         "download": "Download",
         "enable-highlighting": "Enable highlighting",
-        "filter-level": "Filter logs result by level"
+        "filter-level": "Filter logs result by level",
+        "reset-highlights": "Clear all custom highlights"
       },
       "unwrap-lines": "Unwrap lines",
       "wrap-lines": "Wrap lines"
@@ -10067,6 +10069,7 @@
     "popover-menu": {
       "copy": "Copy selection",
       "disable-menu": "Disable menu",
+      "highlight-occurrences": "Highlight occurrences",
       "line-contains": "Add as line contains filter",
       "line-contains-not": "Add as line does not contain filter"
     },
