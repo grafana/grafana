@@ -268,7 +268,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
                   rowProps={{}}
                   style={{
                     height,
-                    maxHeight: 'unset',
+                    maxHeight: height,
                     width,
                   }}
                 />
@@ -304,7 +304,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
                   rowProps={{}}
                   style={{
                     height,
-                    maxHeight: 'unset',
+                    maxHeight: height,
                     width,
                   }}
                 />
