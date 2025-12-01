@@ -568,14 +568,16 @@ export const getStyles = (
           color: colors.logLineBody,
         },
         // Generate highlight classes from entire theme palette
-        ...theme.visualization.palette.map((_, index) => ({
-          [`.log-custom-highlight-${index}`]: {
-            backgroundColor: theme.visualization.getColorByName(theme.visualization.palette[index]),
-            color: theme.colors.getContrastText(
-              theme.visualization.getColorByName(theme.visualization.palette[index])
-            ),
-          },
-        })).reduce((acc, obj) => ({ ...acc, ...obj }), {}),
+        ...theme.visualization.palette
+          .map((_, index) => ({
+            [`.log-custom-highlight-${index}`]: {
+              backgroundColor: theme.visualization.getColorByName(theme.visualization.palette[index]),
+              color: theme.colors.getContrastText(
+                theme.visualization.getColorByName(theme.visualization.palette[index])
+              ),
+            },
+          }))
+          .reduce((acc, obj) => ({ ...acc, ...obj }), {}),
       },
       '& .no-highlighting': {
         color: theme.colors.text.primary,
