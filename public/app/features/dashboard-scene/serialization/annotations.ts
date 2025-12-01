@@ -103,10 +103,13 @@ export function transformV2ToV1AnnotationQuery(annotation: AnnotationQueryKind):
     };
   }
 
-  // Only include builtIn if it's true (outputs 1), otherwise omit it
-  if (annotation.spec.builtIn) {
-    annoQuerySpec.type = 'dashboard';
-    annoQuerySpec.builtIn = 1;
+  if (annotation.spec.builtIn !== undefined) {
+    if (annotation.spec.builtIn) {
+      annoQuerySpec.type = 'dashboard';
+      annoQuerySpec.builtIn = 1;
+    } else {
+      annoQuerySpec.builtIn = 0;
+    }
   }
 
   if (annotation.spec.filter) {
