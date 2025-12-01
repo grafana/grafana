@@ -1,0 +1,49 @@
+# --- Frontend Build (One-time)
+local_resource(
+  'frontend-assets',
+  cmd='yarn install && yarn dev',
+  dir='../../..',
+  deps=[
+    '../../../public/app',
+    '../../../packages',
+    '../../../scripts/webpack',
+    '../../../tsconfig.json',
+    '../../../package.json',
+    '../../../yarn.lock',
+  ],
+  labels=["local"]
+)
+
+# --- Backend Build
+local_resource(
+  'backend-build',
+  cmd='mkdir -p build && bash ./build-grafana.sh',
+  dir='..',
+  deps=[
+    '../../../pkg',
+    '../../../apps',
+    '../../../kinds',
+    '../../../kindsv2',
+    '../../../local',
+    '../../../scripts',
+    '../../../conf',
+    '../../../go.sum',
+    '../../../go.mod',
+  ],
+  allow_parallel=True,
+  labels=["local"]
+)
+
+# --- Docker Compose
+docker_compose('./docker-compose.yaml')
+
+dc_resource("proxy",
+  resource_deps=["frontend-service"],
+  labels=["services"]
+)
+
+dc_resource("frontend-service",
+  resource_deps=["frontend-assets", "backend-build"],
+  labels=["services"],
+)
+

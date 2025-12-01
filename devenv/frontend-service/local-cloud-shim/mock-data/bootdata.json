@@ -1,0 +1,138 @@
+{
+  "user": {
+    "isSignedIn": true,
+    "id": 0,
+    "uid": "",
+    "login": "",
+    "email": "",
+    "name": "",
+    "theme": "dark",
+    "lightTheme": false,
+    "orgCount": 1,
+    "orgId": 1,
+    "orgName": "Main Org.",
+    "orgRole": "Viewer",
+    "isGrafanaAdmin": false,
+    "gravatarUrl": "",
+    "timezone": "browser",
+    "weekStart": "browser",
+    "locale": "en-US",
+    "regionalFormat": "",
+    "language": "en-US",
+    "helpFlags1": 0,
+    "hasEditPermissionInFolders": false,
+    "authenticatedBy": "",
+    "permissions": {},
+    "analytics": {
+      "identifier": ""
+    }
+  },
+  "settings": {
+    "defaultDatasource": "-- Grafana --",
+    "datasources": {},
+    "minRefreshInterval": "5s",
+    "panels": {},
+    "apps": {},
+    "appUrl": "http://localhost:12345/",
+    "appSubUrl": "",
+    "allowOrgCreate": false,
+    "authProxyEnabled": false,
+    "ldapEnabled": false,
+    "jwtHeaderName": "",
+    "jwtUrlLogin": false,
+    "liveEnabled": true,
+    "autoAssignOrg": true,
+    "verifyEmailEnabled": false,
+    "sigV4AuthEnabled": false,
+    "azureAuthEnabled": false,
+    "rbacEnabled": true,
+    "exploreEnabled": true,
+    "helpEnabled": true,
+    "profileEnabled": true,
+    "newsFeedEnabled": true,
+    "queryHistoryEnabled": true,
+    "googleAnalyticsId": "",
+    "googleAnalytics4Id": "",
+    "rudderstackWriteKey": "",
+    "rudderstackDataPlaneUrl": "",
+    "feedbackLinksEnabled": true,
+    "disableLoginForm": false,
+    "disableUserSignUp": true,
+    "loginHint": "",
+    "passwordHint": "",
+    "viewersCanEdit": false,
+    "disableSanitizeHtml": false,
+    "auth": {
+      "disableLogin": false
+    },
+    "buildInfo": {
+      "hideVersion": false,
+      "version": "12.4.0-dev",
+      "commit": "dev",
+      "commitShort": "dev",
+      "buildstamp": 0,
+      "edition": "Open Source",
+      "latestVersion": "",
+      "hasUpdate": false,
+      "env": "development"
+    },
+    "licenseInfo": {
+      "expiry": 0,
+      "stateInfo": "",
+      "licenseUrl": "",
+      "edition": "Open Source"
+    },
+    "featureToggles": {},
+    "anonymousEnabled": false,
+    "rendererAvailable": false,
+    "http2Enabled": false,
+    "pluginCatalogURL": "https://grafana.com/grafana/plugins/",
+    "pluginAdminEnabled": true,
+    "pluginAdminExternalManageEnabled": false,
+    "pluginCatalogHiddenPlugins": [],
+    "expressionsEnabled": true,
+    "awsAllowedAuthProviders": ["keys"],
+    "awsAssumeRoleEnabled": false,
+    "azure": {
+      "cloud": "AzureCloud"
+    },
+    "caching": {
+      "enabled": false
+    },
+    "unifiedAlertingEnabled": true,
+    "unifiedAlerting": {
+      "minInterval": "10s"
+    },
+    "oauth": {},
+    "samlEnabled": false,
+    "samlName": "",
+    "dateFormats": {
+      "fullDate": "YYYY-MM-DD HH:mm:ss",
+      "useBrowserLocale": false,
+      "interval": {
+        "second": "HH:mm:ss",
+        "minute": "HH:mm",
+        "hour": "MM/DD HH:mm",
+        "day": "MM/DD",
+        "month": "YYYY-MM",
+        "year": "YYYY"
+      },
+      "defaultTimezone": "browser",
+      "defaultWeekStart": "browser"
+    },
+    "licensing": {
+      "usageBilling": {
+        "enabled": false
+      }
+    }
+  },
+  "navTree": [
+    {
+      "id": "home",
+      "text": "Home",
+      "icon": "home-alt",
+      "url": "/",
+      "sortWeight": -4000
+    }
+  ]
+}
