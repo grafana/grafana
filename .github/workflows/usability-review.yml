@@ -1,0 +1,180 @@
+name: Usability Review Agent
+
+on:
+  pull_request:
+    types:
+      - labeled
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+env:
+  TEST_URL: https://play.grafana.org/
+  OUTPUT_TEXT_PATH: usability-review.txt
+  SCREENSHOT_PATH: usability-screenshot.png
+
+jobs:
+  usability-review:
+    # Only run when the 'usability-review' label is added
+    if: github.event.label.name == 'usability-review'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get PR details
+        id: pr-details
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Get PR title, body, and changed files
+          PR_DATA=$(gh pr view $PR_NUMBER --json title,body,files)
+
+          PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
+          PR_BODY=$(echo "$PR_DATA" | jq -r '.body // ""')
+
+          # Get list of changed files
+          CHANGED_FILES=$(echo "$PR_DATA" | jq -r '.files[].path' | head -20)
+
+          # Save to files for next step
+          echo "$PR_TITLE" > pr_title.txt
+          echo "$PR_BODY" > pr_body.txt
+          echo "$CHANGED_FILES" > changed_files.txt
+
+          echo "PR Title: $PR_TITLE"
+          echo "Changed files count: $(echo "$CHANGED_FILES" | wc -l)"
+
+      - name: Generate PR summary
+        id: pr-summary
+        env:
+          OPENAI_API_KEY: ${{ secrets.CUA_DEMO }}
+          OPENAI_ORG: ${{ secrets.ORG_ID }}
+        run: |
+          python - <<'PY'
+          import os
+          from openai import OpenAI
+
+          client = OpenAI()
+
+          # Read PR details
+          with open("pr_title.txt", "r") as f:
+              pr_title = f.read().strip()
+
+          with open("pr_body.txt", "r") as f:
+              pr_body = f.read().strip()
+
+          with open("changed_files.txt", "r") as f:
+              changed_files = f.read().strip()
+
+          # Generate summary of what the PR does
+          system = "You are a technical analyst summarizing pull request changes."
+          user = f"""Analyze this PR and provide a 2-3 sentence summary of what feature/change is being implemented:
+
+          PR Title: {pr_title}
+
+          PR Description: {pr_body if pr_body else "(No description provided)"}
+
+          Changed Files:
+          {changed_files}
+
+          Focus on what the user-facing impact is and what functionality is being added or modified."""
+
+          resp = client.chat.completions.create(
+              model="gpt-4o-mini",
+              messages=[
+                  {"role": "system", "content": system},
+                  {"role": "user", "content": user},
+              ],
+          )
+          pr_summary = resp.choices[0].message.content.strip()
+
+          with open("pr_summary.txt", "w") as f:
+              f.write(pr_summary)
+
+          print(f"PR Summary: {pr_summary}")
+          PY
+
+      - name: Build dynamic prompt
+        id: build-prompt
+        run: |
+          # Read the PR summary
+          PR_SUMMARY=$(cat pr_summary.txt)
+
+          # Read base prompt template from action
+          BASE_PROMPT=$(cat .github/actions/usability-review-agent/prompt.txt)
+
+          # Build dynamic prompt with PR context
+          cat > dynamic_prompt.txt <<EOF
+          ## Context
+          You are reviewing a pull request that makes the following changes:
+
+          $PR_SUMMARY
+
+          Your task is to test the workflow and provide usability feedback.
+
+          ## Instructions
+          $BASE_PROMPT
+          EOF
+
+          # Copy to action directory so it can be used
+          cp dynamic_prompt.txt .github/actions/usability-review-agent/dynamic_prompt.txt
+
+          echo "Dynamic prompt created"
+
+      - name: Run usability review agent
+        uses: ./.github/actions/usability-review-agent
+        with:
+          target_url: ${{ env.TEST_URL }}
+          openai_api_key: ${{ secrets.CUA_DEMO }}
+          openai_org: ${{ secrets.ORG_ID }}
+          workflow_name: "the application interface"
+          prompt_file: "dynamic_prompt.txt"
+          output_text_path: ${{ env.OUTPUT_TEXT_PATH }}
+          screenshot_path: ${{ env.SCREENSHOT_PATH }}
+
+      - name: Upload review artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: usability-review-results
+          path: |
+            ${{ env.OUTPUT_TEXT_PATH }}
+            ${{ env.SCREENSHOT_PATH }}
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Post review results to PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          COMMENT_FILE=$(mktemp)
+
+          echo "## 🔍 Usability Review Results" > "$COMMENT_FILE"
+          echo "" >> "$COMMENT_FILE"
+          echo "**Test URL:** ${{ env.TEST_URL }}" >> "$COMMENT_FILE"
+          echo "" >> "$COMMENT_FILE"
+          echo "---" >> "$COMMENT_FILE"
+          echo "" >> "$COMMENT_FILE"
+
+          if [ -s ${{ env.OUTPUT_TEXT_PATH }} ]; then
+            cat ${{ env.OUTPUT_TEXT_PATH }} >> "$COMMENT_FILE"
+          else
+            echo "⚠️ No review output was generated." >> "$COMMENT_FILE"
+          fi
+
+          echo "" >> "$COMMENT_FILE"
+          echo "---" >> "$COMMENT_FILE"
+          echo "" >> "$COMMENT_FILE"
+          echo "📸 [View screenshot and full artifacts](https://github.com/${{ github.repository }}/actions/runs/$RUN_ID)" >> "$COMMENT_FILE"
+
+          gh pr comment $PR_NUMBER --body-file "$COMMENT_FILE"
+          rm "$COMMENT_FILE"
