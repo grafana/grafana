@@ -255,7 +255,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: '50%',
       transform: 'translate(-50%, -50%)',
       zIndex: 10,
-      padding: `0 ${theme.spacing(2)}`,
+      padding: theme.spacing(0, 2),
     }),
   };
 };

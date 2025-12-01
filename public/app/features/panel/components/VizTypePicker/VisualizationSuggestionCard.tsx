@@ -96,7 +96,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     hoverPaneSelected: css({
-      background: colorManipulator.alpha(theme.colors.text.primary, 0.3),
+      background: colorManipulator.alpha(theme.colors.text.primary, 0.1),
     }),
     vizBox: css({
       position: 'relative',
