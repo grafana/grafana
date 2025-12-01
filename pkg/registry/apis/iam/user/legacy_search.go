@@ -202,6 +202,10 @@ func convertToSortOptions(sortBy []*resourcepb.ResourceSearchRequest_Sort) []mod
 			field = "lastSeenAtAge"
 		case resource.SEARCH_FIELD_TITLE:
 			field = "name"
+		case fieldLogin:
+			field = "login"
+		case fieldEmail:
+			field = "email"
 		}
 
 		suffix := "asc"

@@ -18,11 +18,12 @@ const (
 	USER_ROLE         = "role"
 )
 
-var UserSortableFields = []string{
+// UserSortableExtraFields are the additional fields that can be used for sorting user search results.
+// Should not include standard fields like title.
+var UserSortableExtraFields = []string{
 	USER_EMAIL,
 	USER_LOGIN,
 	USER_LAST_SEEN_AT,
-	USER_ROLE,
 }
 
 var UserTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{

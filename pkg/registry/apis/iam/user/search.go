@@ -33,8 +33,6 @@ type SearchHandler struct {
 }
 
 func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	// searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-	// 	unified, NewUserLegacySearchClient(legacyUserSvc), features)
 	return &SearchHandler{
 		client:   searchClient,
 		log:      slog.Default().With("logger", "grafana-apiserver.user.search"),
@@ -116,6 +114,42 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 												ExampleProps: spec3.ExampleProps{
 													Summary: "title descending",
 													Value:   "-title",
+												},
+											},
+											"lastSeenAt": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "last seen at ascending",
+													Value:   "lastSeenAt",
+												},
+											},
+											"-lastSeenAt": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "last seen at descending",
+													Value:   "-lastSeenAt",
+												},
+											},
+											"email": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "email ascending",
+													Value:   "email",
+												},
+											},
+											"-email": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "email descending",
+													Value:   "-email",
+												},
+											},
+											"login": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "login ascending",
+													Value:   "login",
+												},
+											},
+											"-login": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "login descending",
+													Value:   "-login",
 												},
 											},
 										},
@@ -204,8 +238,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 				currField = sort[1:]
 				desc = true
 			}
-			if slices.Contains(builders.UserSortableFields, currField) {
+			if slices.Contains(builders.UserSortableExtraFields, currField) {
 				sort = resource.SEARCH_FIELD_PREFIX + currField
+			} else {
+				sort = currField
 			}
 			s := &resourcepb.ResourceSearchRequest_Sort{
 				Field: sort,
