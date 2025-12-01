@@ -544,7 +544,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 // kvListIterator implements ListIterator for KV storage
 type kvListIterator struct {
 	listRV           int64
-	isCrossNamespace bool // true when listing across all namespaces
+	isCrossNamespace bool
 
 	// pull-style iterator
 	next func() (DataObj, error, bool)
