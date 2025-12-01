@@ -19,9 +19,7 @@ export function getLogListStyleFromOldProps(
 }
 
 export function getLogListStyle(logOptionsStorageKey?: string) {
-  const stored = logOptionsStorageKey
-    ? store.getObject<string>(`${logOptionsStorageKey}.listStyle`)
-    : LogListStyle.Inline;
+  const stored = logOptionsStorageKey ? store.get(`${logOptionsStorageKey}.listStyle`) : LogListStyle.Inline;
   if (stored === LogListStyle.InlineWithColumns) {
     return LogListStyle.InlineWithColumns;
   } else if (stored === LogListStyle.Wrapped) {

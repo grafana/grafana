@@ -1152,7 +1152,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   sortOrder={logsSortOrder}
                   timeRange={props.range}
                   timeZone={timeZone}
-                  wrapLogMessage={wrapLogMessage}
                 />
               )}
             </div>

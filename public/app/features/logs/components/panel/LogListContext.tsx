@@ -343,16 +343,16 @@ export const LogListContextProvider = ({
   // Sync prettifyJSON and wrapLogMessage
   useEffect(() => {
     setListStyleState((listStyle) => {
-      if (listStyle && (wrapLogMessageProp || prettifyJSONProp)) {
+      if (listStyle && (wrapLogMessageProp !== undefined || prettifyJSONProp !== undefined)) {
         if (wrapLogMessageProp) {
           deprecationWarning('LogsPanel', 'wrapLogMessage', 'listStyle');
         }
         if (prettifyJSONProp) {
           deprecationWarning('LogsPanel', 'prettifyJSON', 'listStyle');
         }
-        return listStyle;
+        return getLogListStyleFromOldProps(wrapLogMessageProp, prettifyJSONProp, undefined);
       }
-      return getLogListStyleFromOldProps(wrapLogMessageProp, prettifyJSONProp, undefined);
+      return listStyle;
     });
   }, [wrapLogMessageProp, prettifyJSONProp]);
 
