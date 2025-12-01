@@ -966,9 +966,33 @@
               "": {
                 "summary": "default sorting"
               },
+              "-email": {
+                "summary": "email descending",
+                "value": "-email"
+              },
+              "-lastSeenAt": {
+                "summary": "last seen at descending",
+                "value": "-lastSeenAt"
+              },
+              "-login": {
+                "summary": "login descending",
+                "value": "-login"
+              },
               "-title": {
                 "summary": "title descending",
                 "value": "-title"
+              },
+              "email": {
+                "summary": "email ascending",
+                "value": "email"
+              },
+              "lastSeenAt": {
+                "summary": "last seen at ascending",
+                "value": "lastSeenAt"
+              },
+              "login": {
+                "summary": "login ascending",
+                "value": "login"
               },
               "title": {
                 "summary": "title ascending",
