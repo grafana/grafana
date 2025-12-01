@@ -22,7 +22,7 @@ weight: 100
 
 # Node graph
 
-Node graphs are useful when you need to visualize elements that are related to each other. This is done by displaying circles&mdash;or _nodes_&mdash;for each element you want to visualize, connected by lines&mdash;or _edges_. The visualization uses a [layered layout](#layout-algorithm) that positions the nodes into a network of connected circles.
+Node graphs are useful when you need to visualize elements that are related to each other. This is done by displaying circles&mdash;or _nodes_&mdash;for each element you want to visualize, connected by lines&mdash;or _edges_. By default, the visualization uses a [layered layout](#layout-algorithm) that positions the nodes into a network of connected circles.
 
 Node graphs display useful information about each node, as well as the relationships between them, allowing you to visualize complex infrastructure maps, hierarchies, or execution diagrams.
 
