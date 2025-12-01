@@ -17,7 +17,7 @@ import {
   SortOrder,
   defaultTimeZone,
 } from '@grafana/schema';
-import { useTheme, useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
 import { prepSeries, prepConfig, PrepConfigOpts, prepMarkers, seperateMarkerSeries } from './utils';

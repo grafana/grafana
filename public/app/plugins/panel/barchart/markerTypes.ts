@@ -5,7 +5,7 @@ export type BarMarkerOpts = {
   shape: string;
   opacity: number;
   fill: boolean;
-  strokeWidth: number
+  strokeWidth: number;
 };
 
 // Group of markers as they are defined in the panels settings.

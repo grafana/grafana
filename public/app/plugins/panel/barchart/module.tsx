@@ -7,20 +7,20 @@ import {
   PanelPlugin,
   VizOrientation,
 } from '@grafana/data';
+import { NestedValueAccess } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
+
 import { BarChartPanel } from './BarChartPanel';
-// import { BarMarkersEditor } from './BarMarkersEditor';
+import { addMarkerEditor, barMarkersEditor, removeMarkerEditor } from './BarMarkersEditor';
 import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
-import { addMarkerEditor, barMarkersEditor2, removeMarkerEditor } from './BarMarkersEditor2';
-import { NestedValueAccess } from '@grafana/data/internal';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
   .setPanelChangeHandler(changeToBarChartPanelMigrationHandler)
@@ -248,38 +248,37 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         showIf: (c) => c.stacking === StackingMode.None,
       });
 
-      builder.addCustomEditor({
-        category: markersCategory,
-        path: 'markers',
-        id: 'barchart.markers.add',
-        name: 'Add marker',
-        editor: addMarkerEditor,
-      })
-    
-      builder.addNestedOptions({
+    builder.addCustomEditor({
       category: markersCategory,
       path: 'markers',
-      build: barMarkersEditor2,
+      id: 'barchart.markers.add',
+      name: 'Add marker',
+      editor: addMarkerEditor,
+    });
+
+    builder.addNestedOptions({
+      category: markersCategory,
+      path: 'markers',
+      build: barMarkersEditor,
       values: (parent: NestedValueAccess) => ({
         getValue: (path: string) => {
           return parent.getValue('markers' + path);
         },
         onChange: (path: string, value: any) => {
           parent.onChange('markers' + path, value);
-        }
+        },
       }),
     });
     builder.addCustomEditor({
-        category: markersCategory,
-        path: 'markers',
-        id: 'barchart.markers.remove',
-        name: 'Remove marker',
-        editor: removeMarkerEditor,
-        showIf: (opts) => {
-          return opts.markers.select != undefined
-        }
-      })
-  
+      category: markersCategory,
+      path: 'markers',
+      id: 'barchart.markers.remove',
+      name: 'Remove marker',
+      editor: removeMarkerEditor,
+      showIf: (opts) => {
+        return opts.markers.select !== undefined;
+      },
+    });
 
     builder.addFieldNamePicker({
       path: 'colorByField',
@@ -288,7 +287,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         'barchart.config.description-color-by-field',
         'Use the color value for a sibling field to color each bar value.'
       ),
-      });
+    });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);

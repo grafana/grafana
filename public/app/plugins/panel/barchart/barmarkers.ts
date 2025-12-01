@@ -1,12 +1,8 @@
 import uPlot from 'uplot';
 
 import { MarkerDrawingArgs } from './markerTypes';
-import {   useTheme2 } from '@grafana/ui'
-
 
 export function drawBarMarkers(markers: MarkerDrawingArgs[]) {
-
-
   return (u: uPlot) => {
     const ctx = u.ctx;
 
@@ -18,8 +14,8 @@ export function drawBarMarkers(markers: MarkerDrawingArgs[]) {
     ctx.save();
 
     for (const marker of markers) {
-      const { size, shape, fill,color,   strokeWidth } = marker.opts;
-      const{ x, y, isRotated } = marker
+      const { size, shape, fill, color, strokeWidth } = marker.opts;
+      const { x, y, isRotated } = marker;
 
       ctx.beginPath();
 
