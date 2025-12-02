@@ -194,7 +194,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
   const renderMaxDataPointsOption = () => {
     const realMd = data.request?.maxDataPoints;
     const value = options.maxDataPoints ?? '';
-    const isAuto = value === '';
+    // const isAuto = value === '';
 
     return (
       <>
@@ -220,7 +220,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
           onBlur={onMaxDataPointsBlur}
           defaultValue={value}
         />
-        {isAuto && (
+        {/* {isAuto && (
           <>
             <span className={cx(styles.noSquish, styles.operator)}>=</span>
             <span className={cx(styles.noSquish, styles.left)}>
@@ -229,7 +229,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
               </Trans>
             </span>
           </>
-        )}
+        )} */}
       </>
     );
   };
@@ -274,12 +274,12 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
           <Trans i18nKey="query.query-group-options-editor.render-interval-option.interval">Interval</Trans>
         </InlineLabel>
         <span className={styles.noSquish}>{realInterval}</span>
-        <span className={cx(styles.noSquish, styles.operator)}>=</span>
+        {/* <span className={cx(styles.noSquish, styles.operator)}>=</span>
         <span className={cx(styles.noSquish, styles.left)}>
           <Trans i18nKey="query.query-group-options-editor.render-interval-option.time-range-max-data-points">
             Time range / max data points
           </Trans>
-        </span>
+        </span> */}
       </>
     );
   };
@@ -374,10 +374,11 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     grid: css({
       display: 'grid',
-      gridTemplateColumns: `auto minmax(5em, 1fr) auto 1fr`,
+      gridTemplateColumns: `auto 8em`,
       gap: theme.spacing(0.5),
       gridAutoRows: theme.spacing(4),
       whiteSpace: 'nowrap',
+      minWidth: '100%',
     }),
     firstColumn: css({
       gridColumn: 1,

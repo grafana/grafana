@@ -13,7 +13,7 @@ import {
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataQuery, VizPanel, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
-import { Button, ErrorBoundaryAlert, useStyles2 } from '@grafana/ui';
+import { Button, ErrorBoundaryAlert, Stack, useStyles2 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 import { QueryGroupOptionsEditor } from 'app/features/query/components/QueryGroupOptions';
@@ -334,45 +334,58 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
 
   return (
     <div className={styles.container}>
-      <div className={cx(styles.contentWrapper, showOptions && styles.contentWrapperTwoColumn)}>
-        <div className={styles.mainContent}>
-          <QueryOperationRow
-            id={`query-${query.refId}`}
-            index={queryIndex}
-            draggable={false}
-            collapsable={false}
-            isOpen={true}
-            hideHeader={true}
-            className={styles.queryOperationRow}
-          >
-            <div className={styles.queryContent}>
-              {error && <QueryErrorAlert error={error} />}
-              {renderQueryEditor()}
-            </div>
-          </QueryOperationRow>
-          <div className={styles.footer}>
-            {renderCollapsedText()}
+      <div className={cx(styles.content, showOptions && styles.contentOptionsVisible)}>
+        <QueryOperationRow
+          id={`query-${query.refId}`}
+          index={queryIndex}
+          draggable={false}
+          collapsable={false}
+          isOpen={true}
+          hideHeader={true}
+          className={styles.queryOperationRow}
+        >
+          <div className={styles.queryContent}>
+            {error && <QueryErrorAlert error={error} />}
+            {renderQueryEditor()}
+          </div>
+        </QueryOperationRow>
+        <div className={styles.optionsColumn}>
+          <Stack gap={1} direction="column">
             <Button
-              size="sm"
-              icon={showOptions ? 'angle-right' : 'angle-left'}
+              size="md"
+              icon="angle-right"
               fill="text"
+              variant="secondary"
               onClick={() => setShowOptions(!showOptions)}
+              className={styles.optionsButton}
             >
-              <Trans i18nKey="dashboard-scene.query-detail-view.options">Options</Trans>
+              <Trans i18nKey="dashboard-scene.query-detail-view.query-options">Query Options</Trans>
             </Button>
-          </div>
+            {datasource && panelData && (
+              <QueryGroupOptionsEditor
+                options={queryOptions}
+                dataSource={datasource}
+                data={panelData}
+                onChange={handleQueryOptionsChange}
+              />
+            )}
+          </Stack>
         </div>
-        {showOptions && datasource && panelData && (
-          <div className={styles.optionsColumn}>
-            <QueryGroupOptionsEditor
-              options={queryOptions}
-              dataSource={datasource}
-              data={panelData}
-              onChange={handleQueryOptionsChange}
-            />
-          </div>
-        )}
       </div>
+      {datasource && panelData && !showOptions && (
+        <div className={styles.optionsFooter}>
+          {renderCollapsedText()}
+          <Button
+            size="sm"
+            icon="angle-left"
+            fill="text"
+            onClick={() => setShowOptions(!showOptions)}
+            className={styles.optionsButton}
+          >
+            <Trans i18nKey="dashboard-scene.query-detail-view.options">Options</Trans>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -382,36 +395,34 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css({
       width: '100%',
       height: '100%',
-    }),
-    contentWrapper: css({
-      display: 'grid',
-      gridTemplateColumns: '1fr',
-      width: '100%',
-      height: '100%',
-    }),
-    contentWrapperTwoColumn: css({
-      gridTemplateColumns: '1fr 0.5fr',
-    }),
-    mainContent: css({
-      display: 'flex',
-      flexDirection: 'column',
       position: 'relative',
-      overflow: 'scroll',
+      overflow: 'hidden',
+    }),
+    content: css({
+      display: 'flex',
+      flexDirection: 'row',
+      height: '100%',
+      width: 'calc(100% + 300px)',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['width'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+    }),
+    contentOptionsVisible: css({
+      width: '100%',
     }),
     queryContent: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
       padding: theme.spacing(2),
       height: '100%',
-      overflow: 'scroll',
     }),
     queryOperationRow: css({
       marginBottom: '0 !important', // need to beat specificty in the underling component
-      minHeight: 'calc(100% - 32px)', // 32px for the footer
-      overflow: 'scroll',
+      maxHeight: 'calc(100% - 32px)', // 32px for the footer
+      width: 'calc(100% - 300px)',
+      overflowY: 'auto',
     }),
-    footer: css({
+    optionsFooter: css({
       height: '32px',
       display: 'flex',
       justifyContent: 'flex-end',
@@ -424,11 +435,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.secondary,
     }),
     optionsColumn: css({
+      width: '300px',
       display: 'flex',
       flexDirection: 'column',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.secondary,
       padding: theme.spacing(2),
+    }),
+    optionsButton: css({
+      paddingLeft: 0,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      textTransform: 'uppercase',
     }),
     noEditor: css({
       padding: theme.spacing(2),

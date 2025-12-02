@@ -90,11 +90,7 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
     return undefined;
   }, [selectedItem]);
 
-  // Get all queries for validation
-  const allQueries = useMemo(() => {
-    const queryRunner = getQueryRunnerFor(panel);
-    return queryRunner?.state.queries || [];
-  }, [panel]);
+  const queryRunner = getQueryRunnerFor(panel);
 
   // Handle datasource change for queries
   const handleDataSourceChange = useCallback(
@@ -177,7 +173,7 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
         return;
       }
 
-      for (const otherQuery of allQueries) {
+      for (const otherQuery of queryRunner?.state.queries || []) {
         if (otherQuery !== selectedItem.data && newName === otherQuery.refId) {
           setValidationError('Query name already exists');
           return;
@@ -188,7 +184,7 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
         setValidationError(null);
       }
     },
-    [allQueries, selectedItem.data, validationError]
+    [queryRunner, selectedItem.data, validationError]
   );
 
   const onEditQueryBlur = useCallback(
@@ -290,7 +286,7 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
             <>
               {!isEditing ? (
                 <button
-                  className={styles.queryNameWrapper}
+                  className={cx(styles.queryNameWrapper, styles.monospace)}
                   title={t('dashboard-scene.detail-view-header.edit-query-name', 'Edit query name')}
                   onClick={onEditQueryName}
                   type="button"
@@ -321,7 +317,14 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
         {/* Right side: Run Query + Actions Menu */}
         {(selectedItem.type === 'query' || selectedItem.type === 'expression') && (
           <Stack gap={0.5} alignItems="center">
-            <Button variant="primary" fill="text" size="sm" onClick={onRunQuery} icon="play">
+            <Button
+              className={styles.monospace}
+              variant="primary"
+              fill="text"
+              size="sm"
+              onClick={onRunQuery}
+              icon="play"
+            >
               {t('dashboard-scene.detail-view-header.run-query', 'RUN QUERY')}
             </Button>
             <Dropdown
@@ -365,6 +368,9 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
 
 const getStyles = (theme: GrafanaTheme2, config: { color: string }) => {
   return {
+    monospace: css({
+      fontFamily: theme.typography.fontFamilyMonospace,
+    }),
     header: css({
       padding: theme.spacing(0.5),
       borderLeft: `4px solid ${config.color}`,

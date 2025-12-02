@@ -224,7 +224,7 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       flexShrink: 0,
     }),
     typeLabel: css({
-      fontFamily: "'CommitMono', monospace",
+      fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       color: 'inherit',
       textTransform: 'uppercase',
@@ -243,7 +243,7 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       flexShrink: 0,
     }),
     name: css({
-      fontFamily: "'CommitMono', monospace",
+      fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.maxContrast,
       overflow: 'hidden',

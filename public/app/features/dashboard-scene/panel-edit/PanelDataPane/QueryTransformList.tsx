@@ -231,7 +231,6 @@ QueryTransformList.displayName = 'QueryTransformList';
 const getStyles = (theme: GrafanaTheme2) => {
   const headerHeight = 41;
   const footerHeight = 32;
-  const monoFont = "'CommitMono', monospace";
   const barBase = {
     padding: theme.spacing(0.5, 2),
     background: theme.colors.background.secondary,
@@ -257,12 +256,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     headerTitle: css({
-      fontFamily: monoFont,
+      fontFamily: theme.typography.fontFamilyMonospace,
       textTransform: 'uppercase',
       color: theme.colors.text.primary,
     }),
     sectionLabel: css({
-      fontFamily: "'CommitMono', monospace",
+      fontFamily: theme.typography.fontFamilyMonospace
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.maxContrast,
       textTransform: 'uppercase',
@@ -295,7 +294,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: 20,
     }),
     footerStat: css({
-      fontFamily: monoFont,
+      fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.primary,
       textTransform: 'uppercase',
