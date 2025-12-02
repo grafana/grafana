@@ -114,7 +114,7 @@ describe('AzureMonitorKustoQueryParser', () => {
     } as BuilderQueryExpression;
 
     const result = AzureMonitorKustoQueryBuilder.toQuery(builderQuery);
-    expect(result).toContain('summarize percentile(95, Duration)');
+    expect(result).toContain('summarize percentile(Duration,95)');
   });
 
   it('handles summarize with basic aggregation function like avg', () => {
