@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -96,7 +97,7 @@ type CreateExploreMapResponse struct {
 // 500: internalServerError
 func (hs *HTTPServer) listExploreMaps(c *contextmodel.ReqContext) response.Response {
 	query := &exploremap.GetExploreMapsQuery{
-		OrgID: c.SignedInUser.GetOrgID(),
+		OrgID: c.GetOrgID(),
 		Limit: c.QueryInt("limit"),
 	}
 
@@ -126,12 +127,12 @@ func (hs *HTTPServer) getExploreMap(c *contextmodel.ReqContext) response.Respons
 	uid := web.Params(c.Req)[":uid"]
 	query := &exploremap.GetExploreMapByUIDQuery{
 		UID:   uid,
-		OrgID: c.SignedInUser.GetOrgID(),
+		OrgID: c.GetOrgID(),
 	}
 
 	m, err := hs.exploreMapService.Get(c.Req.Context(), query)
 	if err != nil {
-		if err == exploremap.ErrExploreMapNotFound {
+		if errors.Is(err, exploremap.ErrExploreMapNotFound) {
 			return response.Error(http.StatusNotFound, "Explore map not found", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to get explore map", err)
@@ -155,8 +156,8 @@ func (hs *HTTPServer) createExploreMap(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	cmd.OrgID = c.SignedInUser.GetOrgID()
-	cmd.CreatedBy = c.SignedInUser.UserID
+	cmd.OrgID = c.GetOrgID()
+	cmd.CreatedBy = c.UserID
 
 	m, err := hs.exploreMapService.Create(c.Req.Context(), &cmd)
 	if err != nil {
@@ -184,12 +185,12 @@ func (hs *HTTPServer) updateExploreMap(c *contextmodel.ReqContext) response.Resp
 	}
 
 	cmd.UID = uid
-	cmd.OrgID = c.SignedInUser.GetOrgID()
-	cmd.UpdatedBy = c.SignedInUser.UserID
+	cmd.OrgID = c.GetOrgID()
+	cmd.UpdatedBy = c.UserID
 
 	m, err := hs.exploreMapService.Update(c.Req.Context(), &cmd)
 	if err != nil {
-		if err == exploremap.ErrExploreMapNotFound {
+		if errors.Is(err, exploremap.ErrExploreMapNotFound) {
 			return response.Error(http.StatusNotFound, "Explore map not found", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to update explore map", err)
@@ -212,12 +213,12 @@ func (hs *HTTPServer) deleteExploreMap(c *contextmodel.ReqContext) response.Resp
 	uid := web.Params(c.Req)[":uid"]
 	cmd := &exploremap.DeleteExploreMapCommand{
 		UID:   uid,
-		OrgID: c.SignedInUser.GetOrgID(),
+		OrgID: c.GetOrgID(),
 	}
 
 	err := hs.exploreMapService.Delete(c.Req.Context(), cmd)
 	if err != nil {
-		if err == exploremap.ErrExploreMapNotFound {
+		if errors.Is(err, exploremap.ErrExploreMapNotFound) {
 			return response.Error(http.StatusNotFound, "Explore map not found", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete explore map", err)

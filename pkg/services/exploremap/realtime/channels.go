@@ -66,8 +66,8 @@ func (h *ExploreMapChannelHandler) OnSubscribe(ctx context.Context, user identit
 type messageType string
 
 const (
-	MessageTypeCursorUpdate  messageType = "cursor_update"
-	MessageTypeCursorLeave   messageType = "cursor_leave"
+	MessageTypeCursorUpdate   messageType = "cursor_update"
+	MessageTypeCursorLeave    messageType = "cursor_leave"
 	MessageTypeViewportUpdate messageType = "viewport_update"
 )
 

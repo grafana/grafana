@@ -3,6 +3,7 @@ package realtime
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -26,7 +27,6 @@ type OperationHub struct {
 	liveService *live.GrafanaLive
 	store       Store
 	states      *StateCache
-	mu          sync.RWMutex
 }
 
 // StateCache holds in-memory CRDT states for active maps
@@ -124,8 +124,14 @@ func (h *OperationHub) applyOperation(state *MapState, op crdt.Operation) error 
 			}
 		}
 
-	// Other operation types don't need special handling in the hub
-	// They're applied at the client level
+	case crdt.OpUpdatePanelPosition,
+		crdt.OpUpdatePanelSize,
+		crdt.OpUpdatePanelZIndex,
+		crdt.OpUpdatePanelExplore,
+		crdt.OpAddComment,
+		crdt.OpRemoveComment:
+		// These operation types don't need special handling in the hub
+		// They're applied at the client level
 	}
 
 	return nil
@@ -199,7 +205,7 @@ func (h *OperationHub) snapshotAll(ctx context.Context) {
 	for _, uid := range mapUIDs {
 		if err := h.SnapshotState(ctx, uid); err != nil {
 			// Ignore "not found" errors - map may have been deleted or not yet created
-			if err != exploremap.ErrExploreMapNotFound {
+			if !errors.Is(err, exploremap.ErrExploreMapNotFound) {
 				logger.Warn("Failed to snapshot state", "error", err, "mapUid", uid)
 			}
 		}
