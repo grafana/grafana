@@ -36,6 +36,13 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
+
+				{
+					Kind:       "Snapshot",
+					Plural:     "Snapshots",
+					Scope:      "Namespaced",
+					Conversion: false,
+				},
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
@@ -110,6 +117,7 @@ func RemoteManifest() app.Manifest {
 
 var kindVersionToGoType = map[string]resource.Kind{
 	"Dashboard/v0alpha1": v0alpha1.DashboardKind(),
+	"Snapshot/v0alpha1":  v0alpha1.SnapshotKind(),
 	"Dashboard/v1beta1":  v1beta1.DashboardKind(),
 	"Dashboard/v2alpha1": v2alpha1.DashboardKind(),
 	"Dashboard/v2beta1":  v2beta1.DashboardKind(),
