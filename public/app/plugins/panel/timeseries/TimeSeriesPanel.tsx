@@ -178,7 +178,7 @@ export const TimeSeriesPanel = ({
                   };
 
                   const groupingFilters =
-                    seriesIdx && getFiltersBasedOnGrouping
+                    seriesIdx && config.featureToggles.perPanelFiltering && getFiltersBasedOnGrouping
                       ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
                       : [];
 
