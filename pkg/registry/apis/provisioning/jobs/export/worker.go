@@ -100,6 +100,14 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
+		// Check if Resources list is provided (bulk export mode)
+		if len(options.Resources) > 0 {
+			progress.SetTotal(ctx, len(options.Resources))
+			progress.StrictMaxErrors(1) // Fail fast on any error during export
+			return ExportSpecificResources(ctx, *options, clients, repositoryResources, progress)
+		}
+
+		// Fall back to existing ExportAll behavior for backward compatibility
 		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
 	}
 

@@ -133,6 +133,12 @@ type ExportJobOptions struct {
 	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
+
+	// Resources to export
+	// This option has been created because currently the frontend does not use
+	// standarized app platform APIs. For performance and API consistency reasons, the preferred option
+	// is it to use the resources.
+	Resources []ResourceRef `json:"resources,omitempty"`
 }
 
 type MigrateJobOptions struct {

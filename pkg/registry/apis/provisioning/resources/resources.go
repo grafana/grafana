@@ -167,6 +167,9 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 		title = name
 	}
 
+	fileName := slugify.Slugify(title) + ".json"
+
+	// Use folder structure: get the folder path from the resource and append it to Path
 	folder := meta.GetFolder()
 	// Get the absolute path of the folder
 	rootFolder := RootFolder(r.repo.Config())
@@ -184,13 +187,18 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 		}
 	}
 
-	fileName := slugify.Slugify(title) + ".json"
+	// Build the full path: start with options.Path, then add folder path, then filename
+	basePath := options.Path
 	if fid.Path != "" {
-		fileName = safepath.Join(fid.Path, fileName)
+		if basePath != "" {
+			basePath = safepath.Join(basePath, fid.Path)
+		} else {
+			basePath = fid.Path
+		}
 	}
 
-	if options.Path != "" {
-		fileName = safepath.Join(options.Path, fileName)
+	if basePath != "" {
+		fileName = safepath.Join(basePath, fileName)
 	}
 
 	parsed := ParsedResource{
