@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Box, EmptyState, FilterInput, Icon, Stack, TextLink } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { Alert, Box, Button, EmptyState, FilterInput, Icon, Stack, TextLink } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryListItem } from '../Repository/RepositoryListItem';
@@ -22,6 +23,11 @@ export function RepositoryList({ items }: Props) {
 
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
   const { instanceConnected } = checkSyncSettings(items);
+
+  const handlePushUnmanaged = () => {
+    // Navigate to dashboards page with autoPush parameter
+    locationService.push('/dashboards?autoPush=true');
+  };
 
   const getResourceCountSection = () => {
     if (isProvisionedInstance) {
@@ -68,6 +74,15 @@ export function RepositoryList({ items }: Props) {
               </>
             )}
           </Alert>
+          {unmanagedCount > 0 && (
+            <Box>
+              <Button onClick={handlePushUnmanaged} variant="primary">
+                <Trans i18nKey="provisioning.folder-repository-list.push-unmanaged-button">
+                  Push unmanaged resources
+                </Trans>
+              </Button>
+            </Box>
+          )}
         </Stack>
       );
     }

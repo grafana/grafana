@@ -11750,6 +11750,7 @@
       "no-results-matching-your-query": "No results matching your query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
+      "push-unmanaged-button": "Push unmanaged resources",
       "unmanaged-resources_one": "{{count}} resource isn't managed by git sync.",
       "unmanaged-resources_other": "{{count}} resources aren't managed by git sync."
     },
