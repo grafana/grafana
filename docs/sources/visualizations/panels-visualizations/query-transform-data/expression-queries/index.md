@@ -10,8 +10,8 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Write expression queries
-title: Write expression queries
+menuTitle: Grafana Expressions
+title: Grafana Expressions
 description: Write server-side expressions to manipulate data using math and other operations
 weight: 40
 refs:
@@ -37,13 +37,41 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries-dimensions/#labels
 ---
 
-# Write expression queries
+# Grafana Expressions
 
-Server-side expressions enable you to manipulate data returned from queries with math and other operations. Expressions create new data and do not manipulate the data returned by data sources.
+An expression is a server-side operation that performs mathematical or other transformations on query results to create new data, without modifying the original data returned by data sources.
 
-## About expressions
+An expression is a server-side operation that takes the output of one or more data source queries and produces new data from it, such as calculated time series, reduced numbers, or aligned timestamps. Expressions don’t change the data returned by your data sources. Instead, they create additional derived results you can use for visualizations, alerting, and further analysis.
 
-Server-side expressions allow you to manipulate data returned from queries with math and other operations. Expressions create new data and do not manipulate the data returned by data sources, aside from some minor data restructuring to make the data acceptable input for expressions.
+Expressions let you perform calculations and transformations on query results inside Grafana, without needing every data source to support advanced processing or cross-query operations. They provide a consistent, backend-powered way to derive new values, whether that’s combining results from different data sources, normalizing series, or computing metrics your data source cannot produce on its own.
+
+By running on the server, expressions also enable features like alerting to continue working even when no user is viewing a dashboard.
+
+
+## What problems do Expressions solve?
+
+Expressions address several common needs:
+
+**Cross-data-source calculations:** Combine results from multiple data sources (for example, divide a Prometheus series by an SQL query result).
+
+**Derived metrics:** Compute values that aren't available directly from the data source, such as ratios, deltas, aggregates, or conditional logic.
+
+**Alerting logic:** Apply math, reductions, and comparisons to drive alert rules, even when the data source lacks equivalent functionality.
+
+**Lightweight post-processing:** Apply transformations such as resampling, aligning timestamps, filtering non-numeric values, or reducing series to single numbers.
+
+Expressions fill the gap between what a data source can produce and what a visualization or alert needs.
+
+
+
+
+<!-- ## Write expression queries
+
+Server-side expressions enable you to manipulate data returned from queries with math and other operations. Expressions create new data and do not manipulate the data returned by data sources. -->
+
+<!-- ## About expressions
+
+Server-side expressions allow you to manipulate data returned from queries with math and other operations. Expressions create new data and do not manipulate the data returned by data sources, aside from some minor data restructuring to make the data acceptable input for expressions. -->
 
 ### Using expressions
 
