@@ -90,6 +90,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       width: '100%',
       background: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
     }),
     emptyState: css({
       display: 'flex',

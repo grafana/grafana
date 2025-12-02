@@ -353,7 +353,7 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
           <div className={styles.footer}>
             {renderCollapsedText()}
             <Button
-              size="xs"
+              size="sm"
               icon={showOptions ? 'angle-right' : 'angle-left'}
               fill="text"
               onClick={() => setShowOptions(!showOptions)}
@@ -408,10 +408,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     queryOperationRow: css({
       marginBottom: '0 !important', // need to beat specificty in the underling component
-      minHeight: 'calc(100% - 49px)', // 49px for the footer
+      minHeight: 'calc(100% - 32px)', // 32px for the footer
       overflow: 'scroll',
     }),
     footer: css({
+      height: '32px',
       display: 'flex',
       justifyContent: 'flex-end',
       alignItems: 'center',
@@ -419,7 +420,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'sticky',
       bottom: 0,
       zIndex: theme.zIndex.navbarFixed,
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(0.5, 2),
       background: theme.colors.background.secondary,
     }),
     optionsColumn: css({

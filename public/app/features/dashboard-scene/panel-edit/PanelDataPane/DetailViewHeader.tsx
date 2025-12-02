@@ -265,7 +265,7 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
 
   return (
     <div className={styles.header}>
-      <Stack justifyContent="space-between" alignItems="center" gap={2}>
+      <div className={styles.headerContent}>
         {/* Left side: Icon, Datasource, Name */}
         <Stack gap={1} alignItems="center" grow={1} minWidth={0}>
           <Icon name={config.icon} className={styles.icon} />
@@ -358,7 +358,7 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
             </Dropdown>
           </Stack>
         )}
-      </Stack>
+      </div>
     </div>
   );
 };
@@ -366,10 +366,18 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
 const getStyles = (theme: GrafanaTheme2, config: { color: string }) => {
   return {
     header: css({
-      padding: theme.spacing(1.5, 2),
+      padding: theme.spacing(0.5),
       borderLeft: `4px solid ${config.color}`,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.secondary,
+      minHeight: '41px',
+    }),
+    headerContent: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: theme.spacing(2),
+      height: '100%',
     }),
     icon: css({
       color: theme.colors.text.secondary,

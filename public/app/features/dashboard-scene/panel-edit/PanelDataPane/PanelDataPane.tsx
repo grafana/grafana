@@ -473,7 +473,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         <div
           {...splitterProps}
           className={cx(splitterProps.className, styles.splitter)}
-          style={{ ...splitterProps.style, width: 0 }}
+          style={{ ...splitterProps.style, width: '16px' }}
         />
         <div {...secondaryProps}>
           <DetailView selectedItem={selectedItem} panel={panel} tabs={tabs} />
@@ -517,24 +517,12 @@ function getStyles(theme: GrafanaTheme2) {
       flex: 1,
       minHeight: 0,
       background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderLeft: 'none',
-      borderBottom: 'none',
-      borderTopRightRadius: theme.shape.radius.default,
       overflow: 'hidden',
     }),
     splitter: css({
       position: 'relative',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        left: '50%',
-        top: 0,
-        bottom: 0,
-        width: '1px',
-        background: theme.colors.border.weak,
-        transform: 'translateX(-50%)',
-      },
+      background: theme.colors.background.canvas,
+      cursor: 'col-resize',
     }),
   };
 }

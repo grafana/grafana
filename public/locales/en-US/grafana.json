@@ -5976,6 +5976,15 @@
     "description-label": {
       "description": "Description"
     },
+    "detail-view-header": {
+      "actions": "Actions",
+      "duplicate-query": "Duplicate",
+      "edit-query-name": "Edit query name",
+      "hide-response": "Hide response",
+      "remove-query": "Remove",
+      "run-query": "RUN QUERY",
+      "show-response": "Show response"
+    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -6253,7 +6262,7 @@
     "query-detail-view": {
       "loading": "Loading data source...",
       "no-editor": "This data source does not have a query editor",
-      "select-datasource": "Select data source"
+      "options": "Options"
     },
     "query-editor": {
       "query": "Query"
@@ -6264,6 +6273,12 @@
       "remove-query": "Remove query",
       "remove-transform": "Remove transformation",
       "show-response": "Show response"
+    },
+    "query-transform-list": {
+      "header": "Pipeline flow",
+      "hidden-queries": "Hidden",
+      "nodes-total": "nodes total",
+      "visible-queries": "Visible"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
@@ -12320,10 +12335,14 @@
       "title-data-source-help": "Data source help"
     },
     "query-group-options-editor": {
-      "collapsed-interval": "Interval = {{intervalDesc}}",
-      "collapsed-max-data-points": "MD = {{mdDesc}}",
+      "collapsed-cache-timeout-label": "Cache timeout",
+      "collapsed-cache-ttl-label": "Cache TTL",
+      "collapsed-interval-label": "Interval",
+      "collapsed-max-data-points-label": "Max data points",
+      "collapsed-min-interval-label": "Min interval",
+      "collapsed-relative-time-label": "Relative time",
+      "collapsed-time-shift-label": "Time shift",
       "hide-time-info": "Hide time info",
-      "Query options-title-query-options": "Query options",
       "relative-time": "Relative time",
       "relative-time-tooltip": "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5 minutes the Relative time should be <1>{{relativeFrom}}</1> and <4>{{relativeTo}}</4>, or variables like <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
