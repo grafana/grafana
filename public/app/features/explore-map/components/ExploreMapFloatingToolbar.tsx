@@ -92,7 +92,7 @@ export function ExploreMapFloatingToolbar() {
     <Menu>
       <MenuItem
         label={t('explore-map.toolbar.add-panel', 'Add Explore panel')}
-        icon="plus"
+        icon="compass"
         onClick={handleAddPanel}
       />
       <MenuItemWithLogo
