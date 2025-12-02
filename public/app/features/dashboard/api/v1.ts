@@ -36,7 +36,7 @@ export const K8S_V1_DASHBOARD_API_CONFIG = {
 };
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
-  client: ResourceClient<DashboardDataDTO, Status>;
+  private client: ResourceClient<DashboardDataDTO, Status>;
 
   constructor() {
     this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
