@@ -4,7 +4,9 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
-import { Alert, Box, Button, Field, Input, Select, Stack, Text } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Box, Button, Field, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { css } from '@emotion/css';
 import { RepositoryView, Job, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { collectSelectedItems } from 'app/features/browse-dashboards/components/utils';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
@@ -28,6 +30,7 @@ interface FormProps extends BulkActionProvisionResourceProps {
 }
 
 function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss }: FormProps) {
+  const styles = useStyles2(getPathPrefixStyles);
   // States
   const [job, setJob] = useState<Job>();
   const [jobError, setJobError] = useState<string | StatusInfo>();
@@ -260,22 +263,8 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                   )}
                 >
                   <Stack direction="row" gap={0} alignItems="stretch">
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      paddingX={2}
-                      backgroundColor="secondary"
-                      borderStyle="solid"
-                      borderWidth={1}
-                      borderRightWidth={0}
-                      borderColor="border.strong"
-                      style={{
-                        borderTopLeftRadius: '4px',
-                        borderBottomLeftRadius: '4px',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      <Text variant="body" color="text.secondary">
+                    <Box className={styles.pathPrefix}>
+                      <Text variant="body" color="secondary">
                         {repositoryView.path}
                       </Text>
                     </Box>
@@ -378,4 +367,18 @@ export function BulkExportProvisionedResource({
     />
   );
 }
+
+const getPathPrefixStyles = (theme: GrafanaTheme2) => ({
+  pathPrefix: css({
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(0, 1),
+    backgroundColor: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.strong}`,
+    borderRight: 'none',
+    borderTopLeftRadius: theme.shape.borderRadius(1),
+    borderBottomLeftRadius: theme.shape.borderRadius(1),
+    whiteSpace: 'nowrap',
+  }),
+});
 
