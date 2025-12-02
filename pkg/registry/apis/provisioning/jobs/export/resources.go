@@ -225,7 +225,9 @@ func exportSingleResource(
 	}
 
 	// Convert dashboard if needed
-	if err := convertDashboardIfNeeded(ctx, gvr, item, meta, clients, dashboardShim, versionClients, resourceRef, &result, progress); err != nil {
+	var err error
+	item, meta, err = convertDashboardIfNeeded(ctx, gvr, item, meta, clients, dashboardShim, versionClients, resourceRef, &result, progress)
+	if err != nil {
 		return err
 	}
 	if result.Error != nil {
@@ -305,6 +307,7 @@ func fetchAndValidateResource(
 }
 
 // convertDashboardIfNeeded converts a dashboard to its original API version if needed.
+// Returns the potentially updated item and meta accessor.
 func convertDashboardIfNeeded(
 	ctx context.Context,
 	gvr schema.GroupVersionResource,
@@ -316,9 +319,9 @@ func convertDashboardIfNeeded(
 	resourceRef provisioning.ResourceRef,
 	result *jobs.JobResourceResult,
 	progress jobs.JobProgressRecorder,
-) error {
+) (*unstructured.Unstructured, utils.GrafanaMetaAccessor, error) {
 	if gvr.GroupResource() != resources.DashboardResource.GroupResource() {
-		return nil
+		return item, meta, nil
 	}
 
 	// Create or reuse the dashboard shim (shared across all dashboard resources)
@@ -332,7 +335,7 @@ func convertDashboardIfNeeded(
 	if err != nil {
 		result.Error = fmt.Errorf("converting dashboard %s/%s/%s: %w", resourceRef.Group, resourceRef.Kind, resourceRef.Name, err)
 		progress.Record(ctx, *result)
-		return progress.TooManyErrors()
+		return nil, nil, progress.TooManyErrors()
 	}
 
 	// Re-extract meta after shim conversion in case the item changed
@@ -341,10 +344,10 @@ func convertDashboardIfNeeded(
 		result.Action = repository.FileActionIgnored
 		result.Error = fmt.Errorf("extracting meta accessor after conversion for resource %s: %w", result.Name, err)
 		progress.Record(ctx, *result)
-		return progress.TooManyErrors()
+		return nil, nil, progress.TooManyErrors()
 	}
 
-	return nil
+	return item, meta, nil
 }
 
 // computeExportPath computes the export path by combining the base path with the folder path from the tree.

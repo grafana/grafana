@@ -80,7 +80,7 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	dashboard2File := filepath.Join(helper.ProvisioningPath, "test-dashboard-created-at-v2beta1.json")
 
 	// Check dashboard1
-	body1, err := os.ReadFile(dashboard1File)
+	body1, err := os.ReadFile(dashboard1File) //nolint:gosec
 	require.NoError(t, err, "exported file should exist for dashboard1")
 	obj1 := map[string]any{}
 	err = json.Unmarshal(body1, &obj1)
@@ -90,7 +90,7 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	require.Equal(t, "test-v1", val)
 
 	// Check dashboard2
-	body2, err := os.ReadFile(dashboard2File)
+	body2, err := os.ReadFile(dashboard2File) //nolint:gosec
 	require.NoError(t, err, "exported file should exist for dashboard2")
 	obj2 := map[string]any{}
 	err = json.Unmarshal(body2, &obj2)
@@ -140,7 +140,7 @@ func TestIntegrationProvisioning_ExportSpecificResourcesWithPath(t *testing.T) {
 
 	// Verify dashboard was exported to custom path
 	expectedFile := filepath.Join(helper.ProvisioningPath, "custom", "path", "test-dashboard-created-at-v1.json")
-	body, err := os.ReadFile(expectedFile)
+	body, err := os.ReadFile(expectedFile) //nolint:gosec
 	require.NoError(t, err, "exported file should exist at custom path")
 	obj := map[string]any{}
 	err = json.Unmarshal(body, &obj)
@@ -323,7 +323,8 @@ func TestIntegrationProvisioning_ExportSpecificResourcesWithFolderStructure(t *t
 	// Create unmanaged dashboard in the folder
 	dashboard := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
 	// Set folder UID in dashboard spec
-	unstructured.SetNestedField(dashboard.Object, string(folderUID), "spec", "folder")
+	err = unstructured.SetNestedField(dashboard.Object, string(folderUID), "spec", "folder")
+	require.NoError(t, err, "should be able to set folder UID")
 
 	dashboardObj, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create dashboard in folder")
@@ -359,7 +360,7 @@ func TestIntegrationProvisioning_ExportSpecificResourcesWithFolderStructure(t *t
 	// The folder path should be included in the file path based on the folder title
 	// Folder title is "Test Export Folder", which gets slugified to "test-export-folder"
 	expectedFile := filepath.Join(helper.ProvisioningPath, "test-export-folder", "test-dashboard-created-at-v1.json")
-	body, err := os.ReadFile(expectedFile)
+	body, err := os.ReadFile(expectedFile) //nolint:gosec
 	require.NoError(t, err, "exported file should exist with folder structure")
 	obj := map[string]any{}
 	err = json.Unmarshal(body, &obj)
