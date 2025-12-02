@@ -3613,7 +3613,7 @@
       "no-items": "No items selected",
       "path": "Path",
       "path-description": "Path relative to the repository root (optional). Resources will be exported under this path.",
-      "path-description-with-repo": "Add a sub-path below to organize exported dashboards.",
+      "path-description-with-repo": "Add a sub-path below to organize exported resources.",
       "path-placeholder": "e.g., dashboards/",
       "path-placeholder-with-repo": "e.g., dashboards/team-a/",
       "repository": "Repository",
