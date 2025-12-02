@@ -8210,6 +8210,12 @@
         "nextNYears_other": "Next {{count}} years"
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "Accessible",
+        "otherGroup": "Others"
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
