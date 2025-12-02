@@ -207,7 +207,9 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"name":"ci-test","role":"Admin"}')
 
+          echo "Service account response: $SA_RESPONSE"
           SA_ID=$(echo "$SA_RESPONSE" | jq -r '.id')
+          echo "Service account ID: $SA_ID"
           echo "SERVICE_ACCOUNT_ID=$SA_ID" >> $GITHUB_ENV
 
           # Create token
@@ -216,7 +218,9 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"name":"ci-token"}')
 
+          echo "Token response: $TOKEN_RESPONSE"
           TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.key')
+          echo "Token (first 10 chars): ${TOKEN:0:10}..."
           echo "SA_TOKEN=$TOKEN" >> $GITHUB_ENV
 
       - name: Create test user for playwright
