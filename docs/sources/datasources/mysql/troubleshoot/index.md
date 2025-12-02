@@ -63,7 +63,7 @@ refs:
     - destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/
 ---
 
-# Troubleshoot common problems wiyj the Grafana MySQL data source plugin
+# Troubleshoot common problems with the Grafana MySQL data source plugin
 
 This page lists common issues you might experience when setting up the Grafana MySQL data source plugin.
 
