@@ -77,6 +77,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       label: 'detailWrapper',
       flex: '1',
       minWidth: 0,
+      backgroundColor: theme.colors.background.canvas,
+      border: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 });
@@ -165,6 +167,7 @@ const UnthemedSpanDetailRow = React.memo<SpanDetailRowProps>((props) => {
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             visibleSpanIds={visibleSpanIds}
+            removeLastIndentGuide={true}
           />
         </div>
         <div className={styles.detailWrapper}>

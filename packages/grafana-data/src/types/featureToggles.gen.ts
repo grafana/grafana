@@ -50,11 +50,6 @@ export interface FeatureToggles {
   */
   storage?: boolean;
   /**
-  * Correlations page
-  * @default true
-  */
-  correlations?: boolean;
-  /**
   * Allow elements nesting
   */
   canvasPanelNesting?: boolean;
@@ -83,10 +78,6 @@ export interface FeatureToggles {
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;
-  /**
-  * Enables drag and drop for CSV and Excel files
-  */
-  editPanelCSVDragAndDrop?: boolean;
   /**
   * Allow datasource to provide custom UI for context view
   * @default true
@@ -131,11 +122,6 @@ export interface FeatureToggles {
   */
   lokiLogsDataplane?: boolean;
   /**
-  * Support dataplane contract field name change for transformations and field name matchers where the name is different
-  * @default true
-  */
-  dataplaneFrontendFallback?: boolean;
-  /**
   * Disables dataplane specific processing in server side expressions.
   */
   disableSSEDataplane?: boolean;
@@ -174,11 +160,6 @@ export interface FeatureToggles {
   * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
-  /**
-  * Enables the transformations redesign
-  * @default true
-  */
-  transformationsRedesign?: boolean;
   /**
   * Enable support for Machine Learning in server-side expressions
   */
@@ -250,11 +231,6 @@ export interface FeatureToggles {
   * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
   */
   disableClassicHTTPHistogram?: boolean;
-  /**
-  * Enable format string transformer
-  * @default true
-  */
-  formatString?: boolean;
   /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
@@ -341,11 +317,6 @@ export interface FeatureToggles {
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
   /**
-  * Add cumulative and window functions to the add field from calculation transformation
-  * @default true
-  */
-  addFieldFromCalculationStatFunctions?: boolean;
-  /**
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   */
   alertmanagerRemoteSecondary?: boolean;
@@ -353,6 +324,14 @@ export interface FeatureToggles {
   * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
   */
   alertingProvenanceLockWrites?: boolean;
+  /**
+  * Enables the UI to use certain backend-side filters
+  */
+  alertingUIUseBackendFilters?: boolean;
+  /**
+  * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
+  */
+  alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
@@ -362,10 +341,6 @@ export interface FeatureToggles {
   * @default true
   */
   annotationPermissionUpdate?: boolean;
-  /**
-  * Make sure extracted field names are unique in the dataframe
-  */
-  extractFieldsNameDeduplication?: boolean;
   /**
   * Enables dashboard rendering using Scenes for viewer roles
   * @default true
@@ -386,6 +361,10 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Use the v2 kubernetes API in the frontend for dashboards
+  */
+  kubernetesDashboardsV2?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   */
   dashboardUndoRedo?: boolean;
@@ -393,6 +372,14 @@ export interface FeatureToggles {
   * Enables unlimited dashboard panel grouping
   */
   unlimitedLayoutsNesting?: boolean;
+  /**
+  * Enables viewing non-applicable drilldowns on a panel level
+  */
+  perPanelNonApplicableDrilldowns?: boolean;
+  /**
+  * Enabled a group by action per panel
+  */
+  panelGroupBy?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
@@ -410,27 +397,9 @@ export interface FeatureToggles {
   */
   timeComparison?: boolean;
   /**
-  * Enables infinite scrolling for the Logs panel in Explore and Dashboards
-  * @default true
-  */
-  logsInfiniteScrolling?: boolean;
-  /**
-  * Enable filtering menu displayed when text of a log line is selected
-  * @default true
-  */
-  logRowsPopoverMenu?: boolean;
-  /**
-  * Disables passing host environment variable to plugin processes
-  */
-  pluginsSkipHostEnvVars?: boolean;
-  /**
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
-  /**
-  * Enables regression analysis transformation
-  */
-  regressionTransformation?: boolean;
   /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
@@ -448,11 +417,6 @@ export interface FeatureToggles {
   * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
-  /**
-  * Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
-  * @default true
-  */
-  onPremToCloudMigrations?: boolean;
   /**
   * Enable the secrets management API and services under app platform
   */
@@ -499,21 +463,6 @@ export interface FeatureToggles {
   */
   sqlExpressionsColumnAutoComplete?: boolean;
   /**
-  * Enables the group to nested table transformation
-  * @default true
-  */
-  groupToNestedTableTransformation?: boolean;
-  /**
-  * New implementation for the dashboard-to-PDF rendering
-  * @default true
-  */
-  newPDFRendering?: boolean;
-  /**
-  * Use TLS-enabled memcached in the enterprise caching feature
-  * @default true
-  */
-  tlsMemcached?: boolean;
-  /**
   * Enable grafana's embedded kube-aggregator
   */
   kubernetesAggregator?: boolean;
@@ -533,6 +482,10 @@ export interface FeatureToggles {
   * Require that sub claims is present in oauth tokens.
   */
   oauthRequireSubClaim?: boolean;
+  /**
+  * Require that refresh tokens are present in oauth tokens.
+  */
+  refreshTokenRequired?: boolean;
   /**
   * Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
   */
@@ -555,13 +508,17 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
-  * Enable dashboard library experiments that are production ready
+  * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   */
   dashboardLibrary?: boolean;
   /**
-  * Enable suggested dashboards when creating new dashboards
+  * Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
   */
   suggestedDashboards?: boolean;
+  /**
+  * Enables a flow to get started with a new dashboard from a template
+  */
+  dashboardTemplates?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -592,11 +549,6 @@ export interface FeatureToggles {
   * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
-  /**
-  * Enables pinning of nav items
-  * @default true
-  */
-  pinNavItems?: boolean;
   /**
   * Enables the gRPC server for authorization
   */
@@ -655,7 +607,7 @@ export interface FeatureToggles {
   */
   alertingPrometheusRulesPrimary?: boolean;
   /**
-  * Used in Logs Drilldown to split queries into multiple queries based on the number of shards
+  * Deprecated. Replace with lokiShardSplitting. Used in Logs Drilldown to split queries into multiple queries based on the number of shards
   */
   exploreLogsShardSplitting?: boolean;
   /**
@@ -722,6 +674,10 @@ export interface FeatureToggles {
   * Enables time range panning functionality
   */
   timeRangePan?: boolean;
+  /**
+  * Enables new keyboard shortcuts for time range zoom operations
+  */
+  newTimeRangeZoomShortcuts?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -806,10 +762,6 @@ export interface FeatureToggles {
   */
   alertingNotificationsStepMode?: boolean;
   /**
-  * Enables a button to send feedback from the Grafana UI
-  */
-  feedbackButton?: boolean;
-  /**
   * Enable unified storage search UI
   */
   unifiedStorageSearchUI?: boolean;
@@ -851,10 +803,6 @@ export interface FeatureToggles {
   * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   */
   teamHttpHeadersTempo?: boolean;
-  /**
-  * Use new **Combobox** component for template variables
-  */
-  templateVariablesUsesCombobox?: boolean;
   /**
   * Enables Advisor app
   */
@@ -925,10 +873,6 @@ export interface FeatureToggles {
   */
   infinityRunQueriesInParallel?: boolean;
   /**
-  * Renders invite user button along the app
-  */
-  inviteUserExperimental?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
   * @default true
   */
@@ -938,11 +882,6 @@ export interface FeatureToggles {
   * @default true
   */
   alertingImportYAMLUI?: boolean;
-  /**
-  * Enables the unified storage history pruner
-  * @default true
-  */
-  unifiedStorageHistoryPruner?: boolean;
   /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
@@ -990,10 +929,6 @@ export interface FeatureToggles {
   */
   grafanaAssistantInProfilesDrilldown?: boolean;
   /**
-  * Enables using PGX instead of libpq for PostgreSQL datasource
-  */
-  postgresDSUsePGX?: boolean;
-  /**
   * Enables creating alerts from Tempo data source
   */
   tempoAlerting?: boolean;
@@ -1035,6 +970,10 @@ export interface FeatureToggles {
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
+  /**
+  * Routes external group mapping requests from /api to the /apis endpoint
+  */
+  kubernetesExternalGroupMapping?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
@@ -1127,11 +1066,6 @@ export interface FeatureToggles {
   */
   restrictedPluginApis?: boolean;
   /**
-  * Enable adhoc filter buttons in visualization tooltips
-  * @default true
-  */
-  adhocFiltersInTooltips?: boolean;
-  /**
   * Enable favorite datasources
   */
   favoriteDatasources?: boolean;
@@ -1165,7 +1099,7 @@ export interface FeatureToggles {
   graphiteBackendMode?: boolean;
   /**
   * Enables the updated Azure Monitor resource picker
-  * @default false
+  * @default true
   */
   azureResourcePickerUpdates?: boolean;
   /**
@@ -1204,6 +1138,16 @@ export interface FeatureToggles {
   */
   newGauge?: boolean;
   /**
+  * Enable new visualization suggestions
+  * @default false
+  */
+  newVizSuggestions?: boolean;
+  /**
+  * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
+  * @default false
+  */
+  externalVizSuggestions?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
@@ -1218,6 +1162,11 @@ export interface FeatureToggles {
   */
   pluginStoreServiceLoading?: boolean;
   /**
+  * Increases panel padding globally
+  * @default true
+  */
+  newPanelPadding?: boolean;
+  /**
   * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
   * @default true
   */
@@ -1227,12 +1176,34 @@ export interface FeatureToggles {
   */
   panelTimeSettings?: boolean;
   /**
-  * Enable template dashboards
-  */
-  dashboardTemplates?: boolean;
-  /**
   * Enables app platform API for annotations
   * @default false
   */
   kubernetesAnnotations?: boolean;
+  /**
+  * Enables http proxy settings for aws datasources
+  * @default false
+  */
+  awsDatasourcesHttpProxy?: boolean;
+  /**
+  * Show transformation quick-start cards in empty transformations state
+  */
+  transformationsEmptyPlaceholder?: boolean;
+  /**
+  * Enable TTL plugin instance manager
+  */
+  ttlPluginInstanceManager?: boolean;
+  /**
+  * Send X-Loki-Query-Limits-Context header to Loki on first split request
+  */
+  lokiQueryLimitsContext?: boolean;
+  /**
+  * Enables the new version of rudderstack
+  * @default false
+  */
+  rudderstackUpgrade?: boolean;
+  /**
+  * Adds support for Kubernetes alerting historian APIs
+  */
+  kubernetesAlertingHistorian?: boolean;
 }

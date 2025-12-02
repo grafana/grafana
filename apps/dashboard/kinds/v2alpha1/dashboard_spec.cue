@@ -109,7 +109,13 @@ DashboardLink: {
 	includeVars: bool | *false
 	// If true, includes current time range in the link as query params
 	keepTime: bool | *false
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	placement?: DashboardLinkPlacement
 }
+
+// Dashboard Link placement. Defines where the link should be displayed. 
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+DashboardLinkPlacement: "inControlsMenu"
 
 DataSourceRef: {
 	// The plugin type-id
@@ -154,6 +160,8 @@ FieldConfigSource: {
 	defaults: FieldConfig
 	// Overrides are the options applied to specific fields overriding the defaults.
 	overrides: [...{
+		// Describes config override rules created when interacting with Grafana.
+		"__systemRef"?: string
 		matcher: MatcherConfig
 		properties: [...DynamicConfigValue]
 	}]
@@ -247,7 +255,8 @@ MatcherConfig: {
 }
 
 Threshold: {
-	value: number
+	// Value null means -Infinity
+	value: number | null
 	color: string
 }
 
@@ -337,7 +346,12 @@ ValueMappingResult: {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -349,7 +363,7 @@ ValueMappingResult: {
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
+FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
 
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 FieldColorSeriesByMode: "min" | "max" | "last"
@@ -374,7 +388,7 @@ FetchOptions: {
 	url: string
 	body?: string
 	// These are 2D arrays of strings, each representing a key-value pair
-	// We are defining them this way because we can't generate a go struct that 
+	// We are defining them this way because we can't generate a go struct that
 	// that would have exactly two strings in each sub-array
 	queryParams?: [...[...string]]
 	headers?: [...[...string]]
@@ -384,7 +398,7 @@ InfinityOptions: FetchOptions & {
 	datasourceUid: string
 }
 
-HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" 
+HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH"
 
 // Action variable type
 ActionVariableType: "string"
@@ -707,9 +721,9 @@ VariableCustomFormatterFn: {
 // `custom`: Define the variable options manually using a comma-separated list.
 // `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-	"system" | "snapshot"
+	"system" | "snapshot" | "switch"
 
-VariableKind: QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind
+VariableKind: QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind | SwitchVariableKind
 
 // Sort variable options
 // Accepted values are:
@@ -965,6 +979,23 @@ AdHocFilterWithLabels: {
 AdhocVariableKind: {
 	kind: "AdhocVariable"
 	spec: AdhocVariableSpec
+}
+
+// Switch variable specification
+SwitchVariableSpec: {
+	name:         string | *""
+	current:      string | *"false"
+	enabledValue:  string | *"true"
+	disabledValue: string | *"false"
+	label?:        string
+	hide:          VariableHide
+	skipUrlSync:   bool | *false
+	description?:  string
+}
+
+SwitchVariableKind: {
+	kind: "SwitchVariable"
+	spec: SwitchVariableSpec
 }
 
 ConditionalRenderingGroupKind: {

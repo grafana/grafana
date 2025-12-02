@@ -1,5 +1,5 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
-import React from 'react';
+import React, { type JSX } from 'react';
 
 import {
   PluginContextProvider,
@@ -22,6 +22,9 @@ import { PluginExtensionRegistries } from './registry/types';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponents } from './usePluginComponents';
 import { isGrafanaDevMode } from './utils';
+
+// Unmock usePluginComponents to test the real implementation
+jest.unmock('./usePluginComponents');
 
 jest.mock('./useLoadAppPlugins');
 

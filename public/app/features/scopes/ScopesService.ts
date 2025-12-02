@@ -73,6 +73,11 @@ export class ScopesService implements ScopesContextValue {
     const scopeNodeId = queryParams.get('scope_node');
     // TODO: figure out when to remove this. scope_parent is for backward compatibility only
     const parentNodeId = queryParams.get('scope_parent');
+    const navigationScope = queryParams.get('navigation_scope');
+
+    if (navigationScope) {
+      this.dashboardsService.setNavigationScope(navigationScope);
+    }
 
     this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined, scopeNodeId ?? undefined);
 
@@ -133,6 +138,16 @@ export class ScopesService implements ScopesContextValue {
         }
       })
     );
+    // Update the URL based on change in the navigation scope
+    this.subscriptions.push(
+      this.dashboardsService.subscribeToState((state, prevState) => {
+        if (state.navigationScope !== prevState.navigationScope) {
+          this.locationService.partial({
+            navigation_scope: state.navigationScope,
+          });
+        }
+      })
+    );
   }
 
   /**
@@ -157,7 +172,8 @@ export class ScopesService implements ScopesContextValue {
   }
 
   public changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string) =>
-    this.selectorService.changeScopes(scopeNames, parentNodeId, scopeNodeId);
+    // Don't redirect on apply for initial load from URL. We only want to redirect when selecting from the selector
+    this.selectorService.changeScopes(scopeNames, parentNodeId, scopeNodeId, false);
 
   public setReadOnly = (readOnly: boolean) => {
     if (this.state.readOnly !== readOnly) {

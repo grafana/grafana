@@ -169,21 +169,23 @@ func RegisterAPIService(
 		publicDashboardService:       publicDashboardService,
 
 		legacy: &DashboardStorage{
-			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
+			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
 		},
 	}
 
 	migration.RegisterMetrics(reg)
-	migration.Initialize(&datasourceInfoProvider{
+	migration.Initialize(&datasourceIndexProvider{
 		datasourceService: datasourceService,
+	}, &libraryElementIndexProvider{
+		libraryElementService: libraryPanels,
 	})
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
-	migration.Initialize(datasourceProvider)
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
+	migration.Initialize(datasourceProvider, libraryElementProvider)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
 		accessClient:           ac,
@@ -196,7 +198,7 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
-	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
+	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts, featuremgmt.FlagKubernetesDashboardsV2) {
 		// If dashboards v2 is enabled, we want to use v2beta1 as the default API version.
 		return []schema.GroupVersion{
 			dashv2beta1.DashboardResourceInfo.GroupVersion(),
@@ -231,7 +233,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	// Register the explicit conversions
-	if err := conversion.RegisterConversions(scheme); err != nil {
+	if err := conversion.RegisterConversions(scheme, migration.GetDataSourceIndexProvider(), migration.GetLibraryElementIndexProvider()); err != nil {
 		return err
 	}
 

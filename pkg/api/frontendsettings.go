@@ -150,6 +150,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			continue
 		}
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if panel.ID == "datagrid" && !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagEnableDatagridEditing) {
 			continue
 		}
@@ -163,6 +164,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
 			BaseURL:         panel.BaseURL,
 			SkipDataQuery:   panel.SkipDataQuery,
+			Suggestions:     panel.Suggestions,
 			HideFromList:    panel.HideFromList,
 			ReleaseState:    string(panel.State),
 			Signature:       string(panel.Signature),
@@ -190,7 +192,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
-	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigration.IsTarget
+	isCloudMigrationTarget := hs.Cfg.CloudMigration.Enabled && hs.Cfg.CloudMigration.IsTarget
 	featureToggles := hs.Features.GetEnabled(c.Req.Context())
 	// this is needed for backwards compatibility with external plugins
 	// we should remove this once we can be sure that no external plugins rely on this
@@ -258,6 +260,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PluginRestrictedAPIsBlockList:    hs.Cfg.PluginRestrictedAPIsBlockList,
 		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:          hs.Cfg.PublicDashboardsEnabled,
+		CloudMigrationEnabled:            hs.Cfg.CloudMigration.Enabled,
 		CloudMigrationIsTarget:           isCloudMigrationTarget,
 		CloudMigrationPollIntervalMs:     int(hs.Cfg.CloudMigration.FrontendPollInterval.Milliseconds()),
 		SharedWithMeFolderUID:            folder.SharedWithMeFolderUID,
@@ -406,6 +409,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
 		hasEnabledProviders := hs.samlEnabled() || hs.authnService.IsClientEnabled(authn.ClientLDAP)
 
@@ -444,6 +448,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings.Namespace = hs.namespacer(c.OrgID)
 
 	// experimental scope features
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
 		frontendSettings.ListScopesEndpoint = hs.Cfg.ScopesListScopesURL
 		frontendSettings.ListDashboardScopesEndpoint = hs.Cfg.ScopesListDashboardsURL
@@ -637,6 +642,7 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Dependencies:    plugin.Dependencies,
 		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
 		Translations:    plugin.Translations,
+		BuildMode:       plugin.BuildMode,
 	}
 
 	if settings.Enabled {

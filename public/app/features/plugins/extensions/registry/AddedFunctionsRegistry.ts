@@ -11,10 +11,10 @@ import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
 const logPrefix = 'Could not register function extension. Reason:';
 
-export type AddedFunctionsRegistryItem = {
+export type AddedFunctionsRegistryItem<Signature = unknown> = {
   pluginId: string;
   title: string;
-  fn: unknown;
+  fn: Signature;
   description?: string;
 };
 
@@ -67,11 +67,9 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
 
         pointIdLog.debug('Added function extension successfully registered');
 
-        if (!(extensionPointId in registry)) {
-          registry[extensionPointId] = [result];
-        } else {
-          registry[extensionPointId].push(result);
-        }
+        // Creating a new array instead of pushing to get a new reference
+        const slice = registry[extensionPointId] ?? [];
+        registry[extensionPointId] = slice.concat(result);
       }
     }
 

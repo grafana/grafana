@@ -3,7 +3,7 @@ package appregistry
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/registry/apps/advisor"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
@@ -21,12 +21,12 @@ var WireSet = wire.NewSet(
 	ProvideBuilderRunners,
 	playlist.RegisterAppInstaller,
 	investigations.RegisterApp,
-	advisor.RegisterApp,
-	plugins.RegisterAppInstaller,
+	plugins.ProvideAppInstaller,
 	shorturl.RegisterAppInstaller,
 	correlations.RegisterAppInstaller,
 	rules.RegisterAppInstaller,
 	notifications.RegisterAppInstaller,
+	historian.RegisterAppInstaller,
 	logsdrilldown.RegisterAppInstaller,
 	annotation.RegisterAppInstaller,
 	example.RegisterAppInstaller,

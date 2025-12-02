@@ -236,6 +236,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   private processDashboardFromProvisioning(
     repo: string,
     path: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dryRun: any,
     provisioningPreview: ProvisioningPreview
   ) {
@@ -443,7 +444,12 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const scene = transformSaveModelToScene(rsp);
 
       // Special handling for Template route - set up edit mode and dirty state
-      if (config.featureToggles.dashboardLibrary && options.route === DashboardRoutes.Template) {
+      if (
+        (config.featureToggles.dashboardLibrary ||
+          config.featureToggles.suggestedDashboards ||
+          config.featureToggles.dashboardTemplates) &&
+        options.route === DashboardRoutes.Template
+      ) {
         scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
         scene.onEnterEditMode();
         scene.setState({ isDirty: true });
@@ -495,13 +501,19 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
   }
 
-  private async loadSuggestedDashboard(): Promise<DashboardDTO> {
+  private async loadDashboardLibrary(): Promise<DashboardDTO> {
     // Extract template parameters from URL
     const searchParams = new URLSearchParams(window.location.search);
     const datasource = searchParams.get('datasource');
     const gnetId = searchParams.get('gnetId');
     const pluginId = searchParams.get('pluginId');
+
     const path = searchParams.get('path');
+
+    // Check if this is a template dashboard
+    if (gnetId && datasource && pluginId) {
+      return this.loadTemplateDashboard(gnetId, datasource, pluginId);
+    }
 
     // Check if this is a community dashboard (has gnetId) or plugin dashboard
     if (gnetId) {
@@ -527,6 +539,34 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           name: '*',
           type: 'datasource',
           pluginId,
+          value: datasource,
+        },
+      ],
+    };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+  }
+
+  private async loadTemplateDashboard(
+    gnetId: string,
+    datasource: string | null,
+    pluginId: string | null
+  ): Promise<DashboardDTO> {
+    // Fetch the community dashboard from grafana.com
+    const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
+
+    // The dashboard JSON is in the 'json' property
+    const dashboardJson = gnetDashboard.json;
+
+    const data = {
+      dashboard: dashboardJson,
+      overwrite: true,
+      inputs: [
+        {
+          name: '*',
+          type: 'datasource',
+          pluginId: pluginId,
           value: datasource,
         },
       ],
@@ -604,7 +644,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
         case DashboardRoutes.Template:
-          rsp = await this.loadSuggestedDashboard();
+          rsp = await this.loadDashboardLibrary();
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
@@ -918,6 +958,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 }
 
+export function shouldForceV2API(): boolean {
+  return Boolean(config.featureToggles.kubernetesDashboardsV2 || config.featureToggles.dashboardNewLayouts);
+}
+
 export class UnifiedDashboardScenePageStateManager extends DashboardScenePageStateManagerBase<
   DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
 > {
@@ -930,7 +974,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     this.v1Manager = new DashboardScenePageStateManager(initialState);
     this.v2Manager = new DashboardScenePageStateManagerV2(initialState);
 
-    this.activeManager = this.v1Manager;
+    this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
   }
 
   private async withVersionHandling<T>(
@@ -1035,7 +1079,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
     if (options.route === DashboardRoutes.New) {
-      const newDashboardVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
+      const newDashboardVersion = shouldForceV2API() ? 'v2' : 'v1';
       this.setActiveManager(newDashboardVersion);
     }
     return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
@@ -1049,7 +1093,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
   }
   public resetActiveManager() {
-    this.setActiveManager('v1');
+    this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
   }
 }
 

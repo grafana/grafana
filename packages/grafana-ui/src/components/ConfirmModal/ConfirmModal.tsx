@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
+import type { JSX } from 'react';
 
 import { IconName } from '@grafana/data';
 

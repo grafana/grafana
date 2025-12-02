@@ -5,7 +5,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneVariableSet, VizPanel } from '@grafana/scenes';
-import { ElementSelectionContext } from '@grafana/ui';
+import { ElementSelectionContext, Sidebar, useSidebar } from '@grafana/ui';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
@@ -86,6 +86,12 @@ function buildTestScene() {
   return testScene;
 }
 
+function WrapSidebar({ children }: { children: React.ReactElement }) {
+  const sidebarContext = useSidebar({});
+
+  return <Sidebar contextValue={sidebarContext}>{children}</Sidebar>;
+}
+
 describe('DashboardOutline', () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -101,7 +107,9 @@ describe('DashboardOutline', () => {
 
       render(
         <ElementSelectionContext.Provider value={scene.state.editPane.state.selectionContext}>
-          <DashboardOutline editPane={scene.state.editPane} />
+          <WrapSidebar>
+            <DashboardOutline editPane={scene.state.editPane} isEditing={true} />
+          </WrapSidebar>
         </ElementSelectionContext.Provider>
       );
       // select Row lvl 1

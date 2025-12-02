@@ -93,7 +93,18 @@ type K8sTestHelper struct {
 	userSvc user.Service
 }
 
+type K8sTestHelperOpts struct {
+	testinfra.GrafanaOpts
+	// If provided, these users will be used instead of creating new ones
+	Org1Users *OrgUsers
+	OrgBUsers *OrgUsers
+}
+
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
+	return NewK8sTestHelperWithOpts(t, K8sTestHelperOpts{GrafanaOpts: opts})
+}
+
+func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelper {
 	t.Helper()
 
 	// Use GRPC server when not configured
@@ -106,8 +117,17 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
-	dir, path := testinfra.CreateGrafDir(t, opts)
-	listenerAddress, env := testinfra.StartGrafanaEnv(t, dir, path)
+	var (
+		dir  = opts.Dir
+		path = opts.DirPath
+	)
+	if opts.Dir == "" && opts.DirPath == "" {
+		dir, path = testinfra.CreateGrafDir(t, opts.GrafanaOpts)
+	}
+	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, dir, path)
+	if !opts.DisableDBCleanup {
+		t.Cleanup(testDB.Cleanup)
+	}
 
 	c := &K8sTestHelper{
 		env:             *env,
@@ -137,8 +157,24 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	_ = c.CreateOrg(Org1)
 	_ = c.CreateOrg(Org2)
 
-	c.Org1 = c.createTestUsers(Org1)
-	c.OrgB = c.createTestUsers(Org2)
+	if opts.Org1Users != nil {
+		c.Org1 = *opts.Org1Users
+		c.Org1.Admin.baseURL = listenerAddress
+		c.Org1.Editor.baseURL = listenerAddress
+		c.Org1.Viewer.baseURL = listenerAddress
+		c.Org1.None.baseURL = listenerAddress
+	} else {
+		c.Org1 = c.createTestUsers(Org1)
+	}
+	if opts.OrgBUsers != nil {
+		c.OrgB = *opts.OrgBUsers
+		c.OrgB.Admin.baseURL = listenerAddress
+		c.OrgB.Editor.baseURL = listenerAddress
+		c.OrgB.Viewer.baseURL = listenerAddress
+		c.OrgB.None.baseURL = listenerAddress
+	} else {
+		c.OrgB = c.createTestUsers(Org2)
+	}
 
 	c.loadAPIGroups()
 
