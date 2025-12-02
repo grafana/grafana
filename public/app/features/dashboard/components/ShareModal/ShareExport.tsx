@@ -38,10 +38,10 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
           console.error('Failed to export dashboard:', dashboardJson.error);
           return;
         }
-        openSaveAsDialog(dashboardJson as Record<string, unknown> & { title?: string });
+        openSaveAsDialog(dashboardJson);
       });
     } else {
-      openSaveAsDialog(dashboard.getSaveModelClone() as Record<string, unknown> & { title?: string });
+      openSaveAsDialog(dashboard.getSaveModelClone());
     }
   };
 
