@@ -211,6 +211,7 @@ jobs:
         env:
           INSTANCE_SLUG: ${{ env.INSTANCE_SLUG }}
         run: |
+          pip install requests
           python3 <<'PYTHON'
           import os, requests, json, random, string
 
