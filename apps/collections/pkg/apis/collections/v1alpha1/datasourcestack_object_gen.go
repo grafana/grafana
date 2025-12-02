@@ -15,20 +15,20 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type Datasources struct {
+type DataSourceStack struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
-	// Spec is the spec of the Datasources
-	Spec DatasourcesSpec `json:"spec" yaml:"spec"`
+	// Spec is the spec of the DataSourceStack
+	Spec DataSourceStackSpec `json:"spec" yaml:"spec"`
 }
 
-func (o *Datasources) GetSpec() any {
+func (o *DataSourceStack) GetSpec() any {
 	return o.Spec
 }
 
-func (o *Datasources) SetSpec(spec any) error {
-	cast, ok := spec.(DatasourcesSpec)
+func (o *DataSourceStack) SetSpec(spec any) error {
+	cast, ok := spec.(DataSourceStackSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -36,25 +36,25 @@ func (o *Datasources) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *Datasources) GetSubresources() map[string]any {
+func (o *DataSourceStack) GetSubresources() map[string]any {
 	return map[string]any{}
 }
 
-func (o *Datasources) GetSubresource(name string) (any, bool) {
+func (o *DataSourceStack) GetSubresource(name string) (any, bool) {
 	switch name {
 	default:
 		return nil, false
 	}
 }
 
-func (o *Datasources) SetSubresource(name string, value any) error {
+func (o *DataSourceStack) SetSubresource(name string, value any) error {
 	switch name {
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
 }
 
-func (o *Datasources) GetStaticMetadata() resource.StaticMetadata {
+func (o *DataSourceStack) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -65,7 +65,7 @@ func (o *Datasources) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *Datasources) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *DataSourceStack) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -75,7 +75,7 @@ func (o *Datasources) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *Datasources) GetCommonMetadata() resource.CommonMetadata {
+func (o *DataSourceStack) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -107,7 +107,7 @@ func (o *Datasources) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *Datasources) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *DataSourceStack) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -152,7 +152,7 @@ func (o *Datasources) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *Datasources) GetCreatedBy() string {
+func (o *DataSourceStack) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -160,7 +160,7 @@ func (o *Datasources) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *Datasources) SetCreatedBy(createdBy string) {
+func (o *DataSourceStack) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -168,7 +168,7 @@ func (o *Datasources) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *Datasources) GetUpdateTimestamp() time.Time {
+func (o *DataSourceStack) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -177,7 +177,7 @@ func (o *Datasources) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *Datasources) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *DataSourceStack) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -185,7 +185,7 @@ func (o *Datasources) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *Datasources) GetUpdatedBy() string {
+func (o *DataSourceStack) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -193,7 +193,7 @@ func (o *Datasources) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *Datasources) SetUpdatedBy(updatedBy string) {
+func (o *DataSourceStack) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -201,21 +201,21 @@ func (o *Datasources) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *Datasources) Copy() resource.Object {
+func (o *DataSourceStack) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *Datasources) DeepCopyObject() runtime.Object {
+func (o *DataSourceStack) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *Datasources) DeepCopy() *Datasources {
-	cpy := &Datasources{}
+func (o *DataSourceStack) DeepCopy() *DataSourceStack {
+	cpy := &DataSourceStack{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *Datasources) DeepCopyInto(dst *Datasources) {
+func (o *DataSourceStack) DeepCopyInto(dst *DataSourceStack) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
@@ -223,34 +223,34 @@ func (o *Datasources) DeepCopyInto(dst *Datasources) {
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &Datasources{}
+var _ resource.Object = &DataSourceStack{}
 
 // +k8s:openapi-gen=true
-type DatasourcesList struct {
+type DataSourceStackList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []Datasources `json:"items" yaml:"items"`
+	Items           []DataSourceStack `json:"items" yaml:"items"`
 }
 
-func (o *DatasourcesList) DeepCopyObject() runtime.Object {
+func (o *DataSourceStackList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *DatasourcesList) Copy() resource.ListObject {
-	cpy := &DatasourcesList{
+func (o *DataSourceStackList) Copy() resource.ListObject {
+	cpy := &DataSourceStackList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]Datasources, len(o.Items)),
+		Items:    make([]DataSourceStack, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*Datasources); ok {
+		if item, ok := o.Items[i].Copy().(*DataSourceStack); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *DatasourcesList) GetItems() []resource.Object {
+func (o *DataSourceStackList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -258,36 +258,36 @@ func (o *DatasourcesList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *DatasourcesList) SetItems(items []resource.Object) {
-	o.Items = make([]Datasources, len(items))
+func (o *DataSourceStackList) SetItems(items []resource.Object) {
+	o.Items = make([]DataSourceStack, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*Datasources)
+		o.Items[i] = *items[i].(*DataSourceStack)
 	}
 }
 
-func (o *DatasourcesList) DeepCopy() *DatasourcesList {
-	cpy := &DatasourcesList{}
+func (o *DataSourceStackList) DeepCopy() *DataSourceStackList {
+	cpy := &DataSourceStackList{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *DatasourcesList) DeepCopyInto(dst *DatasourcesList) {
+func (o *DataSourceStackList) DeepCopyInto(dst *DataSourceStackList) {
 	resource.CopyObjectInto(dst, o)
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &DatasourcesList{}
+var _ resource.ListObject = &DataSourceStackList{}
 
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *DatasourcesSpec) DeepCopy() *DatasourcesSpec {
-	cpy := &DatasourcesSpec{}
+func (s *DataSourceStackSpec) DeepCopy() *DataSourceStackSpec {
+	cpy := &DataSourceStackSpec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *DatasourcesSpec) DeepCopyInto(dst *DatasourcesSpec) {
+func (s *DataSourceStackSpec) DeepCopyInto(dst *DataSourceStackSpec) {
 	resource.CopyObjectInto(dst, s)
 }

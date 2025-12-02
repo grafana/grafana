@@ -15,6 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -113,7 +114,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[starsResource.StoragePath("update")] = &starsREST{store: stars}
 
 	// no need for dual writer for a kind that does not exist in the legacy database
-	resourceInfo := collections.DatasourcesResourceInfo
+	resourceInfo := collections.DatasourceStacksResourceInfo
 	datasourcesStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
 	if err != nil {
 		return err
@@ -132,6 +133,17 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return b.authorizer.Authorize(ctx, attr)
 			}
 
+			// datasources auth branch starts
+			if !attr.IsResourceRequest() {
+				return authorizer.DecisionNoOpinion, "", nil
+			}
+			// require a user
+			_, err = identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
+
+			// TODO make the auth more restrictive
 			return authorizer.DecisionAllow, "", nil
 
 		})

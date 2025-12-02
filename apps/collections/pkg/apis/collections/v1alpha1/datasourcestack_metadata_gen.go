@@ -9,7 +9,7 @@ import (
 // metadata contains embedded CommonMetadata and can be extended with custom string fields
 // TODO: use CommonMetadata instead of redefining here; currently needs to be defined here
 // without external reference as using the CommonMetadata reference breaks thema codegen.
-type DatasourcesMetadata struct {
+type DataSourceStackMetadata struct {
 	UpdateTimestamp   time.Time         `json:"updateTimestamp"`
 	CreatedBy         string            `json:"createdBy"`
 	Uid               string            `json:"uid"`
@@ -22,9 +22,9 @@ type DatasourcesMetadata struct {
 	Labels            map[string]string `json:"labels"`
 }
 
-// NewDatasourcesMetadata creates a new DatasourcesMetadata object.
-func NewDatasourcesMetadata() *DatasourcesMetadata {
-	return &DatasourcesMetadata{
+// NewDataSourceStackMetadata creates a new DataSourceStackMetadata object.
+func NewDataSourceStackMetadata() *DataSourceStackMetadata {
+	return &DataSourceStackMetadata{
 		Finalizers: []string{},
 		Labels:     map[string]string{},
 	}

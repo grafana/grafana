@@ -31,12 +31,12 @@ func (s *datasourceStorage) List(ctx context.Context, options *internalversion.L
 
 	// Get the single user stars
 	case authlib.TypeUser:
-		datasources := &collections.DatasourcesList{}
+		datasources := &collections.DataSourceStackList{}
 		obj, _ := s.Get(ctx, "user-"+user.GetIdentifier(), &v1.GetOptions{})
 		if obj != nil {
-			d, ok := obj.(*collections.Datasources)
+			d, ok := obj.(*collections.DataSourceStack)
 			if ok {
-				datasources.Items = []collections.Datasources{*d}
+				datasources.Items = []collections.DataSourceStack{*d}
 			}
 		}
 		return datasources, nil

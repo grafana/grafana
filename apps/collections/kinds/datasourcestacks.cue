@@ -1,35 +1,35 @@
 package preferences
 
 datasourcestacksV1alpha1: {
-  kind: "Datasources"
-  pluralName: "Datasource"
+  kind: "DataSourceStack"
+  pluralName: "DataSourceStacks"
   scope: "Namespaced"
   schema: {
     spec: {
       template: TemplateSpec
-      modes: [...Mode]
+      modes: [...ModeSpec]
     }
   }
 }
 
 
 TemplateSpec: {
-  [string]: DataSourceTemplateSpec
+  [string]: DataSourceStackTemplateItem
 }
 
-DataSourceTemplateSpec: {
+DataSourceStackTemplateItem: {
   group: string // type
   name: string // variable name / display name
 }
 
-Mode: {
+ModeSpec: {
   name: string
   uid: string
-  definition: ModeSpec
+  definition: Mode
 }
 
-ModeSpec: [string]: DataSourceRef
+Mode: [string]: ModeItem
 
-DataSourceRef: {
-  name: string // grafana data source uid
+ModeItem: {
+  dataSourceRef: string // grafana data source uid
 }

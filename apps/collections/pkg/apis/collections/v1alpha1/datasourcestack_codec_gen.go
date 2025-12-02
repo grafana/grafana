@@ -11,18 +11,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-// DatasourcesJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
-type DatasourcesJSONCodec struct{}
+// DataSourceStackJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
+type DataSourceStackJSONCodec struct{}
 
 // Read reads JSON-encoded bytes from `reader` and unmarshals them into `into`
-func (*DatasourcesJSONCodec) Read(reader io.Reader, into resource.Object) error {
+func (*DataSourceStackJSONCodec) Read(reader io.Reader, into resource.Object) error {
 	return json.NewDecoder(reader).Decode(into)
 }
 
 // Write writes JSON-encoded bytes into `writer` marshaled from `from`
-func (*DatasourcesJSONCodec) Write(writer io.Writer, from resource.Object) error {
+func (*DataSourceStackJSONCodec) Write(writer io.Writer, from resource.Object) error {
 	return json.NewEncoder(writer).Encode(from)
 }
 
 // Interface compliance checks
-var _ resource.Codec = &DatasourcesJSONCodec{}
+var _ resource.Codec = &DataSourceStackJSONCodec{}

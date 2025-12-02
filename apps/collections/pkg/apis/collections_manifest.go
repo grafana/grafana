@@ -20,12 +20,12 @@ import (
 )
 
 var (
-	rawSchemaStarsv1alpha1           = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
-	versionSchemaStarsv1alpha1       app.VersionSchema
-	_                                = json.Unmarshal(rawSchemaStarsv1alpha1, &versionSchemaStarsv1alpha1)
-	rawSchemaDatasourcesv1alpha1     = []byte(`{"DataSourceRef":{"additionalProperties":false,"properties":{"name":{"description":"grafana data source uid","type":"string"}},"required":["name"],"type":"object"},"DataSourceTemplateSpec":{"additionalProperties":false,"properties":{"group":{"description":"type","type":"string"},"name":{"description":"variable name / display name","type":"string"}},"required":["group","name"],"type":"object"},"Datasources":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"Mode":{"additionalProperties":false,"properties":{"definition":{"$ref":"#/components/schemas/ModeSpec"},"name":{"type":"string"},"uid":{"type":"string"}},"required":["name","uid","definition"],"type":"object"},"ModeSpec":{"additionalProperties":{"$ref":"#/components/schemas/DataSourceRef"},"type":"object"},"TemplateSpec":{"additionalProperties":{"$ref":"#/components/schemas/DataSourceTemplateSpec"},"type":"object"},"spec":{"additionalProperties":false,"properties":{"modes":{"items":{"$ref":"#/components/schemas/Mode"},"type":"array"},"template":{"$ref":"#/components/schemas/TemplateSpec"}},"required":["template","modes"],"type":"object"}}`)
-	versionSchemaDatasourcesv1alpha1 app.VersionSchema
-	_                                = json.Unmarshal(rawSchemaDatasourcesv1alpha1, &versionSchemaDatasourcesv1alpha1)
+	rawSchemaStarsv1alpha1               = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
+	versionSchemaStarsv1alpha1           app.VersionSchema
+	_                                    = json.Unmarshal(rawSchemaStarsv1alpha1, &versionSchemaStarsv1alpha1)
+	rawSchemaDataSourceStackv1alpha1     = []byte(`{"DataSourceStack":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"DataSourceStackTemplateItem":{"additionalProperties":false,"properties":{"group":{"description":"type","type":"string"},"name":{"description":"variable name / display name","type":"string"}},"required":["group","name"],"type":"object"},"Mode":{"additionalProperties":{"$ref":"#/components/schemas/ModeItem"},"type":"object"},"ModeItem":{"additionalProperties":false,"properties":{"dataSourceRef":{"description":"grafana data source uid","type":"string"}},"required":["dataSourceRef"],"type":"object"},"ModeSpec":{"additionalProperties":false,"properties":{"definition":{"$ref":"#/components/schemas/Mode"},"name":{"type":"string"},"uid":{"type":"string"}},"required":["name","uid","definition"],"type":"object"},"TemplateSpec":{"additionalProperties":{"$ref":"#/components/schemas/DataSourceStackTemplateItem"},"type":"object"},"spec":{"additionalProperties":false,"properties":{"modes":{"items":{"$ref":"#/components/schemas/ModeSpec"},"type":"array"},"template":{"$ref":"#/components/schemas/TemplateSpec"}},"required":["template","modes"],"type":"object"}}`)
+	versionSchemaDataSourceStackv1alpha1 app.VersionSchema
+	_                                    = json.Unmarshal(rawSchemaDataSourceStackv1alpha1, &versionSchemaDataSourceStackv1alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -54,11 +54,11 @@ var appManifestData = app.ManifestData{
 				},
 
 				{
-					Kind:       "Datasources",
-					Plural:     "Datasource",
+					Kind:       "DataSourceStack",
+					Plural:     "DataSourceStacks",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDatasourcesv1alpha1,
+					Schema:     &versionSchemaDataSourceStackv1alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -79,8 +79,8 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Stars/v1alpha1":       v1alpha1.StarsKind(),
-	"Datasources/v1alpha1": v1alpha1.DatasourcesKind(),
+	"Stars/v1alpha1":           v1alpha1.StarsKind(),
+	"DataSourceStack/v1alpha1": v1alpha1.DataSourceStackKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
