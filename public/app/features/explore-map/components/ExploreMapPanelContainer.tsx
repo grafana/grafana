@@ -4,7 +4,7 @@ import { Rnd, RndDragCallback, RndResizeCallback } from 'react-rnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { splitClose } from '../../explore/state/main';
@@ -19,7 +19,7 @@ import {
   updatePanelPosition,
   updatePanelSize,
 } from '../state/crdtSlice';
-import { selectSelectedPanelIds, selectViewport } from '../state/selectors';
+import { selectSelectedPanelIds, selectViewport, selectCursors } from '../state/selectors';
 import { ExploreMapPanel } from '../state/types';
 
 import { ExploreMapPanelContent } from './ExploreMapPanelContent';
@@ -36,7 +36,13 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
 
   const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
+  const cursors = useSelector((state) => selectCursors(state.exploreMapCRDT));
   const isSelected = selectedPanelIds.includes(panel.id);
+
+  // Find all users who have this panel selected (excluding current user)
+  const remoteSelectingUsers = Object.values(cursors).filter(
+    (cursor) => cursor.selectedPanelIds?.includes(panel.id)
+  );
 
   // Get the active drag info from a parent context (if any panel is being dragged)
   const activeDragInfo = useSelector((state) => state.exploreMapCRDT.local.activeDrag);
@@ -217,40 +223,70 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
       minWidth={300}
       minHeight={200}
     >
-      <div className={styles.panel}>
-        <div className={cx(styles.panelHeader, 'panel-drag-handle')}>
-          <div className={styles.panelTitle}>
-            {t('explore-map.panel.title', 'Explore Panel {{id}}', { id: panel.id.slice(0, 8) })}
+      <div className={styles.panelWrapper}>
+        {/* Render remote user selection outlines */}
+        {remoteSelectingUsers.map((user, index) => (
+          <div
+            key={user.sessionId}
+            className={styles.remoteSelection}
+            style={{
+              borderColor: user.color,
+              // Offset each outline slightly so multiple selections are visible
+              inset: `${-2 - index * 3}px`,
+            }}
+          />
+        ))}
+        <div className={styles.panel}>
+          <div className={cx(styles.panelHeader, 'panel-drag-handle')}>
+            <div className={styles.panelTitle}>
+              {t('explore-map.panel.title', 'Explore Panel {{id}}', { id: panel.id.slice(0, 8) })}
+            </div>
+            <div className={styles.panelHeaderRight}>
+              {remoteSelectingUsers.length > 0 && (
+                <div className={styles.remoteUsers}>
+                  {remoteSelectingUsers.map((user) => (
+                    <span key={user.sessionId} className={styles.remoteUserBadge} style={{ backgroundColor: user.color }}>
+                      {user.userName}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className={styles.panelActions}>
+                <Dropdown
+                  overlay={
+                    <Menu>
+                      <Menu.Item
+                        label={t('explore-map.panel.info', 'Panel information')}
+                        icon="info-circle"
+                        onClick={handleInfoClick}
+                        description={getInfoTooltipContent()}
+                      />
+                      <Menu.Item
+                        label={t('explore-map.panel.duplicate', 'Duplicate panel')}
+                        icon="copy"
+                        onClick={handleDuplicate}
+                      />
+                      <Menu.Divider />
+                      <Menu.Item
+                        label={t('explore-map.panel.remove', 'Remove')}
+                        icon="times"
+                        onClick={handleRemove}
+                      />
+                    </Menu>
+                  }
+                  placement="bottom-end"
+                >
+                  <Button
+                    icon="ellipsis-v"
+                    variant="secondary"
+                    size="sm"
+                    fill="text"
+                    aria-label={t('explore-map.panel.actions', 'Panel actions')}
+                  />
+                </Dropdown>
+              </div>
+            </div>
           </div>
-          <div className={styles.panelActions}>
-            <Tooltip content={getInfoTooltipContent()} placement="bottom">
-              <Button
-                icon="info-circle"
-                variant="secondary"
-                size="sm"
-                fill="text"
-                onClick={handleInfoClick}
-                aria-label={t('explore-map.panel.info', 'Panel information')}
-              />
-            </Tooltip>
-            <Button
-              icon="copy"
-              variant="secondary"
-              size="sm"
-              fill="text"
-              onClick={handleDuplicate}
-              tooltip={t('explore-map.panel.duplicate', 'Duplicate panel')}
-            />
-            <Button
-              icon="times"
-              variant="secondary"
-              size="sm"
-              fill="text"
-              onClick={handleRemove}
-              tooltip={t('explore-map.panel.remove', 'Remove')}
-            />
-          </div>
-        </div>
         <div className={styles.panelContent}>
           <ExploreMapPanelContent
             panelId={panel.id}
@@ -262,6 +298,7 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
             exploreState={panel.exploreState}
           />
         </div>
+      </div>
       </div>
     </Rnd>
   );
@@ -291,6 +328,18 @@ const getStyles = (theme: GrafanaTheme2) => {
     panelContainer: css({
       cursor: 'default',
     }),
+    panelWrapper: css({
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+    }),
+    remoteSelection: css({
+      position: 'absolute',
+      pointerEvents: 'none',
+      border: '2px solid',
+      borderRadius: theme.shape.radius.default,
+      zIndex: 1,
+    }),
     panel: css({
       width: '100%',
       height: '100%',
@@ -301,9 +350,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       overflow: 'hidden',
       boxShadow: theme.shadows.z2,
+      position: 'relative',
+      zIndex: 2,
     }),
     selectedPanel: css({
-      '& > div': {
+      '& > div > div': {
         border: `2px solid ${theme.colors.primary.border}`,
       },
     }),
@@ -321,6 +372,31 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.body.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       userSelect: 'none',
+      flex: 1,
+      minWidth: 0, // Allow text truncation
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    panelHeaderRight: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      flexShrink: 0, // Prevent shrinking
+    }),
+    remoteUsers: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      alignItems: 'center',
+    }),
+    remoteUserBadge: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      padding: theme.spacing(0.25, 0.75),
+      borderRadius: theme.shape.radius.default,
+      color: 'white',
+      fontWeight: theme.typography.fontWeightMedium,
+      userSelect: 'none',
+      whiteSpace: 'nowrap',
     }),
     panelActions: css({
       display: 'flex',

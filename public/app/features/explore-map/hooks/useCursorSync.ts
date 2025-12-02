@@ -5,9 +5,9 @@
  * for collaborative cursor sharing across all active sessions.
  */
 
+import { throttle } from 'lodash';
 import { useCallback, useEffect, useRef } from 'react';
 import { Unsubscribable } from 'rxjs';
-import { throttle } from 'lodash';
 
 import { LiveChannelAddress, LiveChannelScope, isLiveChannelMessageEvent } from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
@@ -32,6 +32,7 @@ interface CursorUpdateMessage {
     x: number;
     y: number;
     color: string;
+    selectedPanelIds: string[];
   };
   timestamp: number;
 }
@@ -58,6 +59,30 @@ export function useCursorSync(options: CursorSyncOptions) {
   const subscriptionRef = useRef<Unsubscribable | null>(null);
   const channelAddressRef = useRef<LiveChannelAddress | null>(null);
   const cursorColorRef = useRef<string>(generateRandomColor());
+
+  // Send cursor leave message
+  const sendCursorLeave = useCallback(() => {
+    if (!channelAddressRef.current) {
+      return;
+    }
+
+    const liveService = getGrafanaLiveSrv();
+    if (!liveService) {
+      return;
+    }
+
+    const message: CursorLeaveMessage = {
+      type: 'cursor_leave',
+      sessionId,
+      userId: '', // Will be enriched by backend
+      userName: '', // Will be enriched by backend
+      timestamp: Date.now(),
+    };
+
+    liveService.publish(channelAddressRef.current, message, { useSocket: true }).catch(() => {
+      // Failed to send cursor leave - ignore silently
+    });
+  }, [sessionId]);
 
   // Initialize channel connection
   useEffect(() => {
@@ -93,7 +118,7 @@ export function useCursorSync(options: CursorSyncOptions) {
             try {
               // Handle cursor message events
               if (isLiveChannelMessageEvent(event)) {
-                const message = event.message as CursorMessage;
+                const message: CursorMessage = event.message;
 
                 // Skip our own messages (backend should filter, but double-check)
                 if (message.sessionId === sessionId) {
@@ -109,6 +134,7 @@ export function useCursorSync(options: CursorSyncOptions) {
                     x: message.data.x,
                     y: message.data.y,
                     lastUpdated: message.timestamp,
+                    selectedPanelIds: message.data.selectedPanelIds || [],
                   };
                   dispatch(updateCursor(cursor));
                 } else if (message.type === 'cursor_leave') {
@@ -146,35 +172,11 @@ export function useCursorSync(options: CursorSyncOptions) {
       }
       channelAddressRef.current = null;
     };
-  }, [mapUid, enabled, sessionId, dispatch]);
-
-  // Send cursor leave message
-  const sendCursorLeave = useCallback(() => {
-    if (!channelAddressRef.current) {
-      return;
-    }
-
-    const liveService = getGrafanaLiveSrv();
-    if (!liveService) {
-      return;
-    }
-
-    const message: CursorLeaveMessage = {
-      type: 'cursor_leave',
-      sessionId,
-      userId: '', // Will be enriched by backend
-      userName: '', // Will be enriched by backend
-      timestamp: Date.now(),
-    };
-
-    liveService.publish(channelAddressRef.current, message, { useSocket: true }).catch(() => {
-      // Failed to send cursor leave - ignore silently
-    });
-  }, [sessionId]);
+  }, [mapUid, enabled, sessionId, dispatch, sendCursorLeave]);
 
   // Throttled cursor update function
   const sendCursorUpdate = useRef(
-    throttle((x: number, y: number) => {
+    throttle((x: number, y: number, selectedPanelIds: string[]) => {
       if (!channelAddressRef.current) {
         return;
       }
@@ -193,6 +195,7 @@ export function useCursorSync(options: CursorSyncOptions) {
           x,
           y,
           color: cursorColorRef.current,
+          selectedPanelIds,
         },
         timestamp: Date.now(),
       };
@@ -203,16 +206,50 @@ export function useCursorSync(options: CursorSyncOptions) {
     }, throttleMs)
   ).current;
 
-  // Update cursor position
+  // Update cursor position (throttled)
   const updatePosition = useCallback(
-    (x: number, y: number) => {
-      sendCursorUpdate(x, y);
+    (x: number, y: number, selectedPanelIds: string[]) => {
+      sendCursorUpdate(x, y, selectedPanelIds);
     },
     [sendCursorUpdate]
   );
 
+  // Force send cursor update immediately (not throttled) - used for selection changes
+  const updatePositionImmediate = useCallback(
+    (x: number, y: number, selectedPanelIds: string[]) => {
+      if (!channelAddressRef.current) {
+        return;
+      }
+
+      const liveService = getGrafanaLiveSrv();
+      if (!liveService) {
+        return;
+      }
+
+      const message: CursorUpdateMessage = {
+        type: 'cursor_update',
+        sessionId,
+        userId: '', // Will be enriched by backend
+        userName: '', // Will be enriched by backend
+        data: {
+          x,
+          y,
+          color: cursorColorRef.current,
+          selectedPanelIds,
+        },
+        timestamp: Date.now(),
+      };
+
+      liveService.publish(channelAddressRef.current, message, { useSocket: true }).catch(() => {
+        // Failed to send cursor update - ignore silently
+      });
+    },
+    [sessionId]
+  );
+
   return {
     updatePosition,
+    updatePositionImmediate,
     color: cursorColorRef.current,
   };
 }

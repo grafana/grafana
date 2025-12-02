@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -38,10 +38,16 @@ export function ExploreMapCanvas() {
   const mapUid = useSelector((state) => selectMapUid(state.exploreMapCRDT));
 
   // Initialize cursor sync
-  const { updatePosition } = useCursorSync({
+  const { updatePosition, updatePositionImmediate } = useCursorSync({
     mapUid: mapUid || '',
     enabled: !!mapUid,
   });
+
+  // Send selection update immediately when selection changes
+  // Use position (0, 0) since we only care about the selection, not cursor position
+  useEffect(() => {
+    updatePositionImmediate(0, 0, selectedPanelIds);
+  }, [selectedPanelIds, updatePositionImmediate]);
 
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent) => {
@@ -124,7 +130,8 @@ export function ExploreMapCanvas() {
       const canvasY = Math.max(0, Math.min(10000, screenY / scale));
 
       // Update cursor position for all sessions (using actual canvas coordinates, clamped to bounds)
-      updatePosition(canvasX, canvasY);
+      // Include currently selected panel IDs for collaborative selection visualization
+      updatePosition(canvasX, canvasY, selectedPanelIds);
 
       // Handle selection rectangle if dragging (using canvas coordinates)
       if (isSelecting && selectionRect) {
@@ -135,7 +142,7 @@ export function ExploreMapCanvas() {
         });
       }
     },
-    [isSelecting, selectionRect, updatePosition, contextTransformRef, viewport]
+    [isSelecting, selectionRect, updatePosition, contextTransformRef, viewport, selectedPanelIds]
   );
 
   const handleCanvasMouseUp = useCallback(

@@ -57,6 +57,7 @@ export interface UserCursor {
   x: number;
   y: number;
   lastUpdated: number;
+  selectedPanelIds: string[];
 }
 
 export interface ExploreMapState {
