@@ -5437,6 +5437,10 @@
       "loading-initializing-dashboard": "Wczytywanie i inicjowanie pulpitu",
       "title-not-found": "Nie znaleziono panelu o identyfikatorze {{panelId}}"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Zmienne szablonu"
     },
@@ -11184,6 +11188,12 @@
       "could-anything-matching-query": "Nie znaleziono wyników pasujących do Twojego zapytania"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Wyczyść typy",
     "select-aria-label": "Filtr typu panelu",
@@ -11803,13 +11813,6 @@
       "saving": "Zapisywanie",
       "title-error-loading-file": "Błąd podczas ładowania pliku"
     },
-    "files-view": {
-      "columns": {
-        "history": "Historia",
-        "view": "Wyświetl"
-      },
-      "placeholder-search": "Szukaj"
-    },
     "finish-step": {
       "description-enable-previews": "Dodaje podgląd obrazu zmian pulpitu w żądaniach pull. Obrazy pulpitów Grafany zostaną udostępnione w repozytorium Git i będą widoczne dla każdego, kto ma do niego dostęp.",
       "description-generate-dashboard-previews": "Utwórz linki podglądu dla żądań pull",
@@ -12024,9 +12027,6 @@
       "source-code": "Kod źródłowy"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Tylko do odczytu",
       "settings": "Ustawienia",
       "view": "Wyświetl"
@@ -12063,14 +12063,6 @@
       "webhook-last-event": "Ostatnie zdarzenie:",
       "webhook-url": "Wyświetl element webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Historia",
-        "view-dashboard": "Wyświetl",
-        "view-folder": "Wyświetl"
-      },
-      "placeholder-search": "Szukaj"
-    },
     "repository-status-page": {
       "back-to-repositories": "Wróć do repozytoriów",
       "cleaning-up-resources": "Sprzątanie zasobów repozytorium",
@@ -12078,12 +12070,10 @@
       "not-found": "nie znaleziono",
       "not-found-message": "Nie znaleziono repozytorium",
       "repository-config-exists-configuration": "Upewnij się, że konfiguracja repozytorium istnieje w pliku konfiguracyjnym.",
-      "tab-files": "Pliki",
-      "tab-files-title": "Lista nieprzetworzonych plików z repozytorium",
       "tab-overview": "Przegląd",
       "tab-overview-title": "Przegląd repozytorium",
       "tab-resources": "Zasoby",
-      "tab-resources-title": "Zasoby zapisane w bazie danych Grafany",
+      "tab-resources-title": "",
       "title": "Status repozytorium",
       "title-legacy-storage": "Starsza pamięć masowa",
       "title-queued-for-deletion": "Dodano do kolejki do usunięcia"
@@ -12105,6 +12095,17 @@
       "local-description": "Skonfiguruj aprowizację plików",
       "pure-git": "Czysty Git",
       "pure-git-description": "Połącz z dowolnym repozytorium Git"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Podstawa",
@@ -13396,6 +13397,7 @@
     "create-team": {
       "create": "Utwórz",
       "description-email": "Jest to ustawienie opcjonalne i służy przede wszystkim do zezwalania na niestandardowe awatary zespołu",
+      "failed-to-create": "",
       "label-email": "E-mail",
       "label-name": "Nazwa",
       "label-role": "Rola"
@@ -13427,6 +13429,7 @@
         "title-edit-team": "Edytuj zespół",
         "tooltip-edit-team": "Edytuj zespół"
       },
+      "loading-teams": "",
       "new-team": "Nowy zespół",
       "placeholder-search-teams": "Szukaj zespołów"
     },

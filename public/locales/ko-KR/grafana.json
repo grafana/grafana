@@ -5374,6 +5374,10 @@
       "loading-initializing-dashboard": "대시보드 로딩 및 초기화",
       "title-not-found": "ID가 {{panelId}}인 패널을 찾을 수 없음"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "템플릿 변수"
     },
@@ -11043,6 +11047,12 @@
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "유형 초기화",
     "select-aria-label": "패널 유형 필터",
@@ -11653,13 +11663,6 @@
       "saving": "저장 중",
       "title-error-loading-file": "파일 로딩 중 오류 발생"
     },
-    "files-view": {
-      "columns": {
-        "history": "이력",
-        "view": "보기"
-      },
-      "placeholder-search": "검색"
-    },
     "finish-step": {
       "description-enable-previews": "풀 요청에서 대시보드 변경 사항의 이미지 미리 보기를 추가합니다. Grafana 대시보드의 이미지는 Git 리포지토리에서 공유되며 리포지토리 액세스 권한이 있는 모든 사용자가 볼 수 있습니다.",
       "description-generate-dashboard-previews": "풀 요청에 대한 미리 보기 링크 생성",
@@ -11868,9 +11871,6 @@
       "source-code": "소스 코드"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "웹훅"
-      },
       "read-only-badge": "읽기 전용",
       "settings": "설정",
       "view": "보기"
@@ -11907,14 +11907,6 @@
       "webhook-last-event": "마지막 이벤트:",
       "webhook-url": "웹훅 보기"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "이력",
-        "view-dashboard": "보기",
-        "view-folder": "보기"
-      },
-      "placeholder-search": "검색"
-    },
     "repository-status-page": {
       "back-to-repositories": "리포지토리로 돌아가기",
       "cleaning-up-resources": "리포지토리 리소스 정리 및 삭제 중",
@@ -11922,12 +11914,10 @@
       "not-found": "찾을 수 없음",
       "not-found-message": "리포지토리를 찾을 수 없습니다",
       "repository-config-exists-configuration": "리포지토리 구성이 구성 파일에 있는지 확인하세요.",
-      "tab-files": "파일",
-      "tab-files-title": "리포지토리의 원시 파일 목록",
       "tab-overview": "개요",
       "tab-overview-title": "리포지토리 개요",
       "tab-resources": "리소스",
-      "tab-resources-title": "Grafana 데이터베이스에 저장된 리소스",
+      "tab-resources-title": "",
       "title": "리포지토리 상태",
       "title-legacy-storage": "레거시 스토리지",
       "title-queued-for-deletion": "삭제 대기열에 추가됨"
@@ -11949,6 +11939,17 @@
       "local-description": "파일 프로비저닝 구성",
       "pure-git": "Git으로만 구성",
       "pure-git-description": "모든 Git 리포지토리에 연결"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "베이스",
@@ -13225,6 +13226,7 @@
     "create-team": {
       "create": "생성",
       "description-email": "이 항목은 선택 사항이며 주로 사용자 지정 팀 아바타를 허용하는 데 사용됩니다",
+      "failed-to-create": "",
       "label-email": "이메일",
       "label-name": "이름",
       "label-role": "역할"
@@ -13256,6 +13258,7 @@
         "title-edit-team": "팀 편집",
         "tooltip-edit-team": "팀 편집"
       },
+      "loading-teams": "",
       "new-team": "새 팀",
       "placeholder-search-teams": "팀 검색"
     },

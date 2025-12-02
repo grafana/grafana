@@ -5395,6 +5395,10 @@
       "loading-initializing-dashboard": "Chargement et initialisation du tableau de bord",
       "title-not-found": "Panneau avec l’ID {{panelId}} introuvable"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Variables de modèle"
     },
@@ -11090,6 +11094,12 @@
       "could-anything-matching-query": "Impossible de trouver quoi que ce soit correspondant à votre requête"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Effacer les types",
     "select-aria-label": "Filtre par type de panneau",
@@ -11703,13 +11713,6 @@
       "saving": "Enregistrement en cours",
       "title-error-loading-file": "Erreur lors du chargement du fichier"
     },
-    "files-view": {
-      "columns": {
-        "history": "Historique",
-        "view": "Afficher"
-      },
-      "placeholder-search": "Rechercher"
-    },
     "finish-step": {
       "description-enable-previews": "Ajoute un aperçu des images des modifications apportées au tableau de bord dans les demandes de fusion. Les images de vos tableaux de bord Grafana seront partagées dans votre référentiel Git et visibles par toute personne ayant accès au référentiel.",
       "description-generate-dashboard-previews": "Créer des liens de prévisualisation pour les demandes de tirage",
@@ -11920,9 +11923,6 @@
       "source-code": "Code source"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Lecture seule",
       "settings": "Paramètres",
       "view": "Afficher"
@@ -11959,14 +11959,6 @@
       "webhook-last-event": "Dernier événement :",
       "webhook-url": "Voir le webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Historique",
-        "view-dashboard": "Afficher",
-        "view-folder": "Afficher"
-      },
-      "placeholder-search": "Rechercher"
-    },
     "repository-status-page": {
       "back-to-repositories": "Retour aux référentiels",
       "cleaning-up-resources": "Nettoyage des ressources du référentiel",
@@ -11974,12 +11966,10 @@
       "not-found": "introuvable",
       "not-found-message": "Référentiel introuvable",
       "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration.",
-      "tab-files": "Fichiers",
-      "tab-files-title": "La liste des fichiers bruts du référentiel",
       "tab-overview": "Vue d’ensemble",
       "tab-overview-title": "Vue d’ensemble du référentiel",
       "tab-resources": "Ressources",
-      "tab-resources-title": "Ressources enregistrées dans la base de données Grafana",
+      "tab-resources-title": "",
       "title": "Statut du référentiel",
       "title-legacy-storage": "Stockage hérité",
       "title-queued-for-deletion": "Mis en attente pour suppression"
@@ -12001,6 +11991,17 @@
       "local-description": "Configurer l’approvisionnement par fichier",
       "pure-git": "Pure Git",
       "pure-git-description": "Se connecter à un quelconque dépôt Git"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Base",
@@ -13282,6 +13283,7 @@
     "create-team": {
       "create": "Créer",
       "description-email": "Ceci est facultatif et est principalement utilisé pour autoriser les avatars d’équipe personnalisés",
+      "failed-to-create": "",
       "label-email": "Adresse e-mail",
       "label-name": "Nom",
       "label-role": "Rôle"
@@ -13313,6 +13315,7 @@
         "title-edit-team": "Modifier l’équipe",
         "tooltip-edit-team": "Modifier l’équipe"
       },
+      "loading-teams": "",
       "new-team": "Nouvelle équipe",
       "placeholder-search-teams": "Rechercher les équipes"
     },

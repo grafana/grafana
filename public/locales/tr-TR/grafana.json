@@ -5395,6 +5395,10 @@
       "loading-initializing-dashboard": "Pano yükleniyor ve başlatılıyor",
       "title-not-found": "{{panelId}} kimliğine sahip panel bulunamadı"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Şablon değişkenleri"
     },
@@ -11090,6 +11094,12 @@
       "could-anything-matching-query": "Sorgunuzla eşleşen hiçbir şey bulunamadı"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Türleri temizle",
     "select-aria-label": "Panel tipi filtresi",
@@ -11703,13 +11713,6 @@
       "saving": "Kaydediliyor",
       "title-error-loading-file": "Dosya yüklenirken hata oluştu"
     },
-    "files-view": {
-      "columns": {
-        "history": "Geçmiş",
-        "view": "Görüntüle"
-      },
-      "placeholder-search": "Ara"
-    },
     "finish-step": {
       "description-enable-previews": "Çekme isteklerinde pano değişikliklerinin görsel ön izlemesini ekler. Grafana panolarınızın görselleri Git deponuzda paylaşılacak ve depo erişimi olan herkes tarafından görülebilecektir.",
       "description-generate-dashboard-previews": "Çekme istekleri için ön izleme bağlantıları oluşturun",
@@ -11920,9 +11923,6 @@
       "source-code": "Kaynak kodu"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Web kancası"
-      },
       "read-only-badge": "",
       "settings": "Ayarlar",
       "view": "Görüntüle"
@@ -11959,14 +11959,6 @@
       "webhook-last-event": "Son Olay:",
       "webhook-url": "Web Kancasını Görüntüle"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Geçmiş",
-        "view-dashboard": "Görüntüle",
-        "view-folder": "Görüntüle"
-      },
-      "placeholder-search": "Ara"
-    },
     "repository-status-page": {
       "back-to-repositories": "Depolara geri dön",
       "cleaning-up-resources": "Depo kaynakları temizleniyor",
@@ -11974,12 +11966,10 @@
       "not-found": "bulunamadı",
       "not-found-message": "Depo bulunamadı",
       "repository-config-exists-configuration": "Depo yapılandırmasının yapılandırma dosyasında mevcut olduğundan emin olun.",
-      "tab-files": "Dosyalar",
-      "tab-files-title": "Depodan ham dosya listesi",
       "tab-overview": "Genel Bakış",
       "tab-overview-title": "Depoya genel bakış",
       "tab-resources": "Kaynaklar",
-      "tab-resources-title": "Grafana veri tabanına kaydedilen kaynaklar",
+      "tab-resources-title": "",
       "title": "Depo Durumu",
       "title-legacy-storage": "Eski Depolama",
       "title-queued-for-deletion": "Silinmek üzere kuyruğa alındı"
@@ -12001,6 +11991,17 @@
       "local-description": "Dosya sağlamayı yapılandır",
       "pure-git": "Pure Git",
       "pure-git-description": "Herhangi bir Git deposuna bağlanın"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Temel",
@@ -13282,6 +13283,7 @@
     "create-team": {
       "create": "Oluştur",
       "description-email": "Bu isteğe bağlıdır ve esas olarak özel takım avatarlarına izin vermek için kullanılır",
+      "failed-to-create": "",
       "label-email": "E-posta",
       "label-name": "Ad",
       "label-role": "Rol"
@@ -13313,6 +13315,7 @@
         "title-edit-team": "Ekibi düzenle",
         "tooltip-edit-team": "Ekibi düzenle"
       },
+      "loading-teams": "",
       "new-team": "Yeni ekip",
       "placeholder-search-teams": "Ekip ara"
     },

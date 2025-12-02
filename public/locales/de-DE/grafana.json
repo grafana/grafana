@@ -5395,6 +5395,10 @@
       "loading-initializing-dashboard": "Laden und Initialisieren des Dashboards",
       "title-not-found": "Das Panel mit der ID {{panelId}} wurde nicht gefunden"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Vorlagenvariablen"
     },
@@ -11090,6 +11094,12 @@
       "could-anything-matching-query": "Es konnte nichts gefunden werden, was Ihrer Abfrage entspricht"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Typen zurücksetzen",
     "select-aria-label": "Panel-Typ-Filter",
@@ -11703,13 +11713,6 @@
       "saving": "Einsparen",
       "title-error-loading-file": "Fehler beim Laden der Datei"
     },
-    "files-view": {
-      "columns": {
-        "history": "Verlauf",
-        "view": "Anzeigen"
-      },
-      "placeholder-search": "Suche"
-    },
     "finish-step": {
       "description-enable-previews": "Fügt eine Bildvorschau der Dashboard-Änderungen bei Pull-Requests hinzu. Bilder Ihrer Grafana-Dashboards werden in Ihrem Git-Repository bereitgestellt und sind für jede Person mit Repository-Zugriff sichtbar.",
       "description-generate-dashboard-previews": "Erstellen Sie Vorschau-Links für Pull-Requests",
@@ -11920,9 +11923,6 @@
       "source-code": "Quellcode"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Schreibgeschützt",
       "settings": "Einstellungen",
       "view": "Anzeigen"
@@ -11959,14 +11959,6 @@
       "webhook-last-event": "Letztes Ereignis:",
       "webhook-url": "Webhook anzeigen"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Verlauf",
-        "view-dashboard": "Anzeigen",
-        "view-folder": "Anzeigen"
-      },
-      "placeholder-search": "Suche"
-    },
     "repository-status-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
       "cleaning-up-resources": "Bereinigen von Repository-Ressourcen",
@@ -11974,12 +11966,10 @@
       "not-found": "nicht gefunden",
       "not-found-message": "Repository nicht gefunden",
       "repository-config-exists-configuration": "Achten Sie darauf, dass die Repository-config in der Konfigurationsdatei vorhanden ist.",
-      "tab-files": "Dateien",
-      "tab-files-title": "Die Raw-Datei-Liste aus dem Repository",
       "tab-overview": "Übersicht",
       "tab-overview-title": "Repository-Übersicht",
       "tab-resources": "Ressourcen",
-      "tab-resources-title": "In der Grafana-Datenbank gespeicherte Ressourcen",
+      "tab-resources-title": "",
       "title": "Repository-Status",
       "title-legacy-storage": "Veralteter Speicher",
       "title-queued-for-deletion": "Zum Löschen in die Warteschlange gestellt"
@@ -12001,6 +11991,17 @@
       "local-description": "Dateibereitstellung konfigurieren",
       "pure-git": "Pure Git",
       "pure-git-description": "Mit beliebigem Git-Repository verbinden"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Basis",
@@ -13282,6 +13283,7 @@
     "create-team": {
       "create": "Erstellen",
       "description-email": "Dies ist optional und wird hauptsächlich genutzt, um individuelle Team-Avatare zu ermöglichen",
+      "failed-to-create": "",
       "label-email": "E-Mail-Adresse",
       "label-name": "Name",
       "label-role": "Rolle"
@@ -13313,6 +13315,7 @@
         "title-edit-team": "Team bearbeiten",
         "tooltip-edit-team": "Team bearbeiten"
       },
+      "loading-teams": "",
       "new-team": "Neues Team",
       "placeholder-search-teams": "Teams suchen"
     },

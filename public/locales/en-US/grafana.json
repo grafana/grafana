@@ -5395,6 +5395,10 @@
       "loading-initializing-dashboard": "Loading & initializing dashboard",
       "title-not-found": "Panel with id {{panelId}} not found"
     },
+    "source-link": {
+      "title": "Source ({{provider}})",
+      "tooltip": "View source file in repository"
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Template variables"
     },
@@ -13281,6 +13285,7 @@
     "create-team": {
       "create": "Create",
       "description-email": "This is optional and is primarily used for allowing custom team avatars",
+      "failed-to-create": "Failed to create team",
       "label-email": "Email",
       "label-name": "Name",
       "label-role": "Role"
@@ -13312,6 +13317,7 @@
         "title-edit-team": "Edit team",
         "tooltip-edit-team": "Edit team"
       },
+      "loading-teams": "Loading teams...",
       "new-team": "New Team",
       "placeholder-search-teams": "Search teams"
     },

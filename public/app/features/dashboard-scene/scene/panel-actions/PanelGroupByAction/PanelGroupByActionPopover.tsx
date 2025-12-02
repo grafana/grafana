@@ -67,16 +67,14 @@ export function PanelGroupByActionPopover({
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div className={styles.menuContainer} onClick={(ev) => ev.stopPropagation()}>
         <Stack direction="column">
-          <Stack gap={1}>
-            <div className={styles.searchContainer}>
-              <Input
-                prefix={<Icon name="search" />}
-                placeholder={t('panel-group-by.search-placeholder', 'Search')}
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.currentTarget.value)}
-              />
-            </div>
-          </Stack>
+          <div className={styles.searchContainer}>
+            <Input
+              prefix={<Icon name="search" />}
+              placeholder={t('panel-group-by.search-placeholder', 'Search')}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.currentTarget.value)}
+            />
+          </div>
 
           <div className={styles.listContainer}>
             {isLoading ? (
@@ -124,7 +122,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   searchContainer: css({
     width: '100%',
-    padding: theme.spacing(1),
+    paddingBottom: theme.spacing(1),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
   listContainer: css({

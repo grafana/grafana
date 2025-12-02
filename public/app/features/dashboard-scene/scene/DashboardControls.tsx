@@ -171,13 +171,22 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     >
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
-          <div className={styles.timeControls}>
+          <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {!hideDashboardControls && model.hasDashboardControls() && <DashboardControlsButton dashboard={dashboard} />}
-        {config.featureToggles.dashboardNewLayouts && <DashboardControlActions dashboard={dashboard} />}
+        {!hideDashboardControls && model.hasDashboardControls() && (
+          <div className={styles.dashboardControlsButton}>
+            <DashboardControlsButton dashboard={dashboard} />
+          </div>
+        )}
+        {config.featureToggles.dashboardNewLayouts && (
+          <div className={styles.fixedControls}>
+            <DashboardControlActions dashboard={dashboard} />
+          </div>
+        )}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
       {!hideVariableControls && (
         <>
@@ -185,7 +194,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}
-      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
@@ -268,17 +276,26 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rightControls: css({
       display: 'flex',
-      justifyContent: 'flex-end',
       gap: theme.spacing(1),
-      marginBottom: theme.spacing(1),
       float: 'right',
       alignItems: 'flex-start',
+      flexWrap: 'wrap',
+      maxWidth: '100%',
+      minWidth: 0,
     }),
-    timeControls: css({
+    fixedControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
+      order: 2,
+      marginLeft: 'auto',
+      flexShrink: 0,
+      alignSelf: 'flex-start',
+    }),
+    dashboardControlsButton: css({
+      order: 2,
+      marginLeft: 'auto',
     }),
     rightControlsWrap: css({
       flexWrap: 'wrap',

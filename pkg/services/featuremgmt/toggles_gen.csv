@@ -184,7 +184,7 @@ k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
-elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
+elasticsearchImprovedParsing,experimental,@grafana/partner-datasources,false,false,false
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 newLogsPanel,GA,@grafana/observability-logs,false,false,true
@@ -257,6 +257,7 @@ cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
 newGauge,experimental,@grafana/dataviz-squad,false,false,true
 newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
+externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -269,3 +270,4 @@ transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 ttlPluginInstanceManager,experimental,@grafana/plugins-platform-backend,false,false,true
 lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
+kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false

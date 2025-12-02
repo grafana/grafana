@@ -8,6 +8,7 @@ export const grafanaESModules = [
   'd3',
   'd3-color',
   'd3-interpolate',
+  'd3-scale-chromatic',
   'delaunator',
   'get-user-locale',
   'internmap',

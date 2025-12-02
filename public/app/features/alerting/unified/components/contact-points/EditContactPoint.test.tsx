@@ -1,4 +1,5 @@
 import 'core-js/stable/structured-clone';
+import type { JSX } from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, within } from 'test/test-utils';

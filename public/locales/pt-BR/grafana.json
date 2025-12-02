@@ -5395,6 +5395,10 @@
       "loading-initializing-dashboard": "Carregando e inicializando o painel",
       "title-not-found": "Painel com ID {{panelId}} não encontrado"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Variáveis do modelo"
     },
@@ -11090,6 +11094,12 @@
       "could-anything-matching-query": "Não foi possível encontrar nada que corresponda à sua consulta"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Limpar tipos",
     "select-aria-label": "Filtro de tipo de painel",
@@ -11703,13 +11713,6 @@
       "saving": "Salvando",
       "title-error-loading-file": "Erro ao carregar o arquivo"
     },
-    "files-view": {
-      "columns": {
-        "history": "Histórico",
-        "view": "Visualizar"
-      },
-      "placeholder-search": "Pesquisar"
-    },
     "finish-step": {
       "description-enable-previews": "Adiciona uma pré-visualização em imagem das alterações do painel nas solicitações de extração. As imagens dos seus painéis da Grafana serão compartilhadas no seu repositório Git e estarão disponíveis para qualquer pessoa com acesso ao repositório.",
       "description-generate-dashboard-previews": "Criar links de prévia para solicitações de extração",
@@ -11920,9 +11923,6 @@
       "source-code": "Código fonte"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Somente leitura",
       "settings": "Configurações",
       "view": "Visualizar"
@@ -11959,14 +11959,6 @@
       "webhook-last-event": "Último evento:",
       "webhook-url": "Visualizar Webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Histórico",
-        "view-dashboard": "Visualizar",
-        "view-folder": "Visualizar"
-      },
-      "placeholder-search": "Pesquisar"
-    },
     "repository-status-page": {
       "back-to-repositories": "Voltar para os repositórios",
       "cleaning-up-resources": "Limpando recursos do repositório",
@@ -11974,12 +11966,10 @@
       "not-found": "não encontrado",
       "not-found-message": "Repositório não encontrado",
       "repository-config-exists-configuration": "Verifique se a configuração do repositório existe no arquivo de configuração.",
-      "tab-files": "Arquivos",
-      "tab-files-title": "A lista de arquivos brutos do repositório",
       "tab-overview": "Visão geral",
       "tab-overview-title": "Visão geral do repositório",
       "tab-resources": "Fontes",
-      "tab-resources-title": "Recursos salvos no banco de dados da Grafana",
+      "tab-resources-title": "",
       "title": "Status do repositório",
       "title-legacy-storage": "Armazenamento legado",
       "title-queued-for-deletion": "Na fila para exclusão"
@@ -12001,6 +11991,17 @@
       "local-description": "Configurar o provisionamento de arquivos",
       "pure-git": "Git puro",
       "pure-git-description": "Conectar a qualquer repositório do Git"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Base",
@@ -13282,6 +13283,7 @@
     "create-team": {
       "create": "Criar",
       "description-email": "Isso é opcional e é usado principalmente para permitir avatares de equipe personalizados",
+      "failed-to-create": "",
       "label-email": "E-mail",
       "label-name": "Nome",
       "label-role": "Função"
@@ -13313,6 +13315,7 @@
         "title-edit-team": "Editar equipe",
         "tooltip-edit-team": "Editar equipe"
       },
+      "loading-teams": "",
       "new-team": "Nova equipe",
       "placeholder-search-teams": "Pesquisar equipes"
     },

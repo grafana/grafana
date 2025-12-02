@@ -5395,6 +5395,10 @@
       "loading-initializing-dashboard": "Irányítópult betöltése és inicializálása",
       "title-not-found": "A(z) {{panelId}} azonosítójú panel nem található"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Sablonváltozók"
     },
@@ -11090,6 +11094,12 @@
       "could-anything-matching-query": "Nincs találat a lekérdezésre"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Típusok törlése",
     "select-aria-label": "Paneltípusszűrő",
@@ -11703,13 +11713,6 @@
       "saving": "Mentés",
       "title-error-loading-file": "Hiba a fájl betöltésekor"
     },
-    "files-view": {
-      "columns": {
-        "history": "Előzmények",
-        "view": "Nézet"
-      },
-      "placeholder-search": "Keresés"
-    },
     "finish-step": {
       "description-enable-previews": "Hozzáadja az irányítópult változásainak előnézetét a lekérésekben. A Grafana-irányítópultok képei meg lesznek osztva a Git-tárban, és bárki számára láthatóak lesznek, aki hozzáféréssel rendelkezik az adattárhoz.",
       "description-generate-dashboard-previews": "Előnézeti hivatkozások létrehozása az összefésülési kérelmekhez",
@@ -11920,9 +11923,6 @@
       "source-code": "Forráskód"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webkapocs"
-      },
       "read-only-badge": "Csak olvasható",
       "settings": "Beállítások",
       "view": "Nézet"
@@ -11959,14 +11959,6 @@
       "webhook-last-event": "Legutóbbi esemény:",
       "webhook-url": "Webkapocs megtekintése"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Előzmények",
-        "view-dashboard": "Nézet",
-        "view-folder": "Nézet"
-      },
-      "placeholder-search": "Keresés"
-    },
     "repository-status-page": {
       "back-to-repositories": "Vissza az adattárakhoz",
       "cleaning-up-resources": "Adattári erőforrások tisztítása",
@@ -11974,12 +11966,10 @@
       "not-found": "nem található",
       "not-found-message": "Nem található adattár",
       "repository-config-exists-configuration": "Győződjön meg arról, hogy a tároló konfigurációja létezik a konfigurációs fájlban.",
-      "tab-files": "Fájlok",
-      "tab-files-title": "Nyers fájllista az adattárból",
       "tab-overview": "Áttekintés",
       "tab-overview-title": "Adattár áttekintése",
       "tab-resources": "Erőforrások",
-      "tab-resources-title": "Grafana-adatbázisba mentett erőforrások",
+      "tab-resources-title": "",
       "title": "Adattár állapota",
       "title-legacy-storage": "Örökölt tárolás",
       "title-queued-for-deletion": "Törlésre vár"
@@ -12001,6 +11991,17 @@
       "local-description": "Fájlkiépítés konfigurálása",
       "pure-git": "Pure Git",
       "pure-git-description": "Csatlakozás bármely Git-adattárhoz"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Alap",
@@ -13282,6 +13283,7 @@
     "create-team": {
       "create": "Létrehozás",
       "description-email": "Ez nem kötelező, és elsősorban egyéni csapatavatárok engedélyezésére szolgál",
+      "failed-to-create": "",
       "label-email": "E-mail",
       "label-name": "Név",
       "label-role": "Szerepkör"
@@ -13313,6 +13315,7 @@
         "title-edit-team": "Csapat szerkesztése",
         "tooltip-edit-team": "Csapat szerkesztése"
       },
+      "loading-teams": "",
       "new-team": "Új csapat",
       "placeholder-search-teams": "Csapatok keresése"
     },

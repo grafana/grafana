@@ -1336,7 +1336,7 @@ var (
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaPartnerPluginsSquad,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
@@ -1892,6 +1892,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "externalVizSuggestions",
+			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
@@ -1983,6 +1991,13 @@ var (
 			Expression:      "false",
 			RequiresRestart: false,
 			HideFromDocs:    false,
+		},
+		{
+			Name:            "kubernetesAlertingHistorian",
+			Description:     "Adds support for Kubernetes alerting historian APIs",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
 		},
 	}
 )
