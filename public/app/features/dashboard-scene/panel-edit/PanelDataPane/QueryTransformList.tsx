@@ -19,7 +19,9 @@ export interface QueryTransformItem {
 }
 
 interface QueryTransformListProps {
-  items: QueryTransformItem[];
+  allItems: QueryTransformItem[];
+  dataSourceItems: QueryTransformItem[];
+  transformItems: QueryTransformItem[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onAddQuery: () => void;
@@ -32,11 +34,14 @@ interface QueryTransformListProps {
   onRemoveExpression?: (index: number) => void;
   onToggleExpressionVisibility?: (index: number) => void;
   onRemoveTransform?: (index: number) => void;
+  onToggleTransformVisibility?: (index: number) => void;
 }
 
 export const QueryTransformList = memo(
   ({
-    items,
+    dataSourceItems,
+    transformItems,
+    allItems,
     selectedId,
     onSelect,
     onAddQuery,
@@ -49,13 +54,14 @@ export const QueryTransformList = memo(
     onRemoveExpression,
     onToggleExpressionVisibility,
     onRemoveTransform,
+    onToggleTransformVisibility,
   }: QueryTransformListProps) => {
     const styles = useStyles2(getStyles);
 
     const allConnections = useMemo(() => {
       const conns: Array<{ from: string; to: string }> = [];
 
-      items.forEach((item) => {
+      allItems.forEach((item) => {
         if (item.type === 'expression' && 'expression' in item.data && 'refId' in item.data) {
           const expr = item.data;
 
@@ -78,7 +84,7 @@ export const QueryTransformList = memo(
       });
 
       return conns;
-    }, [items]);
+    }, [allItems]);
 
     // Filter connections to only show for selected card
     const visibleConnections = useMemo(() => {
@@ -87,7 +93,7 @@ export const QueryTransformList = memo(
       }
 
       // Find the item to get its refId
-      const activeItem = items.find((item) => item.id === selectedId);
+      const activeItem = allItems.find((item) => item.id === selectedId);
       if (!activeItem || !('refId' in activeItem.data)) {
         return [];
       }
@@ -96,7 +102,7 @@ export const QueryTransformList = memo(
 
       // Show connections where this card is involved (either as source or destination)
       return allConnections.filter((conn) => conn.from === activeRefId || conn.to === activeRefId);
-    }, [allConnections, selectedId, items]);
+    }, [allConnections, selectedId, allItems]);
 
     const getHandlers = (item: QueryTransformItem) => {
       switch (item.type) {
@@ -118,23 +124,24 @@ export const QueryTransformList = memo(
           return {
             onDuplicate: undefined,
             onRemove: onRemoveTransform ? () => onRemoveTransform(item.index) : undefined,
-            onToggleVisibility: undefined,
+            onToggleVisibility: onToggleTransformVisibility ? () => onToggleTransformVisibility(item.index) : undefined,
           };
       }
     };
 
     const stats = useMemo(() => {
-      const totalCards = items.length;
-      const queries = items.filter((item) => item.type === 'query' || item.type === 'expression');
-      const hiddenQueries = queries.filter((item) => 'hide' in item.data && item.data.hide);
-      const visibleQueries = queries.length - hiddenQueries.length;
+      const totalCards = allItems.length;
+      const hiddenQueries = dataSourceItems.filter((item) => 'hide' in item.data && item.data.hide);
+      const disabledTransforms = transformItems.filter((item) => 'disabled' in item.data && item.data.disabled);
+      const hiddenTotal = hiddenQueries.length + disabledTransforms.length;
+      const visibleTotal = totalCards - hiddenTotal;
 
       return {
         totalCards,
-        visibleQueries,
-        hiddenQueries: hiddenQueries.length,
+        visibleQueries: visibleTotal,
+        hiddenQueries: hiddenTotal,
       };
-    }, [items]);
+    }, [allItems, dataSourceItems, transformItems]);
 
     return (
       <div className={styles.container}>
@@ -149,18 +156,46 @@ export const QueryTransformList = memo(
         <div className={styles.scrollWrapper}>
           <ScrollContainer data-scrollcontainer>
             <div className={styles.content}>
-              <Stack direction="column" gap={2}>
-                {items.map((item) => (
-                  <QueryTransformCard
-                    key={item.id}
-                    item={item.data}
-                    type={item.type}
-                    index={item.index}
-                    isSelected={selectedId === item.id}
-                    onClick={() => onSelect(item.id)}
-                    {...getHandlers(item)}
-                  />
-                ))}
+              <Stack direction="column" gap={3}>
+                {/* Data Sources Section (Queries + Expressions) */}
+                {dataSourceItems.length > 0 && (
+                  <Stack direction="column" gap={2}>
+                    <div className={styles.sectionLabel}>
+                      {t('dashboard-scene.query-transform-list.queries-expressions', 'Queries & Expressions')}
+                    </div>
+                    {dataSourceItems.map((item) => (
+                      <QueryTransformCard
+                        key={item.id}
+                        item={item.data}
+                        type={item.type}
+                        index={item.index}
+                        isSelected={selectedId === item.id}
+                        onClick={() => onSelect(item.id)}
+                        {...getHandlers(item)}
+                      />
+                    ))}
+                  </Stack>
+                )}
+
+                {/* Transformations Section */}
+                {transformItems.length > 0 && (
+                  <Stack direction="column" gap={2}>
+                    <div className={styles.sectionLabel}>
+                      {t('dashboard-scene.query-transform-list.transformations', 'Transformations')}
+                    </div>
+                    {transformItems.map((item) => (
+                      <QueryTransformCard
+                        key={item.id}
+                        item={item.data}
+                        type={item.type}
+                        index={item.index}
+                        isSelected={selectedId === item.id}
+                        onClick={() => onSelect(item.id)}
+                        {...getHandlers(item)}
+                      />
+                    ))}
+                  </Stack>
+                )}
 
                 <AddDataItemMenu
                   onAddQuery={onAddQuery}
@@ -226,13 +261,30 @@ const getStyles = (theme: GrafanaTheme2) => {
       textTransform: 'uppercase',
       color: theme.colors.text.primary,
     }),
+    sectionLabel: css({
+      fontFamily: "'CommitMono', monospace",
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.maxContrast,
+      textTransform: 'uppercase',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      marginLeft: theme.spacing(-2),
+      marginRight: theme.spacing(-2),
+      '&::before, &::after': {
+        content: '""',
+        flex: 1,
+        height: '1px',
+        background: theme.colors.border.weak,
+      },
+    }),
     scrollWrapper: css({
       flex: 1,
       minHeight: 0,
       position: 'relative',
     }),
     content: css({
-      padding: theme.spacing(2),
+      padding: theme.spacing(4),
       paddingRight: theme.spacing(6),
     }),
     footer: css({

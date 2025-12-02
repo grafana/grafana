@@ -48,7 +48,9 @@ export const QueryTransformCard = memo(
       return undefined;
     }, [type, item]);
 
-    const isHidden = (type === 'query' || type === 'expression') && 'hide' in item && item.hide;
+    const isHidden =
+      ((type === 'query' || type === 'expression') && 'hide' in item && item.hide) ||
+      (type === 'transform' && 'disabled' in item && item.disabled);
     const icon = type === 'query' ? 'database' : type === 'expression' ? 'code' : 'pivot';
     const typeLabel = type === 'query' ? 'Query' : type === 'expression' ? 'Expression' : 'Transformation';
     const name = getName();
@@ -90,15 +92,19 @@ export const QueryTransformCard = memo(
             <span className={styles.typeLabel}>{typeLabel}</span>
           </div>
           <Stack gap={0.25}>
-            {(type === 'query' || type === 'expression') && onToggleVisibility && (
+            {onToggleVisibility && (
               <IconButton
                 name={isHidden ? 'eye-slash' : 'eye'}
                 size="sm"
                 variant="secondary"
                 tooltip={
                   isHidden
-                    ? t('dashboard-scene.query-transform-card.show-response', 'Show response')
-                    : t('dashboard-scene.query-transform-card.hide-response', 'Hide response')
+                    ? type === 'transform'
+                      ? t('dashboard-scene.query-transform-card.enable-transform', 'Enable transformation')
+                      : t('dashboard-scene.query-transform-card.show-response', 'Show response')
+                    : type === 'transform'
+                      ? t('dashboard-scene.query-transform-card.disable-transform', 'Disable transformation')
+                      : t('dashboard-scene.query-transform-card.hide-response', 'Hide response')
                 }
                 onClick={(e) => handleAction(e, onToggleVisibility)}
                 className={styles.actionButton}
@@ -161,7 +167,7 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       background: theme.colors.background.secondary,
       width: '100%',
       minWidth: 180,
-      maxWidth: 240,
+      maxWidth: 300,
       '&:hover': {
         borderColor: theme.colors.border.strong,
       },

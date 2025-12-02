@@ -137,13 +137,16 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
   const transformerState = dataTransformer?.useState();
 
-  // Build combined items list
-  const items: QueryTransformItem[] = useMemo(() => {
-    const result: QueryTransformItem[] = [];
+  // Build separate lists for queries/expressions and transformations
+  const { dataSourceItems, transformItems, allItems } = useMemo(() => {
+    const dataSourceItems: QueryTransformItem[] = [];
+    const transformItems: QueryTransformItem[] = [];
+
+    // Add queries and expressions
     const queries = queryRunnerState?.queries;
     for (let i = 0; i < (queries?.length ?? 0); i++) {
       const query = queries![i];
-      result.push({
+      dataSourceItems.push({
         id: queryItemId(query),
         type: isExpressionQuery(query) ? 'expression' : 'query',
         data: query,
@@ -151,11 +154,12 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       });
     }
 
+    // Add transformations
     const transformations = transformerState?.transformations;
     for (let i = 0; i < (transformations?.length ?? 0); i++) {
       const transform = transformations![i];
       if (isDataTransformerConfig(transform)) {
-        result.push({
+        transformItems.push({
           id: transformItemId(i),
           type: 'transform',
           data: transform,
@@ -164,20 +168,24 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       }
     }
 
-    return result;
+    return {
+      dataSourceItems,
+      transformItems,
+      allItems: [...dataSourceItems, ...transformItems],
+    };
   }, [queryRunnerState?.queries, transformerState?.transformations]);
 
   // Auto-select first item if nothing is selected
   const effectiveSelectedId = useMemo(() => {
-    if (selectedId === null && items.length > 0) {
-      return items[0].id;
+    if (selectedId === null && allItems.length > 0) {
+      return allItems[0].id;
     }
     return selectedId;
-  }, [selectedId, items]);
+  }, [selectedId, allItems]);
 
   const selectedItem = useMemo(() => {
-    return items.find((item) => item.id === effectiveSelectedId);
-  }, [items, effectiveSelectedId]);
+    return allItems.find((item) => item.id === effectiveSelectedId);
+  }, [allItems, effectiveSelectedId]);
 
   const handleSelect = useCallback((id: string) => {
     setSelectedId(id);
@@ -406,6 +414,22 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     [tabs, selectedId]
   );
 
+  const handleToggleTransformVisibility = useCallback(
+    (index: number) => {
+      const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
+      if (transformsTab) {
+        const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
+          isDataTransformerConfig
+        );
+        const newTransformations = transformations.map((t, i) =>
+          i === index ? { ...t, disabled: t.disabled ? undefined : true } : t
+        );
+        transformsTab.onChangeTransformations(newTransformations);
+      }
+    },
+    [tabs]
+  );
+
   // Get data for transformations drawer
   const sourceData = queryRunner?.useState();
   const series = sourceData?.data?.series || [];
@@ -421,7 +445,9 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       <div {...containerProps} className={cx(containerProps.className, styles.unifiedLayout)}>
         <div {...primaryProps} className={cx(primaryProps.className, styles.leftPane)}>
           <QueryTransformList
-            items={items}
+            allItems={allItems}
+            dataSourceItems={dataSourceItems}
+            transformItems={transformItems}
             selectedId={effectiveSelectedId}
             onSelect={handleSelect}
             onAddQuery={handleAddQuery}
@@ -435,6 +461,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             onRemoveExpression={handleRemoveExpression}
             onToggleExpressionVisibility={handleToggleExpressionVisibility}
             onRemoveTransform={handleRemoveTransform}
+            onToggleTransformVisibility={handleToggleTransformVisibility}
           />
         </div>
         <div
@@ -470,9 +497,9 @@ export function shouldShowAlertingTab(pluginId: string) {
   return isGraph || isTimeseries;
 }
 
-// Left pane sizing: card width + padding (16px left + 48px right = 64px)
-const LEFT_PANE_MIN = 180 + 64; // 244px (180px card + padding)
-const LEFT_PANE_MAX = 240 + 64; // 304px (240px card + padding)
+// Left pane sizing: cards grow from 180px-300px, plus content padding (32px + 48px = 80px)
+const LEFT_PANE_MIN = 180 + 80; // 260px (180px card min + 80px padding)
+const LEFT_PANE_MAX = 300 + 80; // 380px (300px card max + 80px padding)
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -496,9 +523,9 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'col-resize',
     }),
     leftPane: css({
-      // !important to override useSplitter's inline styles
+      // !important on minWidth to override useSplitter's inline minWidth: 'min-content'
       minWidth: `${LEFT_PANE_MIN}px !important`,
-      maxWidth: `${LEFT_PANE_MAX}px !important`,
+      maxWidth: `${LEFT_PANE_MAX}px`,
       overflow: 'hidden',
     }),
   };
