@@ -8,6 +8,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataQuery } from '@grafana/scenes';
 import { Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
 
+import { usePanelDataPaneColors } from './theme';
 import { queryItemId, transformItemId } from './utils';
 
 interface QueryTransformCardProps {
@@ -23,7 +24,8 @@ interface QueryTransformCardProps {
 
 export const QueryTransformCard = memo(
   ({ item, type, index, isSelected, onClick, onDuplicate, onRemove, onToggleVisibility }: QueryTransformCardProps) => {
-    const styles = useStyles2(getStyles);
+    const colors = usePanelDataPaneColors();
+    const styles = useStyles2(getStyles, colors);
 
     const getName = (): string => {
       if ((type === 'query' || type === 'expression') && 'refId' in item) {
@@ -47,7 +49,7 @@ export const QueryTransformCard = memo(
     }, [type, item]);
 
     const isHidden = (type === 'query' || type === 'expression') && 'hide' in item && item.hide;
-    const icon = type === 'query' ? 'database' : type === 'expression' ? 'calculator-alt' : 'process';
+    const icon = type === 'query' ? 'database' : type === 'expression' ? 'code' : 'pivot';
     const typeLabel = type === 'query' ? 'Query' : type === 'expression' ? 'Expression' : 'Transformation';
     const name = getName();
 
@@ -145,7 +147,7 @@ export const QueryTransformCard = memo(
 
 QueryTransformCard.displayName = 'QueryTransformCard';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataPaneColors>) => {
   const selectedClass = 'card-selected';
   const hiddenClass = 'card-hidden';
 
@@ -156,7 +158,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       overflow: 'hidden',
-      background: theme.colors.background.primary,
+      background: theme.colors.background.secondary,
       width: '100%',
       minWidth: 180,
       maxWidth: 240,
@@ -182,28 +184,27 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: theme.spacing(0.5),
-      background: theme.colors.primary.transparent,
+      background: theme.colors.background.canvas,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      color: colors.query.accent,
     }),
     headerTransform: css({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: theme.spacing(0.5),
-      background: theme.isDark
-        ? `${theme.visualization.getColorByName('orange')}20`
-        : `${theme.visualization.getColorByName('orange')}15`,
+      background: theme.colors.background.canvas,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      color: colors.transform.accent,
     }),
     headerExpression: css({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: theme.spacing(0.5),
-      background: theme.isDark
-        ? `${theme.visualization.getColorByName('purple')}20`
-        : `${theme.visualization.getColorByName('purple')}15`,
+      background: theme.colors.background.canvas,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      color: colors.expression.accent,
     }),
     headerLeft: css({
       display: 'flex',
@@ -213,13 +214,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       minWidth: 0,
     }),
     headerIcon: css({
-      color: theme.colors.text.secondary,
+      color: 'inherit',
       flexShrink: 0,
     }),
     typeLabel: css({
       fontFamily: "'CommitMono', monospace",
       fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.maxContrast,
+      color: 'inherit',
       textTransform: 'uppercase',
     }),
     actionButton: css({

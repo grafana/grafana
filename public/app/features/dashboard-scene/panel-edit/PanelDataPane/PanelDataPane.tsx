@@ -496,9 +496,10 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'col-resize',
     }),
     leftPane: css({
-      // !important to override useSplitter's inline minWidth: 'min-content'
+      // !important to override useSplitter's inline styles
       minWidth: `${LEFT_PANE_MIN}px !important`,
       maxWidth: `${LEFT_PANE_MAX}px !important`,
+      overflow: 'hidden',
     }),
   };
 }

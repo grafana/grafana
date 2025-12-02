@@ -211,6 +211,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
+      width: '100%',
+      maxWidth: '100%',
       overflow: 'hidden',
       border: `1px solid ${theme.colors.border.weak}`,
     }),
@@ -243,7 +245,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     footerStat: css({
       fontFamily: monoFont,
-      fontSize: '10px',
+      fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.primary,
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
