@@ -5437,6 +5437,10 @@
       "loading-initializing-dashboard": "Načítání a inicializace nástěnky",
       "title-not-found": "Panel s ID {{panelId}} nebyl nalezen"
     },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Proměnné šablony"
     },
@@ -11184,6 +11188,12 @@
       "could-anything-matching-query": "Nenašly jsme žádnou shodu s vaším dotazem"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Vymazat typy",
     "select-aria-label": "Filtr typu panelu",
@@ -13387,6 +13397,7 @@
     "create-team": {
       "create": "Vytvořit",
       "description-email": "Toto je volitelné a používá se především k povolení vlastních týmových avatarů",
+      "failed-to-create": "",
       "label-email": "E-mail",
       "label-name": "Název",
       "label-role": "Role"
@@ -13418,6 +13429,7 @@
         "title-edit-team": "Upravit tým",
         "tooltip-edit-team": "Upravit tým"
       },
+      "loading-teams": "",
       "new-team": "Nový tým",
       "placeholder-search-teams": "Hledat týmy"
     },

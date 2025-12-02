@@ -1385,6 +1385,20 @@
     },
     {
       "metadata": {
+        "name": "externalVizSuggestions",
+        "resourceVersion": "1763498528748",
+        "creationTimestamp": "2025-11-18T20:42:08Z"
+      },
+      "spec": {
+        "description": "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2023-05-10T13:37:04Z",
@@ -2510,6 +2524,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "panelGroupBy",
+        "resourceVersion": "1764257043719",
+        "creationTimestamp": "2025-11-27T15:24:03Z"
+      },
+      "spec": {
+        "description": "Enabled a group by action per panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
@@ -55,8 +56,12 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 	// skip migrations if disabled in config
 	if p.cfg.DisableDataMigrations {
+		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping")
 		return nil
+	} else {
+		metrics.MUnifiedStorageMigrationStatus.Set(2)
+		logger.Info("Data migrations not yet enforced, skipping")
 	}
 
 	// TODO: Re-enable once migrations are ready
@@ -85,8 +90,13 @@ func RegisterMigrations(
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
+	migrationLocking := sec.Key("migration_locking").MustBool(true)
+	if mg.Dialect.DriverName() == sqlstoremigrator.SQLite {
+		// disable migration locking for SQLite to avoid "database is locked" errors in the bulk operations
+		migrationLocking = false
+	}
 	if err := mg.RunMigrations(ctx,
-		sec.Key("migration_locking").MustBool(true),
+		migrationLocking,
 		sec.Key("locking_attempt_timeout_sec").MustInt()); err != nil {
 		return fmt.Errorf("unified storage data migration failed: %w", err)
 	}
@@ -98,12 +108,14 @@ func RegisterMigrations(
 func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
 	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	driverName := mg.Dialect.DriverName()
 
 	folderCountValidator := NewCountValidator(
 		client,
 		folders,
 		"dashboard",
 		"org_id = ? and is_folder = true",
+		driverName,
 	)
 
 	dashboardCountValidator := NewCountValidator(
@@ -111,9 +123,10 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator
 		dashboards,
 		"dashboard",
 		"org_id = ? and is_folder = false",
+		driverName,
 	)
 
-	folderTreeValidator := NewFolderTreeValidator(client, folders)
+	folderTreeValidator := NewFolderTreeValidator(client, folders, driverName)
 
 	dashboardsAndFolders := NewResourceMigration(
 		migrator,
