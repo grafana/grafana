@@ -5,6 +5,9 @@ import { CustomHighlight } from '@grafana/data';
 
 import { useLogListHighlightContext, LogListHighlightContext } from './LogListHighlightContext';
 
+// Mock palette length to match typical theme palette size
+const MOCK_PALETTE_LENGTH = 50;
+
 describe('LogListHighlightContext', () => {
   const createWrapper = (highlights: CustomHighlight[], onChange: (highlights: CustomHighlight[]) => void) => {
     return ({ children }: { children: ReactNode }) => (
@@ -13,7 +16,7 @@ describe('LogListHighlightContext', () => {
           customHighlights: highlights,
           addHighlight: (text: string) => {
             const filtered = highlights.filter((h) => h.text !== text);
-            const nextColorIndex = filtered.length % 50;
+            const nextColorIndex = filtered.length % MOCK_PALETTE_LENGTH;
             onChange([...filtered, { text, colorIndex: nextColorIndex }]);
           },
           resetHighlights: () => onChange([]),
