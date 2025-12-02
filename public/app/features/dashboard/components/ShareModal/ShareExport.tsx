@@ -60,13 +60,16 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
     }
   };
 
-  const openSaveAsDialog = (dash: Record<string, unknown> & { title?: string }) => {
+  const openSaveAsDialog = (dash: unknown) => {
     const dashboardJsonPretty = JSON.stringify(dash, null, 2);
     const blob = new Blob([dashboardJsonPretty], {
       type: 'application/json;charset=utf-8',
     });
     const time = new Date().getTime();
-    const title = dash.title && typeof dash.title === 'string' ? dash.title : 'dashboard';
+    const title =
+      typeof dash === 'object' && dash !== null && 'title' in dash && typeof dash.title === 'string'
+        ? dash.title
+        : 'dashboard';
     saveAs(blob, `${title}-${time}.json`);
   };
 
