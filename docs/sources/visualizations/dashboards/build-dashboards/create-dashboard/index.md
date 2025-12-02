@@ -118,8 +118,9 @@ To begin building a dashboard directly from a data source, follow these steps:
 1. Do one of the following:
 
    - Click **+Add visualization** to configure all the elements of the new dashboard.
-   - Select one of the suggested dashboards by clicking **Use dashboard**. If there are more than three dashboard suggestions, you can click **View all** to see the rest of them.
-    <image here>
+   - Select one of the suggested dashboards by clicking its **Use dashboard** button. If there are more than three dashboard suggestions, you can click **View all** to see the rest of them.
+
+   ![List of configured data sources](/media/docs/grafana/dashboards/screenshot-suggested-dashboards-v12.3.png)
 
    {{< docs/public-preview product="Suggested dashboards" >}}
 
