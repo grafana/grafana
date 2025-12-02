@@ -229,8 +229,9 @@ func TestIntegrationProvisioning_ExportSpecificResourcesRejectsManagedResources(
 		Copies: map[string]string{
 			"exportunifiedtorepository/dashboard-test-v1.yaml": "dashboard.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
+		ExpectedDashboards:     1,
+		ExpectedFolders:        1, // Folder target creates a folder with the repo name
+		SkipResourceAssertions: true, // Skip assertions since we're testing export, not sync
 	}
 	helper.CreateRepo(t, testRepo)
 

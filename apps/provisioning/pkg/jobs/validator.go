@@ -101,13 +101,13 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 	}
 
 	// Validate resources if specified
-	// If Resources is provided (either as non-nil slice or empty slice), it must not be empty
-	// Note: JSON unmarshaling will set Resources to [] rather than nil when explicitly provided
-	// Note: len() for nil slices is defined as zero, so we can check len directly
-	if len(opts.Resources) == 0 {
-		list = append(list, field.Required(field.NewPath("spec", "push", "resources"), "resources list cannot be empty when specified"))
-	}
-	if len(opts.Resources) > 0 {
+	// Only validate Resources when it's explicitly provided (not nil).
+	// When Resources is nil, the old API path (using Folder) is used, so we skip validation.
+	// When Resources is explicitly provided as empty slice [], we must validate it's not empty.
+	if opts.Resources != nil {
+		if len(opts.Resources) == 0 {
+			list = append(list, field.Required(field.NewPath("spec", "push", "resources"), "resources list cannot be empty when specified"))
+		}
 		for i, r := range opts.Resources {
 			resourcePath := field.NewPath("spec", "push", "resources").Index(i)
 
