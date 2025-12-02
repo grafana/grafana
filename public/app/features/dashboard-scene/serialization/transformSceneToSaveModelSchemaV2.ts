@@ -305,9 +305,16 @@ export function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSR
 
       // For default empty queries, don't use getElementDatasource as it will assign a datasource
       // Instead, leave datasource undefined so it gets deleted below
-      const queryDatasource = isDefaultEmptyQuery
+      let queryDatasource = isDefaultEmptyQuery
         ? undefined
         : getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
+
+      // Resolve "datasource" type to Grafana datasource UID
+      // When panel or query has type: "datasource" with no UID, resolve to uid: "grafana"
+      const dsType = query.datasource?.type || queryRunner?.state.datasource?.type;
+      if (dsType === 'datasource' && !queryDatasource?.uid) {
+        queryDatasource = { type: 'datasource', uid: 'grafana' };
+      }
 
       const dataQuery: DataQueryKind = {
         kind: 'DataQuery',
