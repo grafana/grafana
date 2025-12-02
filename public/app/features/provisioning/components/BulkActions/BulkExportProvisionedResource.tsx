@@ -216,12 +216,12 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                 <Alert severity="error" title={String(errors.root.message)} />
               )}
 
-              {/* Warn if folders are selected */}
+              {/* Info if folders are selected */}
               {Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]).length > 0 && (
-                <Alert severity="warning" title={t('browse-dashboards.bulk-export-resources-form.folders-warning', 'Folders cannot be exported')}>
+                <Alert severity="info" title={t('browse-dashboards.bulk-export-resources-form.folders-info', 'Folders in selection')}>
                   {t(
-                    'browse-dashboards.bulk-export-resources-form.folders-warning-description',
-                    'Only dashboards can be exported. Folders in your selection will be ignored.'
+                    'browse-dashboards.bulk-export-resources-form.folders-info-description',
+                    'Folders will be left behind. New folders will be created in the repository based on the dashboard folder structure.'
                   )}
                 </Alert>
               )}
@@ -256,8 +256,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                   label={t('browse-dashboards.bulk-export-resources-form.path', 'Path')}
                   description={t(
                     'browse-dashboards.bulk-export-resources-form.path-description-with-repo',
-                    'Resources will be exported under the repository path: {{repoPath}}. You can add a sub-path below.',
-                    { repoPath: repositoryView.path }
+                    'Add a sub-path below to organize exported dashboards.'
                   )}
                 >
                   <Stack direction="row" gap={0} alignItems="stretch">
