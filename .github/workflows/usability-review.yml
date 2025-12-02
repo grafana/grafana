@@ -195,76 +195,46 @@ jobs:
             echo "Basic auth already enabled, skipping..."
           fi
 
-      - name: Create service account for testing
+      - name: Create test user for playwright
         env:
           GCOM_HOST: ${{ env.GCOM_HOST }}
           GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
-          INSTANCE_SLUG: ${{ env.INSTANCE_SLUG }}
-        run: |
-          # Create service account
-          SA_RESPONSE=$(curl -X POST "${GCOM_HOST}/api/instances/${INSTANCE_SLUG}/api/serviceaccounts" \
-            -H "Authorization: Bearer ${GCOM_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"name":"ci-test","role":"Admin"}')
-
-          echo "Service account response: $SA_RESPONSE"
-          SA_ID=$(echo "$SA_RESPONSE" | jq -r '.id')
-          echo "Service account ID: $SA_ID"
-          echo "SERVICE_ACCOUNT_ID=$SA_ID" >> $GITHUB_ENV
-
-          # Create token
-          TOKEN_RESPONSE=$(curl -X POST "${GCOM_HOST}/api/instances/${INSTANCE_SLUG}/api/serviceaccounts/${SA_ID}/tokens" \
-            -H "Authorization: Bearer ${GCOM_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"name":"ci-token"}')
-
-          echo "Token response: $TOKEN_RESPONSE"
-          TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.key')
-          echo "Token (first 10 chars): ${TOKEN:0:10}..."
-          echo "SA_TOKEN=$TOKEN" >> $GITHUB_ENV
-
-      - name: Create test user for playwright
-        env:
           INSTANCE_SLUG: ${{ env.INSTANCE_SLUG }}
         run: |
           pip install requests
           python3 <<'PYTHON'
           import os, requests, json, random, string
 
+          gcom_host = os.environ['GCOM_HOST']
+          gcom_token = os.environ['GCOM_TOKEN']
           instance = os.environ['INSTANCE_SLUG']
-          token = os.environ['SA_TOKEN']
 
           # Generate random password
           password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
 
-          # Create user
+          # Create user via GCOM API (proxies to instance /api/admin/users)
           resp = requests.post(
-              f"https://{instance}.grafana-dev.net/api/admin/users",
-              headers={"Authorization": f"Bearer {token}"},
+              f"{gcom_host}/api/instances/{instance}/api/admin/users",
+              headers={"Authorization": f"Bearer {gcom_token}"},
               json={"name": "Playwright Test", "login": "playwright-test", "password": password}
           )
           resp.raise_for_status()
           user_id = resp.json()['id']
 
-          # Make user admin
+          # Make user admin via GCOM API (proxies to instance)
           requests.put(
-              f"https://{instance}.grafana-dev.net/api/admin/users/{user_id}/permissions",
-              headers={"Authorization": f"Bearer {token}"},
+              f"{gcom_host}/api/instances/{instance}/api/admin/users/{user_id}/permissions",
+              headers={"Authorization": f"Bearer {gcom_token}"},
               json={"isGrafanaAdmin": True}
           )
 
-          # Save credentials to file
-          with open("test_credentials.json", "w") as f:
-              json.dump({"username": "playwright-test", "password": password}, f)
+          # Export credentials directly to environment
+          with open(os.environ['GITHUB_ENV'], 'a') as env_file:
+              env_file.write(f"GRAFANA_USERNAME=playwright-test\n")
+              env_file.write(f"GRAFANA_PASSWORD={password}\n")
 
           print(f"Created user: playwright-test")
           PYTHON
-
-          # Export credentials as environment variables
-          TEST_USER=$(jq -r '.username' test_credentials.json)
-          TEST_PASS=$(jq -r '.password' test_credentials.json)
-          echo "GRAFANA_USERNAME=$TEST_USER" >> $GITHUB_ENV
-          echo "GRAFANA_PASSWORD=$TEST_PASS" >> $GITHUB_ENV
 
       - name: Run usability review agent
         uses: ./.github/actions/usability-review-agent
