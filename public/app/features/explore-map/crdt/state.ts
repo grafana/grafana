@@ -501,10 +501,14 @@ export class CRDTStateManager {
 
     const xUpdated = panelData.positionX.set(x, operation.timestamp);
     const yUpdated = panelData.positionY.set(y, operation.timestamp);
+    const updated = xUpdated || yUpdated;
+
+    // Note: We don't increment remoteVersion for position changes
+    // Position updates should not trigger content re-renders
 
     return {
       success: true,
-      applied: xUpdated || yUpdated,
+      applied: updated,
     };
   }
 
@@ -518,10 +522,14 @@ export class CRDTStateManager {
 
     const widthUpdated = panelData.width.set(width, operation.timestamp);
     const heightUpdated = panelData.height.set(height, operation.timestamp);
+    const updated = widthUpdated || heightUpdated;
+
+    // Note: Size changes are handled by width/height props in ExploreMapPanelContent
+    // They trigger re-renders through the React.memo comparison, not remoteVersion
 
     return {
       success: true,
-      applied: widthUpdated || heightUpdated,
+      applied: updated,
     };
   }
 
@@ -534,6 +542,9 @@ export class CRDTStateManager {
     }
 
     const updated = panelData.zIndex.set(zIndex, operation.timestamp);
+
+    // Note: We don't increment remoteVersion for zIndex changes
+    // zIndex is a visual property that doesn't affect content
 
     return {
       success: true,
@@ -571,6 +582,11 @@ export class CRDTStateManager {
     }
 
     const updated = panelData.iframeUrl.set(iframeUrl, operation.timestamp);
+
+    // Increment remoteVersion only for remote operations
+    if (updated && operation.nodeId !== this.nodeId) {
+      panelData.remoteVersion++;
+    }
 
     return {
       success: true,

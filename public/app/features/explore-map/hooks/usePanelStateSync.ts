@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { shallowEqual } from 'react-redux';
 
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -30,16 +31,20 @@ export function usePanelStateSync({ panelId, exploreId }: UsePanelStateSyncOptio
   // Track the last synced state
   const lastSyncedStateRef = useRef<string | null>(null);
 
-  // Get current selection state
-  const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
-  const isSelected = selectedPanelIds.includes(panelId);
+  // Get current selection state - memoized to only change when THIS panel's selection changes
+  const isSelected = useSelector((state) => {
+    const selectedIds = selectSelectedPanelIds(state.exploreMapCRDT);
+    return selectedIds.includes(panelId);
+  });
 
-  // Get current explore state
-  const explorePane = useSelector((state) => state.explore?.panes?.[exploreId]);
+  // Get current explore state - using shallowEqual to prevent re-renders when content is the same
+  const explorePane = useSelector((state) => state.explore?.panes?.[exploreId], shallowEqual);
 
-  // Get the panel's saved state
-  const panels = useSelector((state) => selectPanels(state.exploreMapCRDT));
-  const panel = panels[panelId];
+  // Get the panel's saved exploreState only - using shallowEqual to prevent re-renders
+  const panelExploreState = useSelector((state) => {
+    const panels = selectPanels(state.exploreMapCRDT);
+    return panels[panelId]?.exploreState;
+  }, shallowEqual);
 
   useEffect((): void | (() => void) => {
     // Update tracking ref
@@ -48,13 +53,10 @@ export function usePanelStateSync({ panelId, exploreId }: UsePanelStateSyncOptio
 
     // Detect deselection (was selected, now not selected)
     if (previouslySelected && !isSelected) {
-      console.log('[PanelStateSync] Panel deselected:', panelId);
-
       // Add a small delay to ensure explore state updates have been committed to Redux
       const syncTimer = setTimeout(() => {
         // Get current explore state (after delay to ensure it's updated)
         if (!explorePane) {
-          console.log('[PanelStateSync] No explore pane found for', exploreId);
           return;
         }
 
@@ -68,13 +70,6 @@ export function usePanelStateSync({ panelId, exploreId }: UsePanelStateSyncOptio
           compact: explorePane.compact,
         };
 
-        // Log detailed info about queries and datasource
-        console.log('[PanelStateSync] Current state:', {
-          datasourceUid: currentState.datasourceUid,
-          queriesCount: currentState.queries.length,
-          queries: currentState.queries,
-        });
-
         // Create a stable string representation focusing on the important fields
         const currentStateStr = JSON.stringify({
           datasourceUid: currentState.datasourceUid,
@@ -82,15 +77,10 @@ export function usePanelStateSync({ panelId, exploreId }: UsePanelStateSyncOptio
           range: currentState.range,
         });
 
-        console.log('[PanelStateSync] Last synced state:', lastSyncedStateRef.current?.substring(0, 100));
-        console.log('[PanelStateSync] Current state str:', currentStateStr.substring(0, 100));
-
         // Check if state has changed since last sync
         const hasChanged = lastSyncedStateRef.current !== currentStateStr;
 
         if (hasChanged) {
-          console.log('[PanelStateSync] State changed, syncing full state');
-
           // Dispatch sync action with full state
           dispatch(savePanelExploreState({
             panelId,
@@ -99,8 +89,6 @@ export function usePanelStateSync({ panelId, exploreId }: UsePanelStateSyncOptio
 
           // Update last synced state
           lastSyncedStateRef.current = currentStateStr;
-        } else {
-          console.log('[PanelStateSync] State unchanged, skipping sync');
         }
       }, 100); // Small delay to ensure state is updated
 
@@ -111,15 +99,14 @@ export function usePanelStateSync({ panelId, exploreId }: UsePanelStateSyncOptio
 
   // Initialize last synced state from panel's saved state
   useEffect(() => {
-    if (panel?.exploreState && lastSyncedStateRef.current === null) {
+    if (panelExploreState && lastSyncedStateRef.current === null) {
       // Use the same format as in the main effect for consistency
       const initStateStr = JSON.stringify({
-        datasourceUid: panel.exploreState.datasourceUid,
-        queries: panel.exploreState.queries || [],
-        range: panel.exploreState.range,
+        datasourceUid: panelExploreState.datasourceUid,
+        queries: panelExploreState.queries || [],
+        range: panelExploreState.range,
       });
       lastSyncedStateRef.current = initStateStr;
-      console.log('[PanelStateSync] Initialized with saved state:', initStateStr.substring(0, 100));
     }
-  }, [panel?.exploreState]);
+  }, [panelExploreState]);
 }

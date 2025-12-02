@@ -83,7 +83,7 @@ export function validateOperation(
       validateAddComment(operation, opts, errors);
       break;
     case 'remove-comment':
-      validateRemoveComment(operation, errors);
+      validateRemoveComment(operation, opts, errors);
       break;
     case 'batch':
       validateBatchOperation(operation, opts, errors);

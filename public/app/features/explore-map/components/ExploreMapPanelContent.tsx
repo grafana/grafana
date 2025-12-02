@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { useDispatch, useSelector } from 'app/types/store';
+import { useDispatch } from 'app/types/store';
 
 import { ExplorePaneContainer } from '../../explore/ExplorePaneContainer';
 import { DEFAULT_RANGE } from '../../explore/state/constants';
@@ -12,7 +12,6 @@ import { initializeExplore } from '../../explore/state/explorePane';
 import { usePanelStateSync } from '../hooks/usePanelStateSync';
 // import { useExploreStateReceiver } from '../hooks/useExploreStateReceiver';
 // import { useExploreStateSync } from '../hooks/useExploreStateSync';
-import { selectPanels } from '../state/selectors';
 
 import { ExploreMapLogsDrilldownPanel } from './Drilldown/ExploreMapLogsDrilldownPanel';
 import { ExploreMapMetricsDrilldownPanel } from './Drilldown/ExploreMapMetricsDrilldownPanel';
@@ -24,6 +23,9 @@ interface ExploreMapPanelContentProps {
   exploreId: string;
   width: number;
   height: number;
+  remoteVersion?: number;
+  mode?: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown';
+  exploreState?: any;
 }
 
 
@@ -83,7 +85,7 @@ function patchGetBoundingClientRect() {
   isPatched = true;
 }
 
-export function ExploreMapPanelContent({ panelId, exploreId, width, height }: ExploreMapPanelContentProps) {
+export const ExploreMapPanelContent = React.memo(function ExploreMapPanelContent({ panelId, exploreId, width, height, remoteVersion, mode, exploreState }: ExploreMapPanelContentProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -117,19 +119,13 @@ export function ExploreMapPanelContent({ panelId, exploreId, width, height }: Ex
     patchGetBoundingClientRect();
   }, []);
 
-  // Get panel from CRDT state (which has the latest exploreState)
-  const panel = useSelector((state) => {
-    const panels = selectPanels(state.exploreMapCRDT);
-    return panels[panelId];
-  });
-
   // Initialize Explore pane on mount (only for standard Explore panels)
   useEffect(() => {
     if (
-      panel?.mode === 'traces-drilldown' ||
-      panel?.mode === 'metrics-drilldown' ||
-      panel?.mode === 'profiles-drilldown' ||
-      panel?.mode === 'logs-drilldown'
+      mode === 'traces-drilldown' ||
+      mode === 'metrics-drilldown' ||
+      mode === 'profiles-drilldown' ||
+      mode === 'logs-drilldown'
     ) {
       // Drilldown panels don't need Explore initialization
       setIsInitialized(true);
@@ -138,9 +134,7 @@ export function ExploreMapPanelContent({ panelId, exploreId, width, height }: Ex
 
     const initializePane = async () => {
       // Use saved state if available, otherwise defaults
-      const savedState = panel?.exploreState;
-
-      console.log('[ExploreMapPanelContent] Initializing with saved state:', savedState);
+      const savedState = exploreState;
 
       await dispatch(
         initializeExplore({
@@ -162,21 +156,21 @@ export function ExploreMapPanelContent({ panelId, exploreId, width, height }: Ex
       eventBus.removeAllListeners();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, exploreId, eventBus, panel?.exploreState, panel?.mode]);
+  }, [dispatch, exploreId, eventBus, exploreState, mode]);
 
-  if (panel?.mode === 'traces-drilldown') {
+  if (mode === 'traces-drilldown') {
     return <ExploreMapTracesDrilldownPanel exploreId={exploreId} width={width} height={height} />;
   }
 
-  if (panel?.mode === 'metrics-drilldown') {
+  if (mode === 'metrics-drilldown') {
     return <ExploreMapMetricsDrilldownPanel exploreId={exploreId} width={width} height={height} />;
   }
 
-  if (panel?.mode === 'profiles-drilldown') {
+  if (mode === 'profiles-drilldown') {
     return <ExploreMapProfilesDrilldownPanel exploreId={exploreId} width={width} height={height} />;
   }
 
-  if (panel?.mode === 'logs-drilldown') {
+  if (mode === 'logs-drilldown') {
     return <ExploreMapLogsDrilldownPanel exploreId={exploreId} width={width} height={height} />;
   }
 
@@ -202,7 +196,23 @@ export function ExploreMapPanelContent({ panelId, exploreId, width, height }: Ex
       <ExplorePaneContainer exploreId={exploreId} />
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Only re-render if width, height, remoteVersion, or mode changes
+  // This prevents re-renders when only position changes (local drag operations)
+  //
+  // NOTE: We deliberately exclude exploreState from comparison because:
+  // 1. It's only used during initialization (mount)
+  // 2. After initialization, the component manages state via Redux
+  // 3. exploreState is an object that gets new references even when data is the same
+  return (
+    prevProps.panelId === nextProps.panelId &&
+    prevProps.exploreId === nextProps.exploreId &&
+    prevProps.width === nextProps.width &&
+    prevProps.height === nextProps.height &&
+    prevProps.remoteVersion === nextProps.remoteVersion &&
+    prevProps.mode === nextProps.mode
+  );
+});
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Rnd, RndDragCallback, RndResizeCallback } from 'react-rnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,9 +10,11 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { splitClose } from '../../explore/state/main';
 import {
   bringPanelToFront,
+  clearActiveDrag,
   duplicatePanel,
   removePanel,
   selectPanel,
+  setActiveDrag,
   updateMultiplePanelPositions,
   updatePanelPosition,
   updatePanelSize,
@@ -26,7 +28,7 @@ interface ExploreMapPanelContainerProps {
   panel: ExploreMapPanel;
 }
 
-export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProps) {
+function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const rndRef = useRef<Rnd>(null);
@@ -35,6 +37,19 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
   const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
   const isSelected = selectedPanelIds.includes(panel.id);
+
+  // Get the active drag info from a parent context (if any panel is being dragged)
+  const activeDragInfo = useSelector((state) => state.exploreMapCRDT.local.activeDrag);
+
+  // Calculate effective position considering active drag
+  let effectiveX = panel.position.x;
+  let effectiveY = panel.position.y;
+
+  // If another panel in the selection is being dragged, apply the offset to this panel
+  if (activeDragInfo && activeDragInfo.draggedPanelId !== panel.id && isSelected) {
+    effectiveX += activeDragInfo.deltaX;
+    effectiveY += activeDragInfo.deltaY;
+  }
 
   const handleDragStart: RndDragCallback = useCallback(
     (_e, data) => {
@@ -52,23 +67,24 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
       const deltaX = data.x - dragStartPos.x;
       const deltaY = data.y - dragStartPos.y;
 
-      // If this panel is selected and there are multiple selections, move all others
+      // If dragging multiple panels, store the drag offset in local state
+      // This will cause other panels to visually move without CRDT operations
       if (isSelected && selectedPanelIds.length > 1) {
-        dispatch(
-          updateMultiplePanelPositions({
-            panelId: panel.id,
-            deltaX,
-            deltaY,
-          })
-        );
-        setDragStartPos({ x: data.x, y: data.y });
+        dispatch(setActiveDrag({
+          draggedPanelId: panel.id,
+          deltaX: data.x - panel.position.x,
+          deltaY: data.y - panel.position.y,
+        }));
       }
     },
-    [dispatch, panel.id, dragStartPos, isSelected, selectedPanelIds.length]
+    [dispatch, panel.id, panel.position.x, panel.position.y, dragStartPos, isSelected, selectedPanelIds.length]
   );
 
   const handleDragStop: RndDragCallback = useCallback(
     (_e, data) => {
+      // Clear the active drag state
+      dispatch(clearActiveDrag());
+
       if (dragStartPos) {
         const deltaX = data.x - dragStartPos.x;
         const deltaY = data.y - dragStartPos.y;
@@ -77,9 +93,9 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
         const hasMoved = Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5;
 
         if (hasMoved) {
-          // Final position update for all panels
           if (isSelected && selectedPanelIds.length > 1) {
-            // Update other panels with the remaining delta
+            // Multi-panel drag: update all selected panels with the delta
+            // This creates CRDT operations that will be broadcast
             dispatch(
               updateMultiplePanelPositions({
                 panelId: panel.id,
@@ -87,24 +103,16 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
                 deltaY,
               })
             );
-            // Update the dragged panel's position in Redux
-            dispatch(
-              updatePanelPosition({
-                panelId: panel.id,
-                x: data.x,
-                y: data.y,
-              })
-            );
-          } else {
-            // Single panel drag
-            dispatch(
-              updatePanelPosition({
-                panelId: panel.id,
-                x: data.x,
-                y: data.y,
-              })
-            );
           }
+
+          // Always update the dragged panel's final position
+          dispatch(
+            updatePanelPosition({
+              panelId: panel.id,
+              x: data.x,
+              y: data.y,
+            })
+          );
         }
       }
       setDragStartPos(null);
@@ -185,7 +193,7 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
   return (
     <Rnd
       ref={rndRef}
-      position={{ x: panel.position.x, y: panel.position.y }}
+      position={{ x: effectiveX, y: effectiveY }}
       size={{ width: panel.position.width, height: panel.position.height }}
       scale={viewport.zoom}
       onDragStart={handleDragStart}
@@ -230,12 +238,34 @@ export function ExploreMapPanelContainer({ panel }: ExploreMapPanelContainerProp
             exploreId={panel.exploreId}
             width={panel.position.width}
             height={panel.position.height - 36}
+            remoteVersion={panel.remoteVersion}
+            mode={panel.mode}
+            exploreState={panel.exploreState}
           />
         </div>
       </div>
     </Rnd>
   );
 }
+
+export const ExploreMapPanelContainer = React.memo(ExploreMapPanelContainerComponent, (prevProps, nextProps) => {
+  const prev = prevProps.panel;
+  const next = nextProps.panel;
+
+  // Only re-render if these specific properties change
+  // This prevents re-renders when unrelated panels update
+  return (
+    prev.id === next.id &&
+    prev.position.x === next.position.x &&
+    prev.position.y === next.position.y &&
+    prev.position.width === next.position.width &&
+    prev.position.height === next.position.height &&
+    prev.position.zIndex === next.position.zIndex &&
+    prev.remoteVersion === next.remoteVersion &&
+    prev.exploreId === next.exploreId &&
+    prev.mode === next.mode
+  );
+});
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

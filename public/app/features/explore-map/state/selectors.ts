@@ -25,7 +25,17 @@ function getCRDTManager(state: ExploreMapCRDTState): CRDTStateManager {
 }
 
 /**
+ * Cache for individual panel objects
+ * Key: panelId, Value: { panel object, serialized panel data for comparison }
+ */
+const panelCache = new Map<string, { panel: ExploreMapPanel; data: string }>();
+
+/**
  * Select all panels as a Record (for compatibility with existing UI)
+ *
+ * OPTIMIZATION: This selector caches individual panel objects and only creates
+ * new panel objects when the underlying CRDT data for that specific panel changes.
+ * This prevents unnecessary re-renders of unchanged panels when another panel is modified.
  */
 export const selectPanels = createSelector(
   [
@@ -50,11 +60,34 @@ export const selectPanels = createSelector(
     };
     const manager = getCRDTManager(state);
     const panels: Record<string, ExploreMapPanel> = {};
+    const currentPanelIds = new Set(manager.getPanelIds());
 
-    for (const panelId of manager.getPanelIds()) {
+    // Clean up cache for removed panels
+    for (const cachedPanelId of panelCache.keys()) {
+      if (!currentPanelIds.has(cachedPanelId)) {
+        panelCache.delete(cachedPanelId);
+      }
+    }
+
+    // Build panels object, reusing cached objects when data hasn't changed
+    for (const panelId of currentPanelIds) {
       const panelData = manager.getPanelForUI(panelId);
-      if (panelData) {
-        panels[panelId] = panelData as ExploreMapPanel;
+      if (!panelData) {
+        continue;
+      }
+
+      // Serialize the panel data to detect changes
+      const serializedData = JSON.stringify(panelData);
+      const cached = panelCache.get(panelId);
+
+      // Reuse cached panel if data hasn't changed
+      if (cached && cached.data === serializedData) {
+        panels[panelId] = cached.panel;
+      } else {
+        // Panel is new or changed, create new object and cache it
+        const panel = panelData as ExploreMapPanel;
+        panels[panelId] = panel;
+        panelCache.set(panelId, { panel, data: serializedData });
       }
     }
 

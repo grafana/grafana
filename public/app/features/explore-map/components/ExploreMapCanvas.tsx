@@ -251,9 +251,7 @@ export function ExploreMapCanvas() {
             tabIndex={0}
           >
             {Object.values(panels).map((panel) => {
-              // Use remoteVersion in the key to force re-render when remote state changes
-              // remoteVersion only increments on remote updates, so local edits won't trigger re-render
-              return <ExploreMapPanelContainer key={`${panel.id}-v${panel.remoteVersion || 0}`} panel={panel} />;
+              return <ExploreMapPanelContainer key={panel.id} panel={panel} />;
             })}
             {Object.values(cursors).map((cursor) => (
               <UserCursor key={cursor.sessionId} cursor={cursor} />

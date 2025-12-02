@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateExploreId } from 'app/core/utils/explore';
 
 import { CRDTStateManager } from '../crdt/state';
-import { CRDTOperation, CommentData } from '../crdt/types';
+import { CRDTOperation, CommentData, CRDTExploreMapStateJSON } from '../crdt/types';
 
 import { CanvasViewport, SerializedExploreState, UserCursor } from './types';
 
@@ -41,6 +41,11 @@ export interface ExploreMapCRDTState {
     cursors: Record<string, UserCursor>;
     isOnline: boolean;
     isSyncing: boolean;
+    activeDrag?: {
+      draggedPanelId: string;
+      deltaX: number;
+      deltaY: number;
+    };
   };
 }
 
@@ -70,6 +75,7 @@ export function createInitialCRDTState(mapUid?: string): ExploreMapCRDTState {
       cursors: {},
       isOnline: false,
       isSyncing: false,
+      activeDrag: undefined,
     },
   };
 }
@@ -111,7 +117,7 @@ const crdtSlice = createSlice({
     /**
      * Load CRDT state from server
      */
-    loadState: (state, action: PayloadAction<{ crdtState: any }>) => {
+    loadState: (state, action: PayloadAction<{ crdtState: CRDTExploreMapStateJSON }>) => {
       const manager = CRDTStateManager.fromJSON(action.payload.crdtState, state.nodeId);
       saveCRDTManager(state, manager);
       // Restore uid from the loaded CRDT state
@@ -507,7 +513,7 @@ const crdtSlice = createSlice({
           width: sourcePanel.position.width,
           height: sourcePanel.position.height,
         },
-        (sourcePanel.mode || 'explore') as 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown'
+        sourcePanel.mode || 'explore'
       );
 
       manager.applyOperation(addOperation);
@@ -613,6 +619,20 @@ const crdtSlice = createSlice({
     },
 
     /**
+     * Set active drag info (for multi-panel drag visual feedback)
+     */
+    setActiveDrag: (state, action: PayloadAction<{ draggedPanelId: string; deltaX: number; deltaY: number }>) => {
+      state.local.activeDrag = action.payload;
+    },
+
+    /**
+     * Clear active drag info
+     */
+    clearActiveDrag: (state) => {
+      state.local.activeDrag = undefined;
+    },
+
+    /**
      * Clear all state (reset)
      */
     clearMap: (state) => {
@@ -648,6 +668,8 @@ export const {
   removeCursor,
   setOnlineStatus,
   setSyncingStatus,
+  setActiveDrag,
+  clearActiveDrag,
   clearMap,
 } = crdtSlice.actions;
 
