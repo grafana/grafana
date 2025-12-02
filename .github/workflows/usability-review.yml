@@ -200,39 +200,38 @@ jobs:
       - name: Create test user for playwright
         env:
           INSTANCE_SLUG: ephemeral15111821114646titoli
-          SA_TOKEN: ${{ env.SA_TOKEN }}
         run: |
-          python3 << 'PYTHON'
-import os, requests, json, random, string
+          python3 <<'PYTHON'
+          import os, requests, json, random, string
 
-instance = os.environ['INSTANCE_SLUG']
-token = os.environ['SA_TOKEN']
+          instance = os.environ['INSTANCE_SLUG']
+          token = os.environ['SA_TOKEN']
 
-# Generate random password
-password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+          # Generate random password
+          password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
 
-# Create user
-resp = requests.post(
-    f"https://{instance}.grafana-dev.net/api/admin/users",
-    headers={"Authorization": f"Bearer {token}"},
-    json={"name": "Playwright Test", "login": "playwright-test", "password": password}
-)
-resp.raise_for_status()
-user_id = resp.json()['id']
+          # Create user
+          resp = requests.post(
+              f"https://{instance}.grafana-dev.net/api/admin/users",
+              headers={"Authorization": f"Bearer {token}"},
+              json={"name": "Playwright Test", "login": "playwright-test", "password": password}
+          )
+          resp.raise_for_status()
+          user_id = resp.json()['id']
 
-# Make user admin
-requests.put(
-    f"https://{instance}.grafana-dev.net/api/admin/users/{user_id}/permissions",
-    headers={"Authorization": f"Bearer {token}"},
-    json={"isGrafanaAdmin": True}
-)
+          # Make user admin
+          requests.put(
+              f"https://{instance}.grafana-dev.net/api/admin/users/{user_id}/permissions",
+              headers={"Authorization": f"Bearer {token}"},
+              json={"isGrafanaAdmin": True}
+          )
 
-# Save credentials to file
-with open("test_credentials.json", "w") as f:
-    json.dump({"username": "playwright-test", "password": password}, f)
+          # Save credentials to file
+          with open("test_credentials.json", "w") as f:
+              json.dump({"username": "playwright-test", "password": password}, f)
 
-print(f"Created user: playwright-test")
-PYTHON
+          print(f"Created user: playwright-test")
+          PYTHON
 
           # Export credentials as environment variables
           TEST_USER=$(jq -r '.username' test_credentials.json)
