@@ -2174,13 +2174,18 @@ func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *uns
 	dashVersion := obj.GetGeneration()
 	spec["version"] = dashVersion
 
+	folderUID := obj.GetFolder()
+	if folderUID == folder.GeneralFolderUID {
+		folderUID = "" // empty in legacy API
+	}
+
 	title, _, _ := unstructured.NestedString(spec, "title")
 	out := dashboards.Dashboard{
 		OrgID:      orgID,
 		ID:         obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		UID:        uid,
 		Slug:       slugify.Slugify(title),
-		FolderUID:  obj.GetFolder(),
+		FolderUID:  folderUID,
 		Version:    int(dashVersion),
 		Data:       simplejson.NewFromAny(spec),
 		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboardv0.GROUP+"/"),
