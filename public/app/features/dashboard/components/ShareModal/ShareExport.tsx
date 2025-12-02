@@ -35,6 +35,10 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
 
     if (shareExternally) {
       makeExportableV1(dashboard).then((dashboardJson) => {
+        if ('error' in dashboardJson) {
+          console.error('Failed to export dashboard:', dashboardJson.error);
+          return;
+        }
         openSaveAsDialog(dashboardJson);
       });
     } else {
@@ -57,13 +61,14 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
     }
   };
 
-  const openSaveAsDialog = (dash: Dashboard) => {
+  const openSaveAsDialog = (dash: { title?: string; [key: string]: unknown }) => {
     const dashboardJsonPretty = JSON.stringify(dash, null, 2);
     const blob = new Blob([dashboardJsonPretty], {
       type: 'application/json;charset=utf-8',
     });
     const time = new Date().getTime();
-    saveAs(blob, `${dash.title}-${time}.json`);
+    const title = dash.title && typeof dash.title === 'string' ? dash.title : 'dashboard';
+    saveAs(blob, `${title}-${time}.json`);
   };
 
   const openJsonModal = (clone: object) => {
