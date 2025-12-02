@@ -438,16 +438,17 @@ type paginationContext struct {
 	alertStateMutator RuleAlertStateMutator
 
 	// Query parameters
-	namespaceUIDs   []string
-	ruleUIDs        []string
-	dashboardUID    string
-	panelID         int64
-	ruleGroups      []string
-	receiverName    string
-	title           string
-	searchRuleGroup string
-	ruleType        ngmodels.RuleTypeFilter
-	ruleNamesSet    map[string]struct{}
+	namespaceUIDs     []string
+	ruleUIDs          []string
+	dashboardUID      string
+	panelID           int64
+	ruleGroups        []string
+	receiverName      string
+	searchDataSources []string
+	title             string
+	searchRuleGroup   string
+	ruleType          ngmodels.RuleTypeFilter
+	ruleNamesSet      map[string]struct{}
 
 	// Filters
 	stateFilterSet     map[eval.State]struct{}
@@ -476,15 +477,16 @@ func accumulateTotals(dest, source map[string]int64) {
 func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlertRulesStoreV2, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
-			OrgID:           ctx.opts.OrgID,
-			NamespaceUIDs:   ctx.namespaceUIDs,
-			RuleUIDs:        ctx.ruleUIDs,
-			DashboardUID:    ctx.dashboardUID,
-			PanelID:         ctx.panelID,
-			RuleGroups:      ctx.ruleGroups,
-			ReceiverName:    ctx.receiverName,
-			SearchTitle:     ctx.title,
-			SearchRuleGroup: ctx.searchRuleGroup,
+			OrgID:             ctx.opts.OrgID,
+			NamespaceUIDs:     ctx.namespaceUIDs,
+			RuleUIDs:          ctx.ruleUIDs,
+			DashboardUID:      ctx.dashboardUID,
+			PanelID:           ctx.panelID,
+			RuleGroups:        ctx.ruleGroups,
+			ReceiverName:      ctx.receiverName,
+			SearchDataSources: ctx.searchDataSources,
+			SearchTitle:       ctx.title,
+			SearchRuleGroup:   ctx.searchRuleGroup,
 		},
 		RuleType:      ctx.ruleType,
 		Limit:         remainingGroups,
@@ -737,6 +739,9 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	searchRuleGroup := opts.Query.Get("search.rule_group")
 	span.SetAttributes(attribute.Bool("search_rule_group_set", searchRuleGroup != ""))
 
+	searchDataSources := strings.Split(opts.Query.Get("search.datasource"), ",")
+	span.SetAttributes(attribute.Bool("search_datasource_set", len(searchDataSources) != 1))
+
 	var ruleType ngmodels.RuleTypeFilter
 	switch ngmodels.RuleType(opts.Query.Get("rule_type")) {
 	case ngmodels.RuleTypeAlerting:
@@ -792,6 +797,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ruleGroups:         ruleGroups,
 		receiverName:       receiverName,
 		title:              title,
+		searchDataSources:  searchDataSources,
 		searchRuleGroup:    searchRuleGroup,
 		ruleType:           ruleType,
 		ruleNamesSet:       ruleNamesSet,
@@ -899,18 +905,20 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 
 	receiverName := opts.Query.Get("receiver_name")
 	title := opts.Query.Get("search.rule_name")
+	searchDataSources := strings.Split(opts.Query.Get("search.datasource"), ",")
 	searchRuleGroup := opts.Query.Get("search.rule_group")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:           opts.OrgID,
-		NamespaceUIDs:   namespaceUIDs,
-		RuleUIDs:        ruleUIDs,
-		DashboardUID:    dashboardUID,
-		PanelID:         panelID,
-		RuleGroups:      ruleGroups,
-		ReceiverName:    receiverName,
-		SearchTitle:     title,
-		SearchRuleGroup: searchRuleGroup,
+		OrgID:             opts.OrgID,
+		NamespaceUIDs:     namespaceUIDs,
+		RuleUIDs:          ruleUIDs,
+		DashboardUID:      dashboardUID,
+		PanelID:           panelID,
+		RuleGroups:        ruleGroups,
+		ReceiverName:      receiverName,
+		SearchTitle:       title,
+		SearchRuleGroup:   searchRuleGroup,
+		SearchDataSources: searchDataSources,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {

@@ -311,12 +311,16 @@ func (aq *AlertQuery) setQueryType() error {
 
 // PreSave sets query's properties.
 // It should be called before being saved.
+// PreSave prepares the AlertQuery for storage by setting defaults and normalizing the JSON model.
+// This ensures consistent JSON formatting across all alert rules by unmarshaling and re-marshaling
+// the Model field, which produces compact JSON without extra whitespace.
 func (aq *AlertQuery) PreSave() error {
 	if err := aq.setQueryType(); err != nil {
 		return fmt.Errorf("failed to set query type to query model: %w", err)
 	}
 
-	// Initialize defaults, which also overrides the model
+	// Initialize defaults, which also overrides the model.
+	// This normalizes the JSON format by unmarshaling and re-marshaling via GetModel().
 	if err := aq.InitDefaults(); err != nil {
 		return err
 	}
@@ -334,6 +338,8 @@ func (aq *AlertQuery) PreSave() error {
 
 // InitDefaults ensures all default parameters are set in the query model.
 // This helps maintain consistent query models for comparisons.
+// Additionally, this normalizes JSON formatting by unmarshaling and re-marshaling
+// the Model field (via GetModel()), ensuring compact JSON without whitespace.
 func (aq *AlertQuery) InitDefaults() error {
 	model, err := aq.GetModel()
 	if err != nil {

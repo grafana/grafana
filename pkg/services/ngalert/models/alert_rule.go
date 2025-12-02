@@ -985,6 +985,10 @@ type ListAlertRulesQuery struct {
 
 	ReceiverName     string
 	TimeIntervalName string
+
+	// SearchDataSources allows searching for alert rules in data sources that match
+	// any of the given strings exactly (case sensitive).
+	SearchDataSources []string
 	// SearchTitle allows searching for alert rules that contain
 	// the given string in their title (case insensitive)
 	SearchTitle string
