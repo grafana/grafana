@@ -32,6 +32,9 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const filteredOptions = availableOptions.filter((option) => !option.excludeFromPicker);
 
   const options: Array<SelectableValue<string>> = [];
+  // collect any grouped options in this map
+  // this allows us to easily push to the child array without having to rescan the options array
+  // it also allows us to maintain group position in the order they're first encountered
   const groupMap = new Map<string, Array<SelectableValue<string>>>();
 
   for (const option of filteredOptions) {
@@ -47,9 +50,6 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
       },
     };
 
-    // collect any grouped options in this map
-    // this allows us to easily push to the child array without having to rescan the options array
-    // it also allows us to add group entries in the order they're first encountered
     if (groupName) {
       let group = groupMap.get(groupName);
       if (!group) {
