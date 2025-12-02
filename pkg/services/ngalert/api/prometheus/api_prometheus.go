@@ -739,8 +739,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	searchRuleGroup := opts.Query.Get("search.rule_group")
 	span.SetAttributes(attribute.Bool("search_rule_group_set", searchRuleGroup != ""))
 
-	searchDataSources := strings.Split(opts.Query.Get("search.datasource"), ",")
-	span.SetAttributes(attribute.Bool("search_datasource_set", len(searchDataSources) != 1))
+	searchDataSources := opts.Query["search.datasources"]
+	span.SetAttributes(attribute.Bool("search_datasources_set", len(searchDataSources) > 0))
 
 	var ruleType ngmodels.RuleTypeFilter
 	switch ngmodels.RuleType(opts.Query.Get("rule_type")) {
@@ -905,7 +905,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 
 	receiverName := opts.Query.Get("receiver_name")
 	title := opts.Query.Get("search.rule_name")
-	searchDataSources := strings.Split(opts.Query.Get("search.datasource"), ",")
+	searchDataSources := opts.Query["search.datasources"]
 	searchRuleGroup := opts.Query.Get("search.rule_group")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{

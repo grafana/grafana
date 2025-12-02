@@ -37,7 +37,7 @@ type PromRulesOptions = WithNotificationOptions<{
 export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace' | 'excludeAlerts'> & {
   folderUid?: string;
   dashboardUid?: string;
-  datasource?: string; // Comma-separated list.
+  datasources?: string[];
   panelId?: number;
   limitAlerts?: number;
   ruleLimit?: number;
@@ -99,7 +99,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         limitAlerts,
         groupNextToken,
         title,
-        datasource,
+        datasources,
         searchGroupName,
         dashboardUid,
       }) => ({
@@ -116,7 +116,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           rule_limit: ruleLimit?.toFixed(0),
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
-          'search.datasource': datasource, // Comma-separated list
+          'search.datasources': datasources,
           'search.rule_name': title,
           'search.rule_group': searchGroupName,
           dashboard_uid: dashboardUid,

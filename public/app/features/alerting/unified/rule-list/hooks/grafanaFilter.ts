@@ -73,9 +73,9 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     type: ruleFilterConfig.ruleType ? undefined : normalizedFilterState.ruleType,
     dashboardUid: ruleFilterConfig.dashboardUid ? undefined : normalizedFilterState.dashboardUid,
     searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
-    datasource: ruleFilterConfig.dataSourceNames
+    datasources: ruleFilterConfig.dataSourceNames
       ? undefined
-      : mapDataSourceNamesToUids(normalizedFilterState.dataSourceNames).join(','), // The BE needs these to be UIDs.
+      : mapDataSourceNamesToUids(normalizedFilterState.dataSourceNames),
   };
 
   return {
