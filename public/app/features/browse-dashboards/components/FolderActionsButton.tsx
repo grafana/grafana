@@ -133,13 +133,13 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     try {
       // Collect all dashboards under this folder and its children
       const dashboardUIDs = await collectAllDashboardsUnderFolder(folder.uid);
-      
+
       // Create selected items object with all dashboards
       const selectedDashboards: Record<string, boolean> = {};
       dashboardUIDs.forEach((uid) => {
         selectedDashboards[uid] = true;
       });
-      
+
       setExportSelectedDashboards(selectedDashboards);
       setShowExportFolderDrawer(true);
     } catch (error) {
@@ -183,9 +183,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
           label={deleteLabel}
         />
       )}
-      {provisioningEnabled && isUnmanagedFolder && (
-        <MenuItem onClick={handleExportFolder} label={exportLabel} />
-      )}
+      {provisioningEnabled && isUnmanagedFolder && <MenuItem onClick={handleExportFolder} label={exportLabel} />}
     </Menu>
   );
 

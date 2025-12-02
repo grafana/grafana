@@ -65,8 +65,12 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const onDelete = async () => {
-    const selectedDashboards = Object.keys(selectedItemsForActions.dashboard).filter((uid) => selectedItemsForActions.dashboard[uid]);
-    const selectedFolders = Object.keys(selectedItemsForActions.folder).filter((uid) => selectedItemsForActions.folder[uid]);
+    const selectedDashboards = Object.keys(selectedItemsForActions.dashboard).filter(
+      (uid) => selectedItemsForActions.dashboard[uid]
+    );
+    const selectedFolders = Object.keys(selectedItemsForActions.folder).filter(
+      (uid) => selectedItemsForActions.folder[uid]
+    );
     await deleteDashboards({ dashboardUIDs: selectedDashboards });
     await deleteFolders({ folderUIDs: selectedFolders });
     trackAction('delete', selectedItemsForActions);
@@ -74,8 +78,12 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const onMove = async (destinationUID: string) => {
-    const selectedDashboards = Object.keys(selectedItemsForActions.dashboard).filter((uid) => selectedItemsForActions.dashboard[uid]);
-    const selectedFolders = Object.keys(selectedItemsForActions.folder).filter((uid) => selectedItemsForActions.folder[uid]);
+    const selectedDashboards = Object.keys(selectedItemsForActions.dashboard).filter(
+      (uid) => selectedItemsForActions.dashboard[uid]
+    );
+    const selectedFolders = Object.keys(selectedItemsForActions.folder).filter(
+      (uid) => selectedItemsForActions.folder[uid]
+    );
 
     await moveFolders({ folderUIDs: selectedFolders, destinationUID });
     await moveDashboards({ dashboardUIDs: selectedDashboards, destinationUID });

@@ -60,17 +60,15 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
   }, [repositories, selectedRepositoryName, isLoadingRepos]);
 
   // Get selected repository
-  const repositoryView: RepositoryView | undefined = repositories.find(
-    (repo) => repo.name === selectedRepositoryName
-  );
+  const repositoryView: RepositoryView | undefined = repositories.find((repo) => repo.name === selectedRepositoryName);
 
   // Compute workflow options based on selected repository
   const selectedWorkflowOptions = repositoryView ? getWorkflowOptions(repositoryView) : workflowOptions;
   const selectedDefaultWorkflow = repositoryView
     ? getDefaultWorkflow(repositoryView)
-    : (workflowOptions[0]?.value === 'branch' || workflowOptions[0]?.value === 'write'
-        ? workflowOptions[0].value
-        : undefined);
+    : workflowOptions[0]?.value === 'branch' || workflowOptions[0]?.value === 'write'
+      ? workflowOptions[0].value
+      : undefined;
 
   // Update workflow, branch, and path when repository changes
   useEffect(() => {
@@ -216,13 +214,14 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
               </Box>
 
               {/* Show form-level errors */}
-              {errors.root && (
-                <Alert severity="error" title={String(errors.root.message)} />
-              )}
+              {errors.root && <Alert severity="error" title={String(errors.root.message)} />}
 
               {/* Info if folders are selected */}
               {Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]).length > 0 && (
-                <Alert severity="info" title={t('browse-dashboards.bulk-export-resources-form.folders-info', 'Folders in selection')}>
+                <Alert
+                  severity="info"
+                  title={t('browse-dashboards.bulk-export-resources-form.folders-info', 'Folders in selection')}
+                >
                   {t(
                     'browse-dashboards.bulk-export-resources-form.folders-info-description',
                     'Folders will be left behind. New folders will be created in the repository based on the resource folder structure.'
@@ -297,7 +296,10 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                   <Input
                     type="text"
                     {...methods.register('path')}
-                    placeholder={t('browse-dashboards.bulk-export-resources-form.path-placeholder', 'e.g., dashboards/')}
+                    placeholder={t(
+                      'browse-dashboards.bulk-export-resources-form.path-placeholder',
+                      'e.g., dashboards/'
+                    )}
                   />
                 </Field>
               )}
@@ -318,10 +320,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                 <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
                   <Trans i18nKey="browse-dashboards.bulk-export-resources-form.button-cancel">Cancel</Trans>
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={!!job || isCreatingJob || hasSubmitted || !selectedRepositoryName}
-                >
+                <Button type="submit" disabled={!!job || isCreatingJob || hasSubmitted || !selectedRepositoryName}>
                   {isCreatingJob
                     ? t('browse-dashboards.bulk-export-resources-form.button-exporting', 'Exporting...')
                     : t('browse-dashboards.bulk-export-resources-form.button-export', 'Export')}
@@ -382,4 +381,3 @@ const getPathPrefixStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
 });
-

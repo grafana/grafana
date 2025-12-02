@@ -69,4 +69,3 @@ export async function collectAllDashboardsUnderFolder(folderUID: string): Promis
 
   return dashboardUIDs;
 }
-

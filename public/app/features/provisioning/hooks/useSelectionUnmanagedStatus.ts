@@ -12,9 +12,10 @@ import { findItem } from '../../browse-dashboards/state/utils';
 import { DashboardTreeSelection } from '../../browse-dashboards/types';
 
 // This hook checks if selected items are unmanaged (not managed by any repository)
-export function useSelectionUnmanagedStatus(
-  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>
-): { hasUnmanaged: boolean; isLoading: boolean } {
+export function useSelectionUnmanagedStatus(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>): {
+  hasUnmanaged: boolean;
+  isLoading: boolean;
+} {
   const browseState = useSelector((state) => state.browseDashboards);
   const [, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
@@ -155,4 +156,3 @@ export function useSelectionUnmanagedStatus(
 
   return status;
 }
-
