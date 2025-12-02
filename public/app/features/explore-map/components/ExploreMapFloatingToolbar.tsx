@@ -1,23 +1,33 @@
 import { css } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
+import { useAssistant, createAssistantContextItem } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Menu, MenuItem, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import pyroscopeIconSvg from 'app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg';
 import lokiIconSvg from 'app/plugins/datasource/loki/img/loki_icon.svg';
 import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';
 import tempoLogoSvg from 'app/plugins/datasource/tempo/img/tempo_logo.svg';
-import { useDispatch } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { addPanel } from '../state/crdtSlice';
+import { selectPanels, selectMapUid } from '../state/selectors';
 
 export function ExploreMapFloatingToolbar() {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const currentUsername = contextSrv.user.name || contextSrv.user.login || 'Unknown';
+
+  // Get assistant functionality
+  const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
+
+  // Get canvas state for assistant context
+  const panels = useSelector((state) => selectPanels(state.exploreMapCRDT));
+  const mapUid = useSelector((state) => selectMapUid(state.exploreMapCRDT));
 
   const handleAddPanel = useCallback(() => {
     dispatch(
@@ -88,6 +98,48 @@ export function ExploreMapFloatingToolbar() {
     setIsOpen(false);
   }, [dispatch, currentUsername]);
 
+  // Build context for assistant
+  const canvasContext = useMemo(() => {
+    const panelsArray = Object.values(panels);
+
+    return createAssistantContextItem('structured', {
+      title: 'Explore Canvas',
+      data: {
+        canvasId: mapUid,
+        panelCount: panelsArray.length,
+        panels: panelsArray.map((panel) => ({
+          id: panel.id,
+          mode: panel.mode,
+          position: panel.position,
+          datasourceUid: panel.exploreState?.datasourceUid,
+          queries: panel.exploreState?.queries,
+          queryCount: panel.exploreState?.queries?.length || 0,
+          timeRange: panel.exploreState?.range,
+          createdBy: panel.createdBy,
+        })),
+      },
+    });
+  }, [panels, mapUid]);
+
+  const handleOpenAssistant = useCallback(() => {
+    if (!openAssistant) {
+      return;
+    }
+
+    reportInteraction('grafana_explore_map_assistant_opened', {
+      panelCount: Object.keys(panels).length,
+      canvasId: mapUid,
+    });
+
+    openAssistant({
+      origin: 'grafana/explore-map',
+      mode: 'assistant',
+      prompt: 'Analyze this explore canvas and summarize what queries and data are being visualized. Identify any patterns or relationships between the panels.',
+      context: [canvasContext],
+      autoSend: true,
+    });
+  }, [openAssistant, panels, mapUid, canvasContext]);
+
   const MenuActions = () => (
     <Menu>
       <MenuItem
@@ -136,6 +188,11 @@ export function ExploreMapFloatingToolbar() {
           />
         </Dropdown>
       </ButtonGroup>
+      {isAssistantAvailable && Object.keys(panels).length > 0 && (
+        <Button icon="ai-sparkle" onClick={handleOpenAssistant} variant="secondary">
+          <Trans i18nKey="explore-map.toolbar.ask-assistant">Ask Assistant</Trans>
+        </Button>
+      )}
     </div>
   );
 }
