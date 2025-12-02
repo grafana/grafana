@@ -922,6 +922,19 @@ func transformVariableSortToEnum(sort interface{}) dashv2alpha1.DashboardVariabl
 	}
 }
 
+func transformVariableRegexApplyToToEnum(regexApplyTo string) *dashv2alpha1.DashboardVariableRegexApplyTo {
+	var result dashv2alpha1.DashboardVariableRegexApplyTo
+	switch regexApplyTo {
+	case "text":
+		result = dashv2alpha1.DashboardVariableRegexApplyToText
+	case "value":
+		result = dashv2alpha1.DashboardVariableRegexApplyToValue
+	default:
+		return nil
+	}
+	return &result
+}
+
 func transformVariables(ctx context.Context, dashboard map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) ([]dashv2alpha1.DashboardVariableKind, error) {
 	templating, ok := dashboard["templating"].(map[string]interface{})
 	if !ok {
@@ -1195,6 +1208,7 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Sort:             transformVariableSortToEnum(varMap["sort"]),
 			Regex:            schemaversion.GetStringValue(varMap, "regex"),
+			RegexApplyTo:     transformVariableRegexApplyToToEnum(schemaversion.GetStringValue(varMap, "regexApplyTo")),
 			Query:            buildDataQueryKindForVariable(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},

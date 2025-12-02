@@ -85,6 +85,7 @@ import {
   transformSortVariableToEnumV1,
   transformVariableHideToEnumV1,
   transformVariableRefreshToEnumV1,
+  transformRegexApplyToEnumV1,
 } from './transformToV1TypesUtils';
 import { LEGACY_STRING_VALUE_KEY } from './transformToV2TypesUtils';
 
@@ -366,6 +367,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       sort: transformSortVariableToEnumV1(variable.spec.sort),
       refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
       regex: variable.spec.regex,
+      regexApplyTo: transformRegexApplyToEnumV1(variable.spec.regexApplyTo),
       allValue: variable.spec.allValue || undefined,
       includeAll: variable.spec.includeAll,
       defaultToAll: Boolean(variable.spec.includeAll),

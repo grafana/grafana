@@ -6258,12 +6258,20 @@
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
+      "description-regex-apply-to": "Choose whether to apply the regex pattern to the variable value or display text",
       "label-data-source": "Data source",
+      "label-regex-apply-to": "Apply regex to",
       "label-static-options-sort": "Static options sort",
       "label-target-data-source": "Target data source",
       "label-use-static-options": "Use static options",
       "name-regex": "Regex",
       "query-options": "Query options",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "Display text",
+          "value": "Variable value"
+        }
+      },
       "selection-options": "Selection options",
       "static-options-legend": "Static options"
     },

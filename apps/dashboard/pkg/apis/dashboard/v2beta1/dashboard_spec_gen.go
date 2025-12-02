@@ -1367,6 +1367,7 @@ type DashboardQueryVariableSpec struct {
 	Description        *string                                       `json:"description,omitempty"`
 	Query              DashboardDataQueryKind                        `json:"query"`
 	Regex              string                                        `json:"regex"`
+	RegexApplyTo       *DashboardVariableRegexApplyTo                `json:"regexApplyTo,omitempty"`
 	Sort               DashboardVariableSort                         `json:"sort"`
 	Definition         *string                                       `json:"definition,omitempty"`
 	Options            []DashboardVariableOption                     `json:"options"`
@@ -1396,6 +1397,7 @@ func NewDashboardQueryVariableSpec() *DashboardQueryVariableSpec {
 		SkipUrlSync:      false,
 		Query:            *NewDashboardDataQueryKind(),
 		Regex:            "",
+		RegexApplyTo:     (func(input DashboardVariableRegexApplyTo) *DashboardVariableRegexApplyTo { return &input })(DashboardVariableRegexApplyToValue),
 		Options:          []DashboardVariableOption{},
 		Multi:            false,
 		IncludeAll:       false,
@@ -1445,6 +1447,16 @@ const (
 	DashboardVariableRefreshNever              DashboardVariableRefresh = "never"
 	DashboardVariableRefreshOnDashboardLoad    DashboardVariableRefresh = "onDashboardLoad"
 	DashboardVariableRefreshOnTimeRangeChanged DashboardVariableRefresh = "onTimeRangeChanged"
+)
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+// +k8s:openapi-gen=true
+type DashboardVariableRegexApplyTo string
+
+const (
+	DashboardVariableRegexApplyToValue DashboardVariableRegexApplyTo = "value"
+	DashboardVariableRegexApplyToText  DashboardVariableRegexApplyTo = "text"
 )
 
 // Sort variable options
