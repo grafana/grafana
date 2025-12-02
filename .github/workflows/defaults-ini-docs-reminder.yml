@@ -6,31 +6,19 @@ on:
       - 'conf/defaults.ini'
 
 jobs:
-  remind-about-docs:
+  add-comment:
     if: ${{ ! github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
-      - uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405
+      - uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
           message: |
-            ## 📝 Configuration Documentation Reminder
-            
             Hi there! 👋 This PR modifies `conf/defaults.ini`.
             
-            If this change introduces **user-facing configuration options** or modifies existing ones, please remember to update the configuration documentation:
+            If this change introduces user-facing configuration options or modifies existing ones, please remember to update [`docs/sources/setup-grafana/configure-grafana/_index.md`](https://github.com/grafana/grafana/blob/main/docs/sources/setup-grafana/configure-grafana/_index.md).
             
-            📄 [`docs/sources/setup-grafana/configure-grafana/_index.md`](https://github.com/grafana/grafana/blob/main/docs/sources/setup-grafana/configure-grafana/_index.md)
+            If this change is internal-only (experimental flags, internal refactoring, etc.), you can ignore this reminder.
             
-            **Please check if:**
-            - New configuration options need to be documented
-            - Existing option descriptions need updating
-            - Default values have changed
-            - Any options have been deprecated or removed
-            
-            If this change is **internal-only** (experimental flags, internal refactoring, etc.), please ignore this reminder! ✨
-            
-            ---
-            
-            _This is an automated reminder. Questions? Reach out to the #docs channel on Slack._
+            Questions? Reach out to the #docs channel on Slack.
