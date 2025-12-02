@@ -480,7 +480,7 @@ const crdtSlice = createSlice({
           width: sourcePanel.position.width,
           height: sourcePanel.position.height,
         },
-        (sourcePanel.mode || 'explore') as 'explore' | 'traces-drilldown' | 'metrics-drilldown'
+        (sourcePanel.mode || 'explore') as 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown'
       );
 
       manager.applyOperation(addOperation);
