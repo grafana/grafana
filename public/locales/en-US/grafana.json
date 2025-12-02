@@ -3565,6 +3565,7 @@
       "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
       "export-button": "Export",
+      "export-to-repository-button": "Export to Repository",
       "export-folder": "Export Folder to Repository",
       "manage-permissions-button": "Manage permissions",
       "move-button": "Move",
@@ -3607,8 +3608,10 @@
       "folders-warning": "Folders cannot be exported",
       "folders-warning-description": "Only dashboards can be exported. Folders in your selection will be ignored.",
       "path": "Path",
-      "path-description": "Prefix path in the target repository (optional)",
-      "path-placeholder": "e.g., grafana/",
+      "path-description": "Path relative to the repository root (optional). Resources will be exported under this path.",
+      "path-description-with-repo": "Resources will be exported under the repository path: {{repoPath}}. You can add a sub-path below.",
+      "path-placeholder": "e.g., dashboards/",
+      "path-placeholder-with-repo": "e.g., dashboards/team-a/",
       "repository": "Repository",
       "repository-placeholder": "Select a repository"
     },
@@ -11750,10 +11753,10 @@
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resource is managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
+      "export-remaining-resources-button": "Export remaining resources",
       "no-results-matching-your-query": "No results matching your query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
-      "push-unmanaged-button": "Push unmanaged resources",
       "unmanaged-resources_one": "{{count}} resource isn't managed by git sync.",
       "unmanaged-resources_other": "{{count}} resources aren't managed by git sync."
     },

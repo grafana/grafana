@@ -1,5 +1,5 @@
-import { DashboardViewItem } from 'app/features/search/types';
 import { listDashboards } from 'app/features/browse-dashboards/api/services';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 /**
  * Recursively collects all dashboards under a folder and its children
@@ -37,7 +37,6 @@ export async function collectAllDashboardsUnderFolder(folderUID: string): Promis
 
     // Get child folders and add them to the processing queue
     // We need to use the search API to find child folders
-    const { getGrafanaSearcher } = await import('@grafana/runtime');
     const searcher = getGrafanaSearcher();
     
     const foldersResults = await searcher.search({

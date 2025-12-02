@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Alert, Box, Button, EmptyState, FilterInput, Icon, Stack, TextLink } from '@grafana/ui';
+import { Alert, Box, EmptyState, FilterInput, Icon, Stack, TextLink } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryListItem } from '../Repository/RepositoryListItem';
@@ -45,45 +45,45 @@ export function RepositoryList({ items }: Props) {
 
     if (filteredItems.length) {
       return (
-        <Stack>
-          <Alert title={''} severity="info">
-            <Trans
-              i18nKey="provisioning.folder-repository-list.partial-managed"
-              values={{ managedCount, resourceCount }}
-            >
-              {{ managedCount }}/{{ resourceCount }} resources managed by Git sync.
-            </Trans>
-            {unmanagedCount > 0 && (
-              <>
-                {' '}
-                <Trans i18nKey="provisioning.folder-repository-list.unmanaged-resources" count={unmanagedCount}>
-                  {{ count: unmanagedCount }} resources aren&apos;t managed by Git sync.
-                </Trans>
-              </>
-            )}
-            {isFreeTierLicense() && (
-              <>
-                <br />
-                <Trans i18nKey="provisioning.free-tier-limit.message-connection">
-                  Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,
-                </Trans>{' '}
-                <TextLink href={UPGRADE_URL} external>
-                  <Trans i18nKey="provisioning.free-tier-limit.upgrade-link">upgrade your account</Trans>{' '}
-                </TextLink>
-                .
-              </>
-            )}
-          </Alert>
+        <Alert
+          title={''}
+          severity="info"
+          buttonContent={
+            unmanagedCount > 0 ? (
+              <Trans i18nKey="provisioning.folder-repository-list.export-remaining-resources-button">
+                Export remaining resources
+              </Trans>
+            ) : undefined
+          }
+          onRemove={unmanagedCount > 0 ? handlePushUnmanaged : undefined}
+        >
+          <Trans
+            i18nKey="provisioning.folder-repository-list.partial-managed"
+            values={{ managedCount, resourceCount }}
+          >
+            {{ managedCount }}/{{ resourceCount }} resources managed by Git sync.
+          </Trans>
           {unmanagedCount > 0 && (
-            <Box>
-              <Button onClick={handlePushUnmanaged} variant="primary">
-                <Trans i18nKey="provisioning.folder-repository-list.push-unmanaged-button">
-                  Push unmanaged resources
-                </Trans>
-              </Button>
-            </Box>
+            <>
+              {' '}
+              <Trans i18nKey="provisioning.folder-repository-list.unmanaged-resources" count={unmanagedCount}>
+                {{ count: unmanagedCount }} resources aren&apos;t managed by Git sync.
+              </Trans>
+            </>
           )}
-        </Stack>
+          {isFreeTierLicense() && (
+            <>
+              <br />
+              <Trans i18nKey="provisioning.free-tier-limit.message-connection">
+                Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,
+              </Trans>{' '}
+              <TextLink href={UPGRADE_URL} external>
+                <Trans i18nKey="provisioning.free-tier-limit.upgrade-link">upgrade your account</Trans>{' '}
+              </TextLink>
+              .
+            </>
+          )}
+        </Alert>
       );
     }
     return null;

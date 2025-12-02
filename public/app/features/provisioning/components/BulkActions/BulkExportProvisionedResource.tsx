@@ -1,5 +1,4 @@
-import { skipToken } from '@reduxjs/toolkit/query';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -57,6 +56,31 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
     (repo) => repo.name === selectedRepositoryName
   );
 
+  // Compute workflow options based on selected repository
+  const selectedWorkflowOptions = repositoryView ? getWorkflowOptions(repositoryView) : workflowOptions;
+  const selectedDefaultWorkflow = repositoryView
+    ? getDefaultWorkflow(repositoryView)
+    : (workflowOptions[0]?.value === 'branch' || workflowOptions[0]?.value === 'write'
+        ? workflowOptions[0].value
+        : undefined);
+
+  // Update workflow, branch, and path when repository changes
+  useEffect(() => {
+    if (repositoryView && selectedDefaultWorkflow) {
+      methods.setValue('workflow', selectedDefaultWorkflow as 'branch' | 'write');
+      if (selectedDefaultWorkflow === 'branch') {
+        const timestamp = generateTimestamp();
+        methods.setValue('ref', `bulk-export/${timestamp}`);
+      } else if (selectedDefaultWorkflow === 'write' && repositoryView.branch) {
+        methods.setValue('ref', repositoryView.branch);
+      }
+      // Set the path to the repository's configured path
+      if (repositoryView.path) {
+        methods.setValue('path', repositoryView.path);
+      }
+    }
+  }, [repositoryView, selectedDefaultWorkflow, methods]);
+
   const handleSubmitForm = async (data: BulkActionFormData) => {
     setHasSubmitted(true);
 
@@ -94,12 +118,14 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
     });
 
     // Create the export job spec (backend uses 'push' action)
+    // Use repository path as default if no path is provided
+    const exportPath = data.path || repositoryView.path || undefined;
     const jobSpec: ExportJobSpec = {
       action: 'push',
       push: {
         message: data.comment || undefined,
         branch: data.workflow === 'write' ? undefined : data.ref,
-        path: data.path || undefined,
+        path: exportPath,
         resources: dashboardResources,
       },
     };
@@ -191,15 +217,30 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
               <Field
                 noMargin
                 label={t('browse-dashboards.bulk-export-resources-form.path', 'Path')}
-                description={t(
-                  'browse-dashboards.bulk-export-resources-form.path-description',
-                  'Prefix path in the target repository (optional)'
-                )}
+                description={
+                  repositoryView?.path
+                    ? t(
+                        'browse-dashboards.bulk-export-resources-form.path-description-with-repo',
+                        'Resources will be exported under the repository path: {{repoPath}}. You can add a sub-path below.',
+                        { repoPath: repositoryView.path }
+                      )
+                    : t(
+                        'browse-dashboards.bulk-export-resources-form.path-description',
+                        'Path relative to the repository root (optional). Resources will be exported under this path.'
+                      )
+                }
               >
                 <Input
                   type="text"
                   {...methods.register('path')}
-                  placeholder={t('browse-dashboards.bulk-export-resources-form.path-placeholder', 'e.g., grafana/')}
+                  placeholder={
+                    repositoryView?.path
+                      ? t(
+                          'browse-dashboards.bulk-export-resources-form.path-placeholder-with-repo',
+                          'e.g., dashboards/team-a/'
+                        )
+                      : t('browse-dashboards.bulk-export-resources-form.path-placeholder', 'e.g., dashboards/')
+                  }
                 />
               </Field>
 
@@ -209,7 +250,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                   resourceType="dashboard"
                   isNew={false}
                   workflow={workflow}
-                  workflowOptions={workflowOptions}
+                  workflowOptions={selectedWorkflowOptions}
                   repository={repositoryView}
                   hidePath
                 />

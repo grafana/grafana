@@ -189,7 +189,7 @@ export function BrowseActions({ folderDTO }: Props) {
       variant="secondary"
       disabled={!hasUnmanaged || isLoadingUnmanaged || !hasSelectedDashboards}
     >
-      <Trans i18nKey="browse-dashboards.action.export-button">Export</Trans>
+      <Trans i18nKey="browse-dashboards.action.export-to-repository-button">Export to Repository</Trans>
     </Button>
   );
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
@@ -160,6 +160,11 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
   const exportLabel = t('browse-dashboards.folder-actions-button.export', 'Export to Repository');
 
+  const provisioningEnabled = config.featureToggles.provisioning;
+  // isProvisionedFolder means the folder IS managed/provisioned
+  // So !isProvisionedFolder means the folder is unmanaged (not provisioned)
+  const isUnmanagedFolder = !isProvisionedFolder;
+
   const menu = (
     <Menu>
       {canViewPermissions && !isProvisionedFolder && (
@@ -178,13 +183,20 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
           label={deleteLabel}
         />
       )}
-      {!isProvisionedFolder && canEditFolders && (
+      {provisioningEnabled && isUnmanagedFolder && (
         <MenuItem onClick={handleExportFolder} label={exportLabel} />
       )}
     </Menu>
   );
 
-  if (!canViewPermissions && !canMoveFolder && !canDeleteFolders && isProvisionedFolder) {
+  // Show menu if there are any available actions
+  const hasAnyActions =
+    (canViewPermissions && !isProvisionedFolder) ||
+    (canMoveFolder && !isReadOnlyRepo) ||
+    (canDeleteFolders && !isReadOnlyRepo) ||
+    (provisioningEnabled && isUnmanagedFolder);
+
+  if (!hasAnyActions) {
     return null;
   }
 
@@ -263,7 +275,6 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
             selectedItems={{
               dashboard: exportSelectedDashboards,
               folder: {},
-              panel: {},
               $all: false,
             }}
             onDismiss={() => {

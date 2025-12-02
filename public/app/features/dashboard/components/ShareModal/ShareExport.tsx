@@ -3,7 +3,7 @@ import { memo, useState, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Drawer, Field, Modal, Stack, Switch, Text } from '@grafana/ui';
+import { Button, Drawer, Field, Modal, Switch, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { BulkExportProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkExportProvisionedResource';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
@@ -118,9 +118,8 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
           <BulkExportProvisionedResource
             folderUid={dashboard.meta.folderUid}
             selectedItems={{
-              dashboard: { [dashboard.uid]: true },
+              dashboard: dashboard.uid ? { [dashboard.uid]: true } : {},
               folder: {},
-              panel: {},
               $all: false,
             }}
             onDismiss={() => {
