@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -9,7 +8,6 @@ import { ManagerKind } from 'app/features/apiserver/types';
 import { BulkDeleteProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource';
 import { BulkExportProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkExportProvisionedResource';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
-import { useAutoSelectUnmanagedDashboards } from 'app/features/provisioning/hooks/useAutoSelectUnmanagedDashboards';
 import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
 import { useSelectionUnmanagedStatus } from 'app/features/provisioning/hooks/useSelectionUnmanagedStatus';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -47,8 +45,6 @@ export function BrowseActions({ folderDTO }: Props) {
   const [moveDashboards] = useMoveDashboardsMutation();
   const [, stateManager] = useSearchStateManager();
   const provisioningEnabled = config.featureToggles.provisioning;
-  const location = useLocation();
-  const selectAllUnmanagedDashboards = useAutoSelectUnmanagedDashboards();
 
   const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(
     selectedItems,
@@ -57,37 +53,6 @@ export function BrowseActions({ folderDTO }: Props) {
   const { hasUnmanaged, isLoading: isLoadingUnmanaged } = useSelectionUnmanagedStatus(selectedItems);
 
   const isSearching = stateManager.hasSearchFilters();
-
-  // Handle autoExport URL parameter
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    if (searchParams.get('autoExport') === 'true' && provisioningEnabled) {
-      // Remove the parameter from URL
-      searchParams.delete('autoExport');
-      const newSearch = searchParams.toString();
-      locationService.replace({
-        pathname: location.pathname,
-        search: newSearch ? `?${newSearch}` : '',
-      });
-
-      // Wait for dashboards to load, then auto-select unmanaged dashboards and open export drawer
-      const attemptAutoSelect = async () => {
-        // Try multiple times with delays to ensure dashboards are loaded
-        for (let i = 0; i < 5; i++) {
-          await selectAllUnmanagedDashboards();
-          await new Promise((resolve) => setTimeout(resolve, 300));
-        }
-        
-        // Open the drawer after attempting to select
-        setShowBulkExportProvisionedResource(true);
-      };
-
-      // Start after a short delay to allow page to render
-      setTimeout(() => {
-        attemptAutoSelect();
-      }, 500);
-    }
-  }, [location.search, location.pathname, provisioningEnabled, selectAllUnmanagedDashboards]);
 
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
