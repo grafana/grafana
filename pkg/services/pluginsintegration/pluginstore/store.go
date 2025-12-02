@@ -106,14 +106,12 @@ func (s *Service) starting(ctx context.Context) error {
 	logger := log.New(ServiceName)
 	logger.Info("Loading plugins...")
 
-	loadedPluginsToSync := make([]*plugins.Plugin, 0)
 	for _, ps := range s.pluginSources.List(ctx) {
 		loadedPlugins, err := s.pluginLoader.Load(ctx, ps)
 		if err != nil {
 			logger.Error("Loading plugin source failed", "source", ps.PluginClass(ctx), "error", err)
 			return err
 		}
-		loadedPluginsToSync = append(loadedPluginsToSync, loadedPlugins...)
 		totalPlugins += len(loadedPlugins)
 	}
 

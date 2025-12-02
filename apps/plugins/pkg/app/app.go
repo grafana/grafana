@@ -21,8 +21,6 @@ import (
 )
 
 func New(cfg app.Config) (app.App, error) {
-	cfg.KubeConfig.APIPath = "apis"
-
 	specificConfig, ok := cfg.SpecificConfig.(*PluginAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
