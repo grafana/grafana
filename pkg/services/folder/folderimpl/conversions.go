@@ -32,7 +32,7 @@ func convertUnstructuredToFolder(item *unstructured.Unstructured, identifiers ma
 
 	uid := meta.GetName()
 	url := ""
-	if uid != folder.RootFolder.UID {
+	if !folder.IsRootFolder(uid) {
 		slug := slugify.Slugify(title)
 		url = dashboards.GetFolderURL(uid, slug)
 	}

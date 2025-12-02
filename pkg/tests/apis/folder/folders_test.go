@@ -134,9 +134,9 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 	// test on all dual writer modes
 	modes := []grafanarest.DualWriterMode{
-		grafanarest.Mode1,
-		grafanarest.Mode2,
-		grafanarest.Mode3,
+		grafanarest.Mode0, // legacy only
+		grafanarest.Mode2, // write both, read legacy
+		grafanarest.Mode3, // write both, read unified
 		grafanarest.Mode4,
 	}
 	for _, modeDw := range modes {

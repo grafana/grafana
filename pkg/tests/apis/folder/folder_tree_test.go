@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xlab/treeprint"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -376,7 +377,7 @@ func getFoldersFromLegacyAPISearch(t *testing.T, client *rest.RESTClient) *Folde
 		result = client.Get().AbsPath("api", "folders", hit.UID).
 			Do(context.Background()).
 			StatusCode(&statusCode)
-		require.NoError(t, result.Error(), "getting folder access info (/api)")
+		assert.NoError(t, result.Error(), "getting folder access info (/api) uid:%s", hit.UID)
 		require.Equal(t, int(http.StatusOK), statusCode)
 
 		body, err := result.Raw()
@@ -393,7 +394,7 @@ func makeRoot(lookup map[string]*FolderView, name string) *FolderView {
 	shared := &FolderView{} // when not found
 	root := &FolderView{}
 	for _, v := range lookup {
-		if v.Parent == "" {
+		if folder.IsRootFolder(v.Parent) { // general or empty
 			root.Children = append(root.Children, v)
 		} else {
 			p, ok := lookup[v.Parent]
@@ -444,7 +445,7 @@ func getFoldersFromDashboardV0Search(t *testing.T, client *rest.RESTClient, ns s
 			folderV1.APIVersion, "namespaces", ns, "folders", hit.Name, "access").
 			Do(context.Background()).
 			StatusCode(&statusCode)
-		require.NoError(t, result.Error(), "getting folder access info (/access)")
+		require.NoError(t, result.Error(), "getting folder access info (/access) name:%s", hit.Name)
 		require.Equal(t, int(http.StatusOK), statusCode)
 
 		body, err := result.Raw()
