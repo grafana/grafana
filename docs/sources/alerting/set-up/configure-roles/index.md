@@ -24,7 +24,7 @@ For more information, refer to [Organization roles](https://grafana.com/docs/gra
 
 ## Manage access using roles
 
-For Grafana OSS, there are three roles: Admin, Editor, and Viewer.
+Grafana OSS has three roles: Admin, Editor, and Viewer.
 
 The following table describes the access each role provides for Grafana Alerting.
 
