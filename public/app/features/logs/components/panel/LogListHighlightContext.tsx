@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext } from 'react';
 
 import { CustomHighlight } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
 
 export interface LogListHighlightContextData {
   customHighlights: CustomHighlight[];
@@ -20,9 +21,6 @@ export const useLogListHighlightContext = (): LogListHighlightContextData => {
   return useContext(LogListHighlightContext);
 };
 
-// Using full theme palette length (50+ colors) - the modulo operation will cycle through all available colors
-const HIGHLIGHT_COLOR_COUNT = 50;
-
 interface LogListHighlightContextProviderProps {
   children: ReactNode;
   customHighlights: CustomHighlight[];
@@ -34,15 +32,18 @@ export const LogListHighlightContextProvider = ({
   customHighlights,
   onHighlightsChange,
 }: LogListHighlightContextProviderProps) => {
+  const theme = useTheme2();
+  const paletteLength = theme.visualization.palette.length;
+
   const addHighlight = useCallback(
     (text: string) => {
       // If text already exists, remove it first (to re-highlight with next color)
       const filtered = customHighlights.filter((h) => h.text !== text);
       // Auto-assign next color index (cycling through available colors)
-      const nextColorIndex = filtered.length % HIGHLIGHT_COLOR_COUNT;
+      const nextColorIndex = filtered.length % paletteLength;
       onHighlightsChange([...filtered, { text, colorIndex: nextColorIndex }]);
     },
-    [customHighlights, onHighlightsChange]
+    [customHighlights, onHighlightsChange, paletteLength]
   );
 
   const resetHighlights = useCallback(() => {
