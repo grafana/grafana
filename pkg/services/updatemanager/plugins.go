@@ -100,7 +100,6 @@ func (s *PluginsService) IsDisabled() bool {
 func (s *PluginsService) checkAndUpdate(ctx context.Context) {
 	s.instrumentedCheckForUpdates(ctx)
 	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
-	if enabled {
 		s.updateAll(ctx)
 	}
 }
@@ -228,8 +227,7 @@ func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugi
 		return false
 	}
 
-	enabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
-	if enabled {
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
 		return s.updateChecker.CanUpdate(plugin.ID, plugin.Info.Version, gcomVersion, s.updateStrategy == setting.PluginUpdateStrategyMinor)
 	}
 
