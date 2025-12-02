@@ -62,6 +62,11 @@ func (s *datasourceStorage) Create(ctx context.Context, obj runtime.Object, crea
 	return s.Storage.Create(ctx, obj, createValidation, options)
 }
 
+func (d *datasourceStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	// the objInfo is not obviosuly simply to perform validation on, it feels like we should be performing validation elsewhere.
+	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
 func indexOf(slice []string, item string) int {
 	for i, v := range slice {
 		if v == item {
