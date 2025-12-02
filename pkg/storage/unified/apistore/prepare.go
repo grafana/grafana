@@ -21,6 +21,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -76,6 +77,20 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 	return nil
 }
 
+func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
+	if s.opts.EnableFolderSupport {
+		if obj.GetFolder() == "" {
+			// return apierrors.NewBadRequest("missing folder annotation")
+			// TODO?: should this be optionally be done in a mutation webhook?
+			obj.SetFolder(folder.GeneralFolderUID) // always enter something
+			return nil
+		}
+	} else if obj.GetFolder() != "" {
+		return apierrors.NewBadRequest("folders not supported in this resource")
+	}
+	return nil
+}
+
 // Called on create
 func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) (objectForStorage, error) {
 	v := objectForStorage{}
@@ -102,6 +117,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	}
 	if s.opts.MaximumNameLength > 0 && len(obj.GetName()) > s.opts.MaximumNameLength {
 		return v, apierrors.NewBadRequest(fmt.Sprintf("name exceeds maximum length (%d)", s.opts.MaximumNameLength))
+	}
+	if err = s.verifyFolder(obj); err != nil {
+		return v, err
 	}
 
 	v.grantPermissions = obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
@@ -193,17 +211,15 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
 	}
 
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
-	if err != nil {
+	if err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v); err != nil {
+		return v, err
+	}
+	if err = s.verifyFolder(obj); err != nil {
 		return v, err
 	}
 
 	// Check if we should bump the generation
 	if obj.GetFolder() != previous.GetFolder() {
-		if !s.opts.EnableFolderSupport {
-			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
-		}
-		// TODO: check that we can move the folder?
 		v.hasChanged = true
 	} else if obj.GetDeletionTimestamp() != nil && previous.GetDeletionTimestamp() == nil {
 		v.hasChanged = true // bump generation when deleted
