@@ -58,7 +58,7 @@ type kvStorageBackend struct {
 	bulkLock                     *BulkLock
 	dataStore                    *dataStore
 	eventStore                   *eventStore
-	metadataStore                *metadataStore
+	internalStore                *internalStore
 	notifier                     *notifier
 	builder                      DocumentBuilder
 	log                          logging.Logger
@@ -108,7 +108,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
 		bulkLock:                     NewBulkLock(),
 		dataStore:                    newDataStore(kv),
 		eventStore:                   eventStore,
-		metadataStore:                newMetadataStore(kv),
+		internalStore:                newInternalStore(kv),
 		notifier:                     newNotifier(eventStore, notifierOptions{}),
 		snowflake:                    s,
 		builder:                      StandardDocumentBuilder(), // For now we use the standard document builder.
@@ -1237,7 +1237,7 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		for metadata, err := range k.metadataStore.GetAll(ctx) {
+		for metadata, err := range k.internalStore.GetAll(ctx) {
 			if err != nil {
 				yield(ResourceLastImportTime{}, err)
 				return
@@ -1264,7 +1264,7 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 }
 
 func (k *kvStorageBackend) updateLastImportTime(ctx context.Context, key *resourcepb.ResourceKey, now time.Time) error {
-	metadata, err := k.metadataStore.Get(ctx, MetadataKey{
+	metadata, err := k.internalStore.Get(ctx, MetadataKey{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
@@ -1284,7 +1284,7 @@ func (k *kvStorageBackend) updateLastImportTime(ctx context.Context, key *resour
 	}
 
 	metadata.LastImportTime = now.UTC()
-	return k.metadataStore.Save(ctx, metadata)
+	return k.internalStore.Save(ctx, metadata)
 }
 
 func (k *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {

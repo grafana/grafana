@@ -10,22 +10,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestMetadataStore(t *testing.T) *metadataStore {
+func setupTestInternalStore(t *testing.T) *internalStore {
 	db := setupTestBadgerDB(t)
 	t.Cleanup(func() {
 		err := db.Close()
 		require.NoError(t, err)
 	})
 	kv := NewBadgerKV(db)
-	return newMetadataStore(kv)
+	return newInternalStore(kv)
 }
 
-func TestNewMetadataStore(t *testing.T) {
-	store := setupTestMetadataStore(t)
+func TestNewInternalStore(t *testing.T) {
+	store := setupTestInternalStore(t)
 	assert.NotNil(t, store.kv)
 }
 
-func TestMetadataStore_MetadataKey_String(t *testing.T) {
+func TestInternalStore_MetadataKey_String(t *testing.T) {
 	tests := []struct {
 		name        string
 		metadataKey MetadataKey
@@ -59,7 +59,7 @@ func TestMetadataStore_MetadataKey_String(t *testing.T) {
 	}
 }
 
-func TestMetadataStore_MetadataKey_Validate(t *testing.T) {
+func TestInternalStore_MetadataKey_Validate(t *testing.T) {
 	tests := []struct {
 		name  string
 		key   MetadataKey
@@ -116,10 +116,10 @@ func TestMetadataStore_MetadataKey_Validate(t *testing.T) {
 	}
 }
 
-func TestMetadataStore(t *testing.T) {
+func TestInternalStore(t *testing.T) {
 	t.Run("Save and Get", func(t *testing.T) {
 		ctx := context.Background()
-		store := setupTestMetadataStore(t)
+		store := setupTestInternalStore(t)
 		metadata := Metadata{
 			Namespace:      "default",
 			Group:          "apps",
@@ -143,7 +143,7 @@ func TestMetadataStore(t *testing.T) {
 
 	t.Run("GetAll", func(t *testing.T) {
 		ctx := context.Background()
-		store := setupTestMetadataStore(t)
+		store := setupTestInternalStore(t)
 		metadatas := []Metadata{
 			{
 				Namespace:      "stacks-1",

@@ -14,7 +14,7 @@ const (
 	metadataSection = "unified/metadata"
 )
 
-type metadataStore struct {
+type internalStore struct {
 	kv KV
 }
 
@@ -48,13 +48,13 @@ type Metadata struct {
 	LastImportTime time.Time `json:"lastImportTime"`
 }
 
-func newMetadataStore(kv KV) *metadataStore {
-	return &metadataStore{
+func newInternalStore(kv KV) *internalStore {
+	return &internalStore{
 		kv: kv,
 	}
 }
 
-func (d *metadataStore) Get(ctx context.Context, key MetadataKey) (Metadata, error) {
+func (d *internalStore) Get(ctx context.Context, key MetadataKey) (Metadata, error) {
 	if err := key.Validate(); err != nil {
 		return Metadata{}, fmt.Errorf("invalid metadata key: %w", err)
 	}
@@ -62,7 +62,7 @@ func (d *metadataStore) Get(ctx context.Context, key MetadataKey) (Metadata, err
 	return d.get(ctx, key.String())
 }
 
-func (d *metadataStore) get(ctx context.Context, key string) (Metadata, error) {
+func (d *internalStore) get(ctx context.Context, key string) (Metadata, error) {
 	reader, err := d.kv.Get(ctx, metadataSection, key)
 	if err != nil {
 		return Metadata{}, err
@@ -75,7 +75,7 @@ func (d *metadataStore) get(ctx context.Context, key string) (Metadata, error) {
 	return metadata, nil
 }
 
-func (d *metadataStore) GetAll(ctx context.Context) iter.Seq2[Metadata, error] {
+func (d *internalStore) GetAll(ctx context.Context) iter.Seq2[Metadata, error] {
 	opts := ListOptions{
 		Sort:     SortOrderAsc,
 		StartKey: "",
@@ -95,7 +95,7 @@ func (d *metadataStore) GetAll(ctx context.Context) iter.Seq2[Metadata, error] {
 	}
 }
 
-func (d *metadataStore) Save(ctx context.Context, metadata Metadata) error {
+func (d *internalStore) Save(ctx context.Context, metadata Metadata) error {
 	metadataKey := MetadataKey{
 		Namespace: metadata.Namespace,
 		Group:     metadata.Group,
