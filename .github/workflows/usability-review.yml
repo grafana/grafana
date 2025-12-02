@@ -159,7 +159,9 @@ jobs:
           GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
           INSTANCE_SLUG: ephemeral15111821114646titoli
         run: |
-          gcom-dev /instances/${INSTANCE_SLUG}/config \
+          curl -X POST "${GCOM_HOST}/api/instances/${INSTANCE_SLUG}/config" \
+            -H "Authorization: Bearer ${GCOM_TOKEN}" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
             -d 'config[auth][disable_login_form]=false'
 
           echo "Waiting for pod restart..."
@@ -182,16 +184,18 @@ jobs:
           INSTANCE_SLUG: ephemeral15111821114646titoli
         run: |
           # Create service account
-          SA_RESPONSE=$(gcom-dev /instances/${INSTANCE_SLUG}/api/serviceaccounts \
-            -X POST \
+          SA_RESPONSE=$(curl -X POST "${GCOM_HOST}/api/instances/${INSTANCE_SLUG}/api/serviceaccounts" \
+            -H "Authorization: Bearer ${GCOM_TOKEN}" \
+            -H "Content-Type: application/json" \
             -d '{"name":"ci-test","role":"Admin"}')
 
           SA_ID=$(echo "$SA_RESPONSE" | jq -r '.id')
           echo "SERVICE_ACCOUNT_ID=$SA_ID" >> $GITHUB_ENV
 
           # Create token
-          TOKEN_RESPONSE=$(gcom-dev /instances/${INSTANCE_SLUG}/api/serviceaccounts/${SA_ID}/tokens \
-            -X POST \
+          TOKEN_RESPONSE=$(curl -X POST "${GCOM_HOST}/api/instances/${INSTANCE_SLUG}/api/serviceaccounts/${SA_ID}/tokens" \
+            -H "Authorization: Bearer ${GCOM_TOKEN}" \
+            -H "Content-Type: application/json" \
             -d '{"name":"ci-token"}')
 
           TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.key')
