@@ -3,12 +3,13 @@ import { memo, useState, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { Button, Drawer, Field, Modal, Switch, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { BulkExportProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkExportProvisionedResource';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
 import { makeExportableV1 } from 'app/features/dashboard-scene/scene/export/exporters';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { BulkExportProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkExportProvisionedResource';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { ViewJsonModal } from './ViewJsonModal';
@@ -56,7 +57,7 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
     }
   };
 
-  const openSaveAsDialog = (dash: any) => {
+  const openSaveAsDialog = (dash: Dashboard) => {
     const dashboardJsonPretty = JSON.stringify(dash, null, 2);
     const blob = new Blob([dashboardJsonPretty], {
       type: 'application/json;charset=utf-8',
@@ -85,7 +86,7 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
       <p>
         <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
       </p>
-      <Field label={exportExternallyTranslation}>
+      <Field label={exportExternallyTranslation} noMargin>
         <Switch id="share-externally-toggle" value={shareExternally} onChange={onShareExternallyChange} />
       </Field>
       <Modal.ButtonRow>
