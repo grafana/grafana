@@ -413,6 +413,15 @@ func TestExportResources_Dashboards_Versions(t *testing.T) {
 			},
 		},
 		{
+			name:          "v2 success",
+			storedVersion: "v2",
+			dashboardName: "v2-dashboard",
+			expectSuccess: true,
+			createDashboard: func(name, version string) unstructured.Unstructured {
+				return createV2DashboardObject(name, version)
+			},
+		},
+		{
 			name:          "v3alpha1 success",
 			storedVersion: "v3alpha1",
 			dashboardName: "v3-dashboard",
