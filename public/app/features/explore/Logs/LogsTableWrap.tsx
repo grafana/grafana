@@ -282,10 +282,16 @@ export function LogsTableWrap(props: Props) {
     (sortBy: Array<{ displayName: string; desc?: boolean }>) => {
       // Transform from Table format to URL format - only store the first sort column
       if (sortBy.length > 0) {
-        updatePanelState({
-          tableSortBy: sortBy[0].displayName,
-          tableSortDir: sortBy[0].desc ? 'desc' : 'asc',
-        });
+        // Defer the Redux dispatch to avoid updating ExploreActions during Table's render cycle
+        // Even though this is called from an event handler, the synchronous Redux dispatch
+        // can cause ExploreActions (which subscribes to panes state) to re-render while
+        // Table is still rendering, triggering the React warning
+        setTimeout(() => {
+          updatePanelState({
+            tableSortBy: sortBy[0].displayName,
+            tableSortDir: sortBy[0].desc ? 'desc' : 'asc',
+          });
+        }, 0);
       }
     },
     [updatePanelState]
