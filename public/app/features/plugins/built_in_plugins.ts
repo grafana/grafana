@@ -115,4 +115,8 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/radialbar': radialBar,
 };
 
+export function isBuiltinPluginPath(path: string): path is keyof typeof builtInPlugins {
+  return Boolean(builtInPlugins[path]);
+}
+
 export default builtInPlugins;

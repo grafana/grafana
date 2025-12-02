@@ -1,6 +1,7 @@
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import config from 'app/core/config';
 
+import builtInPlugins, { isBuiltinPluginPath } from './built_in_plugins';
 import { pluginImporter } from './importer/pluginImporter';
 
 const promiseCache: Record<string, Promise<PanelPlugin>> = {};
@@ -23,6 +24,14 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
   }
 
   return promiseCache[id];
+}
+
+export function isBuiltInPlugin(id?: string): id is keyof typeof builtInPlugins {
+  if (!id) {
+    return false;
+  }
+  const meta = getPanelPluginMeta(id);
+  return Boolean(meta != null && isBuiltinPluginPath(meta.module));
 }
 
 export function hasPanelPlugin(id: string): boolean {
