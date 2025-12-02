@@ -394,7 +394,8 @@ func TestIntegrationProvisioning_ExportSpecificResourcesEmptyList(t *testing.T) 
 	}
 	helper.CreateRepo(t, testRepo)
 
-	// Try to export with empty resources list (should fail validation)
+	// Try to export with empty resources list (should succeed, as empty is treated same as nil)
+	// Empty resources list means using the old API path (using Folder), so validation is skipped
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.ExportJobOptions{
@@ -402,7 +403,7 @@ func TestIntegrationProvisioning_ExportSpecificResourcesEmptyList(t *testing.T) 
 		},
 	}
 
-	// This should fail with validation error
+	// This should succeed (empty resources is treated same as nil, skipping validation)
 	body := asJSON(spec)
 	result := helper.AdminREST.Post().
 		Namespace("default").
@@ -414,5 +415,5 @@ func TestIntegrationProvisioning_ExportSpecificResourcesEmptyList(t *testing.T) 
 		Do(ctx)
 
 	err := result.Error()
-	require.Error(t, err, "should fail validation when resources list is empty")
+	require.NoError(t, err, "empty resources list should be treated same as nil and skip validation")
 }
