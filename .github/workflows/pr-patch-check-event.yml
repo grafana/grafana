@@ -25,3 +25,4 @@ jobs:
       sender_login: ${{ github.event.sender.login }}
       sha: ${{ github.sha }}
       pr_commit_sha: ${{ github.event.pull_request.head.sha }}
+      is_fork: ${{ github.event.pull_request.head.repo.fork }}
