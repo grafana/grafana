@@ -446,7 +446,9 @@
     "@mapbox/jsonlint-lines-primitives": "github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954",
     "get-document": "github:webmodules/get-document#commit=a04ccb499d6e0433a368c3bb150b4899b698461f",
     "gitconfiglocal": "2.1.0",
-    "tmp@npm:^0.0.33": "~0.2.1"
+    "tmp@npm:^0.0.33": "~0.2.1",
+    "js-yaml@npm:4.1.0": "^4.1.0",
+    "js-yaml@npm:=4.1.0": "^4.1.0"
   },
   "workspaces": {
     "packages": [
