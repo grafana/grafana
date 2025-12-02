@@ -462,7 +462,7 @@
                         "name": "existing-ref-uid"
                       },
                       "spec": {
-                        "__legacyStringValue": "up"
+                        "query": "up"
                       }
                     },
                     "refId": "A",
@@ -641,6 +641,19 @@
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-3"
+                        }
+                      }
+                    },       
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 9,
+                        "width": 8,
+                        "height": 3,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-4"
                         }
                       }
                     }

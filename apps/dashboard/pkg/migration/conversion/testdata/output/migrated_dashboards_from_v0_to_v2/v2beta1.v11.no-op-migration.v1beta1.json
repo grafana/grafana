@@ -83,8 +83,7 @@
             "value": ""
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "hide": 0,
           "includeAll": false,

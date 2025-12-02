@@ -66,8 +66,7 @@
             ]
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "hide": 0,
           "includeAll": false,
@@ -94,8 +93,7 @@
             ]
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "hide": 0,
           "includeAll": false,
@@ -116,8 +114,7 @@
             "value": "D"
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "hide": 0,
           "includeAll": false,
@@ -138,8 +135,7 @@
             "value": "E"
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "hide": 0,
           "includeAll": false,
@@ -160,8 +156,7 @@
             "value": "F"
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "hide": 0,
           "includeAll": false,
@@ -182,8 +177,7 @@
             "value": ""
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "hide": 0,
           "includeAll": false,
@@ -204,8 +198,7 @@
             "value": ""
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "hide": 0,
           "includeAll": false,

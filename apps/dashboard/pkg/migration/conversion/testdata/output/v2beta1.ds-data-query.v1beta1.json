@@ -42,8 +42,7 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "enable": true,
           "hide": false,
@@ -74,8 +73,7 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "enable": true,
           "hide": false,
@@ -228,6 +226,9 @@
         "pluginVersion": "12.1.0-pre",
         "targets": [
           {
+            "datasource": {
+              "type": "prometheus"
+            },
             "disableTextWrap": false,
             "editorMode": "builder",
             "expr": "rate(counters_requests[$__rate_interval])",
@@ -387,6 +388,9 @@
         "pluginVersion": "12.1.0-pre",
         "targets": [
           {
+            "datasource": {
+              "type": "grafana-testdata-datasource"
+            },
             "refId": "A",
             "scenarioId": "random_walk",
             "seriesCount": 4
@@ -591,6 +595,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -667,6 +675,9 @@
         "pluginVersion": "12.1.0-pre",
         "targets": [
           {
+            "datasource": {
+              "type": "prometheus"
+            },
             "disableTextWrap": false,
             "editorMode": "builder",
             "expr": "rate(counters_requests{server=\"backend-01\"}[$__rate_interval])",
@@ -678,6 +689,9 @@
             "useBackend": false
           },
           {
+            "datasource": {
+              "type": "grafana-testdata-datasource"
+            },
             "refId": "B"
           }
         ],
@@ -721,8 +735,7 @@
             "value": ""
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": 0,
           "includeAll": false,
@@ -746,8 +759,7 @@
             "value": ""
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "grafana-testdata-datasource"
           },
           "hide": 0,
           "includeAll": false,
@@ -768,8 +780,7 @@
             "value": ""
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "hide": 0,
           "includeAll": false,

@@ -20,10 +20,6 @@
           "type": "dashboard"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
           "enable": true,
           "hide": false,
           "iconColor": "",
@@ -140,8 +136,7 @@
             "value": ""
           },
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "type": "prometheus"
           },
           "hide": 0,
           "includeAll": false,

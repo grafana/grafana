@@ -234,26 +234,54 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 
 /**
  * Get runtime datasource for a query variable.
+ * For V2→V1 conversion consistency:
+ * - If V2 has explicit UID (datasource.name): return {uid, type}
+ * - If V2 has only type (group): return {type} only (no UID resolution)
+ * - If V2 has neither: return undefined
  * @param variable - The query variable
  */
 export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
-  const ds: DataSourceRef = {
-    uid: variable.spec.query.datasource?.name,
-    type: variable.spec.query.group,
-  };
-  return getDataSourceForQuery(ds, variable.spec.query.group);
+  const explicitUid = variable.spec.query.datasource?.name;
+  const queryType = variable.spec.query.group;
+
+  // If explicit UID provided, resolve fully
+  if (explicitUid) {
+    return getDataSourceForQuery({ uid: explicitUid, type: queryType }, queryType);
+  }
+
+  // If only type provided (no explicit UID), return type-only to match backend V2→V1 conversion
+  if (queryType) {
+    return { type: queryType };
+  }
+
+  // Neither UID nor type - no datasource
+  return undefined;
 }
 
 /**
- * Get runtime datasource for a panel query.
+ * Get runtime datasource for a panel query or annotation.
+ * For V2→V1 conversion consistency:
+ * - If V2 has explicit UID (datasource.name): return {uid, type}
+ * - If V2 has only type (group): return {type} only (no UID resolution)
+ * - If V2 has neither: return undefined (caller should handle default)
  * @param query - The data query
  */
-export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef {
-  const ds: DataSourceRef = {
-    uid: query.datasource?.name,
-    type: query.group,
-  };
-  return getDataSourceForQuery(ds, query.group);
+export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef | undefined {
+  const explicitUid = query.datasource?.name;
+  const queryType = query.group;
+
+  // If explicit UID provided, resolve fully
+  if (explicitUid) {
+    return getDataSourceForQuery({ uid: explicitUid, type: queryType }, queryType);
+  }
+
+  // If only type provided (no explicit UID), return type-only to match backend V2→V1 conversion
+  if (queryType) {
+    return { type: queryType };
+  }
+
+  // Neither UID nor type - no datasource
+  return undefined;
 }
 
 /**
@@ -314,15 +342,16 @@ export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | n
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
-  // Only add datasource if the query has an explicit datasource.name reference.
-  // This matches the Go backend behavior which only outputs datasource when present in input.
-  // Having just a group (datasource type) without a name shouldn't add a resolved datasource.
-  const hasExplicitDatasource = Boolean(query.spec.query.datasource?.name);
+  // Add datasource to match Go backend V2→V1 conversion:
+  // - If explicit UID (datasource.name) exists → add { uid, type }
+  // - If only type (group) exists → add { type } only
+  // - If neither → no datasource
+  const datasource = getRuntimePanelDataSource(query.spec.query);
 
   return {
     refId: query.spec.refId,
     hide: query.spec.hidden,
-    ...(hasExplicitDatasource ? { datasource: getRuntimePanelDataSource(query.spec.query) } : {}),
+    ...(datasource ? { datasource } : {}),
     ...query.spec.query.spec,
   };
 }

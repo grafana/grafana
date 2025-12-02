@@ -1146,84 +1146,53 @@ func convertPanelQueryToV1(query *dashv2alpha1.DashboardPanelQueryKind, dsIndex 
 		target["hide"] = true
 	}
 
-	// Resolve datasource - only add if explicit (panel-level datasource handles defaults)
-	// This differs from variables/annotations which need resolved datasources
-	if query.Spec.Datasource != nil && query.Spec.Datasource.Uid != nil && *query.Spec.Datasource.Uid != "" {
-		datasource := map[string]interface{}{
-			"uid": *query.Spec.Datasource.Uid,
-		}
-		if query.Spec.Datasource.Type != nil {
-			datasource["type"] = *query.Spec.Datasource.Type
-		}
+	// Resolve datasource based on V2 input (reuse shared function)
+	datasource := getDataSourceForQuery(query.Spec.Datasource, query.Spec.Query.Kind, nil)
+	if datasource != nil {
 		target["datasource"] = datasource
 	}
 
 	return target
 }
 
-// getDataSourceForQuery resolves a datasource reference, matching frontend's getDataSourceForQuery.
-// Resolution order:
-// 1. If explicit datasource with UID is provided, use it
-// 2. Otherwise, find a datasource matching the queryKind (type)
-// 3. Fall back to the default datasource
-// Used for variables and annotations. Panel queries handle datasource inline.
-func getDataSourceForQuery(explicitDS *dashv2alpha1.DashboardDataSourceRef, queryKind string, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
-	// If explicit datasource is provided (with UID), use it
+// getDataSourceForQuery converts V2 datasource info to V1 format.
+// This preserves exactly what V2 has without runtime resolution:
+// - If explicit UID provided → return {uid, type}
+// - Else if queryKind (type) is non-empty → return {type} only
+// - Else → return nil (no datasource)
+// Used for variables and annotations. Panel queries use convertPanelQueryToV1Target.
+func getDataSourceForQuery(explicitDS *dashv2alpha1.DashboardDataSourceRef, queryKind string, _ *schemaversion.DatasourceIndex) map[string]interface{} {
+	// Case 1: Explicit datasource with UID provided
 	if explicitDS != nil && explicitDS.Uid != nil && *explicitDS.Uid != "" {
-		datasource := make(map[string]interface{})
-		datasource["uid"] = *explicitDS.Uid
+		datasource := map[string]interface{}{
+			"uid": *explicitDS.Uid,
+		}
 		if explicitDS.Type != nil {
 			datasource["type"] = *explicitDS.Type
+		} else if queryKind != "" {
+			// Use query kind as type if explicit type not provided
+			datasource["type"] = queryKind
 		}
 		return datasource
 	}
 
-	// No explicit datasource - resolve based on queryKind (datasource type) or default
-	if dsIndex == nil {
-		return nil
-	}
-
-	// Try to find a datasource matching the query kind (type)
+	// Case 2: No explicit UID but query kind (type) exists - include only type
 	if queryKind != "" {
-		var matchingDS *schemaversion.DataSourceInfo
-		for _, ds := range dsIndex.ByUID {
-			if ds.Type == queryKind {
-				if matchingDS == nil || ds.Default {
-					matchingDS = ds
-					if ds.Default {
-						break
-					}
-				}
-			}
-		}
-		if matchingDS != nil {
-			return map[string]interface{}{
-				"uid":  matchingDS.UID,
-				"type": matchingDS.Type,
-			}
-		}
-	}
-
-	// Fall back to default datasource
-	if dsIndex.DefaultDS != nil {
 		return map[string]interface{}{
-			"uid":  dsIndex.DefaultDS.UID,
-			"type": dsIndex.DefaultDS.Type,
+			"type": queryKind,
 		}
 	}
 
+	// Case 3: No UID and no query kind - no datasource
 	return nil
 }
 
 // detectMixedDatasource checks if panel queries use different datasources.
 // Returns a mixed datasource reference if queries use different datasources, nil otherwise.
-// This matches the frontend behavior in getPanelDataSource (layoutSerializers/utils.ts).
-//
-// The logic mirrors the frontend:
-// - If query has explicit datasource.uid, use { uid, type } from it
-// - Otherwise, resolve via dsIndex (similar to frontend's getRuntimePanelDataSource → getDataSourceForQuery)
-// - Compare resolved datasources to detect mixed mode
-func detectMixedDatasource(queries []dashv2alpha1.DashboardPanelQueryKind, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
+// Compares based on V2 input without runtime resolution:
+// - If query has explicit datasource.uid → use that UID and type
+// - Else → use query.Kind as type (empty UID)
+func detectMixedDatasource(queries []dashv2alpha1.DashboardPanelQueryKind, _ *schemaversion.DatasourceIndex) map[string]interface{} {
 	if len(queries) == 0 {
 		return nil
 	}
@@ -1234,25 +1203,19 @@ func detectMixedDatasource(queries []dashv2alpha1.DashboardPanelQueryKind, dsInd
 	for _, query := range queries {
 		var queryUID, queryType string
 
-		// Get datasource from query - mirrors frontend's getPanelDataSource logic
+		// Get datasource from query based on V2 input (no runtime resolution)
 		if query.Spec.Datasource != nil && query.Spec.Datasource.Uid != nil && *query.Spec.Datasource.Uid != "" {
 			// Explicit datasource reference
 			queryUID = *query.Spec.Datasource.Uid
-			queryType = query.Spec.Query.Kind // Use query kind as type
-		} else {
-			// No explicit datasource - resolve like frontend's getRuntimePanelDataSource → getDataSourceForQuery
-			// 1. Try to find datasource matching the query kind (type)
-			// 2. Fall back to default datasource
-			queryKind := query.Spec.Query.Kind
-			resolved := resolveRuntimeDatasource(queryKind, dsIndex)
-			if resolved != nil {
-				queryUID = resolved["uid"].(string)
-				queryType = resolved["type"].(string)
+			if query.Spec.Datasource.Type != nil {
+				queryType = *query.Spec.Datasource.Type
 			} else {
-				// No resolution possible - use empty values
-				queryUID = ""
-				queryType = queryKind
+				queryType = query.Spec.Query.Kind
 			}
+		} else {
+			// No explicit datasource - use query kind as type
+			queryUID = ""
+			queryType = query.Spec.Query.Kind
 		}
 
 		if !hasFirst {
@@ -1269,42 +1232,6 @@ func detectMixedDatasource(queries []dashv2alpha1.DashboardPanelQueryKind, dsInd
 	}
 
 	// Not mixed - don't set panel-level datasource
-	return nil
-}
-
-// resolveRuntimeDatasource resolves a datasource for a query kind, similar to frontend's getDataSourceForQuery.
-// It tries to find a datasource matching the query type, then falls back to default.
-func resolveRuntimeDatasource(queryKind string, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
-	if dsIndex == nil {
-		return nil
-	}
-
-	// First, check if default datasource matches the query type
-	if dsIndex.DefaultDS != nil && dsIndex.DefaultDS.Type == queryKind {
-		return map[string]interface{}{
-			"uid":  dsIndex.DefaultDS.UID,
-			"type": dsIndex.DefaultDS.Type,
-		}
-	}
-
-	// Look for any datasource matching the query type
-	for _, ds := range dsIndex.ByUID {
-		if ds.Type == queryKind {
-			return map[string]interface{}{
-				"uid":  ds.UID,
-				"type": ds.Type,
-			}
-		}
-	}
-
-	// Fall back to default datasource (like frontend does)
-	if dsIndex.DefaultDS != nil {
-		return map[string]interface{}{
-			"uid":  dsIndex.DefaultDS.UID,
-			"type": dsIndex.DefaultDS.Type,
-		}
-	}
-
 	return nil
 }
 
