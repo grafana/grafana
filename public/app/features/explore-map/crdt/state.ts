@@ -121,6 +121,7 @@ export class CRDTStateManager {
       exploreState: data.exploreState.get(),
       mode: data.mode.get(),
       iframeUrl: data.iframeUrl.get(),
+      createdBy: data.createdBy.get(),
       remoteVersion: data.remoteVersion,
     };
   }
@@ -146,7 +147,8 @@ export class CRDTStateManager {
     panelId: string,
     exploreId: string,
     position: { x: number; y: number; width: number; height: number },
-    mode: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown' = 'explore'
+    mode: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown' = 'explore',
+    createdBy?: string
   ): AddPanelOperation {
     const timestamp = this.clock.tick();
     return {
@@ -160,6 +162,7 @@ export class CRDTStateManager {
         exploreId,
         position,
         mode,
+        createdBy,
       },
     };
   }
@@ -451,7 +454,7 @@ export class CRDTStateManager {
   }
 
   private applyAddPanel(operation: AddPanelOperation): OperationResult {
-    const { panelId, exploreId, position, mode } = operation.payload;
+    const { panelId, exploreId, position, mode, createdBy } = operation.payload;
     const panelMode = mode || 'explore';
 
     // Add to OR-Set with operation ID as tag
@@ -472,6 +475,7 @@ export class CRDTStateManager {
         exploreState: new LWWRegister(undefined, operation.timestamp),
         mode: new LWWRegister(panelMode, operation.timestamp),
         iframeUrl: new LWWRegister(undefined, operation.timestamp),
+        createdBy: new LWWRegister(createdBy, operation.timestamp),
         remoteVersion: 0,
       });
     }
@@ -697,6 +701,7 @@ export class CRDTStateManager {
           exploreState: otherPanelData.exploreState.clone(),
           mode: otherPanelData.mode.clone(),
           iframeUrl: otherPanelData.iframeUrl.clone(),
+          createdBy: otherPanelData.createdBy.clone(),
           remoteVersion: otherPanelData.remoteVersion,
         });
       } else {
@@ -709,6 +714,7 @@ export class CRDTStateManager {
         myPanelData.exploreState.merge(otherPanelData.exploreState);
         myPanelData.mode.merge(otherPanelData.mode);
         myPanelData.iframeUrl.merge(otherPanelData.iframeUrl);
+        myPanelData.createdBy.merge(otherPanelData.createdBy);
       }
     }
 
@@ -734,6 +740,7 @@ export class CRDTStateManager {
         exploreState: data.exploreState.toJSON(),
         mode: data.mode.toJSON(),
         iframeUrl: data.iframeUrl.toJSON(),
+        createdBy: data.createdBy.toJSON(),
         remoteVersion: data.remoteVersion,
       };
     }
@@ -789,6 +796,7 @@ export class CRDTStateManager {
         exploreState: LWWRegister.fromJSON(data.exploreState),
         mode: data.mode ? LWWRegister.fromJSON(data.mode) : new LWWRegister('explore', defaultTimestamp),
         iframeUrl: data.iframeUrl ? LWWRegister.fromJSON(data.iframeUrl) : new LWWRegister(undefined, defaultTimestamp),
+        createdBy: data.createdBy ? LWWRegister.fromJSON(data.createdBy) : new LWWRegister(undefined, defaultTimestamp),
         remoteVersion: data.remoteVersion || 0,
       });
     }

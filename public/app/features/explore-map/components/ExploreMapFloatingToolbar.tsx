@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ButtonGroup, Dropdown, Menu, MenuItem, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import pyroscopeIconSvg from 'app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg';
 import lokiIconSvg from 'app/plugins/datasource/loki/img/loki_icon.svg';
 import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';
@@ -16,6 +17,7 @@ export function ExploreMapFloatingToolbar() {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
+  const currentUsername = contextSrv.user.name || contextSrv.user.login || 'Unknown';
 
   const handleAddPanel = useCallback(() => {
     dispatch(
@@ -24,10 +26,11 @@ export function ExploreMapFloatingToolbar() {
           width: window.innerWidth,
           height: window.innerHeight,
         },
+        createdBy: currentUsername,
       })
     );
     setIsOpen(false);
-  }, [dispatch]);
+  }, [dispatch, currentUsername]);
 
   const handleAddTracesDrilldownPanel = useCallback(() => {
     dispatch(
@@ -37,10 +40,11 @@ export function ExploreMapFloatingToolbar() {
           height: window.innerHeight,
         },
         kind: 'traces-drilldown',
+        createdBy: currentUsername,
       })
     );
     setIsOpen(false);
-  }, [dispatch]);
+  }, [dispatch, currentUsername]);
 
   const handleAddMetricsDrilldownPanel = useCallback(() => {
     dispatch(
@@ -50,10 +54,11 @@ export function ExploreMapFloatingToolbar() {
           height: window.innerHeight,
         },
         kind: 'metrics-drilldown',
+        createdBy: currentUsername,
       })
     );
     setIsOpen(false);
-  }, [dispatch]);
+  }, [dispatch, currentUsername]);
 
   const handleAddProfilesDrilldownPanel = useCallback(() => {
     dispatch(
@@ -63,10 +68,11 @@ export function ExploreMapFloatingToolbar() {
           height: window.innerHeight,
         },
         kind: 'profiles-drilldown',
+        createdBy: currentUsername,
       })
     );
     setIsOpen(false);
-  }, [dispatch]);
+  }, [dispatch, currentUsername]);
 
   const handleAddLogsDrilldownPanel = useCallback(() => {
     dispatch(
@@ -76,10 +82,11 @@ export function ExploreMapFloatingToolbar() {
           height: window.innerHeight,
         },
         kind: 'logs-drilldown',
+        createdBy: currentUsername,
       })
     );
     setIsOpen(false);
-  }, [dispatch]);
+  }, [dispatch, currentUsername]);
 
   const MenuActions = () => (
     <Menu>

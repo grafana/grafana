@@ -217,6 +217,7 @@ const crdtSlice = createSlice({
       viewportSize?: { width: number; height: number };
       position?: { x: number; y: number; width: number; height: number };
       kind?: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown';
+      createdBy?: string;
     }>) => {
       const manager = getCRDTManager(state);
 
@@ -253,7 +254,7 @@ const crdtSlice = createSlice({
       const panelId = uuidv4();
       const exploreId = generateExploreId();
 
-      const operation = manager.createAddPanelOperation(panelId, exploreId, position, mode);
+      const operation = manager.createAddPanelOperation(panelId, exploreId, position, mode, action.payload.createdBy);
 
       // Apply locally
       manager.applyOperation(operation);
@@ -513,7 +514,8 @@ const crdtSlice = createSlice({
           width: sourcePanel.position.width,
           height: sourcePanel.position.height,
         },
-        sourcePanel.mode || 'explore'
+        sourcePanel.mode || 'explore',
+        sourcePanel.createdBy
       );
 
       manager.applyOperation(addOperation);

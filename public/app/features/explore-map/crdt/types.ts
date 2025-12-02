@@ -36,6 +36,9 @@ export interface CRDTPanelData {
   // Iframe URL for traces-drilldown panels
   iframeUrl: LWWRegister<string | undefined>;
 
+  // Creator metadata (username of who created the panel)
+  createdBy: LWWRegister<string | undefined>;
+
   // Local counter incremented only for remote explore state updates
   remoteVersion: number;
 }
@@ -117,6 +120,7 @@ export interface CRDTExploreMapStateJSON {
     exploreState: { value: SerializedExploreState | undefined; timestamp: HLCTimestamp };
     mode: { value: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown'; timestamp: HLCTimestamp };
     iframeUrl: { value: string | undefined; timestamp: HLCTimestamp };
+    createdBy?: { value: string | undefined; timestamp: HLCTimestamp };
     remoteVersion?: number;
   }>;
   zIndexCounter: {
@@ -167,6 +171,7 @@ export interface AddPanelOperation extends CRDTOperationBase {
       height: number;
     };
     mode?: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown';
+    createdBy?: string;
   };
 }
 

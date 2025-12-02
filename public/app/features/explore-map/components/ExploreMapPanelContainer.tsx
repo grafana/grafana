@@ -4,7 +4,7 @@ import { Rnd, RndDragCallback, RndResizeCallback } from 'react-rnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { splitClose } from '../../explore/state/main';
@@ -63,9 +63,6 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
       if (!dragStartPos) {
         return;
       }
-
-      const deltaX = data.x - dragStartPos.x;
-      const deltaY = data.y - dragStartPos.y;
 
       // If dragging multiple panels, store the drag offset in local state
       // This will cause other panels to visually move without CRDT operations
@@ -190,6 +187,18 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
     [dispatch, panel.id]
   );
 
+  const handleInfoClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  // Build tooltip content for panel info
+  const getInfoTooltipContent = useCallback(() => {
+    if (panel.createdBy) {
+      return t('explore-map.panel.info.created-by', 'Created by: {{creator}}', { creator: panel.createdBy });
+    }
+    return t('explore-map.panel.info.no-creator', 'Creator unknown');
+  }, [panel.createdBy]);
+
   return (
     <Rnd
       ref={rndRef}
@@ -214,6 +223,16 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
             {t('explore-map.panel.title', 'Explore Panel {{id}}', { id: panel.id.slice(0, 8) })}
           </div>
           <div className={styles.panelActions}>
+            <Tooltip content={getInfoTooltipContent()} placement="bottom">
+              <Button
+                icon="info-circle"
+                variant="secondary"
+                size="sm"
+                fill="text"
+                onClick={handleInfoClick}
+                aria-label={t('explore-map.panel.info', 'Panel information')}
+              />
+            </Tooltip>
             <Button
               icon="copy"
               variant="secondary"

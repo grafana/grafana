@@ -37,6 +37,10 @@ export interface ExploreMapPanel {
    * including query parameters to restore state on reload
    */
   iframeUrl?: string;
+  /**
+   * Username of the user who created this panel
+   */
+  createdBy?: string;
 }
 
 export interface CanvasViewport {
