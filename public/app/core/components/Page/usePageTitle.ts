@@ -15,8 +15,7 @@ export function usePageTitle(navModel?: NavModel, pageNav?: NavModelItem) {
       .map((crumb) => crumb.text)
       .reverse();
 
-    // Override `Home` with the custom brand title
-    parts[parts.length - 1] = Branding.AppTitle;
+    parts.push(Branding.AppTitle);
 
     document.title = parts.join(' - ');
   }, [homeNav, navModel, pageNav]);
