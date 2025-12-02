@@ -108,8 +108,7 @@ You can start the process of creating a dashboard directly from a data source ra
 
 To begin building a dashboard directly from a data source, follow these steps:
 
-1. Navigate to **Connections**.
-1. Click the **Data sources** tile.
+1. Navigate to **Connections > Data sources**.
 1. On the row of the data source for which you want to build a dashboard, click **Build a dashboard**.
 
    The empty dashboard page opens.
