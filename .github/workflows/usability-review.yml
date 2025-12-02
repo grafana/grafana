@@ -28,15 +28,21 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Get vault secrets"
-        id: vault-secrets
+      - name: "Get vault secrets (ops)"
+        id: vault-secrets-ops
+        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0
+        with:
+          repo_secrets: |
+            GCOM_HOST=ephemeral-instances-bot:gcom-host
+            GCOM_TOKEN=ephemeral-instances-bot:gcom-token
+
+      - name: "Get vault secrets (dev)"
+        id: vault-secrets-dev
         uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0
         with:
           vault_instance: "dev"
           repo_secrets: |
             OPENAI_API_KEY=usability-review-agent:OPENAI_API_KEY
-            GRAFANA_USERNAME=usability-review-agent:GRAFANA_USERNAME
-            GRAFANA_PASSWORD=usability-review-agent:GRAFANA_PASSWORD
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -146,6 +152,92 @@ jobs:
           cp dynamic_prompt.txt .github/actions/usability-review-agent/dynamic_prompt.txt
 
           echo "Dynamic prompt created"
+
+      - name: Enable basic auth on instance
+        env:
+          GCOM_HOST: ${{ env.GCOM_HOST }}
+          GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
+          INSTANCE_SLUG: ephemeral15111821114646titoli
+        run: |
+          gcom-dev /instances/${INSTANCE_SLUG}/config \
+            -d 'config[auth][disable_login_form]=false'
+
+          echo "Waiting for pod restart..."
+          sleep 300
+
+          # Verify instance is ready
+          for i in {1..10}; do
+            if curl -sf https://${INSTANCE_SLUG}.grafana-dev.net/api/health; then
+              echo "Instance ready!"
+              break
+            fi
+            echo "Attempt $i failed, waiting..."
+            sleep 10
+          done
+
+      - name: Create service account for testing
+        env:
+          GCOM_HOST: ${{ env.GCOM_HOST }}
+          GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
+          INSTANCE_SLUG: ephemeral15111821114646titoli
+        run: |
+          # Create service account
+          SA_RESPONSE=$(gcom-dev /instances/${INSTANCE_SLUG}/api/serviceaccounts \
+            -X POST \
+            -d '{"name":"ci-test","role":"Admin"}')
+
+          SA_ID=$(echo "$SA_RESPONSE" | jq -r '.id')
+          echo "SERVICE_ACCOUNT_ID=$SA_ID" >> $GITHUB_ENV
+
+          # Create token
+          TOKEN_RESPONSE=$(gcom-dev /instances/${INSTANCE_SLUG}/api/serviceaccounts/${SA_ID}/tokens \
+            -X POST \
+            -d '{"name":"ci-token"}')
+
+          TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.key')
+          echo "SA_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+      - name: Create test user for playwright
+        env:
+          INSTANCE_SLUG: ephemeral15111821114646titoli
+        run: |
+          python3 << 'PYTHON'
+import os, requests, json, random, string
+
+instance = os.environ['INSTANCE_SLUG']
+token = os.environ['SA_TOKEN']
+
+# Generate random password
+password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+
+# Create user
+resp = requests.post(
+    f"https://{instance}.grafana-dev.net/api/admin/users",
+    headers={"Authorization": f"Bearer {token}"},
+    json={"name": "Playwright Test", "login": "playwright-test", "password": password}
+)
+resp.raise_for_status()
+user_id = resp.json()['id']
+
+# Make user admin
+requests.put(
+    f"https://{instance}.grafana-dev.net/api/admin/users/{user_id}/permissions",
+    headers={"Authorization": f"Bearer {token}"},
+    json={"isGrafanaAdmin": True}
+)
+
+# Save credentials to file
+with open("test_credentials.json", "w") as f:
+    json.dump({"username": "playwright-test", "password": password}, f)
+
+print(f"Created user: playwright-test")
+PYTHON
+
+          # Export credentials as environment variables
+          TEST_USER=$(jq -r '.username' test_credentials.json)
+          TEST_PASS=$(jq -r '.password' test_credentials.json)
+          echo "GRAFANA_USERNAME=$TEST_USER" >> $GITHUB_ENV
+          echo "GRAFANA_PASSWORD=$TEST_PASS" >> $GITHUB_ENV
 
       - name: Run usability review agent
         uses: ./.github/actions/usability-review-agent

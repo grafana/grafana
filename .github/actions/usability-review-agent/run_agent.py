@@ -15,27 +15,7 @@ def load_prompt():
         raise FileNotFoundError(f"Prompt file not found: {prompt_file}")
 
     with open(prompt_file, "r", encoding="utf-8") as f:
-        prompt = f.read().strip()
-
-    # Inject login credentials if available (not logged, only sent to API)
-    username = os.environ.get("GRAFANA_USERNAME")
-    password = os.environ.get("GRAFANA_PASSWORD")
-
-    if username and password:
-        login_instructions = f"""
-
-## Authentication
-Before you begin testing, you need to log in to Grafana. The page will likely show a login screen.
-
-**Credentials:**
-- Username: {username}
-- Password: {password}
-
-Follow the login flow presented (it may be a form, OAuth button, or other method) and complete authentication before proceeding with usability testing.
-"""
-        prompt = prompt + login_instructions
-
-    return prompt
+        return f.read().strip()
 
 def acknowledge_safety_check_callback(message: str) -> bool:
     # Auto-approve in CI/non-interactive environments
