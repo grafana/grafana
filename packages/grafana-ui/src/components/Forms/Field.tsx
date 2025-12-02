@@ -12,7 +12,7 @@ import { Label } from './Label';
 
 export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Form input element, i.e Input or Switch */
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
   /** Label for the field */
   label?: React.ReactNode;
   /** Description of the field */
