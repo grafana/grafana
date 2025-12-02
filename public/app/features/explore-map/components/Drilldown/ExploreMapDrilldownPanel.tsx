@@ -41,16 +41,25 @@ export function ExploreMapDrilldownPanel({
   });
 
   // Initialize URL from panel state or default
+  // Add kiosk parameter to hide chrome (including breadcrumbs) in the iframe
   const initialUrl = (() => {
     const origin = window.location.origin;
     const subUrl = config.appSubUrl || '';
-    return `${origin}${subUrl}${appPath}`;
+    const baseUrl = `${origin}${subUrl}${appPath}`;
+    // Add kiosk parameter to hide chrome/breadcrumbs (kiosk=1 enables full kiosk mode)
+    const url = new URL(baseUrl, window.location.href);
+    url.searchParams.set('kiosk', '1');
+    return url.toString();
   })();
 
   const [drilldownUrl, setDrilldownUrl] = useState(initialUrl);
   const lastLocalUrlRef = useRef<string | undefined>(undefined);
   const lastRemoteUrlRef = useRef<string | undefined>(undefined);
   const isInitialMountRef = useRef(true);
+  const hasSetInitialUrlRef = useRef(false);
+  const lastPanelIframeUrlRef = useRef<string | undefined>(undefined);
+  const lastAppliedRemoteUrlRef = useRef<string | undefined>(undefined);
+  const remoteUrlAppliedTimeRef = useRef<number>(0);
 
   // Initialize immediately for drilldown panels
   useEffect(() => {
@@ -69,15 +78,38 @@ export function ExploreMapDrilldownPanel({
     }
 
     // Get the current URL from panel state
-    const currentUrl = panel.mode === mode && panel.iframeUrl
-      ? panel.iframeUrl
-      : initialUrl;
+    const panelIframeUrl = panel.mode === mode ? panel.iframeUrl : undefined;
     
-    // On initial mount, set the URL immediately
+    // Skip if panel iframeUrl hasn't actually changed (prevents unnecessary refreshes)
+    if (panelIframeUrl === lastPanelIframeUrlRef.current && !isInitialMountRef.current) {
+      return;
+    }
+    
+    lastPanelIframeUrlRef.current = panelIframeUrl;
+    
+    let currentUrl = panelIframeUrl || initialUrl;
+    
+    // Ensure kiosk parameter is present to hide breadcrumbs
+    try {
+      const url = new URL(currentUrl, window.location.href);
+      if (!url.searchParams.has('kiosk')) {
+        url.searchParams.set('kiosk', '1');
+        currentUrl = url.toString();
+      }
+    } catch (e) {
+      // If URL parsing fails, use the original URL
+      console.warn('Failed to parse URL for kiosk mode:', e);
+    }
+    
+    // On initial mount, set the URL immediately (only once)
     if (isInitialMountRef.current) {
       isInitialMountRef.current = false;
-      if (currentUrl !== drilldownUrl) {
-        setDrilldownUrl(currentUrl);
+      if (!hasSetInitialUrlRef.current) {
+        hasSetInitialUrlRef.current = true;
+        // Only update if URL is different from initial
+        if (currentUrl !== initialUrl) {
+          setDrilldownUrl(currentUrl);
+        }
       }
       return;
     }
@@ -99,8 +131,11 @@ export function ExploreMapDrilldownPanel({
     
     // This is a new remote URL - update the iframe
     lastRemoteUrlRef.current = currentUrl;
+    lastAppliedRemoteUrlRef.current = currentUrl;
+    remoteUrlAppliedTimeRef.current = Date.now();
     setDrilldownUrl(currentUrl);
-  }, [panel?.iframeUrl, isInitialized, panel, drilldownUrl, mode, appPath, initialUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panel?.iframeUrl, isInitialized]);
 
   // Auto-save iframe URL changes for drilldown panels
   useEffect(() => {
@@ -124,21 +159,48 @@ export function ExploreMapDrilldownPanel({
       try {
         const currentUrl = iframe.contentWindow?.location.href;
         if (currentUrl && currentUrl !== lastSavedUrl) {
-          lastSavedUrl = currentUrl;
+          // Skip if this URL was just applied from a remote update (within last 3 seconds)
+          // This prevents the refresh loop where remote updates trigger saves that sync back
+          const timeSinceRemoteUpdate = Date.now() - remoteUrlAppliedTimeRef.current;
+          if (
+            lastAppliedRemoteUrlRef.current &&
+            currentUrl === lastAppliedRemoteUrlRef.current &&
+            timeSinceRemoteUpdate < 3000
+          ) {
+            // This is the URL we just applied from remote - don't save it back
+            lastSavedUrl = currentUrl;
+            return;
+          }
+          
+          // Ensure kiosk parameter is present in the saved URL
+          let urlToSave = currentUrl;
+          try {
+            const url = new URL(currentUrl, window.location.href);
+            if (!url.searchParams.has('kiosk')) {
+              url.searchParams.set('kiosk', '1');
+              urlToSave = url.toString();
+            }
+          } catch (e) {
+            // If URL parsing fails, use the original URL
+            console.warn('Failed to parse URL for kiosk mode:', e);
+          }
+          
+          lastSavedUrl = urlToSave;
           // Mark this as a local update so we don't reload the iframe when the CRDT syncs back
-          lastLocalUrlRef.current = currentUrl;
+          lastLocalUrlRef.current = urlToSave;
           // Clear the remote URL marker since we're updating locally
           lastRemoteUrlRef.current = undefined;
+          lastAppliedRemoteUrlRef.current = undefined;
           dispatch(
             updatePanelIframeUrl({
               panelId,
-              iframeUrl: currentUrl,
+              iframeUrl: urlToSave,
             })
           );
           // Clear the local URL marker after a delay to allow for remote updates
           setTimeout(() => {
             // Only clear if it's still the same URL (no new local navigation happened)
-            if (lastLocalUrlRef.current === currentUrl) {
+            if (lastLocalUrlRef.current === urlToSave) {
               lastLocalUrlRef.current = undefined;
             }
           }, 2000);
