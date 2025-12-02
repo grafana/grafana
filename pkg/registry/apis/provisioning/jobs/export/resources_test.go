@@ -336,202 +336,188 @@ func TestExportResources_Dashboards_FailedConversionNoStoredVersion(t *testing.T
 	require.NoError(t, err)
 }
 
-func TestExportResources_Dashboards_V2Alpha1(t *testing.T) {
-	mockItems := []unstructured.Unstructured{
+func TestExportResources_Dashboards_Versions(t *testing.T) {
+	tests := []struct {
+		name            string
+		storedVersion   string
+		dashboardName   string
+		expectSuccess   bool
+		clientError     error
+		expectedError   string
+		createDashboard func(name, version string) unstructured.Unstructured
+	}{
 		{
-			Object: map[string]interface{}{
-				"apiVersion": resources.DashboardResource.GroupVersion().String(),
-				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
-					"name": "v2-dashboard",
-				},
-				"status": map[string]interface{}{
+			name:          "v1beta1 success",
+			storedVersion: "v1beta1",
+			dashboardName: "v1-dashboard",
+			expectSuccess: true,
+			createDashboard: func(name, version string) unstructured.Unstructured {
+				dashboard := createDashboardObject(name)
+				dashboard.SetAPIVersion(fmt.Sprintf("%s/%s", resources.DashboardResource.Group, version))
+				dashboard.Object["status"] = map[string]interface{}{
 					"conversion": map[string]interface{}{
 						"failed":        true,
-						"storedVersion": "v2alpha1",
+						"storedVersion": version,
 					},
-				},
+				}
+				return dashboard
+			},
+		},
+		{
+			name:          "v2alpha1 success",
+			storedVersion: "v2alpha1",
+			dashboardName: "v2alpha-dashboard",
+			expectSuccess: true,
+			createDashboard: func(name, version string) unstructured.Unstructured {
+				return createV2DashboardObject(name, version)
+			},
+		},
+		{
+			name:          "v2alpha1 client error",
+			storedVersion: "v2alpha1",
+			dashboardName: "v2alpha-dashboard-error",
+			expectSuccess: false,
+			clientError:   fmt.Errorf("v2 client error"),
+			expectedError: "writing resource file for v2alpha-dashboard-error: get client for version v2alpha1: v2 client error",
+			createDashboard: func(name, version string) unstructured.Unstructured {
+				return createV2DashboardObject(name, version)
+			},
+		},
+		{
+			name:          "v2beta1 success",
+			storedVersion: "v2beta1",
+			dashboardName: "v2beta-dashboard",
+			expectSuccess: true,
+			createDashboard: func(name, version string) unstructured.Unstructured {
+				return createV2DashboardObject(name, version)
+			},
+		},
+		{
+			name:          "v2beta1 client error",
+			storedVersion: "v2beta1",
+			dashboardName: "v2beta-dashboard-error",
+			expectSuccess: false,
+			clientError:   fmt.Errorf("v2 client error"),
+			expectedError: "writing resource file for v2beta-dashboard-error: get client for version v2beta1: v2 client error",
+			createDashboard: func(name, version string) unstructured.Unstructured {
+				return createV2DashboardObject(name, version)
+			},
+		},
+		{
+			name:          "v2gamma1 success",
+			storedVersion: "v2gamma1",
+			dashboardName: "v2gamma-dashboard",
+			expectSuccess: true,
+			createDashboard: func(name, version string) unstructured.Unstructured {
+				return createV2DashboardObject(name, version)
+			},
+		},
+		{
+			name:          "v2 success",
+			storedVersion: "v2",
+			dashboardName: "v2-dashboard",
+			expectSuccess: true,
+			createDashboard: func(name, version string) unstructured.Unstructured {
+				return createV2DashboardObject(name, version)
+			},
+		},
+		{
+			name:          "v3alpha1 success",
+			storedVersion: "v3alpha1",
+			dashboardName: "v3-dashboard",
+			expectSuccess: true,
+			createDashboard: func(name, version string) unstructured.Unstructured {
+				return unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": fmt.Sprintf("dashboard.grafana.app/%s", version),
+						"kind":       "Dashboard",
+						"metadata": map[string]interface{}{
+							"name": name,
+						},
+						"spec": map[string]interface{}{
+							"version": 3,
+							"title":   "V3 Dashboard",
+						},
+					},
+				}
 			},
 		},
 	}
 
-	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
-		progress.On("SetMessage", mock.Anything, "start resource export").Return()
-		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
-		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "v2-dashboard" && result.Action == repository.FileActionCreated
-		})).Return()
-		progress.On("TooManyErrors").Return(nil)
-	}
-
-	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		// Setup v1 client
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
-
-		// Setup v2 client
-		v2Dashboard := createV2DashboardObject("v2-dashboard", "v2alpha1")
-		v2Client := &mockDynamicInterface{items: []unstructured.Unstructured{v2Dashboard}}
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResourceV2alpha1).Return(v2Client, gvk, nil)
-
-		options := resources.WriteOptions{
-			Path: "grafana",
-			Ref:  "feature/branch",
-		}
-		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v2Dashboard, options).Return("v2-dashboard.json", nil)
-	}
-
-	err := runExportTest(t, mockItems, setupProgress, setupResources)
-	require.NoError(t, err)
-}
-
-func TestExportResources_Dashboards_V2Alpha1_ClientError(t *testing.T) {
-	mockItems := []unstructured.Unstructured{
-		{
-			Object: map[string]interface{}{
-				"apiVersion": resources.DashboardResource.GroupVersion().String(),
-				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
-					"name": "v2-dashboard-error",
-				},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
-						"failed":        true,
-						"storedVersion": "v2alpha1",
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockItems := []unstructured.Unstructured{
+				{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       "Dashboard",
+						"metadata": map[string]interface{}{
+							"name": tt.dashboardName,
+						},
+						"status": map[string]interface{}{
+							"conversion": map[string]interface{}{
+								"failed":        true,
+								"storedVersion": tt.storedVersion,
+							},
+						},
 					},
 				},
-			},
-		},
-	}
-
-	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
-		progress.On("SetMessage", mock.Anything, "start resource export").Return()
-		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
-		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			if result.Name != "v2-dashboard-error" {
-				return false
-			}
-			if result.Action != repository.FileActionIgnored {
-				return false
-			}
-			if result.Error == nil {
-				return false
 			}
 
-			if result.Error.Error() != "writing resource file for v2-dashboard-error: v2 client error" {
-				return false
+			setupProgress := func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+				if tt.expectSuccess {
+					progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+						return result.Name == tt.dashboardName && result.Action == repository.FileActionCreated
+					})).Return()
+				} else {
+					progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+						if result.Name != tt.dashboardName {
+							return false
+						}
+						if result.Action != repository.FileActionIgnored {
+							return false
+						}
+						if result.Error == nil {
+							return false
+						}
+						return result.Error.Error() == tt.expectedError
+					})).Return()
+				}
+				progress.On("TooManyErrors").Return(nil)
 			}
 
-			return true
-		})).Return()
-		progress.On("TooManyErrors").Return(nil)
-	}
+			setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
+				// Setup v1 client
+				resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
 
-	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResourceV2alpha1).Return(nil, gvk, fmt.Errorf("v2 client error"))
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
-	}
+				// Setup version-specific client
+				versionGVR := schema.GroupVersionResource{
+					Group:    resources.DashboardResource.Group,
+					Version:  tt.storedVersion,
+					Resource: resources.DashboardResource.Resource,
+				}
 
-	err := runExportTest(t, mockItems, setupProgress, setupResources)
-	require.NoError(t, err)
-}
+				if tt.clientError != nil {
+					resourceClients.On("ForResource", mock.Anything, versionGVR).Return(nil, gvk, tt.clientError)
+				} else {
+					dashboard := tt.createDashboard(tt.dashboardName, tt.storedVersion)
+					versionClient := &mockDynamicInterface{items: []unstructured.Unstructured{dashboard}}
+					resourceClients.On("ForResource", mock.Anything, versionGVR).Return(versionClient, gvk, nil)
 
-func TestExportResources_Dashboards_V2beta1(t *testing.T) {
-	mockItems := []unstructured.Unstructured{
-		{
-			Object: map[string]interface{}{
-				"apiVersion": resources.DashboardResource.GroupVersion().String(),
-				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
-					"name": "v2-dashboard",
-				},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
-						"failed":        true,
-						"storedVersion": "v2beta1",
-					},
-				},
-			},
-		},
-	}
-
-	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
-		progress.On("SetMessage", mock.Anything, "start resource export").Return()
-		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
-		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "v2-dashboard" && result.Action == repository.FileActionCreated
-		})).Return()
-		progress.On("TooManyErrors").Return(nil)
-	}
-
-	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		// Setup v1 client
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
-
-		// Setup v2 client
-		v2Dashboard := createV2DashboardObject("v2-dashboard", "v2beta1")
-		v2Client := &mockDynamicInterface{items: []unstructured.Unstructured{v2Dashboard}}
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResourceV2beta1).Return(v2Client, gvk, nil)
-
-		options := resources.WriteOptions{
-			Path: "grafana",
-			Ref:  "feature/branch",
-		}
-		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v2Dashboard, options).Return("v2-dashboard.json", nil)
-	}
-
-	err := runExportTest(t, mockItems, setupProgress, setupResources)
-	require.NoError(t, err)
-}
-
-func TestExportResources_Dashboards_V2beta1_ClientError(t *testing.T) {
-	mockItems := []unstructured.Unstructured{
-		{
-			Object: map[string]interface{}{
-				"apiVersion": resources.DashboardResource.GroupVersion().String(),
-				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
-					"name": "v2-dashboard-error",
-				},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
-						"failed":        true,
-						"storedVersion": "v2beta1",
-					},
-				},
-			},
-		},
-	}
-
-	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
-		progress.On("SetMessage", mock.Anything, "start resource export").Return()
-		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
-		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			if result.Name != "v2-dashboard-error" {
-				return false
-			}
-			if result.Action != repository.FileActionIgnored {
-				return false
-			}
-			if result.Error == nil {
-				return false
+					options := resources.WriteOptions{
+						Path: "grafana",
+						Ref:  "feature/branch",
+					}
+					repoResources.On("WriteResourceFileFromObject", mock.Anything, &dashboard, options).Return(fmt.Sprintf("%s.json", tt.dashboardName), nil)
+				}
 			}
 
-			if result.Error.Error() != "writing resource file for v2-dashboard-error: v2 client error" {
-				return false
-			}
-
-			return true
-		})).Return()
-		progress.On("TooManyErrors").Return(nil)
+			err := runExportTest(t, mockItems, setupProgress, setupResources)
+			require.NoError(t, err)
+		})
 	}
-
-	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResourceV2beta1).Return(nil, gvk, fmt.Errorf("v2 client error"))
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
-	}
-
-	err := runExportTest(t, mockItems, setupProgress, setupResources)
-	require.NoError(t, err)
 }
 
 func TestExportResources_Dashboards_SkipsManagedResources(t *testing.T) {
@@ -565,5 +551,124 @@ func TestExportResources_Dashboards_SkipsManagedResources(t *testing.T) {
 	}
 
 	err = runExportTest(t, mockItems, setupProgress, setupResources)
+	require.NoError(t, err)
+}
+
+func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
+	// Test that we can handle multiple dashboards with different stored versions
+	mockItems := []unstructured.Unstructured{
+		{
+			Object: map[string]interface{}{
+				"apiVersion": resources.DashboardResource.GroupVersion().String(),
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"name": "v2alpha-dashboard",
+				},
+				"status": map[string]interface{}{
+					"conversion": map[string]interface{}{
+						"failed":        true,
+						"storedVersion": "v2alpha1",
+					},
+				},
+			},
+		},
+		{
+			Object: map[string]interface{}{
+				"apiVersion": resources.DashboardResource.GroupVersion().String(),
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"name": "v2beta-dashboard",
+				},
+				"status": map[string]interface{}{
+					"conversion": map[string]interface{}{
+						"failed":        true,
+						"storedVersion": "v2beta1",
+					},
+				},
+			},
+		},
+		{
+			Object: map[string]interface{}{
+				"apiVersion": resources.DashboardResource.GroupVersion().String(),
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"name": "v3-dashboard",
+				},
+				"status": map[string]interface{}{
+					"conversion": map[string]interface{}{
+						"failed":        true,
+						"storedVersion": "v3alpha1",
+					},
+				},
+			},
+		},
+	}
+
+	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
+		progress.On("SetMessage", mock.Anything, "start resource export").Return()
+		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return (result.Name == "v2alpha-dashboard" || result.Name == "v2beta-dashboard" || result.Name == "v3-dashboard") &&
+				result.Action == repository.FileActionCreated
+		})).Return().Times(3)
+		progress.On("TooManyErrors").Return(nil).Times(3)
+	}
+
+	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
+		// Setup v1 client
+		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
+
+		// Setup v2alpha1 client
+		v2alphaDashboard := createV2DashboardObject("v2alpha-dashboard", "v2alpha1")
+		v2alphaClient := &mockDynamicInterface{items: []unstructured.Unstructured{v2alphaDashboard}}
+		v2alphaGVR := schema.GroupVersionResource{
+			Group:    resources.DashboardResource.Group,
+			Version:  "v2alpha1",
+			Resource: resources.DashboardResource.Resource,
+		}
+		resourceClients.On("ForResource", mock.Anything, v2alphaGVR).Return(v2alphaClient, gvk, nil)
+
+		// Setup v2beta1 client
+		v2betaDashboard := createV2DashboardObject("v2beta-dashboard", "v2beta1")
+		v2betaClient := &mockDynamicInterface{items: []unstructured.Unstructured{v2betaDashboard}}
+		v2betaGVR := schema.GroupVersionResource{
+			Group:    resources.DashboardResource.Group,
+			Version:  "v2beta1",
+			Resource: resources.DashboardResource.Resource,
+		}
+		resourceClients.On("ForResource", mock.Anything, v2betaGVR).Return(v2betaClient, gvk, nil)
+
+		// Setup v3alpha1 client
+		v3Dashboard := unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "dashboard.grafana.app/v3alpha1",
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"name": "v3-dashboard",
+				},
+				"spec": map[string]interface{}{
+					"version": 3,
+					"title":   "V3 Dashboard",
+				},
+			},
+		}
+		v3Client := &mockDynamicInterface{items: []unstructured.Unstructured{v3Dashboard}}
+		v3GVR := schema.GroupVersionResource{
+			Group:    resources.DashboardResource.Group,
+			Version:  "v3alpha1",
+			Resource: resources.DashboardResource.Resource,
+		}
+		resourceClients.On("ForResource", mock.Anything, v3GVR).Return(v3Client, gvk, nil)
+
+		options := resources.WriteOptions{
+			Path: "grafana",
+			Ref:  "feature/branch",
+		}
+		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v2alphaDashboard, options).Return("v2alpha-dashboard.json", nil)
+		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v2betaDashboard, options).Return("v2beta-dashboard.json", nil)
+		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v3Dashboard, options).Return("v3-dashboard.json", nil)
+	}
+
+	err := runExportTest(t, mockItems, setupProgress, setupResources)
 	require.NoError(t, err)
 }
