@@ -68,17 +68,22 @@ export function ConnectionLines({ connections }: ConnectionLinesProps) {
     return <svg ref={containerRef} className={styles.svg} />;
   }
 
-  const cardIds = new Set<string>();
+  // Helper to find card rect by refId (tries query-X and expression-X formats)
+  const findCardRect = (refId: string): DOMRect | undefined => {
+    return positions.get(`query-${refId}`) || positions.get(`expression-${refId}`);
+  };
+
+  const refIds = new Set<string>();
   connections.forEach(({ from, to }) => {
-    cardIds.add(from);
-    cardIds.add(to);
+    refIds.add(from);
+    refIds.add(to);
   });
 
-  const swimlaneX = containerRect.width - 32;
+  const swimlaneX = containerRect.width - 24;
 
   const cardPositions: number[] = [];
-  cardIds.forEach((cardId) => {
-    const cardRect = positions.get(cardId);
+  refIds.forEach((refId) => {
+    const cardRect = findCardRect(refId);
     if (cardRect) {
       cardPositions.push(cardRect.top + cardRect.height / 2 - containerRect.top);
     }
@@ -95,13 +100,13 @@ export function ConnectionLines({ connections }: ConnectionLinesProps) {
     <svg ref={containerRef} className={styles.svg}>
       <g className={styles.connectionGroup}>
         <line x1={swimlaneX} y1={minY} x2={swimlaneX} y2={maxY} className={styles.swimlane} />
-        {Array.from(cardIds).map((cardId) => {
-          const cardRect = positions.get(cardId);
+        {Array.from(refIds).map((refId) => {
+          const cardRect = findCardRect(refId);
           if (!cardRect) {
             return null;
           }
           const pointY = cardRect.top + cardRect.height / 2 - containerRect.top;
-          return <circle key={cardId} cx={swimlaneX} cy={pointY} r={4} className={styles.point} />;
+          return <circle key={refId} cx={swimlaneX} cy={pointY} r={4} className={styles.point} />;
         })}
       </g>
     </svg>

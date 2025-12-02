@@ -412,14 +412,14 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
-    initialSize: 0.25,
+    initialSize: 0.01,
     handleSize: 'xs',
   });
 
   return (
     <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
       <div {...containerProps} className={cx(containerProps.className, styles.unifiedLayout)}>
-        <div {...primaryProps}>
+        <div {...primaryProps} className={cx(primaryProps.className, styles.leftPane)}>
           <QueryTransformList
             items={items}
             selectedId={effectiveSelectedId}
@@ -470,6 +470,10 @@ export function shouldShowAlertingTab(pluginId: string) {
   return isGraph || isTimeseries;
 }
 
+// Left pane sizing: card width + padding (16px left + 48px right = 64px)
+const LEFT_PANE_MIN = 180 + 64; // 244px (180px card + padding)
+const LEFT_PANE_MAX = 240 + 64; // 304px (240px card + padding)
+
 function getStyles(theme: GrafanaTheme2) {
   return {
     dataPane: css({
@@ -490,6 +494,11 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       background: theme.colors.background.canvas,
       cursor: 'col-resize',
+    }),
+    leftPane: css({
+      // !important to override useSplitter's inline minWidth: 'min-content'
+      minWidth: `${LEFT_PANE_MIN}px !important`,
+      maxWidth: `${LEFT_PANE_MAX}px !important`,
     }),
   };
 }

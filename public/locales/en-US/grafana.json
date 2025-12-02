@@ -6278,9 +6278,7 @@
     },
     "query-transform-list": {
       "header": "Pipeline flow",
-      "hidden-queries": "Hidden",
-      "nodes-total": "nodes total",
-      "visible-queries": "Visible"
+      "nodes": "nodes"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",

@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Dropdown, IconButton, Menu, Stack, useStyles2 } from '@grafana/ui';
+import { Dropdown, IconButton, Menu, Stack } from '@grafana/ui';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 interface AddDataItemMenuProps {
@@ -14,8 +12,6 @@ interface AddDataItemMenuProps {
 }
 
 export const AddDataItemMenu = memo(({ onAddQuery, onAddTransform, onAddExpression }: AddDataItemMenuProps) => {
-  const styles = useStyles2(getStyles);
-
   const expressionTypes = [
     { type: ExpressionQueryType.math, label: t('dashboard-scene.add-data-item-menu.expression-math', 'Math') },
     { type: ExpressionQueryType.reduce, label: t('dashboard-scene.add-data-item-menu.expression-reduce', 'Reduce') },
@@ -80,11 +76,3 @@ export const AddDataItemMenu = memo(({ onAddQuery, onAddTransform, onAddExpressi
 });
 
 AddDataItemMenu.displayName = 'AddDataItemMenu';
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css({
-      width: '100%',
-    }),
-  };
-};

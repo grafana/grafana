@@ -174,15 +174,15 @@ export const QueryTransformList = memo(
         <div className={styles.footer}>
           <Stack direction="row" gap={1.5}>
             <span className={styles.footerStat}>
-              {stats.totalCards} {t('dashboard-scene.query-transform-list.nodes-total', 'nodes total')}
+              {stats.totalCards} {t('dashboard-scene.query-transform-list.nodes', 'nodes')}
             </span>
             <span className={styles.footerStat}>
               <Icon size="xs" name="eye" />
-              {t('dashboard-scene.query-transform-list.visible-queries', 'Visible')}: {stats.visibleQueries}
+              {stats.visibleQueries}
             </span>
             <span className={styles.footerStat}>
               <Icon size="xs" name="eye-slash" />
-              {t('dashboard-scene.query-transform-list.hidden-queries', 'Hidden')}: {stats.hiddenQueries}
+              {stats.hiddenQueries}
             </span>
           </Stack>
         </div>
@@ -211,7 +211,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      width: '100%',
       overflow: 'hidden',
       border: `1px solid ${theme.colors.border.weak}`,
     }),

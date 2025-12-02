@@ -87,7 +87,7 @@ export const QueryTransformCard = memo(
             <Icon name={icon} className={styles.headerIcon} />
             <span className={styles.typeLabel}>{typeLabel}</span>
           </div>
-          <Stack gap={0.5}>
+          <Stack gap={0.25}>
             {(type === 'query' || type === 'expression') && onToggleVisibility && (
               <IconButton
                 name={isHidden ? 'eye-slash' : 'eye'}
@@ -131,7 +131,7 @@ export const QueryTransformCard = memo(
 
         {/* Content: Name */}
         <div className={styles.content}>
-          <Stack direction="row" gap={1}>
+          <Stack direction="row" alignItems="center" gap={1}>
             {type === 'query' && datasourceIcon && (
               <img src={datasourceIcon} alt="" className={styles.datasourceIcon} />
             )}
@@ -158,6 +158,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       background: theme.colors.background.primary,
       width: '100%',
+      minWidth: 180,
+      maxWidth: 240,
       '&:hover': {
         borderColor: theme.colors.border.strong,
       },
@@ -179,7 +181,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: theme.spacing(1, 1.5),
+      padding: theme.spacing(0.5),
       background: theme.colors.primary.transparent,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
@@ -187,7 +189,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: theme.spacing(1, 1.5),
+      padding: theme.spacing(0.5),
       background: theme.isDark
         ? `${theme.visualization.getColorByName('orange')}20`
         : `${theme.visualization.getColorByName('orange')}15`,
@@ -197,7 +199,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: theme.spacing(1, 1.5),
+      padding: theme.spacing(0.5),
       background: theme.isDark
         ? `${theme.visualization.getColorByName('purple')}20`
         : `${theme.visualization.getColorByName('purple')}15`,
@@ -206,7 +208,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     headerLeft: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       flex: 1,
       minWidth: 0,
     }),
@@ -217,10 +219,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     typeLabel: css({
       fontFamily: "'CommitMono', monospace",
       fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.maxContrast,
       textTransform: 'uppercase',
-      letterSpacing: '0.05em',
     }),
     actionButton: css({
       '&:hover': {
@@ -237,9 +237,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     name: css({
       fontFamily: "'CommitMono', monospace",
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.primary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.maxContrast,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     }),
   };
 };
