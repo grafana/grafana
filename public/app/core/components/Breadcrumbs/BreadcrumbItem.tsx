@@ -5,8 +5,6 @@ import { Components } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { Breadcrumb } from './types';
-
 type Props = Breadcrumb & {
   isCurrent: boolean;
   index: number;

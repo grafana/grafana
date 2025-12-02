@@ -4,8 +4,8 @@ import React, { memo } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { ScopesContextValue } from '@grafana/runtime';
-import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { reportInteraction, ScopesContextValue } from '@grafana/runtime';
+import { Icon, Stack, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -65,6 +65,10 @@ export const SingleTopBar = memo(function SingleTopBar({
   const isLargeScreen = useMediaQueryMinWidth('lg');
   const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
 
+  const onHomeClicked = () => {
+    reportInteraction('grafana_home_clicked', { url: homeNav?.url });
+  };
+
   return (
     <>
       <div className={styles.layout}>
@@ -77,10 +81,22 @@ export const SingleTopBar = memo(function SingleTopBar({
               tooltip={t('navigation.megamenu.open', 'Open menu')}
             >
               <Stack gap={0} alignItems="center">
-                <Branding.MenuLogo className={styles.img} />
-                <Icon size="sm" name="angle-down" />
+                <Icon name="bars" size="xl" />
               </Stack>
             </ToolbarButton>
+          )}
+          {!menuDockedAndOpen && (
+            <Tooltip placement="bottom" content={homeNav?.text || 'Home'}>
+              <a
+                onClick={onHomeClicked}
+                data-testid={Components.Breadcrumbs.breadcrumb('Home')}
+                className={styles.homeLink}
+                title={homeNav?.text || 'Home'}
+                href={homeNav?.url}
+              >
+                <Branding.LoginLogo />
+              </a>
+            </Tooltip>
           )}
           {topLevelScopes ? <ScopesSelector /> : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
@@ -141,6 +157,18 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
   kioskToggle: css({
     [theme.breakpoints.down('lg')]: {
       display: 'none',
+    },
+  }),
+  homeLink: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: theme.spacing(3),
+    width: theme.spacing(3),
+    margin: theme.spacing(0, 0.5),
+    img: {
+      maxHeight: '100%',
+      maxWidth: '100%',
     },
   }),
 });
