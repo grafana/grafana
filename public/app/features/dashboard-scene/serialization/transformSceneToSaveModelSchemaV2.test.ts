@@ -411,6 +411,45 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.annotations).toHaveLength(2);
   });
 
+  it('should transform links with placement property', () => {
+    const sceneWithPlacementLink = new DashboardScene({
+      links: [
+        {
+          title: 'Link in Controls Menu',
+          url: 'http://test.com',
+          type: 'link',
+          placement: 'inControlsMenu',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+        {
+          title: 'Link without placement',
+          url: 'http://test2.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+      ],
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithPlacementLink);
+
+    expect(result.links).toBeDefined();
+    expect(result.links).toHaveLength(2);
+    expect(result.links![0]).toHaveProperty('placement', 'inControlsMenu');
+    expect(result.links![1]).not.toHaveProperty('placement');
+  });
+
   it('should transform the minimum scene to save model schema v2', () => {
     const minimalScene = new DashboardScene({});
 

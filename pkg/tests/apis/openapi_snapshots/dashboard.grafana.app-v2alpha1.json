@@ -1877,6 +1877,10 @@
             "type": "boolean",
             "default": false
           },
+          "placement": {
+            "description": "Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.",
+            "type": "string"
+          },
           "tags": {
             "description": "List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards",
             "type": "array",

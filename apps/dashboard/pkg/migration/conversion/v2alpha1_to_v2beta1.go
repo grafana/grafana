@@ -548,6 +548,7 @@ func convertDashboardLink_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDashboar
 	out.TargetBlank = in.TargetBlank
 	out.IncludeVars = in.IncludeVars
 	out.KeepTime = in.KeepTime
+	out.Placement = in.Placement
 }
 
 func convertDataLink_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDataLink, out *dashv2beta1.DashboardDataLink) {
