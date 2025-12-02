@@ -211,8 +211,15 @@ const crdtSlice = createSlice({
       const canvasCenterX = (-state.local.viewport.panX + viewportSize.width / 2) / state.local.viewport.zoom;
       const canvasCenterY = (-state.local.viewport.panY + viewportSize.height / 2) / state.local.viewport.zoom;
 
-      const panelWidth = action.payload.position?.width || 600;
-      const panelHeight = action.payload.position?.height || 400;
+      const mode = action.payload.kind || 'explore';
+      
+      // Set default panel size based on panel type
+      // Traces drilldown panels are larger to accommodate the iframe content
+      const defaultWidth = mode === 'traces-drilldown' ? 1000 : 600;
+      const defaultHeight = mode === 'traces-drilldown' ? 550 : 400;
+      
+      const panelWidth = action.payload.position?.width || defaultWidth;
+      const panelHeight = action.payload.position?.height || defaultHeight;
       const panelCount = manager.getPanelIds().length;
       const offset = panelCount * 30;
 
@@ -226,7 +233,6 @@ const crdtSlice = createSlice({
       // Create operation
       const panelId = uuidv4();
       const exploreId = generateExploreId();
-      const mode = action.payload.kind || 'explore';
 
       const operation = manager.createAddPanelOperation(panelId, exploreId, position, mode);
 
