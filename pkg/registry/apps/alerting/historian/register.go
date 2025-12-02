@@ -11,6 +11,7 @@ import (
 	historianAppConfig "github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,6 +29,24 @@ func RegisterAppInstaller(
 ) (*AlertingHistorianAppInstaller, error) {
 	installer := &AlertingHistorianAppInstaller{}
 	appSpecificConfig := historianAppConfig.RuntimeConfig{}
+
+	// If we're provided some config, then we can enable some things.
+	if cfg != nil {
+		nhCfg := cfg.UnifiedAlerting.NotificationHistory
+
+		// Only parse config if enabled.
+		if nhCfg.Enabled {
+			lokiConfig, err := lokiconfig.NewLokiConfig(cfg.UnifiedAlerting.NotificationHistory.LokiSettings)
+			if err != nil {
+				return nil, err
+			}
+
+			appSpecificConfig.Notification = historianAppConfig.NotificationConfig{
+				Enabled: nhCfg.Enabled,
+				Loki:    lokiConfig,
+			}
+		}
+	}
 
 	// If we're provided an AlertNG, then call back into that for things we need.
 	// This is a temporary whilst building out the app; we should not depend on it.
