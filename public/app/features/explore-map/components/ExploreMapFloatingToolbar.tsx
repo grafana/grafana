@@ -38,6 +38,19 @@ export function ExploreMapFloatingToolbar() {
     setIsOpen(false);
   }, [dispatch]);
 
+  const handleAddMetricsDrilldownPanel = useCallback(() => {
+    dispatch(
+      addPanel({
+        viewportSize: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+        kind: 'metrics-drilldown',
+      })
+    );
+    setIsOpen(false);
+  }, [dispatch]);
+
   const MenuActions = () => (
     <Menu>
       <MenuItem
@@ -49,6 +62,11 @@ export function ExploreMapFloatingToolbar() {
         label={t('explore-map.toolbar.add-traces-drilldown-panel', 'Add Traces Drilldown panel')}
         icon="drilldown"
         onClick={handleAddTracesDrilldownPanel}
+      />
+      <MenuItem
+        label={t('explore-map.toolbar.add-metrics-drilldown-panel', 'Add Metrics Drilldown panel')}
+        icon="chart-line"
+        onClick={handleAddMetricsDrilldownPanel}
       />
     </Menu>
   );

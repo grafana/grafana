@@ -7,16 +7,16 @@ import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { updatePanelIframeUrl } from '../state/crdtSlice';
-import { selectPanels } from '../state/selectors';
+import { updatePanelIframeUrl } from '../../state/crdtSlice';
+import { selectPanels } from '../../state/selectors';
 
-interface ExploreMapTracesDrilldownPanelProps {
+interface ExploreMapMetricsDrilldownPanelProps {
   exploreId: string;
   width: number;
   height: number;
 }
 
-export function ExploreMapTracesDrilldownPanel({ exploreId, width, height }: ExploreMapTracesDrilldownPanelProps) {
+export function ExploreMapMetricsDrilldownPanel({ exploreId, width, height }: ExploreMapMetricsDrilldownPanelProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -28,26 +28,26 @@ export function ExploreMapTracesDrilldownPanel({ exploreId, width, height }: Exp
     return Object.values(panels).find((p) => p.exploreId === exploreId);
   });
 
-  // Build iframe URL for traces drilldown - use saved URL if available, otherwise default
+  // Build iframe URL for metrics drilldown - use saved URL if available, otherwise default
   // IMPORTANT: Only compute this once on mount to prevent iframe reloads
-  const [tracesDrilldownUrl] = useState(() => {
+  const [metricsDrilldownUrl] = useState(() => {
     // If we have a saved iframe URL from previous session, use it
-    if (panel?.mode === 'traces-drilldown' && panel?.iframeUrl) {
+    if (panel?.mode === 'metrics-drilldown' && panel?.iframeUrl) {
       return panel.iframeUrl;
     }
     // Otherwise, construct the default URL
     const origin = window.location.origin;
     const subUrl = config.appSubUrl || '';
-    const appPath = '/a/grafana-exploretraces-app';
+    const appPath = '/a/grafana-metricsdrilldown-app';
     return `${origin}${subUrl}${appPath}`;
   });
 
-  // Initialize immediately for traces drilldown panels
+  // Initialize immediately for metrics drilldown panels
   useEffect(() => {
     setIsInitialized(true);
   }, []);
 
-  // Auto-save iframe URL changes for traces-drilldown panels
+  // Auto-save iframe URL changes for metrics-drilldown panels
   useEffect(() => {
     if (!isInitialized) {
       return;
@@ -117,8 +117,8 @@ export function ExploreMapTracesDrilldownPanel({ exploreId, width, height }: Exp
     >
       <iframe
         ref={iframeRef}
-        src={tracesDrilldownUrl}
-        title={t('explore-map.panel.traces-drilldown', 'Traces Drilldown')}
+        src={metricsDrilldownUrl}
+        title={t('explore-map.panel.metrics-drilldown', 'Metrics Drilldown')}
         style={{
           width: '100%',
           height: '100%',

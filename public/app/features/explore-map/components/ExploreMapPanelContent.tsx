@@ -14,7 +14,8 @@ import { usePanelStateSync } from '../hooks/usePanelStateSync';
 // import { useExploreStateSync } from '../hooks/useExploreStateSync';
 import { selectPanels } from '../state/selectors';
 
-import { ExploreMapTracesDrilldownPanel } from './ExploreMapTracesDrilldownPanel';
+import { ExploreMapMetricsDrilldownPanel } from './Drilldown/ExploreMapMetricsDrilldownPanel';
+import { ExploreMapTracesDrilldownPanel } from './Drilldown/ExploreMapTracesDrilldownPanel';
 
 interface ExploreMapPanelContentProps {
   panelId: string;
@@ -122,8 +123,8 @@ export function ExploreMapPanelContent({ panelId, exploreId, width, height }: Ex
 
   // Initialize Explore pane on mount (only for standard Explore panels)
   useEffect(() => {
-    if (panel?.mode === 'traces-drilldown') {
-      // Traces drilldown panels don't need Explore initialization
+    if (panel?.mode === 'traces-drilldown' || panel?.mode === 'metrics-drilldown') {
+      // Drilldown panels don't need Explore initialization
       setIsInitialized(true);
       return;
     }
@@ -158,6 +159,10 @@ export function ExploreMapPanelContent({ panelId, exploreId, width, height }: Ex
 
   if (panel?.mode === 'traces-drilldown') {
     return <ExploreMapTracesDrilldownPanel exploreId={exploreId} width={width} height={height} />;
+  }
+
+  if (panel?.mode === 'metrics-drilldown') {
+    return <ExploreMapMetricsDrilldownPanel exploreId={exploreId} width={width} height={height} />;
   }
 
   // Wait for Redux state to be initialized
