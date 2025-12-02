@@ -25,8 +25,11 @@ import {
   UpdatePanelExploreStateOperation,
   UpdatePanelIframeUrlOperation,
   UpdateTitleOperation,
+  AddCommentOperation,
+  RemoveCommentOperation,
   OperationResult,
   CRDTExploreMapStateJSON,
+  CommentData,
 } from './types';
 
 export class CRDTStateManager {
@@ -48,6 +51,8 @@ export class CRDTStateManager {
     return {
       uid: this.mapUid,
       title: createLWWRegister('Untitled Map', this.nodeId),
+      comments: new ORSet<string>(),
+      commentData: new Map(),
       panels: new ORSet<string>(),
       panelData: new Map(),
       zIndexCounter: new PNCounter(),
@@ -329,6 +334,76 @@ export class CRDTStateManager {
   }
 
   /**
+   * Create an add comment operation
+   */
+  createAddCommentOperation(commentId: string, comment: CommentData): AddCommentOperation {
+    const timestamp = this.clock.tick();
+    return {
+      type: 'add-comment',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        commentId,
+        comment,
+      },
+    };
+  }
+
+  /**
+   * Create a remove comment operation
+   */
+  createRemoveCommentOperation(commentId: string): RemoveCommentOperation {
+    const timestamp = this.clock.tick();
+    const observedTags = this.state.comments.getTags(commentId);
+    return {
+      type: 'remove-comment',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        commentId,
+        observedTags,
+      },
+    };
+  }
+
+  /**
+   * Get all comment IDs
+   */
+  getCommentIds(): string[] {
+    return this.state.comments.values();
+  }
+
+  /**
+   * Get comment data by ID
+   */
+  getCommentData(commentId: string): CommentData | undefined {
+    if (!this.state.comments.contains(commentId)) {
+      return undefined;
+    }
+    return this.state.commentData.get(commentId);
+  }
+
+  /**
+   * Get all comments as an array, sorted by timestamp (newest first)
+   */
+  getCommentsForUI(): Array<{ id: string; data: CommentData }> {
+    const commentIds = this.getCommentIds();
+    const comments = commentIds
+      .map((id) => {
+        const data = this.getCommentData(id);
+        return data ? { id, data } : null;
+      })
+      .filter((c): c is { id: string; data: CommentData } => c !== null);
+
+    // Sort by timestamp, newest first
+    return comments.sort((a, b) => b.data.timestamp - a.data.timestamp);
+  }
+
+  /**
    * Apply a CRDT operation to the state
    */
   applyOperation(operation: CRDTOperation): OperationResult {
@@ -353,6 +428,10 @@ export class CRDTStateManager {
           return this.applyUpdatePanelIframeUrl(operation);
         case 'update-title':
           return this.applyUpdateTitle(operation);
+        case 'add-comment':
+          return this.applyAddComment(operation);
+        case 'remove-comment':
+          return this.applyRemoveComment(operation);
         case 'batch':
           return this.applyBatchOperation(operation);
         default:
@@ -509,6 +588,41 @@ export class CRDTStateManager {
     };
   }
 
+  private applyAddComment(operation: AddCommentOperation): OperationResult {
+    const { commentId, comment } = operation.payload;
+
+    // Add to OR-Set using operation ID as the tag
+    this.state.comments.add(commentId, operation.operationId);
+
+    // Store comment data
+    this.state.commentData.set(commentId, comment);
+
+    return {
+      success: true,
+      applied: true,
+    };
+  }
+
+  private applyRemoveComment(operation: RemoveCommentOperation): OperationResult {
+    const { commentId, observedTags } = operation.payload;
+
+    // Check if comment exists before removing
+    const existed = this.state.comments.contains(commentId);
+
+    // Remove from OR-Set
+    this.state.comments.remove(commentId, observedTags);
+
+    // Remove comment data if it existed
+    if (existed) {
+      this.state.commentData.delete(commentId);
+    }
+
+    return {
+      success: true,
+      applied: existed,
+    };
+  }
+
   private applyBatchOperation(operation: any): OperationResult {
     let anyApplied = false;
     const errors: string[] = [];
@@ -536,6 +650,16 @@ export class CRDTStateManager {
   mergeState(other: CRDTExploreMapState): void {
     // Merge title
     this.state.title.merge(other.title);
+
+    // Merge comments OR-Set
+    this.state.comments.merge(other.comments);
+
+    // Merge comment data
+    for (const [commentId, commentData] of other.commentData.entries()) {
+      if (this.state.comments.contains(commentId)) {
+        this.state.commentData.set(commentId, commentData);
+      }
+    }
 
     // Merge panel OR-Set
     this.state.panels.merge(other.panels);
@@ -598,9 +722,18 @@ export class CRDTStateManager {
       };
     }
 
+    const commentData: Record<string, CommentData> = {};
+    for (const [commentId, data] of this.state.commentData.entries()) {
+      if (this.state.comments.contains(commentId)) {
+        commentData[commentId] = data;
+      }
+    }
+
     return {
       uid: this.state.uid,
       title: this.state.title.toJSON(),
+      comments: this.state.comments.toJSON(),
+      commentData,
       panels: this.state.panels.toJSON(),
       panelData,
       zIndexCounter: this.state.zIndexCounter.toJSON(),
@@ -615,6 +748,13 @@ export class CRDTStateManager {
 
     manager.state.uid = json.uid;
     manager.state.title = LWWRegister.fromJSON(json.title);
+    manager.state.comments = json.comments ? ORSet.fromJSON(json.comments) : new ORSet<string>();
+    manager.state.commentData = new Map();
+    if (json.commentData) {
+      for (const [commentId, data] of Object.entries(json.commentData)) {
+        manager.state.commentData.set(commentId, data);
+      }
+    }
     manager.state.panels = ORSet.fromJSON(json.panels);
     manager.state.zIndexCounter = PNCounter.fromJSON(json.zIndexCounter);
 

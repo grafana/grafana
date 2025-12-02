@@ -6,7 +6,9 @@
  */
 
 import { createSelector } from '@reduxjs/toolkit';
+
 import { CRDTStateManager } from '../crdt/state';
+
 import { ExploreMapCRDTState } from './crdtSlice';
 import { ExploreMapPanel } from './types';
 
@@ -95,6 +97,17 @@ export const selectMapTitle = createSelector(
     const manager = getCRDTManager(state);
     const crdtState = manager.getState();
     return crdtState.title.get();
+  }
+);
+
+/**
+ * Select all comments as an array, sorted by timestamp (newest first)
+ */
+export const selectComments = createSelector(
+  [(state: ExploreMapCRDTState) => state],
+  (state) => {
+    const manager = getCRDTManager(state);
+    return manager.getCommentsForUI();
   }
 );
 

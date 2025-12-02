@@ -79,6 +79,12 @@ export function validateOperation(
     case 'update-title':
       validateUpdateTitle(operation, opts, errors);
       break;
+    case 'add-comment':
+      validateAddComment(operation, opts, errors);
+      break;
+    case 'remove-comment':
+      validateRemoveComment(operation, errors);
+      break;
     case 'batch':
       validateBatchOperation(operation, opts, errors);
       break;
@@ -266,6 +272,58 @@ function validateUpdateTitle(operation: any, opts: Required<ValidationOptions>, 
     errors.push('Title must be a string');
   } else if (title.length > opts.maxTitleLength) {
     errors.push(`Title exceeds maximum length of ${opts.maxTitleLength} characters`);
+  }
+}
+
+function validateAddComment(operation: any, opts: Required<ValidationOptions>, errors: string[]): void {
+  if (!operation.payload) {
+    errors.push('Add comment operation requires payload');
+    return;
+  }
+
+  const { commentId, comment } = operation.payload;
+
+  if (!commentId || typeof commentId !== 'string') {
+    errors.push('Comment ID is required and must be a string');
+  }
+
+  if (!comment || typeof comment !== 'object') {
+    errors.push('Comment must be an object');
+    return;
+  }
+
+  if (typeof comment.text !== 'string') {
+    errors.push('Comment text must be a string');
+  }
+  if (typeof comment.username !== 'string') {
+    errors.push('Comment username must be a string');
+  }
+  if (typeof comment.timestamp !== 'number') {
+    errors.push('Comment timestamp must be a number');
+  }
+
+  // Comments can be longer than titles, so we use a higher limit
+  // Using 10x the title limit for comments
+  const maxCommentLength = opts.maxTitleLength * 10;
+  if (comment.text && comment.text.length > maxCommentLength) {
+    errors.push(`Comment text exceeds maximum length of ${maxCommentLength} characters`);
+  }
+}
+
+function validateRemoveComment(operation: any, opts: Required<ValidationOptions>, errors: string[]): void {
+  if (!operation.payload) {
+    errors.push('Remove comment operation requires payload');
+    return;
+  }
+
+  const { commentId, observedTags } = operation.payload;
+
+  if (!commentId || typeof commentId !== 'string') {
+    errors.push('Comment ID is required and must be a string');
+  }
+
+  if (!Array.isArray(observedTags)) {
+    errors.push('Observed tags must be an array');
   }
 }
 

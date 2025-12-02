@@ -34,6 +34,9 @@ export type {
   UpdatePanelZIndexOperation,
   UpdatePanelExploreStateOperation,
   UpdateTitleOperation,
+  AddCommentOperation,
+  RemoveCommentOperation,
   BatchOperation,
   OperationResult,
+  CommentData,
 } from './types';

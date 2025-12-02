@@ -11,6 +11,7 @@ import { useCursorSync } from '../hooks/useCursorSync';
 import { selectPanel as selectPanelCRDT, updateViewport as updateViewportCRDT, selectMultiplePanels as selectMultiplePanelsCRDT } from '../state/crdtSlice';
 import { selectPanels, selectViewport, selectCursors, selectSelectedPanelIds, selectMapUid } from '../state/selectors';
 
+import { ExploreMapComment } from './ExploreMapComment';
 import { ExploreMapPanelContainer } from './ExploreMapPanelContainer';
 import { UserCursor } from './UserCursor';
 
@@ -271,6 +272,7 @@ export function ExploreMapCanvas() {
           </div>
         </TransformComponent>
       </TransformWrapper>
+      <ExploreMapComment />
     </div>
   );
 }

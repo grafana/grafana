@@ -145,6 +145,20 @@ function compressPayload(operation: CRDTOperation): any {
         t: payload.title,
       };
 
+    case 'add-comment':
+      return {
+        cid: payload.commentId,
+        ct: payload.comment.text,
+        cu: payload.comment.username,
+        cts: payload.comment.timestamp,
+      };
+
+    case 'remove-comment':
+      return {
+        cid: payload.commentId,
+        ot: payload.observedTags,
+      };
+
     case 'batch':
       return {
         ops: payload.operations.map(compressOperation),
@@ -234,6 +248,22 @@ function decompressPayload(type: string, compressed: any): any {
         title: compressed.t,
       };
 
+    case 'add-comment':
+      return {
+        commentId: compressed.cid,
+        comment: {
+          text: compressed.ct,
+          username: compressed.cu,
+          timestamp: compressed.cts,
+        },
+      };
+
+    case 'remove-comment':
+      return {
+        commentId: compressed.cid,
+        observedTags: compressed.ot,
+      };
+
     case 'batch':
       return {
         operations: compressed.ops.map(decompressOperation),
@@ -260,7 +290,7 @@ export function estimateOperationSize(operation: CRDTOperation): number {
  */
 export function batchOperations(
   operations: CRDTOperation[],
-  maxBatchSize: number = 10
+  maxBatchSize = 10
 ): CRDTOperation[][] {
   const batches: CRDTOperation[][] = [];
 

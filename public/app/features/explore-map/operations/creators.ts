@@ -6,6 +6,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { HLCTimestamp } from '../crdt/hlc';
 import {
   CRDTOperation,
@@ -16,7 +17,10 @@ import {
   UpdatePanelZIndexOperation,
   UpdatePanelExploreStateOperation,
   UpdateTitleOperation,
+  AddCommentOperation,
+  RemoveCommentOperation,
   BatchOperation,
+  CommentData,
 } from '../crdt/types';
 import { SerializedExploreState } from '../state/types';
 
@@ -173,6 +177,50 @@ export function createUpdateTitleOperation(
 ): UpdateTitleOperation {
   return {
     type: 'update-title',
+    mapUid,
+    operationId: uuidv4(),
+    timestamp,
+    nodeId,
+    payload,
+  };
+}
+
+/**
+ * Create an add comment operation
+ */
+export function createAddCommentOperation(
+  mapUid: string,
+  nodeId: string,
+  timestamp: HLCTimestamp,
+  payload: {
+    commentId: string;
+    comment: CommentData;
+  }
+): AddCommentOperation {
+  return {
+    type: 'add-comment',
+    mapUid,
+    operationId: uuidv4(),
+    timestamp,
+    nodeId,
+    payload,
+  };
+}
+
+/**
+ * Create a remove comment operation
+ */
+export function createRemoveCommentOperation(
+  mapUid: string,
+  nodeId: string,
+  timestamp: HLCTimestamp,
+  payload: {
+    commentId: string;
+    observedTags: string[];
+  }
+): RemoveCommentOperation {
+  return {
+    type: 'remove-comment',
     mapUid,
     operationId: uuidv4(),
     timestamp,

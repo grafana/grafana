@@ -43,10 +43,22 @@ export interface CRDTPanelData {
 /**
  * Complete CRDT-based Explore Map state
  */
+export interface CommentData {
+  text: string;
+  username: string;
+  timestamp: number; // Unix timestamp in milliseconds
+}
+
 export interface CRDTExploreMapState {
   // Map metadata
   uid?: string;
   title: LWWRegister<string>;
+
+  // Comment collection (OR-Set for add/remove operations)
+  comments: ORSet<string>;  // Set of comment IDs
+
+  // Comment data (text, username, timestamp)
+  commentData: Map<string, CommentData>;
 
   // Panel collection (OR-Set for add/remove operations)
   panels: ORSet<string>;  // Set of panel IDs
@@ -85,6 +97,11 @@ export interface CRDTExploreMapStateJSON {
     value: string;
     timestamp: HLCTimestamp;
   };
+  comments?: {
+    adds: Record<string, string[]>;
+    removes: string[];
+  };
+  commentData?: Record<string, CommentData>;
   panels: {
     adds: Record<string, string[]>;
     removes: string[];
@@ -120,6 +137,8 @@ export type CRDTOperationType =
   | 'update-panel-explore-state'
   | 'update-panel-iframe-url'
   | 'update-title'
+  | 'add-comment'
+  | 'remove-comment'
   | 'batch';  // For batching multiple operations
 
 /**
@@ -230,6 +249,28 @@ export interface UpdateTitleOperation extends CRDTOperationBase {
 }
 
 /**
+ * Add comment operation
+ */
+export interface AddCommentOperation extends CRDTOperationBase {
+  type: 'add-comment';
+  payload: {
+    commentId: string;
+    comment: CommentData;
+  };
+}
+
+/**
+ * Remove comment operation
+ */
+export interface RemoveCommentOperation extends CRDTOperationBase {
+  type: 'remove-comment';
+  payload: {
+    commentId: string;
+    observedTags: string[];  // Tags from OR-Set
+  };
+}
+
+/**
  * Batch operation (multiple operations in one)
  */
 export interface BatchOperation extends CRDTOperationBase {
@@ -251,6 +292,8 @@ export type CRDTOperation =
   | UpdatePanelExploreStateOperation
   | UpdatePanelIframeUrlOperation
   | UpdateTitleOperation
+  | AddCommentOperation
+  | RemoveCommentOperation
   | BatchOperation;
 
 /**

@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateExploreId } from 'app/core/utils/explore';
 
 import { CRDTStateManager } from '../crdt/state';
-import { CRDTOperation } from '../crdt/types';
+import { CRDTOperation, CommentData } from '../crdt/types';
 
 import { CanvasViewport, SerializedExploreState, UserCursor } from './types';
 
@@ -456,6 +456,33 @@ const crdtSlice = createSlice({
     },
 
     /**
+     * Add a comment
+     */
+    addComment: (state, action: PayloadAction<{ comment: CommentData }>) => {
+      const manager = getCRDTManager(state);
+      const commentId = uuidv4();
+
+      const operation = manager.createAddCommentOperation(commentId, action.payload.comment);
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Remove a comment
+     */
+    removeComment: (state, action: PayloadAction<{ commentId: string }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createRemoveCommentOperation(action.payload.commentId);
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+      state.pendingOperations.push(operation);
+    },
+
+    /**
      * Duplicate a panel
      */
     duplicatePanel: (state, action: PayloadAction<{ panelId: string }>) => {
@@ -610,6 +637,8 @@ export const {
   savePanelExploreState,
   updatePanelIframeUrl,
   updateMapTitle,
+  addComment,
+  removeComment,
   duplicatePanel,
   clearPendingOperations,
   updateViewport,

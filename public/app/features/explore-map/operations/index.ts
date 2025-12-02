@@ -21,6 +21,8 @@ export {
   createUpdatePanelZIndexOperation,
   createUpdatePanelExploreStateOperation,
   createUpdateTitleOperation,
+  createAddCommentOperation,
+  createRemoveCommentOperation,
   createBatchOperation,
   createMultiPanelMoveOperation,
   createDuplicatePanelOperation,

@@ -8,14 +8,16 @@ import (
 type OperationType string
 
 const (
-	OpAddPanel              OperationType = "add-panel"
-	OpRemovePanel           OperationType = "remove-panel"
-	OpUpdatePanelPosition   OperationType = "update-panel-position"
-	OpUpdatePanelSize       OperationType = "update-panel-size"
-	OpUpdatePanelZIndex     OperationType = "update-panel-zindex"
-	OpUpdatePanelExplore    OperationType = "update-panel-explore-state"
-	OpUpdateTitle           OperationType = "update-title"
-	OpBatch                 OperationType = "batch"
+	OpAddPanel            OperationType = "add-panel"
+	OpRemovePanel         OperationType = "remove-panel"
+	OpUpdatePanelPosition OperationType = "update-panel-position"
+	OpUpdatePanelSize     OperationType = "update-panel-size"
+	OpUpdatePanelZIndex   OperationType = "update-panel-zindex"
+	OpUpdatePanelExplore  OperationType = "update-panel-explore-state"
+	OpUpdateTitle         OperationType = "update-title"
+	OpAddComment          OperationType = "add-comment"
+	OpRemoveComment       OperationType = "remove-comment"
+	OpBatch               OperationType = "batch"
 )
 
 // Operation represents a CRDT operation
@@ -72,6 +74,25 @@ type UpdateTitlePayload struct {
 	Title string `json:"title"`
 }
 
+// CommentData represents a comment with text, username, and timestamp
+type CommentData struct {
+	Text      string `json:"text"`
+	Username  string `json:"username"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+// AddCommentPayload represents the payload for add-comment operation
+type AddCommentPayload struct {
+	CommentID string      `json:"commentId"`
+	Comment   CommentData `json:"comment"`
+}
+
+// RemoveCommentPayload represents the payload for remove-comment operation
+type RemoveCommentPayload struct {
+	CommentID    string   `json:"commentId"`
+	ObservedTags []string `json:"observedTags"`
+}
+
 // BatchPayload represents the payload for batch operation
 type BatchPayload struct {
 	Operations []Operation `json:"operations"`
@@ -120,6 +141,16 @@ func (op *Operation) ParsePayload() (interface{}, error) {
 
 	case OpUpdateTitle:
 		var payload UpdateTitlePayload
+		err := json.Unmarshal(op.Payload, &payload)
+		return payload, err
+
+	case OpAddComment:
+		var payload AddCommentPayload
+		err := json.Unmarshal(op.Payload, &payload)
+		return payload, err
+
+	case OpRemoveComment:
+		var payload RemoveCommentPayload
 		err := json.Unmarshal(op.Payload, &payload)
 		return payload, err
 
