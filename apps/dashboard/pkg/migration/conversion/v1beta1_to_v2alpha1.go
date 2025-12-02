@@ -387,6 +387,13 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 					}
 				}
 
+				// Optional placement field - only set if present
+				if placement, exists := linkMap["placement"]; exists {
+					if placementStr, ok := placement.(string); ok {
+						dashLink.Placement = &placementStr
+					}
+				}
+
 				result = append(result, dashLink)
 			}
 		}

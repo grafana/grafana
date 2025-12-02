@@ -583,7 +583,12 @@ func NewDashboardFieldColor() *DashboardFieldColor {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -602,6 +607,11 @@ const (
 	DashboardFieldColorModeIdThresholds           DashboardFieldColorModeId = "thresholds"
 	DashboardFieldColorModeIdPaletteClassic       DashboardFieldColorModeId = "palette-classic"
 	DashboardFieldColorModeIdPaletteClassicByName DashboardFieldColorModeId = "palette-classic-by-name"
+	DashboardFieldColorModeIdContinuousViridis    DashboardFieldColorModeId = "continuous-viridis"
+	DashboardFieldColorModeIdContinuousMagma      DashboardFieldColorModeId = "continuous-magma"
+	DashboardFieldColorModeIdContinuousPlasma     DashboardFieldColorModeId = "continuous-plasma"
+	DashboardFieldColorModeIdContinuousInferno    DashboardFieldColorModeId = "continuous-inferno"
+	DashboardFieldColorModeIdContinuousCividis    DashboardFieldColorModeId = "continuous-cividis"
 	DashboardFieldColorModeIdContinuousGrYlRd     DashboardFieldColorModeId = "continuous-GrYlRd"
 	DashboardFieldColorModeIdContinuousRdYlGr     DashboardFieldColorModeId = "continuous-RdYlGr"
 	DashboardFieldColorModeIdContinuousBlYlRd     DashboardFieldColorModeId = "continuous-BlYlRd"
@@ -1206,6 +1216,8 @@ type DashboardDashboardLink struct {
 	IncludeVars bool `json:"includeVars"`
 	// If true, includes current time range in the link as query params
 	KeepTime bool `json:"keepTime"`
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	Placement *string `json:"placement,omitempty"`
 }
 
 // NewDashboardDashboardLink creates a new DashboardDashboardLink object.
@@ -1216,6 +1228,7 @@ func NewDashboardDashboardLink() *DashboardDashboardLink {
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
+		Placement:   (func(input string) *string { return &input })(DashboardDashboardLinkPlacement),
 	}
 }
 
@@ -1227,6 +1240,11 @@ const (
 	DashboardDashboardLinkTypeLink       DashboardDashboardLinkType = "link"
 	DashboardDashboardLinkTypeDashboards DashboardDashboardLinkType = "dashboards"
 )
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+// +k8s:openapi-gen=true
+const DashboardDashboardLinkPlacement = "inControlsMenu"
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.

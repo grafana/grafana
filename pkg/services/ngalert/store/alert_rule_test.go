@@ -1963,6 +1963,94 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 			require.Equal(t, expected, actual, "rules should be ordered by group name")
 		}
 	})
+
+	t.Run("SearchTitle filter should be applied across all pages", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		searchTitle := "str"
+
+		// Create rules across multiple groups with some having "str" in title
+		// Group 1: 2 rules, one with "str", one without
+		// Group 2: 2 rules, none with "str"
+		// Group 3: 2 rules, one with "str", one without
+		ruleGen := models.RuleGen.With(
+			models.RuleMuts.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+			models.RuleMuts.WithOrgID(orgID),
+		)
+
+		ns := "test-ns"
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-1"),
+			models.RuleMuts.WithTitle("rule-1 with str"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-1"),
+			models.RuleMuts.WithTitle("rule-2"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-2"),
+			models.RuleMuts.WithTitle("rule-3"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-2"),
+			models.RuleMuts.WithTitle("rule-4"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-3"),
+			models.RuleMuts.WithTitle("rule-5 with str"),
+		))
+		createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-3"),
+			models.RuleMuts.WithTitle("rule-6"),
+		))
+
+		// First page: get 1 group with SearchTitle filter
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:       orgID,
+				SearchTitle: searchTitle,
+			},
+			Limit: 1,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, continueToken, "should have more pages")
+
+		// Verify first page only has rules with "str" in title
+		require.Len(t, result, 1)
+		for _, rule := range result {
+			require.Contains(t, strings.ToLower(rule.Title), searchTitle)
+			require.Equal(t, "group-1", rule.RuleGroup)
+		}
+
+		// Second page
+		result2, continueToken2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:       orgID,
+				SearchTitle: searchTitle,
+			},
+			Limit:         1,
+			ContinueToken: continueToken,
+		})
+		require.NoError(t, err)
+
+		// Verify second page also only has rules with "str" in title
+		require.Len(t, result2, 1)
+		for _, rule := range result2 {
+			require.Contains(t, strings.ToLower(rule.Title), searchTitle)
+			require.Equal(t, "group-3", rule.RuleGroup)
+		}
+
+		// After all pages, token should be empty
+		require.Empty(t, continueToken2, "should be no more pages")
+	})
 }
 
 func Benchmark_ListAlertRules(b *testing.B) {
