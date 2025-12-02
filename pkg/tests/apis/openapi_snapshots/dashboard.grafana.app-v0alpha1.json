@@ -2100,6 +2100,7 @@
           "Snapshot"
         ],
         "description": "Creates a new Snapshot",
+        "operationId": "createSnapshot",
         "parameters": [
           {
             "name": "namespace",

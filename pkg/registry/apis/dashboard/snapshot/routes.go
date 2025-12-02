@@ -48,6 +48,7 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						},
 						OperationProps: spec3.OperationProps{
 							Tags:        tags,
+							OperationId: "createSnapshot",
 							Description: "Creates a new Snapshot",
 							Parameters: []*spec3.Parameter{
 								{

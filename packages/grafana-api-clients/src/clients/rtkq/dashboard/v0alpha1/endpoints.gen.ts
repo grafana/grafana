@@ -276,7 +276,7 @@ const injectedRtkApi = api
         }),
         providesTags: ['Snapshot'],
       }),
-      postSnapshotsCreate: build.mutation<PostSnapshotsCreateApiResponse, PostSnapshotsCreateApiArg>({
+      createSnapshot: build.mutation<CreateSnapshotApiResponse, CreateSnapshotApiArg>({
         query: (queryArg) => ({ url: `/snapshots/create`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Snapshot'],
       }),
@@ -730,8 +730,8 @@ export type ListSnapshotApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type PostSnapshotsCreateApiResponse = /** status 200 undefined */ any;
-export type PostSnapshotsCreateApiArg = {
+export type CreateSnapshotApiResponse = /** status 200 undefined */ any;
+export type CreateSnapshotApiArg = {
   body: any;
 };
 export type DeleteWithKeyApiResponse = unknown;
@@ -1268,7 +1268,7 @@ export const {
   useLazyGetSearchSortableQuery,
   useListSnapshotQuery,
   useLazyListSnapshotQuery,
-  usePostSnapshotsCreateMutation,
+  useCreateSnapshotMutation,
   useDeleteWithKeyMutation,
   useGetSnapshotQuery,
   useLazyGetSnapshotQuery,
