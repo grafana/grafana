@@ -20,7 +20,7 @@ import {
   useMoveMultipleFoldersMutationFacade,
 } from '../../../../api/clients/folder/v1beta1/hooks';
 import { useDeleteDashboardsMutation, useMoveDashboardsMutation } from '../../api/browseDashboardsAPI';
-import { useActionSelectionState } from '../../state/hooks';
+import { useActionSelectionState, useCheckboxSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
 
@@ -38,7 +38,8 @@ export function BrowseActions({ folderDTO }: Props) {
   const [showBulkExportProvisionedResource, setShowBulkExportProvisionedResource] = useState(false);
 
   const dispatch = useDispatch();
-  const selectedItems = useActionSelectionState();
+  const selectedItemsForActions = useActionSelectionState(); // For move/delete - filters out children
+  const selectedItems = useCheckboxSelectionState(); // For export - includes all selected items
   const [deleteDashboards] = useDeleteDashboardsMutation();
   const deleteFolders = useDeleteMultipleFoldersMutationFacade();
   const [moveFolders] = useMoveMultipleFoldersMutationFacade();
@@ -47,7 +48,7 @@ export function BrowseActions({ folderDTO }: Props) {
   const provisioningEnabled = config.featureToggles.provisioning;
 
   const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(
-    selectedItems,
+    selectedItemsForActions,
     folderDTO?.managedBy === ManagerKind.Repo
   );
   const { hasUnmanaged, isLoading: isLoadingUnmanaged } = useSelectionUnmanagedStatus(selectedItems);
@@ -64,21 +65,21 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const onDelete = async () => {
-    const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-    const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+    const selectedDashboards = Object.keys(selectedItemsForActions.dashboard).filter((uid) => selectedItemsForActions.dashboard[uid]);
+    const selectedFolders = Object.keys(selectedItemsForActions.folder).filter((uid) => selectedItemsForActions.folder[uid]);
     await deleteDashboards({ dashboardUIDs: selectedDashboards });
     await deleteFolders({ folderUIDs: selectedFolders });
-    trackAction('delete', selectedItems);
+    trackAction('delete', selectedItemsForActions);
     onActionComplete();
   };
 
   const onMove = async (destinationUID: string) => {
-    const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-    const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+    const selectedDashboards = Object.keys(selectedItemsForActions.dashboard).filter((uid) => selectedItemsForActions.dashboard[uid]);
+    const selectedFolders = Object.keys(selectedItemsForActions.folder).filter((uid) => selectedItemsForActions.folder[uid]);
 
     await moveFolders({ folderUIDs: selectedFolders, destinationUID });
     await moveDashboards({ dashboardUIDs: selectedDashboards, destinationUID });
-    trackAction('move', selectedItems);
+    trackAction('move', selectedItemsForActions);
     onActionComplete();
   };
 
@@ -145,6 +146,7 @@ export function BrowseActions({ folderDTO }: Props) {
   );
 
   // Check if any dashboards are selected (export only supports dashboards, not folders)
+  // Use raw selectedItems (not selectedItemsForActions) to include all selected dashboards
   const hasSelectedDashboards =
     Object.keys(selectedItems.dashboard || {}).filter((uid) => selectedItems.dashboard[uid]).length > 0;
 
@@ -181,7 +183,7 @@ export function BrowseActions({ folderDTO }: Props) {
           size="md"
         >
           <BulkDeleteProvisionedResource
-            selectedItems={selectedItems}
+            selectedItems={selectedItemsForActions}
             folderUid={folderDTO?.uid || ''}
             onDismiss={() => {
               setShowBulkDeleteProvisionedResource(false);
@@ -203,7 +205,7 @@ export function BrowseActions({ folderDTO }: Props) {
           size="md"
         >
           <BulkMoveProvisionedResource
-            selectedItems={selectedItems}
+            selectedItems={selectedItemsForActions}
             folderUid={folderDTO?.uid}
             onDismiss={() => {
               setShowBulkMoveProvisionedResource(false);
