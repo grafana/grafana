@@ -143,7 +143,9 @@ export function useSelectionUnmanagedStatus(
       ];
 
       const results = await Promise.all(checks);
-      const hasUnmanaged = results.some((isUnmanaged) => isUnmanaged);
+      // Export should only be enabled if ALL selected items are unmanaged
+      // If ANY item is managed, hasUnmanaged should be false
+      const hasUnmanaged = results.length > 0 && results.every((isUnmanaged) => isUnmanaged);
 
       setStatus({ hasUnmanaged, isLoading: false });
     };
