@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
@@ -30,8 +30,8 @@ interface QueryDetailViewProps {
 }
 
 export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewProps) {
-  const styles = useStyles2(getStyles);
   const [showOptions, setShowOptions] = useState(false);
+  const styles = useStyles2(getStyles, showOptions);
 
   const dsSettings = useMemo(() => {
     try {
@@ -334,93 +334,78 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
 
   return (
     <div className={styles.container}>
-      <div className={cx(styles.content, showOptions && styles.contentOptionsVisible)}>
-        <QueryOperationRow
-          id={`query-${query.refId}`}
-          index={queryIndex}
-          draggable={false}
-          collapsable={false}
-          isOpen={true}
-          hideHeader={true}
-          className={styles.queryOperationRow}
-        >
-          <div className={styles.queryContent}>
-            {error && <QueryErrorAlert error={error} />}
-            {renderQueryEditor()}
+      <QueryOperationRow
+        id={`query-${query.refId}`}
+        index={queryIndex}
+        draggable={false}
+        collapsable={false}
+        isOpen={true}
+        hideHeader={true}
+        className={styles.queryOperationRow}
+      >
+        {error && <QueryErrorAlert error={error} />}
+        {renderQueryEditor()}
+      </QueryOperationRow>
+      {datasource &&
+        panelData &&
+        (showOptions ? (
+          <div className={styles.optionsColumn}>
+            <Stack gap={1} direction="column">
+              <Button
+                size="md"
+                icon="angle-right"
+                fill="text"
+                variant="secondary"
+                onClick={() => setShowOptions(!showOptions)}
+                className={styles.optionsButton}
+              >
+                <Trans i18nKey="dashboard-scene.query-detail-view.query-options">Query Options</Trans>
+              </Button>
+              {datasource && panelData && (
+                <QueryGroupOptionsEditor
+                  options={queryOptions}
+                  dataSource={datasource}
+                  data={panelData}
+                  onChange={handleQueryOptionsChange}
+                />
+              )}
+            </Stack>
           </div>
-        </QueryOperationRow>
-        <div className={styles.optionsColumn}>
-          <Stack gap={1} direction="column">
+        ) : (
+          <div className={styles.optionsFooter}>
+            {renderCollapsedText()}
             <Button
-              size="md"
-              icon="angle-right"
+              size="sm"
+              icon="angle-left"
               fill="text"
-              variant="secondary"
               onClick={() => setShowOptions(!showOptions)}
               className={styles.optionsButton}
             >
-              <Trans i18nKey="dashboard-scene.query-detail-view.query-options">Query Options</Trans>
+              <Trans i18nKey="dashboard-scene.query-detail-view.options">Options</Trans>
             </Button>
-            {datasource && panelData && (
-              <QueryGroupOptionsEditor
-                options={queryOptions}
-                dataSource={datasource}
-                data={panelData}
-                onChange={handleQueryOptionsChange}
-              />
-            )}
-          </Stack>
-        </div>
-      </div>
-      {datasource && panelData && !showOptions && (
-        <div className={styles.optionsFooter}>
-          {renderCollapsedText()}
-          <Button
-            size="sm"
-            icon="angle-left"
-            fill="text"
-            onClick={() => setShowOptions(!showOptions)}
-            className={styles.optionsButton}
-          >
-            <Trans i18nKey="dashboard-scene.query-detail-view.options">Options</Trans>
-          </Button>
-        </div>
-      )}
+          </div>
+        ))}
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, showOptions: boolean) => {
   return {
     container: css({
       width: '100%',
       height: '100%',
       position: 'relative',
       overflow: 'hidden',
-    }),
-    content: css({
       display: 'flex',
-      flexDirection: 'row',
-      height: '100%',
-      width: 'calc(100% + 300px)',
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['width'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-    }),
-    contentOptionsVisible: css({
-      width: '100%',
-    }),
-    queryContent: css({
-      padding: theme.spacing(2),
-      height: '100%',
+      flexDirection: showOptions ? 'row' : 'column',
     }),
     queryOperationRow: css({
       marginBottom: '0 !important', // need to beat specificty in the underling component
-      maxHeight: 'calc(100% - 32px)', // 32px for the footer
-      width: 'calc(100% - 300px)',
+      height: showOptions ? '100%' : 'calc(100% - 32px)', // 32px for the footer
+      flexGrow: 1,
+      gap: theme.spacing(1),
       overflowY: 'auto',
+      padding: theme.spacing(2),
     }),
     optionsFooter: css({
       height: '32px',
