@@ -1,7 +1,7 @@
+import { css } from '@emotion/css';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { css } from '@emotion/css';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';

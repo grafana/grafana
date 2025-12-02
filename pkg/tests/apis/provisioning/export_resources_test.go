@@ -221,7 +221,7 @@ func TestIntegrationProvisioning_ExportSpecificResourcesRejectsManagedResources(
 
 	// Create a managed dashboard via repository sync
 	testRepo := TestRepo{
-		Name:               "managed-dashboard-repo",
+		Name: "managed-dashboard-repo",
 		Copies: map[string]string{
 			"exportunifiedtorepository/dashboard-test-v1.yaml": "dashboard.json",
 		},
@@ -281,12 +281,12 @@ func TestIntegrationProvisioning_ExportSpecificResourcesRejectsManagedResources(
 	require.NoError(t, err, "job should be created")
 	unstruct, ok := obj.(*unstructured.Unstructured)
 	require.True(t, ok, "should get unstructured object")
-	
+
 	// Wait for job to complete
 	job := helper.AwaitJob(t, ctx, unstruct)
 	lastState := mustNestedString(job.Object, "status", "state")
 	lastErrors := mustNestedStringSlice(job.Object, "status", "errors")
-	
+
 	// Job should fail with error about managed resource
 	require.Equal(t, string(provisioning.JobStateError), lastState, "job should fail")
 	require.NotEmpty(t, lastErrors, "job should have errors")
@@ -407,4 +407,3 @@ func TestIntegrationProvisioning_ExportSpecificResourcesEmptyList(t *testing.T) 
 	err := result.Error()
 	require.Error(t, err, "should fail validation when resources list is empty")
 }
-
