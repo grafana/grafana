@@ -355,7 +355,6 @@
             }
           },
           "regex": "",
-          "regexApplyTo": "value",
           "sort": "disabled",
           "options": [],
           "multi": false,
