@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -358,12 +357,10 @@ func computeExportPath(basePath string, meta utils.GrafanaMetaAccessor, tree res
 		// Get the folder path from the unmanaged tree (rootFolder is empty string for unmanaged tree)
 		fid, ok := tree.DirPath(resourceFolder, "")
 		if ok && fid.Path != "" {
-			// Slugify the folder path to match file system conventions
-			slugifiedPath := slugify.Slugify(fid.Path)
 			if exportPath != "" {
-				exportPath = safepath.Join(exportPath, slugifiedPath)
+				exportPath = safepath.Join(exportPath, fid.Path)
 			} else {
-				exportPath = slugifiedPath
+				exportPath = fid.Path
 			}
 		}
 	}

@@ -230,7 +230,7 @@ func TestIntegrationProvisioning_ExportSpecificResourcesRejectsManagedResources(
 			"exportunifiedtorepository/dashboard-test-v1.yaml": "dashboard.json",
 		},
 		ExpectedDashboards:     1,
-		ExpectedFolders:        1, // Folder target creates a folder with the repo name
+		ExpectedFolders:        1,    // Folder target creates a folder with the repo name
 		SkipResourceAssertions: true, // Skip assertions since we're testing export, not sync
 	}
 	helper.CreateRepo(t, testRepo)
@@ -366,8 +366,8 @@ func TestIntegrationProvisioning_ExportSpecificResourcesWithFolderStructure(t *t
 
 	// Verify dashboard was exported with folder structure
 	// The folder path should be included in the file path based on the folder title
-	// Folder title is "Test Export Folder", which gets slugified to "test-export-folder"
-	expectedFile := filepath.Join(helper.ProvisioningPath, "test-export-folder", "test-dashboard-created-at-v1.json")
+	// Folder title is "Test Export Folder", which is used as-is (with spaces)
+	expectedFile := filepath.Join(helper.ProvisioningPath, "Test Export Folder", "test-dashboard-created-at-v1.json")
 	body, err := os.ReadFile(expectedFile) //nolint:gosec
 	require.NoError(t, err, "exported file should exist with folder structure")
 	obj := map[string]any{}
