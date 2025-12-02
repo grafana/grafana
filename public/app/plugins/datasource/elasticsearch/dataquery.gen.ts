@@ -402,6 +402,10 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    */
   bucketAggs?: Array<BucketAggregation>;
   /**
+   * Editor type
+   */
+  editorType?: string;
+  /**
    * List of metric aggregations
    */
   metrics?: Array<MetricAggregation>;

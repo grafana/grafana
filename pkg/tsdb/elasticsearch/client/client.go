@@ -170,7 +170,6 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	return msr, nil
 }
 
-
 func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) ([]*multiRequest, error) {
 	multiRequests := []*multiRequest{}
 

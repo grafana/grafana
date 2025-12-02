@@ -14,6 +14,8 @@ export const changeAliasPattern = createAction<ElasticsearchDataQuery['alias']>(
 
 export const changeRawQuery = createAction<ElasticsearchDataQuery['rawDSLQuery']>('change_raw_query');
 
+export const changeEditorType = createAction<ElasticsearchDataQuery['editorType']>('change_editor_type');
+
 export const queryReducer = (prevQuery: ElasticsearchDataQuery['query'], action: Action) => {
   if (changeQuery.match(action)) {
     return action.payload;
@@ -48,4 +50,16 @@ export const rawQueryReducer = (prevRawQuery: ElasticsearchDataQuery['rawDSLQuer
   }
 
   return prevRawQuery;
+};
+
+export const editorTypeReducer = (prevEditorType: ElasticsearchDataQuery['editorType'], action: Action) => {
+  if (changeEditorType.match(action)) {
+    return action.payload;
+  }
+
+  if (initQuery.match(action)) {
+    return prevEditorType || 'builder';
+  }
+
+  return prevEditorType;
 };

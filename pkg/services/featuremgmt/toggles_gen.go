@@ -754,17 +754,10 @@ const (
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
 
-<<<<<<< HEAD
-	// FlagDashboardTemplates
-	// Enable template dashboards
-	FlagDashboardTemplates = "dashboardTemplates"
-
 	// FlagElasticsearchRawDSLQuery
 	// Enables the raw DSL query editor in the Elasticsearch data source
 	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
 
-=======
->>>>>>> origin/main
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"

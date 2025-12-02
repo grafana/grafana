@@ -810,6 +810,8 @@ type ElasticsearchDataQuery struct {
 	Query *string `json:"query,omitempty"`
 	// Name of time field
 	TimeField *string `json:"timeField,omitempty"`
+	// Editor type
+	EditorType *string `json:"editorType,omitempty"`
 	// List of bucket aggregations
 	BucketAggs []BucketAggregation `json:"bucketAggs,omitempty"`
 	// List of metric aggregations

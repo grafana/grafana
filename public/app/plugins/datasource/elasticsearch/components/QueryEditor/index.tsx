@@ -14,6 +14,7 @@ import { ElasticsearchOptions } from '../../types';
 import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
+import { EditorTypeSelector } from './EditorTypeSelector';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
@@ -116,9 +117,9 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
         </div>
       </div>
             <div className={styles.root}>
-        <InlineLabel width={17}>Query type</InlineLabel>
+        <InlineLabel width={17}>Editor type</InlineLabel>
         <div className={styles.queryItem}>
-          hello 
+          <EditorTypeSelector />
         </div>
       </div>
 

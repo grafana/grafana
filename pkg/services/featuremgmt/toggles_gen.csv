@@ -262,11 +262,7 @@ pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,f
 newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
-<<<<<<< HEAD
-dashboardTemplates,experimental,@grafana/sharing-squad,false,false,false
 elasticsearchRawDSLQuery,experimental,@grafana/partner-datasources,false,false,false
-=======
->>>>>>> origin/main
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false
 awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false
 transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true

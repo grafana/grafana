@@ -209,4 +209,3 @@ func (m *MultiSearchRequestBuilder) Build() (*MultiSearchRequest, error) {
 		Requests: requests,
 	}, nil
 }
-
