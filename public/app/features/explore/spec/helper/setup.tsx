@@ -265,8 +265,8 @@ export function makeDatasourceSetup({
       updated: '',
       version: '',
       logos: {
-        small: '',
-        large: '',
+        small: 'small.png',
+        large: 'large.png',
       },
     },
     id: id.toString(),

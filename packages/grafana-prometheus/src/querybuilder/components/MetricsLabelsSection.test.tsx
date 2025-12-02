@@ -99,7 +99,7 @@ describe('MetricsLabelsSection', () => {
         onBlur: onBlur,
         variableEditor: undefined,
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -124,7 +124,7 @@ describe('MetricsLabelsSection', () => {
         labelsFilters: defaultQuery.labels,
         variableEditor: undefined,
       }),
-      expect.anything()
+      undefined
     );
   });
 

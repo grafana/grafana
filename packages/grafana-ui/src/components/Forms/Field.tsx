@@ -85,7 +85,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
         {labelElement}
         <div>
-          <div ref={ref}>{React.cloneElement(children, childProps)}</div>
+          <div ref={ref}>{React.cloneElement(children, children.type !== React.Fragment ? childProps : undefined)}</div>
           {invalid && error && !horizontal && (
             <div
               className={cx(styles.fieldValidationWrapper, {

@@ -317,7 +317,7 @@ const BaseActions = ({ children, disabled, variant, className }: ActionsProps) =
     <div className={cx(css, className)}>
       {React.Children.map(children, (child) => {
         return React.isValidElement<Record<string, unknown>>(child)
-          ? cloneElement(child, { disabled: isDisabled, ...child.props })
+          ? cloneElement(child, child.type !== React.Fragment ? { disabled: isDisabled, ...child.props } : undefined)
           : null;
       })}
     </div>

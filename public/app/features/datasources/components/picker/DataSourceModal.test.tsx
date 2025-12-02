@@ -19,7 +19,7 @@ const pluginMetaInfo: PluginMetaInfo = {
   version: '',
   updated: '',
   links: [],
-  logos: { small: '', large: '' },
+  logos: { small: 'small.png', large: 'large.png' },
 };
 
 function createPluginMeta(name: string, builtIn: boolean): DataSourcePluginMeta {

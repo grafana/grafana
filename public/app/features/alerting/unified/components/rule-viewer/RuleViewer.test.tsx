@@ -479,7 +479,7 @@ describe('RuleViewer', () => {
         expect.objectContaining({
           ruleUid: 'test-rule-uid',
         }),
-        expect.any(Object)
+        undefined
       );
       expect(screen.getByTestId('enrichment-section')).toBeInTheDocument();
     });
@@ -500,7 +500,7 @@ describe('RuleViewer', () => {
         expect.objectContaining({
           ruleUid: 'test-rule-uid',
         }),
-        expect.any(Object)
+        undefined
       );
       expect(screen.getByTestId('enrichment-section')).toBeInTheDocument();
     });
