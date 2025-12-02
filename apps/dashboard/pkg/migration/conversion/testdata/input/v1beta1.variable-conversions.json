@@ -302,9 +302,7 @@
           },
           "hide": 0,
           "refresh": 1,
-          "skipUrlSync": false,
-          "regex": "",
-          "regexApplyTo": "value"
+          "skipUrlSync": false
         },
         {
           "name": "complex_query_var",

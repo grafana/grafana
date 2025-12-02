@@ -320,8 +320,6 @@
           "name": "legacy_string_var",
           "query": "up",
           "refresh": 1,
-          "regex": "",
-          "regexApplyTo": "value",
           "skipUrlSync": false,
           "type": "query"
         },
