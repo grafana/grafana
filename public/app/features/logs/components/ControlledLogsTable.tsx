@@ -64,7 +64,6 @@ export const ControlledLogsTable = ({
           datasourceType={datasourceType}
           displayedFields={displayedFields}
           exploreId={exploreId}
-          visualisationType={visualisationType}
           absoluteRange={absoluteRange}
           logRows={logRows}
         />

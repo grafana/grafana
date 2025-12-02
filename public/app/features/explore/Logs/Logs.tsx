@@ -1005,7 +1005,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 datasourceType={props.datasourceType}
                 displayedFields={displayedFields}
                 exploreId={props.exploreId}
-                visualisationType={visualisationType}
                 absoluteRange={props.absoluteRange}
                 logRows={props.logRows}
               />

@@ -44,7 +44,6 @@ interface Props {
   datasourceType?: string;
   exploreId?: string;
   displayedFields?: string[];
-  visualisationType?: 'table' | 'logs';
   absoluteRange?: AbsoluteTimeRange;
   logRows?: LogRowModel[];
 }
