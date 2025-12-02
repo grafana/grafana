@@ -107,6 +107,9 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	dbCfg.Key("user").SetValue(testDB.User)
 	dbCfg.Key("password").SetValue(testDB.Password)
 	dbCfg.Key("name").SetValue(testDB.Database)
+	if testDB.Path != "" {
+		dbCfg.Key("path").SetValue(testDB.Path)
+	}
 
 	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
 
