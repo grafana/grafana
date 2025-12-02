@@ -26,11 +26,17 @@ func convertSnapshotDTOToK8sResource(v *dashboardsnapshots.DashboardSnapshotDTO,
 			Namespace:         namespacer(v.OrgID),
 		},
 		Spec: dashV0.SnapshotSpec{
-			Title:       &v.Name,
-			External:    &v.External,
-			ExternalUrl: &v.ExternalURL,
-			Expires:     &expires,
+			Title: &v.Name,
 		},
+	}
+
+	// Only show external settings when it is external
+	if v.External {
+		snap.Spec.External = &v.External
+		snap.Spec.ExternalUrl = &v.ExternalURL
+	}
+	if expires > 0 {
+		snap.Spec.Expires = &expires
 	}
 	if v.Updated != v.Created {
 		meta, _ := utils.MetaAccessor(snap)
@@ -53,13 +59,19 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 			Namespace:         namespacer(v.OrgID),
 		},
 		Spec: dashV0.SnapshotSpec{
-			Title:       &v.Name,
-			External:    &v.External,
-			ExternalUrl: &v.ExternalURL,
-			Expires:     &expires,
-			Dashboard:   v.Dashboard.Interface().(map[string]interface{}),
+			Title: &v.Name,
 		},
 	}
+
+	// Only show external settings when it is external
+	if v.External {
+		snap.Spec.External = &v.External
+		snap.Spec.ExternalUrl = &v.ExternalURL
+	}
+	if expires > 0 {
+		snap.Spec.Expires = &expires
+	}
+
 	if v.Updated != v.Created {
 		meta, _ := utils.MetaAccessor(snap)
 		meta.SetUpdatedTimestamp(&v.Updated)
