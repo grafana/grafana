@@ -4,9 +4,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
-import { Alert, Box, Button, Field, Input, Select, Stack } from '@grafana/ui';
+import { Alert, Box, Button, Field, Input, Select, Stack, Text } from '@grafana/ui';
 import { RepositoryView, Job, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 import { collectSelectedItems } from 'app/features/browse-dashboards/components/utils';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
@@ -172,7 +171,37 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                 <Trans i18nKey="browse-dashboards.bulk-export-resources-form.export-total">
                   In total, this will export:
                 </Trans>
-                <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
+                <Text element="p" color="secondary">
+                  {(() => {
+                    // For export, only count explicitly selected dashboards (folders are filtered out)
+                    const selectedDashboardUIDs = Object.keys(selectedItems.dashboard || {}).filter(
+                      (uid) => selectedItems.dashboard[uid]
+                    );
+                    const selectedFolderUIDs = Object.keys(selectedItems.folder || {}).filter(
+                      (uid) => selectedItems.folder[uid]
+                    );
+                    const totalItems = selectedDashboardUIDs.length + selectedFolderUIDs.length;
+                    if (totalItems === 0) {
+                      return t('browse-dashboards.bulk-export-resources-form.no-items', 'No items selected');
+                    }
+                    const parts: string[] = [];
+                    if (selectedFolderUIDs.length > 0) {
+                      parts.push(
+                        t('browse-dashboards.bulk-export-resources-form.folders-count', '{{count}} folder', {
+                          count: selectedFolderUIDs.length,
+                        })
+                      );
+                    }
+                    if (selectedDashboardUIDs.length > 0) {
+                      parts.push(
+                        t('browse-dashboards.bulk-export-resources-form.dashboards-count', '{{count}} dashboard', {
+                          count: selectedDashboardUIDs.length,
+                        })
+                      );
+                    }
+                    return `${totalItems} ${totalItems === 1 ? 'item' : 'items'}: ${parts.join(', ')}`;
+                  })()}
+                </Text>
               </Box>
 
               {/* Show form-level errors */}
