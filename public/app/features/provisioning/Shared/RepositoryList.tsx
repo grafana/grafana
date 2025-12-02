@@ -25,8 +25,8 @@ export function RepositoryList({ items }: Props) {
   const { instanceConnected } = checkSyncSettings(items);
 
   const handlePushUnmanaged = () => {
-    // Navigate to dashboards page with autoPush parameter
-    locationService.push('/dashboards?autoPush=true');
+    // Navigate to dashboards page with autoExport parameter
+    locationService.push('/dashboards?autoExport=true');
   };
 
   const getResourceCountSection = () => {

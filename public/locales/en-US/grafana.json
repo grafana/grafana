@@ -3551,8 +3551,8 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
+      "bulk-export-provisioned-resources": "Bulk Export Resources",
       "bulk-move-provisioned-resources": "Bulk Move Provisioned Resources",
-      "bulk-push-provisioned-resources": "Bulk Push Resources",
       "cancel-button": "Cancel",
       "confirmation-text": "Delete",
       "delete-button": "Delete",
@@ -3564,6 +3564,8 @@
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
+      "export-button": "Export",
+      "export-folder": "Export Folder to Repository",
       "manage-permissions-button": "Manage permissions",
       "move-button": "Move",
       "move-modal-alert": "Moving this item may change its permissions.",
@@ -3574,7 +3576,6 @@
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required.",
-      "push-button": "Push",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
@@ -3595,6 +3596,22 @@
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
       "error-deleting-resources": "Error deleting resources"
     },
+    "bulk-export-resources-form": {
+      "button-cancel": "Cancel",
+      "button-export": "Export",
+      "button-exporting": "Exporting...",
+      "error-exporting-resources": "Error exporting resources",
+      "error-no-dashboards": "No dashboards selected. Only dashboards can be exported.",
+      "error-no-repository": "Please select a repository",
+      "export-total": "In total, this will export:",
+      "folders-warning": "Folders cannot be exported",
+      "folders-warning-description": "Only dashboards can be exported. Folders in your selection will be ignored.",
+      "path": "Path",
+      "path-description": "Prefix path in the target repository (optional)",
+      "path-placeholder": "e.g., grafana/",
+      "repository": "Repository",
+      "repository-placeholder": "Select a repository"
+    },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
       "button-move": "Move",
@@ -3612,22 +3629,6 @@
       "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
       "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "target-folder": "Target Folder"
-    },
-    "bulk-push-resources-form": {
-      "button-cancel": "Cancel",
-      "button-push": "Push",
-      "button-pushing": "Pushing...",
-      "error-no-dashboards": "No dashboards selected. Only dashboards can be pushed.",
-      "error-no-repository": "Please select a repository",
-      "error-pushing-resources": "Error pushing resources",
-      "folders-warning": "Folders cannot be pushed",
-      "folders-warning-description": "Only dashboards can be pushed. Folders in your selection will be ignored.",
-      "path": "Path",
-      "path-description": "Prefix path in the target repository (optional)",
-      "path-placeholder": "e.g., grafana/",
-      "push-total": "In total, this will push:",
-      "repository": "Repository",
-      "repository-placeholder": "Select a repository"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
@@ -3676,6 +3677,8 @@
     "folder-actions-button": {
       "delete": "Delete this folder",
       "delete-folder-error": "Error deleting folder. Please try again later.",
+      "export": "Export to Repository",
+      "export-folder-error": "Error collecting dashboards. Please try again later.",
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
       "move": "Move this folder"
@@ -12751,6 +12754,8 @@
     "export": {
       "back-button": "Back to export config",
       "cancel-button": "Cancel",
+      "export-to-repository-button": "Export to Repository",
+      "export-to-repository-title": "Export Dashboard to Repository",
       "info-text": "Export this dashboard.",
       "loading": "Loading...",
       "save-button": "Save to file",

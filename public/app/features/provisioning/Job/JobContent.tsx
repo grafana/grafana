@@ -12,7 +12,7 @@ import { StepStatusInfo } from '../Wizard/types';
 import { JobSummary } from './JobSummary';
 
 export interface JobContentProps {
-  jobType: 'sync' | 'delete' | 'move' | 'push';
+  jobType: 'sync' | 'delete' | 'move' | 'export';
   job?: Job;
   isFinishedJob?: boolean;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;

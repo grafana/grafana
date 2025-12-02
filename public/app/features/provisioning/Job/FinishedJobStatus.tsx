@@ -11,7 +11,7 @@ import { JobContent } from './JobContent';
 export interface FinishedJobProps {
   jobUid: string;
   repositoryName: string;
-  jobType: 'sync' | 'delete' | 'move' | 'push';
+  jobType: 'sync' | 'delete' | 'move' | 'export';
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
 }
 

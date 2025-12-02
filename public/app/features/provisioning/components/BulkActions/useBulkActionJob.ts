@@ -24,7 +24,7 @@ export interface MoveJobSpec {
   };
 }
 
-export interface PushJobSpec {
+export interface ExportJobSpec {
   action: 'push';
   push: {
     message?: string;
@@ -34,7 +34,7 @@ export interface PushJobSpec {
   };
 }
 
-export type BulkJobSpec = DeleteJobSpec | MoveJobSpec | PushJobSpec;
+export type BulkJobSpec = DeleteJobSpec | MoveJobSpec | ExportJobSpec;
 
 interface UseBulkActionJobResult {
   createBulkJob: (

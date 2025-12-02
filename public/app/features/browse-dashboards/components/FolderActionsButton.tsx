@@ -7,9 +7,11 @@ import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/u
 import { appEvents } from 'app/core/app_events';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { BulkExportProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkExportProvisionedResource';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { collectAllDashboardsUnderFolder } from 'app/features/provisioning/utils/collectFolderDashboards';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
@@ -32,6 +34,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [showMoveProvisionedFolderDrawer, setShowMoveProvisionedFolderDrawer] = useState(false);
+  const [showExportFolderDrawer, setShowExportFolderDrawer] = useState(false);
+  const [exportSelectedDashboards, setExportSelectedDashboards] = useState<Record<string, boolean>>({});
   const [moveFolder] = useMoveFolderMutationFacade();
   const isProvisionedInstance = useIsProvisionedInstance();
 
@@ -125,9 +129,36 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     setShowMoveProvisionedFolderDrawer(true);
   };
 
+  const handleExportFolder = async () => {
+    try {
+      // Collect all dashboards under this folder and its children
+      const dashboardUIDs = await collectAllDashboardsUnderFolder(folder.uid);
+      
+      // Create selected items object with all dashboards
+      const selectedDashboards: Record<string, boolean> = {};
+      dashboardUIDs.forEach((uid) => {
+        selectedDashboards[uid] = true;
+      });
+      
+      setExportSelectedDashboards(selectedDashboards);
+      setShowExportFolderDrawer(true);
+    } catch (error) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [
+          t(
+            'browse-dashboards.folder-actions-button.export-folder-error',
+            'Error collecting dashboards. Please try again later.'
+          ),
+        ],
+      });
+    }
+  };
+
   const managePermissionsLabel = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move this folder');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
+  const exportLabel = t('browse-dashboards.folder-actions-button.export', 'Export to Repository');
 
   const menu = (
     <Menu>
@@ -147,10 +178,13 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
           label={deleteLabel}
         />
       )}
+      {!isProvisionedFolder && canEditFolders && (
+        <MenuItem onClick={handleExportFolder} label={exportLabel} />
+      )}
     </Menu>
   );
 
-  if (!canViewPermissions && !canMoveFolder && !canDeleteFolders) {
+  if (!canViewPermissions && !canMoveFolder && !canDeleteFolders && isProvisionedFolder) {
     return null;
   }
 
@@ -210,6 +244,32 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
             folderUid={folder.uid}
             selectedItems={{ dashboard: {}, folder: { [folder.uid]: true } }}
             onDismiss={() => setShowMoveProvisionedFolderDrawer(false)}
+          />
+        </Drawer>
+      )}
+      {showExportFolderDrawer && (
+        <Drawer
+          title={
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.export-folder', 'Export Folder to Repository')}
+            </Text>
+          }
+          subtitle={folder.title}
+          onClose={() => setShowExportFolderDrawer(false)}
+          size="md"
+        >
+          <BulkExportProvisionedResource
+            folderUid={folder.uid}
+            selectedItems={{
+              dashboard: exportSelectedDashboards,
+              folder: {},
+              panel: {},
+              $all: false,
+            }}
+            onDismiss={() => {
+              setShowExportFolderDrawer(false);
+              setExportSelectedDashboards({});
+            }}
           />
         </Drawer>
       )}

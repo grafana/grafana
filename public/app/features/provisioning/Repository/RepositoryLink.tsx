@@ -8,7 +8,7 @@ import { getRepoHrefForProvider } from '../utils/git';
 
 type RepositoryLinkProps = {
   name?: string;
-  jobType: 'sync' | 'delete' | 'move';
+  jobType: 'sync' | 'delete' | 'move' | 'push';
 };
 
 export function RepositoryLink({ name, jobType }: RepositoryLinkProps) {

@@ -21,7 +21,7 @@ import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFi
 import { getDefaultWorkflow, getWorkflowOptions } from '../defaults';
 import { generateTimestamp } from '../utils/timestamp';
 
-import { PushJobSpec, useBulkActionJob } from './useBulkActionJob';
+import { ExportJobSpec, useBulkActionJob } from './useBulkActionJob';
 import { BulkActionFormData, BulkActionProvisionResourceProps } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
@@ -64,37 +64,37 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
       // Use a form-level error since 'repository' is not in BulkActionFormData
       setError('root', {
         type: 'manual',
-        message: t('browse-dashboards.bulk-push-resources-form.error-no-repository', 'Please select a repository'),
+        message: t('browse-dashboards.bulk-export-resources-form.error-no-repository', 'Please select a repository'),
       });
       setHasSubmitted(false);
       return;
     }
 
     const resources = collectSelectedItems(selectedItems);
-    // Filter out folders - only dashboards are supported for push
+    // Filter out folders - only dashboards are supported for export
     const dashboardResources = resources.filter((r) => r.kind === 'Dashboard');
 
     if (dashboardResources.length === 0) {
       setError('root', {
         type: 'manual',
         message: t(
-          'browse-dashboards.bulk-push-resources-form.error-no-dashboards',
-          'No dashboards selected. Only dashboards can be pushed.'
+          'browse-dashboards.bulk-export-resources-form.error-no-dashboards',
+          'No dashboards selected. Only dashboards can be exported.'
         ),
       });
       setHasSubmitted(false);
       return;
     }
 
-    reportInteraction('grafana_provisioning_bulk_push_submitted', {
+    reportInteraction('grafana_provisioning_bulk_export_submitted', {
       workflow: data.workflow,
       repositoryName: repositoryView.name ?? 'unknown',
       repositoryType: repositoryView.type ?? 'unknown',
       resourceCount: dashboardResources.length,
     });
 
-    // Create the push job spec
-    const jobSpec: PushJobSpec = {
+    // Create the export job spec (backend uses 'push' action)
+    const jobSpec: ExportJobSpec = {
       action: 'push',
       push: {
         message: data.comment || undefined,
@@ -112,7 +112,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
       getAppEvents().publish({
         type: AppEvents.alertError.name,
         payload: [
-          t('browse-dashboards.bulk-push-resources-form.error-pushing-resources', 'Error pushing resources'),
+          t('browse-dashboards.bulk-export-resources-form.error-exporting-resources', 'Error exporting resources'),
           result.error,
         ],
       });
@@ -143,8 +143,8 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
           ) : (
             <>
               <Box paddingBottom={2}>
-                <Trans i18nKey="browse-dashboards.bulk-push-resources-form.push-total">
-                  In total, this will push:
+                <Trans i18nKey="browse-dashboards.bulk-export-resources-form.export-total">
+                  In total, this will export:
                 </Trans>
                 <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
               </Box>
@@ -156,10 +156,10 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
 
               {/* Warn if folders are selected */}
               {Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]).length > 0 && (
-                <Alert severity="warning" title={t('browse-dashboards.bulk-push-resources-form.folders-warning', 'Folders cannot be pushed')}>
+                <Alert severity="warning" title={t('browse-dashboards.bulk-export-resources-form.folders-warning', 'Folders cannot be exported')}>
                   {t(
-                    'browse-dashboards.bulk-push-resources-form.folders-warning-description',
-                    'Only dashboards can be pushed. Folders in your selection will be ignored.'
+                    'browse-dashboards.bulk-export-resources-form.folders-warning-description',
+                    'Only dashboards can be exported. Folders in your selection will be ignored.'
                   )}
                 </Alert>
               )}
@@ -167,7 +167,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
               {/* Repository selection */}
               <Field
                 noMargin
-                label={t('browse-dashboards.bulk-push-resources-form.repository', 'Repository')}
+                label={t('browse-dashboards.bulk-export-resources-form.repository', 'Repository')}
                 error={errors.root?.message}
                 invalid={!!errors.root && !selectedRepositoryName}
                 required
@@ -181,7 +181,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                   }}
                   isLoading={isLoadingRepos}
                   placeholder={t(
-                    'browse-dashboards.bulk-push-resources-form.repository-placeholder',
+                    'browse-dashboards.bulk-export-resources-form.repository-placeholder',
                     'Select a repository'
                   )}
                 />
@@ -190,16 +190,16 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
               {/* Path field */}
               <Field
                 noMargin
-                label={t('browse-dashboards.bulk-push-resources-form.path', 'Path')}
+                label={t('browse-dashboards.bulk-export-resources-form.path', 'Path')}
                 description={t(
-                  'browse-dashboards.bulk-push-resources-form.path-description',
+                  'browse-dashboards.bulk-export-resources-form.path-description',
                   'Prefix path in the target repository (optional)'
                 )}
               >
                 <Input
                   type="text"
                   {...methods.register('path')}
-                  placeholder={t('browse-dashboards.bulk-push-resources-form.path-placeholder', 'e.g., grafana/')}
+                  placeholder={t('browse-dashboards.bulk-export-resources-form.path-placeholder', 'e.g., grafana/')}
                 />
               </Field>
 
@@ -217,15 +217,15 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
 
               <Stack gap={2}>
                 <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
-                  <Trans i18nKey="browse-dashboards.bulk-push-resources-form.button-cancel">Cancel</Trans>
+                  <Trans i18nKey="browse-dashboards.bulk-export-resources-form.button-cancel">Cancel</Trans>
                 </Button>
                 <Button
                   type="submit"
                   disabled={!!job || isCreatingJob || hasSubmitted || !selectedRepositoryName}
                 >
                   {isCreatingJob
-                    ? t('browse-dashboards.bulk-push-resources-form.button-pushing', 'Pushing...')
-                    : t('browse-dashboards.bulk-push-resources-form.button-push', 'Push')}
+                    ? t('browse-dashboards.bulk-export-resources-form.button-exporting', 'Exporting...')
+                    : t('browse-dashboards.bulk-export-resources-form.button-export', 'Export')}
                 </Button>
               </Stack>
             </>
@@ -236,7 +236,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
   );
 }
 
-export function BulkPushProvisionedResource({
+export function BulkExportProvisionedResource({
   folderUid,
   selectedItems,
   onDismiss,
@@ -254,12 +254,12 @@ export function BulkPushProvisionedResource({
 
   const initialValues = {
     comment: '',
-    ref: defaultWorkflow === 'branch' ? `bulk-push/${timestamp}` : (repository?.branch ?? ''),
+    ref: defaultWorkflow === 'branch' ? `bulk-export/${timestamp}` : (repository?.branch ?? ''),
     workflow: defaultWorkflow,
     path: '',
   };
 
-  // Note: We don't require a repository context for push since user selects target repository
+  // Note: We don't require a repository context for export since user selects target repository
   return (
     <FormContent
       selectedItems={selectedItems}

@@ -2,8 +2,10 @@ import { saveAs } from 'file-saver';
 import { memo, useState, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Modal, Switch } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Button, Drawer, Field, Modal, Stack, Switch, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { BulkExportProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkExportProvisionedResource';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
 import { makeExportableV1 } from 'app/features/dashboard-scene/scene/export/exporters';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -17,7 +19,10 @@ interface Props extends ShareModalTabProps {}
 
 export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
   const [shareExternally, setShareExternally] = useState(false);
+  const [showExportToRepositoryDrawer, setShowExportToRepositoryDrawer] = useState(false);
   const exporter = useMemo(() => new DashboardExporter(), []);
+  const provisioningEnabled = config.featureToggles.provisioning;
+  const isUnmanaged = !dashboard.meta.provisioned;
 
   const onShareExternallyChange = () => setShareExternally((prev) => !prev);
 
@@ -87,6 +92,11 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
         <Button variant="secondary" onClick={onDismiss} fill="outline">
           <Trans i18nKey="share-modal.export.cancel-button">Cancel</Trans>
         </Button>
+        {provisioningEnabled && isUnmanaged && (
+          <Button variant="secondary" onClick={() => setShowExportToRepositoryDrawer(true)}>
+            <Trans i18nKey="share-modal.export.export-to-repository-button">Export to Repository</Trans>
+          </Button>
+        )}
         <Button variant="secondary" onClick={onViewJson}>
           <Trans i18nKey="share-modal.export.view-button">View JSON</Trans>
         </Button>
@@ -94,6 +104,32 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
           <Trans i18nKey="share-modal.export.save-button">Save to file</Trans>
         </Button>
       </Modal.ButtonRow>
+      {showExportToRepositoryDrawer && (
+        <Drawer
+          title={
+            <Text variant="h3" element="h2">
+              {t('share-modal.export.export-to-repository-title', 'Export Dashboard to Repository')}
+            </Text>
+          }
+          subtitle={dashboard.title}
+          onClose={() => setShowExportToRepositoryDrawer(false)}
+          size="md"
+        >
+          <BulkExportProvisionedResource
+            folderUid={dashboard.meta.folderUid}
+            selectedItems={{
+              dashboard: { [dashboard.uid]: true },
+              folder: {},
+              panel: {},
+              $all: false,
+            }}
+            onDismiss={() => {
+              setShowExportToRepositoryDrawer(false);
+              onDismiss?.();
+            }}
+          />
+        </Drawer>
+      )}
     </>
   );
 });

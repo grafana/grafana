@@ -7,7 +7,7 @@ import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { BulkDeleteProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource';
-import { BulkPushProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkPushProvisionedResource';
+import { BulkExportProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkExportProvisionedResource';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { useAutoSelectUnmanagedDashboards } from 'app/features/provisioning/hooks/useAutoSelectUnmanagedDashboards';
 import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
@@ -37,7 +37,7 @@ export interface Props {
 export function BrowseActions({ folderDTO }: Props) {
   const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
   const [showBulkMoveProvisionedResource, setShowBulkMoveProvisionedResource] = useState(false);
-  const [showBulkPushProvisionedResource, setShowBulkPushProvisionedResource] = useState(false);
+  const [showBulkExportProvisionedResource, setShowBulkExportProvisionedResource] = useState(false);
 
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
@@ -58,19 +58,19 @@ export function BrowseActions({ folderDTO }: Props) {
 
   const isSearching = stateManager.hasSearchFilters();
 
-  // Handle autoPush URL parameter
+  // Handle autoExport URL parameter
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    if (searchParams.get('autoPush') === 'true' && provisioningEnabled) {
+    if (searchParams.get('autoExport') === 'true' && provisioningEnabled) {
       // Remove the parameter from URL
-      searchParams.delete('autoPush');
+      searchParams.delete('autoExport');
       const newSearch = searchParams.toString();
       locationService.replace({
         pathname: location.pathname,
         search: newSearch ? `?${newSearch}` : '',
       });
 
-      // Wait for dashboards to load, then auto-select unmanaged dashboards and open push drawer
+      // Wait for dashboards to load, then auto-select unmanaged dashboards and open export drawer
       const attemptAutoSelect = async () => {
         // Try multiple times with delays to ensure dashboards are loaded
         for (let i = 0; i < 5; i++) {
@@ -79,7 +79,7 @@ export function BrowseActions({ folderDTO }: Props) {
         }
         
         // Open the drawer after attempting to select
-        setShowBulkPushProvisionedResource(true);
+        setShowBulkExportProvisionedResource(true);
       };
 
       // Start after a short delay to allow page to render
@@ -185,11 +185,11 @@ export function BrowseActions({ folderDTO }: Props) {
 
   const pushButton = (
     <Button
-      onClick={() => setShowBulkPushProvisionedResource(true)}
+      onClick={() => setShowBulkExportProvisionedResource(true)}
       variant="secondary"
       disabled={!hasUnmanaged || isLoadingUnmanaged || !hasSelectedDashboards}
     >
-      <Trans i18nKey="browse-dashboards.action.push-button">Push</Trans>
+      <Trans i18nKey="browse-dashboards.action.export-button">Export</Trans>
     </Button>
   );
 
@@ -247,23 +247,23 @@ export function BrowseActions({ folderDTO }: Props) {
         </Drawer>
       )}
 
-      {/* bulk push */}
-      {showBulkPushProvisionedResource && (
+      {/* bulk export */}
+      {showBulkExportProvisionedResource && (
         <Drawer
           title={
             // Heading levels should only increase by one (a11y)
             <Text variant="h3" element="h2">
-              {t('browse-dashboards.action.bulk-push-provisioned-resources', 'Bulk Push Resources')}
+              {t('browse-dashboards.action.bulk-export-provisioned-resources', 'Bulk Export Resources')}
             </Text>
           }
-          onClose={() => setShowBulkPushProvisionedResource(false)}
+          onClose={() => setShowBulkExportProvisionedResource(false)}
           size="md"
         >
-          <BulkPushProvisionedResource
+          <BulkExportProvisionedResource
             selectedItems={selectedItems}
             folderUid={folderDTO?.uid}
             onDismiss={() => {
-              setShowBulkPushProvisionedResource(false);
+              setShowBulkExportProvisionedResource(false);
             }}
           />
         </Drawer>
