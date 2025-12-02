@@ -164,9 +164,19 @@ Access to Grafana alert rules is an intersection of many permissions:
 - Permission to read a folder. For example, the fixed role `fixed:folders:reader` includes the action `folders:read` and a folder scope `folders:id:`.
 - Permission to query **all** data sources that a given alert rule uses. If a user cannot query a given data source, they cannot see any alert rules that query that data source.
 
-There is only one exclusion at this moment. Role `fixed:alerting.provisioning:writer` does not require user to have any additional permissions and provides access to all aspects of the alerting configuration via special provisioning API.
+There is only one exclusion. Role `fixed:alerting.provisioning:writer` does not require user to have any additional permissions and provides access to all aspects of the alerting configuration via special provisioning API.
 
 For more information about the permissions required to access alert rules, refer to [Create a custom role to access alerts in a folder](ref:plan-rbac-rollout-strategy-create-a-custom-role-to-access-alerts-in-a-folder).
+
+#### Alerting basic roles
+
+The following table lists the default RBAC alerting role assignments to the basic roles:
+
+| Basic role | Associated fixed roles                                                                                            | Description                                                             |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Admin      | `fixed:alerting:writer`<br>`fixed:alerting.provisioning.secrets:reader`<br>`fixed:alerting.provisioning:writer`   | Default [Grafana organization administrator](ref:rbac-basic-roles) assignments. |
+| Editor     | `fixed:alerting:writer`<br>`fixed:alerting.provisioning.status:writer`                                            | Default [Editor](ref:rbac-basic-roles) assignments.                     |
+| Viewer     | `fixed:alerting:reader`                                                                                           | Default [Viewer](ref:rbac-basic-roles) assignments.                     |
 
 ### Grafana OnCall roles
 
