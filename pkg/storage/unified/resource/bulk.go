@@ -15,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/bwmarrin/snowflake"
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -333,35 +334,59 @@ func (b *batchRunner) RollbackRequested() bool {
 	return false
 }
 
-type bulkRV struct {
-	max     int64
-	counter int64
+// getDummySnowflake returns a snowflake with machine and counter bits set to 0
+func getDummySnowflake(ts time.Time) int64 {
+	return (ts.UnixMilli() - snowflake.Epoch) << 22
 }
 
-// Used when executing a bulk import where we can fake the RV values
-func NewBulkRV() *bulkRV {
-	t := time.Now().Truncate(time.Second * 10)
+type bulkRV struct {
+	max      int64
+	counters map[int64]int64
+}
+
+// Used when executing a bulk import so that we can generate snowflake RVs in the past
+func newBulkRV() *bulkRV {
+	t := getDummySnowflake(time.Now())
 	return &bulkRV{
-		max:     (t.UnixMicro() / 10000000) * 10000000,
-		counter: 0,
+		max:      t,
+		counters: make(map[int64]int64),
 	}
 }
 
-func (x *bulkRV) Next(obj metav1.Object) int64 {
-	ts := obj.GetCreationTimestamp().UnixMicro()
+func (x *bulkRV) next(obj metav1.Object) int64 {
+	ts := getDummySnowflake(obj.GetCreationTimestamp().Time)
 	anno := obj.GetAnnotations()
 	if anno != nil {
 		v := anno[utils.AnnoKeyUpdatedTimestamp]
 		t, err := time.Parse(time.RFC3339, v)
 		if err == nil {
-			ts = t.UnixMicro()
+			ts = getDummySnowflake(t)
 		}
 	}
-	if ts > x.max || ts < 10000000 {
+	if ts > x.max || ts < 0 {
 		ts = x.max
 	}
-	x.counter++
-	return (ts/10000000)*10000000 + x.counter
+
+	counter := x.counters[ts]
+	counter++
+
+	if counter > 65535 {
+		for {
+			ts += (1 << 22) // Add 1ms in snowflake format
+			if x.counters[ts] < 65535 {
+				break
+			}
+		}
+
+		counter = x.counters[ts] + 1
+
+		if ts > x.max {
+			x.max = ts
+		}
+	}
+
+	x.counters[ts] = counter
+	return ts + counter
 }
 
 type BulkLock struct {

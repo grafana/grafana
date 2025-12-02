@@ -1161,7 +1161,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 	defer b.bulkLock.Finish(setting.Collection)
 
-	bulkRvGenerator := NewBulkRV()
+	bulkRvGenerator := newBulkRV()
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 	rsp := &resourcepb.BulkResponse{}
 
@@ -1310,7 +1310,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			Resource:        req.Key.Resource,
 			Namespace:       req.Key.Namespace,
 			Name:            req.Key.Name,
-			ResourceVersion: bulkRvGenerator.Next(obj),
+			ResourceVersion: bulkRvGenerator.next(obj),
 			Action:          action,
 			Folder:          req.Folder,
 		}
