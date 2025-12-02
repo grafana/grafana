@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { useId } from '@react-aria/utils';
-import { FormEvent, PropsWithChildren, ReactElement } from 'react';
-import * as React from 'react';
+import { FormEvent, PropsWithChildren, ReactElement, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, TextArea, useStyles2 } from '@grafana/ui';
@@ -17,7 +16,7 @@ interface VariableTextAreaFieldProps {
   required?: boolean;
   testId?: string;
   onBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
-  description?: React.ReactNode;
+  description?: ReactNode;
   noMargin?: boolean;
 }
 
