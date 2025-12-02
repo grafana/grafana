@@ -68,6 +68,7 @@ export const QueryTransformCard = memo(
         onClick={onClick}
         onKeyDown={handleKeyDown}
         data-testid={`${type}-card-${index}`}
+        data-card-id={'refId' in item ? item.refId : `transform-${index}`}
       >
         {/* Header with type and action icons */}
         <div
@@ -149,6 +150,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     card: css({
+      position: 'relative',
       cursor: 'pointer',
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
