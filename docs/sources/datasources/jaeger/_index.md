@@ -391,6 +391,7 @@ Use the Jaeger data source with the "Dependency Graph" query type on a Node Grap
 ## Querying Data via gRPC Endpoint (Public Preview)
 
 Jaeger now offers an alternative method for querying data via HTTP, which utilizes their gRPC service. For detailed information about the API and any necessary Jaeger setup requirements, please consult their [documentation](https://www.jaegertracing.io/docs/2.12/architecture/apis/#query-json-over-http).
+
 The following queries are currently enabled through the gRPC endpoint:
 
 - Service search
