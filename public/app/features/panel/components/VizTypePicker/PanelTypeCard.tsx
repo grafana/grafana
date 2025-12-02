@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { MouseEventHandler } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -14,11 +13,12 @@ interface Props {
   isCurrent: boolean;
   plugin: PanelPluginMeta;
   title: string;
-  onClick: MouseEventHandler<HTMLDivElement>;
+  onSelect: (withModKey?: boolean) => void;
   onDelete?: () => void;
   disabled?: boolean;
   showBadge?: boolean;
   description?: string;
+  tabIndex?: number;
 }
 
 const IMAGE_SIZE = 38;
@@ -27,12 +27,13 @@ const PanelTypeCardComponent = ({
   isCurrent,
   title,
   plugin,
-  onClick,
+  onSelect,
   onDelete,
   disabled,
   showBadge,
   description,
   children,
+  tabIndex = 0,
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
 
@@ -44,13 +45,22 @@ const PanelTypeCardComponent = ({
   });
 
   return (
-    // TODO: fix keyboard a11y
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events
     <div
       className={cssClass}
-      aria-label={selectors.components.PluginVisualization.item(plugin.name)}
       data-testid={selectors.components.PluginVisualization.item(plugin.name)}
-      onClick={isDisabled ? undefined : onClick}
+      onClick={isDisabled ? undefined : (ev) => onSelect(ev.metaKey || ev.ctrlKey || ev.altKey)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={
+        isDisabled
+          ? undefined
+          : (ev) => {
+              if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault();
+                onSelect(ev.metaKey || ev.ctrlKey || ev.altKey);
+              }
+            }
+      }
       title={
         isCurrent ? t('panel.panel-type-card.title-click-to-close', 'Click again to close this section') : plugin.name
       }

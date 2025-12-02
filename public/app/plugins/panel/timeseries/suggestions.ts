@@ -45,6 +45,7 @@ const withDefaults = (
     },
     cardOptions: {
       previewModifier: (s) => {
+        s.options!.disableKeyboardEvents = true;
         if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
           s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
         }

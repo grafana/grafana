@@ -39,7 +39,7 @@ const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, showSecond
         title={libraryPanel.name}
         description={libraryPanel.description}
         plugin={panelPlugin}
-        onClick={() => onClick?.(libraryPanel)}
+        onSelect={() => onClick?.(libraryPanel)}
         onDelete={showSecondaryActions ? () => setShowDeletionModal(true) : undefined}
       >
         <FolderLink libraryPanel={libraryPanel} />

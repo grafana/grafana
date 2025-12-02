@@ -89,6 +89,7 @@ export function TablePanel(props: Props) {
       structureRev={data.structureRev}
       transparent={transparent}
       disableSanitizeHtml={disableSanitizeHtml}
+      disableKeyboardEvents={options.disableKeyboardEvents}
     />
   );
 
@@ -107,7 +108,12 @@ export function TablePanel(props: Props) {
     <div className={tableStyles.wrapper}>
       {tableElement}
       <div className={tableStyles.selectWrapper}>
-        <Select options={names} value={names[currentIndex]} onChange={(val) => onChangeTableSelection(val, props)} />
+        <Select
+          tabIndex={options.disableKeyboardEvents ? -1 : 0}
+          options={names}
+          value={names[currentIndex]}
+          onChange={(val) => onChangeTableSelection(val, props)}
+        />
       </div>
     </div>
   );

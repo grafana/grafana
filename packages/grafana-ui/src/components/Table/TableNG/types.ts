@@ -138,6 +138,8 @@ export interface BaseTableProps {
   enableVirtualization?: boolean;
   // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
   disableSanitizeHtml?: boolean;
+  // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
+  disableKeyboardEvents?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
