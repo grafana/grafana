@@ -33,6 +33,7 @@ type CorrelationsPageProps = {
   fetchCorrelations: (params: GetCorrelationsParams) => Promise<CorrelationsData>;
   correlations?: CorrelationsData;
   isLoading: boolean;
+  changePageFn?: (page: number) => void;
   removeFn?: (params: RemoveCorrelationParams) => Promise<{
     message: string;
   }>;
@@ -50,7 +51,7 @@ const loaderWrapper = css({
 });
 
 export default function CorrelationsPage(props: CorrelationsPageProps) {
-  const { fetchCorrelations, correlations, isLoading, error, removeFn } = props;
+  const { fetchCorrelations, correlations, isLoading, error, removeFn, changePageFn } = props;
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
   const page = useRef(1);
@@ -156,6 +157,8 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     </Button>
   );
 
+  console.log(correlations?.totalCount, correlations?.limit);
+
   return (
     <Page
       navModel={navModel}
@@ -178,11 +181,9 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
               <LoadingPlaceholder text={t('correlations.list.loading', 'loading...')} />
             </div>
           )}
-
           {showEmptyListCTA && (
             <EmptyCorrelationsCTA canWriteCorrelations={canWriteCorrelations} onClick={() => setIsAdding(true)} />
           )}
-
           {
             // This error is not actionable, it'd be nice to have a recovery button
             error && (
@@ -199,7 +200,6 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
               </Alert>
             )
           }
-
           {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
 
           {correlations && corrData.length >= 1 && (
@@ -220,6 +220,9 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
                 currentPage={page.current}
                 numberOfPages={Math.ceil(correlations?.totalCount / correlations?.limit)}
                 onNavigate={(toPage: number) => {
+                  if (changePageFn) {
+                    changePageFn(toPage);
+                  }
                   fetchCorrelations({ page: (page.current = toPage) });
                 }}
               />

@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import {
   Correlation as CorrelationK8s,
   useListCorrelationQuery,
@@ -60,16 +62,26 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
   }
 };
 
-export const useCorrelationsK8s = (props: { limit: number }) => {
-  const { currentData, isLoading, error } = useListCorrelationQuery({ limit: props.limit });
+// we're faking traditional pagination here, realistically folks shouldnt have enough correlations to see a performance impact but if they do we can change the ui
+export const useCorrelationsK8s = (limit: number, page: number) => {
+  let pagedLimit = limit;
+  if (page > 1) {
+    pagedLimit = limit * page;
+  }
+
+  const { currentData, isLoading, error } = useListCorrelationQuery({ limit: pagedLimit });
+  const startIdx = limit * (page - 1);
+  const pagedData = currentData?.items.slice(startIdx, startIdx + limit) ?? [];
+
   const enrichedCorrelations =
     currentData !== undefined
-      ? currentData.items.map((item) => toEnrichedCorrelationDataK8s(item)).filter((i) => i !== undefined)
+      ? pagedData.map((item) => toEnrichedCorrelationDataK8s(item)).filter((i) => i !== undefined)
       : [];
 
   return {
     currentData: enrichedCorrelations,
     isLoading,
     error,
+    remainingItems: currentData?.metadata.remainingItemCount || 0,
   };
 };

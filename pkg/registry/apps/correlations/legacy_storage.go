@@ -110,8 +110,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	list := &correlationsV0.CorrelationList{
 		Items: make([]correlationsV0.Correlation, 0, len(rsp.Correlations)),
 	}
+
 	for i, orig := range rsp.Correlations {
 		if i >= int(limit) {
+			remaining := rsp.TotalCount - (page * limit) - int64(len(list.Items))
+			if remaining > 0 {
+				list.RemainingItemCount = &remaining
+			}
+
 			list.Continue = encodeContinueToken(page+1, limit)
 			break
 		}
