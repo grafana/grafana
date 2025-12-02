@@ -50,6 +50,13 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
   const { data: settingsData, isLoading: isLoadingRepos } = useGetFrontendSettingsQuery();
   const repositories = settingsData?.items ?? [];
 
+  // Auto-select first repository when repositories are loaded
+  useEffect(() => {
+    if (repositories.length > 0 && !selectedRepositoryName && !isLoadingRepos) {
+      setSelectedRepositoryName(repositories[0].name || '');
+    }
+  }, [repositories, selectedRepositoryName, isLoadingRepos]);
+
   // Get selected repository
   const repositoryView: RepositoryView | undefined = repositories.find(
     (repo) => repo.name === selectedRepositoryName
@@ -73,10 +80,8 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
       } else if (selectedDefaultWorkflow === 'write' && repositoryView.branch) {
         methods.setValue('ref', repositoryView.branch);
       }
-      // Set the path to the repository's configured path
-      if (repositoryView.path) {
-        methods.setValue('path', repositoryView.path);
-      }
+      // Clear the path when repository changes - user will enter sub-path only
+      methods.setValue('path', '');
     }
   }, [repositoryView, selectedDefaultWorkflow, methods]);
 
@@ -117,8 +122,10 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
     });
 
     // Create the export job spec (backend uses 'push' action)
-    // Use repository path as default if no path is provided
-    const exportPath = data.path || repositoryView.path || undefined;
+    // Combine repository path with user's sub-path
+    const repoPath = repositoryView.path || '';
+    const subPath = (data.path || '').trim();
+    const exportPath = subPath ? `${repoPath}${repoPath.endsWith('/') ? '' : '/'}${subPath}` : repoPath || undefined;
     const jobSpec: ExportJobSpec = {
       action: 'push',
       push: {
@@ -243,35 +250,68 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
               </Field>
 
               {/* Path field */}
-              <Field
-                noMargin
-                label={t('browse-dashboards.bulk-export-resources-form.path', 'Path')}
-                description={
-                  repositoryView?.path
-                    ? t(
-                        'browse-dashboards.bulk-export-resources-form.path-description-with-repo',
-                        'Resources will be exported under the repository path: {{repoPath}}. You can add a sub-path below.',
-                        { repoPath: repositoryView.path }
-                      )
-                    : t(
-                        'browse-dashboards.bulk-export-resources-form.path-description',
-                        'Path relative to the repository root (optional). Resources will be exported under this path.'
-                      )
-                }
-              >
-                <Input
-                  type="text"
-                  {...methods.register('path')}
-                  placeholder={
-                    repositoryView?.path
-                      ? t(
-                          'browse-dashboards.bulk-export-resources-form.path-placeholder-with-repo',
-                          'e.g., dashboards/team-a/'
-                        )
-                      : t('browse-dashboards.bulk-export-resources-form.path-placeholder', 'e.g., dashboards/')
-                  }
-                />
-              </Field>
+              {repositoryView?.path && (
+                <Field
+                  noMargin
+                  label={t('browse-dashboards.bulk-export-resources-form.path', 'Path')}
+                  description={t(
+                    'browse-dashboards.bulk-export-resources-form.path-description-with-repo',
+                    'Resources will be exported under the repository path: {{repoPath}}. You can add a sub-path below.',
+                    { repoPath: repositoryView.path }
+                  )}
+                >
+                  <Stack direction="row" gap={0} alignItems="stretch">
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      paddingX={2}
+                      backgroundColor="secondary"
+                      borderStyle="solid"
+                      borderWidth={1}
+                      borderRightWidth={0}
+                      borderColor="border.strong"
+                      style={{
+                        borderTopLeftRadius: '4px',
+                        borderBottomLeftRadius: '4px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <Text variant="body" color="text.secondary">
+                        {repositoryView.path}
+                      </Text>
+                    </Box>
+                    <Input
+                      type="text"
+                      {...methods.register('path')}
+                      placeholder={t(
+                        'browse-dashboards.bulk-export-resources-form.path-placeholder-with-repo',
+                        'e.g., dashboards/team-a/'
+                      )}
+                      style={{
+                        borderTopLeftRadius: 0,
+                        borderBottomLeftRadius: 0,
+                        flex: 1,
+                      }}
+                    />
+                  </Stack>
+                </Field>
+              )}
+              {!repositoryView?.path && (
+                <Field
+                  noMargin
+                  label={t('browse-dashboards.bulk-export-resources-form.path', 'Path')}
+                  description={t(
+                    'browse-dashboards.bulk-export-resources-form.path-description',
+                    'Path relative to the repository root (optional). Resources will be exported under this path.'
+                  )}
+                >
+                  <Input
+                    type="text"
+                    {...methods.register('path')}
+                    placeholder={t('browse-dashboards.bulk-export-resources-form.path-placeholder', 'e.g., dashboards/')}
+                  />
+                </Field>
+              )}
 
               {/* Shared fields (comment, workflow, branch) */}
               {repositoryView && (
