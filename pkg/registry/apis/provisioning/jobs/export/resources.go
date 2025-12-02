@@ -379,21 +379,22 @@ func writeResourceToRepository(
 	result *jobs.JobResourceResult,
 	progress jobs.JobProgressRecorder,
 ) error {
-	// Temporarily clear folder metadata so WriteResourceFileFromObject doesn't try to resolve
-	// folder paths from repository tree (we've already computed the path from unmanaged tree)
-	originalFolder := meta.GetFolder()
-	if originalFolder != "" {
-		meta.SetFolder("")
-	}
-	defer func() {
-		if originalFolder != "" {
-			meta.SetFolder(originalFolder)
-		}
-	}()
-
 	// Export the resource
 	progress.SetMessage(ctx, fmt.Sprintf("Exporting resource %s/%s/%s", resourceRef.Group, resourceRef.Kind, resourceRef.Name))
 	var err error
+	// exportPath already includes the folder structure from the unmanaged tree.
+	// We need to clear the folder metadata so WriteResourceFileFromObject doesn't try to resolve
+	// folder paths from repository tree (which doesn't have unmanaged folders).
+	// When folder is empty, WriteResourceFileFromObject will use rootFolder logic:
+	// - For instance targets: rootFolder is empty, so fid.Path will be empty, and it will use exportPath directly
+	// - For folder targets: rootFolder is repo name, but fid.Path will still be empty, so it will use exportPath directly
+	originalFolder := meta.GetFolder()
+	if originalFolder != "" {
+		meta.SetFolder("")
+		defer func() {
+			meta.SetFolder(originalFolder)
+		}()
+	}
 	result.Path, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
 		Path: exportPath, // Path already includes folder structure from unmanaged tree
 		Ref:  branch,

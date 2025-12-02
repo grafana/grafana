@@ -222,9 +222,10 @@ func TestIntegrationProvisioning_ExportSpecificResourcesRejectsManagedResources(
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	// Create a managed dashboard via repository sync
+	// Create a managed dashboard via repository sync (use folder target to allow second repo)
 	testRepo := TestRepo{
-		Name: "managed-dashboard-repo",
+		Name:   "managed-dashboard-repo",
+		Target: "folder",
 		Copies: map[string]string{
 			"exportunifiedtorepository/dashboard-test-v1.yaml": "dashboard.json",
 		},
