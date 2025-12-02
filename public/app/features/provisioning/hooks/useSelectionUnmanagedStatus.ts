@@ -1,0 +1,146 @@
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
+import { config } from '@grafana/runtime';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
+import { useSelector } from 'app/types/store';
+
+import { findItem } from '../../browse-dashboards/state/utils';
+import { DashboardTreeSelection } from '../../browse-dashboards/types';
+
+// This hook checks if selected items are unmanaged (not managed by any repository)
+export function useSelectionUnmanagedStatus(
+  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>
+): { hasUnmanaged: boolean; isLoading: boolean } {
+  const browseState = useSelector((state) => state.browseDashboards);
+  const [, stateManager] = useSearchStateManager();
+  const isSearching = stateManager.hasSearchFilters();
+  const provisioningEnabled = config.featureToggles.provisioning;
+
+  const [status, setStatus] = useState({ hasUnmanaged: false, isLoading: true });
+  const [folderCache, setFolderCache] = useState<Record<string, boolean>>({});
+  const [dashboardCache, setDashboardCache] = useState<Record<string, boolean>>({});
+
+  // Create folder resource client for k8s API
+  const folderClient = useMemo(
+    () =>
+      new ScopedResourceClient({
+        group: 'folder.grafana.app',
+        version: 'v1beta1',
+        resource: 'folders',
+      }),
+    []
+  );
+
+  const findItemInState = useCallback(
+    (uid: string) => {
+      const item = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, uid);
+      return item ? { parentUID: item.parentUID, managedBy: item.managedBy } : undefined;
+    },
+    [browseState]
+  );
+
+  const getFolderMeta = useCallback(
+    async (uid: string) => {
+      if (folderCache[uid] !== undefined) {
+        return folderCache[uid];
+      }
+      try {
+        const folder = await folderClient.get(uid);
+        const managedBy = folder.metadata?.annotations?.[AnnoKeyManagerKind];
+        // Unmanaged if not managed by repository
+        const result = managedBy !== ManagerKind.Repo;
+        setFolderCache((prev) => ({ ...prev, [uid]: result }));
+        return result;
+      } catch {
+        // If we can't fetch, assume unmanaged
+        return true;
+      }
+    },
+    [folderCache, folderClient]
+  );
+
+  const getDashboardMeta = useCallback(
+    async (uid: string) => {
+      if (dashboardCache[uid] !== undefined) {
+        return dashboardCache[uid];
+      }
+      try {
+        const dto = await getDashboardAPI().getDashboardDTO(uid);
+        // Unmanaged if not provisioned
+        const result = !isProvisionedDashboardFromMeta(dto);
+        setDashboardCache((prev) => ({ ...prev, [uid]: result }));
+        return result;
+      } catch {
+        // If we can't fetch, assume unmanaged
+        return true;
+      }
+    },
+    [dashboardCache]
+  );
+
+  const checkItemUnmanaged = useCallback(
+    async (uid: string, isFolder: boolean): Promise<boolean> => {
+      if (isSearching) {
+        return isFolder ? await getFolderMeta(uid) : await getDashboardMeta(uid);
+      }
+
+      const item = findItemInState(uid);
+      if (isFolder) {
+        // Unmanaged if not managed by repository
+        return item?.managedBy !== ManagerKind.Repo;
+      }
+
+      // Check parent folder first for dashboards
+      const parent = item?.parentUID ? findItemInState(item.parentUID) : undefined;
+      if (parent?.managedBy === ManagerKind.Repo) {
+        // If parent is managed, dashboard is managed
+        return false;
+      }
+
+      // Unmanaged if not managed by repository
+      return item?.managedBy !== ManagerKind.Repo;
+    },
+    [isSearching, getFolderMeta, getDashboardMeta, findItemInState]
+  );
+
+  useEffect(() => {
+    if (!provisioningEnabled) {
+      setStatus({ hasUnmanaged: false, isLoading: false });
+      return;
+    }
+
+    const checkUnmanagedStatus = async () => {
+      setStatus({ hasUnmanaged: false, isLoading: true });
+
+      const selectedDashboards = Object.keys(selectedItems.dashboard || {}).filter(
+        (uid) => selectedItems.dashboard[uid]
+      );
+      const selectedFolders = Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
+
+      if (selectedDashboards.length === 0 && selectedFolders.length === 0) {
+        setStatus({ hasUnmanaged: false, isLoading: false });
+        return;
+      }
+
+      // Check all selected items
+      const checks = [
+        ...selectedDashboards.map((uid) => checkItemUnmanaged(uid, false)),
+        ...selectedFolders.map((uid) => checkItemUnmanaged(uid, true)),
+      ];
+
+      const results = await Promise.all(checks);
+      const hasUnmanaged = results.some((isUnmanaged) => isUnmanaged);
+
+      setStatus({ hasUnmanaged, isLoading: false });
+    };
+
+    checkUnmanagedStatus();
+  }, [selectedItems, provisioningEnabled, checkItemUnmanaged]);
+
+  return status;
+}
+

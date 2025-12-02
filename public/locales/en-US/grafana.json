@@ -3552,6 +3552,7 @@
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
       "bulk-move-provisioned-resources": "Bulk Move Provisioned Resources",
+      "bulk-push-provisioned-resources": "Bulk Push Resources",
       "cancel-button": "Cancel",
       "confirmation-text": "Delete",
       "delete-button": "Delete",
@@ -3573,6 +3574,7 @@
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required.",
+      "push-button": "Push",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
@@ -3610,6 +3612,22 @@
       "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
       "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "target-folder": "Target Folder"
+    },
+    "bulk-push-resources-form": {
+      "button-cancel": "Cancel",
+      "button-push": "Push",
+      "button-pushing": "Pushing...",
+      "error-no-dashboards": "No dashboards selected. Only dashboards can be pushed.",
+      "error-no-repository": "Please select a repository",
+      "error-pushing-resources": "Error pushing resources",
+      "folders-warning": "Folders cannot be pushed",
+      "folders-warning-description": "Only dashboards can be pushed. Folders in your selection will be ignored.",
+      "path": "Path",
+      "path-description": "Prefix path in the target repository (optional)",
+      "path-placeholder": "e.g., grafana/",
+      "push-total": "In total, this will push:",
+      "repository": "Repository",
+      "repository-placeholder": "Select a repository"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",

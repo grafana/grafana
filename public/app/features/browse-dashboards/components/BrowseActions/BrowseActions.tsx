@@ -6,8 +6,10 @@ import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { BulkDeleteProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource';
+import { BulkPushProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkPushProvisionedResource';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
+import { useSelectionUnmanagedStatus } from 'app/features/provisioning/hooks/useSelectionUnmanagedStatus';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
@@ -33,6 +35,7 @@ export interface Props {
 export function BrowseActions({ folderDTO }: Props) {
   const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
   const [showBulkMoveProvisionedResource, setShowBulkMoveProvisionedResource] = useState(false);
+  const [showBulkPushProvisionedResource, setShowBulkPushProvisionedResource] = useState(false);
 
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
@@ -47,6 +50,7 @@ export function BrowseActions({ folderDTO }: Props) {
     selectedItems,
     folderDTO?.managedBy === ManagerKind.Repo
   );
+  const { hasUnmanaged, isLoading: isLoadingUnmanaged } = useSelectionUnmanagedStatus(selectedItems);
 
   const isSearching = stateManager.hasSearchFilters();
 
@@ -140,10 +144,25 @@ export function BrowseActions({ folderDTO }: Props) {
     </Button>
   );
 
+  // Check if any dashboards are selected (export only supports dashboards, not folders)
+  const hasSelectedDashboards =
+    Object.keys(selectedItems.dashboard || {}).filter((uid) => selectedItems.dashboard[uid]).length > 0;
+
+  const pushButton = (
+    <Button
+      onClick={() => setShowBulkPushProvisionedResource(true)}
+      variant="secondary"
+      disabled={!hasUnmanaged || isLoadingUnmanaged || !hasSelectedDashboards}
+    >
+      <Trans i18nKey="browse-dashboards.action.push-button">Push</Trans>
+    </Button>
+  );
+
   return (
     <>
       <Stack gap={1} data-testid="manage-actions">
         {moveButton}
+        {provisioningEnabled && pushButton}
 
         <Button onClick={showDeleteModal} variant="destructive">
           <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
@@ -188,6 +207,28 @@ export function BrowseActions({ folderDTO }: Props) {
             folderUid={folderDTO?.uid}
             onDismiss={() => {
               setShowBulkMoveProvisionedResource(false);
+            }}
+          />
+        </Drawer>
+      )}
+
+      {/* bulk push */}
+      {showBulkPushProvisionedResource && (
+        <Drawer
+          title={
+            // Heading levels should only increase by one (a11y)
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.bulk-push-provisioned-resources', 'Bulk Push Resources')}
+            </Text>
+          }
+          onClose={() => setShowBulkPushProvisionedResource(false)}
+          size="md"
+        >
+          <BulkPushProvisionedResource
+            selectedItems={selectedItems}
+            folderUid={folderDTO?.uid}
+            onDismiss={() => {
+              setShowBulkPushProvisionedResource(false);
             }}
           />
         </Drawer>
