@@ -656,7 +656,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...(v.definition && { definition: v.definition }),
             refresh: transformVariableRefreshToEnum(v.refresh),
             regex: v.regex ?? '',
-            regexApplyTo: transformRegexApplyToEnum(v.regexApplyTo),
+            ...(v.regexApplyTo && { regexApplyTo: transformRegexApplyToEnum(v.regexApplyTo) }),
             sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
             query: {
               kind: 'DataQuery',
