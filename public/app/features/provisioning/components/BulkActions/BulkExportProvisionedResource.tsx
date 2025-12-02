@@ -49,7 +49,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
   const workflow = watch('workflow');
 
   // Get repositories list from frontend settings (which returns RepositoryView[])
-  const { data: settingsData, isLoading: isLoadingRepos } = useGetFrontendSettingsQuery(skipToken);
+  const { data: settingsData, isLoading: isLoadingRepos } = useGetFrontendSettingsQuery();
   const repositories = settingsData?.items ?? [];
 
   // Get selected repository
