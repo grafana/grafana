@@ -62,13 +62,18 @@ func convertUnstructuredToFolder(item *unstructured.Unstructured, identifiers ma
 		}
 	}
 
+	parent := meta.GetFolder()
+	if folder.IsRootFolder(parent) {
+		parent = ""
+	}
+
 	manager, _ := meta.GetManagerProperties()
 	return &folder.Folder{
 		UID:         uid,
 		Title:       title,
 		Description: description,
 		ID:          meta.GetDeprecatedInternalID(), // nolint:staticcheck
-		ParentUID:   meta.GetFolder(),
+		ParentUID:   parent,
 		Version:     int(meta.GetGeneration()),
 		ManagedBy:   manager.Kind,
 

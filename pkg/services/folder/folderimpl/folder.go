@@ -1384,7 +1384,7 @@ func SplitFullpath(s string) []string {
 func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.nestedFolderCreate")
 	defer span.End()
-	if cmd.ParentUID != "" {
+	if !folder.IsRootFolder(cmd.ParentUID) {
 		if err := s.validateParent(ctx, cmd.OrgID, cmd.ParentUID, cmd.UID); err != nil {
 			return nil, err
 		}

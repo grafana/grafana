@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -132,9 +132,14 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		}`, string(v1Disco))
 	})
 
-	// test on all dualwriter modes
-	for mode := 0; mode <= 4; mode++ {
-		modeDw := grafanarest.DualWriterMode(mode)
+	// test on all dual writer modes
+	modes := []grafanarest.DualWriterMode{
+		grafanarest.Mode1,
+		grafanarest.Mode2,
+		grafanarest.Mode3,
+		grafanarest.Mode4,
+	}
+	for _, modeDw := range modes {
 
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v)", modeDw), func(t *testing.T) {
 			doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
