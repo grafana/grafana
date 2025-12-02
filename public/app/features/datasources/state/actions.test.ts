@@ -2,7 +2,7 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
 import { DataSourceSrv, FetchError } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ThunkResult, ThunkDispatch } from 'app/types/store';
 
@@ -31,8 +31,8 @@ import {
 
 jest.mock('../api');
 jest.mock('app/core/services/backend_srv');
-jest.mock('app/core/core', () => ({
-  ...jest.requireActual('app/core/core'),
+jest.mock('app/core/app_events', () => ({
+  ...jest.requireActual('app/core/app_events'),
   appEvents: {
     publish: jest.fn(),
   },

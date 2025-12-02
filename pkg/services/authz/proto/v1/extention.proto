@@ -13,6 +13,165 @@ service AuthzExtentionService {
 
   rpc Read(ReadRequest) returns (ReadResponse);
   rpc Write(WriteRequest) returns (WriteResponse);
+
+  rpc Mutate(MutateRequest) returns (MutateResponse);
+  rpc Query(QueryRequest) returns (QueryResponse);
+}
+
+message MutateRequest {
+  string namespace = 1;
+  repeated MutateOperation operations = 2;
+}
+
+message MutateResponse {}
+
+message MutateOperation {
+  oneof operation {
+    SetFolderParentOperation set_folder_parent = 1;
+    DeleteFolderOperation delete_folder = 2;
+    CreatePermissionOperation create_permission = 3;
+    DeletePermissionOperation delete_permission = 4;
+    UpdateUserOrgRoleOperation update_user_org_role = 5;
+    DeleteUserOrgRoleOperation delete_user_org_role = 6;
+    AddUserOrgRoleOperation add_user_org_role = 7;
+    CreateRoleBindingOperation create_role_binding = 8;
+    DeleteRoleBindingOperation delete_role_binding = 9;
+    CreateTeamBindingOperation create_team_binding = 10;
+    DeleteTeamBindingOperation delete_team_binding = 11;
+    CreateRoleOperation create_role = 12;
+    DeleteRoleOperation delete_role = 13;
+  }
+}
+
+message SetFolderParentOperation {
+  // UID of the folder
+  string folder = 1;
+  // UID of the parent folder
+  string parent = 2;
+  // If true, delete all existing parent relations associated with the folder
+  bool delete_existing = 3;
+}
+
+message DeleteFolderOperation {
+  // UID of the folder to delete
+  string folder = 1;
+  // UID of the parent folder
+  string parent = 2;
+  // If true, delete all existing parent relations associated with the folder
+  bool delete_existing = 3;
+}
+
+message CreatePermissionOperation {
+  Resource resource = 1;
+  Permission permission = 2;
+}
+
+message DeletePermissionOperation {
+  Resource resource = 1;
+  Permission permission = 2;
+}
+
+message AddUserOrgRoleOperation {
+  // User UID
+  string user = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+// UpdateUserOrgRoleOperation assigns the user's basic role and deletes existing basic role assignments.
+message UpdateUserOrgRoleOperation {
+  // User UID
+  string user = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+message DeleteUserOrgRoleOperation {
+  // User UID
+  string user = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+message CreateRoleBindingOperation {
+  // kind of the identity getting the permission (User/Team/ServiceAccount/BasicRole)
+  string subject_kind = 1;
+  // uid of the identity
+  string subject_name = 2;
+  // kind of the role (Role/CoreRole/GlobalRole)
+  string role_kind = 3;
+  // uid of the role
+  string role_name = 4;
+}
+
+message DeleteRoleBindingOperation {
+  // kind of the identity getting the permission (User/Team/ServiceAccount/BasicRole)
+  string subject_kind = 1;
+  // uid of the identity
+  string subject_name = 2;
+  // kind of the role (Role/CoreRole/GlobalRole)
+  string role_kind = 3;
+  // uid of the role
+  string role_name = 4;
+}
+
+message CreateTeamBindingOperation {
+  // uid of the identity
+  string subject_name = 1;
+  // uid of the team
+  string team_name = 2;
+  // permission of the identity in the team (admin/member)
+  string permission = 3;
+}
+
+message DeleteTeamBindingOperation {
+  // uid of the identity
+  string subject_name = 1;
+  // uid of the team
+  string team_name = 2;
+  // permission of the identity in the team (admin/member)
+  string permission = 3;
+}
+
+message CreateRoleOperation {
+  // kind of the role (Role/CoreRole/GlobalRole)
+  string role_kind = 1;
+  // uid of the role
+  string role_name = 2;
+  // permissions of the role
+  repeated RolePermission permissions = 3;
+}
+
+message DeleteRoleOperation {
+  // kind of the role (Role/CoreRole/GlobalRole)
+  string role_kind = 1;
+  // uid of the role
+  string role_name = 2;
+  // permissions of the role
+  repeated RolePermission permissions = 3;
+}
+
+message RolePermission {
+  string action = 1;
+  string scope = 2;
+}
+
+message Resource {
+  // group of the resource (e.g: "dashboard.grafana.app")
+  string group = 1;
+  // kind of the resource (e.g: "dashboards")
+  string resource = 2;
+  // uid of the resource
+  string name = 3;
+}
+
+message Permission {
+  // kind of the identity getting the permission (e.g: "user", "team", "serviceaccount")
+  string kind = 1;
+  // uid of the identity getting the permission
+  string name = 2;
+  // action set granted to the user (e.g. "admin" or "edit", "view")
+  string verb = 3;
 }
 
 message TupleKey {
@@ -93,4 +252,31 @@ message BatchCheckResponse {
 
 message BatchCheckGroupResource {
   map<string, bool> items = 1;
+}
+
+message QueryRequest {
+  string namespace = 1;
+  QueryOperation operation = 2;
+}
+
+message QueryResponse {
+  oneof result {
+    GetFolderParentsResult folder_parents = 1;
+  }
+}
+
+message QueryOperation {
+  oneof operation {
+    GetFolderParentsQuery get_folder_parents = 1;
+  }
+}
+
+message GetFolderParentsQuery {
+  // UID of the folder
+  string folder = 1;
+}
+
+message GetFolderParentsResult {
+  // List of parent folder UIDs
+  repeated string parent_uids = 1;
 }

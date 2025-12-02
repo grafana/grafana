@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -18,6 +19,7 @@ type RepoGetter interface {
 //
 //go:generate mockery --name JobProgressRecorder --structname MockJobProgressRecorder --inpackage --filename job_progress_recorder_mock.go --with-expecter
 type JobProgressRecorder interface {
+	Started() time.Time
 	Record(ctx context.Context, result JobResourceResult)
 	ResetResults()
 	SetFinalMessage(ctx context.Context, msg string)

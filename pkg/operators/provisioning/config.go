@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
+	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -120,6 +121,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 			return authrt.NewRoundTripper(tokenExchangeClient, rt, provisioning.GROUP)
 		}),
 		TLSClientConfig: tlsConfig,
+		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
 	}
 
 	provisioningClient, err := client.NewForConfig(config)
@@ -166,6 +168,11 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	}
 	configProviders := make(map[string]apiserver.RestConfigProvider)
 
+	tlsConfigForTransport, err := rest.TLSConfigFor(&rest.Config{TLSClientConfig: tlsConfig})
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert TLS config for transport: %w", err)
+	}
+
 	for group, url := range apiServerURLs {
 		config := &rest.Config{
 			APIPath: "/apis",
@@ -173,7 +180,13 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
 				return authrt.NewRoundTripper(tokenExchangeClient, rt, group)
 			}),
-			TLSClientConfig: tlsConfig,
+			Transport: &http.Transport{
+				MaxConnsPerHost:     100,
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 100,
+				TLSClientConfig:     tlsConfigForTransport,
+			},
+			RateLimiter: flowcontrol.NewFakeAlwaysRateLimiter(),
 		}
 		configProviders[group] = NewDirectConfigProvider(config)
 	}

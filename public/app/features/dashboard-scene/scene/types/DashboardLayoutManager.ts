@@ -86,11 +86,6 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Get children for outline
    */
   getOutlineChildren(): SceneObject[];
-
-  /**
-   * Merge the layout with another layout
-   */
-  merge?(other: DashboardLayoutManager): void;
 }
 
 export interface LayoutManagerSerializer {

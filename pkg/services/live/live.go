@@ -120,7 +120,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		Metrics: centrifuge.MetricsConfig{
 			MetricsNamespace: "grafana_live",
 		},
-		ClientQueueMaxSize: 4194304, // 4MB
+		ClientQueueMaxSize: cfg.LiveClientQueueMaxSize,
 		// Use reasonably large expiration interval for stream meta key,
 		// much bigger than maximum HistoryLifetime value in Node config.
 		// This way stream meta data will expire, in some cases you may want
@@ -196,6 +196,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
 	// Testing watch with just the provisioning support -- this will be removed when it is well validated
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if toggles.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
 	}

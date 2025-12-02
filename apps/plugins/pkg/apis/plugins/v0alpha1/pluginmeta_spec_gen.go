@@ -2,10 +2,6 @@
 
 package v0alpha1
 
-import (
-	time "time"
-)
-
 // JSON configuration schema for Grafana plugins
 // Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
 // +k8s:openapi-gen=true
@@ -44,6 +40,7 @@ type PluginMetaJSONData struct {
 	SkipDataQuery *bool                    `json:"skipDataQuery,omitempty"`
 	State         *PluginMetaJSONDataState `json:"state,omitempty"`
 	Streaming     *bool                    `json:"streaming,omitempty"`
+	Suggestions   *bool                    `json:"suggestions,omitempty"`
 	Tracing       *bool                    `json:"tracing,omitempty"`
 	Iam           *PluginMetaIAM           `json:"iam,omitempty"`
 	// +listType=atomic
@@ -65,7 +62,7 @@ type PluginMetaInfo struct {
 	// +listType=set
 	Keywords []string                    `json:"keywords"`
 	Logos    PluginMetaV0alpha1InfoLogos `json:"logos"`
-	Updated  time.Time                   `json:"updated"`
+	Updated  string                      `json:"updated"`
 	Version  string                      `json:"version"`
 	// Optional fields
 	Author      *PluginMetaV0alpha1InfoAuthor `json:"author,omitempty"`

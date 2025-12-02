@@ -18,7 +18,7 @@ import { createTheme, dateTime } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
 
 import DetailState from './SpanDetail/DetailState';
-import { UnthemedSpanDetailRow, SpanDetailRowProps } from './SpanDetailRow';
+import SpanDetailRow, { type SpanDetailRowProps } from './SpanDetailRow';
 
 const testSpan = {
   spanID: 'testSpanID',
@@ -57,7 +57,7 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
     },
     ...propOverrides,
   };
-  return render(<UnthemedSpanDetailRow {...(props as SpanDetailRowProps)} />);
+  return render(<SpanDetailRow {...(props as SpanDetailRowProps)} />);
 };
 
 describe('SpanDetailRow tests', () => {

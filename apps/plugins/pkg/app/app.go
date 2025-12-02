@@ -2,25 +2,23 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/operator"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 
-	pluginsapi "github.com/grafana/grafana/apps/plugins/pkg/apis"
+	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 )
 
 func New(cfg app.Config) (app.App, error) {
-	managedKinds := []simple.AppManagedKind{}
-	for _, kinds := range GetKinds() {
-		for _, k := range kinds {
-			managedKinds = append(managedKinds, simple.AppManagedKind{
-				Kind: k,
-			})
-		}
+	cfg.KubeConfig.APIPath = "apis"
+
+	specificConfig, ok := cfg.SpecificConfig.(*PluginAppConfig)
+	if !ok {
+		return nil, fmt.Errorf("invalid config type")
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -33,7 +31,14 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: managedKinds,
+		ManagedKinds: []simple.AppManagedKind{
+			{
+				Kind: pluginsv0alpha1.PluginKind(),
+			},
+			{
+				Kind: pluginsv0alpha1.PluginMetaKind(),
+			},
+		},
 	}
 
 	a, err := simple.NewApp(simpleConfig)
@@ -46,23 +51,12 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
+	// Register MetaProviderManager as a runnable so its cleanup goroutine is managed by the app lifecycle
+	a.AddRunnable(specificConfig.MetaProviderManager)
+
 	return a, nil
 }
 
-func GetKinds() map[schema.GroupVersion][]resource.Kind {
-	kinds := make(map[schema.GroupVersion][]resource.Kind)
-	manifest := pluginsapi.LocalManifest()
-	for _, v := range manifest.ManifestData.Versions {
-		gv := schema.GroupVersion{
-			Group:   manifest.ManifestData.Group,
-			Version: v.Name,
-		}
-		for _, k := range v.Kinds {
-			kind, ok := pluginsapi.ManifestGoTypeAssociator(k.Kind, v.Name)
-			if ok {
-				kinds[gv] = append(kinds[gv], kind)
-			}
-		}
-	}
-	return kinds
+type PluginAppConfig struct {
+	MetaProviderManager *meta.ProviderManager
 }

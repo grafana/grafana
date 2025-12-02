@@ -11,6 +11,7 @@ import (
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	secretsgarbagecollectionworker "github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -71,6 +72,7 @@ func ProvideBackgroundServiceRegistry(
 	pluginDashboardUpdater *plugindashboardsservice.DashboardUpdater,
 	dashboardServiceImpl *service.DashboardServiceImpl,
 	secretsGarbageCollectionWorker *secretsgarbagecollectionworker.Worker,
+	fixedRolesLoader *accesscontrol.FixedRolesLoader,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -118,6 +120,7 @@ func ProvideBackgroundServiceRegistry(
 		pluginDashboardUpdater,
 		dashboardServiceImpl,
 		secretsGarbageCollectionWorker,
+		fixedRolesLoader,
 	)
 }
 

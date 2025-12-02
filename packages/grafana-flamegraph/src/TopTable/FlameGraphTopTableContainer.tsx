@@ -10,6 +10,7 @@ import {
   FieldType,
   GrafanaTheme2,
   MappingType,
+  escapeStringForRegex,
 } from '@grafana/data';
 import {
   IconButton,
@@ -143,6 +144,7 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
     // Add current call to the stack
     callStack.push(label);
   }
+
   return filteredTable;
 }
 
@@ -332,7 +334,7 @@ type ActionCellProps = {
 function ActionCell(props: ActionCellProps) {
   const styles = getStylesActionCell();
   const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values[props.rowIndex];
-  const isSearched = props.search === symbol;
+  const isSearched = props.search === `^${escapeStringForRegex(String(symbol))}$`;
   const isSandwiched = props.sandwichItem === symbol;
 
   return (

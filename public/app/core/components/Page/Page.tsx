@@ -102,6 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: '1 1 0',
       flexDirection: 'column',
       position: 'relative',
+      container: 'page / inline-size',
     }),
     wrapperPrimary: css({
       label: 'page-wrapper-primary',

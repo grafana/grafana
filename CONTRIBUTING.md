@@ -2,7 +2,9 @@
 
 Thank you for your interest in contributing to Grafana! We welcome all people who want to contribute in a healthy and constructive manner within our community. To help us create a safe and positive community experience for all, we require all participants to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-This document is a guide to help you through the process of contributing to Grafana. Be sure to check out the [Grafana Champions program](https://grafana.com/community/champions/?src=github&camp=community-cross-platform-engagement) as you start to contribute. It’s designed to recognize and empower individuals who are actively contributing to the growth and success of the Grafana ecosystem.
+This document is a guide to help you through the process of contributing to Grafana. Be sure to check out the [Grafana Champions program](https://grafana.com/community/champions/?src=github&camp=community-cross-platform-engagement) as you start to contribute. It's designed to recognize and empower individuals who are actively contributing to the growth and success of the Grafana ecosystem.
+
+> **Help us improve!** We'd love to hear about your contributor experience. Take a moment to share your feedback in our [Open Source Contributor Experience Survey](https://gra.fan/ome). Your input helps us make contributing to Grafana better for everyone.
 
 Whether you're a new contributor or a seasoned veteran, we hope these resources help you connect with the community.
 
@@ -108,7 +110,7 @@ If you believe you've found a security vulnerability, please read our [security 
 
 ### Suggest features
 
-If you have an idea of how to improve Grafana, submit a [feature request](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md).
+If you have an idea of how to improve Grafana, submit a [feature request](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md). To learn how to write an effective feature request, refer to [Create a feature request](contribute/create-feature-request.md).
 
 We want to make Grafana accessible to even more people. Submit an [accessibility issue](https://github.com/grafana/grafana/issues/new?template=2-accessibility.md) to help us understand what we can improve.
 

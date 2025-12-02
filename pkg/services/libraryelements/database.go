@@ -110,7 +110,7 @@ func (l *LibraryElementService) GetLibraryElement(c context.Context, signedInUse
 }
 
 // createLibraryElement adds a library element.
-func (l *LibraryElementService) createLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
+func (l *LibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return model.LibraryElementDTO{}, err
 	}
@@ -169,7 +169,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
 		if !allowed {
-			return fmt.Errorf("insufficient permissions for creating library panel in folder with UID %s", folderUID)
+			return fmt.Errorf("insufficient permissions for creating library panel in folder with UID: '%s'", folderUID)
 		}
 		if err != nil {
 			return err
@@ -216,7 +216,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 }
 
 // deleteLibraryElement deletes a library element.
-func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
+func (l *LibraryElementService) DeleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
 	var elementID int64
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		element, err := l.GetLibraryElement(c, signedInUser, session, uid)
@@ -473,17 +473,22 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if err != nil {
 			return err
 		}
+
 		// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
-		var folderUIDS = []string{"general", ""}
-		folderMap := map[string]string{}
+		// Using a map for O(1) lookup instead of O(n) slice iteration
+		folderUIDSet := make(map[string]bool, len(fs)+2)
+		folderUIDSet["general"] = true
+		folderUIDSet[""] = true
+
+		folderMap := make(map[string]string, len(fs))
 		for _, f := range fs {
-			folderUIDS = append(folderUIDS, f.UID)
+			folderUIDSet[f.UID] = true
 			folderMap[f.UID] = f.Title
 		}
 		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, element := range elements {
 			if !signedInUser.HasRole(org.RoleAdmin) {
-				if !contains(folderUIDS, element.FolderUID) {
+				if !folderUIDSet[element.FolderUID] {
 					continue
 				}
 			}
@@ -522,10 +527,11 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			})
 		}
 
-		var libraryElements []model.LibraryElement
+		var libraryElements []model.LibraryElementWithMeta
 		countBuilder := db.SQLBuilder{}
 		if folderFilter.includeGeneralFolder {
 			countBuilder.Write(selectLibraryElementDTOWithMeta)
+			countBuilder.Write(", '' as folder_uid ")
 			countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &countBuilder)
@@ -537,6 +543,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			countBuilder.Write(" ")
 		}
 		countBuilder.Write(selectLibraryElementDTOWithMeta)
+		countBuilder.Write(", le.folder_uid as folder_uid ")
 		countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 		countBuilder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &countBuilder)
@@ -550,8 +557,19 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			return err
 		}
 
+		// Apply the same folder permission filtering to the count for non-admin users
+		totalCount := int64(len(libraryElements))
+		if !signedInUser.HasRole(org.RoleAdmin) {
+			totalCount = 0
+			for _, element := range libraryElements {
+				if folderUIDSet[element.FolderUID] {
+					totalCount++
+				}
+			}
+		}
+
 		result = model.LibraryElementSearchResult{
-			TotalCount: int64(len(libraryElements)),
+			TotalCount: totalCount,
 			Elements:   retDTOs,
 			Page:       query.Page,
 			PerPage:    query.PerPage,
@@ -578,7 +596,7 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 }
 
 // patchLibraryElement updates a Library Element.
-func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error) {
+func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error) {
 	var dto model.LibraryElementDTO
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return model.LibraryElementDTO{}, err
@@ -876,15 +894,6 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 
 		return nil
 	})
-}
-
-func contains(slice []string, element string) bool {
-	for _, item := range slice {
-		if item == element {
-			return true
-		}
-	}
-	return false
 }
 
 func getFoldersWithMatchingTitles(c context.Context, l *LibraryElementService, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) ([]string, error) {

@@ -1082,6 +1082,99 @@ const Foo = () => {
       errors: [{ messageId: 'noUntranslatedStringsProp' }],
     },
 
+    // NAMESPACE FUNCTIONALITY TESTS
+    {
+      name: 'Basic untranslated text with namespace configuration',
+      code: `
+const Foo = () => <div>Untranslated text</div>`,
+      filename,
+      options: [{ namespace: 'my-namespace' }],
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
+${TRANS_IMPORT}
+const Foo = () => <div><Trans i18nKey="my-namespace:some-feature.foo.untranslated-text">Untranslated text</Trans></div>`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Prop fix with namespace configuration',
+      code: `
+const Foo = () => {
+  return (
+    <div title="foo" />
+  )
+}`,
+      filename,
+      options: [{ namespace: 'alerts' }],
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => {
+  return (
+    <div title={t("alerts:some-feature.foo.title-foo", "foo")} />
+  )
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Empty namespace should not add prefix',
+      code: `
+const Foo = () => <div>Test text</div>`,
+      filename,
+      options: [{ namespace: '' }],
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
+${TRANS_IMPORT}
+const Foo = () => <div><Trans i18nKey="some-feature.foo.test-text">Test text</Trans></div>`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Namespace with special characters gets used as-is',
+      code: `
+const Foo = () => <div>Test content</div>`,
+      filename,
+      options: [{ namespace: 'feature.sub-module' }],
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `
+${TRANS_IMPORT}
+const Foo = () => <div><Trans i18nKey="feature.sub-module:some-feature.foo.test-content">Test content</Trans></div>`,
+            },
+          ],
+        },
+      ],
+    },
+
     // TODO: Enable test once all top-level issues have been fixed
     // and rule is enabled again
     //     {

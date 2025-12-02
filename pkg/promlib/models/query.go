@@ -13,11 +13,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
+
 	glog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
+
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
 
@@ -164,7 +166,7 @@ type internalQueryModel struct {
 func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
 	model := &internalQueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
-		return nil, err
+		return nil, backend.DownstreamErrorf("error unmarshaling query: %w", err)
 	}
 	span.SetAttributes(attribute.String("rawExpr", model.Expr))
 

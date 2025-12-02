@@ -3,6 +3,7 @@ package conversion
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/conversion"
@@ -39,6 +40,11 @@ func getErroredConversionFunc(err error) string {
 		return migrationErr.GetFunctionName()
 	}
 
+	var dataLossErr *ConversionDataLossError
+	if errors.As(err, &dataLossErr) {
+		return dataLossErr.GetFunctionName()
+	}
+
 	return ""
 }
 
@@ -65,6 +71,7 @@ func convertAPIVersionToFuncName(apiVersion string) string {
 }
 
 // withConversionMetrics wraps a conversion function with metrics and logging for the overall conversion process
+// It optionally runs a data loss check function after successful conversion
 func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversionFunc func(a, b interface{}, scope conversion.Scope) error) func(a, b interface{}, scope conversion.Scope) error {
 	return func(a, b interface{}, scope conversion.Scope) error {
 		// Extract dashboard UID and schema version from source
@@ -113,16 +120,24 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		// Execute the actual conversion
 		err := conversionFunc(a, b, scope)
 
+		// If conversion succeeded, run data loss check
+		if err == nil {
+			err = checkConversionDataLoss(sourceVersionAPI, targetVersionAPI, a, b)
+		}
+
 		// Report conversion-level metrics and logs
 		if err != nil {
 			// Classify error type for metrics
 			errorType := "conversion_error"
 			var migrationErr *schemaversion.MigrationError
 			var minVersionErr *schemaversion.MinimumVersionError
+			var dataLossErr *ConversionDataLossError
 			if errors.As(err, &migrationErr) {
 				errorType = "schema_version_migration_error"
 			} else if errors.As(err, &minVersionErr) {
 				errorType = "schema_minimum_version_error"
+			} else if errors.As(err, &dataLossErr) {
+				errorType = "conversion_data_loss_error"
 			}
 
 			// Record failure metrics
@@ -158,6 +173,20 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 					"sourceSchemaVersion", sourceSchemaVersion,
 					"targetSchemaVersion", targetSchemaVersion,
 					"erroredSchemaVersionFunc", getErroredSchemaVersionFunc(err),
+				)
+			}
+
+			// Add data loss specific fields if this is a data loss error
+			if errorType == "conversion_data_loss_error" {
+				sourceStats := collectDashboardStats(a)
+				targetStats := collectDashboardStats(b)
+				// We consider losing data when the target is less than the source
+				logFields = append(logFields,
+					"panelsLost", math.Max(0, float64(sourceStats.panelCount-targetStats.panelCount)),
+					"queriesLost", math.Max(0, float64(sourceStats.queryCount-targetStats.queryCount)),
+					"annotationsLost", math.Max(0, float64(sourceStats.annotationCount-targetStats.annotationCount)),
+					"linksLost", math.Max(0, float64(sourceStats.linkCount-targetStats.linkCount)),
+					"variablesLost", math.Max(0, float64(sourceStats.variableCount-targetStats.variableCount)),
 				)
 			}
 

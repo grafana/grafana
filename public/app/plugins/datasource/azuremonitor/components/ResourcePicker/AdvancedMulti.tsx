@@ -4,8 +4,8 @@ import * as React from 'react';
 import { t } from '@grafana/i18n';
 import { Collapse, Space } from '@grafana/ui';
 
+import { AzureMonitorResource } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorResource } from '../../types/query';
 
 export interface ResourcePickerProps<T> {
   resources: T[];
@@ -19,7 +19,6 @@ const AdvancedMulti = ({ resources, onChange, renderAdvanced }: ResourcePickerPr
   return (
     <div data-testid={selectors.components.queryEditor.resourcePicker.advanced.collapse}>
       <Collapse
-        collapsible
         label={t('components.advanced-multi.label-advanced', 'Advanced')}
         isOpen={isAdvancedOpen}
         onToggle={() => setIsAdvancedOpen(!isAdvancedOpen)}
