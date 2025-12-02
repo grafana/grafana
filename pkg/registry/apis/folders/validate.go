@@ -44,12 +44,12 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return dashboards.ErrFolderTitleEmpty
 	}
 
-	parentName := meta.GetFolder()
-	if parentName == "" {
+	switch meta.GetFolder() {
+	case "", folder.GeneralFolderUID:
 		return nil // OK, we do not need to validate the tree
-	}
-
-	if parentName == f.Name {
+	case folder.SharedWithMeFolderUID:
+		return fmt.Errorf("can not save shared with me")
+	case f.Name:
 		return folder.ErrFolderCannotBeParentOfItself
 	}
 
@@ -94,14 +94,15 @@ func validateOnUpdate(ctx context.Context,
 	// Validate the move operation
 	newParent := folderObj.GetFolder()
 
-	// If we move to root, we don't need to validate the depth.
-	if newParent == folder.RootFolderUID {
-		return nil
-	}
-
-	// folder cannot be moved to a k6 folder
-	if newParent == accesscontrol.K6FolderUID {
+	switch newParent {
+	case "", folder.GeneralFolderUID:
+		return nil // OK, we do not need to validate the tree
+	case folder.SharedWithMeFolderUID:
+		return fmt.Errorf("can not save shared with me")
+	case accesscontrol.K6FolderUID:
 		return fmt.Errorf("k6 project may not be moved")
+	case folderObj.GetName():
+		return folder.ErrFolderCannotBeParentOfItself
 	}
 
 	parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})

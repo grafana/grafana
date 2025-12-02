@@ -534,12 +534,12 @@ func (h *provisioningTestHelper) validateManagedDashboardsFolderMetadata(t *test
 		sourcePath, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
 		isNested := strings.Contains(sourcePath, "/")
 
-		folder, found, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/folder")
+		folderName, found, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/folder")
+		require.True(t, found, "dashboard will always have a folder annotation")
 		if isNested {
-			require.True(t, found, "dashboard should have a folder annotation")
-			require.NotEmpty(t, folder, "dashboard should be in a non-empty folder")
+			require.NotEmpty(t, folderName, "dashboard should be in a non-empty folder")
 		} else {
-			require.False(t, found, "dashboard should not have a folder annotation")
+			require.Equal(t, folderName, "general", "non nested folder is in general")
 		}
 
 		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
