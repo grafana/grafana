@@ -1,6 +1,7 @@
 package collections
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -124,7 +125,16 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 }
 
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b.authorizer
+
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			if attr.GetResource() == "stars" {
+				return b.authorizer.Authorize(ctx, attr)
+			}
+
+			return authorizer.DecisionAllow, "", nil
+
+		})
 }
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
