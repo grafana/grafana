@@ -7,7 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { SerializedExploreState } from '../state/types';
+import { ExploreMapPanel, SerializedExploreState } from '../state/types';
 
 import { HybridLogicalClock } from './hlc';
 import { LWWRegister, createLWWRegister } from './lwwregister';
@@ -30,6 +30,7 @@ import {
   OperationResult,
   CRDTExploreMapStateJSON,
   CommentData,
+  BatchOperation,
 } from './types';
 
 export class CRDTStateManager {
@@ -129,8 +130,8 @@ export class CRDTStateManager {
   /**
    * Get all panels for UI rendering
    */
-  getAllPanelsForUI() {
-    const panels: Record<string, any> = {};
+  getAllPanelsForUI(): Record<string, ExploreMapPanel> {
+    const panels: Record<string, ExploreMapPanel> = {};
     for (const panelId of this.getPanelIds()) {
       const panel = this.getPanelForUI(panelId);
       if (panel) {
@@ -148,7 +149,8 @@ export class CRDTStateManager {
     exploreId: string,
     position: { x: number; y: number; width: number; height: number },
     mode: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown' = 'explore',
-    createdBy?: string
+    createdBy?: string,
+    initialExploreState?: SerializedExploreState
   ): AddPanelOperation {
     const timestamp = this.clock.tick();
     return {
@@ -163,6 +165,7 @@ export class CRDTStateManager {
         position,
         mode,
         createdBy,
+        initialExploreState,
       },
     };
   }
@@ -441,7 +444,7 @@ export class CRDTStateManager {
           return {
             success: false,
             applied: false,
-            error: `Unknown operation type: ${(operation as any).type}`,
+            error: `Unknown operation type: ${(operation as CRDTOperation).type}`,
           };
       }
     } catch (error) {
@@ -454,7 +457,7 @@ export class CRDTStateManager {
   }
 
   private applyAddPanel(operation: AddPanelOperation): OperationResult {
-    const { panelId, exploreId, position, mode, createdBy } = operation.payload;
+    const { panelId, exploreId, position, mode, createdBy, initialExploreState } = operation.payload;
     const panelMode = mode || 'explore';
 
     // Add to OR-Set with operation ID as tag
@@ -472,7 +475,7 @@ export class CRDTStateManager {
         width: new LWWRegister(position.width, operation.timestamp),
         height: new LWWRegister(position.height, operation.timestamp),
         zIndex: new LWWRegister(zIndex, operation.timestamp),
-        exploreState: new LWWRegister(undefined, operation.timestamp),
+        exploreState: new LWWRegister(initialExploreState, operation.timestamp),
         mode: new LWWRegister(panelMode, operation.timestamp),
         iframeUrl: new LWWRegister(undefined, operation.timestamp),
         createdBy: new LWWRegister(createdBy, operation.timestamp),
@@ -643,7 +646,7 @@ export class CRDTStateManager {
     };
   }
 
-  private applyBatchOperation(operation: any): OperationResult {
+  private applyBatchOperation(operation: BatchOperation): OperationResult {
     let anyApplied = false;
     const errors: string[] = [];
 
@@ -726,7 +729,7 @@ export class CRDTStateManager {
    * Serialize state to JSON
    */
   toJSON(): CRDTExploreMapStateJSON {
-    const panelData: Record<string, any> = {};
+    const panelData: CRDTExploreMapStateJSON['panelData'] = {};
 
     for (const [panelId, data] of this.state.panelData.entries()) {
       panelData[panelId] = {

@@ -15,6 +15,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { addPanel } from '../state/crdtSlice';
 import { selectPanels, selectMapUid } from '../state/selectors';
+import { AddPanelAction } from './AssistantComponents';
 
 export function ExploreMapFloatingToolbar() {
   const styles = useStyles2(getStyles);
@@ -103,7 +104,7 @@ export function ExploreMapFloatingToolbar() {
     const panelsArray = Object.values(panels);
 
     return createAssistantContextItem('structured', {
-      title: 'Explore Canvas',
+      title: t('explore-map.assistant.canvas-title', 'Explore Canvas'),
       data: {
         canvasId: mapUid,
         panelCount: panelsArray.length,
@@ -121,6 +122,59 @@ export function ExploreMapFloatingToolbar() {
     });
   }, [panels, mapUid]);
 
+  // Provide component context and additional instructions to the assistant
+  const componentContext = useMemo(() => {
+    return createAssistantContextItem('component', {
+      components: {
+        AddPanelAction,
+      },
+      namespace: 'exploreMap',
+      hidden: false, // Make visible so we can debug
+      prompt: `IMPORTANT: You have an interactive component that can add pre-configured panels.
+
+Component: exploreMap_AddPanelAction
+
+Whitelisted props (ONLY these are allowed):
+- type: MUST ALWAYS BE "explore" (only explore panels supported)
+- namespace: datasource UID (optional - use to specify which datasource)
+- metric: query expression (optional - PromQL, LogQL, TraceQL, etc.) - MUST BE URL-ENCODED
+- description: custom button text (optional)
+- name: display name (optional)
+
+Usage (place directly in response, NEVER in code blocks):
+<exploreMap_AddPanelAction type="explore" />
+<exploreMap_AddPanelAction type="explore" namespace="prometheus-uid" metric="up" />
+<exploreMap_AddPanelAction type="explore" namespace="loki-uid" metric="%7Bjob%3D%22varlogs%22%7D" />
+<exploreMap_AddPanelAction type="explore" namespace="prometheus-uid" metric="rate%28http_requests_total%5B5m%5D%29" description="HTTP Request Rate" />
+
+CRITICAL:
+- **ALWAYS use type="explore"** - no other types are supported.
+- Never wrap components in backticks or code blocks.
+- Always URL-encode the metric prop to handle special characters like ( ) [ ] { } " ' etc.`,
+    });
+  }, []);
+
+  // Provide additional instructions to the assistant (hidden from UI)
+  const assistantInstructions = useMemo(() => {
+    return createAssistantContextItem('structured', {
+      hidden: true,
+      title: t('explore-map.assistant.capabilities-title', 'Explore Map Capabilities'),
+      data: {
+        capabilities: [
+          t('explore-map.assistant.capability-add-panels', 'You can help users add new panels to the canvas using the exploreMap_AddPanelAction component'),
+          t('explore-map.assistant.capability-analyze', 'Analyze the current panels and suggest additional panels that would complement the existing ones'),
+          t('explore-map.assistant.capability-gaps', 'Identify gaps in observability coverage (missing logs, traces, metrics, or profiles)'),
+          t('explore-map.assistant.capability-layouts', 'Suggest panel layouts or organization strategies'),
+          t('explore-map.assistant.capability-relationships', 'Help users understand relationships between panels based on their queries and datasources'),
+        ],
+        instructions: t(
+          'explore-map.assistant.instructions',
+          'When users ask to add panels, use the exploreMap_AddPanelAction component to provide interactive buttons. You can suggest multiple panels at once by providing multiple component instances. Always explain why you are suggesting specific panel types based on the current canvas state.'
+        ),
+      },
+    });
+  }, []);
+
   const handleOpenAssistant = useCallback(() => {
     if (!openAssistant) {
       return;
@@ -134,11 +188,14 @@ export function ExploreMapFloatingToolbar() {
     openAssistant({
       origin: 'grafana/explore-map',
       mode: 'assistant',
-      prompt: 'Analyze this explore canvas and summarize what queries and data are being visualized. Identify any patterns or relationships between the panels.',
-      context: [canvasContext],
+      prompt:
+        'Analyze this explore canvas and summarize what queries and data are being visualized. ' +
+        'Identify any patterns or relationships between the panels. ' +
+        'If you notice gaps in observability coverage, suggest additional panels I could add using the interactive component.',
+      context: [canvasContext, componentContext, assistantInstructions],
       autoSend: true,
     });
-  }, [openAssistant, panels, mapUid, canvasContext]);
+  }, [openAssistant, panels, mapUid, canvasContext, componentContext, assistantInstructions]);
 
   const MenuActions = () => (
     <Menu>

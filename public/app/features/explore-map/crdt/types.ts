@@ -172,6 +172,7 @@ export interface AddPanelOperation extends CRDTOperationBase {
     };
     mode?: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown';
     createdBy?: string;
+    initialExploreState?: SerializedExploreState; // Optional initial datasource/query configuration
   };
 }
 

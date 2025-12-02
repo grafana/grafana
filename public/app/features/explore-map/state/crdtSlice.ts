@@ -8,6 +8,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
+import { dateTime, DataQuery } from '@grafana/data';
 import { generateExploreId } from 'app/core/utils/explore';
 
 import { CRDTStateManager } from '../crdt/state';
@@ -218,6 +219,8 @@ const crdtSlice = createSlice({
       position?: { x: number; y: number; width: number; height: number };
       kind?: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown';
       createdBy?: string;
+      datasourceUid?: string;
+      query?: string;
     }>) => {
       const manager = getCRDTManager(state);
 
@@ -254,7 +257,30 @@ const crdtSlice = createSlice({
       const panelId = uuidv4();
       const exploreId = generateExploreId();
 
-      const operation = manager.createAddPanelOperation(panelId, exploreId, position, mode, action.payload.createdBy);
+      // Build initial explore state if datasource/query provided
+      let initialExploreState: SerializedExploreState | undefined;
+      if (action.payload.datasourceUid || action.payload.query) {
+        initialExploreState = {
+          queries: action.payload.query
+            ? [
+                {
+                  refId: 'A',
+                  datasource: { uid: action.payload.datasourceUid, type: 'prometheus' },
+                  // Using index signature to add query-specific field
+                  ...{ expr: action.payload.query },
+                } as DataQuery,
+              ]
+            : [],
+          datasourceUid: action.payload.datasourceUid,
+          range: {
+            from: dateTime('now-1h'),
+            to: dateTime('now'),
+            raw: { from: 'now-1h', to: 'now' },
+          },
+        };
+      }
+
+      const operation = manager.createAddPanelOperation(panelId, exploreId, position, mode, action.payload.createdBy, initialExploreState);
 
       // Apply locally
       manager.applyOperation(operation);
