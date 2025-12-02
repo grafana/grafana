@@ -398,4 +398,4 @@ The following queries are currently enabled through the gRPC endpoint:
 - Operation search
 - Trace ID search
 
-To enable gRPC querying for Jaeger within Grafana, you must activate the jaegerEnableGrpcEndpoint feature flag. Grafana Cloud customers should contact support to request access and provide feedback on this feature.
+To enable gRPC querying for Jaeger within Grafana, you must enable the `jaegerEnableGrpcEndpoint` feature flag. Grafana Cloud customers should contact support to request access and provide feedback on this feature.
