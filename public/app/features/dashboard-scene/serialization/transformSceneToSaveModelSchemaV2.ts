@@ -834,7 +834,8 @@ export function getAutoAssignedDSRef(
  */
 export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | AnnotationQuery>(
   element: T,
-  autoAssignedDsRef: Set<string>,
+  autoAssignedDsRef: Map<string, string>,
+
   type: 'query' | 'variable' | 'annotation',
   context?: SceneQueryRunner
 ): DataSourceRef | undefined {
@@ -842,8 +843,19 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   const elementId = getElementIdentifier(element, type);
 
   // If the element is in the auto-assigned set, it didn't have a datasource specified
-  if (autoAssignedDsRef?.has(elementId)) {
+  //TODO: If autoassignedDsRef was undefined
+  if (autoAssignedDsRef?.get(elementId)) {
     return undefined;
+  }
+
+  const autoAssignedDsType = autoAssignedDsRef?.get(elementId);
+  if (autoAssignedDsType !== undefined) {
+    if (autoAssignedDsType !== '') {
+      // If the autoassignedDsType is not empty, return the datasource with only the type
+      return { type: autoAssignedDsType };
+    } else {
+      return undefined; // If the autoassignedDsType is empty, return undefined
+    }
   }
 
   // Return appropriate datasource reference based on element type
