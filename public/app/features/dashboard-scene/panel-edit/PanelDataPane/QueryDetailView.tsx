@@ -405,8 +405,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(2),
       height: '100%',
       overflow: 'scroll',
-      scrollbarWidth: 'thin',
-      scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
     }),
     queryOperationRow: css({
       marginBottom: '0 !important', // need to beat specificty in the underling component
