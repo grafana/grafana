@@ -13,7 +13,7 @@ export async function collectAllDashboardsUnderFolder(folderUID: string): Promis
 
   while (foldersToProcess.length > 0) {
     const currentFolderUID = foldersToProcess.shift()!;
-    
+
     if (processedFolders.has(currentFolderUID)) {
       continue;
     }
@@ -26,7 +26,7 @@ export async function collectAllDashboardsUnderFolder(folderUID: string): Promis
 
     while (hasMore) {
       const dashboards = await listDashboards(currentFolderUID, page, pageSize);
-      
+
       for (const dashboard of dashboards) {
         dashboardUIDs.push(dashboard.uid);
       }

@@ -1,12 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { AppEvents } from '@grafana/data';
+import { css } from '@emotion/css';
+import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
-import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Box, Button, Field, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { css } from '@emotion/css';
 import { RepositoryView, Job, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { collectSelectedItems } from 'app/features/browse-dashboards/components/utils';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
@@ -51,7 +50,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
 
   // Get repositories list from frontend settings (which returns RepositoryView[])
   const { data: settingsData, isLoading: isLoadingRepos } = useGetFrontendSettingsQuery();
-  const repositories = settingsData?.items ?? [];
+  const repositories = useMemo(() => settingsData?.items ?? [], [settingsData?.items]);
 
   // Auto-select first repository when repositories are loaded
   useEffect(() => {
@@ -76,15 +75,17 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
   // Update workflow, branch, and path when repository changes
   useEffect(() => {
     if (repositoryView && selectedDefaultWorkflow) {
-      methods.setValue('workflow', selectedDefaultWorkflow as 'branch' | 'write');
-      if (selectedDefaultWorkflow === 'branch') {
-        const timestamp = generateTimestamp();
-        methods.setValue('ref', `bulk-export/${timestamp}`);
-      } else if (selectedDefaultWorkflow === 'write' && repositoryView.branch) {
-        methods.setValue('ref', repositoryView.branch);
+      if (selectedDefaultWorkflow === 'branch' || selectedDefaultWorkflow === 'write') {
+        methods.setValue('workflow', selectedDefaultWorkflow);
+        if (selectedDefaultWorkflow === 'branch') {
+          const timestamp = generateTimestamp();
+          methods.setValue('ref', `bulk-export/${timestamp}`);
+        } else if (selectedDefaultWorkflow === 'write' && repositoryView.branch) {
+          methods.setValue('ref', repositoryView.branch);
+        }
+        // Clear the path when repository changes - user will enter sub-path only
+        methods.setValue('path', '');
       }
-      // Clear the path when repository changes - user will enter sub-path only
-      methods.setValue('path', '');
     }
   }, [repositoryView, selectedDefaultWorkflow, methods]);
 
