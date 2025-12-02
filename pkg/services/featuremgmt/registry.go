@@ -580,6 +580,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "kubernetesDashboardsV2",
+			Description:  "Use the v2 kubernetes API in the frontend for dashboards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
 			Stage:        FeatureStageExperimental,
@@ -596,6 +603,13 @@ var (
 		{
 			Name:         "perPanelNonApplicableDrilldowns",
 			Description:  "Enables viewing non-applicable drilldowns on a panel level",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "panelGroupBy",
+			Description:  "Enabled a group by action per panel",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -1315,7 +1329,7 @@ var (
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaPartnerPluginsSquad,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
@@ -1801,10 +1815,10 @@ var (
 		{
 			Name:         "azureResourcePickerUpdates",
 			Description:  "Enables the updated Azure Monitor resource picker",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaPartnerPluginsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:            "prometheusTypeMigration",
@@ -1866,6 +1880,14 @@ var (
 			Name:         "newVizSuggestions",
 			Description:  "Enable new visualization suggestions",
 			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "externalVizSuggestions",
+			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
@@ -1962,6 +1984,13 @@ var (
 			Expression:      "false",
 			RequiresRestart: false,
 			HideFromDocs:    false,
+		},
+		{
+			Name:            "kubernetesAlertingHistorian",
+			Description:     "Adds support for Kubernetes alerting historian APIs",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
 		},
 	}
 )

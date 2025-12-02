@@ -5395,6 +5395,10 @@
       "loading-initializing-dashboard": "Loading & initializing dashboard",
       "title-not-found": "Panel with id {{panelId}} not found"
     },
+    "source-link": {
+      "title": "Source ({{provider}})",
+      "tooltip": "View source file in repository"
+    },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Template variables"
     },
@@ -11090,6 +11094,12 @@
       "could-anything-matching-query": "Could not find anything matching your query"
     }
   },
+  "panel-group-by": {
+    "button": "Group by",
+    "loading": "Loading options",
+    "no-options": "No options found",
+    "search-placeholder": "Search"
+  },
   "panel-type-filter": {
     "clear-button": "Clear types",
     "select-aria-label": "Panel type filter",
@@ -11703,13 +11713,6 @@
       "saving": "Saving",
       "title-error-loading-file": "Error loading file"
     },
-    "files-view": {
-      "columns": {
-        "history": "History",
-        "view": "View"
-      },
-      "placeholder-search": "Search"
-    },
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
       "description-generate-dashboard-previews": "Create preview links for pull requests",
@@ -11920,9 +11923,6 @@
       "source-code": "Source code"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
@@ -11959,14 +11959,6 @@
       "webhook-last-event": "Last Event:",
       "webhook-url": "View Webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "History",
-        "view-dashboard": "View",
-        "view-folder": "View"
-      },
-      "placeholder-search": "Search"
-    },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
@@ -11974,12 +11966,10 @@
       "not-found": "not found",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
-      "tab-files": "Files",
-      "tab-files-title": "The raw file list from the repository",
       "tab-overview": "Overview",
       "tab-overview-title": "Repository overview",
       "tab-resources": "Resources",
-      "tab-resources-title": "Resources saved in grafana database",
+      "tab-resources-title": "Repository files and resources",
       "title": "Repository Status",
       "title-legacy-storage": "Legacy Storage",
       "title-queued-for-deletion": "Queued for deletion"
@@ -12001,6 +11991,17 @@
       "local-description": "Configure file provisioning",
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository"
+    },
+    "resource-tree": {
+      "header-hash": "Hash",
+      "header-status": "Status",
+      "header-title": "Title",
+      "header-type": "Type",
+      "search-placeholder": "Search by path or title",
+      "source": "Source",
+      "status-pending": "Pending",
+      "status-synced": "Synced",
+      "view": "View"
     },
     "resource-view": {
       "base": "Base",
@@ -13282,6 +13283,7 @@
     "create-team": {
       "create": "Create",
       "description-email": "This is optional and is primarily used for allowing custom team avatars",
+      "failed-to-create": "Failed to create team",
       "label-email": "Email",
       "label-name": "Name",
       "label-role": "Role"
@@ -13313,6 +13315,7 @@
         "title-edit-team": "Edit team",
         "tooltip-edit-team": "Edit team"
       },
+      "loading-teams": "Loading teams...",
       "new-team": "New Team",
       "placeholder-search-teams": "Search teams"
     },

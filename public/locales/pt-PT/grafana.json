@@ -477,6 +477,7 @@
       "noOptionsMessage-no-datasources-found": "Nenhuma fonte de dados encontrada"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "Copiar link",
       "duplicate": "Duplicar",
       "export": "Exportar",
@@ -3476,6 +3477,14 @@
         "label-negative-y": "Y negativo"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Requerer espaço do lado direito",
       "gaps-options": {
@@ -3520,6 +3529,10 @@
     },
     "name-show-unfilled-area": "Mostrar a área não preenchida",
     "name-value-display": "Apresentação dos valores",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "Oculto",
       "label-text-color": "Cor do texto",
@@ -4172,6 +4185,7 @@
     "clear": "Limpar",
     "collapse": "Recolher",
     "disabled": "",
+    "discard": "",
     "edit": "Editar",
     "help": "Ajuda",
     "loading": "A carregar...",
@@ -4789,7 +4803,6 @@
         "variable": "Variável {{type}}",
         "variable-set": "Variáveis"
       },
-      "open": "Abrir painel de opções",
       "row": {
         "header": {
           "hide": "Ocultar",
@@ -5140,6 +5153,7 @@
       "title-matched_other": "Correspondente a {{count}}/{{totalCount}} opções"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "Repetir",
       "tree-item": {
         "empty": "(vazio)",
@@ -5351,9 +5365,39 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "A carregar a configuração"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "A carregar e inicializar o painel de controlo",
       "title-not-found": "Painel com ID {{panelId}} não encontrado"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Variáveis do modelo"
@@ -5454,11 +5498,8 @@
           "tooltip": "Este painel de controlo foi marcado como apenas de leitura"
         },
         "export": {
-          "arrow": "Exportar",
-          "title": "Exportar",
           "tooltip": {
-            "as-code": "Exportar como código",
-            "json": "Exportar como JSON"
+            "as-code": "Exportar como código"
           }
         },
         "more-save-options": "Mais opções de guardar",
@@ -5510,6 +5551,9 @@
       "save-library-panel": "Guardar painel de biblioteca",
       "settings": "Definições do painel de controlo",
       "share-button": "Partilhar",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5838,9 +5882,6 @@
       "custom-options": "Opções personalizadas",
       "name-values-separated-comma": "Valores separados por vírgulas",
       "selection-options": "Opções de seleção"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "Contorno"
     },
     "dashboard-link-form": {
       "back-to-list": "Voltar à lista",
@@ -7824,6 +7865,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8118,13 +8160,6 @@
           "create-slo": "Criar SLO",
           "enable-slo-alerting": "Ativar alertas SLO"
         }
-      }
-    }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "Voltar"
       }
     }
   },
@@ -11059,6 +11094,12 @@
       "could-anything-matching-query": "Não foi possível encontrar nada que corresponda à sua consulta"
     }
   },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
+  },
   "panel-type-filter": {
     "clear-button": "Limpar tipos",
     "select-aria-label": "Filtro do tipo de painel",
@@ -11085,6 +11126,10 @@
     "pie-chart-type-options": {
       "label-donut": "Anel",
       "label-pie": "Circular"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -11668,13 +11713,6 @@
       "saving": "A guardar",
       "title-error-loading-file": "Erro ao carregar o ficheiro"
     },
-    "files-view": {
-      "columns": {
-        "history": "Histórico",
-        "view": "Ver"
-      },
-      "placeholder-search": "Pesquisar"
-    },
     "finish-step": {
       "description-enable-previews": "Adicionar uma pré-visualização de imagem das alterações do painel de controlo nos pedidos de extração. As imagens dos seus painéis de controlo Grafana serão partilhadas no seu repositório Git e visíveis para qualquer pessoa com acesso ao repositório.",
       "description-generate-dashboard-previews": "Criar links de pré-visualização para pedidos de extração",
@@ -11885,9 +11923,6 @@
       "source-code": "Código-fonte"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Apenas para leitura",
       "settings": "Definições",
       "view": "Ver"
@@ -11924,14 +11959,6 @@
       "webhook-last-event": "Último evento:",
       "webhook-url": "Visualizar Webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Histórico",
-        "view-dashboard": "Ver",
-        "view-folder": "Ver"
-      },
-      "placeholder-search": "Pesquisar"
-    },
     "repository-status-page": {
       "back-to-repositories": "Voltar aos repositórios",
       "cleaning-up-resources": "A limpar recursos do repositório",
@@ -11939,12 +11966,10 @@
       "not-found": "não encontrado",
       "not-found-message": "Repositório não encontrado",
       "repository-config-exists-configuration": "Certifique-se de que a configuração do repositório existe no ficheiro de configuração.",
-      "tab-files": "Ficheiros",
-      "tab-files-title": "A lista de ficheiros sem processar do repositório",
       "tab-overview": "Visão geral",
       "tab-overview-title": "Vista geral do repositório",
       "tab-resources": "Recursos",
-      "tab-resources-title": "Recursos guardados na base de dados da Grafana",
+      "tab-resources-title": "",
       "title": "Estado do repositório",
       "title-legacy-storage": "Armazenamento herdado",
       "title-queued-for-deletion": "Em fila para eliminação"
@@ -11966,6 +11991,17 @@
       "local-description": "Configurar o provisionamento de ficheiros",
       "pure-git": "Git puro",
       "pure-git-description": "Ligar a qualquer repositório Git"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Base",
@@ -13033,6 +13069,12 @@
       "label-same-as-value": "Igual ao valor",
       "label-standard": "Predefinição"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "Automático",
       "label-center": "Centro"
@@ -13241,6 +13283,7 @@
     "create-team": {
       "create": "Criar",
       "description-email": "Isto é opcional e é utilizado principalmente para permitir avatares de equipa personalizados",
+      "failed-to-create": "",
       "label-email": "E-mail",
       "label-name": "Nome",
       "label-role": "Função"
@@ -13272,6 +13315,7 @@
         "title-edit-team": "Editar equipa",
         "tooltip-edit-team": "Editar equipa"
       },
+      "loading-teams": "",
       "new-team": "Nova equipa",
       "placeholder-search-teams": "Pesquisar equipas"
     },
@@ -13370,7 +13414,8 @@
       "forwards-time-aria-label": "Mover o intervalo de tempo para a frente",
       "to": "para",
       "zoom-out-button": "Diminuir o zoom do intervalo de tempo",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "Aplicar intervalo de tempo",
@@ -13471,6 +13516,16 @@
         "label-never": "Nunca",
         "label-threshold": "Limite"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Adicionar fuso horário",
