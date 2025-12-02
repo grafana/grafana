@@ -21,7 +21,6 @@ on:
         type: string
         required: true
 
-
 permissions:
   id-token: write
   contents: read
