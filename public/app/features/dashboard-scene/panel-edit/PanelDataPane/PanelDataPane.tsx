@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,6 +12,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
   SceneDataTransformer,
+  SceneDataQuery,
 } from '@grafana/scenes';
 import { useStyles2, useSplitter } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
@@ -37,6 +38,10 @@ export interface PanelDataPaneState extends SceneObjectState {
   tab: TabId;
   panelRef: SceneObjectRef<VizPanel>;
 }
+
+const querySelectedId = (refId: string) => `query-${refId}`;
+const transformSelectedId = (index: number) => `transform-${index}`;
+const expressionSelectedId = (refId: string) => `expression-${refId}`;
 
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
@@ -94,6 +99,47 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
 
+  // the selectedId is based on the refId of the query. refId is a user-editable property, so it can change,
+  // which will break the selectId and result in the UI going into a deselected state. to avoid this,
+  // we can subscribe to changes and detect if a single refId just changed, and then assume that change
+  // is a rename of the currently selected query.
+  const orderedRefIds = useRef<string[]>(queryRunnerState?.queries.map(({ refId }) => refId) ?? []);
+  useEffect(() => {
+    queryRunner?.subscribeToState((newState) => {
+      // loop over the new queries and confirm that the refIds are the same. if not, then a mutation
+      // occurred, but we need to figure out if it was a rename or a reorder
+
+      const oldOrderedRefIds = orderedRefIds.current;
+      orderedRefIds.current = newState.queries.map(({ refId }) => refId);
+
+      if (newState.queries.length !== oldOrderedRefIds.length) {
+        return; // add, remove, something else.
+      }
+
+      let refIdChanges = 0;
+      let updatedQuery: SceneDataQuery | undefined = undefined;
+      for (let i = 0; i < newState.queries.length; i++) {
+        const newQuery = newState.queries[i];
+        const oldRefId = oldOrderedRefIds[i];
+        if (newQuery.refId !== oldRefId) {
+          if (++refIdChanges < 2) {
+            updatedQuery = newQuery;
+          } else {
+            return; // more than 2 refId changes, so it's a reorder or something else.
+          }
+        }
+      }
+
+      if (updatedQuery) {
+        setSelectedId(
+          updatedQuery.datasource?.type === '__expr__'
+            ? expressionSelectedId(updatedQuery.refId)
+            : querySelectedId(updatedQuery.refId)
+        );
+      }
+    });
+  }, [queryRunner]);
+
   // Subscribe to data transformer state changes
   const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
   const transformerState = dataTransformer?.useState();
@@ -108,14 +154,14 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       if ('refId' in query) {
         if (isExpressionQuery(query)) {
           result.push({
-            id: `expression-${query.refId}`,
+            id: expressionSelectedId(query.refId),
             type: 'expression',
             data: query,
             index: actualIndex, // Store actual index in queries array
           });
         } else {
           result.push({
-            id: `query-${query.refId}`,
+            id: querySelectedId(query.refId),
             type: 'query',
             data: query,
             index: actualIndex, // Store actual index in queries array
@@ -168,7 +214,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       setTimeout(() => {
         const newQueries = getQueryRunnerFor(panel)?.state.queries || [];
         if (newQueries.length > 0) {
-          setSelectedId(`query-${newQueries[newQueries.length - 1].refId}`);
+          setSelectedId(querySelectedId(newQueries[newQueries.length - 1].refId));
         }
       }, 100);
     }
@@ -208,7 +254,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         queryRunner.runQueries();
 
         // Select the new expression
-        setSelectedId(`expression-${nextRefId}`);
+        setSelectedId(expressionSelectedId(nextRefId));
       }
     },
     [queryRunner]
@@ -241,7 +287,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
         // Select the newly added transformation
         setTimeout(() => {
-          setSelectedId(`transform-${transformations.length}`);
+          setSelectedId(transformSelectedId(transformations.length));
         }, 100);
       }
     },
@@ -273,7 +319,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           queryRunner.runQueries();
 
           // Select the new query
-          setSelectedId(`query-${newRefId}`);
+          setSelectedId(querySelectedId(newRefId));
         }
       }
     },
@@ -289,7 +335,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         queryRunner.runQueries();
 
         // Clear selection if removing the selected query
-        if (selectedId === `query-${queries[index]?.refId}`) {
+        if (selectedId === querySelectedId(queries[index]?.refId)) {
           setSelectedId(null);
         }
       }
@@ -334,7 +380,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           queryRunner.setState({ queries: newQueries });
           queryRunner.runQueries();
 
-          setSelectedId(`expression-${newRefId}`);
+          setSelectedId(expressionSelectedId(newRefId));
         }
       }
     },
@@ -350,7 +396,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         queryRunner.runQueries();
 
         const expressionToRemove = queries[index];
-        if (expressionToRemove && selectedId === `expression-${expressionToRemove.refId}`) {
+        if (expressionToRemove && selectedId === expressionSelectedId(expressionToRemove.refId)) {
           setSelectedId(null);
         }
       }
@@ -386,7 +432,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         transformsTab.onChangeTransformations(newTransformations);
 
         // Clear selection if removing the selected transformation
-        if (selectedId === `transform-${index}`) {
+        if (selectedId === transformSelectedId(index)) {
           setSelectedId(null);
         }
       }
