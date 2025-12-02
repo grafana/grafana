@@ -50,6 +50,7 @@ import (
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -346,8 +347,12 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return fmt.Errorf("error getting requester: %w", err)
 	}
 
+	if a.IsDryRun() {
+		return nil // do not check folder or quota
+	}
+
 	// Validate folder existence if specified
-	if !a.IsDryRun() && accessor.GetFolder() != "" {
+	if !folder.IsRootFolder(accessor.GetFolder()) {
 		folder, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID())
 		if err != nil {
 			return err
@@ -359,7 +364,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate quota
-	if !b.isStandalone && !a.IsDryRun() {
+	if !b.isStandalone {
 		params := &quota.ScopeParameters{}
 		params.OrgID = id.GetOrgID()
 		internalId, err := id.GetInternalID()
