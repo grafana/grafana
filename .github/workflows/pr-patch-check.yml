@@ -20,6 +20,9 @@ on:
       pr_commit_sha:
         type: string
         required: true
+      is_fork:
+        type: boolean
+        required: true
 
 permissions:
   id-token: write
@@ -39,6 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Get vault secrets"
+        if: ${{ ! inputs.is_fork }}
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
@@ -46,6 +50,7 @@ jobs:
           repo_secrets: |
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
       - name: "Generate token"
+        if: ${{ ! inputs.is_fork }}
         id: generate_token
         uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         with:
