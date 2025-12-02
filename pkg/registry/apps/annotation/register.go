@@ -2,11 +2,12 @@ package annotation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,9 +56,14 @@ func RegisterAppInstaller(
 	var tagHandler func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error
 	if service != nil {
 		mapper := grafrequest.GetNamespaceMapper(cfg)
+		kvAdapter, err := NewKVStore("kv")
+		if err != nil {
+			return nil, err
+		}
 		sqlAdapter := NewSQLAdapter(service, cleaner, mapper, cfg)
 		installer.legacy = &legacyStorage{
-			store:  sqlAdapter,
+			// store:  sqlAdapter,
+			store:  kvAdapter,
 			mapper: mapper,
 		}
 		// Create the tags handler using the sqlAdapter as TagProvider
@@ -156,7 +162,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
 
-	opts := ListOptions{}
+	opts := ListOptions{To: time.Now().UnixMilli()}
 	if options.FieldSelector != nil {
 		for _, r := range options.FieldSelector.Requirements() {
 			switch r.Field {
@@ -257,7 +263,26 @@ func (s *legacyStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	return nil, false, errors.New("not implemented")
+	old, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+	obj, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return old, false, err
+	}
+	newObj, ok := obj.(*annotationV0.Annotation)
+	if !ok {
+		return nil, false, k8serrors.NewBadRequest("expected valid annotation")
+	}
+	if updateValidation != nil {
+		if err := updateValidation(ctx, obj, old); err != nil {
+			return nil, false, err
+		}
+	}
+	// TODO: validate that only name/tags are modified
+	_, err = s.store.Update(ctx, newObj)
+	return nil, false, err
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
