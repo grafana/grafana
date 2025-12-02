@@ -217,27 +217,119 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
       return undefined;
     }
 
-    let mdDesc = queryOptions.maxDataPoints ?? '';
-    if (mdDesc === '' && panelData.request) {
-      mdDesc = `auto = ${panelData.request.maxDataPoints}`;
+    const optionItems: React.ReactNode[] = [];
+
+    // Helper to render value with appropriate styling
+    const renderValue = (value: string | number, isCustom: boolean) => (
+      <span className={isCustom ? styles.collapsedTextValueCustom : styles.collapsedTextValue}>{value}</span>
+    );
+
+    // Helper to render the custom indicator (green circle)
+    const renderCustomIndicator = (isCustom: boolean) =>
+      isCustom ? <span className={styles.customIndicator} /> : null;
+
+    // Max data points - custom if explicitly set
+    const hasCustomMaxDataPoints = queryOptions.maxDataPoints !== undefined && queryOptions.maxDataPoints !== null;
+    const mdDesc = queryOptions.maxDataPoints ?? panelData.request?.maxDataPoints ?? '-';
+    optionItems.push(
+      <span key="md" className={styles.collapsedText}>
+        {renderCustomIndicator(hasCustomMaxDataPoints)}
+        <span className={styles.collapsedTextLabel}>
+          <Trans i18nKey="query.query-group-options-editor.collapsed-max-data-points-label">Max data points</Trans>
+        </span>
+        {' = '}
+        {renderValue(mdDesc, hasCustomMaxDataPoints)}
+      </span>
+    );
+
+    // Min interval - custom if explicitly set (not falling back to datasource default)
+    const hasCustomMinInterval = !!queryOptions.minInterval;
+    const minIntervalDesc = queryOptions.minInterval ?? datasource?.interval ?? 'No limit';
+    optionItems.push(
+      <span key="min-interval" className={styles.collapsedText}>
+        {renderCustomIndicator(hasCustomMinInterval)}
+        <span className={styles.collapsedTextLabel}>
+          <Trans i18nKey="query.query-group-options-editor.collapsed-min-interval-label">Min interval</Trans>
+        </span>
+        {' = '}
+        {renderValue(minIntervalDesc, hasCustomMinInterval)}
+      </span>
+    );
+
+    // Interval - read-only, never custom (computed value)
+    const intervalDesc = panelData.request?.interval ?? '-';
+    optionItems.push(
+      <span key="interval" className={styles.collapsedText}>
+        {renderCustomIndicator(false)}
+        <span className={styles.collapsedTextLabel}>
+          <Trans i18nKey="query.query-group-options-editor.collapsed-interval-label">Interval</Trans>
+        </span>
+        {' = '}
+        {renderValue(intervalDesc, false)}
+      </span>
+    );
+
+    // Cache timeout - custom if explicitly set (not using default "60")
+    if (dsSettings?.meta.queryOptions?.cacheTimeout) {
+      const hasCustomCacheTimeout = !!queryOptions.cacheTimeout;
+      const cacheTimeoutDesc = queryOptions.cacheTimeout ?? '60';
+      optionItems.push(
+        <span key="cache-timeout" className={styles.collapsedText}>
+          {renderCustomIndicator(hasCustomCacheTimeout)}
+          <span className={styles.collapsedTextLabel}>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-cache-timeout-label">Cache timeout</Trans>
+          </span>
+          {' = '}
+          {renderValue(cacheTimeoutDesc, hasCustomCacheTimeout)}
+        </span>
+      );
     }
 
-    const intervalDesc = panelData.request?.interval ?? queryOptions.minInterval;
+    // Cache TTL - custom if explicitly set (not using datasource default)
+    if (datasource?.cachingConfig?.enabled) {
+      const hasCustomCacheTTL = queryOptions.queryCachingTTL !== undefined && queryOptions.queryCachingTTL !== null;
+      const cacheTTLDesc = queryOptions.queryCachingTTL ?? datasource.cachingConfig.TTLMs ?? '-';
+      optionItems.push(
+        <span key="cache-ttl" className={styles.collapsedText}>
+          {renderCustomIndicator(hasCustomCacheTTL)}
+          <span className={styles.collapsedTextLabel}>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-cache-ttl-label">Cache TTL</Trans>
+          </span>
+          {' = '}
+          {renderValue(cacheTTLDesc, hasCustomCacheTTL)}
+        </span>
+      );
+    }
 
-    return (
-      <>
-        {
-          <span className={styles.collapsedText}>
-            <Trans i18nKey="query.query-group-options-editor.collapsed-max-data-points">MD = {{ mdDesc }}</Trans>
-          </span>
-        }
-        {
-          <span className={styles.collapsedText}>
-            <Trans i18nKey="query.query-group-options-editor.collapsed-interval">Interval = {{ intervalDesc }}</Trans>
-          </span>
-        }
-      </>
+    // Relative time - custom if explicitly set
+    const hasCustomRelativeTime = !!queryOptions.timeRange?.from;
+    const relativeTime = queryOptions.timeRange?.from ?? '1h';
+    optionItems.push(
+      <span key="relative-time" className={styles.collapsedText}>
+        {renderCustomIndicator(hasCustomRelativeTime)}
+        <span className={styles.collapsedTextLabel}>
+          <Trans i18nKey="query.query-group-options-editor.collapsed-relative-time-label">Relative time</Trans>
+        </span>
+        {' = '}
+        {renderValue(relativeTime, hasCustomRelativeTime)}
+      </span>
     );
+
+    // Time shift - custom if explicitly set
+    const hasCustomTimeShift = !!queryOptions.timeRange?.shift;
+    const timeShift = queryOptions.timeRange?.shift ?? '1h';
+    optionItems.push(
+      <span key="time-shift" className={styles.collapsedText}>
+        {renderCustomIndicator(hasCustomTimeShift)}
+        <span className={styles.collapsedTextLabel}>
+          <Trans i18nKey="query.query-group-options-editor.collapsed-time-shift-label">Time shift</Trans>
+        </span>
+        {' = '}
+        {renderValue(timeShift, hasCustomTimeShift)}
+      </span>
+    );
+
+    return <>{optionItems}</>;
   };
 
   return (
@@ -324,6 +416,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.link,
       cursor: 'pointer',
       fontSize: theme.typography.bodySmall.fontSize,
+      marginLeft: 'auto',
       padding: 0,
       textDecoration: 'none',
       '&:hover': {
@@ -347,6 +440,25 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginInline: theme.spacing(1),
       fontSize: theme.typography.size.sm,
       color: theme.colors.text.secondary,
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
+    collapsedTextLabel: css({
+      color: theme.colors.text.primary,
+    }),
+    collapsedTextValue: css({
+      color: theme.colors.text.secondary,
+    }),
+    collapsedTextValueCustom: css({
+      color: theme.visualization.getColorByName('green'),
+    }),
+    customIndicator: css({
+      width: 6,
+      height: 6,
+      borderRadius: theme.shape.radius.circle,
+      backgroundColor: theme.visualization.getColorByName('green'),
+      flexShrink: 0,
     }),
   };
 };
