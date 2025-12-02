@@ -84,7 +84,15 @@ export function useRealtimeSync(options: RealtimeSyncOptions): RealtimeSyncStatu
             try {
               // Handle message events
               if (isLiveChannelMessageEvent(event)) {
-                const operation: CRDTOperation = event.message;
+                const message: any = event.message;
+
+                // Skip cursor-related messages (handled by useCursorSync)
+                if (message.type === 'cursor_update' || message.type === 'cursor_leave' || message.type === 'viewport_update') {
+                  return;
+                }
+
+                // Handle CRDT operations
+                const operation: CRDTOperation = message;
 
                 // Skip if this is our own operation
                 if (operation.nodeId === nodeId) {

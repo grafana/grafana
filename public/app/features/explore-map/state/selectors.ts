@@ -26,8 +26,26 @@ function getCRDTManager(state: ExploreMapCRDTState): CRDTStateManager {
  * Select all panels as a Record (for compatibility with existing UI)
  */
 export const selectPanels = createSelector(
-  [(state: ExploreMapCRDTState) => state],
-  (state): Record<string, ExploreMapPanel> => {
+  [
+    (state: ExploreMapCRDTState) => state.crdtStateJSON,
+    (state: ExploreMapCRDTState) => state.nodeId,
+    (state: ExploreMapCRDTState) => state.uid,
+  ],
+  (crdtStateJSON, nodeId, uid): Record<string, ExploreMapPanel> => {
+    const state: ExploreMapCRDTState = {
+      uid,
+      crdtStateJSON,
+      nodeId,
+      sessionId: '', // Not needed for panel selection
+      pendingOperations: [],
+      local: {
+        viewport: { zoom: 1, panX: 0, panY: 0 },
+        selectedPanelIds: [],
+        cursors: {},
+        isOnline: false,
+        isSyncing: false,
+      },
+    };
     const manager = getCRDTManager(state);
     const panels: Record<string, ExploreMapPanel> = {};
 
@@ -141,6 +159,13 @@ export const selectHasPendingOperations = (state: ExploreMapCRDTState): boolean 
  */
 export const selectNodeId = (state: ExploreMapCRDTState): string => {
   return state.nodeId;
+};
+
+/**
+ * Select session ID
+ */
+export const selectSessionId = (state: ExploreMapCRDTState): string => {
+  return state.sessionId;
 };
 
 /**

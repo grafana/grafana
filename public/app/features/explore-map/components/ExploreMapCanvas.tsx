@@ -7,9 +7,9 @@ import { useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { useTransformContext } from '../context/TransformContext';
-import { useMockCursors } from '../hooks/useMockCursors';
+import { useCursorSync } from '../hooks/useCursorSync';
 import { selectPanel as selectPanelCRDT, updateViewport as updateViewportCRDT, selectMultiplePanels as selectMultiplePanelsCRDT } from '../state/crdtSlice';
-import { selectPanels, selectViewport, selectCursors, selectSelectedPanelIds } from '../state/selectors';
+import { selectPanels, selectViewport, selectCursors, selectSelectedPanelIds, selectMapUid } from '../state/selectors';
 
 import { ExploreMapPanelContainer } from './ExploreMapPanelContainer';
 import { UserCursor } from './UserCursor';
@@ -34,9 +34,13 @@ export function ExploreMapCanvas() {
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
   const cursors = useSelector((state) => selectCursors(state.exploreMapCRDT));
   const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
+  const mapUid = useSelector((state) => selectMapUid(state.exploreMapCRDT));
 
-  // Initialize mock cursors
-  useMockCursors();
+  // Initialize cursor sync
+  const { updatePosition } = useCursorSync({
+    mapUid: mapUid || '',
+    enabled: !!mapUid,
+  });
 
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent) => {
@@ -82,20 +86,28 @@ export function ExploreMapCanvas() {
 
   const handleCanvasMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isSelecting || !selectionRect) {
+      // Get position relative to the canvas element, not the event target
+      if (!canvasRef.current) {
         return;
       }
 
-      const canvasX = e.nativeEvent.offsetX;
-      const canvasY = e.nativeEvent.offsetY;
+      const canvasRect = canvasRef.current.getBoundingClientRect();
+      const canvasX = e.clientX - canvasRect.left;
+      const canvasY = e.clientY - canvasRect.top;
 
-      setSelectionRect({
-        ...selectionRect,
-        currentX: canvasX,
-        currentY: canvasY,
-      });
+      // Update cursor position for all sessions
+      updatePosition(canvasX, canvasY);
+
+      // Handle selection rectangle if dragging
+      if (isSelecting && selectionRect) {
+        setSelectionRect({
+          ...selectionRect,
+          currentX: canvasX,
+          currentY: canvasY,
+        });
+      }
     },
-    [isSelecting, selectionRect]
+    [isSelecting, selectionRect, updatePosition]
   );
 
   const handleCanvasMouseUp = useCallback(
@@ -201,7 +213,7 @@ export function ExploreMapCanvas() {
   );
 
   return (
-    <div className={styles.canvasWrapper}>
+    <div className={styles.canvasWrapper} onMouseMove={handleCanvasMouseMove}>
       <TransformWrapper
         ref={contextTransformRef}
         initialScale={viewport.zoom}
@@ -228,7 +240,6 @@ export function ExploreMapCanvas() {
             className={styles.canvas}
             onClick={handleCanvasClick}
             onMouseDown={handleCanvasMouseDown}
-            onMouseMove={handleCanvasMouseMove}
             onMouseUp={handleCanvasMouseUp}
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
@@ -244,7 +255,7 @@ export function ExploreMapCanvas() {
               return <ExploreMapPanelContainer key={`${panel.id}-v${panel.remoteVersion || 0}`} panel={panel} />;
             })}
             {Object.values(cursors).map((cursor) => (
-              <UserCursor key={cursor.userId} cursor={cursor} />
+              <UserCursor key={cursor.sessionId} cursor={cursor} />
             ))}
             {selectionRect && (
               <div

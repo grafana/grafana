@@ -50,7 +50,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       pointerEvents: 'none',
       zIndex: 10000,
-      transition: 'left 0.15s ease-out, top 0.15s ease-out',
+      // Smooth transition matching the update frequency (100ms)
+      // Using linear for more predictive movement
+      transition: 'left 0.1s linear, top 0.1s linear',
+      // Will-change hint for better performance
+      willChange: 'left, top',
     }),
     cursorSvg: css({
       display: 'block',

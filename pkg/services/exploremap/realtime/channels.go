@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -61,9 +62,61 @@ func (h *ExploreMapChannelHandler) OnSubscribe(ctx context.Context, user identit
 	}, backend.SubscribeStreamStatusOK, nil
 }
 
+// messageType represents the type of message being sent
+type messageType string
+
+const (
+	MessageTypeCursorUpdate  messageType = "cursor_update"
+	MessageTypeCursorLeave   messageType = "cursor_leave"
+	MessageTypeViewportUpdate messageType = "viewport_update"
+)
+
 // OnPublish is called when a client publishes to the channel
 func (h *ExploreMapChannelHandler) OnPublish(ctx context.Context, user identity.Requester, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
-	// Parse operation
+	// First, peek at the message to see if it has a "type" field that matches cursor message types
+	var msgPeek struct {
+		Type messageType `json:"type"`
+	}
+	if err := json.Unmarshal(e.Data, &msgPeek); err == nil {
+		// Check if this is a cursor/viewport message
+		if msgPeek.Type == MessageTypeCursorUpdate || msgPeek.Type == MessageTypeCursorLeave || msgPeek.Type == MessageTypeViewportUpdate {
+			// This is a cursor message, enrich it with user info and broadcast
+			var msg struct {
+				Type      messageType     `json:"type"`
+				SessionID string          `json:"sessionId"`
+				UserID    string          `json:"userId"`
+				UserName  string          `json:"userName"`
+				Timestamp int64           `json:"timestamp"`
+				Data      json.RawMessage `json:"data"`
+			}
+			if err := json.Unmarshal(e.Data, &msg); err != nil {
+				logger.Warn("Failed to parse cursor message", "error", err)
+				return model.PublishReply{}, backend.PublishStreamStatusPermissionDenied, fmt.Errorf("invalid cursor message format")
+			}
+
+			// Enrich with user info
+			msg.UserID = user.GetRawIdentifier()
+			msg.UserName = user.GetName()
+			if msg.UserName == "" {
+				msg.UserName = user.GetLogin()
+			}
+			msg.Timestamp = time.Now().UnixMilli()
+
+			// Marshal enriched message
+			enrichedData, err := json.Marshal(msg)
+			if err != nil {
+				logger.Warn("Failed to marshal enriched cursor message", "error", err)
+				return model.PublishReply{}, backend.PublishStreamStatusPermissionDenied, fmt.Errorf("internal error")
+			}
+
+			// Broadcast to all subscribers
+			return model.PublishReply{
+				Data: enrichedData,
+			}, backend.PublishStreamStatusOK, nil
+		}
+	}
+
+	// Not a cursor message, treat as CRDT operation
 	var op crdt.Operation
 	if err := json.Unmarshal(e.Data, &op); err != nil {
 		logger.Warn("Failed to parse operation", "error", err)

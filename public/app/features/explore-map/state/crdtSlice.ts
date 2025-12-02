@@ -28,6 +28,9 @@ export interface ExploreMapCRDTState {
   // Node ID for this client
   nodeId: string;
 
+  // Session ID for this browser tab (unique per tab)
+  sessionId: string;
+
   // Operation queue (not serialized, reconstructed on load)
   pendingOperations: CRDTOperation[];
 
@@ -48,16 +51,18 @@ const initialViewport: CanvasViewport = {
 };
 
 /**
- * Create initial state with a new node ID
+ * Create initial state with a new node ID and session ID
  */
 export function createInitialCRDTState(mapUid?: string): ExploreMapCRDTState {
   const nodeId = uuidv4();
+  const sessionId = uuidv4();
   const manager = new CRDTStateManager(mapUid || '', nodeId);
 
   return {
     uid: mapUid,
     crdtStateJSON: JSON.stringify(manager.toJSON()),
     nodeId,
+    sessionId,
     pendingOperations: [],
     local: {
       viewport: initialViewport,
@@ -109,6 +114,9 @@ const crdtSlice = createSlice({
     loadState: (state, action: PayloadAction<{ crdtState: any }>) => {
       const manager = CRDTStateManager.fromJSON(action.payload.crdtState, state.nodeId);
       saveCRDTManager(state, manager);
+      // Restore uid from the loaded CRDT state
+      const crdtState = manager.getState();
+      state.uid = crdtState.uid;
     },
 
     /**
@@ -550,17 +558,17 @@ const crdtSlice = createSlice({
     },
 
     /**
-     * Update cursor position
+     * Update cursor position (keyed by sessionId to support multiple sessions per user)
      */
     updateCursor: (state, action: PayloadAction<UserCursor>) => {
-      state.local.cursors[action.payload.userId] = action.payload;
+      state.local.cursors[action.payload.sessionId] = action.payload;
     },
 
     /**
-     * Remove cursor
+     * Remove cursor (by sessionId)
      */
-    removeCursor: (state, action: PayloadAction<{ userId: string }>) => {
-      delete state.local.cursors[action.payload.userId];
+    removeCursor: (state, action: PayloadAction<{ sessionId: string }>) => {
+      delete state.local.cursors[action.payload.sessionId];
     },
 
     /**

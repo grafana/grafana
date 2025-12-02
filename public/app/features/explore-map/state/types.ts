@@ -47,6 +47,7 @@ export interface CanvasViewport {
 
 export interface UserCursor {
   userId: string;
+  sessionId: string;
   userName: string;
   color: string;
   x: number;
