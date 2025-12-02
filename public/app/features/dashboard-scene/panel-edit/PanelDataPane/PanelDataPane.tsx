@@ -32,16 +32,13 @@ import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
 import { QueryTransformList, QueryTransformItem } from './QueryTransformList';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId } from './types';
+import { isDataTransformerConfig, queryItemId, transformItemId } from './utils';
 
 export interface PanelDataPaneState extends SceneObjectState {
   tabs: PanelDataPaneTab[];
   tab: TabId;
   panelRef: SceneObjectRef<VizPanel>;
 }
-
-const querySelectedId = (refId: string) => `query-${refId}`;
-const transformSelectedId = (index: number) => `transform-${index}`;
-const expressionSelectedId = (refId: string) => `expression-${refId}`;
 
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
@@ -131,11 +128,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       }
 
       if (updatedQuery) {
-        setSelectedId(
-          updatedQuery.datasource?.type === '__expr__'
-            ? expressionSelectedId(updatedQuery.refId)
-            : querySelectedId(updatedQuery.refId)
-        );
+        setSelectedId(queryItemId(updatedQuery));
       }
     });
   }, [queryRunner]);
@@ -147,45 +140,29 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   // Build combined items list
   const items: QueryTransformItem[] = useMemo(() => {
     const result: QueryTransformItem[] = [];
-
-    // Add queries and expressions (using actual array index)
-    const queries = queryRunnerState?.queries || [];
-    queries.forEach((query, actualIndex) => {
-      if ('refId' in query) {
-        if (isExpressionQuery(query)) {
-          result.push({
-            id: expressionSelectedId(query.refId),
-            type: 'expression',
-            data: query,
-            index: actualIndex, // Store actual index in queries array
-          });
-        } else {
-          result.push({
-            id: querySelectedId(query.refId),
-            type: 'query',
-            data: query,
-            index: actualIndex, // Store actual index in queries array
-          });
-        }
-      }
-    });
-
-    // Add transformations
-    const rawTransformations = transformerState?.transformations || [];
-    const transformations = Array.isArray(rawTransformations)
-      ? rawTransformations.filter(
-          (t): t is DataTransformerConfig =>
-            t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
-        )
-      : [];
-    transformations.forEach((transform, index) => {
+    const queries = queryRunnerState?.queries;
+    for (let i = 0; i < (queries?.length ?? 0); i++) {
+      const query = queries![i];
       result.push({
-        id: `transform-${index}`,
-        type: 'transform',
-        data: transform,
-        index,
+        id: queryItemId(query),
+        type: isExpressionQuery(query) ? 'expression' : 'query',
+        data: query,
+        index: i, // Store actual index in queries array
       });
-    });
+    }
+
+    const transformations = transformerState?.transformations;
+    for (let i = 0; i < (transformations?.length ?? 0); i++) {
+      const transform = transformations![i];
+      if (isDataTransformerConfig(transform)) {
+        result.push({
+          id: transformItemId(i),
+          type: 'transform',
+          data: transform,
+          index: i,
+        });
+      }
+    }
 
     return result;
   }, [queryRunnerState?.queries, transformerState?.transformations]);
@@ -214,7 +191,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       setTimeout(() => {
         const newQueries = getQueryRunnerFor(panel)?.state.queries || [];
         if (newQueries.length > 0) {
-          setSelectedId(querySelectedId(newQueries[newQueries.length - 1].refId));
+          setSelectedId(queryItemId(newQueries[newQueries.length - 1]));
         }
       }, 100);
     }
@@ -254,7 +231,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         queryRunner.runQueries();
 
         // Select the new expression
-        setSelectedId(expressionSelectedId(nextRefId));
+        setSelectedId(queryItemId(newExpression));
       }
     },
     [queryRunner]
@@ -268,15 +245,9 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
       const transformsTab = tabs.find((t) => t.tabId === TabId.Transformations);
       if (transformsTab instanceof PanelDataTransformationsTab) {
-        const transformer = transformsTab.getDataTransformer();
-        const rawTransformations = transformer.state.transformations || [];
-        const transformations = Array.isArray(rawTransformations)
-          ? rawTransformations.filter(
-              (t): t is DataTransformerConfig =>
-                t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
-            )
-          : [];
-
+        const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
+          isDataTransformerConfig
+        );
         const newTransformation: DataTransformerConfig = {
           id: selected.value,
           options: {},
@@ -287,7 +258,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
         // Select the newly added transformation
         setTimeout(() => {
-          setSelectedId(transformSelectedId(transformations.length));
+          setSelectedId(transformItemId(transformations.length));
         }, 100);
       }
     },
@@ -319,7 +290,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           queryRunner.runQueries();
 
           // Select the new query
-          setSelectedId(querySelectedId(newRefId));
+          setSelectedId(queryItemId(duplicatedQuery));
         }
       }
     },
@@ -335,7 +306,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         queryRunner.runQueries();
 
         // Clear selection if removing the selected query
-        if (selectedId === querySelectedId(queries[index]?.refId)) {
+        if (selectedId === queryItemId(queries[index])) {
           setSelectedId(null);
         }
       }
@@ -380,7 +351,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           queryRunner.setState({ queries: newQueries });
           queryRunner.runQueries();
 
-          setSelectedId(expressionSelectedId(newRefId));
+          setSelectedId(queryItemId(duplicatedExpression));
         }
       }
     },
@@ -396,7 +367,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         queryRunner.runQueries();
 
         const expressionToRemove = queries[index];
-        if (expressionToRemove && selectedId === expressionSelectedId(expressionToRemove.refId)) {
+        if (expressionToRemove && selectedId === queryItemId(expressionToRemove)) {
           setSelectedId(null);
         }
       }
@@ -418,21 +389,16 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   const handleRemoveTransform = useCallback(
     (index: number) => {
-      const transformsTab = tabs.find((t) => t.tabId === TabId.Transformations);
-      if (transformsTab instanceof PanelDataTransformationsTab) {
-        const transformer = transformsTab.getDataTransformer();
-        const rawTransformations = transformer.state.transformations || [];
-        const transformations = Array.isArray(rawTransformations)
-          ? rawTransformations.filter(
-              (t): t is DataTransformerConfig =>
-                t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
-            )
-          : [];
+      const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
+      if (transformsTab) {
+        const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
+          isDataTransformerConfig
+        );
         const newTransformations = transformations.filter((_, i) => i !== index);
         transformsTab.onChangeTransformations(newTransformations);
 
         // Clear selection if removing the selected transformation
-        if (selectedId === transformSelectedId(index)) {
+        if (selectedId === transformItemId(index)) {
           setSelectedId(null);
         }
       }
@@ -464,6 +430,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             onDuplicateQuery={handleDuplicateQuery}
             onRemoveQuery={handleRemoveQuery}
             onToggleQueryVisibility={handleToggleQueryVisibility}
+            // TODO: can all the expression stuff just be handled with the query handlers since expressions are queries?
             onDuplicateExpression={handleDuplicateExpression}
             onRemoveExpression={handleRemoveExpression}
             onToggleExpressionVisibility={handleToggleExpressionVisibility}

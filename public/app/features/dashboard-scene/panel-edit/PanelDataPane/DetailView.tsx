@@ -59,14 +59,14 @@ export const DetailView = memo(({ selectedItem, panel, tabs }: DetailViewProps) 
         );
       }
     } else {
-      const transformsTab = tabs.find((t) => t.tabId === TabId.Transformations);
-      if (transformsTab instanceof PanelDataTransformationsTab && 'id' in selectedItem.data) {
+      const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
+      if (transformsTab && 'id' in selectedItem.data) {
         return (
           <>
             <DetailViewHeader selectedItem={selectedItem} panel={panel} />
             <ScrollContainer>
               <Container>
-                <PanelDataTransformationsTabRendered model={transformsTab} />
+                <PanelDataTransformationsTabRendered model={transformsTab} selectedIdx={selectedItem.index} />
               </Container>
             </ScrollContainer>
           </>

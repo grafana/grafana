@@ -24,7 +24,7 @@ import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
-import { findSqlExpression, scrollToQueryRow } from './utils';
+import { findSqlExpression, isDataTransformerConfig, scrollToQueryRow } from './utils';
 
 const SET_TIMEOUT = 750;
 
@@ -67,19 +67,17 @@ export class PanelDataTransformationsTab
   }
 }
 
-export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
+export function PanelDataTransformationsTabRendered({
+  model,
+  selectedIdx,
+}: SceneComponentProps<PanelDataTransformationsTab> & { selectedIdx?: number }) {
   const sourceData = model.getQueryRunner().useState();
-  const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
+  const { data, transformations: rawTransformations } = model.getDataTransformer().useState();
 
   // Type guard to ensure transformations are DataTransformerConfig[]
   const transformations = useMemo<DataTransformerConfig[]>(() => {
-    return Array.isArray(transformsWrongType)
-      ? transformsWrongType.filter(
-          (t): t is DataTransformerConfig =>
-            t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
-        )
-      : [];
-  }, [transformsWrongType]);
+    return Array.isArray(rawTransformations) ? rawTransformations.filter(isDataTransformerConfig) : [];
+  }, [rawTransformations]);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
 
@@ -159,7 +157,12 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   return (
     <>
-      <TransformationsEditor data={sourceData.data} transformations={transformations} model={model} />
+      <TransformationsEditor
+        data={sourceData.data}
+        transformations={transformations}
+        model={model}
+        selectedIdx={selectedIdx}
+      />
       {transformationsDrawer}
     </>
   );
@@ -169,9 +172,10 @@ interface TransformationEditorProps {
   transformations: DataTransformerConfig[];
   model: PanelDataTransformationsTab;
   data: PanelData;
+  selectedIdx?: number;
 }
 
-function TransformationsEditor({ transformations, model, data }: TransformationEditorProps) {
+function TransformationsEditor({ transformations, model, data, selectedIdx }: TransformationEditorProps) {
   const transformationEditorRows = transformations.map((t, i) => ({ id: `${i} - ${t.id}`, transformation: t }));
   const styles = useStyles2(getStyles);
 
@@ -211,6 +215,7 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
                   }}
                   configs={transformationEditorRows}
                   data={data}
+                  selectedIdx={selectedIdx}
                 ></TransformationOperationRows>
                 {provided.placeholder}
               </div>

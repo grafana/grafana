@@ -8,6 +8,8 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataQuery } from '@grafana/scenes';
 import { Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
 
+import { queryItemId, transformItemId } from './utils';
+
 interface QueryTransformCardProps {
   item: SceneDataQuery | DataTransformerConfig;
   type: 'query' | 'transform' | 'expression';
@@ -69,7 +71,7 @@ export const QueryTransformCard = memo(
         onClick={onClick}
         onKeyDown={handleKeyDown}
         data-testid={`${type}-card-${index}`}
-        data-card-id={'refId' in item ? item.refId : `transform-${index}`}
+        data-card-id={'refId' in item ? queryItemId(item) : transformItemId(index)}
       >
         {/* Header with type and action icons */}
         <div
