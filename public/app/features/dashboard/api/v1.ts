@@ -206,6 +206,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     }
   }
 
+  async listDashboardHistory(uid: string) {
+    return await this.client.list({
+      labelSelector: 'grafana.app/get-history=true',
+      fieldSelector: `metadata.name=${uid}`,
+    });
+  }
+
   async listDeletedDashboards(options: ListDeletedDashboardsOptions) {
     return await this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
   }

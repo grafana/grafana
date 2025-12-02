@@ -181,6 +181,13 @@ export class K8sDashboardV2API
     };
   }
 
+  async listDashboardHistory(uid: string) {
+    return await this.client.list({
+      labelSelector: 'grafana.app/get-history=true',
+      fieldSelector: `metadata.name=${uid}`,
+    });
+  }
+
   listDeletedDashboards(options: ListDeletedDashboardsOptions) {
     return this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
   }
