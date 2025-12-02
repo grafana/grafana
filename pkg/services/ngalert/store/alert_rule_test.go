@@ -2082,6 +2082,84 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		}
 	})
 
+	t.Run("filter by SearchDataSource", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		// Create rules with different datasources
+		const (
+			uid1     = "uid-1"
+			uid2     = "uid-2"
+			uid3     = "uid-3"
+			rule1UID = "rule-1"
+			rule2UID = "rule-2"
+			rule3UID = "rule-3"
+			rule4UID = "rule-4"
+			rule5UID = "rule-5"
+			rule6UID = "rule-6"
+		)
+
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule1UID), models.RuleGen.WithDataSourceUID(uid1)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule2UID), models.RuleMuts.WithDataSourceUID(uid2)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule3UID), models.RuleMuts.WithDataSourceUID(uid3)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule4UID), models.RuleGen.WithDataSourceUID(uid1, uid2)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule5UID), models.RuleMuts.WithDataSourceUID(uid2, uid3)))
+		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule6UID), models.RuleMuts.WithDataSourceUID(uid1, uid2, uid3)))
+
+		tc := []struct {
+			name         string
+			dsSearch     []string
+			expectedUIDs []string
+		}{
+			{
+				name:         "search for uid-1 returns rules using it",
+				dsSearch:     []string{uid1},
+				expectedUIDs: []string{rule1UID, rule4UID, rule6UID},
+			},
+			{
+				name:         "search for uid-1 and uid-2 returns rules using them",
+				dsSearch:     []string{uid1, uid2},
+				expectedUIDs: []string{rule1UID, rule2UID, rule4UID, rule5UID, rule6UID},
+			},
+			{
+				name:         "search for uid-1, uid-2, and uid-3 returns all rules",
+				dsSearch:     []string{uid1, uid2, uid3},
+				expectedUIDs: []string{rule1UID, rule2UID, rule3UID, rule4UID, rule5UID, rule6UID},
+			},
+			{
+				name:     "search for a non-existing UID should return no rules",
+				dsSearch: []string{"non-existing"},
+			},
+			{
+				name:         "search for uid-1 and a non-existing UID should return the rules using uid-1",
+				dsSearch:     []string{"non-existing", uid1},
+				expectedUIDs: []string{rule1UID, rule4UID, rule6UID},
+			},
+			{
+				name:         "no data source filter should return all rules",
+				expectedUIDs: []string{rule1UID, rule2UID, rule3UID, rule4UID, rule5UID, rule6UID},
+			},
+		}
+
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesQuery{
+					OrgID:             orgID,
+					SearchDataSources: tt.dsSearch,
+				}
+				result, err := store.ListAlertRules(context.Background(), query)
+				require.NoError(t, err)
+
+				got := make([]string, 0, len(result))
+				for _, r := range result {
+					got = append(got, r.UID)
+				}
+				require.ElementsMatch(t, tt.expectedUIDs, got)
+			})
+		}
+	})
+
 	t.Run("filter by SearchTitle", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
