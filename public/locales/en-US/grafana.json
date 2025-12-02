@@ -7330,7 +7330,8 @@
       "title-failed-volume-query": "Failed to load log volume for this query",
       "title-no-logs-volume-available": "No logs volume available",
       "title-showing-partial-data": "Showing partial data",
-      "title-unable-to-show-log-volume": "Unable to show log volume"
+      "title-unable-to-show-log-volume": "Unable to show log volume",
+      "visible-range-description": "Range from oldest to newest logs in display"
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
