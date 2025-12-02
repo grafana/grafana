@@ -1986,13 +1986,41 @@ This setting has precedence over each individual rule frequency.
 If a rule frequency is lower than this value, then this value is enforced.
 {{< /admonition >}}
 
-<hr>
+#### `state_periodic_save_interval`
+
+If the `alertingSaveStatePeriodic` feature flag is enabled, sets the interval used to persist alerting instances to the database. Specify a duration (for example, `5m`). Default is `5m`.
+
+#### `state_periodic_save_batch_size`
+
+If the `alertingSaveStatePeriodic` feature flag is enabled, sets the size of the batch that is saved to the database at once. Default is `1`.
+
+#### `state_periodic_save_jitter_enabled`
+
+Enables jitter for periodic state saving to distribute database load over time. When enabled, batches are spread across the save interval to prevent load spikes. Default is `false`.
+
+#### `disable_jitter`
+
+Disables smoothing of alert evaluations across their evaluation window. When set to `true`, rules evaluate in sync. Default is `false`.
+
+#### `notification_log_retention`
+
+Retention period for Alertmanager notification log entries. Specify a duration (for example, `5d`). Default is `5d`.
+
+#### `resolved_alert_retention`
+
+Duration for which a resolved alert state transition continues to be sent to the Alertmanager. Specify a duration (for example, `15m`). Default is `15m`.
 
 #### `rule_version_record_limit`
 
 Defines the limits for how many alert rule versions are stored in the database per alert rule.
 
 The default `0` value means there's no limit.
+
+#### `deleted_rule_retention`
+
+Retention period for deleted alerting rules before permanent removal. Specify a duration (for example, `30d`). Default is `30d`. Setting `0` deletes rules immediately.
+
+<hr>
 
 ### `[unified_alerting.screenshots]`
 
