@@ -40,23 +40,67 @@ export function ExploreMapDrilldownPanel({
     return Object.values(panels).find((p) => p.exploreId === exploreId);
   });
 
-  // Build iframe URL - use saved URL if available, otherwise default
-  // IMPORTANT: Only compute this once on mount to prevent iframe reloads
-  const [drilldownUrl] = useState(() => {
-    // If we have a saved iframe URL from previous session, use it
-    if (panel?.mode === mode && panel?.iframeUrl) {
-      return panel.iframeUrl;
-    }
-    // Otherwise, construct the default URL
+  // Initialize URL from panel state or default
+  const initialUrl = (() => {
     const origin = window.location.origin;
     const subUrl = config.appSubUrl || '';
     return `${origin}${subUrl}${appPath}`;
-  });
+  })();
+
+  const [drilldownUrl, setDrilldownUrl] = useState(initialUrl);
+  const lastLocalUrlRef = useRef<string | undefined>(undefined);
+  const lastRemoteUrlRef = useRef<string | undefined>(undefined);
+  const isInitialMountRef = useRef(true);
 
   // Initialize immediately for drilldown panels
   useEffect(() => {
     setIsInitialized(true);
   }, []);
+
+  // Update iframe URL when panel becomes available or URL changes
+  useEffect(() => {
+    if (!isInitialized) {
+      return;
+    }
+
+    // Wait for panel to be available
+    if (!panel) {
+      return;
+    }
+
+    // Get the current URL from panel state
+    const currentUrl = panel.mode === mode && panel.iframeUrl
+      ? panel.iframeUrl
+      : initialUrl;
+    
+    // On initial mount, set the URL immediately
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      if (currentUrl !== drilldownUrl) {
+        setDrilldownUrl(currentUrl);
+      }
+      return;
+    }
+    
+    // Skip if this is the same URL we already have
+    if (currentUrl === drilldownUrl) {
+      return;
+    }
+    
+    // Skip if this is a local update we just made
+    if (currentUrl === lastLocalUrlRef.current) {
+      return;
+    }
+    
+    // Skip if we already processed this remote URL
+    if (currentUrl === lastRemoteUrlRef.current) {
+      return;
+    }
+    
+    // This is a new remote URL - update the iframe
+    lastRemoteUrlRef.current = currentUrl;
+    setDrilldownUrl(currentUrl);
+  }, [panel?.iframeUrl, isInitialized, panel, drilldownUrl, mode, appPath, initialUrl]);
 
   // Auto-save iframe URL changes for drilldown panels
   useEffect(() => {
@@ -81,12 +125,23 @@ export function ExploreMapDrilldownPanel({
         const currentUrl = iframe.contentWindow?.location.href;
         if (currentUrl && currentUrl !== lastSavedUrl) {
           lastSavedUrl = currentUrl;
+          // Mark this as a local update so we don't reload the iframe when the CRDT syncs back
+          lastLocalUrlRef.current = currentUrl;
+          // Clear the remote URL marker since we're updating locally
+          lastRemoteUrlRef.current = undefined;
           dispatch(
             updatePanelIframeUrl({
               panelId,
               iframeUrl: currentUrl,
             })
           );
+          // Clear the local URL marker after a delay to allow for remote updates
+          setTimeout(() => {
+            // Only clear if it's still the same URL (no new local navigation happened)
+            if (lastLocalUrlRef.current === currentUrl) {
+              lastLocalUrlRef.current = undefined;
+            }
+          }, 2000);
         } else if (!currentUrl) {
           console.log('No URL detected');
         }
