@@ -3227,6 +3227,9 @@
             "type": "string",
             "default": ""
           },
+          "regexApplyTo": {
+            "type": "string"
+          },
           "skipUrlSync": {
             "type": "boolean",
             "default": false
