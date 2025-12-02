@@ -3,13 +3,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, ButtonGroup, ConfirmModal, Input, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, ConfirmModal, Input, ToolbarButton, UsersIndicator, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { useTransformContext } from '../context/TransformContext';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
 import { updateMapTitle } from '../state/crdtSlice';
-import { selectPanelCount, selectViewport, selectMapTitle } from '../state/selectors';
+import { selectPanelCount, selectViewport, selectMapTitle, selectActiveUsers } from '../state/selectors';
 
 interface ExploreMapToolbarProps {
   uid?: string;
@@ -28,6 +28,7 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
   const panelCount = useSelector((state) => selectPanelCount(state.exploreMapCRDT));
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
   const mapTitle = useSelector((state) => selectMapTitle(state.exploreMapCRDT));
+  const activeUsers = useSelector((state) => selectActiveUsers(state.exploreMapCRDT));
 
   useEffect(() => {
     if (mapTitle) {
@@ -185,6 +186,11 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
         </div>
 
         <div className={styles.toolbarSection}>
+          {activeUsers.length > 0 && (
+            <div className={styles.activeUsersContainer}>
+              <UsersIndicator users={activeUsers} limit={5} />
+            </div>
+          )}
           <ButtonGroup>
             <ToolbarButton
               icon="save"
@@ -275,6 +281,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       fontStyle: 'italic',
+    }),
+    activeUsersContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      marginRight: theme.spacing(2),
     }),
   };
 };

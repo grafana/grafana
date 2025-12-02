@@ -299,6 +299,48 @@ export const selectCRDTStateJSON = (state: ExploreMapCRDTState): string | undefi
 };
 
 /**
+ * Select active users from cursors
+ * Groups by userId and filters out stale cursors (not updated in last 15 minutes)
+ */
+export const selectActiveUsers = createSelector(
+  [selectCursors],
+  (cursors) => {
+    const now = Date.now();
+    const STALE_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
+
+    // Group cursors by userId and keep the most recent one for each user
+    const userMap = new Map<string, { userId: string; userName: string; lastUpdated: number }>();
+
+    for (const cursor of Object.values(cursors)) {
+      // Filter out stale cursors
+      if (now - cursor.lastUpdated > STALE_THRESHOLD_MS) {
+        continue;
+      }
+
+      // Keep the most recent cursor for each user
+      const existing = userMap.get(cursor.userId);
+      if (!existing || cursor.lastUpdated > existing.lastUpdated) {
+        userMap.set(cursor.userId, {
+          userId: cursor.userId,
+          userName: cursor.userName,
+          lastUpdated: cursor.lastUpdated,
+        });
+      }
+    }
+
+    // Convert to UserView format for UsersIndicator component
+    return Array.from(userMap.values())
+      .map((user) => ({
+        user: {
+          name: user.userName,
+        },
+        lastActiveAt: new Date(user.lastUpdated).toISOString(),
+      }))
+      .sort((a, b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime());
+  }
+);
+
+/**
  * Select the entire legacy-compatible state
  * Useful for gradual migration
  */
