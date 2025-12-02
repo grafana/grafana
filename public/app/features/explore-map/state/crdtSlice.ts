@@ -202,6 +202,7 @@ const crdtSlice = createSlice({
     addPanel: (state, action: PayloadAction<{
       viewportSize?: { width: number; height: number };
       position?: { x: number; y: number; width: number; height: number };
+      kind?: 'explore' | 'traces-drilldown';
     }>) => {
       const manager = getCRDTManager(state);
 
@@ -225,8 +226,9 @@ const crdtSlice = createSlice({
       // Create operation
       const panelId = uuidv4();
       const exploreId = generateExploreId();
+      const mode = action.payload.kind || 'explore';
 
-      const operation = manager.createAddPanelOperation(panelId, exploreId, position);
+      const operation = manager.createAddPanelOperation(panelId, exploreId, position, mode);
 
       // Apply locally
       manager.applyOperation(operation);
@@ -399,6 +401,29 @@ const crdtSlice = createSlice({
     },
 
     /**
+     * Update panel iframe URL
+     */
+    updatePanelIframeUrl: (
+      state,
+      action: PayloadAction<{ panelId: string; iframeUrl: string | undefined }>
+    ) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createUpdatePanelIframeUrlOperation(
+        action.payload.panelId,
+        action.payload.iframeUrl
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+      state.pendingOperations.push(operation);
+    },
+
+    /**
      * Update map title
      */
     updateMapTitle: (state, action: PayloadAction<{ title: string }>) => {
@@ -435,7 +460,8 @@ const crdtSlice = createSlice({
           y: sourcePanel.position.y + offset,
           width: sourcePanel.position.width,
           height: sourcePanel.position.height,
-        }
+        },
+        sourcePanel.mode || 'explore'
       );
 
       manager.applyOperation(addOperation);
@@ -563,6 +589,7 @@ export const {
   updatePanelSize,
   bringPanelToFront,
   savePanelExploreState,
+  updatePanelIframeUrl,
   updateMapTitle,
   duplicatePanel,
   clearPendingOperations,

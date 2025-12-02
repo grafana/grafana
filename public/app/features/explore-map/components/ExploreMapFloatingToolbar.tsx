@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, ButtonGroup, Dropdown, Menu, MenuItem, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types/store';
 
 import { addPanel } from '../state/crdtSlice';
@@ -11,6 +11,7 @@ import { addPanel } from '../state/crdtSlice';
 export function ExploreMapFloatingToolbar() {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleAddPanel = useCallback(() => {
     dispatch(
@@ -21,13 +22,51 @@ export function ExploreMapFloatingToolbar() {
         },
       })
     );
+    setIsOpen(false);
   }, [dispatch]);
+
+  const handleAddTracesDrilldownPanel = useCallback(() => {
+    dispatch(
+      addPanel({
+        viewportSize: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+        kind: 'traces-drilldown',
+      })
+    );
+    setIsOpen(false);
+  }, [dispatch]);
+
+  const MenuActions = () => (
+    <Menu>
+      <MenuItem
+        label={t('explore-map.toolbar.add-panel', 'Add Explore panel')}
+        icon="plus"
+        onClick={handleAddPanel}
+      />
+      <MenuItem
+        label={t('explore-map.toolbar.add-traces-drilldown-panel', 'Add Traces Drilldown panel')}
+        icon="drilldown"
+        onClick={handleAddTracesDrilldownPanel}
+      />
+    </Menu>
+  );
 
   return (
     <div className={styles.floatingToolbar}>
-      <Button icon="plus" onClick={handleAddPanel} variant="primary">
-        <Trans i18nKey="explore-map.toolbar.add-panel">Add Panel</Trans>
-      </Button>
+      <ButtonGroup>
+        <Button icon="plus" onClick={handleAddPanel} variant="primary">
+          <Trans i18nKey="explore-map.toolbar.add-panel">Add panel</Trans>
+        </Button>
+        <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
+          <Button
+            aria-label={t('explore-map.toolbar.add-panel-dropdown', 'Add panel options')}
+            variant="primary"
+            icon={isOpen ? 'angle-up' : 'angle-down'}
+          />
+        </Dropdown>
+      </ButtonGroup>
     </div>
   );
 }

@@ -15,6 +15,11 @@ import {
 interface AddPanelPayload {
   position?: Partial<PanelPosition>;
   viewportSize?: { width: number; height: number };
+  /**
+   * Optional panel mode. Defaults to 'explore' for backward compatibility.
+   * Use 'traces-drilldown' to embed the Explore Traces drilldown app.
+   */
+  mode?: 'explore' | 'traces-drilldown';
 }
 
 const exploreMapSlice = createSlice({
@@ -24,6 +29,7 @@ const exploreMapSlice = createSlice({
     addPanel: (state, action: PayloadAction<AddPanelPayload>) => {
       const panelId = uuidv4();
       const exploreId = generateExploreId();
+      const mode = action.payload.mode ?? 'explore';
 
       // Calculate center of current viewport in canvas coordinates
       const viewportSize = action.payload.viewportSize || { width: 1920, height: 1080 };
@@ -45,6 +51,7 @@ const exploreMapSlice = createSlice({
       state.panels[panelId] = {
         id: panelId,
         exploreId: exploreId,
+        mode,
         position: { ...defaultPosition, ...action.payload.position },
       };
       state.nextZIndex++;
@@ -58,11 +65,18 @@ const exploreMapSlice = createSlice({
 
     updatePanelPosition: (
       state,
-      action: PayloadAction<{ panelId: string; position: Partial<PanelPosition> }>
+      action: PayloadAction<{ panelId: string; position: Partial<PanelPosition & { iframeUrl?: string }> }>
     ) => {
       const panel = state.panels[action.payload.panelId];
       if (panel) {
-        panel.position = { ...panel.position, ...action.payload.position };
+        // Handle position updates
+        const { iframeUrl, ...positionUpdates } = action.payload.position;
+        panel.position = { ...panel.position, ...positionUpdates };
+        
+        // Handle iframe URL updates separately
+        if (iframeUrl !== undefined) {
+          panel.iframeUrl = iframeUrl;
+        }
       }
     },
 
@@ -176,6 +190,7 @@ const exploreMapSlice = createSlice({
         state.panels[newPanelId] = {
           id: newPanelId,
           exploreId: newExploreId,
+          mode: sourcePanel.mode ?? 'explore',
           position: {
             ...sourcePanel.position,
             x: sourcePanel.position.x + 30,
@@ -207,7 +222,16 @@ const exploreMapSlice = createSlice({
       return {
         ...initialExploreMapState,
         ...loadedState,
-        panels: loadedState.panels || {},
+        panels: Object.fromEntries(
+          Object.entries(loadedState.panels || {}).map(([panelId, panel]) => [
+            panelId,
+            {
+              ...panel,
+              // Default to 'explore' for canvases saved before panel modes existed
+              mode: panel.mode ?? 'explore',
+            },
+          ])
+        ),
         selectedPanelIds: [],
         cursors: {},
       };

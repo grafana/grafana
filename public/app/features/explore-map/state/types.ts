@@ -23,6 +23,17 @@ export interface ExploreMapPanel {
   position: PanelPosition;
   exploreState?: SerializedExploreState;
   remoteVersion?: number; // Increments only on remote explore state updates
+  /**
+   * Panel mode determines what kind of content is rendered inside the panel.
+   * - 'explore': standard Explore pane (current behavior)
+   * - 'traces-drilldown': Traces Drilldown app
+   */
+  mode: 'explore' | 'traces-drilldown';
+  /**
+   * For iframe-based panels (like traces-drilldown), store the complete URL
+   * including query parameters to restore state on reload
+   */
+  iframeUrl?: string;
 }
 
 export interface CanvasViewport {

@@ -6,6 +6,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
+import { SerializedExploreState } from '../state/types';
+
 import { HybridLogicalClock } from './hlc';
 import { LWWRegister, createLWWRegister } from './lwwregister';
 import { ORSet } from './orset';
@@ -20,11 +23,11 @@ import {
   UpdatePanelSizeOperation,
   UpdatePanelZIndexOperation,
   UpdatePanelExploreStateOperation,
+  UpdatePanelIframeUrlOperation,
   UpdateTitleOperation,
   OperationResult,
   CRDTExploreMapStateJSON,
 } from './types';
-import { SerializedExploreState } from '../state/types';
 
 export class CRDTStateManager {
   private state: CRDTExploreMapState;
@@ -111,6 +114,8 @@ export class CRDTStateManager {
         zIndex: data.zIndex.get(),
       },
       exploreState: data.exploreState.get(),
+      mode: data.mode.get(),
+      iframeUrl: data.iframeUrl.get(),
       remoteVersion: data.remoteVersion,
     };
   }
@@ -135,7 +140,8 @@ export class CRDTStateManager {
   createAddPanelOperation(
     panelId: string,
     exploreId: string,
-    position: { x: number; y: number; width: number; height: number }
+    position: { x: number; y: number; width: number; height: number },
+    mode: 'explore' | 'traces-drilldown' = 'explore'
   ): AddPanelOperation {
     const timestamp = this.clock.tick();
     return {
@@ -148,6 +154,7 @@ export class CRDTStateManager {
         panelId,
         exploreId,
         position,
+        mode,
       },
     };
   }
@@ -280,6 +287,31 @@ export class CRDTStateManager {
   }
 
   /**
+   * Create an update panel iframe URL operation
+   */
+  createUpdatePanelIframeUrlOperation(
+    panelId: string,
+    iframeUrl: string | undefined
+  ): UpdatePanelIframeUrlOperation | null {
+    if (!this.state.panels.contains(panelId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'update-panel-iframe-url',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        panelId,
+        iframeUrl,
+      },
+    };
+  }
+
+  /**
    * Create an update title operation
    */
   createUpdateTitleOperation(title: string): UpdateTitleOperation {
@@ -317,6 +349,8 @@ export class CRDTStateManager {
           return this.applyUpdatePanelZIndex(operation);
         case 'update-panel-explore-state':
           return this.applyUpdatePanelExploreState(operation);
+        case 'update-panel-iframe-url':
+          return this.applyUpdatePanelIframeUrl(operation);
         case 'update-title':
           return this.applyUpdateTitle(operation);
         case 'batch':
@@ -338,7 +372,8 @@ export class CRDTStateManager {
   }
 
   private applyAddPanel(operation: AddPanelOperation): OperationResult {
-    const { panelId, exploreId, position } = operation.payload;
+    const { panelId, exploreId, position, mode } = operation.payload;
+    const panelMode = mode || 'explore';
 
     // Add to OR-Set with operation ID as tag
     this.state.panels.add(panelId, operation.operationId);
@@ -356,6 +391,8 @@ export class CRDTStateManager {
         height: new LWWRegister(position.height, operation.timestamp),
         zIndex: new LWWRegister(zIndex, operation.timestamp),
         exploreState: new LWWRegister(undefined, operation.timestamp),
+        mode: new LWWRegister(panelMode, operation.timestamp),
+        iframeUrl: new LWWRegister(undefined, operation.timestamp),
         remoteVersion: 0,
       });
     }
@@ -446,6 +483,22 @@ export class CRDTStateManager {
     };
   }
 
+  private applyUpdatePanelIframeUrl(operation: UpdatePanelIframeUrlOperation): OperationResult {
+    const { panelId, iframeUrl } = operation.payload;
+    const panelData = this.state.panelData.get(panelId);
+
+    if (!panelData) {
+      return { success: true, applied: false, error: 'Panel not found' };
+    }
+
+    const updated = panelData.iframeUrl.set(iframeUrl, operation.timestamp);
+
+    return {
+      success: true,
+      applied: updated,
+    };
+  }
+
   private applyUpdateTitle(operation: UpdateTitleOperation): OperationResult {
     const { title } = operation.payload;
     const updated = this.state.title.set(title, operation.timestamp);
@@ -502,6 +555,8 @@ export class CRDTStateManager {
           height: otherPanelData.height.clone(),
           zIndex: otherPanelData.zIndex.clone(),
           exploreState: otherPanelData.exploreState.clone(),
+          mode: otherPanelData.mode.clone(),
+          iframeUrl: otherPanelData.iframeUrl.clone(),
           remoteVersion: otherPanelData.remoteVersion,
         });
       } else {
@@ -512,6 +567,8 @@ export class CRDTStateManager {
         myPanelData.height.merge(otherPanelData.height);
         myPanelData.zIndex.merge(otherPanelData.zIndex);
         myPanelData.exploreState.merge(otherPanelData.exploreState);
+        myPanelData.mode.merge(otherPanelData.mode);
+        myPanelData.iframeUrl.merge(otherPanelData.iframeUrl);
       }
     }
 
@@ -535,6 +592,8 @@ export class CRDTStateManager {
         height: data.height.toJSON(),
         zIndex: data.zIndex.toJSON(),
         exploreState: data.exploreState.toJSON(),
+        mode: data.mode.toJSON(),
+        iframeUrl: data.iframeUrl.toJSON(),
         remoteVersion: data.remoteVersion,
       };
     }
@@ -561,6 +620,8 @@ export class CRDTStateManager {
 
     // Load panel data
     for (const [panelId, data] of Object.entries(json.panelData)) {
+      // Get the first timestamp from existing registers for defaults
+      const defaultTimestamp = data.positionX?.timestamp || { nodeId: manager.nodeId, counter: 0, wallClock: Date.now() };
       manager.state.panelData.set(panelId, {
         id: data.id,
         exploreId: data.exploreId,
@@ -570,6 +631,8 @@ export class CRDTStateManager {
         height: LWWRegister.fromJSON(data.height),
         zIndex: LWWRegister.fromJSON(data.zIndex),
         exploreState: LWWRegister.fromJSON(data.exploreState),
+        mode: data.mode ? LWWRegister.fromJSON(data.mode) : new LWWRegister('explore', defaultTimestamp),
+        iframeUrl: data.iframeUrl ? LWWRegister.fromJSON(data.iframeUrl) : new LWWRegister(undefined, defaultTimestamp),
         remoteVersion: data.remoteVersion || 0,
       });
     }

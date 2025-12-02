@@ -14,6 +14,8 @@ import { usePanelStateSync } from '../hooks/usePanelStateSync';
 // import { useExploreStateSync } from '../hooks/useExploreStateSync';
 import { selectPanels } from '../state/selectors';
 
+import { ExploreMapTracesDrilldownPanel } from './ExploreMapTracesDrilldownPanel';
+
 interface ExploreMapPanelContentProps {
   panelId: string;
   exploreId: string;
@@ -118,8 +120,14 @@ export function ExploreMapPanelContent({ panelId, exploreId, width, height }: Ex
     return panels[panelId];
   });
 
-  // Initialize Explore pane on mount
+  // Initialize Explore pane on mount (only for standard Explore panels)
   useEffect(() => {
+    if (panel?.mode === 'traces-drilldown') {
+      // Traces drilldown panels don't need Explore initialization
+      setIsInitialized(true);
+      return;
+    }
+
     const initializePane = async () => {
       // Use saved state if available, otherwise defaults
       const savedState = panel?.exploreState;
@@ -133,7 +141,7 @@ export function ExploreMapPanelContent({ panelId, exploreId, width, height }: Ex
           queries: savedState?.queries || [],
           range: savedState?.range || DEFAULT_RANGE,
           eventBridge: eventBus,
-          compact: savedState?.compact || false,
+          compact: savedState?.compact ?? false,
         })
       );
       setIsInitialized(true);
@@ -146,7 +154,11 @@ export function ExploreMapPanelContent({ panelId, exploreId, width, height }: Ex
       eventBus.removeAllListeners();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, exploreId, eventBus]);
+  }, [dispatch, exploreId, eventBus, panel?.exploreState, panel?.mode]);
+
+  if (panel?.mode === 'traces-drilldown') {
+    return <ExploreMapTracesDrilldownPanel exploreId={exploreId} width={width} height={height} />;
+  }
 
   // Wait for Redux state to be initialized
   if (!isInitialized) {

@@ -5,11 +5,12 @@
  * feature, enabling conflict-free collaborative editing.
  */
 
+import { SerializedExploreState } from '../state/types';
+
+import { HLCTimestamp } from './hlc';
 import { LWWRegister } from './lwwregister';
 import { ORSet } from './orset';
 import { PNCounter } from './pncounter';
-import { HLCTimestamp } from './hlc';
-import { SerializedExploreState } from '../state/types';
 
 /**
  * CRDT state for a single panel
@@ -28,6 +29,12 @@ export interface CRDTPanelData {
 
   // CRDT-replicated explore state
   exploreState: LWWRegister<SerializedExploreState | undefined>;
+
+  // Panel mode (explore or traces-drilldown)
+  mode: LWWRegister<'explore' | 'traces-drilldown'>;
+
+  // Iframe URL for traces-drilldown panels
+  iframeUrl: LWWRegister<string | undefined>;
 
   // Local counter incremented only for remote explore state updates
   remoteVersion: number;
@@ -91,6 +98,8 @@ export interface CRDTExploreMapStateJSON {
     height: { value: number; timestamp: HLCTimestamp };
     zIndex: { value: number; timestamp: HLCTimestamp };
     exploreState: { value: SerializedExploreState | undefined; timestamp: HLCTimestamp };
+    mode: { value: 'explore' | 'traces-drilldown'; timestamp: HLCTimestamp };
+    iframeUrl: { value: string | undefined; timestamp: HLCTimestamp };
     remoteVersion?: number;
   }>;
   zIndexCounter: {
@@ -109,6 +118,7 @@ export type CRDTOperationType =
   | 'update-panel-size'
   | 'update-panel-zindex'
   | 'update-panel-explore-state'
+  | 'update-panel-iframe-url'
   | 'update-title'
   | 'batch';  // For batching multiple operations
 
@@ -137,6 +147,7 @@ export interface AddPanelOperation extends CRDTOperationBase {
       width: number;
       height: number;
     };
+    mode?: 'explore' | 'traces-drilldown';
   };
 }
 
@@ -198,6 +209,17 @@ export interface UpdatePanelExploreStateOperation extends CRDTOperationBase {
 }
 
 /**
+ * Update panel iframe URL operation
+ */
+export interface UpdatePanelIframeUrlOperation extends CRDTOperationBase {
+  type: 'update-panel-iframe-url';
+  payload: {
+    panelId: string;
+    iframeUrl: string | undefined;
+  };
+}
+
+/**
  * Update map title operation
  */
 export interface UpdateTitleOperation extends CRDTOperationBase {
@@ -227,6 +249,7 @@ export type CRDTOperation =
   | UpdatePanelSizeOperation
   | UpdatePanelZIndexOperation
   | UpdatePanelExploreStateOperation
+  | UpdatePanelIframeUrlOperation
   | UpdateTitleOperation
   | BatchOperation;
 
