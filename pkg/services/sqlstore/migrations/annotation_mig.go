@@ -2,6 +2,8 @@ package migrations
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -249,6 +251,13 @@ func (m *SetDashboardUIDMigration) Exec(sess *xorm.Session, mg *Migrator) error 
 
 func RunDashboardUIDMigrations(sess *xorm.Session, driverName string, logger log.Logger) error {
 	batchSize := 5000
+	if size := os.Getenv("ANNOTATION_DASHBOARD_UID_MIGRATION_BATCH_SIZE"); size != "" {
+		n, err := strconv.ParseInt(size, 10, 64)
+		if err == nil {
+			batchSize = int(n)
+		}
+	}
+
 	logger.Info("Starting batched dashboard_uid migration for annotations (newest first)", "batchSize", batchSize)
 	updateSQL := `UPDATE annotation
 		SET dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = annotation.dashboard_id)
