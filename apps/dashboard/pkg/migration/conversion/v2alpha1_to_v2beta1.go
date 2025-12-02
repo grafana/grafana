@@ -548,6 +548,7 @@ func convertDashboardLink_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDashboar
 	out.TargetBlank = in.TargetBlank
 	out.IncludeVars = in.IncludeVars
 	out.KeepTime = in.KeepTime
+	out.Placement = in.Placement
 }
 
 func convertDataLink_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDataLink, out *dashv2beta1.DashboardDataLink) {
@@ -729,6 +730,22 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 				SkipUrlSync:      in.AdhocVariableKind.Spec.SkipUrlSync,
 				Description:      in.AdhocVariableKind.Spec.Description,
 				AllowCustomValue: in.AdhocVariableKind.Spec.AllowCustomValue,
+			},
+		}
+	}
+
+	if in.SwitchVariableKind != nil {
+		out.SwitchVariableKind = &dashv2beta1.DashboardSwitchVariableKind{
+			Kind: in.SwitchVariableKind.Kind,
+			Spec: dashv2beta1.DashboardSwitchVariableSpec{
+				Name:          in.SwitchVariableKind.Spec.Name,
+				Current:       in.SwitchVariableKind.Spec.Current,
+				EnabledValue:  in.SwitchVariableKind.Spec.EnabledValue,
+				DisabledValue: in.SwitchVariableKind.Spec.DisabledValue,
+				Label:         in.SwitchVariableKind.Spec.Label,
+				Hide:          dashv2beta1.DashboardVariableHide(in.SwitchVariableKind.Spec.Hide),
+				SkipUrlSync:   in.SwitchVariableKind.Spec.SkipUrlSync,
+				Description:   in.SwitchVariableKind.Spec.Description,
 			},
 		}
 	}

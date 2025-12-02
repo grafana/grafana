@@ -34,6 +34,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
+			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
 		},
 	})
@@ -106,6 +107,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "rules.alerting.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "historian.alerting.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "correlations.grafana.app",

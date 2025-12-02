@@ -11,7 +11,6 @@ LogsDrilldownSpecv1alpha1: {
 	interceptDismissed: bool
 }
 
-// Users API
 logsdrilldownv1alpha1: {
 	kind:       "LogsDrilldown"  // note: must be uppercase
 	schema: {
@@ -19,7 +18,6 @@ logsdrilldownv1alpha1: {
 	}
 }
 
-// Admins API
 logsdrilldownDefaultsv1alpha1: {
 	kind:       "LogsDrilldownDefaults"  // note: must be uppercase
 	pluralName: "LogsDrilldownDefaults"
