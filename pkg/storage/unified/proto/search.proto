@@ -100,7 +100,7 @@ message ResourceSearchRequest {
 
   int64 permission = 12;
 
-  //  which fields to query against (if empty, defaults to "title")
+  // Fields to query against (if empty, defaults to "title")
   repeated string query_fields = 13;
 }
 

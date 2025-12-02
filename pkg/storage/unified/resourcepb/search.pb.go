@@ -169,7 +169,7 @@ type ResourceSearchRequest struct {
 	IsDeleted  bool  `protobuf:"varint,10,opt,name=is_deleted,json=isDeleted,proto3" json:"is_deleted,omitempty"`
 	Page       int64 `protobuf:"varint,11,opt,name=page,proto3" json:"page,omitempty"`
 	Permission int64 `protobuf:"varint,12,opt,name=permission,proto3" json:"permission,omitempty"`
-	// which fields to query against (if empty, defaults to "title")
+	// Fields to query against (if empty, defaults to "title")
 	QueryFields   []string `protobuf:"bytes,13,rep,name=query_fields,json=queryFields,proto3" json:"query_fields,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
