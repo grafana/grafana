@@ -1347,6 +1347,8 @@ func convertVariablesToV1(variables []dashv2alpha1.DashboardVariableKind, dsInde
 			varMap, err = convertGroupByVariableToV1(variable.GroupByVariableKind, dsIndex)
 		} else if variable.AdhocVariableKind != nil {
 			varMap, err = convertAdhocVariableToV1(variable.AdhocVariableKind, dsIndex)
+		} else if variable.SwitchVariableKind != nil {
+			varMap, err = convertSwitchVariableToV1(variable.SwitchVariableKind)
 		}
 
 		if err == nil && varMap != nil {
@@ -1685,6 +1687,47 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind,
 			defaultKeys = append(defaultKeys, keyMap)
 		}
 		varMap["defaultKeys"] = defaultKeys
+	}
+
+	return varMap, nil
+}
+
+func convertSwitchVariableToV1(variable *dashv2alpha1.DashboardSwitchVariableKind) (map[string]interface{}, error) {
+	spec := variable.Spec
+
+	// Determine which value is selected based on current
+	enabledSelected := spec.Current == spec.EnabledValue
+	disabledSelected := spec.Current == spec.DisabledValue
+
+	varMap := map[string]interface{}{
+		"name":        spec.Name,
+		"type":        "switch",
+		"hide":        transformVariableHideFromEnum(spec.Hide),
+		"skipUrlSync": spec.SkipUrlSync,
+		"query":       "", // Switch variables have empty query in V1
+		"current": map[string]interface{}{
+			"text":  spec.Current,
+			"value": spec.Current,
+		},
+		"options": []map[string]interface{}{
+			{
+				"text":     spec.EnabledValue,
+				"value":    spec.EnabledValue,
+				"selected": enabledSelected,
+			},
+			{
+				"text":     spec.DisabledValue,
+				"value":    spec.DisabledValue,
+				"selected": disabledSelected,
+			},
+		},
+	}
+
+	if spec.Label != nil {
+		varMap["label"] = *spec.Label
+	}
+	if spec.Description != nil {
+		varMap["description"] = *spec.Description
 	}
 
 	return varMap, nil
