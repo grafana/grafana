@@ -200,6 +200,7 @@ jobs:
       - name: Create test user for playwright
         env:
           INSTANCE_SLUG: ephemeral15111821114646titoli
+          SA_TOKEN: ${{ env.SA_TOKEN }}
         run: |
           python3 << 'PYTHON'
 import os, requests, json, random, string
