@@ -400,7 +400,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
-    initialSize: 0.2,
+    initialSize: 0.25,
   });
 
   return (

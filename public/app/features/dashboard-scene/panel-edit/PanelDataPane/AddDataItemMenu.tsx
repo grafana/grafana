@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { Dropdown, IconButton, Menu, Stack, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 interface AddDataItemMenuProps {
@@ -41,6 +41,10 @@ export const AddDataItemMenu = memo(({ onAddQuery, onAddTransform, onAddExpressi
     });
   }
 
+  const expressionSubItems = expressionTypes.map(({ type, label }) => (
+    <Menu.Item key={type} label={label} icon="calculator-alt" onClick={() => onAddExpression(type)} />
+  ));
+
   const menu = (
     <Menu>
       <Menu.Item
@@ -53,27 +57,25 @@ export const AddDataItemMenu = memo(({ onAddQuery, onAddTransform, onAddExpressi
         icon="process"
         onClick={onAddTransform}
       />
-      <Menu.Group label={t('dashboard-scene.add-data-item-menu.expressions-group', 'Expression')}>
-        {expressionTypes.map((expr) => (
-          <Menu.Item
-            key={expr.type}
-            label={expr.label}
-            icon="calculator-alt"
-            onClick={() => onAddExpression(expr.type)}
-          />
-        ))}
-      </Menu.Group>
+      <Menu.Item
+        label={t('dashboard-scene.add-data-item-menu.expressions-group', 'Expression')}
+        icon="calculator-alt"
+        childItems={expressionSubItems}
+      />
     </Menu>
   );
 
   return (
-    <div className={styles.container}>
+    <Stack direction="row" justifyContent="center" alignItems="center">
       <Dropdown overlay={menu} placement="top-start">
-        <Button icon="plus" variant="secondary" fullWidth>
-          <Trans i18nKey="dashboard-scene.add-data-item-menu.add-button">Add</Trans>
-        </Button>
+        <IconButton
+          name="plus-circle"
+          size="xxl"
+          variant="secondary"
+          tooltip={t('dashboard-scene.add-data-item-menu.add-button', 'Add')}
+        />
       </Dropdown>
-    </div>
+    </Stack>
   );
 });
 
