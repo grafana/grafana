@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
+import { clsx } from 'clsx';
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { useUpdateEffect } from 'react-use';
@@ -25,6 +26,7 @@ export interface QueryOperationRowProps {
   disabled?: boolean;
   expanderMessages?: ExpanderMessages;
   hideHeader?: boolean;
+  className?: string;
 }
 
 export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
@@ -50,6 +52,7 @@ export function QueryOperationRow({
   id,
   expanderMessages,
   hideHeader = false,
+  className,
 }: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const styles = useStyles2(getQueryOperationRowStyles, hideHeader);
@@ -114,7 +117,7 @@ export function QueryOperationRow({
         {(provided) => {
           return (
             <>
-              <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
+              <div ref={provided.innerRef} className={clsx(styles.wrapper, className)} {...provided.draggableProps}>
                 {!hideHeader && (
                   <div>
                     <QueryOperationRowHeader
@@ -143,7 +146,7 @@ export function QueryOperationRow({
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={clsx(styles.wrapper, className)}>
       {!hideHeader && (
         <QueryOperationRowHeader
           id={id}

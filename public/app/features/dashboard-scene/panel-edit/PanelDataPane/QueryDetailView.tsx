@@ -13,7 +13,7 @@ import {
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataQuery, VizPanel, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
-import { ErrorBoundaryAlert, useStyles2 } from '@grafana/ui';
+import { Button, ErrorBoundaryAlert, useStyles2 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 import { QueryGroupOptionsEditor } from 'app/features/query/components/QueryGroupOptions';
@@ -343,12 +343,24 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
             collapsable={false}
             isOpen={true}
             hideHeader={true}
+            className={styles.queryOperationRow}
           >
             <div className={styles.queryContent}>
-              {renderQueryEditor()}
               {error && <QueryErrorAlert error={error} />}
+              {renderQueryEditor()}
             </div>
           </QueryOperationRow>
+          <div className={styles.footer}>
+            {renderCollapsedText()}
+            <Button
+              size="xs"
+              icon={showOptions ? 'angle-right' : 'angle-left'}
+              fill="text"
+              onClick={() => setShowOptions(!showOptions)}
+            >
+              <Trans i18nKey="dashboard-scene.query-detail-view.options">Options</Trans>
+            </Button>
+          </div>
         </div>
         {showOptions && datasource && panelData && (
           <div className={styles.optionsColumn}>
@@ -361,12 +373,6 @@ export function QueryDetailView({ panel, query, queryIndex }: QueryDetailViewPro
           </div>
         )}
       </div>
-      <div className={styles.footer}>
-        {renderCollapsedText()}
-        <button type="button" className={styles.optionsLink} onClick={() => setShowOptions(!showOptions)}>
-          <Trans i18nKey="dashboard-scene.query-detail-view.options">Options</Trans>
-        </button>
-      </div>
     </div>
   );
 }
@@ -376,13 +382,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css({
       width: '100%',
       height: '100%',
-      position: 'relative',
     }),
     contentWrapper: css({
       display: 'grid',
       gridTemplateColumns: '1fr',
       width: '100%',
-      minHeight: 'calc(100% - 36px)', // 36px for footer
+      height: '100%',
     }),
     contentWrapperTwoColumn: css({
       gridTemplateColumns: '1fr 0.5fr',
@@ -390,19 +395,28 @@ const getStyles = (theme: GrafanaTheme2) => {
     mainContent: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
+      position: 'relative',
       overflow: 'scroll',
-      padding: theme.spacing(2, 2, 0, 2),
     }),
     queryContent: css({
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      minHeight: '100%',
+      padding: theme.spacing(2),
+      height: '100%',
+      overflow: 'scroll',
+      scrollbarWidth: 'thin',
+      scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
+    }),
+    queryOperationRow: css({
+      marginBottom: '0 !important', // need to beat specificty in the underling component
+      minHeight: 'calc(100% - 49px)', // 49px for the footer
+      overflow: 'scroll',
     }),
     footer: css({
       display: 'flex',
       justifyContent: 'flex-end',
+      alignItems: 'center',
       borderTop: `1px solid ${theme.colors.border.weak}`,
       position: 'sticky',
       bottom: 0,
@@ -410,23 +424,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1, 2),
       background: theme.colors.background.secondary,
     }),
-    optionsLink: css({
-      background: 'none',
-      border: 'none',
-      color: theme.colors.text.link,
-      cursor: 'pointer',
-      fontSize: theme.typography.bodySmall.fontSize,
-      marginLeft: 'auto',
-      padding: 0,
-      textDecoration: 'none',
-      '&:hover': {
-        textDecoration: 'underline',
-      },
-    }),
     optionsColumn: css({
       display: 'flex',
       flexDirection: 'column',
-      paddingLeft: theme.spacing(2),
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.secondary,
       padding: theme.spacing(2),
