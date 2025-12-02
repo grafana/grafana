@@ -200,7 +200,6 @@ export function LogsTable(props: Props) {
                         displayedFields={props.displayedFields}
                         exploreId={props.exploreId}
                         panelState={props.panelState}
-                        visualisationType={props.visualisationType}
                         absoluteRange={props.absoluteRange}
                         logRows={props.logRows}
                         rowIndex={cellProps.rowIndex}
@@ -241,7 +240,6 @@ export function LogsTable(props: Props) {
       props.displayedFields,
       props.exploreId,
       props.panelState,
-      props.visualisationType,
       props.absoluteRange,
       props.logRows,
     ]

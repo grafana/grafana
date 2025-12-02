@@ -23,24 +23,13 @@ interface Props extends CustomCellRendererProps {
   exploreId?: string;
   panelState?: ExploreLogsPanelState;
   displayedFields?: string[];
-  visualisationType?: 'table' | 'logs';
   absoluteRange?: AbsoluteTimeRange;
   logRows?: LogRowModel[];
   index?: number;
 }
 
 export function LogsTableActionButtons(props: Props) {
-  const {
-    exploreId,
-    absoluteRange,
-    logRows,
-    rowIndex,
-    visualisationType,
-    panelState,
-    displayedFields,
-    logsFrame,
-    frame,
-  } = props;
+  const { exploreId, absoluteRange, logRows, rowIndex, panelState, displayedFields, logsFrame, frame } = props;
 
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
@@ -89,7 +78,6 @@ export function LogsTableActionButtons(props: Props) {
         ...currentPaneState.panelsState,
         logs: {
           ...panelState,
-          visualisationType: visualisationType ?? 'table',
           displayedFields: displayedFields ?? [],
         },
       };
@@ -108,7 +96,7 @@ export function LogsTableActionButtons(props: Props) {
     } catch (error) {
       return '';
     }
-  }, [absoluteRange, displayedFields, exploreId, logId, logRows, rowIndex, visualisationType, panelState]);
+  }, [absoluteRange, displayedFields, exploreId, logId, logRows, rowIndex, panelState]);
 
   const handleViewClick = () => {
     setIsInspecting(true);
