@@ -259,15 +259,15 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                   label={t('browse-dashboards.bulk-export-resources-form.path', 'Path')}
                   description={t(
                     'browse-dashboards.bulk-export-resources-form.path-description-with-repo',
-                    'The repository path is shown above. Add a sub-path below to organize exported dashboards.'
+                    'Add a sub-path below to organize exported dashboards.'
                   )}
                 >
                   <Stack direction="row" gap={0} alignItems="stretch">
-                    <Box className={styles.pathPrefix}>
+                    <div className={styles.pathPrefix}>
                       <Text variant="body" color="secondary">
                         {repositoryView.path}
                       </Text>
-                    </Box>
+                    </div>
                     <Input
                       type="text"
                       {...methods.register('path')}
