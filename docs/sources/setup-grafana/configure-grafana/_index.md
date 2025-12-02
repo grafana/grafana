@@ -226,8 +226,8 @@ Dashboards are reloaded when the JSON files change.
 
 #### `min_tls_version`
 
-The TLS Handshake requires a minimum TLS version. The available options are TLS1.2 and TLS1.3.
-If you do not specify a version, the system uses TLS1.2.
+The TLS handshake requires a minimum TLS version. Available options are `TLS1.2` and `TLS1.3`.
+If you don't specify a version, Grafana uses `TLS1.2`.
 
 #### `http_addr`
 
@@ -286,9 +286,9 @@ Set to `true` for Grafana to log all HTTP requests (not just errors). These are 
 
 #### `static_root_path`
 
-The path to the directory where the frontend files (HTML, JS, and CSS
-files). Defaults to `public` which is why the Grafana binary needs to be
-executed with working directory set to the installation path.
+The path to the directory containing the frontend files (HTML, JS, and CSS).
+Defaults to `public`, which is why you must run the Grafana binary with the
+working directory set to the installation path.
 
 #### `enable_gzip`
 
@@ -312,8 +312,8 @@ Optional. Password to decrypt encrypted certificates.
 #### `certs_watch_interval`
 
 Controls whether `cert_key` and `cert_file` are periodically watched for changes.
-Disabled, by default. When enabled, `cert_key` and `cert_file`
-are watched for changes. If there is change, the new certificates are loaded automatically.
+Disabled by default. When enabled, `cert_key` and `cert_file` are watched for
+changes. If there is a change, Grafana loads the new certificates automatically.
 
 {{< admonition type="warning" >}}
 After the new certificates are loaded, connections with old certificates don't work.
@@ -392,6 +392,10 @@ The database user's password (not applicable for `sqlite3`). If the password con
 
 Use either URL or the previous fields to configure the database
 Example: `type://user:password@host:port/name`
+
+#### `high_availability`
+
+Enable or disable high availability mode. When disabled, some functions run in-process instead of relying on the database. Default is `true`.
 
 #### `max_idle_conn`
 
@@ -475,6 +479,10 @@ This setting applies to `sqlite` only and controls the number of times the syste
 
 Set to `true` to add metrics and tracing for database queries. The default value is `false`.
 
+#### `delete_auto_gen_ids`
+
+Delete auto-generated primary keys during migrations. Useful if the database has auto-generated primary keys enabled. Default is `false`.
+
 #### `skip_dashboard_uid_migration_on_startup`
 
 Set to true to skip dashboard UID migrations on startup. Improves startup performance for instances with large numbers of annotations who do not plan to downgrade Grafana. The default value is `false`.
@@ -516,6 +524,14 @@ Example connection string: `addr=127.0.0.1:6379,pool_size=100,db=0,username=graf
 
 Example connection string: `127.0.0.1:11211`
 
+#### `prefix`
+
+Prefix prepended to all keys in the remote cache.
+
+#### `encryption`
+
+Enable encryption of values stored in the remote cache.
+
 <hr />
 
 ### `[dataproxy]`
@@ -529,6 +545,10 @@ This enables data proxy logging, default is `false`.
 How long the data proxy should wait before timing out. Default is 30 seconds.
 
 This setting also applies to core backend HTTP data sources where query requests use an HTTP client with timeout set.
+
+#### `dialTimeout`
+
+How long the data proxy waits to establish a TCP connection before timing out. Default is `10` seconds.
 
 #### `keep_alive_seconds`
 
@@ -1665,6 +1685,10 @@ Custom HTTP endpoint to send events captured by the Grafana Faro agent to. Defau
 #### `api_key`
 
 If `custom_endpoint` required authentication, you can set the API key here. Only relevant for Grafana JavaScript Agent provider.
+
+#### `internal_logger_level`
+
+Sets the internal logging level for the Grafana JavaScript agent. Allowed values are `0` (OFF), `1` (ERROR), `2` (WARN), `3` (INFO), and `4` (VERBOSE). Default is `0`.
 
 #### `instrumentations_console_enabled`
 
@@ -3154,6 +3178,82 @@ Format: `<pageUrl> = <sectionId> <sortWeight>`
 ### `[public_dashboards]`
 
 This section configures the [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/) feature.
+
+### `[cloud_migration]`
+
+Configure the Grafana Cloud Migration Assistant.
+
+#### `enabled`
+
+Enable or disable the Cloud Migration Assistant. Default is `true`.
+
+#### `is_target`
+
+Enable the target-side migration UI. Default is `false`.
+
+#### `gcom_api_token`
+
+Token used to send requests to Grafana com. Default is empty.
+
+#### `start_snapshot_timeout`
+
+Timeout for requests to start a snapshot. Default is `5s`.
+
+#### `validate_key_timeout`
+
+Timeout for requests to validate a key. Default is `5s`.
+
+#### `get_snapshot_status_timeout`
+
+Timeout for requests to get snapshot status. Default is `5s`.
+
+#### `create_upload_url_timeout`
+
+Timeout for requests to create a presigned upload URL. Default is `5s`.
+
+#### `report_event_timeout`
+
+Timeout for requests to report an event. Default is `5s`.
+
+#### `fetch_instance_timeout`
+
+Timeout for requests to fetch an instance. Default is `5s`.
+
+#### `create_access_policy_timeout`
+
+Timeout for requests to create an access policy. Default is `5s`.
+
+#### `fetch_access_policy_timeout`
+
+Timeout for requests to fetch an access policy. Default is `5s`.
+
+#### `delete_access_policy_timeout`
+
+Timeout for requests to delete an access policy. Default is `5s`.
+
+#### `domain`
+
+Domain name used to access the cloud migration service. Default is `grafana.net`.
+
+#### `snapshot_folder`
+
+Folder used to store snapshot files. Default is empty (home dir).
+
+#### `frontend_poll_interval`
+
+Polling interval for the frontend UI while resources are migrating. Default is `2s`.
+
+#### `alert_rules_state`
+
+Controls how alert rules are migrated. Options are `paused` or `unchanged`. Default is `"paused"`.
+
+{{< adomition type="note" >}}
+For more information, refer to the [Prevent duplicated alert notifications](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/migration-guide/cloud-migration-assistant/#prevent-duplicated-alert-notifications) documentation.
+{{< /admonition >}}
+
+#### `resource_storage_type`
+
+Resource snapshot storage type. Options are `db` (database) or `fs` (file system). Default is `"db"`.
 
 #### `enabled`
 
