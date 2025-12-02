@@ -25,7 +25,6 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
-import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
