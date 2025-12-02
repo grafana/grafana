@@ -7,9 +7,10 @@ import { UserCursor as UserCursorType } from '../state/types';
 
 interface UserCursorProps {
   cursor: UserCursorType;
+  zoom: number;
 }
 
-export function UserCursor({ cursor }: UserCursorProps) {
+export function UserCursor({ cursor, zoom }: UserCursorProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -18,6 +19,8 @@ export function UserCursor({ cursor }: UserCursorProps) {
       style={{
         left: cursor.x,
         top: cursor.y,
+        transform: `scale(${1 / zoom})`,
+        transformOrigin: 'top left',
       }}
     >
       <svg
@@ -52,9 +55,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: 10000,
       // Smooth transition matching the update frequency (100ms)
       // Using linear for more predictive movement
-      transition: 'left 0.1s linear, top 0.1s linear',
+      // Also transition transform for smooth scaling when zoom changes
+      transition: 'left 0.1s linear, top 0.1s linear, transform 0.2s ease-out',
       // Will-change hint for better performance
-      willChange: 'left, top',
+      willChange: 'left, top, transform',
     }),
     cursorSvg: css({
       display: 'block',

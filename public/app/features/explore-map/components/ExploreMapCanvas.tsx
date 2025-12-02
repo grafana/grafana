@@ -254,7 +254,7 @@ export function ExploreMapCanvas() {
               return <ExploreMapPanelContainer key={panel.id} panel={panel} />;
             })}
             {Object.values(cursors).map((cursor) => (
-              <UserCursor key={cursor.sessionId} cursor={cursor} />
+              <UserCursor key={cursor.sessionId} cursor={cursor} zoom={viewport.zoom} />
             ))}
             {selectionRect && (
               <div
