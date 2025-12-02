@@ -3,7 +3,6 @@ import { memo, useState, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
 import { Button, Drawer, Field, Modal, Switch, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
@@ -39,10 +38,10 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
           console.error('Failed to export dashboard:', dashboardJson.error);
           return;
         }
-        openSaveAsDialog(dashboardJson);
+        openSaveAsDialog(dashboardJson as Record<string, unknown> & { title?: string });
       });
     } else {
-      openSaveAsDialog(dashboard.getSaveModelClone());
+      openSaveAsDialog(dashboard.getSaveModelClone() as Record<string, unknown> & { title?: string });
     }
   };
 
@@ -61,7 +60,7 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
     }
   };
 
-  const openSaveAsDialog = (dash: { title?: string; [key: string]: unknown }) => {
+  const openSaveAsDialog = (dash: Record<string, unknown> & { title?: string }) => {
     const dashboardJsonPretty = JSON.stringify(dash, null, 2);
     const blob = new Blob([dashboardJsonPretty], {
       type: 'application/json;charset=utf-8',
