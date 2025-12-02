@@ -96,20 +96,20 @@ export const selectFolderWithAllDashboards = createAsyncThunk(
     { dispatch, getState }
   ) => {
     const state = getState().browseDashboards;
-    
+
     // Find the folder item to get its parentUID and managedBy
     const folderItem = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, folderUID);
-    
+
     if (!isSelected) {
       // When deselecting, use the normal action - it will handle deselecting all children recursively
-      dispatch(setItemSelectionState({ 
-        item: { 
-          kind: 'folder', 
-          uid: folderUID, 
-          parentUID: folderItem?.parentUID, 
-          managedBy: folderItem?.managedBy 
-        }, 
-        isSelected: false 
+      dispatch(setItemSelectionState({
+        item: {
+          kind: 'folder',
+          uid: folderUID,
+          parentUID: folderItem?.parentUID,
+          managedBy: folderItem?.managedBy
+        },
+        isSelected: false
       }));
       return;
     }
@@ -119,28 +119,28 @@ export const selectFolderWithAllDashboards = createAsyncThunk(
     const dashboardUIDs = await collectAllDashboardsUnderFolder(folderUID);
 
     // First, select the folder itself
-    dispatch(setItemSelectionState({ 
-      item: { 
-        kind: 'folder', 
-        uid: folderUID, 
-        parentUID: folderItem?.parentUID, 
-        managedBy: folderItem?.managedBy 
-      }, 
-      isSelected: true 
+    dispatch(setItemSelectionState({
+      item: {
+        kind: 'folder',
+        uid: folderUID,
+        parentUID: folderItem?.parentUID,
+        managedBy: folderItem?.managedBy
+      },
+      isSelected: true
     }));
 
     // Then select all dashboards found
     // We need to get the parentUID for each dashboard from the state
     for (const dashboardUID of dashboardUIDs) {
       const dashboardItem = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, dashboardUID);
-      dispatch(setItemSelectionState({ 
-        item: { 
-          kind: 'dashboard', 
-          uid: dashboardUID, 
-          parentUID: dashboardItem?.parentUID, 
-          managedBy: dashboardItem?.managedBy 
-        }, 
-        isSelected: true 
+      dispatch(setItemSelectionState({
+        item: {
+          kind: 'dashboard',
+          uid: dashboardUID,
+          parentUID: dashboardItem?.parentUID,
+          managedBy: dashboardItem?.managedBy
+        },
+        isSelected: true
       }));
     }
   }
