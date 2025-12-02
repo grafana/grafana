@@ -202,7 +202,7 @@ const crdtSlice = createSlice({
     addPanel: (state, action: PayloadAction<{
       viewportSize?: { width: number; height: number };
       position?: { x: number; y: number; width: number; height: number };
-      kind?: 'explore' | 'traces-drilldown' | 'metrics-drilldown';
+      kind?: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown';
     }>) => {
       const manager = getCRDTManager(state);
 
@@ -214,8 +214,12 @@ const crdtSlice = createSlice({
       const mode = action.payload.kind || 'explore';
       
       // Set default panel size based on panel type
-      // Drilldown panels (traces and metrics) are larger to accommodate the iframe content
-      const isDrilldownPanel = mode === 'traces-drilldown' || mode === 'metrics-drilldown';
+      // Drilldown panels are larger to accommodate the iframe content
+      const isDrilldownPanel =
+        mode === 'traces-drilldown' ||
+        mode === 'metrics-drilldown' ||
+        mode === 'profiles-drilldown' ||
+        mode === 'logs-drilldown';
       const defaultWidth = isDrilldownPanel ? 1000 : 600;
       const defaultHeight = isDrilldownPanel ? 550 : 400;
       

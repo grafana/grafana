@@ -141,7 +141,7 @@ export class CRDTStateManager {
     panelId: string,
     exploreId: string,
     position: { x: number; y: number; width: number; height: number },
-    mode: 'explore' | 'traces-drilldown' | 'metrics-drilldown' = 'explore'
+    mode: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown' = 'explore'
   ): AddPanelOperation {
     const timestamp = this.clock.tick();
     return {

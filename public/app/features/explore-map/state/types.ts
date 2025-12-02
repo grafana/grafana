@@ -28,8 +28,10 @@ export interface ExploreMapPanel {
    * - 'explore': standard Explore pane (current behavior)
    * - 'traces-drilldown': Traces Drilldown app
    * - 'metrics-drilldown': Metrics Drilldown app
+   * - 'profiles-drilldown': Profiles Drilldown app
+   * - 'logs-drilldown': Logs Drilldown app
    */
-  mode: 'explore' | 'traces-drilldown' | 'metrics-drilldown';
+  mode: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown';
   /**
    * For iframe-based panels (like traces-drilldown), store the complete URL
    * including query parameters to restore state on reload

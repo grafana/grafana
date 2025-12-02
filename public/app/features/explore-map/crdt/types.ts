@@ -30,8 +30,8 @@ export interface CRDTPanelData {
   // CRDT-replicated explore state
   exploreState: LWWRegister<SerializedExploreState | undefined>;
 
-  // Panel mode (explore, traces-drilldown, or metrics-drilldown)
-  mode: LWWRegister<'explore' | 'traces-drilldown' | 'metrics-drilldown'>;
+  // Panel mode (explore, traces-drilldown, metrics-drilldown, profiles-drilldown, or logs-drilldown)
+  mode: LWWRegister<'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown'>;
 
   // Iframe URL for traces-drilldown panels
   iframeUrl: LWWRegister<string | undefined>;
@@ -98,7 +98,7 @@ export interface CRDTExploreMapStateJSON {
     height: { value: number; timestamp: HLCTimestamp };
     zIndex: { value: number; timestamp: HLCTimestamp };
     exploreState: { value: SerializedExploreState | undefined; timestamp: HLCTimestamp };
-    mode: { value: 'explore' | 'traces-drilldown' | 'metrics-drilldown'; timestamp: HLCTimestamp };
+    mode: { value: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown'; timestamp: HLCTimestamp };
     iframeUrl: { value: string | undefined; timestamp: HLCTimestamp };
     remoteVersion?: number;
   }>;
@@ -147,7 +147,7 @@ export interface AddPanelOperation extends CRDTOperationBase {
       width: number;
       height: number;
     };
-    mode?: 'explore' | 'traces-drilldown' | 'metrics-drilldown';
+    mode?: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown';
   };
 }
 

@@ -51,6 +51,32 @@ export function ExploreMapFloatingToolbar() {
     setIsOpen(false);
   }, [dispatch]);
 
+  const handleAddProfilesDrilldownPanel = useCallback(() => {
+    dispatch(
+      addPanel({
+        viewportSize: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+        kind: 'profiles-drilldown',
+      })
+    );
+    setIsOpen(false);
+  }, [dispatch]);
+
+  const handleAddLogsDrilldownPanel = useCallback(() => {
+    dispatch(
+      addPanel({
+        viewportSize: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+        kind: 'logs-drilldown',
+      })
+    );
+    setIsOpen(false);
+  }, [dispatch]);
+
   const MenuActions = () => (
     <Menu>
       <MenuItem
@@ -59,14 +85,24 @@ export function ExploreMapFloatingToolbar() {
         onClick={handleAddPanel}
       />
       <MenuItem
+        label={t('explore-map.toolbar.add-metrics-drilldown-panel', 'Add Metrics Drilldown panel')}
+        icon="chart-line"
+        onClick={handleAddMetricsDrilldownPanel}
+      />
+      <MenuItem
+        label={t('explore-map.toolbar.add-logs-drilldown-panel', 'Add Logs Drilldown panel')}
+        icon="file-alt"
+        onClick={handleAddLogsDrilldownPanel}
+      />
+      <MenuItem
         label={t('explore-map.toolbar.add-traces-drilldown-panel', 'Add Traces Drilldown panel')}
         icon="drilldown"
         onClick={handleAddTracesDrilldownPanel}
       />
       <MenuItem
-        label={t('explore-map.toolbar.add-metrics-drilldown-panel', 'Add Metrics Drilldown panel')}
-        icon="chart-line"
-        onClick={handleAddMetricsDrilldownPanel}
+        label={t('explore-map.toolbar.add-profiles-drilldown-panel', 'Add Profiles Drilldown panel')}
+        icon="clock-nine"
+        onClick={handleAddProfilesDrilldownPanel}
       />
     </Menu>
   );
