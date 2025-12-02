@@ -401,7 +401,7 @@ func TestIntegrationProvisioning_ExportSpecificResourcesEmptyList(t *testing.T) 
 		SubResource("jobs").
 		Body(body).
 		SetHeader("Content-Type", "application/json").
-		Do(helper.Context())
+		Do(ctx)
 
 	err := result.Error()
 	require.Error(t, err, "should fail validation when resources list is empty")
