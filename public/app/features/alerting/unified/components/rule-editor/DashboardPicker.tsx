@@ -322,7 +322,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 };
 
 export function getVisualPanels(dashboardDTO: DashboardResponse | undefined) {
-  if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
+  if (!dashboardDTO) {
     return [];
   }
 

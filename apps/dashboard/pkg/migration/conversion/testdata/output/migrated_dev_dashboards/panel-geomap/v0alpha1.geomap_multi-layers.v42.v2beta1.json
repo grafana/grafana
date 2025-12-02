@@ -1,0 +1,549 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "metadata": {
+    "name": "v0alpha1.geomap_multi-layers.v42"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "datasource",
+            "version": "v0",
+            "datasource": {
+              "name": "grafana"
+            },
+            "spec": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            }
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Multi layers",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "9.0.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "config": {},
+                  "name": "Layer 0",
+                  "type": "default"
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "config": {
+                      "rules": [
+                        {
+                          "check": {
+                            "operation": "eq",
+                            "property": "name",
+                            "value": "Greenland"
+                          },
+                          "style": {
+                            "color": {
+                              "fixed": "light-blue"
+                            },
+                            "opacity": 0.4,
+                            "rotation": {
+                              "fixed": 0,
+                              "max": 360,
+                              "min": -360,
+                              "mode": "mod"
+                            },
+                            "size": {
+                              "fixed": 5,
+                              "max": 15,
+                              "min": 2
+                            },
+                            "symbol": {
+                              "fixed": "img/icons/marker/circle.svg",
+                              "mode": "fixed"
+                            },
+                            "textConfig": {
+                              "fontSize": 12,
+                              "offsetX": 0,
+                              "offsetY": 0,
+                              "textAlign": "center",
+                              "textBaseline": "middle"
+                            }
+                          }
+                        },
+                        {
+                          "check": {
+                            "operation": "eq",
+                            "property": "name",
+                            "value": "Antarctica"
+                          },
+                          "style": {
+                            "color": {
+                              "fixed": "#FCE2DE"
+                            },
+                            "opacity": 0.4,
+                            "rotation": {
+                              "fixed": 0,
+                              "max": 360,
+                              "min": -360,
+                              "mode": "mod"
+                            },
+                            "size": {
+                              "fixed": 5,
+                              "max": 15,
+                              "min": 2
+                            },
+                            "symbol": {
+                              "fixed": "img/icons/marker/circle.svg",
+                              "mode": "fixed"
+                            },
+                            "textConfig": {
+                              "fontSize": 12,
+                              "offsetX": 0,
+                              "offsetY": 0,
+                              "textAlign": "center",
+                              "textBaseline": "middle"
+                            }
+                          }
+                        },
+                        {
+                          "check": {
+                            "operation": "eq",
+                            "property": "name",
+                            "value": "Canada"
+                          },
+                          "style": {
+                            "color": {
+                              "fixed": "#37872D"
+                            },
+                            "opacity": 0.4,
+                            "rotation": {
+                              "fixed": 0,
+                              "max": 360,
+                              "min": -360,
+                              "mode": "mod"
+                            },
+                            "size": {
+                              "fixed": 5,
+                              "max": 15,
+                              "min": 2
+                            },
+                            "symbol": {
+                              "fixed": "img/icons/marker/circle.svg",
+                              "mode": "fixed"
+                            },
+                            "textConfig": {
+                              "fontSize": 12,
+                              "offsetX": 0,
+                              "offsetY": 0,
+                              "textAlign": "center",
+                              "textBaseline": "middle"
+                            }
+                          }
+                        },
+                        {
+                          "check": {
+                            "operation": "eq",
+                            "property": "name",
+                            "value": "Mexico"
+                          },
+                          "style": {
+                            "color": {
+                              "fixed": "#1F60C4"
+                            },
+                            "opacity": 0.4,
+                            "rotation": {
+                              "fixed": 0,
+                              "max": 360,
+                              "min": -360,
+                              "mode": "mod"
+                            },
+                            "size": {
+                              "fixed": 5,
+                              "max": 15,
+                              "min": 2
+                            },
+                            "symbol": {
+                              "fixed": "img/icons/marker/circle.svg",
+                              "mode": "fixed"
+                            },
+                            "textConfig": {
+                              "fontSize": 12,
+                              "offsetX": 0,
+                              "offsetY": 0,
+                              "textAlign": "center",
+                              "textBaseline": "middle"
+                            }
+                          }
+                        }
+                      ],
+                      "src": "public/maps/countries.geojson",
+                      "style": {
+                        "color": {
+                          "fixed": "dark-green"
+                        },
+                        "opacity": 0.1,
+                        "rotation": {
+                          "fixed": 0,
+                          "max": 360,
+                          "min": -360,
+                          "mode": "mod"
+                        },
+                        "size": {
+                          "fixed": 5,
+                          "max": 15,
+                          "min": 2
+                        },
+                        "symbol": {
+                          "fixed": "img/icons/marker/circle.svg",
+                          "mode": "fixed"
+                        },
+                        "textConfig": {
+                          "fontSize": 12,
+                          "offsetX": 0,
+                          "offsetY": 0,
+                          "textAlign": "center",
+                          "textBaseline": "middle"
+                        }
+                      }
+                    },
+                    "name": "Countries",
+                    "type": "geojson"
+                  },
+                  {
+                    "config": {
+                      "showLegend": true,
+                      "style": {
+                        "color": {
+                          "fixed": "dark-blue"
+                        },
+                        "opacity": 0.4,
+                        "rotation": {
+                          "fixed": 0,
+                          "max": 360,
+                          "min": -360,
+                          "mode": "mod"
+                        },
+                        "size": {
+                          "fixed": 5,
+                          "max": 15,
+                          "min": 2
+                        },
+                        "symbol": {
+                          "fixed": "img/icons/marker/square.svg",
+                          "mode": "fixed"
+                        },
+                        "text": {
+                          "field": "Count",
+                          "fixed": "",
+                          "mode": "field"
+                        },
+                        "textConfig": {
+                          "fontSize": 16,
+                          "offsetX": 10,
+                          "offsetY": 10,
+                          "textAlign": "center",
+                          "textBaseline": "middle"
+                        }
+                      }
+                    },
+                    "location": {
+                      "mode": "auto"
+                    },
+                    "name": "Flights",
+                    "type": "markers"
+                  }
+                ],
+                "view": {
+                  "id": "coords",
+                  "lat": 42.826559,
+                  "lon": -96.868893,
+                  "zoom": 3.58
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Markers",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvFileName": "flight_info_by_state.csv",
+                        "scenarioId": "csv_file"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "geomap",
+            "version": "9.0.0-pre",
+            "spec": {
+              "options": {
+                "basemap": {
+                  "config": {},
+                  "name": "Layer 0",
+                  "type": "default"
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "config": {
+                      "showLegend": true,
+                      "style": {
+                        "color": {
+                          "fixed": "dark-green"
+                        },
+                        "opacity": 0.7,
+                        "rotation": {
+                          "field": "Lng",
+                          "fixed": 0,
+                          "max": 360,
+                          "min": -360,
+                          "mode": "mod"
+                        },
+                        "size": {
+                          "fixed": 10,
+                          "max": 15,
+                          "min": 2
+                        },
+                        "symbol": {
+                          "fixed": "img/icons/marker/plane.svg",
+                          "mode": "fixed"
+                        },
+                        "text": {
+                          "field": "Lng",
+                          "fixed": "",
+                          "mode": "field"
+                        },
+                        "textConfig": {
+                          "fontSize": 12,
+                          "offsetX": 0,
+                          "offsetY": 18,
+                          "textAlign": "center",
+                          "textBaseline": "middle"
+                        }
+                      }
+                    },
+                    "name": "Layer 2",
+                    "type": "markers"
+                  }
+                ],
+                "view": {
+                  "id": "coords",
+                  "lat": 42.826559,
+                  "lon": -96.868893,
+                  "zoom": 3.58
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 22,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 22,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "gdev",
+      "panel-tests",
+      "geomap"
+    ],
+    "timeSettings": {
+      "timezone": "",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Panel Tests - Geomap Multi Layers",
+    "variables": []
+  },
+  "status": {}
+}

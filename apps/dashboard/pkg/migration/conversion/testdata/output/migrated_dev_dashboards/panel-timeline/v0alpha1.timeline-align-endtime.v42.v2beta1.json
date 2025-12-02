@@ -1,0 +1,369 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "metadata": {
+    "name": "v0alpha1.timeline-align-endtime.v42"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Raw frames w/enums",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"typeVersion\": [\n          0,\n          0\n        ]\n      },\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"channel\",\n          \"config\": {\n            \"selector\": \"channel\"\n          },\n          \"type\": \"string\"\n        },\n        {\n          \"name\": \"name\",\n          \"config\": {\n            \"selector\": \"name\"\n          },\n          \"type\": \"string\"\n        },\n        {\n          \"name\": \"starttime\",\n          \"config\": {\n            \"selector\": \"starttime\"\n          },\n          \"type\": \"string\"\n        },\n        {\n          \"name\": \"endtime\",\n          \"config\": {\n            \"selector\": \"endtime\"\n          },\n          \"type\": \"string\"\n        },\n        {\n          \"name\": \"duration_minutes\",\n          \"config\": {\n            \"selector\": \"duration_minutes\"\n          },\n          \"type\": \"number\"\n        },\n        {\n          \"name\": \"state\",\n          \"config\": {\n            \"selector\": \"state\"\n          },\n          \"type\": \"string\"\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"Channel 1\",\n          \"Channel 2\",\n          \"Channel 1\",\n          \"Channel 2\"\n        ],\n        [\n          \"Event 1\",\n          \"Event 2\",\n          \"Event 3\",\n          \"Event 4\"\n        ],\n        [\n          \"2024-02-28T08:00:00Z\",\n          \"2024-02-28T09:00:00Z\",\n          \"2024-02-28T11:00:00Z\",\n          \"2024-02-28T12:30:00Z\"\n        ],\n        [\n          \"2024-02-28T10:00:00Z\",\n          \"2024-02-28T10:30:00Z\",\n          \"2024-02-28T14:00:00Z\",\n          \"2024-02-28T13:30:00Z\"\n        ],\n        [\n          120,\n          90,\n          180,\n          60\n        ],\n        [\n          \"OK\",\n          \"ERROR\",\n          \"NO_DATA\",\n          \"WARNING\"\n        ]\n      ]\n    }\n  }\n]",
+                        "scenarioId": "raw_frame"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "channel": false,
+                        "duration_minutes": true,
+                        "name": true
+                      },
+                      "includeByName": {},
+                      "indexByName": {},
+                      "renameByName": {}
+                    }
+                  }
+                },
+                {
+                  "kind": "convertFieldType",
+                  "spec": {
+                    "id": "convertFieldType",
+                    "options": {
+                      "conversions": [
+                        {
+                          "destinationType": "time",
+                          "enumConfig": {
+                            "text": [
+                              "2024-02-28T08:00:00Z",
+                              "2024-02-28T09:00:00Z",
+                              "2024-02-28T11:00:00Z",
+                              "2024-02-28T12:30:00Z"
+                            ]
+                          },
+                          "targetField": "starttime"
+                        },
+                        {
+                          "destinationType": "time",
+                          "targetField": "endtime"
+                        },
+                        {
+                          "destinationType": "enum",
+                          "enumConfig": {
+                            "text": [
+                              "OK",
+                              "ERROR",
+                              "NO_DATA",
+                              "WARNING"
+                            ]
+                          },
+                          "targetField": "state"
+                        }
+                      ],
+                      "fields": {}
+                    }
+                  }
+                },
+                {
+                  "kind": "partitionByValues",
+                  "spec": {
+                    "id": "partitionByValues",
+                    "options": {
+                      "fields": [
+                        "channel"
+                      ],
+                      "keepFields": false,
+                      "naming": {
+                        "asLabels": false
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "state-timeline",
+            "version": "",
+            "spec": {
+              "options": {
+                "alignValue": "left",
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "mergeValues": true,
+                "rowHeight": 0.9,
+                "showValue": "auto",
+                "tooltip": {
+                  "maxHeight": 600,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "fillOpacity": 70,
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineWidth": 0,
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "CSV content",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "alias": "Channel 1",
+                        "csvContent": "starttime,endtime,state\n1709107200000,1709114400000,OK\n1709118000000,1709128800000,NO_DATA",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "alias": "Channel 2",
+                        "csvContent": "starttime,endtime,state\n1709110800000,1709116200000,ERROR\n1709123400000,1709127000000,WARNING",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "state-timeline",
+            "version": "",
+            "spec": {
+              "options": {
+                "alignValue": "left",
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "mergeValues": true,
+                "rowHeight": 0.9,
+                "showValue": "auto",
+                "tooltip": {
+                  "maxHeight": 600,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "fillOpacity": 70,
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineWidth": 0,
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 15,
+              "height": 13,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 13,
+              "width": 15,
+              "height": 12,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "gdev",
+      "panel-tests",
+      "graph-ng",
+      "demo"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "2024-02-28T07:47:21.428Z",
+      "to": "2024-02-28T14:12:43.391Z",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Panel Tests - StateTimeline - multiple frames with endTime",
+    "variables": []
+  },
+  "status": {}
+}

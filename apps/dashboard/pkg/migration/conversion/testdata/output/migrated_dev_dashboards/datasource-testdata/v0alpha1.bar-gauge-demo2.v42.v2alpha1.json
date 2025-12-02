@@ -1,0 +1,1375 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2alpha1",
+  "metadata": {
+    "name": "v0alpha1.bar-gauge-demo2.v42"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "",
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Panel Title",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "E",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "F",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "G",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "H",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "bargauge",
+            "spec": {
+              "pluginVersion": "6.5.0-pre",
+              "options": {
+                "displayMode": "gradient",
+                "fieldOptions": {
+                  "calcs": [
+                    "mean"
+                  ],
+                  "defaults": {
+                    "mappings": [],
+                    "max": 100,
+                    "min": 0,
+                    "thresholds": [
+                      {
+                        "color": "blue"
+                      },
+                      {
+                        "color": "purple",
+                        "value": 40
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ],
+                    "unit": "percent"
+                  },
+                  "overrides": [],
+                  "values": false
+                },
+                "orientation": "vertical",
+                "showUnfilled": true
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Panel Title",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "E",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "F",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "G",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "labels": "",
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "H",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "I",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "J",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "K",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "L",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "M",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "N",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "labels": "",
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "O",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "P",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "Q",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "bargauge",
+            "spec": {
+              "pluginVersion": "6.5.0-pre",
+              "options": {
+                "displayMode": "gradient",
+                "fieldOptions": {
+                  "calcs": [
+                    "mean"
+                  ],
+                  "defaults": {
+                    "mappings": [],
+                    "max": 100,
+                    "min": 0,
+                    "thresholds": [
+                      {
+                        "color": "red"
+                      },
+                      {
+                        "color": "yellow",
+                        "value": 50
+                      }
+                    ],
+                    "unit": "percent"
+                  },
+                  "overrides": [],
+                  "values": false
+                },
+                "orientation": "horizontal",
+                "showUnfilled": true
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Panel Title",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "K",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "L",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "M",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "N",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "O",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "P",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "Q",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "R",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "S",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "T",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "U",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "V",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "W",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "X",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "bargauge",
+            "spec": {
+              "pluginVersion": "6.5.0-pre",
+              "options": {
+                "displayMode": "basic",
+                "fieldOptions": {
+                  "calcs": [
+                    "mean"
+                  ],
+                  "defaults": {
+                    "mappings": [],
+                    "max": 100,
+                    "min": 0,
+                    "thresholds": [
+                      {
+                        "color": "green"
+                      },
+                      {
+                        "color": "blue",
+                        "value": 50
+                      }
+                    ],
+                    "unit": "percent"
+                  },
+                  "overrides": [],
+                  "values": false
+                },
+                "orientation": "horizontal",
+                "showUnfilled": true
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Panel Title",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "E",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "F",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "G",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "H",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "bargauge",
+            "spec": {
+              "pluginVersion": "6.5.0-pre",
+              "options": {
+                "displayMode": "gradient",
+                "fieldOptions": {
+                  "calcs": [
+                    "mean"
+                  ],
+                  "defaults": {
+                    "mappings": [],
+                    "max": 100,
+                    "min": 0,
+                    "thresholds": [
+                      {
+                        "color": "blue"
+                      },
+                      {
+                        "color": "purple",
+                        "value": 40
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ],
+                    "unit": "percent"
+                  },
+                  "overrides": [],
+                  "values": false
+                },
+                "orientation": "vertical",
+                "showUnfilled": true
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Panel Title",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "E",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "F",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "G",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "testdata-type-uid"
+                    },
+                    "refId": "H",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "bargauge",
+            "spec": {
+              "pluginVersion": "6.5.0-pre",
+              "options": {
+                "displayMode": "gradient",
+                "fieldOptions": {
+                  "calcs": [
+                    "mean"
+                  ],
+                  "defaults": {
+                    "mappings": [],
+                    "max": 100,
+                    "min": 0,
+                    "thresholds": [
+                      {
+                        "color": "blue"
+                      },
+                      {
+                        "color": "purple",
+                        "value": 40
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ],
+                    "unit": "percent"
+                  },
+                  "overrides": [],
+                  "values": false
+                },
+                "orientation": "vertical",
+                "showUnfilled": true
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 9,
+              "height": 32,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 9,
+              "y": 0,
+              "width": 8,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 17,
+              "y": 0,
+              "width": 7,
+              "height": 33,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 9,
+              "y": 11,
+              "width": 8,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 9,
+              "y": 22,
+              "width": 8,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "gdev",
+      "demo"
+    ],
+    "timeSettings": {
+      "timezone": "",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Bar Gauge Demo Unfilled",
+    "variables": []
+  },
+  "status": {}
+}

@@ -1,0 +1,1117 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2alpha1",
+  "metadata": {
+    "name": "v0alpha1.heatmap-calculate-log.v42"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "query": {
+            "kind": "grafana",
+            "spec": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            }
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "panel-10": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "linear (y range = 700-15k)",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 3
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "heatmap",
+            "spec": {
+              "pluginVersion": "9.1.0-pre",
+              "options": {
+                "bucket": {
+                  "layout": "auto"
+                },
+                "calculate": true,
+                "cellGap": 1,
+                "color": {
+                  "exponent": 0.5,
+                  "fill": "dark-orange",
+                  "mode": "scheme",
+                  "scale": "exponential",
+                  "scheme": "Spectral",
+                  "steps": 64
+                },
+                "exemplars": {
+                  "color": "rgba(255,0,255,0.7)"
+                },
+                "filterValues": {
+                  "le": 1e-9
+                },
+                "legend": {
+                  "show": true,
+                  "showLegend": true
+                },
+                "mode": "calculate",
+                "rowsFrame": {
+                  "layout": "auto"
+                },
+                "tooltip": {
+                  "show": true,
+                  "yHistogram": false
+                },
+                "yAxis": {
+                  "axisPlacement": "left",
+                  "max": "15000",
+                  "min": 700,
+                  "reverse": false
+                },
+                "yAxisLabels": "auto",
+                "yAxisReverse": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-11": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "log10 split 2 (y range = 700-15k)",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 3
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "heatmap",
+            "spec": {
+              "pluginVersion": "9.1.0-pre",
+              "options": {
+                "bucket": {
+                  "layout": "auto"
+                },
+                "calculate": true,
+                "calculation": {
+                  "yBuckets": {
+                    "scale": {
+                      "log": 10,
+                      "type": "log"
+                    },
+                    "value": "2"
+                  }
+                },
+                "cellGap": 1,
+                "color": {
+                  "exponent": 0.5,
+                  "fill": "dark-orange",
+                  "mode": "scheme",
+                  "scale": "exponential",
+                  "scheme": "Spectral",
+                  "steps": 64
+                },
+                "exemplars": {
+                  "color": "rgba(255,0,255,0.7)"
+                },
+                "filterValues": {
+                  "le": 1e-9
+                },
+                "legend": {
+                  "show": true,
+                  "showLegend": true
+                },
+                "mode": "calculate",
+                "rowsFrame": {
+                  "layout": "auto"
+                },
+                "tooltip": {
+                  "show": true,
+                  "yHistogram": false
+                },
+                "yAxis": {
+                  "axisPlacement": "left",
+                  "max": "15000",
+                  "min": 700,
+                  "reverse": false
+                },
+                "yAxisLabels": "auto",
+                "yAxisReverse": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Time series",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "max": 500000,
+                        "min": 0.01,
+                        "scenarioId": "random_walk",
+                        "seriesCount": 2,
+                        "spread": 1000,
+                        "startValue": 0.01
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "timeseries",
+            "spec": {
+              "pluginVersion": "9.0.0-pre",
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "drawStyle": "points",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 2,
+                    "scaleDistribution": {
+                      "log": 2,
+                      "type": "log"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "linear",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 3
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "heatmap",
+            "spec": {
+              "pluginVersion": "9.1.0-pre",
+              "options": {
+                "bucket": {
+                  "layout": "auto"
+                },
+                "calculate": true,
+                "cellGap": 1,
+                "color": {
+                  "exponent": 0.5,
+                  "fill": "dark-orange",
+                  "mode": "scheme",
+                  "scale": "exponential",
+                  "scheme": "Spectral",
+                  "steps": 64
+                },
+                "exemplars": {
+                  "color": "rgba(255,0,255,0.7)"
+                },
+                "filterValues": {
+                  "le": 1e-9
+                },
+                "legend": {
+                  "show": true,
+                  "showLegend": true
+                },
+                "mode": "calculate",
+                "rowsFrame": {
+                  "layout": "auto"
+                },
+                "tooltip": {
+                  "show": true,
+                  "yHistogram": false
+                },
+                "yAxis": {
+                  "axisPlacement": "left",
+                  "reverse": false
+                },
+                "yAxisLabels": "auto",
+                "yAxisReverse": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "log10",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 3
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "heatmap",
+            "spec": {
+              "pluginVersion": "9.1.0-pre",
+              "options": {
+                "bucket": {
+                  "layout": "auto"
+                },
+                "calculate": true,
+                "calculation": {
+                  "yBuckets": {
+                    "scale": {
+                      "log": 10,
+                      "type": "log"
+                    }
+                  }
+                },
+                "cellGap": 1,
+                "color": {
+                  "exponent": 0.5,
+                  "fill": "dark-orange",
+                  "mode": "scheme",
+                  "scale": "exponential",
+                  "scheme": "Spectral",
+                  "steps": 64
+                },
+                "exemplars": {
+                  "color": "rgba(255,0,255,0.7)"
+                },
+                "filterValues": {
+                  "le": 1e-9
+                },
+                "legend": {
+                  "show": true,
+                  "showLegend": true
+                },
+                "mode": "calculate",
+                "rowsFrame": {
+                  "layout": "auto"
+                },
+                "tooltip": {
+                  "show": true,
+                  "yHistogram": false
+                },
+                "yAxis": {
+                  "axisPlacement": "left",
+                  "reverse": false
+                },
+                "yAxisLabels": "auto",
+                "yAxisReverse": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "log2",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 3
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "heatmap",
+            "spec": {
+              "pluginVersion": "9.1.0-pre",
+              "options": {
+                "bucket": {
+                  "layout": "auto"
+                },
+                "calculate": true,
+                "calculation": {
+                  "yBuckets": {
+                    "scale": {
+                      "log": 2,
+                      "type": "log"
+                    }
+                  }
+                },
+                "cellGap": 1,
+                "color": {
+                  "exponent": 0.5,
+                  "fill": "dark-orange",
+                  "mode": "scheme",
+                  "scale": "exponential",
+                  "scheme": "Spectral",
+                  "steps": 64
+                },
+                "exemplars": {
+                  "color": "rgba(255,0,255,0.7)"
+                },
+                "filterValues": {
+                  "le": 1e-9
+                },
+                "legend": {
+                  "show": true,
+                  "showLegend": true
+                },
+                "mode": "calculate",
+                "rowsFrame": {
+                  "layout": "auto"
+                },
+                "tooltip": {
+                  "show": true,
+                  "yHistogram": false
+                },
+                "yAxis": {
+                  "axisPlacement": "left",
+                  "reverse": false
+                },
+                "yAxisLabels": "auto",
+                "yAxisReverse": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "log2 split 2",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 3
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "heatmap",
+            "spec": {
+              "pluginVersion": "9.1.0-pre",
+              "options": {
+                "bucket": {
+                  "layout": "auto"
+                },
+                "calculate": true,
+                "calculation": {
+                  "yBuckets": {
+                    "scale": {
+                      "log": 2,
+                      "type": "log"
+                    },
+                    "value": "2"
+                  }
+                },
+                "cellGap": 1,
+                "color": {
+                  "exponent": 0.5,
+                  "fill": "dark-orange",
+                  "mode": "scheme",
+                  "scale": "exponential",
+                  "scheme": "Spectral",
+                  "steps": 64
+                },
+                "exemplars": {
+                  "color": "rgba(255,0,255,0.7)"
+                },
+                "filterValues": {
+                  "le": 1e-9
+                },
+                "legend": {
+                  "show": true,
+                  "showLegend": true
+                },
+                "mode": "calculate",
+                "rowsFrame": {
+                  "layout": "auto"
+                },
+                "tooltip": {
+                  "show": true,
+                  "yHistogram": false
+                },
+                "yAxis": {
+                  "axisPlacement": "left",
+                  "reverse": false
+                },
+                "yAxisLabels": "auto",
+                "yAxisReverse": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "log10 split 2",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 3
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "heatmap",
+            "spec": {
+              "pluginVersion": "9.1.0-pre",
+              "options": {
+                "bucket": {
+                  "layout": "auto"
+                },
+                "calculate": true,
+                "calculation": {
+                  "yBuckets": {
+                    "scale": {
+                      "log": 10,
+                      "type": "log"
+                    },
+                    "value": "2"
+                  }
+                },
+                "cellGap": 1,
+                "color": {
+                  "exponent": 0.5,
+                  "fill": "dark-orange",
+                  "mode": "scheme",
+                  "scale": "exponential",
+                  "scheme": "Spectral",
+                  "steps": 64
+                },
+                "exemplars": {
+                  "color": "rgba(255,0,255,0.7)"
+                },
+                "filterValues": {
+                  "le": 1e-9
+                },
+                "legend": {
+                  "show": true,
+                  "showLegend": true
+                },
+                "mode": "calculate",
+                "rowsFrame": {
+                  "layout": "auto"
+                },
+                "tooltip": {
+                  "show": true,
+                  "yHistogram": false
+                },
+                "yAxis": {
+                  "axisPlacement": "left",
+                  "reverse": false
+                },
+                "yAxisLabels": "auto",
+                "yAxisReverse": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "log10 (y range = 700-15k)",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 3
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "heatmap",
+            "spec": {
+              "pluginVersion": "9.1.0-pre",
+              "options": {
+                "bucket": {
+                  "layout": "auto"
+                },
+                "calculate": true,
+                "calculation": {
+                  "yBuckets": {
+                    "scale": {
+                      "log": 10,
+                      "type": "log"
+                    }
+                  }
+                },
+                "cellGap": 1,
+                "color": {
+                  "exponent": 0.5,
+                  "fill": "dark-orange",
+                  "mode": "scheme",
+                  "scale": "exponential",
+                  "scheme": "Spectral",
+                  "steps": 64
+                },
+                "exemplars": {
+                  "color": "rgba(255,0,255,0.7)"
+                },
+                "filterValues": {
+                  "le": 1e-9
+                },
+                "legend": {
+                  "show": true,
+                  "showLegend": true
+                },
+                "mode": "calculate",
+                "rowsFrame": {
+                  "layout": "auto"
+                },
+                "tooltip": {
+                  "show": true,
+                  "yHistogram": false
+                },
+                "yAxis": {
+                  "axisPlacement": "left",
+                  "max": "15000",
+                  "min": 700,
+                  "reverse": false
+                },
+                "yAxisLabels": "auto",
+                "yAxisReverse": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 8,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 8,
+              "y": 0,
+              "width": 8,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 0,
+              "width": 8,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 14,
+              "width": 8,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 8,
+              "y": 14,
+              "width": 8,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 14,
+              "width": 8,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 28,
+              "width": 8,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-10"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 8,
+              "y": 28,
+              "width": 8,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-9"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 28,
+              "width": 8,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-11"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "gdev",
+      "panel-tests",
+      "graph-ng"
+    ],
+    "timeSettings": {
+      "timezone": "",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Heatmap calculate (log)",
+    "variables": []
+  },
+  "status": {}
+}

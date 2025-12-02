@@ -1962,7 +1962,7 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 8
+      "count": 7
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
