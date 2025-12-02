@@ -6,7 +6,11 @@ import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
 import { mockAlertRuleApi, setupMswServer } from '../../../mockApi';
 import { getGrafanaRule } from '../../../mocks';
-import { getMockOpsLabels } from '../../../mocks/server/handlers/plugins/grafana-labels-app';
+import {
+  defaultLabelValues,
+  getLabelValuesHandler,
+  getMockOpsLabels,
+} from '../../../mocks/server/handlers/plugins/grafana-labels-app';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 import { LabelsWithSuggestions } from './LabelsField';
@@ -215,5 +219,43 @@ describe('LabelsField with ops labels', () => {
 
     // Verify dropdown is open
     expect(combobox).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  // Test that opening the value dropdown requests values for the CORRECT label key
+  // This verifies the async loader is called with the right key
+  it('should request correct label values when opening value dropdown', async () => {
+    const requestedKeys: string[] = [];
+
+    // Add a spy handler that tracks which keys are requested
+    server.use(getLabelValuesHandler(defaultLabelValues, (key) => requestedKeys.push(key)));
+
+    const { user } = await renderLabelsWithOpsLabels();
+
+    // Open the first label's value dropdown (sentMail)
+    const firstValueDropdown = within(screen.getByTestId('labelsInSubform-value-0'));
+    await user.click(firstValueDropdown.getByRole('combobox'));
+
+    // Wait for the API call to be made
+    await waitFor(() => {
+      expect(requestedKeys).toContain('sentMail');
+    });
+
+    // Close dropdown
+    await user.keyboard('{Escape}');
+
+    // Clear the tracked keys
+    requestedKeys.length = 0;
+
+    // Open the second label's value dropdown (stage)
+    const secondValueDropdown = within(screen.getByTestId('labelsInSubform-value-1'));
+    await user.click(secondValueDropdown.getByRole('combobox'));
+
+    // Wait for the API call - should request 'stage', NOT 'sentMail'
+    await waitFor(() => {
+      expect(requestedKeys).toContain('stage');
+    });
+
+    // Verify we didn't request the wrong key (the bug from escalation #19378)
+    expect(requestedKeys).not.toContain('sentMail');
   });
 });

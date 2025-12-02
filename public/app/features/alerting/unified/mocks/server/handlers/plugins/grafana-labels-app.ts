@@ -56,11 +56,17 @@ export const getLabelsKeysHandler = (labelKeys: LabelItem[] = defaultLabelKeys) 
 
 /**
  * Handler for GET /api/plugins/grafana-labels-app/resources/v1/labels/name/:key
- * Returns values for a specific label key
+ * Returns values for a specific label key.
+ * @param labelValues - Custom label values map (defaults to defaultLabelValues)
+ * @param onKeyRequested - Optional callback to spy on which keys are requested (useful for testing)
  */
-export const getLabelValuesHandler = (labelValues: Record<string, LabelItem[]> = defaultLabelValues) =>
+export const getLabelValuesHandler = (
+  labelValues: Record<string, LabelItem[]> = defaultLabelValues,
+  onKeyRequested?: (key: string) => void
+) =>
   http.get<{ key: string }>(`${BASE_URL}/v1/labels/name/:key`, ({ params }) => {
     const key = params.key;
+    onKeyRequested?.(key);
     const values = labelValues[key] || [];
     const response: LabelKeyAndValues = {
       labelKey: { id: '1', name: key, prescribed: false },
