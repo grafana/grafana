@@ -1,7 +1,7 @@
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { isResource } from 'app/features/apiserver/guards';
-import { ListOptions, Resource, ResourceList } from 'app/features/apiserver/types';
+import { Resource, ResourceList } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -57,10 +57,21 @@ export class UnifiedDashboardAPI
   }
 
   async listDashboardHistory(uid: string) {
-    return this.listAcrossVersions({
-      labelSelector: 'grafana.app/get-history=true',
-      fieldSelector: `metadata.name=${uid}`,
-    });
+    const v1Response = await this.v1Client.listDashboardHistory(uid);
+    const filteredV1Items = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
+
+    if (filteredV1Items.length === v1Response.items.length) {
+      return v1Response;
+    }
+
+    const v2Response = await this.v2Client.listDashboardHistory(uid);
+    const filteredV2Items = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
+
+    return {
+      ...v2Response,
+      // Make sure we display only valid resources
+      items: [...filteredV1Items, ...filteredV2Items].filter(isResource),
+    };
   }
 
   /**
@@ -75,25 +86,14 @@ export class UnifiedDashboardAPI
   async listDeletedDashboards(
     options: ListDeletedDashboardsOptions
   ): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
-    return this.listAcrossVersions(options);
-  }
-
-  /**
-   * Steps:
-   * 1. Call v1 client to get all deleted dashboards
-   * 2. Check if any items have failed conversion from v2 versions
-   * 3. If v2 dashboards are detected, call v2 client
-   * 4. Filter and combine v1 and v2 dashboards into one response
-   */
-  private async listAcrossVersions(options: ListOptions): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
-    const v1Response = await this.v1Client.client.list(options);
+    const v1Response = await this.v1Client.listDeletedDashboards(options);
     const filteredV1Items = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
 
     if (filteredV1Items.length === v1Response.items.length) {
       return v1Response;
     }
 
-    const v2Response = await this.v2Client.client.list(options);
+    const v2Response = await this.v2Client.listDeletedDashboards(options);
     const filteredV2Items = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
 
     return {
