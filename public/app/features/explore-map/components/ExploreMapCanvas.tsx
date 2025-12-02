@@ -71,8 +71,22 @@ export function ExploreMapCanvas() {
         return;
       }
 
-      const canvasX = e.nativeEvent.offsetX;
-      const canvasY = e.nativeEvent.offsetY;
+      if (!canvasRef.current) {
+        return;
+      }
+
+      const canvasRect = canvasRef.current.getBoundingClientRect();
+      const screenX = e.clientX - canvasRect.left;
+      const screenY = e.clientY - canvasRect.top;
+
+      // Convert screen coordinates to actual canvas coordinates
+      // Use transform ref state if available, otherwise fall back to viewport state
+      const scale = contextTransformRef?.current?.state?.scale ?? viewport.zoom;
+
+      // Since getBoundingClientRect() gives us the rect AFTER transform,
+      // we just need to divide by scale to get canvas coordinates
+      const canvasX = screenX / scale;
+      const canvasY = screenY / scale;
 
       setSelectionRect({
         startX: canvasX,
@@ -82,7 +96,7 @@ export function ExploreMapCanvas() {
       });
       setIsSelecting(true);
     },
-    []
+    [contextTransformRef, viewport]
   );
 
   const handleCanvasMouseMove = useCallback(
@@ -92,14 +106,27 @@ export function ExploreMapCanvas() {
         return;
       }
 
+      // Get the bounding rect of the transformed canvas element
       const canvasRect = canvasRef.current.getBoundingClientRect();
-      const canvasX = e.clientX - canvasRect.left;
-      const canvasY = e.clientY - canvasRect.top;
 
-      // Update cursor position for all sessions
+      // Calculate position relative to the canvas element's top-left corner (in screen space)
+      const screenX = e.clientX - canvasRect.left;
+      const screenY = e.clientY - canvasRect.top;
+
+      // The canvas element is inside TransformComponent which applies CSS transform: scale() and translate()
+      // The bounding rect already reflects the transform, so screenX/screenY are in the zoomed coordinate space
+      // We need to convert back to the original 10000x10000 canvas coordinate space
+      const scale = contextTransformRef?.current?.state?.scale ?? viewport.zoom;
+
+      // Since getBoundingClientRect() gives us the rect AFTER transform,
+      // we just need to divide by scale to get canvas coordinates
+      const canvasX = Math.max(0, Math.min(10000, screenX / scale));
+      const canvasY = Math.max(0, Math.min(10000, screenY / scale));
+
+      // Update cursor position for all sessions (using actual canvas coordinates, clamped to bounds)
       updatePosition(canvasX, canvasY);
 
-      // Handle selection rectangle if dragging
+      // Handle selection rectangle if dragging (using canvas coordinates)
       if (isSelecting && selectionRect) {
         setSelectionRect({
           ...selectionRect,
@@ -108,7 +135,7 @@ export function ExploreMapCanvas() {
         });
       }
     },
-    [isSelecting, selectionRect, updatePosition]
+    [isSelecting, selectionRect, updatePosition, contextTransformRef, viewport]
   );
 
   const handleCanvasMouseUp = useCallback(
