@@ -1234,34 +1234,41 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		queries = append(queries, wildcard)
 	}
 
+	if len(req.QueryFields) == 0 {
+		req.QueryFields = []string{resource.SEARCH_FIELD_TITLE}
+	}
+
 	if req.Query != "" && !strings.Contains(req.Query, "*") {
 		// Add a text query
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
 
-		// There are multiple ways to match the query string to documents. The following queries are ordered by priority:
+		// For each field to be queried, we create a disjunction query that contains multiple ways to match the query string.
+		for _, field := range req.QueryFields {
+			// There are multiple ways to match the query string to documents. The following queries are ordered by priority:
 
-		// Query 1: Match the exact query string
-		queryExact := bleve.NewMatchQuery(req.Query)
-		queryExact.SetBoost(10.0)
-		queryExact.SetField(resource.SEARCH_FIELD_TITLE)
-		queryExact.Analyzer = keyword.Name                // don't analyze the query input - treat it as a single token
-		queryExact.Operator = query.MatchQueryOperatorAnd // This doesn't make a difference for keyword analyzer, we add it just to be explicit.
+			// Query 1: Match the exact query string
+			queryExact := bleve.NewMatchQuery(req.Query)
+			queryExact.SetBoost(10.0)
+			queryExact.SetField(field)
+			queryExact.Analyzer = keyword.Name                // don't analyze the query input - treat it as a single token
+			queryExact.Operator = query.MatchQueryOperatorAnd // This doesn't make a difference for keyword analyzer, we add it just to be explicit.
 
-		// Query 2: Phrase query with standard analyzer
-		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
-		queryPhrase.SetBoost(5.0)
-		queryPhrase.SetField(resource.SEARCH_FIELD_TITLE)
-		queryPhrase.Analyzer = standard.Name
+			// Query 2: Phrase query with standard analyzer
+			queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
+			queryPhrase.SetBoost(5.0)
+			queryPhrase.SetField(field)
+			queryPhrase.Analyzer = standard.Name
 
-		// Query 3: Match query with standard analyzer
-		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
-		queryAnalyzed.SetField(resource.SEARCH_FIELD_TITLE)
-		queryAnalyzed.Analyzer = standard.Name
-		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
+			// Query 3: Match query with standard analyzer
+			queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
+			queryAnalyzed.SetField(field)
+			queryAnalyzed.Analyzer = standard.Name
+			queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
 
-		// At least one of the queries must match
-		searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
-		queries = append(queries, searchQuery)
+			// At least one of the queries must match
+			searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
+			queries = append(queries, searchQuery)
+		}
 	}
 
 	switch len(queries) {
@@ -1270,7 +1277,12 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	case 1:
 		searchrequest.Query = queries[0]
 	default:
-		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
+		if len(req.QueryFields) > 1 {
+			// When multiple fields are searched, combine them with OR
+			searchrequest.Query = bleve.NewDisjunctionQuery(queries...) // OR
+		} else {
+			searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
+		}
 	}
 
 	if access != nil {
