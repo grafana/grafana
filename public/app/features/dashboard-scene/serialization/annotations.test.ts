@@ -260,7 +260,6 @@ describe('V1<->V2 annotation convertions', () => {
         hide: false,
         iconColor: 'red',
         name: 'prom-annos',
-        builtIn: false,
         query: {
           kind: 'DataQuery',
           group: 'prometheus',
@@ -331,7 +330,6 @@ describe('V1<->V2 annotation convertions', () => {
         hide: false,
         iconColor: 'red',
         name: 'elastic-annos',
-        builtIn: false,
         query: {
           kind: 'DataQuery',
           group: 'elasticsearch',
