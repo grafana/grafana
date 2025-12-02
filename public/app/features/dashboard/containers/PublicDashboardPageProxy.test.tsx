@@ -51,6 +51,9 @@ describe('PublicDashboardPageProxy', () => {
   beforeEach(() => {
     config.featureToggles.publicDashboardsScene = false;
 
+    // Mock console methods to avoid jest-fail-on-console issues
+    jest.spyOn(console, 'warn').mockImplementation();
+
     // Mock the dashboard UID response so we don't get any refused connection errors
     // from this test (as the fetch polyfill means this logic would actually try and call the API)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -54,15 +54,6 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
             {isEditing && !isClone && (
               <div className="dashboard-canvas-add-button">
                 <Button
-                  icon="layers-slash"
-                  variant="primary"
-                  fill="text"
-                  onClick={() => model.ungroupRows()}
-                  data-testid={selectors.components.CanvasGridAddActions.ungroupRows}
-                >
-                  <Trans i18nKey="dashboard.canvas-actions.ungroup-rows">Ungroup rows</Trans>
-                </Button>
-                <Button
                   icon="plus"
                   variant="primary"
                   fill="text"
@@ -84,6 +75,15 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
                     <Trans i18nKey="dashboard.canvas-actions.paste-row">Paste row</Trans>
                   </Button>
                 )}
+                <Button
+                  icon="layers-slash"
+                  variant="primary"
+                  fill="text"
+                  onClick={() => model.ungroupRows()}
+                  data-testid={selectors.components.CanvasGridAddActions.ungroupRows}
+                >
+                  <Trans i18nKey="dashboard.canvas-actions.ungroup-rows">Ungroup rows</Trans>
+                </Button>
               </div>
             )}
           </div>

@@ -1,9 +1,9 @@
-import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Stack, Text, TextLink } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
+
+import { isOnPrem } from '../utils/isOnPrem';
 
 import GettingStarted from './GettingStarted';
 
@@ -34,9 +34,7 @@ export default function GettingStartedPage({ items }: Props) {
 }
 
 function Banner() {
-  const isOnPrem = [GrafanaEdition.OpenSource, GrafanaEdition.Enterprise].includes(config.buildInfo.edition);
-
-  if (!isOnPrem) {
+  if (!isOnPrem()) {
     return null;
   }
 

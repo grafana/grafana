@@ -21,8 +21,6 @@ type TimeInterval struct {
 
 	// Spec is the spec of the TimeInterval
 	Spec TimeIntervalSpec `json:"spec" yaml:"spec"`
-
-	Status TimeIntervalStatus `json:"status" yaml:"status"`
 }
 
 func (o *TimeInterval) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *TimeInterval) SetSpec(spec any) error {
 }
 
 func (o *TimeInterval) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *TimeInterval) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *TimeInterval) GetSubresource(name string) (any, bool) {
 
 func (o *TimeInterval) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(TimeIntervalStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type TimeIntervalStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *TimeInterval) DeepCopyInto(dst *TimeInterval) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *TimeIntervalSpec) DeepCopy() *TimeIntervalSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *TimeIntervalSpec) DeepCopyInto(dst *TimeIntervalSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of TimeIntervalStatus
-func (s *TimeIntervalStatus) DeepCopy() *TimeIntervalStatus {
-	cpy := &TimeIntervalStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies TimeIntervalStatus into another TimeIntervalStatus object
-func (s *TimeIntervalStatus) DeepCopyInto(dst *TimeIntervalStatus) {
 	resource.CopyObjectInto(dst, s)
 }

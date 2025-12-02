@@ -6,9 +6,10 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
 import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult } from 'app/features/search/service/types';
 
 import { getBackendSrv } from '../../../core/services/backend_srv';
-import { DashboardSearchItem } from '../../search/types';
 import {
   LibraryElementConnectionDTO,
   LibraryElementDTO,
@@ -141,15 +142,14 @@ export async function getLibraryPanelConnectedDashboards(
   return result;
 }
 
-export async function getConnectedDashboards(uid: string): Promise<DashboardSearchItem[]> {
+export async function getConnectedDashboards(uid: string): Promise<DashboardQueryResult[] | null> {
   const connections = await getLibraryPanelConnectedDashboards(uid);
   if (connections.length === 0) {
-    return [];
+    return null;
   }
 
-  const searchHits = await getBackendSrv().search({ dashboardUIDs: connections.map((c) => c.connectionUid) });
-
-  return searchHits;
+  const result = await getGrafanaSearcher().search({ uid: connections.map((c) => c.connectionUid) });
+  return result.view.toArray();
 }
 
 export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {

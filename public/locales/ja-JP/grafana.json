@@ -108,7 +108,7 @@
       "dismiss": "閉じる",
       "heading": "エンタープライズ認証",
       "learn-more-link": "詳細を見る",
-      "text": "<1>SAML</1>、<3>SCIM</3>、<6>LDAP</6>、<8>RBAC</8>を使用して、ユーザー、チーム、権限を自動的に管理できます。Grafana CloudとEnterpriseで利用可能です。"
+      "text": ""
     },
     "feature-listing": {
       "title-auditing": "監査",
@@ -209,7 +209,7 @@
       "title-delete": "削除"
     },
     "orgs": {
-      "delete-body": "本当に「{{deleteOrgName}}」を削除しますか？<3></3> <5>この組織のすべてのダッシュボードが削除されます！</5>",
+      "delete-body": "",
       "id-header": "ID",
       "name-header": "名前",
       "new-org-button": "新しい組織"
@@ -474,6 +474,7 @@
       "noOptionsMessage-no-datasources-found": "データソースが見つかりません"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "リンクをコピー",
       "duplicate": "複製",
       "export": "エクスポート",
@@ -716,6 +717,7 @@
         "title-annotations": "注釈"
       },
       "link-dashboard-and-panel": "ダッシュボードとパネルをリンク",
+      "placeholder-value-input": "",
       "placeholder-value-input-default": "カスタム注釈内容を入力..."
     },
     "bulk-actions": {
@@ -1139,7 +1141,7 @@
       "title-something-wrong-trying-fetch-group-details": "グループの詳細取得中に問題が発生しました"
     },
     "evaluation-interval-limit-exceeded": {
-      "body-minimum-interval": "Grafanaで、最小評価間隔<1>{{minInterval}}</1>を設定済みです。<3></3>より短い間隔を設定するには管理者に連絡してください。",
+      "body-minimum-interval": "",
       "title-global-evaluation-interval-limit-exceeded": "グローバル評価間隔の制限を超えました"
     },
     "existing-rule-editor": {
@@ -1287,7 +1289,7 @@
           "resolved": "解決済み"
         }
       },
-      "review-alert-payload": " ペイロードに追加するアラートデータを確認：",
+      "review-alert-payload": "",
       "title-add-custom-alerts": "カスタムアラートを追加"
     },
     "get-alert-suggestions": {
@@ -1411,7 +1413,7 @@
       "title-add-folder-and-labels": "フォルダとラベルを追加"
     },
     "grafana-managed-rule-type": {
-      "description": "あらゆる種類の複数のデータソースに対応しています。<1></1>式を使ってデータを変換できます。"
+      "description": ""
     },
     "grafana-modify-export": {
       "body-invalid-rule-id": "ページURLのルールUIDが無効です。URLを確認して再試行してください。",
@@ -1656,9 +1658,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1716,9 +1715,6 @@
       },
       "placeholder-key": "キー",
       "placeholder-value": "値"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "連絡先を表示または作成",
@@ -1847,7 +1843,7 @@
       "aria-label-new": "新規"
     },
     "mimir-flavored-type": {
-      "description": "Mimir、Loki、またはCortexデータソースを使用してください。<1></1>式はサポートされていません。"
+      "description": ""
     },
     "min-interval-option": {
       "label-interval": "間隔",
@@ -1983,7 +1979,11 @@
       "alertmanager": "Alertmanager：",
       "error": "{{alertmanager}}のルーティングプレビューを読み込めませんでした",
       "initialized": "追加されたラベルに基づいて、アラートインスタンスは次の通知ポリシーにルーティングされます。詳細を表示するには、以下の各通知ポリシーを展開します。",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "ルーティングのプレビュー",
+      "select-folder-tooltip": "",
       "text-loading-preview": "プレビュー読み込み中...",
       "title": "アラートインスタンスのルーティングプレビュー",
       "uninitialized": "フォルダを選択し、クエリとラベルを構成したら、[ルーティングのプレビュー]をクリックして、ここに結果を表示します。"
@@ -2119,7 +2119,8 @@
         "conflict": "通知ポリシーツリーは別のユーザーによって更新されました。",
         "error-code": "エラーメッセージ：「{{error}}」",
         "routes": {
-          "conflictingMatchers": "ルートを追加または更新できません：マッチャー、{{-matchers}}をマージすると、外部ルーティングツリーと競合し、このルートには到達できなくなります。"
+          "conflictingMatchers": "ルートを追加または更新できません：マッチャー、{{-matchers}}をマージすると、外部ルーティングツリーと競合し、このルートには到達できなくなります。",
+          "unknownMatchers": ""
         },
         "suffix": "ページを更新して、やり直してください。",
         "title": "通知ポリシーの追加または更新に失敗しました"
@@ -2236,7 +2237,7 @@
       "error-no-query-editor": "次の理由によりクエリエディタを読み込めませんでした：{{errorMessage}}"
     },
     "recording-rule-type": {
-      "description": "式を事前計算します。<1></1>アラートルールと組み合わせて使用してください。"
+      "description": ""
     },
     "recording-rules": {
       "description-target-data-source": "記録ルールの保存先のPrometheusデータソース",
@@ -2249,7 +2250,7 @@
     },
     "redirect-to-clone-rule": {
       "body-evaluation-group": "元のルールはプロビジョニングされたもので、UI上で作成したルールには使用できないため、コピーしたルールには新しい評価グループを設定する必要があります。",
-      "body-not-provisioned": "新しいルールはプロビジョニングされたルールとしてマーク<1>されません</1>。",
+      "body-not-provisioned": "",
       "confirmText-copy": "コピー",
       "title-copy-provisioned-alert-rule": "プロビジョニングされたアラートルールをコピー"
     },
@@ -2284,13 +2285,13 @@
     "routing-settings": {
       "aria-label-group-by": "グループ化",
       "description-group-by": "同じラベル値でグループ化することで、複数のアラートを1つの通知にまとめます。空の場合はデフォルトの通知ポリシーから継承されます。",
-      "group-interval": "グループ間隔：<1 >{{groupIntervalValue}}</1>",
-      "group-wait": "グループ待機：<1 >{{groupWaitValue}}</1>",
-      "grouping": "グループ化：<1 >{{fields}}</1>",
+      "group-interval": "",
+      "group-wait": "",
+      "grouping": "",
       "label-group-by": "グループ化",
       "label-override-grouping": "グループ化を上書き",
       "label-override-timings": "タイミングを上書き",
-      "repeat-interval": "繰り返し間隔：<1 >{{repeatIntervalValue}}</1>"
+      "repeat-interval": ""
     },
     "rule-actions-buttons": {
       "title-edit": "編集",
@@ -2542,7 +2543,7 @@
       "relative-with-to": ""
     },
     "rule-type-picker": {
-      "grafana-managed": "Ruler APIが有効なMimir、Loki、またはCortexデータソースがない限り、「Grafana管理」を選択してください。"
+      "grafana-managed": ""
     },
     "rule-view": {
       "query": {
@@ -2588,8 +2589,7 @@
         "firing": "発生中",
         "normal": "通常",
         "pending": "保留中",
-        "recovering": "復旧中",
-        "unknown": "不明"
+        "recovering": "復旧中"
       },
       "type": {
         "alert": "アラートルール",
@@ -2613,15 +2613,20 @@
         "placeholder-search-input": "名前で検索するか、フィルタークエリを入力してください…"
       },
       "grafana-folder": "Grafanaフォルダ",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "健康",
       "label": {
         "hide": "非表示",
         "show": "表示"
       },
       "manage-alerts": "これらのデータソースでは、「アラートUI経由で管理」を選択すると、Grafana UIとアラートルールが設定されたデータソースの両方でこれらのアラートルールを管理できます。",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "すべてのデータソース",
       "placeholder-contact-point": "コンタクトポイントを選択してください",
       "placeholder-data-sources": "データソースを選択してください",
+      "placeholder-group-search": "",
       "placeholder-labels": "ラベルを選択してください",
       "plugin-rules": "プラグインルール",
       "rule-source": {
@@ -2795,7 +2800,7 @@
     "template-data-docs": {
       "alert-template-data-table": {
         "alert-template-data": "アラートテンプレートデータ",
-        "only-in-alert": "アラートのコンテキストでのみ使用できます（アラートループ内など）"
+        "only-in-alert": ""
       },
       "available-context-notification": "通知のコンテキストで利用可能です。",
       "notification-template-data": "通知テンプレートデータ"
@@ -2875,8 +2880,10 @@
     "test-contact-point-modal": {
       "custom-notification-message": "以下で定義された注釈を使用してテスト通知を送信します。カスタムテンプレートやメッセージを使用する場合に適したオプションです。",
       "notification-message": "通知メッセージ",
-      "predefined-notification-message": "事前定義されたアラートを使用してテスト通知を送信します。カスタムテンプレートやメッセージを定義している場合は、上の<1>カスタム</1>通知メッセージに切り替えるとより良い結果が得られます。",
+      "predefined-notification-message": "",
       "send-test-notification": "テスト通知を送信",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "連絡先をテスト"
     },
     "threshold": {
@@ -2884,7 +2891,7 @@
     },
     "threshold-expression-viewer": {
       "input": "入力",
-      "stop-alerting-when": "次の場合、アラート（または保留状態）を停止する"
+      "stop-alerting-when": ""
     },
     "time-interval": {
       "add-time-interval": "時間間隔を追加",
@@ -2936,9 +2943,13 @@
       "alert-instances": "",
       "error-loading-rule": "",
       "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
       "pending-instances-count": "",
@@ -2949,7 +2960,9 @@
       "rule-not-found": {
         "description": "",
         "title": ""
-      }
+      },
+      "rules-with-firing-instances": "",
+      "rules-with-pending-instances": ""
     },
     "type-selector-button": {
       "add-expression": "式を追加"
@@ -3072,7 +3085,7 @@
       "title-notification-policies": "通知ポリシー"
     },
     "yaml-content-info": {
-      "body": "エディターのYAMLコンテンツにはアラートルール設定のみが含まれています。<1></1>Prometheusを設定するには、<4>設定ファイルの残りの部分</4>を提供する必要があります。。"
+      "body": ""
     }
   },
   "alertlist": {
@@ -3148,7 +3161,7 @@
       "no-annotations-found": "注釈が見つかりません"
     },
     "annotation-list-item": {
-      "tooltip-created-by": "作成者:<1></1> {{email}} "
+      "tooltip-created-by": ""
     },
     "category-annotation-query": "注釈クエリ",
     "category-display": "表示",
@@ -3186,7 +3199,7 @@
     },
     "empty-state": {
       "button-title": "注釈クエリを追加",
-      "info-box-content": "<0>注釈は、イベントデータをグラフに統合する方法を提供します。すべてのグラフパネルで、垂直線とアイコンとして視覚化されます。注釈アイコンにカーソルを合わせると、イベントのイベントテキストとタグを取得できます。CTRLまたはCMDを押しながらグラフをクリック（または領域をドラッグ）することで、Grafanaから直接注釈イベントを追加できます。これらはGrafanaの注釈データベースに保存されます。</0>",
+      "info-box-content": "",
       "info-box-content-2": "詳細については、<2>注釈のドキュメント</2>をご覧ください。",
       "title": "カスタム注釈クエリがまだ追加されていません"
     },
@@ -3452,6 +3465,14 @@
         "label-negative-y": "Y軸を反転"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "右側にスペースが必要",
       "gaps-options": {
@@ -3496,6 +3517,10 @@
     },
     "name-show-unfilled-area": "未入力の領域を表示",
     "name-value-display": "値を表示",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "非表示",
       "label-text-color": "文字色",
@@ -3522,6 +3547,7 @@
       "delete-modal-invalid-title": "フォルダを削除できません",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "この操作により、次のコンテンツが削除されます：",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "削除",
       "delete-provisioned-folder": "プロビジョニングされたフォルダを削除",
       "deleting": "削除中…",
@@ -3530,6 +3556,7 @@
       "move-modal-alert": "このアイテムを移動すると、そのアクセス許可が変更される可能性があります。",
       "move-modal-field-label": "フォルダ名",
       "move-modal-text": "この操作により、次のコンテンツが移動されます。",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "移動",
       "move-provisioned-folder": "",
       "moving": "移動中…",
@@ -3612,11 +3639,11 @@
       "title-folder": "このフォルダにはまだダッシュボードがありません"
     },
     "folder-actions-button": {
-      "delete": "削除",
+      "delete": "",
       "delete-folder-error": "フォルダの削除中にエラーが発生しました。後でもう一度お試しください。",
       "folder-actions": "フォルダの操作",
       "manage-permissions": "権限を管理する",
-      "move": "移動"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "フォルダを選択：{{ label }}が現在選択されています",
@@ -4098,6 +4125,7 @@
       "description": "カスタム値の利用"
     },
     "options": {
+      "loading": "",
       "no-found": "オプションが見つかりません"
     }
   },
@@ -4105,15 +4133,17 @@
     "action": {
       "change-theme": "テーマを変更",
       "dark-theme": "ダーク",
+      "dashboard-from-template": "",
       "light-theme": "ライト",
       "scopes": "スコープ"
     },
     "empty-state": {
+      "button-title": "",
       "message": "結果はありません"
     },
     "scopes": {
       "apply-selected-scopes": "適用",
-      "selected-scopes-label": "スコープ："
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "検索またはジャンプ先を指定..."
@@ -4134,6 +4164,8 @@
     "cancel": "キャンセル",
     "clear": "消去",
     "collapse": "折りたたみ表示",
+    "disabled": "",
+    "discard": "",
     "edit": "編集",
     "help": "ヘルプ",
     "loading": "読み込み中...",
@@ -4255,7 +4287,7 @@
       "okay": "OK"
     },
     "not-found-datasource": {
-      "body": "URLの入力ミスか、ID <1></1> のプラグインが利用できない可能性があります。<3></3>利用可能なデータソース一覧を表示するには、<5>ここをクリック</5>してください。"
+      "body": ""
     },
     "oss": {
       "connections-home-page": {
@@ -4298,8 +4330,8 @@
     "versionHistory": {
       "comparison": {
         "header": {
-          "hide-json-diff": "JSON diffを非表示にする ",
-          "show-json-diff": "JSON diffを表示する ",
+          "hide-json-diff": "",
+          "show-json-diff": "",
           "text": "バージョン：{{version}}、更新者：{{createdBy}}（{{ageString}}）{{message}}"
         },
         "select": "比較を開始する2つのバージョンを選択してください"
@@ -4326,7 +4358,7 @@
       "label-label": "ラベル",
       "label-placeholder": "例：テンポトレース",
       "label-required": "このフィールドは必須です。",
-      "sub-text": "<0>相関関係を説明するテキストを定義してください。</0>",
+      "sub-text": "",
       "title": "相関ラベルを定義する（ステップ1/3）"
     },
     "configure-correlation-target-form": {
@@ -4355,8 +4387,6 @@
       "next-button": "次へ",
       "save-button": "保存"
     },
-    "page-content": "相関を有効にするには、次のGrafana構成に相関を追加します。",
-    "page-heading": "相関は無効です",
     "query-editor": {
       "control-rules": "選択したターゲットデータソースは、クエリエディタをエクスポートする必要があります。",
       "data-source-text": "最初にターゲットデータソースを選択してください。",
@@ -4370,7 +4400,7 @@
     },
     "source-form": {
       "control-required": "このフィールドは必須です。",
-      "description": "データポイントは、すべての変数に値をフィールドとして、または相関ボタンを視覚化に表示するための変換出力として提供する必要があります。<1></1>注：すべての変数を以下に明示的に定義する必要はありません。<4>logfmt</4>などの変換は、すべてのキー/値ペアに対して変数を作成します。",
+      "description": "",
       "description-external-pre": "ターゲットURLで次の変数を使用しました。",
       "description-query-pre": "ターゲットクエリで次の変数を使用しました。",
       "external-title": "URLを使用するデータソースを構成する（ステップ3/3）",
@@ -4382,12 +4412,12 @@
       "results-required": "このフィールドは必須です。",
       "source-description": "選択したソースデータソースからの結果には、パネルにリンクが表示されます",
       "source-label": "送信元",
-      "sub-text": "<0>どのデータソースが相関を表示するか、どのデータが以前に定義された変数を置き換えるかを定義します。</0>"
+      "sub-text": ""
     },
     "sub-title": "異なるデータソースに存在するデータがどのように相互に関連しているかを定義します。詳細については、<2>ドキュメント</2>をご参照ください。",
     "target-form": {
       "control-rules": "このフィールドは必須です。",
-      "sub-text": "<0>相関がリンクするものを定義します。クエリタイプを使用すると、相関がクリックされたときにクエリが実行されます。外部タイプでは、相関をクリックするとURLが開きます。</0>",
+      "sub-text": "",
       "target-description-external": "リンクがクリックされたときに開くURLを指定します",
       "target-description-query": "リンクがクリックされたときにクエリを実行するデータソースを指定します",
       "target-label": "ターゲット",
@@ -4582,7 +4612,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "カスタムグリッドレイアウトでは、条件付きレンダリングはサポートされていません。条件付きレンダリングを使用するには、自動グリッドに切り替えてください。",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -4593,7 +4624,7 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "プラグインを更新すると、変更は失われます。<1></1><2>カスタムバージョンを作成するには、<1>名前を付けて保存</1>を使用してください。</2>",
+      "body-plugin-dashboard": "",
       "cancel": "キャンセル",
       "overwrite": "上書き",
       "title-plugin-dashboard": "プラグインダッシュボード"
@@ -4752,7 +4783,6 @@
         "variable": "{{type}}変数",
         "variable-set": "変数"
       },
-      "open": "オプションペインを開く",
       "row": {
         "header": {
           "hide": "非表示",
@@ -5066,8 +5096,12 @@
     "new-panel": {
       "configure-button": "構成",
       "configure-button-menu": "メニューの切り替え",
+      "empty-state-message": "",
       "menu-open-panel-editor": "構成",
-      "menu-use-library-panel": "ライブラリパネルを使用"
+      "menu-use-library-panel": "ライブラリパネルを使用",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "新規パネル",
     "on-create-new-row": {
@@ -5098,6 +5132,7 @@
       "title-matched_other": "{{count}}/{{totalCount}}件のオプションが一致"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "繰り返し",
       "tree-item": {
         "empty": "（空白）",
@@ -5107,6 +5142,19 @@
     "override-category-title": {
       "aria-label-remove-override": "オーバーライドを削除",
       "tooltip-remove-override": "オーバーライドを削除"
+    },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
     },
     "panel-edit": {
       "alerting-tab": {
@@ -5267,8 +5315,8 @@
       "title-provisioned": "プロビジョニング済みダッシュボード"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "選択したフォルダには同じ名前のダッシュボードがすでに存在します。<1></1><2>このダッシュボードの保存を続行しますか？</2>",
-      "body-version-mismatch": "他のユーザーがこのダッシュボードを更新しました<1></1><2>このダッシュボードを保存しますか？</2>",
+      "body-name-exists": "",
+      "body-version-mismatch": "",
       "confirmText-save-and-overwrite": "保存して上書き",
       "title-name-exists": "競合",
       "title-version-mismatch": "競合"
@@ -5286,7 +5334,7 @@
       "cancel": "キャンセル",
       "cannot-be-saved": "このダッシュボードは別のソースからプロビジョニングされているため、Grafana UIからは保存できません。JSONをコピーするか下記のファイルに保存した上で、プロビジョニング元でダッシュボードを更新できます。",
       "copy-json-to-clipboard": "JSONをクリップボードにコピー",
-      "file-path": "<0>ファイルパス：</0> {{filePath}}",
+      "file-path": "",
       "save-json-to-file": "JSONをファイルに保存",
       "see-docs": "プロビジョニングについての詳細は<2>ドキュメント</2>をご覧ください。"
     },
@@ -5296,9 +5344,39 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "設定を読み込み中"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "ダッシュボードの読み込みと初期化",
       "title-not-found": "ID{{panelId}}のパネルが見つかりません"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "テンプレートの変数"
@@ -5399,11 +5477,8 @@
           "tooltip": "このダッシュボードは読み取り専用に設定されています"
         },
         "export": {
-          "arrow": "エクスポート",
-          "title": "エクスポート",
           "tooltip": {
-            "as-code": "コードとしてエクスポート",
-            "json": "JSON形式でエクスポート"
+            "as-code": "コードとしてエクスポート"
           }
         },
         "more-save-options": "その他の保存オプション",
@@ -5455,6 +5530,9 @@
       "save-library-panel": "ライブラリパネルを保存",
       "settings": "ダッシュボードの設定",
       "share-button": "共有",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5485,7 +5563,7 @@
     "transformation-picker": {
       "info": "変換機能を使用すると、視覚化する前にクエリ結果の結合、計算、並べ替え、非表示、名前変更ができます。",
       "info-graph-not-suitable": "現在、グラフ表示は時系列データのみに対応しているため、多くの変換機能は適していません。",
-      "info-switch-to-table": "変換によって何が起こっているかを理解するには、テーブル表示に切り替えることをお勧めします。",
+      "info-switch-to-table": "",
       "placeholder-search-for-transformation": "変換を検索",
       "read-more": "続きを読む",
       "title-transformations": "変換"
@@ -5551,8 +5629,8 @@
     "version-history-comparison": {
       "button-restore": "バージョン、{{version}}に復元",
       "label-view-json-diff": "JSON差分を表示",
-      "new-updated-by": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新",
-      "old-updated-by": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "バージョン{{version}}の選択を切り替え",
@@ -5623,6 +5701,64 @@
       "validation-required": "ダッシュボードJSONモデルが必要です"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "template-dashboard-modal": {
+      "description": "",
+      "title": ""
+    },
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "ダッシュボードリンクを追加",
@@ -5662,6 +5798,11 @@
       "open-dashboard": "ダッシュボードを開く",
       "open-in-new-tab": "新しいタブで開く",
       "title-error-adding-the-panel": "パネル追加時のエラー"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "一覧に戻る",
@@ -5719,9 +5860,6 @@
       "custom-options": "カスタムオプション",
       "name-values-separated-comma": "カンマ区切りの値",
       "selection-options": "選択オプション"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "概要"
     },
     "dashboard-link-form": {
       "back-to-list": "一覧に戻る",
@@ -5823,7 +5961,10 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "変換を追加"
+      "add-transformation": "変換を追加",
+      "show-more": "",
+      "sql-name": "",
+      "sql-transformation-description": ""
     },
     "general-settings-edit-view": {
       "editable_options": {
@@ -5952,7 +6093,7 @@
         "cancel": "キャンセル"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "プラグイン更新時に変更は失われます。カスタムバージョンを作成するには、<1>名前を付けて保存</1>を使用してください。",
+        "body-plugin-dashboard": "",
         "title-failed-to-save-dashboard": "ダッシュボードを保存できませんでした",
         "title-plugin-dashboard": "プラグインダッシュボード",
         "title-someone-else-has-updated-this-dashboard": "他のユーザーがこのダッシュボードを更新しました",
@@ -5961,8 +6102,15 @@
       "save-and-overwrite": "「保存して上書き」"
     },
     "library-viz-panel-info": {
-      "last-edited": "<person />が{{timeAgo}}に実施",
+      "last-edited": "",
       "usage-count_other": "{{count}}件のダッシュボードで使用中"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "ダッシュボードの移動に失敗しました",
@@ -6014,7 +6162,7 @@
     },
     "panel-data-queries-tab-rendered": {
       "add-query": "クエリを追加",
-      "expression": "式"
+      "expression": ""
     },
     "panel-data-transformations-tab": {
       "tab-label": "変換"
@@ -6055,8 +6203,8 @@
       "placeholder-search-for": "次を検索...",
       "radio-options": {
         "label": {
-          "suggestions": "提案",
-          "visualizations": "可視化"
+          "all-visualizations": "",
+          "suggestions": "提案"
         }
       },
       "title-close": "閉じる"
@@ -6072,7 +6220,7 @@
       "query": "クエリ"
     },
     "query-variable-editor-form": {
-      "description-examples": "名前付きキャプチャグループを使用すると、表示テキストと値を分けることができます（<1>例を参照</1>）。",
+      "description-examples": "",
       "description-optional": "シリーズ名やメトリックノードセグメントの一部を抽出したい場合の任意設定です。",
       "label-data-source": "データソース",
       "label-static-options-sort": "スタティックオプションの並び替え",
@@ -6133,7 +6281,7 @@
       "label-message": "メッセージ",
       "placeholder-describe-changes-optional": "変更内容を説明するメモを追加してください（任意）。",
       "render-footer": {
-        "body-plugin-dashboard": "プラグイン更新時に変更は失われます。カスタムバージョンを作成するには、<1>名前を付けて保存</1>を使用してください。",
+        "body-plugin-dashboard": "",
         "no-changes-to-save": "保存する変更はありません",
         "title-failed-to-save-dashboard": "ダッシュボードを保存できませんでした",
         "title-plugin-dashboard": "プラグインダッシュボード",
@@ -6168,7 +6316,7 @@
       "cancel": "キャンセル",
       "cannot-be-saved": "このダッシュボードは別のソースからプロビジョニングされているため、Grafana UIからは保存できません。JSONをコピーするか下記のファイルに保存した上で、プロビジョニング元でダッシュボードを更新できます。",
       "copy-json-to-clipboard": "JSONをクリップボードにコピー",
-      "file-path": "<0>ファイルパス：</0> {{filePath}}",
+      "file-path": "",
       "label-description": "説明",
       "label-target-folder": "ターゲットフォルダ",
       "label-title": "タイトル",
@@ -6216,6 +6364,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -6337,8 +6486,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "JSON差分を表示",
-      "new-version-updated": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新",
-      "old-version-updated": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "{{baseVersion}}<3></3>と{{newVersion}}を比較",
@@ -6416,7 +6565,7 @@
     "provisioned-delete-modal": {
       "confirm-button": "OK",
       "text-1": "このダッシュボードはGrafanaプロビジョニングによって管理されており、削除できません。構成ファイルからダッシュボードを削除して削除します。",
-      "text-2": "プロビジョニングの詳細については、grafanaのドキュメントを参照してください。",
+      "text-2": "",
       "text-3": "ファイルパス：{{provisionedId}}",
       "text-link": "ドキュメントページへ移動",
       "title": "プロビジョニングされたダッシュボードを削除できません"
@@ -6642,9 +6791,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "エラーの詳細"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "CSVまたはスプレッドシートを追加"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analyticsデータソース",
@@ -6718,18 +6864,18 @@
       "no-events-yet": "まだイベントはありません"
     },
     "render-info-viewer": {
-      "data-counter": "データ: {{numDataChanges}} ",
+      "data-counter": "",
       "elapsed-time": "時間: {{elapsed}}ミリ秒",
       "field": "フィールド",
       "last": "最新",
-      "render-counter": "レンダリング: {{numRenders}} ",
-      "schema-counter": "スキーマ: {{numSchemaChanges}} ",
+      "render-counter": "",
+      "schema-counter": "",
       "title-reset-counters": "カウンターをリセット",
       "tooltip-step-back": "戻る",
       "type": "種類"
     },
     "state-view": {
-      "current-value": "現在の値: {{currentValue}} ",
+      "current-value": "",
       "label-state-name": "状態名"
     }
   },
@@ -6938,7 +7084,6 @@
         "new-panel": "新しいパネル"
       }
     },
-    "clear": "消去",
     "confirm-navigation-modal": {
       "cancel": "キャンセル",
       "new-tab": "現在のタブで続行しますか、それとも新しいタブを開きますか？",
@@ -7099,6 +7244,7 @@
       "logs-volume": {
         "add-filters": "クエリにラベルを追加して、検索範囲を絞り込んでください。",
         "decrease-timerange": "クエリの時間範囲を短縮してください。",
+        "max-bytes-error": "",
         "much-data": "クエリがアクセスしようとしているデータが多すぎます。次の1つ以上："
       },
       "maximum-pinned-logs": "ピン固定されたログが最大数、{{PINNED_LOGS_LIMIT}}に達しました。別のログを追加するには、ログのピン留めを解除してください。",
@@ -7139,7 +7285,8 @@
     "logs-table-multi-select": {
       "fields": "フィールド",
       "reset": "リセット",
-      "selected-fields": "選択済みのフィールド"
+      "selected-fields": "選択済みのフィールド",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "名前でクエリを選択",
@@ -7147,12 +7294,15 @@
       "tooltip-select-query-visualize-table": "テーブルで表示するクエリを選択"
     },
     "logs-volume-panel": {
-      "content-streaming": "ストリーミング"
+      "content-streaming": "ストリーミング",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "ログ量を再読み込み",
       "label-reload-log-volume": "ログ量を再読み込み",
       "loading": "読み込み中...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "このクエリのログ量の読み込みに失敗しました",
       "title-no-logs-volume-available": "利用可能なログ量がありません",
       "title-showing-partial-data": "部分的なデータの表示",
@@ -7161,7 +7311,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "現在のクエリと時間範囲で利用可能なログ量情報はありません。"
     },
-    "next": "次へ",
     "next-prev-result": {
       "aria-label-next": "次の結果ボタン",
       "aria-label-prev": "前の結果ボタン",
@@ -7176,13 +7325,12 @@
       },
       "footer": {
         "learn-more": "詳細を見る",
-        "pro-tip-define-sources-through-configuration-files": "豆知識：設定ファイルでもデータソースを定義できます。"
+        "pro-tip-define-sources-through-configuration-files": ""
       }
     },
     "pane": {
       "loading-placeholder": "読み込み中..."
     },
-    "prev": "前へ",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "クエリなしにする"
     },
@@ -7238,8 +7386,6 @@
       "query-deleted": "クエリが削除されました"
     },
     "rich-history-queries-tab": {
-      "displaying-partial-queries": "{{ count }}件のクエリを表示しています",
-      "displaying-queries": "{{ count }}件のクエリ",
       "filter-aria-label": "データソースのクエリをフィルタリングします",
       "filter-history": "履歴をフィルタリング",
       "filter-placeholder": "データソースのクエリをフィルタリングします",
@@ -7249,7 +7395,9 @@
       "search-placeholder": "クエリを検索",
       "showing-queries": "{{ total }}件中{{ shown }}件を表示中 <0>さらに表示</0>",
       "sort-aria-label": "クエリを並べ替え",
-      "sort-placeholder": "次でクエリを並べ替え"
+      "sort-placeholder": "次でクエリを並べ替え",
+      "displaying-partial-queries_other": "",
+      "displaying-queries_other": ""
     },
     "rich-history-settings-tab": {
       "alert-info": "Grafanaはエントリを最大{{optionLabel}}件まで保持します。スター付きのエントリは削除されません。",
@@ -7329,8 +7477,7 @@
       "query-inspector-button": "クエリ検査",
       "query-inspector-button-aria-label": "クエリ検査"
     },
-    "show-critical-path-only": "重要なパスのみ表示",
-    "show-matches-only": "一致するもののみを表示",
+    "show-all-spans": "",
     "span-bar": {
       "tooltip-critical-path": "全体的なトレース/リクエスト/ワークフローの<1>重要パス</1>上のセグメント。"
     },
@@ -7359,6 +7506,7 @@
       "label-resource-attributes": "リソース属性",
       "label-span-attributes": "スパン属性",
       "label-stack-trace": "スタックトレース",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "子カウント:",
@@ -7367,8 +7515,7 @@
           "start-time": "開始時間:"
         }
       },
-      "share-span": "共有",
-      "warnings": "警告"
+      "share-span": "共有"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "最大スパン演算子を選択",
@@ -7441,7 +7588,7 @@
       "copy-shortened-link-menu": "コピーリンクのオプションを開く",
       "refresh-picker-cancel": "キャンセル",
       "refresh-picker-run": "クエリの実行",
-      "split-close": "閉める",
+      "split-close": "",
       "split-close-tooltip": "分割ペインを閉じる",
       "split-narrow": "狭いペイン",
       "split-title": "分割",
@@ -7450,10 +7597,18 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "共有トレースオプションメニューを開きます",
+      "critical-path": "",
+      "critical-path-tooltip": "",
       "duration": "期間",
+      "errors": "",
+      "errors-tooltip": "",
       "export-started": "エクスポートが開始されました",
+      "filters": "",
       "give-feedback": "フィードバック",
+      "high-latency": "",
+      "high-latency-tooltip": "",
       "link-copied": "リンクをクリップボードにコピーしました",
+      "overview": "",
       "path": "パス",
       "route": "経路",
       "services": "サービス",
@@ -7467,11 +7622,6 @@
       "tooltip-url": "{{route}}または{{url}}または{{target}}または{{path}}",
       "trace-id": "トレースID",
       "url": "URL"
-    },
-    "trace-page-search-bar": {
-      "aria-label-clear-filters": "フィルターのクリアボタン",
-      "label-show-matches": "「一致のみ表示」の切り替え",
-      "label-show-paths": "「重要パスのみ表示」の切り替え"
     },
     "trace-view": {
       "aria-label-copy": "クリップボードにコピー",
@@ -7571,7 +7721,7 @@
     },
     "math": {
       "available-math-functions": "利用可能な数学関数",
-      "run-math-operations": "1つ以上のクエリで数学演算を実行します。クエリは{{refExample}}（つまり{{ref1}}、{{ref2}}、{{ref3}}など）で参照できます。<10></10>例：<12>{{example}}</12>",
+      "run-math-operations": "",
       "tooltip-footer": "<2>数式</2>に関する追加ドキュメントをご覧ください。",
       "tooltip-title": "数学演算子",
       "tooltip-trigger": "式"
@@ -7598,18 +7748,29 @@
       "label-upsample": "アップサンプリング",
       "tooltip-s-m-h": "10秒、1分、30分、1時間"
     },
+    "schema-inspector-panel": {
+      "aria-label-close-schema-inspector": ""
+    },
     "sql-expr": {
       "button-run-query": "クエリを実行",
       "modal-title": "SQLエディター",
       "tooltip-experimental": "SQL Expressions LLMの統合は実験的です。問題が発生した場合は、Grafanaチームに報告してください。"
+    },
+    "sql-schema": {
+      "close-schema-inspector": "",
+      "error-title": "",
+      "inspect-button": "",
+      "loading": "",
+      "no-data-title": "",
+      "no-fields-desc": "",
+      "no-fields-title": "",
+      "query-error-title": ""
     },
     "threshold": {
       "label-input": "入力"
     }
   },
   "folder-filter": {
-    "clear-folder-button": "フォルダをクリア",
-    "noOptionsMessage-no-folders-found": "フォルダが見つかりません",
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
   },
@@ -7675,6 +7836,15 @@
     "name-show-threshold-labels": "しきい値ラベルを表示",
     "name-show-threshold-markers": "しきい値マーカーを表示",
     "placeholder-neutral": "自動",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "no-thresholds": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -7967,38 +8137,30 @@
       }
     }
   },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "戻る"
-      }
-    },
-    "select-group": "グループを選択"
-  },
   "grafana-data": {
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "一昨日",
+          "previousFiscalQuarter": "前四半期",
+          "previousFiscalYear": "前年度",
+          "previousMonth": "前月",
+          "previousWeek": "前の週",
+          "previousYear": "前の年",
+          "thisDayLastWeek": "先週の同じ曜日",
+          "thisFiscalQuarter": "今四半期",
+          "thisFiscalQuarterSoFar": "今四半期の現在まで",
+          "thisFiscalYear": "今年度",
+          "thisFiscalYearSoFar": "今年度の累計",
+          "thisMonth": "今月",
+          "thisMonthSoFar": "今月の現在まで",
+          "thisWeek": "今週",
+          "thisWeekSoFar": "今週の現在まで",
+          "thisYear": "今年",
+          "thisYearSoFar": "今年の現在まで",
+          "today": "今日",
+          "todaySoFar": "今日の現在まで",
+          "yesterday": "昨日"
         },
         "lastNDays_other": "",
         "lastNHours_other": "",
@@ -8451,7 +8613,13 @@
       "saving": "<1></1>を保存しています"
     },
     "axis-builder": {
-      "linear-threshold": "線形のしきい値",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "ログベース"
     },
     "builder": {
@@ -8602,7 +8770,7 @@
     },
     "data-source-http-settings": {
       "access-help": "<1></1>をヘルプ",
-      "access-help-details": "アクセスモードは、データソースへの要求の処理方法を制御します。特に明記されていない場合は、<1><1>サーバー</1></1>が望ましい方法です。",
+      "access-help-details": "",
       "access-help-title": "ヘルプにアクセス",
       "access-label": "アクセス",
       "allowed-cookies": "許可されたクッキー",
@@ -8717,6 +8885,9 @@
     },
     "drawer": {
       "close": "閉じる"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "試験運用",
@@ -8854,6 +9025,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "右y軸を使用"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -8870,8 +9046,15 @@
       "cell-inspect": "値を検査",
       "cell-inspect-tooltip": "値を検査",
       "copy": "クリップボードにコピー",
-      "csv-counts": "行：{{rows}}、列：{{columns}}  <5></5>",
+      "csv-counts": "",
       "csv-placeholder": "ここにCSVを入力...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "値をフィルタリング",
       "filter-popup-apply": "OK",
       "filter-popup-aria-label-match-case": "大文字/小文字を区別",
@@ -9023,6 +9206,9 @@
     "category-legend": "凡例",
     "category-tooltip": "ツールチップ",
     "category-y-axis": "Y軸",
+    "error": {
+      "no-y-fields": ""
+    },
     "mode-options": {
       "label-opacity": "不透明度",
       "label-scheme": "配色"
@@ -9135,6 +9321,7 @@
       "toggle-panel-edit": "パネル編集ビューを切り替え",
       "toggle-panel-fullscreen": "パネルの全画面表示を切り替え",
       "toggle-panel-legend": "パネルの凡例を切り替え",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "時間範囲をズームアウト"
     },
     "title": "ショートカット"
@@ -9155,7 +9342,6 @@
     "name-line-width": "線の太さ",
     "name-stacking": "積み上げ"
   },
-  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "読込中",
@@ -9317,7 +9503,7 @@
       "error-fetching": "LDAP設定の取得中にエラーが発生しました",
       "error-saving": "LDAP設定の保存中にエラーが発生",
       "error-validate-form": "LDAP設定の検証中にエラーが発生しました",
-      "feature-flag-disabled": "このページにアクセスできるのは、<1>ssoSettingsLDAP</1>機能フラグを有効にする場合のみです。",
+      "feature-flag-disabled": "",
       "saved": "LDAP設定を保存しました"
     },
     "bind-dn": {
@@ -9358,7 +9544,7 @@
       "label": "検索ベースDNS",
       "placeholder": "例：dc=grafana,dc=org"
     },
-    "subtitle": "GrafanaのLDAP統合により、GrafanaユーザーはLDAP認証情報を使用してログインできます。詳細については、<2><0>ドキュメント</0></2>をご覧ください。",
+    "subtitle": "",
     "title": "基本設定"
   },
   "library-panel": {
@@ -9402,7 +9588,7 @@
       "dashboard-name": "ダッシュボード名"
     },
     "library-panel-info": {
-      "last-edited": "<person />が{{timeAgo}}に最終編集",
+      "last-edited": "",
       "usage-count_other": "{{count}}件のダッシュボードで使用中"
     },
     "library-panels-search": {
@@ -9701,7 +9887,7 @@
       "tooltip-unpin-line": "行のピン留めを解除"
     },
     "log-row-message": {
-      "ellipsis": "… ",
+      "ellipsis": "",
       "more": "さらに",
       "see-details": "ログの詳細を見る",
       "tooltip-error": "エラー：{{errorMessage}}"
@@ -9803,11 +9989,7 @@
       "wrap-lines": "行を折り返す"
     },
     "logs-navigation": {
-      "newer-logs": "新しいログ",
-      "older-logs": "古いログ",
-      "scroll-bottom": "一番下までスクロール",
-      "scroll-top": "一番上までスクロール",
-      "start-of-range": "範囲の開始日"
+      "scroll-top": "一番上までスクロール"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -10097,7 +10279,7 @@
     },
     "resource-table": {
       "dashboard-load-error": "ダッシュボードを読み込めません",
-      "error-library-element-sub": "ライブラリ要素{uid}",
+      "error-library-element-sub": "",
       "error-library-element-title": "ライブラリ要素を読み込めません",
       "unknown-datasource-title": "データソース{{datasourceUID}}",
       "unknown-datasource-type": "不明なデータソース"
@@ -10399,6 +10581,7 @@
       "title": "新規"
     },
     "new-dashboard": {
+      "empty-title": "",
       "title": "新しいダッシュボード"
     },
     "new-folder": {
@@ -10527,7 +10710,12 @@
       }
     },
     "help": {
-      "aria-label": "ヘルプ"
+      "aria-label": "ヘルプ",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "招待",
@@ -10559,7 +10747,8 @@
       "aria-label": "プロフィール"
     },
     "quick-add": {
-      "aria-label": "新規"
+      "aria-label": "新規",
+      "new-template-dashboard-button": ""
     },
     "rss-button": "最新ブログから"
   },
@@ -10817,6 +11006,7 @@
       "replace-library-panel": "ライブラリパネルを置き換える",
       "share": "共有",
       "show-legend": "凡例を表示",
+      "time-settings": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "view": "表示"
     },
@@ -10834,7 +11024,7 @@
       "switch-to-table": "テーブルに切り替え"
     },
     "panel-plugin-error": {
-      "text-load-error": "詳細はサーバーの起動ログを確認してください。<1></1>このプラグインがGitから読み込まれた場合は、コンパイルされていることを確認してください。",
+      "text-load-error": "",
       "title-load-error": "読み込みエラー：{{panelId}}",
       "title-not-found": "パネルプラグインが見つかりません：{{id}}"
     },
@@ -10850,12 +11040,18 @@
       "tooltip-delete": "削除"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "現在のデータに基づく",
-      "no-results-matched-your-query": "クエリに一致する結果がありません"
+      "apply-suggestion-aria-label": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "クエリに一致するものが見つかりませんでした"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "タイプをクリア",
@@ -10883,6 +11079,10 @@
     "pie-chart-type-options": {
       "label-donut": "ドーナツ",
       "label-pie": "円"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -11028,7 +11228,7 @@
     },
     "details": {
       "connections-tab": {
-        "description": "現在、次のデータソースが{{pluginName}}に設定されています。タイルをクリックして、設定の詳細を表示します。すべてのデータソース接続は、<4><0>接続</0> - <3>データソース</3>にあります。</4>"
+        "description": ""
       },
       "disabled-error": {
         "angular-deprecation-link": "Angularの非推奨事項の詳細を読む",
@@ -11045,7 +11245,7 @@
       },
       "labels": {
         "contactGrafanaLabs": "Grafana Labsに問い合わせる",
-        "customLinks": "カスタムリンク",
+        "customLinks": "",
         "customLinksTooltip": "これらのリンクは、プラグイン開発者が提供する、開発者向けの追加リソースと情報です。",
         "dependencies": "依存関係",
         "documentation": "ドキュメント",
@@ -11056,7 +11256,7 @@
         "latestVersion": "最新のバージョン",
         "license": "ライセンス",
         "raiseAnIssue": "問題を提起する",
-        "reportAbuse": "懸念事項を報告する ",
+        "reportAbuse": "",
         "reportAbuseTooltip": "悪意のあるプラグインや有害なプラグインに関連する問題は、Grafana Labsに直接報告してください。",
         "repository": "レポジトリ",
         "signature": "署名",
@@ -11066,8 +11266,8 @@
       "modal": {
         "cancel": "キャンセル",
         "copyEmail": "メールアドレスをコピー",
-        "description": "この機能は、プラグイン内の悪意のある動作や有害な動作を報告するためのもの機能です。プラグインに関するご質問は、次までメールでお問い合わせください。",
-        "node": "注：バグや機能リクエストなどの一般的なプラグインの問題については、提供されているリンクを使用してプラグインの作成者にお問い合わせください。",
+        "description": "",
+        "node": "",
         "title": "プラグインの懸念事項を報告する"
       }
     },
@@ -11135,7 +11335,7 @@
       "message": "すべてのプラグインが最新です"
     },
     "not-found-plugin": {
-      "body-plugin-not-found": "プラグインが見つかりません。URLが正しいことを確認するか、<3>プラグインカタログ</3>にアクセスしてください。",
+      "body-plugin-not-found": "",
       "title-plugin-not-found": "プラグインが見つかりません"
     },
     "plugin-actions": {
@@ -11290,12 +11490,15 @@
       "label-workflow": "ワークフロー",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "このリソースは{{repoType}}内の該当ブランチよりも古いバージョンです。",
+      "branch-text": "",
       "not-saved": "このブランチがマージされるまで、組織内の他のGrafanaユーザーには、デフォルトブランチに保存された現在のバージョンが表示されます",
       "open-in-repo-button": "{{repoType}}で開く",
       "open-pull-request-in-repo": "{{repoType}}でプルリクエストを開く",
@@ -11347,6 +11550,9 @@
       "label-display-name": "表示名",
       "placeholder-my-repository-connection": "自分のリポジトリ接続",
       "text-loading-resource-information": "リソース情報読み込み中...",
+      "unavailable-options": {
+        "title": ""
+      },
       "unmanaged-resources-label": "",
       "dashboards-count_other": "{{count}}個のダッシュボード",
       "files-count_other": "{{count}}個のファイル",
@@ -11392,8 +11598,8 @@
     },
     "connect-repository-button": {
       "configure": "構成",
-      "instance-fully-managed-tooltip": "",
-      "repository-limit-reached-tooltip_other": ""
+      "free-tier-limit-tooltip": "",
+      "instance-fully-managed-tooltip": ""
     },
     "delete-repository-button": {
       "button-delete": "削除",
@@ -11420,6 +11626,8 @@
     "empty-state": {
       "no-jobs": "ジョブはありません…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "これらのオプションのアドオンを使って、GitHub連携を最大限に活用しましょう",
       "description-instant-updates": "変更がコミットされるとすぐに、Grafanaでリアルタイムに更新を受け取ります。変更が公開される前に、プルリクエストを使用して変更を確認・承認します。",
@@ -11455,13 +11663,6 @@
       "saving": "保存中",
       "title-error-loading-file": "ファイル読み込み時のエラー"
     },
-    "files-view": {
-      "columns": {
-        "history": "履歴",
-        "view": "表示"
-      },
-      "placeholder-search": "検索"
-    },
     "finish-step": {
       "description-enable-previews": "プルリクエストによるダッシュボードの変更の画像プレビューを追加します。Grafanaダッシュボードの画像はGitリポジトリで共有され、リポジトリにアクセスできる全ユーザーが閲覧できます。",
       "description-generate-dashboard-previews": "プルリクエストのプレビューリンクを作成する",
@@ -11481,6 +11682,13 @@
       "placeholder-search": "検索",
       "all-resources-managed_other": "",
       "unmanaged-resources_other": ""
+    },
+    "free-tier-limit": {
+      "message": "",
+      "message-connection": "",
+      "message-resource": "",
+      "note": "",
+      "upgrade-link": ""
     },
     "get-default-values": {
       "title": {
@@ -11593,7 +11801,6 @@
       "unsupported-repository-type": ""
     },
     "inline-secure-values-warning": "",
-    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "詳細を表示",
       "loading-finished-job": "完了したジョブを読み込み中...",
@@ -11615,11 +11822,22 @@
       "path-label": "リポジトリパス",
       "path-required": "リポジトリパスが必要です"
     },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
+    },
     "mode-options": {
+      "disabled": {
+        "folder-connected": "",
+        "legacy-storage": "",
+        "not-allowed": "",
+        "not-supported": ""
+      },
       "folder": {
         "description": "セットアップ後、新しいGrafanaフォルダが作成され、外部ストレージと同期されます。外部ストレージにリソースがある場合、それらはこの新しいフォルダにプロビジョニングされます。このフォルダで作成された新しいリソースはすべて、外部ストレージに保存されバージョン管理されます。",
         "label": "外部ストレージを新しいGrafanaフォルダに同期",
-        "subtitle": "このオプションを使用すると、インスタンスの他の部分に影響を与えずに外部リソースを新しいフォルダに同期できます。このプロセスは最大10個のフォルダに対して繰り返し実行できます。"
+        "subtitle": ""
       },
       "instance": {
         "description": "リソースは外部ストレージと同期され、このインスタンスにプロビジョニングされます。必要に応じて既存のGrafanaリソースは移行・統合されます。セットアップ後、すべての新規リソースと変更は外部ストレージに保存され、自動的にインスタンスにプロビジョニングされます。",
@@ -11638,14 +11856,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "アクティブなジョブ",
       "column-action": "操作",
       "column-duration": "継続時間",
       "column-job-id": "",
       "column-message": "メッセージ",
       "column-started": "開始済み",
       "column-status": "ステータス",
-      "error-loading": "{{type}}の読み込みエラー",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "ジョブ"
     },
     "repository-actions": {
@@ -11653,9 +11871,6 @@
       "source-code": "ソースコード"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "読み取り専用",
       "settings": "設定",
       "view": "表示"
@@ -11692,14 +11907,6 @@
       "webhook-last-event": "最新イベント：",
       "webhook-url": "Webhookを表示"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "履歴",
-        "view-dashboard": "表示",
-        "view-folder": "表示"
-      },
-      "placeholder-search": "検索"
-    },
     "repository-status-page": {
       "back-to-repositories": "リポジトリに戻る",
       "cleaning-up-resources": "リポジトリリソースのクリーンアップ中",
@@ -11707,12 +11914,10 @@
       "not-found": "見つかりません",
       "not-found-message": "リポジトリが見つかりません",
       "repository-config-exists-configuration": "リポジトリ設定が設定ファイルに含まれていることを確認してください。",
-      "tab-files": "ファイル",
-      "tab-files-title": "リポジトリからのRawファイルリスト",
       "tab-overview": "概要",
       "tab-overview-title": "リポジトリの概要",
       "tab-resources": "リソース",
-      "tab-resources-title": "Grafanaデータベースに保存されたリソース",
+      "tab-resources-title": "",
       "title": "リポジトリの状態",
       "title-legacy-storage": "レガシーストレージ",
       "title-queued-for-deletion": "削除待ちリストに追加されました"
@@ -11734,6 +11939,17 @@
       "local-description": "ファイルのプロビジョニングを設定",
       "pure-git": "Pure Git",
       "pure-git-description": "任意のGitリポジトリに接続"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "ベース",
@@ -11760,10 +11976,26 @@
       "next": "次へ",
       "previous": "前へ"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "完了したステップ",
       "label-current-step": "現在のステップ",
       "label-pending-step": "保留中のステップ"
+    },
+    "status-badge": {
+      "automatic-pulling-disabled": "",
+      "deleting": "",
+      "error": "",
+      "pending": "",
+      "pulling": "",
+      "unknown": "",
+      "up-to-date": "",
+      "waiting-for-health-check": "",
+      "warning": ""
     },
     "success-title-default": "成功",
     "sync-job": {
@@ -11942,7 +12174,7 @@
       "annotations-show-text": "注釈 = 表示",
       "time-range-picker-disabled-text": "時間範囲ピッカー = 無効",
       "time-range-picker-enabled-text": "時間範囲ピッカー = 有効",
-      "time-range-text": "時間範囲 = "
+      "time-range-text": ""
     },
     "share": {
       "success-delete": "ダッシュボードは共有できなくなりました"
@@ -11981,7 +12213,7 @@
       "revoke-user-access-modal-desc-line1": "{{email}}のアクセス権を取り消してもよろしいです か？"
     },
     "delete-user-shared-dashboards-modal": {
-      "revoke-user-access-modal-desc-line2": "このアクションにより、{{email}}は、すべての共有ダッシュボードへのアクセスが即座に取り消されます。"
+      "revoke-user-access-modal-desc-line2": ""
     },
     "modal": {
       "shared-dashboard-modal-title": "共有したダッシュボード"
@@ -12157,7 +12389,7 @@
     },
     "sub-menu-aria-label": "ロール選択ツールのサブメニュー",
     "title": {
-      "description": "Grafanaの機能とリソースへのアクセスを細かく制御するために、ユーザーに役割を割り当てます。詳細については、<2>ドキュメント</2>をご覧ください。"
+      "description": ""
     }
   },
   "role-picker-drawer": {
@@ -12187,6 +12419,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "折りたたみ表示",
+      "exchange": "",
       "expand": "展開",
       "loading": "ダッシュボードを読み込んでいます",
       "noResultsForFilter": "クエリに一致する結果が見つかりませんでした。",
@@ -12205,14 +12438,14 @@
       "cancel": "キャンセル",
       "error-title": "",
       "input": {
-        "placeholder": "スコープを選択...",
-        "removeAll": "すべてのスコープを削除"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "すべてのスコープを削除",
+        "tooltip": ""
       },
       "title": "スコープを選択"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "クエリに一致する結果が見つかりませんでした。",
         "recommended": "おすすめ",
@@ -12242,10 +12475,12 @@
       }
     },
     "dashboard-actions": {
+      "empty-dashboard": "",
       "import": "インポート",
       "new": "新規",
       "new-dashboard": "新しいダッシュボード",
-      "new-folder": "新規フォルダ"
+      "new-folder": "新規フォルダ",
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "スコア"
@@ -12280,7 +12515,7 @@
   },
   "select": {
     "select-menu": {
-      "selected-count": "選択中"
+      "selected-count": ""
     }
   },
   "service-account-create-page": {
@@ -12317,11 +12552,14 @@
       "copy-clipboard": "クリップボードにコピー",
       "copy-to-clipboard-and-close": "クリップボードにコピーして閉じる",
       "description-name-to-easily-identify-the-token": "トークンを簡単に識別するための名前",
+      "description-no-expiration-disabled": "",
       "description-token": "トークンはもう表示できなくなるため、今すぐコピーしてください。トークンを失うと、新しいトークンを作成する必要があります。",
       "generate-token": "トークンを生成",
       "label-display-name": "表示名",
       "label-expiration": "有効期限",
       "label-expiration-date": "有効期日",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "トークン"
     },
     "get-actions-cell": {
@@ -12379,6 +12617,7 @@
       "aria-label-role": "ロール"
     },
     "service-account-tokens-table": {
+      "aria-label-delete-button": "",
       "created": "作成済み",
       "expires": "有効期限",
       "last-used-at": "最終使用日時",
@@ -12489,7 +12728,7 @@
       "info-text-1": "スナップショットは、インタラクティブなダッシュボードを瞬時に公開できる方法です。作成時に、クエリ（メトリック、テンプレート、および注釈）やパネルリンクなどの機密データを削除し、可視化されたメトリックデータと系列名のみをダッシュボードに埋め込みます。",
       "info-text-2": "スナップショットは、リンクがあり、URLにアクセスできる<1>誰でも閲覧できる</1>ことにご注意ください。賢明に共有してください。",
       "local-button": "スナップショットを公開",
-      "mistake-message": "間違えましたか？",
+      "mistake-message": "",
       "name": "スナップショット名",
       "timeout": "タイムアウト（秒）",
       "timeout-description": "ダッシュボードメトリックの収集に時間がかかる場合は、タイムアウト値を設定する必要があります。",
@@ -12613,6 +12852,7 @@
       "theme-label": "インターフェースのテーマ",
       "week-start-label": "週のはじまり"
     },
+    "save": "",
     "theme": {
       "default-label": "初期設定",
       "experimental": "試験運用"
@@ -12711,7 +12951,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -12770,6 +13012,12 @@
       "label-inverted": "反転",
       "label-same-as-value": "値と同じ",
       "label-standard": "標準"
+    },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
     },
     "text-alignment-options": {
       "label-auto": "自動",
@@ -12978,6 +13226,7 @@
     "create-team": {
       "create": "作成",
       "description-email": "これは任意であり、主にカスタムチームのアバターに使用されます",
+      "failed-to-create": "",
       "label-email": "メール",
       "label-name": "名前",
       "label-role": "ロール"
@@ -13009,17 +13258,18 @@
         "title-edit-team": "チームを編集",
         "tooltip-edit-team": "チームを編集"
       },
+      "loading-teams": "",
       "new-team": "新しいチーム",
       "placeholder-search-teams": "チームを検索"
     },
     "team-settings": {
-      "description-email": "これは任意であり、主にチームプロフィールのアバター設定（gravatar経由）に使用されます",
+      "description-email": "",
       "label-email": "メールアドレス",
       "label-name": "名前",
       "label-numerical-identifier": "数値ID",
       "label-role": "ロール",
       "label-team-details": "チーム詳細",
-      "save": "保存"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "チーム同期を使用すると、ユーザーがサインインした際ではなく、シングルサインオングループのメンバーシップに基づいて各ユーザーのGrafanaチームと権限がすぐに更新されるため、Grafanaでのユーザーアクセス管理が容易になります"
@@ -13051,6 +13301,14 @@
       "form-label": "フォームラベル",
       "title": "パネル"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {
@@ -13099,7 +13357,8 @@
       "forwards-time-aria-label": "時間範囲を前に移動",
       "to": "へ",
       "zoom-out-button": "時間範囲をズームアウト",
-      "zoom-out-tooltip": "時間範囲ズームアウト <1></1> CTRL+Z"
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "時間範囲を適用",
@@ -13201,30 +13460,43 @@
         "label-threshold": "しきい値"
       }
     },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
+    },
     "timezones-editor": {
       "tooltip-add-timezone": "タイムゾーンを追加",
       "tooltip-remove-timezone": "タイムゾーンを削除"
     }
   },
   "traces": {
+    "adhocFilters": {
+      "customValue": "",
+      "duration1h": "",
+      "duration1m": "",
+      "duration1ms": "",
+      "duration1s": "",
+      "durationLabel": "",
+      "textSearchDescription": "",
+      "textSearchLabel": ""
+    },
     "category-span-filters": "スパンフィルター",
-    "name-critical-path-only": "クリティカルパスのみ表示",
-    "name-find-in-trace": "トレースで検索",
-    "name-max-duration": "最大継続時間",
-    "name-min-duration": "最小継続時間",
-    "name-service-name": "サービス名",
-    "name-service-name-operator": "サービス名の演算子",
+    "name-critical-path-only": "",
+    "name-filters": "",
     "name-show-matches-only": "一致するもののみを表示",
-    "name-span-name": "スパン名",
-    "name-span-name-operator": "スパン名の演算子",
-    "name-tags": "タグ",
     "traces-panel": {
       "no-data-found-in-response": "応答にデータが見つかりません"
     }
   },
   "transformations": {
     "empty": {
-      "add-transformation-body": "変換を使用すると、視覚化が表示される前にさまざまな方法でデータを変更できます。<1></1>これには、データの結合、フィールド名の変更、計算、表示用のデータのフォーマットなどが含まれます。",
+      "add-transformation-body": "",
       "add-transformation-header": "データの変換を開始"
     }
   },
@@ -14086,8 +14358,8 @@
       "message": "ユーザーが見つかりません"
     },
     "token-revoked-modal": {
-      "auto-revoked": "アカウントの<2>同時セッション数の上限（{{numSessions}}件）</2>に達したため、セッショントークンは自動的に失効しました。",
-      "resume-message": "<0>セッションを再開するには、もう一度サインインしてください。</0>自動的にサインアウトが繰り返される場合は、管理者に連絡するか、ライセンスページでクォータを確認してください。",
+      "auto-revoked": "",
+      "resume-message": "",
       "sign-in": "サインイン",
       "title-you-have-been-automatically-signed-out": "自動的にサインアウトされました"
     },

@@ -53,6 +53,10 @@ The following will help you get started working with Elasticsearch and Grafana:
 
 ## Supported Elasticsearch versions
 
+{{< admonition type="warning" >}}
+The Elasticsearch data source plugin currently does not support Elastic Cloud Serverless, or any other serverless variant of Elasticsearch.
+{{< /admonition >}}
+
 This data source supports these versions of Elasticsearch:
 
 - ≥ v7.17

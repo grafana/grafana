@@ -74,7 +74,7 @@ func TestIntegrationTeamBindings(t *testing.T) {
 }
 
 func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper, team *unstructured.Unstructured, user *unstructured.Unstructured) {
-	t.Run("should create/update/get team binding using the new APIs", func(t *testing.T) {
+	t.Run("should create/update/get/delete team binding using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 
 		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -137,6 +137,18 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.Equal(t, "member", fetchedSpec["permission"])
 		require.Equal(t, false, fetchedSpec["external"])
 		require.Equal(t, createdUID, fetched.GetName())
+
+		// Delete the team binding
+		err = teamBindingClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		// Verify the team binding is deleted
+		_, err = teamBindingClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "not found")
 	})
 
 	t.Run("should not be able to create team binding when using a user with insufficient permissions", func(t *testing.T) {

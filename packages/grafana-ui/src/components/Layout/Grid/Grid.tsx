@@ -34,6 +34,11 @@ interface PropsWithMinColumnWidth extends GridPropsBase {
 /** 'columns' and 'minColumnWidth' are mutually exclusive */
 type GridProps = PropsWithColumns | PropsWithMinColumnWidth;
 
+/**
+ * The Grid component is a layout component that allows you to create a grid of columns and rows to organize content and elements. It is a wrapper around the [CSS Grid](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout) specification.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-grid--docs
+ */
 export const Grid = forwardRef<HTMLDivElement, GridProps>((props, ref) => {
   const { alignItems, children, gap, rowGap, columnGap, columns, minColumnWidth, ...rest } = props;
   const styles = useStyles2(getGridStyles, gap, rowGap, columnGap, columns, minColumnWidth, alignItems);

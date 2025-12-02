@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
@@ -65,15 +65,13 @@ describe('DashboardControlsMenu', () => {
       }),
     ];
 
-    act(() => {
-      render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
-    });
+    render(<DashboardControlsButton dashboard={getDashboard(variables)} />);
 
     // Should have rendered a dropdown
     expect(screen.getByRole('button')).toBeInTheDocument();
 
     // Open the dropdown
-    userEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button'));
     expect(await screen.findByText('textVar1')).toBeInTheDocument();
     expect(await screen.findByText('textVar2')).toBeInTheDocument();
     expect(await screen.findByText('queryVar')).toBeInTheDocument();
@@ -104,7 +102,7 @@ describe('DashboardControlsMenu', () => {
     expect(screen.getByRole('button')).toBeInTheDocument();
 
     // Open the dropdown
-    userEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button'));
     expect(await screen.findByText('textVar1')).toBeInTheDocument();
     expect(await screen.findByText('customVar')).toBeInTheDocument();
     expect(screen.queryByText('textVar2')).not.toBeInTheDocument();

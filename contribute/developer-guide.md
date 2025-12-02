@@ -18,7 +18,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@22
+brew install node@24
 ```
 
 ### Windows
@@ -134,7 +134,13 @@ Next, we'll explain how to build and run the web server that serves these fronte
 
 ### Backend
 
-Build and run the backend by running `make run` in the root directory of the repository. This command compiles the Go source code and starts a web server.
+Build and run the backend by running
+
+```
+make run
+```
+
+in the root directory of the repository. This command compiles the Go source code and starts a web server.
 
 > **Troubleshooting:** Are you having problems with [too many open files](#troubleshooting)?
 
@@ -312,7 +318,7 @@ ulimit -a
 To change the number of open files allowed, run:
 
 ```
-ulimit -S -n 4096
+ulimit -S -n 8000
 ```
 
 The number of files needed may be different on your environment. To determine the number of open files needed by `make run`, run:

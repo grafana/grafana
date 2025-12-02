@@ -28,6 +28,7 @@ func ConvertToK8sResource(orgID int64, r definitions.Route, version string, name
 			RepeatInterval: optionalPrometheusDurationToString(r.RepeatInterval),
 			Receiver:       r.Receiver,
 		},
+		Routes: make([]model.RoutingTreeRoute, 0, len(r.Routes)),
 	}
 	for _, route := range r.Routes {
 		if route == nil {

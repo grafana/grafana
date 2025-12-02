@@ -48,7 +48,8 @@ const panelPluginPostImport: PostImportStrategy<PanelPlugin, PanelPluginMeta> = 
     const pluginExports = await module;
 
     if (pluginExports.plugin) {
-      const plugin: PanelPlugin = pluginExports.plugin;
+      // pluginExports.plugin can either be a Promise<PanelPlugin> or a PanelPlugin
+      const plugin: PanelPlugin = await pluginExports.plugin;
       plugin.meta = meta;
       pluginsCache.set(meta.id, plugin);
       return plugin;

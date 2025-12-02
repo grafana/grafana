@@ -1,9 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, type JSX } from 'react';
 
+import { Pages } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ROUTES } from 'app/features/connections/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -16,7 +17,12 @@ export function DataSourceAddButton(): JSX.Element | null {
   }, []);
 
   return canCreateDataSource ? (
-    <LinkButton icon="plus" href={config.appSubUrl + ROUTES.DataSourcesNew} onClick={handleClick}>
+    <LinkButton
+      icon="plus"
+      href={config.appSubUrl + ROUTES.DataSourcesNew}
+      onClick={handleClick}
+      data-testid={Pages.DataSources.dataSourceAddButton}
+    >
       <Trans i18nKey="data-sources.datasource-add-button.label">Add new data source</Trans>
     </LinkButton>
   ) : null;

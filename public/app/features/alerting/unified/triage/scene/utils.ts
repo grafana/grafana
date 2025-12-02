@@ -1,6 +1,6 @@
 import { TimeRange } from '@grafana/data';
 import { SceneDataQuery } from '@grafana/scenes';
-import { useVariableValue, useVariableValues } from '@grafana/scenes-react';
+import { useVariableValue } from '@grafana/scenes-react';
 import { DataSourceRef } from '@grafana/schema';
 
 import { DATASOURCE_UID, VARIABLES } from '../constants';
@@ -44,11 +44,6 @@ export function convertTimeRangeToDomain(timeRange: TimeRange): Domain {
  * This hook will create a Prometheus label matcher string from the "groupBy" and "filters" variables
  */
 export function useQueryFilter(): string {
-  const [groupBy = []] = useVariableValues<string>(VARIABLES.groupBy);
   const [filters = ''] = useVariableValue<string>(VARIABLES.filters);
-
-  const groupByFilter = stringifyGroupFilter(groupBy);
-  const queryFilter = [groupByFilter, filters].filter((s) => Boolean(s)).join(',');
-
-  return queryFilter;
+  return filters;
 }

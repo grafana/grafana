@@ -325,9 +325,10 @@ The colored background cell type has the following options:
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to the [Tooltip from field](#tooltip-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
-<!-- The cell value inspect and tooltip from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+<!-- The cell value inspect, tooltip from field, and styling from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Data links
 
@@ -346,6 +347,7 @@ The gauge cell type has the following options:
 | Gauge display mode | Controls the type of gauge used. For more information, refer to the [Gauge display mode](#gauge-display-mode). |
 | Value display      | Controls how the value is displayed. For more information, refer to the [Value display](#value-display). |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
 {{< admonition type="note" >}}
@@ -402,24 +404,19 @@ For more detailed information about all of the sparkline styling options (except
 | Point size          | Set the size of the points, from 1 to 40 pixels in diameter. |
 | Bar alignment       | Set the position of the bar relative to a data point. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
 #### JSON View
 
 This cell type shows values formatted as code.
-If a value is an object the JSON view allowing browsing the JSON object will appear on hover.
+If a value is an object, the JSON object will appear on hover.
 
 {{< figure src="/static/img/docs/tables/json-view.png" max-width="350px" alt="JSON view" class="docs-image--no-shadow" >}}
 
-For the JSON view cell type, you can set enable **Cell value inspect**.
-This enables value inspection from table cells.
-When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.
+It has the following cell options:
 
-Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
-For more information, refer to [Tooltip from field](#tooltip-from-field).
-
-Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing.
-However, you can switch back and forth between tabs.
+{{< docs/shared lookup="visualizations/cell-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Pill
 
@@ -510,7 +507,7 @@ Select one of the following options: **Auto**, **Top**, **Right**, **Bottom**, a
 The content of the tooltip is determined by the values of the source field and can't be directly edited.
 However, you can affect the display of the value using overrides like value mappings, as shown in the [Example: Tooltip from field with value mappings](#example-tooltip-from-field-with-value-mappings) section.
 
-While you can turn on this option under **Cell options**, and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
+While you can turn on this option under **Cell options** and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
 This is demonstrated in the example in the following section.
 
 ##### Example: Tooltip from field using overrides
@@ -545,6 +542,30 @@ Now, when you hover the cursor over the chip in the "Short text" cell, the mappe
 
 You can use all field overrides to affect the display of the tooltip.
 For example, the **Table > Column width** or **Cell options > Cell type** overrides can change the cell width or visual display of the data.
+
+#### Styling from field
+
+Toggle on the **Styling from field** switch to apply the styling from another field (or column).
+The referenced field must contain [CSS properties](https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleProperties) formatted in JSON object syntax. For example:
+
+```JSON
+{"marginLeft":12, "text-decoration": "underline"}
+```
+
+While you can turn on this option under **Cell options** and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
+This is demonstrated in the following example.
+
+The following table has six visible fields (columns) as well as a hidden field called "Style":
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-style-from-field-config-v12.3.png" max-width="750px" alt="Configuration of a table including the styling from field option" >}}
+
+- The "Style" field has JSON objects with CSS properties. (Note that they are formatted for use in CSV format in this example.)
+- The "Style" field is hidden using the **Table > Hide in table** override property.
+- The "Info" field is using the **Cell options > Styling from field** override property with the "Style" field as the source.
+
+The following image shows the "Info" field with the styling from the "Style" field applied:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-style-from-field-v12.3.png" max-width="750px" alt="Info field with styling from Style field applied" >}}
 
 ### Standard options
 

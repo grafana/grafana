@@ -12,10 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-type AlertInstancesProvider interface {
-	GetAlertInstances() []models.AlertInstance
-}
-
 type AsyncStatePersister struct {
 	log           log.Logger
 	batchSize     int

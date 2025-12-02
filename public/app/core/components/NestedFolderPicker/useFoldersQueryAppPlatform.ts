@@ -27,14 +27,14 @@ const collator = new Intl.Collator();
  * does not have pagination at the moment.
  */
 
-type Props = Omit<UseFoldersQueryProps, 'permission'>;
 export function useFoldersQueryAppPlatform({
   isBrowsing,
   openFolders,
   /* rootFolderUID: configure which folder to start browsing from */
   rootFolderUID,
   rootFolderItem,
-}: Props) {
+  permission,
+}: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
@@ -89,7 +89,7 @@ export function useFoldersQueryAppPlatform({
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder' } as const;
+      const args = { folder: finalParentUid, type: 'folder', permission } as const;
 
       // Make a request
       const subscription = dispatch(dashboardAPIv0alpha1.endpoints.getSearch.initiate(args));
@@ -101,7 +101,7 @@ export function useFoldersQueryAppPlatform({
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
       requestsRef.current = requestsRef.current.concat([subscription]);
     },
-    [state, dispatch]
+    [state, dispatch, permission]
   );
 
   // Unsubscribe from all requests when the component is unmounted

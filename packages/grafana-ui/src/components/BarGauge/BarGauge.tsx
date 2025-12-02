@@ -1,6 +1,6 @@
 // Library
 import { cx } from '@emotion/css';
-import { CSSProperties, PureComponent, ReactNode } from 'react';
+import { CSSProperties, PureComponent, ReactNode, type JSX } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -56,6 +56,9 @@ export interface Props extends Themeable2 {
   isOverflow: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-bargauge--docs
+ */
 export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     lcdCellWidth: 12,

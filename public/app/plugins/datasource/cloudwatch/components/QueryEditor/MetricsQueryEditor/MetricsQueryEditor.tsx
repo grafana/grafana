@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState, type JSX } from 'react';
 import * as React from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -17,11 +17,11 @@ import {
   MetricQueryType,
   MetricStat,
 } from '../../../types';
-import { MetricStatEditor } from '../../shared/MetricStatEditor';
+import { MetricStatEditor } from '../../shared/MetricStatEditor/MetricStatEditor';
 
 import { DynamicLabelsField } from './DynamicLabelsField';
 import { MathExpressionQueryField } from './MathExpressionQueryField';
-import { SQLBuilderEditor } from './SQLBuilderEditor';
+import { SQLBuilderEditor } from './SQLBuilderEditor/SQLBuilderEditor';
 import { SQLCodeEditor } from './SQLCodeEditor';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
@@ -139,7 +139,6 @@ export const MetricsQueryEditor = (props: Props) => {
   return (
     <>
       <Space v={0.5} />
-
       {query.metricQueryType === MetricQueryType.Search && (
         <>
           {query.metricEditorMode === MetricEditorMode.Builder && (

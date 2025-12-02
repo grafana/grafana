@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type TimeIntervalClient struct {
@@ -74,24 +73,6 @@ func (c *TimeIntervalClient) Update(ctx context.Context, obj *TimeInterval, opts
 
 func (c *TimeIntervalClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*TimeInterval, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
-}
-
-func (c *TimeIntervalClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus TimeIntervalStatus, opts resource.UpdateOptions) (*TimeInterval, error) {
-	return c.client.Update(ctx, &TimeInterval{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       TimeIntervalKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-			Namespace:       identifier.Namespace,
-			Name:            identifier.Name,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
 }
 
 func (c *TimeIntervalClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
