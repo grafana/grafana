@@ -867,10 +867,10 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
-	if len(query.SearchDataSources) > 0 {
-		orConditions := make([]string, 0, len(query.SearchDataSources))
-		orParams := make([]interface{}, 0, len(query.SearchDataSources))
-		for _, dsUID := range query.SearchDataSources {
+	if len(query.DataSourceUIDs) > 0 {
+		orConditions := make([]string, 0, len(query.DataSourceUIDs))
+		orParams := make([]interface{}, 0, len(query.DataSourceUIDs))
+		for _, dsUID := range query.DataSourceUIDs {
 			// The 'data' column holds the alert definition as JSON. The data source's UID is in the 'datasourceUid' field.
 			// Instead of trying to parse that JSON, we can do a simple text search.
 			// All alert rules go through PreSave(), which normalizes the JSON data using json.Marshal().

@@ -2082,7 +2082,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		}
 	})
 
-	t.Run("filter by SearchDataSource", func(t *testing.T) {
+	t.Run("filter by DataSourceUIDs", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
@@ -2109,31 +2109,31 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 
 		tc := []struct {
 			name         string
-			dsSearch     []string
+			dsUIDs       []string
 			expectedUIDs []string
 		}{
 			{
 				name:         "searching for uid-1 returns rules using it",
-				dsSearch:     []string{uid1},
+				dsUIDs:       []string{uid1},
 				expectedUIDs: []string{rule1UID, rule4UID, rule6UID},
 			},
 			{
 				name:         "searching for uid-1 and uid-2 returns rules using them",
-				dsSearch:     []string{uid1, uid2},
+				dsUIDs:       []string{uid1, uid2},
 				expectedUIDs: []string{rule1UID, rule2UID, rule4UID, rule5UID, rule6UID},
 			},
 			{
 				name:         "searching for uid-1, uid-2, and uid-3 returns all rules",
-				dsSearch:     []string{uid1, uid2, uid3},
+				dsUIDs:       []string{uid1, uid2, uid3},
 				expectedUIDs: []string{rule1UID, rule2UID, rule3UID, rule4UID, rule5UID, rule6UID},
 			},
 			{
-				name:     "searching for a non-existing UID returns no rules",
-				dsSearch: []string{"non-existing"},
+				name:   "searching for a non-existing UID returns no rules",
+				dsUIDs: []string{"non-existing"},
 			},
 			{
 				name:         "searching for uid-1 and a non-existing UID returns the rules using uid-1",
-				dsSearch:     []string{"non-existing", uid1},
+				dsUIDs:       []string{"non-existing", uid1},
 				expectedUIDs: []string{rule1UID, rule4UID, rule6UID},
 			},
 			{
@@ -2145,8 +2145,8 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		for _, tt := range tc {
 			t.Run(tt.name, func(t *testing.T) {
 				query := &models.ListAlertRulesQuery{
-					OrgID:             orgID,
-					SearchDataSources: tt.dsSearch,
+					OrgID:          orgID,
+					DataSourceUIDs: tt.dsUIDs,
 				}
 				result, err := store.ListAlertRules(context.Background(), query)
 				require.NoError(t, err)
