@@ -261,7 +261,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
     }),
     sectionLabel: css({
-      fontFamily: theme.typography.fontFamilyMonospace
+      fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.maxContrast,
       textTransform: 'uppercase',
