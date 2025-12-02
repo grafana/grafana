@@ -153,11 +153,17 @@ jobs:
 
           echo "Dynamic prompt created"
 
+      - name: Extract instance slug from URL
+        run: |
+          INSTANCE_SLUG=$(echo "${{ env.TARGET_URL }}" | sed -E 's|https?://([^.]+)\..*|\1|')
+          echo "Instance slug: $INSTANCE_SLUG"
+          echo "INSTANCE_SLUG=$INSTANCE_SLUG" >> $GITHUB_ENV
+
       - name: Enable basic auth on instance
         env:
           GCOM_HOST: ${{ env.GCOM_HOST }}
           GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
-          INSTANCE_SLUG: ephemeral15111821114646titoli
+          INSTANCE_SLUG: ${{ env.INSTANCE_SLUG }}
         run: |
           curl -X POST "${GCOM_HOST}/api/instances/${INSTANCE_SLUG}/config" \
             -H "Authorization: Bearer ${GCOM_TOKEN}" \
@@ -181,7 +187,7 @@ jobs:
         env:
           GCOM_HOST: ${{ env.GCOM_HOST }}
           GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
-          INSTANCE_SLUG: ephemeral15111821114646titoli
+          INSTANCE_SLUG: ${{ env.INSTANCE_SLUG }}
         run: |
           # Create service account
           SA_RESPONSE=$(curl -X POST "${GCOM_HOST}/api/instances/${INSTANCE_SLUG}/api/serviceaccounts" \
@@ -203,7 +209,7 @@ jobs:
 
       - name: Create test user for playwright
         env:
-          INSTANCE_SLUG: ephemeral15111821114646titoli
+          INSTANCE_SLUG: ${{ env.INSTANCE_SLUG }}
         run: |
           python3 <<'PYTHON'
           import os, requests, json, random, string
