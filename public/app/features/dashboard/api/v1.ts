@@ -6,21 +6,22 @@ import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
-  ResourceClient,
-  ResourceForCreate,
-  AnnoKeyMessage,
   AnnoKeyFolder,
   AnnoKeyGrantPermissions,
-  Resource,
-  DeprecatedInternalId,
-  AnnoKeyManagerKind,
-  AnnoKeySourcePath,
   AnnoKeyManagerAllowsEdits,
-  ManagerKind,
+  AnnoKeyManagerKind,
+  AnnoKeyMessage,
+  AnnoKeySourcePath,
   AnnoReloadOnParamsChange,
+  DeprecatedInternalId,
+  ManagerKind,
+  Resource,
+  ResourceClient,
+  ResourceForCreate,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -158,6 +159,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       if (managerKind) {
         result.meta.provisioned = annotations[AnnoKeyManagerAllowsEdits] === 'true' || managerKind === ManagerKind.Repo;
         result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
+      }
+
+      // Inject source link for repo-managed dashboards
+      const sourceLink = await buildSourceLink(annotations);
+      if (sourceLink) {
+        const linksWithoutSource = removeExistingSourceLinks(result.dashboard.links);
+        result.dashboard.links = [sourceLink, ...linksWithoutSource];
       }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {

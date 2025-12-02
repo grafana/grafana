@@ -23,6 +23,27 @@ import {
 } from './filterPredicates';
 
 /**
+ * Determines if client-side filtering is needed for data source-managed rules.
+ */
+export function hasDatasourceClientSideFilters(filterState: Partial<RulesFilter>): boolean {
+  // Check if any filter that applies to datasource rules is active
+  return (
+    (filterState.freeFormWords && filterState.freeFormWords.length > 0) ||
+    Boolean(filterState.ruleName) ||
+    Boolean(filterState.ruleState) ||
+    Boolean(filterState.ruleType) ||
+    (filterState.dataSourceNames && filterState.dataSourceNames.length > 0) ||
+    (filterState.labels && filterState.labels.length > 0) ||
+    Boolean(filterState.ruleHealth) ||
+    Boolean(filterState.dashboardUid) ||
+    Boolean(filterState.plugins) ||
+    Boolean(filterState.contactPoint) ||
+    Boolean(filterState.namespace) ||
+    Boolean(filterState.groupName)
+  );
+}
+
+/**
  * Builds filter configurations for data source-managed alert rules.
  *
  * Constructs filter objects for both rules and groups that are managed by data sources.

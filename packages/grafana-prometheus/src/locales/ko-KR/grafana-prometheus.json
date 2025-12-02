@@ -175,7 +175,7 @@
         "label-scrape-interval": "스크레이핑 간격",
         "label-series-limit": "계열 한도",
         "label-use-series-endpoint": "계열 엔드포인트 사용",
-        "more-info": "",
+        "more-info": "데이터 소스에서 prometheus 유형 및 버전을 구성하는 방법에 대한 자세한 내용은 <2>프로비저닝 문서</2>를 참조하시기 바랍니다.",
         "placeholder-example-maxsourceresolutionmtimeout": "예: {{example}} ",
         "title-interval-behaviour": "간격 동작",
         "title-other": "기타",
