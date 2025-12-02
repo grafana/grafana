@@ -284,8 +284,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     content: css({
-      padding: theme.spacing(4),
-      paddingRight: theme.spacing(6),
+      padding: `${theme.spacing(2)} ${theme.spacing(6)} ${theme.spacing(4)} ${theme.spacing(4)}`,
     }),
     footer: css({
       ...barBase,
