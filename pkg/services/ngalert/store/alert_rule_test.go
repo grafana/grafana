@@ -2087,7 +2087,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
-		// Create rules with different datasources
+		// Create rules with different data sources.
 		const (
 			uid1     = "uid-1"
 			uid2     = "uid-2"
@@ -2113,26 +2113,26 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			expectedUIDs []string
 		}{
 			{
-				name:         "search for uid-1 returns rules using it",
+				name:         "searching for uid-1 returns rules using it",
 				dsSearch:     []string{uid1},
 				expectedUIDs: []string{rule1UID, rule4UID, rule6UID},
 			},
 			{
-				name:         "search for uid-1 and uid-2 returns rules using them",
+				name:         "searching for uid-1 and uid-2 returns rules using them",
 				dsSearch:     []string{uid1, uid2},
 				expectedUIDs: []string{rule1UID, rule2UID, rule4UID, rule5UID, rule6UID},
 			},
 			{
-				name:         "search for uid-1, uid-2, and uid-3 returns all rules",
+				name:         "searching for uid-1, uid-2, and uid-3 returns all rules",
 				dsSearch:     []string{uid1, uid2, uid3},
 				expectedUIDs: []string{rule1UID, rule2UID, rule3UID, rule4UID, rule5UID, rule6UID},
 			},
 			{
-				name:     "search for a non-existing UID should return no rules",
+				name:     "searching for a non-existing UID returns no rules",
 				dsSearch: []string{"non-existing"},
 			},
 			{
-				name:         "search for uid-1 and a non-existing UID should return the rules using uid-1",
+				name:         "searching for uid-1 and a non-existing UID returns the rules using uid-1",
 				dsSearch:     []string{"non-existing", uid1},
 				expectedUIDs: []string{rule1UID, rule4UID, rule6UID},
 			},

@@ -868,17 +868,18 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	}
 
 	if len(query.SearchDataSources) > 0 {
-		// The 'data' column holds the alert definition as JSON. The data source UID is in the 'datasourceUid' field.
-		// Instead of trying to parse that JSON, we can do a simple text search.
-		// All alert rules go through PreSave(), which normalizes the JSON data using json.Marshal().
 		orConditions := make([]string, 0, len(query.SearchDataSources))
 		orParams := make([]interface{}, 0, len(query.SearchDataSources))
 		for _, dsUID := range query.SearchDataSources {
+			// The 'data' column holds the alert definition as JSON. The data source's UID is in the 'datasourceUid' field.
+			// Instead of trying to parse that JSON, we can do a simple text search.
+			// All alert rules go through PreSave(), which normalizes the JSON data using json.Marshal().
 			pattern := fmt.Sprintf(`"datasourceUid":"%s"`, dsUID)
 			sql, param := st.SQLStore.GetDialect().LikeOperator("data", true, pattern, true)
 			orConditions = append(orConditions, sql)
 			orParams = append(orParams, param)
 		}
+
 		q = q.And("("+strings.Join(orConditions, " OR ")+")", orParams...)
 	}
 
