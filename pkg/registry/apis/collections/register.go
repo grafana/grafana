@@ -116,10 +116,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// no need for dual writer for a kind that does not exist in the legacy database
 	resourceInfo := collections.DatasourceStacksResourceInfo
 	datasourcesStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
+	datasources := &datasourceStorage{Storage: datasourcesStorage}
 	if err != nil {
 		return err
 	}
-	storage[resourceInfo.StoragePath()] = datasourcesStorage
+	storage[resourceInfo.StoragePath()] = datasources
 
 	apiGroupInfo.VersionedResourcesStorageMap[collections.APIVersion] = storage
 	return nil
