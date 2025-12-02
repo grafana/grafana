@@ -401,6 +401,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
     initialSize: 0.25,
+    handleSize: 'xs',
   });
 
   return (
@@ -423,7 +424,11 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             onRemoveTransform={handleRemoveTransform}
           />
         </div>
-        <div {...splitterProps} className={cx(splitterProps.className, styles.splitter)} />
+        <div
+          {...splitterProps}
+          className={cx(splitterProps.className, styles.splitter)}
+          style={{ ...splitterProps.style, width: 0 }}
+        />
         <div {...secondaryProps}>
           <DetailView selectedItem={selectedItem} panel={panel} tabs={tabs} />
         </div>
