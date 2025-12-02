@@ -3175,9 +3175,17 @@ Move an app plugin (referenced by its id), including all its pages, to a specifi
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
 Format: `<pageUrl> = <sectionId> <sortWeight>`
 
+<hr>
+
 ### `[public_dashboards]`
 
 This section configures the [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/) feature.
+
+#### `enabled`
+
+Set this to `false` to disable the shared dashboards feature. This prevents users from creating new shared dashboards and disables existing ones.
+
+<hr>
 
 ### `[cloud_migration]`
 
@@ -3254,7 +3262,3 @@ For more information, refer to the [Prevent duplicated alert notifications](http
 #### `resource_storage_type`
 
 Resource snapshot storage type. Options are `db` (database) or `fs` (file system). Default is `"db"`.
-
-#### `enabled`
-
-Set this to `false` to disable the shared dashboards feature. This prevents users from creating new shared dashboards and disables existing ones.
