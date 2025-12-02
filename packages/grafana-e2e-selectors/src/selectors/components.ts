@@ -583,6 +583,9 @@ export const versionedComponents = {
         '11.1.0': 'data-testid Panel editor option pane content',
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane content',
       },
+      header: {
+        '12.4.0': 'data-testid Panel editor OptionsPane header',
+      },
       select: {
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane select',
       },

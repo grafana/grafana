@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Show only overrides",
       "placeholder-search-options": "Search options",
-      "visualization-button-label": "Visualization",
       "visualization-button-tooltip": "Search options"
     },
     "panel-editor-table-view": {
@@ -6223,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": "Back"
+      },
       "placeholder-search-for": "Search for...",
       "radio-options": {
         "label": {
@@ -6534,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Change visualization",
-      "tooltip-click-to-change-visualization": "Click to change visualization"
+      "text": "Change"
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Open query pane",
@@ -11089,6 +11091,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "Apply {{suggestionName}} visualization",
+      "error-loading-suggestions": {
+        "message": "An error occurred when loading visualization suggestions.",
+        "title": "Error"
+      },
+      "unknown-viz-type": "Unknown visualization type",
       "use-this-suggestion": "Use this suggestion"
     },
     "viz-type-picker": {
