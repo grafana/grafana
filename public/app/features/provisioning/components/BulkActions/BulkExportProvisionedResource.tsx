@@ -259,7 +259,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                   label={t('browse-dashboards.bulk-export-resources-form.path', 'Path')}
                   description={t(
                     'browse-dashboards.bulk-export-resources-form.path-description-with-repo',
-                    'Add a sub-path below to organize exported dashboards.'
+                    'Add a sub-path below to organize exported resources.'
                   )}
                 >
                   <Stack direction="row" gap={0} alignItems="stretch">

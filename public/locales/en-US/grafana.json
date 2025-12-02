@@ -3609,7 +3609,7 @@
       "folders-count_one": "{{count}} folder",
       "folders-count_other": "{{count}} folder",
       "folders-info": "Folders in selection",
-      "folders-info-description": "Folders will be left behind. New folders will be created in the repository based on the dashboard folder structure.",
+      "folders-info-description": "Folders will be left behind. New folders will be created in the repository based on the resource folder structure.",
       "no-items": "No items selected",
       "path": "Path",
       "path-description": "Path relative to the repository root (optional). Resources will be exported under this path.",
