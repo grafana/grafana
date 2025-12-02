@@ -42,59 +42,10 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
         page.on("pageerror", lambda err: print(f"Page error: {err}"))
 
         target_url = os.environ.get("TARGET_URL", "https://grafana.com/docs/")
-        grafana_username = os.environ.get("GRAFANA_USERNAME")
-        grafana_password = os.environ.get("GRAFANA_PASSWORD")
 
-        # If credentials are provided, perform login
-        if grafana_username and grafana_password:
-            from urllib.parse import urlparse, urljoin
-
-            base_url = f"{urlparse(target_url).scheme}://{urlparse(target_url).netloc}"
-            login_url = urljoin(base_url, "/login")
-
-            print(f"Logging in to: {login_url}")
-            page.goto(login_url, wait_until="domcontentloaded", timeout=60000)
-
-            try:
-                # Wait for login form
-                page.wait_for_selector('input[name="user"], input[name="username"]', timeout=10000)
-                print("Login form detected")
-
-                # Fill in credentials
-                username_input = page.locator('input[name="user"], input[name="username"]').first
-                password_input = page.locator('input[name="password"]').first
-
-                username_input.fill(grafana_username)
-                password_input.fill(grafana_password)
-                print("Credentials filled")
-
-                # Submit form
-                submit_button = page.locator('button[type="submit"]').first
-                submit_button.click()
-                print("Login form submitted")
-
-                # Wait for navigation after login
-                page.wait_for_load_state("networkidle", timeout=30000)
-                print(f"Login complete, current URL: {page.url}")
-
-            except Exception as e:
-                print(f"Login failed: {e}")
-                print(f"Current URL: {page.url}")
-                raise
-
-        print(f"Navigating to target: {target_url}")
-
-        # Use domcontentloaded since Grafana has continuous network activity
+        print(f"Navigating to: {target_url}")
         page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
-        print(f"Navigation complete, final URL: {page.url}")
-
-        # Wait for Grafana to finish loading by checking for main app container
-        try:
-            # Wait for the main Grafana app container
-            page.wait_for_selector('.main-view, #pageContent', timeout=30000)
-            print("Grafana app loaded successfully")
-        except Exception as e:
-            print(f"Warning: Could not detect Grafana app loaded state: {e}")
+        print(f"Page loaded, URL: {page.url}")
 
         return browser, page
 
