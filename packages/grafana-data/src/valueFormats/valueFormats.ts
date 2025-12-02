@@ -54,15 +54,19 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
     return value.toLocaleString();
   }
 
-  if (decimals === null || decimals === undefined) {
-    decimals = getDecimalsForValue(value);
+  const wasDecimalsUndefined = decimals === null || decimals === undefined;
+  let actualDecimals: number;
+  if (wasDecimalsUndefined) {
+    actualDecimals = getDecimalsForValue(value);
+  } else {
+    actualDecimals = decimals;
   }
 
   if (value === 0) {
-    return value.toFixed(decimals);
+    return value.toFixed(actualDecimals);
   }
 
-  const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
+  const factor = actualDecimals ? Math.pow(10, Math.max(0, actualDecimals)) : 1;
   const formatted = String(Math.round(value * factor) / factor);
 
   // if exponent return directly
@@ -72,14 +76,60 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
 
   const decimalPos = formatted.indexOf('.');
   const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
-  if (precision < decimals) {
-    return (precision ? formatted : formatted + '.') + String(factor).slice(1, decimals - precision + 1);
+  if (precision < actualDecimals) {
+    return (precision ? formatted : formatted + '.') + String(factor).slice(1, actualDecimals - precision + 1);
   }
 
   return formatted;
 }
 
 function getDecimalsForValue(value: number): number {
+  // If Y-axis range context is available, use range-based algorithm
+  if (yAxisRangeContext) {
+    let deltaY = yAxisRangeContext.max - yAxisRangeContext.min;
+
+    // If range is zero, return default decimals
+    if (deltaY === 0) {
+      return 6;
+    }
+
+    // Detect if value has been scaled by unit prefix (K, M, B, etc.)
+    // This happens when formatters like scaledUnits divide the value before calling toFixed
+    const absValue = Math.abs(value);
+    const absRangeCenter = Math.abs((yAxisRangeContext.max + yAxisRangeContext.min) / 2);
+
+    // If value is significantly smaller than the range, it's been scaled
+    if (absValue > 0 && absRangeCenter > 0) {
+      const ratio = absRangeCenter / absValue;
+
+      // Check if ratio suggests scaling by K, M, B, etc. (powers of 1000)
+      if (ratio > 100) {
+        // Estimate the scale factor (round to nearest power of 1000)
+        // For K: ratio ~1000, M: ratio ~1000000, etc.
+        const logRatio = Math.log10(ratio);
+        const scaleSteps = Math.round(logRatio / 3); // 3 because log10(1000) = 3
+
+        if (scaleSteps > 0) {
+          const scaleFactor = Math.pow(1000, scaleSteps);
+          const adjustedDeltaY = deltaY / scaleFactor;
+          deltaY = adjustedDeltaY;
+        }
+      }
+    }
+
+    // Calculate the exponent (E) of the range's order of magnitude
+    const E = Math.floor(Math.log10(deltaY));
+
+    // Optimal Decimal Places (DP) = 3 - E
+    const dpUnclamped = 3 - E;
+
+    // Ensure DP is never negative (minimum DP is 0)
+    const dp = Math.max(0, dpUnclamped);
+
+    return dp;
+  }
+
+  // Fallback to original algorithm when no Y-axis context
   const absValue = Math.abs(value);
   const log10 = Math.floor(Math.log(absValue) / Math.LN10);
   let dec = -log10 + 1;
@@ -150,6 +200,24 @@ export function booleanValueFormatter(t: string, f: string): ValueFormatter {
 }
 
 const logb = (b: number, x: number) => Math.log10(x) / Math.log10(b);
+
+// Y-axis range context for tooltip decimal calculation
+let yAxisRangeContext: { min: number; max: number } | null = null;
+
+/**
+ * Set Y-axis range context for decimal calculation.
+ * This should be called before formatting tooltip values.
+ */
+export function setYAxisRangeContext(yMin: number, yMax: number) {
+  yAxisRangeContext = { min: yMin, max: yMax };
+}
+
+/**
+ * Clear Y-axis range context after tooltip rendering.
+ */
+export function clearYAxisRangeContext() {
+  yAxisRangeContext = null;
+}
 
 export function scaledUnits(factor: number, extArray: string[], offset = 0): ValueFormatter {
   return (size: number, decimals?: DecimalCount) => {

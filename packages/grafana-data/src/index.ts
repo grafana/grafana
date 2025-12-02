@@ -352,6 +352,8 @@ export {
   getValueFormat,
   getValueFormatterIndex,
   getValueFormats,
+  setYAxisRangeContext,
+  clearYAxisRangeContext,
 } from './valueFormats/valueFormats';
 
 // datetime
