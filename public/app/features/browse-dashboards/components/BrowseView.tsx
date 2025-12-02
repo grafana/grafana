@@ -22,6 +22,7 @@ import {
   useLoadNextChildrenPage,
   rootItemsSelector,
 } from '../state/hooks';
+import { selectFolderWithAllDashboards } from '../state/actions';
 import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../state/slice';
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState, BrowseDashboardsPermissions } from '../types';
 
@@ -81,7 +82,13 @@ export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRe
 
   const handleItemSelectionChange = useCallback(
     (item: DashboardViewItem, isSelected: boolean) => {
-      dispatch(setItemSelectionState({ item, isSelected }));
+      // If selecting a folder, use the async thunk to collect all dashboards recursively
+      // When deselecting, the normal reducer will handle deselecting all children
+      if (item.kind === 'folder') {
+        dispatch(selectFolderWithAllDashboards({ folderUID: item.uid, isSelected }));
+      } else {
+        dispatch(setItemSelectionState({ item, isSelected }));
+      }
     },
     [dispatch]
   );
