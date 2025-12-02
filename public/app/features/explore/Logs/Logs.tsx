@@ -808,6 +808,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               onDisplayedSeriesChanged={onDisplayedSeriesChanged}
               eventBus={logsVolumeEventBus}
               onClose={() => onToggleLogsVolumeCollapse(true)}
+              logs={logRows}
             />
           )}
         </PanelChrome>
