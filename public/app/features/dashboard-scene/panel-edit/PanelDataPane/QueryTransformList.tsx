@@ -81,8 +81,6 @@ export const QueryTransformList = memo(
         }
       });
 
-      console.log('Detected connections:', conns);
-
       return conns;
     }, [items]);
 

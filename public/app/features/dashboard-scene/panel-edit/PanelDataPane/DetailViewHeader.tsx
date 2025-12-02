@@ -1,7 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { CoreApp, DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import {
+  CoreApp,
+  DataQuery,
+  DataSourceInstanceSettings,
+  GrafanaTheme2,
+  standardTransformersRegistry,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
@@ -247,6 +253,16 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
     'hide' in selectedItem.data &&
     selectedItem.data.hide;
 
+  // Get transformation display name
+  const transformationName = useMemo(() => {
+    if (selectedItem.type === 'transform' && 'id' in selectedItem.data) {
+      const transformId = selectedItem.data.id;
+      const transformer = standardTransformersRegistry.get(transformId);
+      return transformer?.name || transformId;
+    }
+    return '';
+  }, [selectedItem]);
+
   return (
     <div className={styles.header}>
       <Stack justifyContent="space-between" alignItems="center" gap={2}>
@@ -262,6 +278,11 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
               current={datasourceSettings.name}
               onChange={handleDataSourceChange}
             />
+          )}
+
+          {/* Transformation name */}
+          {selectedItem.type === 'transform' && transformationName && (
+            <span className={styles.transformName}>{transformationName}</span>
           )}
 
           {/* Editable query/expression name */}
@@ -345,15 +366,15 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
 const getStyles = (theme: GrafanaTheme2, config: { color: string }) => {
   return {
     header: css({
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(1.5, 2),
       borderLeft: `4px solid ${config.color}`,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.secondary,
-      minHeight: theme.spacing(6),
     }),
     icon: css({
       color: theme.colors.text.secondary,
       fontSize: theme.typography.h5.fontSize,
+      lineHeight: 1,
     }),
     queryNameWrapper: css({
       display: 'flex',
@@ -398,6 +419,11 @@ const getStyles = (theme: GrafanaTheme2, config: { color: string }) => {
     queryNameInput: css({
       maxWidth: '300px',
       margin: '-4px 0',
+    }),
+    transformName: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+      fontSize: theme.typography.body.fontSize,
     }),
   };
 };
