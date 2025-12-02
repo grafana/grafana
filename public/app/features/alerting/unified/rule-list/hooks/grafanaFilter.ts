@@ -14,7 +14,6 @@ import {
   groupMatches,
   groupNameFilter,
   labelsFilter,
-  mapDataSourceNamesToUids,
   namespaceFilter,
   pluginsFilter,
   ruleMatches,
@@ -73,9 +72,6 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     type: ruleFilterConfig.ruleType ? undefined : normalizedFilterState.ruleType,
     dashboardUid: ruleFilterConfig.dashboardUid ? undefined : normalizedFilterState.dashboardUid,
     searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
-    datasources: ruleFilterConfig.dataSourceNames
-      ? undefined
-      : mapDataSourceNamesToUids(normalizedFilterState.dataSourceNames),
   };
 
   return {
@@ -104,7 +100,7 @@ function buildGrafanaFilterConfigs() {
     ruleName: useBackendFilters ? null : ruleNameFilter,
     ruleState: null,
     ruleType: useBackendFilters || useFullyCompatibleBackendFilters ? null : ruleTypeFilter,
-    dataSourceNames: useBackendFilters || useFullyCompatibleBackendFilters ? null : dataSourceNamesFilter,
+    dataSourceNames: dataSourceNamesFilter,
     labels: labelsFilter,
     ruleHealth: null,
     dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,
