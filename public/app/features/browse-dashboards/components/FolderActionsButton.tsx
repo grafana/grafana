@@ -273,7 +273,6 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
             selectedItems={{
               dashboard: exportSelectedDashboards,
               folder: {},
-              $all: false,
             }}
             onDismiss={() => {
               setShowExportFolderDrawer(false);

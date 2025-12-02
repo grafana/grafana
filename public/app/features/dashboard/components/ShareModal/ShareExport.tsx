@@ -120,7 +120,6 @@ export const ShareExport = memo(({ dashboard, panel, onDismiss }: Props) => {
             selectedItems={{
               dashboard: dashboard.uid ? { [dashboard.uid]: true } : {},
               folder: {},
-              $all: false,
             }}
             onDismiss={() => {
               setShowExportToRepositoryDrawer(false);
