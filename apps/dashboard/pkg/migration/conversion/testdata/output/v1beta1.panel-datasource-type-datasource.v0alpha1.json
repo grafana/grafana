@@ -1,5 +1,5 @@
 {
-  "kind": "Dashboard",
+  "kind": "DashboardWithAccessInfo",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
   "metadata": {
     "name": "ad6phhg",
