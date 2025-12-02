@@ -37,20 +37,33 @@ export async function collectAllDashboardsUnderFolder(folderUID: string): Promis
 
     // Get child folders and add them to the processing queue
     // We need to use the search API to find child folders
+    // Paginate through all folders to ensure we get all child folders
     const searcher = getGrafanaSearcher();
-    
-    const foldersResults = await searcher.search({
-      kind: ['folder'],
-      query: '*',
-      location: currentFolderUID || 'general',
-      limit: 100,
-    });
+    let folderPage = 0;
+    let hasMoreFolders = true;
+    const folderPageSize = 100;
 
-    for (const folderItem of foldersResults.view) {
-      const folderUID = folderItem.uid;
-      if (folderUID && !processedFolders.has(folderUID)) {
-        foldersToProcess.push(folderUID);
+    while (hasMoreFolders) {
+      const foldersResults = await searcher.search({
+        kind: ['folder'],
+        query: '*',
+        location: currentFolderUID || 'general',
+        from: folderPage * folderPageSize,
+        limit: folderPageSize,
+      });
+
+      let foundFolders = 0;
+      for (const folderItem of foldersResults.view) {
+        const folderUID = folderItem.uid;
+        if (folderUID && !processedFolders.has(folderUID)) {
+          foldersToProcess.push(folderUID);
+          foundFolders++;
+        }
       }
+
+      // Check if we've loaded all folders (if we got fewer than pageSize, we're done)
+      hasMoreFolders = foldersResults.view.length === folderPageSize;
+      folderPage++;
     }
   }
 

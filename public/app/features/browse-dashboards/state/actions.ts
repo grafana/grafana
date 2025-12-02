@@ -131,13 +131,16 @@ export const selectFolderWithAllDashboards = createAsyncThunk(
 
     // Then select all dashboards found
     // We need to get the parentUID for each dashboard from the state
+    // If a dashboard isn't in state yet, we still need to select it
     for (const dashboardUID of dashboardUIDs) {
       const dashboardItem = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, dashboardUID);
+      // Even if dashboard isn't in state, we can still select it by UID
+      // The reducer will handle setting selectedItems.dashboard[dashboardUID] = true
       dispatch(setItemSelectionState({
         item: {
           kind: 'dashboard',
           uid: dashboardUID,
-          parentUID: dashboardItem?.parentUID,
+          parentUID: dashboardItem?.parentUID ?? folderUID, // Fallback to folderUID if not found
           managedBy: dashboardItem?.managedBy
         },
         isSelected: true
