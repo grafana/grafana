@@ -6,13 +6,13 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 const BASE_URL = `/api/plugins/${SupportedPlugin.Labels}/resources`;
 
 // Default mock data for ops labels
-const defaultLabelKeys: LabelItem[] = [
+export const defaultLabelKeys: LabelItem[] = [
   { id: '1', name: 'sentMail', prescribed: false },
   { id: '2', name: 'stage', prescribed: false },
   { id: '3', name: 'team', prescribed: false },
 ];
 
-const defaultLabelValues: Record<string, LabelItem[]> = {
+export const defaultLabelValues: Record<string, LabelItem[]> = {
   sentMail: [
     { id: '1', name: 'true', prescribed: false },
     { id: '2', name: 'false', prescribed: false },
@@ -28,6 +28,22 @@ const defaultLabelValues: Record<string, LabelItem[]> = {
     { id: '3', name: 'platform', prescribed: false },
   ],
 };
+
+/**
+ * Helper to generate mock ops labels in the form format (key-value pairs).
+ * @param keys - Array of label key names to include (defaults to first two: sentMail, stage)
+ * @param labelValues - Optional custom label values map
+ * @returns Array of { key, value } objects for use in form tests
+ */
+export function getMockOpsLabels(
+  keys: string[] = [defaultLabelKeys[0].name, defaultLabelKeys[1].name],
+  labelValues: Record<string, LabelItem[]> = defaultLabelValues
+): Array<{ key: string; value: string }> {
+  return keys.map((key) => ({
+    key,
+    value: labelValues[key]?.[0]?.name ?? '',
+  }));
+}
 
 /**
  * Handler for GET /api/plugins/grafana-labels-app/resources/v1/labels/keys
