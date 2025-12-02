@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -31,26 +31,22 @@ export const QueryTransformCard = memo(
       return '';
     };
 
-    const getDatasourceName = (): string => {
+    const datasourceIcon = useMemo(() => {
       if (type === 'query' && 'datasource' in item && item.datasource) {
         try {
           const dsSettings = getDataSourceSrv().getInstanceSettings(item.datasource);
-          return dsSettings?.name || 'Unknown datasource';
+          return dsSettings?.meta.info.logos.small;
         } catch {
-          return 'Unknown datasource';
+          return undefined;
         }
-      } else if (type === 'expression' && 'type' in item && typeof item.type === 'string') {
-        // Show expression type (Math, Reduce, etc.)
-        return item.type.charAt(0).toUpperCase() + item.type.slice(1);
       }
-      return '';
-    };
+      return undefined;
+    }, [type, item]);
 
     const isHidden = (type === 'query' || type === 'expression') && 'hide' in item && item.hide;
     const icon = type === 'query' ? 'database' : type === 'expression' ? 'calculator-alt' : 'process';
     const typeLabel = type === 'query' ? 'Query' : type === 'expression' ? 'Expression' : 'Transformation';
     const name = getName();
-    const datasourceName = getDatasourceName();
 
     const handleAction = (e: React.MouseEvent, action: () => void) => {
       e.stopPropagation();
@@ -131,10 +127,14 @@ export const QueryTransformCard = memo(
           </div>
         </div>
 
-        {/* Content: Name and datasource */}
+        {/* Content: Name */}
         <div className={styles.content}>
-          <div className={styles.name}>{name}</div>
-          {datasourceName && <div className={styles.datasource}>{datasourceName}</div>}
+          <Stack direction="row" gap={1}>
+            {type === 'query' && datasourceIcon && (
+              <img src={datasourceIcon} alt="" className={styles.datasourceIcon} />
+            )}
+            <div className={styles.name}>{name}</div>
+          </Stack>
         </div>
       </div>
     );
@@ -145,6 +145,7 @@ QueryTransformCard.displayName = 'QueryTransformCard';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const actionsClass = 'actions-container';
+  const selectedClass = 'card-selected';
 
   return {
     card: css({
@@ -160,11 +161,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         borderColor: theme.colors.border.strong,
       },
+      [`&.${selectedClass}`]: {
+        borderColor: theme.colors.primary.border,
+        boxShadow: `0 0 0 1px ${theme.colors.primary.border}`,
+      },
+      [`&.${selectedClass}:hover`]: {
+        borderColor: theme.colors.primary.border,
+        boxShadow: `0 0 0 1px ${theme.colors.primary.border}`,
+      },
     }),
-    cardSelected: css({
-      borderColor: theme.colors.primary.border,
-      boxShadow: `0 0 0 1px ${theme.colors.primary.border}`,
-    }),
+    cardSelected: selectedClass,
     headerQuery: css({
       display: 'flex',
       alignItems: 'center',
@@ -205,6 +211,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
     }),
     typeLabel: css({
+      fontFamily: "'CommitMono', monospace",
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
@@ -224,15 +231,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       padding: theme.spacing(1.5),
     }),
+    datasourceIcon: css({
+      width: '16px',
+      height: '16px',
+      flexShrink: 0,
+    }),
     name: css({
-      fontSize: theme.typography.h5.fontSize,
+      fontFamily: "'CommitMono', monospace",
+      fontSize: theme.typography.body.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.primary,
-      marginBottom: theme.spacing(0.5),
-    }),
-    datasource: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
     }),
   };
 };
