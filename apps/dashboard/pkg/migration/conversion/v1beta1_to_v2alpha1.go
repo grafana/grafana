@@ -1784,6 +1784,12 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 		filter = buildAnnotationFilter(filterMap)
 	}
 
+	// Transform mappings
+	var mappings map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping
+	if mappingsMap, ok := annotationMap["mappings"].(map[string]interface{}); ok && mappingsMap != nil {
+		mappings = convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap)
+	}
+
 	// Transform builtIn from float64 to bool
 	var builtInPtr *bool
 	if builtInVal, ok := annotationMap["builtIn"]; ok && builtInVal != nil {
@@ -1809,6 +1815,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 		IconColor:  schemaversion.GetStringValue(annotationMap, "iconColor", defaultAnnotationQuerySpec.IconColor),
 		BuiltIn:    builtInPtr,
 		Filter:     filter,
+		Mappings:   mappings,
 	}
 
 	// Handle any additional properties in LegacyOptions
@@ -1820,7 +1827,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	// Add other legacy fields if they exist
 	for key, value := range annotationMap {
 		switch key {
-		case "name", "datasource", "enable", "hide", "iconColor", "filter", "target", "builtIn", "type":
+		case "name", "datasource", "enable", "hide", "iconColor", "filter", "target", "builtIn", "type", "mappings":
 			// Skip already handled fields
 		default:
 			legacyOptions[key] = value
@@ -1864,6 +1871,41 @@ func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.Dashb
 	}
 
 	return filter
+}
+
+func convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap map[string]interface{}) map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping {
+	mappings := make(map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping)
+
+	for key, value := range mappingsMap {
+		mappingMap, ok := value.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		mapping := dashv2alpha1.DashboardAnnotationEventFieldMapping{}
+
+		// Extract source (defaults to "field" if not specified)
+		if source, ok := mappingMap["source"].(string); ok && source != "" {
+			mapping.Source = &source
+		} else {
+			defaultSource := "field"
+			mapping.Source = &defaultSource
+		}
+
+		// Extract value (optional)
+		if valueStr, ok := mappingMap["value"].(string); ok && valueStr != "" {
+			mapping.Value = &valueStr
+		}
+
+		// Extract regex (optional)
+		if regex, ok := mappingMap["regex"].(string); ok && regex != "" {
+			mapping.Regex = &regex
+		}
+
+		mappings[key] = mapping
+	}
+
+	return mappings
 }
 
 // Panel helper functions
