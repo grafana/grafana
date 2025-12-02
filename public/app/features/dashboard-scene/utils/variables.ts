@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, TypedVariableModel } from '@grafana/data';
+import { AdHocVariableFilter, TypedVariableModel, VariableRegexApplyTo } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -195,6 +195,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       sort: variable.sort,
       refresh: variable.refresh,
       regex: variable.regex,
+      regexApplyTo: variable.regexApplyTo ?? VariableRegexApplyTo.value,
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
       defaultToAll: Boolean(variable.includeAll),

@@ -43,6 +43,7 @@ export {
   defaultAnnotationTarget,
   defaultAnnotationPanelFilter,
   VariableRefresh,
+  VariableRegexApplyTo,
   VariableSort,
   defaultDashboardLink,
   defaultFetchOptions,

@@ -70,6 +70,7 @@ import {
   transformSortVariableToEnumV1,
   transformVariableHideToEnumV1,
   transformVariableRefreshToEnumV1,
+  transformRegexApplyToEnumV1,
 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
   LEGACY_STRING_VALUE_KEY,
@@ -78,6 +79,7 @@ import {
   transformSortVariableToEnum,
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
+  transformRegexApplyToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
@@ -647,6 +649,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...(v.definition && { definition: v.definition }),
             refresh: transformVariableRefreshToEnum(v.refresh),
             regex: v.regex ?? '',
+            regexApplyTo: transformRegexApplyToEnum(v.regexApplyTo),
             sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
             query: {
               kind: 'DataQuery',
@@ -911,6 +914,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
           regex: v.spec.regex,
+          regexApplyTo: transformRegexApplyToEnumV1(v.spec.regexApplyTo),
           allValue: v.spec.allValue,
           includeAll: v.spec.includeAll,
           multi: v.spec.multi,
