@@ -99,8 +99,7 @@ func (s *PluginsService) IsDisabled() bool {
 // checkAndUpdate checks for updates and applies them if auto-update is enabled.
 func (s *PluginsService) checkAndUpdate(ctx context.Context) {
 	s.instrumentedCheckForUpdates(ctx)
-	ofClient := openfeature.NewDefaultClient()
-	enabled := ofClient.Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
 	if enabled {
 		s.updateAll(ctx)
 	}
