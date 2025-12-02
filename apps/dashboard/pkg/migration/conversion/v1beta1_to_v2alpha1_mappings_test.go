@@ -118,7 +118,7 @@ func TestConvertAnnotationMappings_V1beta1_to_V2alpha1(t *testing.T) {
 				"source": "field",
 				"value":  "service",
 			},
-			"invalid": "not a map",
+			"invalid": 123, // Invalid: not a string or map
 			"text": map[string]interface{}{
 				"source": "text",
 				"value":  "constant",
@@ -127,14 +127,15 @@ func TestConvertAnnotationMappings_V1beta1_to_V2alpha1(t *testing.T) {
 
 		result := convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap)
 
-		// Should only have 2 valid mappings
+		// Should have 2 valid mappings (title and text)
+		// String values are now treated as valid legacy format mappings
 		require.Len(t, result, 2)
 		_, ok := result["title"]
 		require.True(t, ok)
 		_, ok = result["text"]
 		require.True(t, ok)
 		_, ok = result["invalid"]
-		assert.False(t, ok)
+		assert.False(t, ok, "invalid entry should be skipped")
 	})
 
 	t.Run("should handle empty mappings map", func(t *testing.T) {

@@ -1877,12 +1877,23 @@ func convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap map[string]interf
 	mappings := make(map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping)
 
 	for key, value := range mappingsMap {
+		mapping := dashv2alpha1.DashboardAnnotationEventFieldMapping{}
+
+		// Handle simple string format (v1beta1 legacy format: "fieldName": "targetFieldName")
+		if valueStr, ok := value.(string); ok && valueStr != "" {
+			// Simple string mapping: treat as field source with the value as the field name
+			defaultSource := "field"
+			mapping.Source = &defaultSource
+			mapping.Value = &valueStr
+			mappings[key] = mapping
+			continue
+		}
+
+		// Handle object format (v2alpha1 format: "fieldName": {"source": "field", "value": "...", "regex": "..."})
 		mappingMap, ok := value.(map[string]interface{})
 		if !ok {
 			continue
 		}
-
-		mapping := dashv2alpha1.DashboardAnnotationEventFieldMapping{}
 
 		// Extract source (defaults to "field" if not specified)
 		if source, ok := mappingMap["source"].(string); ok && source != "" {
