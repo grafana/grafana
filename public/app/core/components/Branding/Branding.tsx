@@ -1,8 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { FC, type JSX } from 'react';
 
-import { colorManipulator } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { colorManipulator, GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
+import { Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import g8LoginDarkSvg from 'img/g8_login_dark.svg';
 import g8LoginLightSvg from 'img/g8_login_light.svg';
 import grafanaIconSvg from 'img/grafana_icon.svg';
@@ -52,6 +54,45 @@ const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
   return <img className={className} src={grafanaIconSvg} alt="Grafana" />;
 };
 
+export function HomeLink({ homeNav }: { homeNav?: NavModelItem }) {
+  const styles = useStyles2(homeLinkStyles);
+
+  const onHomeClicked = () => {
+    reportInteraction('grafana_home_clicked', { url: homeNav?.url });
+  };
+
+  return (
+    <Tooltip placement="bottom" content={homeNav?.text || 'Home'}>
+      <a
+        onClick={onHomeClicked}
+        data-testid={selectors.components.Breadcrumbs.breadcrumb('Home')}
+        className={styles.homeLink}
+        title={homeNav?.text || 'Home'}
+        href={homeNav?.url}
+      >
+        <Branding.LoginLogo />
+      </a>
+    </Tooltip>
+  );
+}
+
+function homeLinkStyles(theme: GrafanaTheme2) {
+  return {
+    homeLink: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: theme.spacing(3),
+      width: theme.spacing(3),
+      margin: theme.spacing(0, 0.5),
+      img: {
+        maxHeight: '100%',
+        maxWidth: '100%',
+      },
+    }),
+  };
+}
+
 const LoginBoxBackground = () => {
   const theme = useTheme2();
   return css({
@@ -64,10 +105,12 @@ export class Branding {
   static LoginLogo = LoginLogo;
   static LoginBackground = LoginBackground;
   static MenuLogo = MenuLogo;
+  static HomeLink = HomeLink;
   static LoginBoxBackground = LoginBoxBackground;
   static AppTitle = 'Grafana';
   static LoginTitle = 'Welcome to Grafana';
   static HideEdition = false;
+
   static GetLoginSubTitle = (): null | string => {
     return null;
   };

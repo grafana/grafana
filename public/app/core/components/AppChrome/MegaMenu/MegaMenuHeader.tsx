@@ -2,8 +2,10 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { Icon, IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { useSelector } from 'app/types/store';
 
 import { Branding } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
@@ -22,20 +24,22 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
   const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
+  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
 
   const styles = getStyles(theme);
 
   return (
     <div className={styles.header}>
-      <Stack alignItems="center" minWidth={0} gap={0.25}>
+      <Stack alignItems="center" minWidth={0} gap={0.5}>
         <ToolbarButton
           narrow
           id={MEGA_MENU_HEADER_TOGGLE_ID}
           onClick={handleMegaMenu}
           tooltip={t('navigation.megamenu.close', 'Close menu')}
         >
-          <Branding.MenuLogo className={styles.img} />
+          <Icon name="bars" size="xl" />
         </ToolbarButton>
+        <Branding.HomeLink homeNav={homeNav} />
         <OrganizationSwitcher />
       </Stack>
       <IconButton
