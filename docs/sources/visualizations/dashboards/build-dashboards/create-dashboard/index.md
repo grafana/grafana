@@ -100,7 +100,7 @@ To create a dashboard, follow these steps:
 1. When you've saved all the changes you want to make to the dashboard, click **Exit edit**.
 
    Now, when you want to make more changes to the saved dashboard, click **Edit** in the top-right corner.
-{{< /docs/list >}}
+   {{< /docs/list >}}
 
 ### Begin dashboard creation from data source configuration
 
@@ -116,7 +116,6 @@ To begin building a dashboard directly from a data source, follow these steps:
    The empty dashboard page opens.
 
 1. Do one of the following:
-
    - Click **+Add visualization** to configure all the elements of the new dashboard.
    - Select one of the suggested dashboards by clicking its **Use dashboard** button. If there are more than three dashboard suggestions, you can click **View all** to see the rest of them.
 
