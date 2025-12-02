@@ -441,6 +441,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'inline-flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
+      whiteSpace: 'nowrap',
     }),
     collapsedTextLabel: css({
       color: theme.colors.text.primary,
