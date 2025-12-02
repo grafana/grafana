@@ -15,7 +15,7 @@ export class ExportToRepository extends ShareExportTab {
 function ExportToRepositoryRenderer({ model }: SceneComponentProps<ExportToRepository>) {
   const dashboard = model.getRoot();
   if (!(dashboard instanceof DashboardScene)) {
-    return null;
+    return <></>;
   }
 
   return (
@@ -24,7 +24,6 @@ function ExportToRepositoryRenderer({ model }: SceneComponentProps<ExportToRepos
       selectedItems={{
         dashboard: dashboard.state.uid ? { [dashboard.state.uid]: true } : {},
         folder: {},
-        $all: false,
       }}
       onDismiss={model.useState().onDismiss}
     />
