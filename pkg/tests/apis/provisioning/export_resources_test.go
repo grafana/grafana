@@ -373,6 +373,7 @@ func TestIntegrationProvisioning_ExportSpecificResourcesEmptyList(t *testing.T) 
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
+	ctx := context.Background()
 
 	// Create repository
 	const repo = "export-empty-resources-test-repo"
