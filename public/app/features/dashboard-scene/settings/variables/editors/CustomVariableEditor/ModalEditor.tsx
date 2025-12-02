@@ -40,7 +40,11 @@ export function ModalEditor(props: ModalEditorProps) {
         >
           <Trans i18nKey="dashboard.edit-pane.variable.custom-options.discard">Discard</Trans>
         </Button>
-        <Button variant="primary" onClick={onSaveOptions}>
+        <Button
+          variant="primary"
+          onClick={onSaveOptions}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton}
+        >
           <Trans i18nKey="dashboard.edit-pane.variable.custom-options.apply">Apply</Trans>
         </Button>
       </Modal.ButtonRow>
