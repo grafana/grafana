@@ -225,7 +225,6 @@ func exportSingleResource(
 	}
 
 	// Convert dashboard if needed
-	var err error
 	item, meta, err = convertDashboardIfNeeded(ctx, gvr, item, meta, clients, dashboardShim, versionClients, resourceRef, &result, progress)
 	if err != nil {
 		return err
