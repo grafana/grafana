@@ -71,6 +71,52 @@ func createDashboardConversionShim(ctx context.Context, clients resources.Resour
 	return shim, versionClients
 }
 
+// createDashboardConversionShimWithCache creates a conversion shim using a provided versionClients cache.
+// This allows the cache to be shared across multiple shim calls.
+func createDashboardConversionShimWithCache(ctx context.Context, clients resources.ResourceClients, gvr schema.GroupVersionResource, versionClients map[string]dynamic.ResourceInterface) conversionShim {
+	shim := func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+		// Check if there's a stored version in the conversion status.
+		// This indicates the original API version the dashboard was created with,
+		// which should be preserved during export regardless of whether conversion succeeded or failed.
+		storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
+		if storedVersion != "" {
+			// For v0 we can simply fallback -- the full model is saved
+			if strings.HasPrefix(storedVersion, "v0") {
+				item.SetAPIVersion(fmt.Sprintf("%s/%s", gvr.Group, storedVersion))
+				return item, nil
+			}
+
+			// For any other version (v1, v2, v3, etc.), fetch the original version via client
+			// Check if we already have a client cached for this version
+			versionClient, ok := versionClients[storedVersion]
+			if !ok {
+				// Dynamically construct the GroupVersionResource for any version
+				versionGVR := schema.GroupVersionResource{
+					Group:    gvr.Group,
+					Version:  storedVersion,
+					Resource: gvr.Resource,
+				}
+				var err error
+				versionClient, _, err = clients.ForResource(ctx, versionGVR)
+				if err != nil {
+					return nil, fmt.Errorf("get client for version %s: %w", storedVersion, err)
+				}
+				versionClients[storedVersion] = versionClient
+			}
+			return versionClient.Get(ctx, item.GetName(), metav1.GetOptions{})
+		}
+
+		// If conversion failed but there's no storedVersion, this is an error condition
+		failed, _, _ := unstructured.NestedBool(item.Object, "status", "conversion", "failed")
+		if failed {
+			return nil, fmt.Errorf("conversion failed but no storedVersion available")
+		}
+
+		return item, nil
+	}
+	return shim
+}
+
 func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "start resource export")
 	for _, kind := range resources.SupportedProvisioningResources {
@@ -138,8 +184,9 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	}
 
 	// Create a shared dashboard conversion shim and cache for all dashboard resources
-	// The versionClients map is captured in the shim closure and shared across all calls
+	// Create the versionClients map once so it's shared across all dashboard conversion calls
 	var dashboardShim conversionShim
+	versionClients := make(map[string]dynamic.ResourceInterface)
 
 	for _, resourceRef := range options.Resources {
 		result := jobs.JobResourceResult{
@@ -234,10 +281,9 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 		// Handle dashboard version conversion using the shared shim logic
 		if gvr.GroupResource() == resources.DashboardResource.GroupResource() {
 			// Create or reuse the dashboard shim (shared across all dashboard resources)
-			// The versionClients map is captured in the shim closure and shared across all calls
-			// This ensures client caching works correctly when exporting multiple dashboards
+			// Pass the shared versionClients map to ensure client caching works correctly
 			if dashboardShim == nil {
-				dashboardShim, _ = createDashboardConversionShim(ctx, clients, gvr)
+				dashboardShim = createDashboardConversionShimWithCache(ctx, clients, gvr, versionClients)
 			}
 
 			item, err = dashboardShim(ctx, item)
