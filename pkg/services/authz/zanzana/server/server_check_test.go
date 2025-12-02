@@ -211,5 +211,9 @@ func testCheck(t *testing.T, server *Server) {
 		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, dashboardGroup, dashboardResource, "", "6", "1"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed(), "user should be able to view dashboards in folder 6")
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, "foo.grafana.app", "bar", "", "4", "1"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed(), "user should not be able to view other resources in folder 4")
 	})
 }
