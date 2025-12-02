@@ -153,13 +153,20 @@ func (provider *Provisioner) Provision(ctx context.Context) error {
 
 // CleanUpOrphanedDashboards deletes provisioned dashboards missing a linked reader.
 func (provider *Provisioner) CleanUpOrphanedDashboards(ctx context.Context) {
-	currentReaders := make([]string, len(provider.fileReaders))
+	configs := make([]dashboards.ProvisioningConfig, len(provider.fileReaders))
 
 	for index, reader := range provider.fileReaders {
-		currentReaders[index] = reader.Cfg.Name
+		configs[index] = dashboards.ProvisioningConfig{
+			Name:           reader.Cfg.Name,
+			OrgID:          reader.Cfg.OrgID,
+			Folder:         reader.Cfg.Folder,
+			AllowUIUpdates: reader.Cfg.AllowUIUpdates,
+		}
 	}
 
-	if err := provider.provisioner.DeleteOrphanedProvisionedDashboards(ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
+	if err := provider.provisioner.DeleteOrphanedProvisionedDashboards(
+		ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{Config: configs},
+	); err != nil {
 		provider.log.Warn("Failed to delete orphaned provisioned dashboards", "err", err)
 	}
 }
