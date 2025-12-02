@@ -51,8 +51,7 @@ export const QueryTransformList = memo(
   }: QueryTransformListProps) => {
     const styles = useStyles2(getStyles);
 
-    // Detect connections between items
-    const connections = useMemo(() => {
+    const allConnections = useMemo(() => {
       const conns: Array<{ from: string; to: string }> = [];
 
       items.forEach((item) => {
@@ -64,25 +63,39 @@ export const QueryTransformList = memo(
             const expressionString = expr.expression;
 
             if (expressionType === 'math') {
-              // Math expressions: parse $A, $B, etc.
               const matches = expressionString.matchAll(/\$(\w+)/g);
               for (const match of matches) {
-                const refId = match[1];
-                conns.push({ from: refId, to: expr.refId });
+                conns.push({ from: match[1], to: expr.refId });
               }
             } else if (expressionType === 'reduce' || expressionType === 'resample' || expressionType === 'threshold') {
-              // Reduce/Resample/Threshold: expression field is a single refId
               if (expressionString) {
                 conns.push({ from: expressionString, to: expr.refId });
               }
             }
-            // TODO: Handle 'sql' and 'classic_conditions' types if needed
           }
         }
       });
 
       return conns;
     }, [items]);
+
+    // Filter connections to only show for selected card
+    const visibleConnections = useMemo(() => {
+      if (!selectedId) {
+        return [];
+      }
+
+      // Find the item to get its refId
+      const activeItem = items.find((item) => item.id === selectedId);
+      if (!activeItem || !('refId' in activeItem.data)) {
+        return [];
+      }
+
+      const activeRefId = activeItem.data.refId;
+
+      // Show connections where this card is involved (either as source or destination)
+      return allConnections.filter((conn) => conn.from === activeRefId || conn.to === activeRefId);
+    }, [allConnections, selectedId, items]);
 
     const getHandlers = (item: QueryTransformItem) => {
       switch (item.type) {
@@ -109,22 +122,11 @@ export const QueryTransformList = memo(
       }
     };
 
-    // Calculate number of lanes for dynamic padding
-    const lanesByExpression = useMemo(() => {
-      const lanes = new Map<string, Set<string>>();
-      connections.forEach((conn) => {
-        if (!lanes.has(conn.to)) {
-          lanes.set(conn.to, new Set());
-        }
-      });
-      return lanes.size;
-    }, [connections]);
-
     return (
       <div className={styles.container}>
-        <ConnectionLines connections={connections} />
+        <ConnectionLines connections={visibleConnections} />
         <ScrollContainer data-scrollcontainer>
-          <div className={lanesByExpression > 0 ? styles.contentWithConnections(lanesByExpression) : styles.content}>
+          <div className={styles.content}>
             <Stack direction="column" gap={2}>
               {items.map((item) => (
                 <QueryTransformCard
@@ -154,10 +156,6 @@ export const QueryTransformList = memo(
 QueryTransformList.displayName = 'QueryTransformList';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const laneSpacing = 16; // Must match ConnectionLines.tsx
-  const baseOffset = 24; // Must match ConnectionLines.tsx
-  const extraPadding = 8; // Extra breathing room beyond the last lane
-
   return {
     container: css({
       position: 'relative',
@@ -170,15 +168,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       position: 'relative',
       padding: theme.spacing(2),
+      paddingRight: theme.spacing(6), // Extra space for the connection line
       zIndex: 1,
     }),
-    contentWithConnections: (numLanes: number) =>
-      css({
-        position: 'relative',
-        padding: theme.spacing(2),
-        // Calculate exact space needed: base offset + (lanes * spacing) + extra padding
-        paddingRight: baseOffset + numLanes * laneSpacing + extraPadding,
-        zIndex: 1,
-      }),
   };
 };

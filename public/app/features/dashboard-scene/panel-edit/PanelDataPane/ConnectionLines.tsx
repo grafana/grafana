@@ -18,44 +18,32 @@ export function ConnectionLines({ connections }: ConnectionLinesProps) {
   const [positions, setPositions] = useState<Map<string, DOMRect>>(new Map());
   const containerRef = useRef<SVGSVGElement>(null);
 
-  // Update positions when cards change
   useLayoutEffect(() => {
     const updatePositions = () => {
       const newPositions = new Map<string, DOMRect>();
-
-      // Find all cards by their data-card-id attribute
       const cards = document.querySelectorAll('[data-card-id]');
 
       cards.forEach((element) => {
         const cardId = element.getAttribute('data-card-id');
         if (cardId) {
-          const rect = element.getBoundingClientRect();
-          newPositions.set(cardId, rect);
+          newPositions.set(cardId, element.getBoundingClientRect());
         }
       });
 
       setPositions(newPositions);
     };
 
-    // Delay to ensure cards are rendered
     const timeoutId = setTimeout(updatePositions, 100);
-
-    // Update on resize and scroll
     window.addEventListener('resize', updatePositions);
 
     const container = containerRef.current?.parentElement;
     if (container) {
-      // Watch for scroll events
       const scrollContainer = container.querySelector('[data-scrollcontainer]');
       scrollContainer?.addEventListener('scroll', updatePositions);
 
-      // Watch for DOM changes
-      const observer = new MutationObserver(() => {
-        setTimeout(updatePositions, 50);
-      });
+      const observer = new MutationObserver(() => setTimeout(updatePositions, 50));
       observer.observe(container, { childList: true, subtree: true });
 
-      // Watch for container resize (splitter changes)
       const resizeObserver = new ResizeObserver(updatePositions);
       resizeObserver.observe(container);
 
@@ -80,76 +68,42 @@ export function ConnectionLines({ connections }: ConnectionLinesProps) {
     return <svg ref={containerRef} className={styles.svg} />;
   }
 
-  // Group connections by expression (each "to" card gets its own lane)
-  const lanesByExpression = new Map<string, Set<string>>();
-
-  connections.forEach((conn) => {
-    if (!lanesByExpression.has(conn.to)) {
-      lanesByExpression.set(conn.to, new Set());
-    }
-    const lane = lanesByExpression.get(conn.to)!;
-    lane.add(conn.from); // Add the referenced query
-    lane.add(conn.to); // Add the expression itself
+  const cardIds = new Set<string>();
+  connections.forEach(({ from, to }) => {
+    cardIds.add(from);
+    cardIds.add(to);
   });
 
-  // Convert to array of lanes
-  const activeLanes = Array.from(lanesByExpression.values());
+  const swimlaneX = containerRect.width - 32;
 
-  // Find the rightmost edge of all cards
-  let maxCardRight = 0;
-  positions.forEach((rect) => {
-    const cardRight = rect.right - containerRect.left;
-    if (cardRight > maxCardRight) {
-      maxCardRight = cardRight;
+  const cardPositions: number[] = [];
+  cardIds.forEach((cardId) => {
+    const cardRect = positions.get(cardId);
+    if (cardRect) {
+      cardPositions.push(cardRect.top + cardRect.height / 2 - containerRect.top);
     }
   });
 
-  const laneSpacing = 16; // Spacing between lanes (must match QueryTransformList.tsx)
-  const baseOffset = 24; // Offset from rightmost card (must match QueryTransformList.tsx)
+  if (cardPositions.length === 0) {
+    return <svg ref={containerRef} className={styles.svg} />;
+  }
+
+  const minY = Math.min(...cardPositions);
+  const maxY = Math.max(...cardPositions);
 
   return (
     <svg ref={containerRef} className={styles.svg}>
-      {activeLanes.map((lane, laneIndex) => {
-        // Calculate Y positions for cards in this lane
-        const laneYPositions: number[] = [];
-        lane.forEach((cardId) => {
+      <g className={styles.connectionGroup}>
+        <line x1={swimlaneX} y1={minY} x2={swimlaneX} y2={maxY} className={styles.swimlane} />
+        {Array.from(cardIds).map((cardId) => {
           const cardRect = positions.get(cardId);
-          if (cardRect) {
-            laneYPositions.push(cardRect.top + cardRect.height / 2 - containerRect.top);
+          if (!cardRect) {
+            return null;
           }
-        });
-
-        if (laneYPositions.length === 0) {
-          return null;
-        }
-
-        // Calculate swimlane X position for this lane (start from rightmost card edge)
-        const swimlaneX = maxCardRight + baseOffset + laneIndex * laneSpacing;
-
-        // Find min/max Y to draw the line only between connected points
-        const minY = Math.min(...laneYPositions);
-        const maxY = Math.max(...laneYPositions);
-
-        return (
-          <g key={laneIndex}>
-            {/* Vertical swimlane line */}
-            <line x1={swimlaneX} y1={minY} x2={swimlaneX} y2={maxY} className={styles.swimlane} />
-
-            {/* Connection points for cards in this lane */}
-            {Array.from(lane).map((cardId) => {
-              const cardRect = positions.get(cardId);
-
-              if (!cardRect) {
-                return null;
-              }
-
-              const pointY = cardRect.top + cardRect.height / 2 - containerRect.top;
-
-              return <circle key={cardId} cx={swimlaneX} cy={pointY} r={4} className={styles.point} />;
-            })}
-          </g>
-        );
-      })}
+          const pointY = cardRect.top + cardRect.height / 2 - containerRect.top;
+          return <circle key={cardId} cx={swimlaneX} cy={pointY} r={4} className={styles.point} />;
+        })}
+      </g>
     </svg>
   );
 }
@@ -164,6 +118,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     pointerEvents: 'none',
     zIndex: 10,
     overflow: 'visible',
+  }),
+  connectionGroup: css({
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      animation: 'fadeIn 0.2s ease-in-out',
+      '@keyframes fadeIn': {
+        from: {
+          opacity: 0,
+        },
+        to: {
+          opacity: 1,
+        },
+      },
+    },
   }),
   swimlane: css({
     stroke: theme.colors.text.maxContrast,

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import clsx from 'clsx';
 import { memo, useMemo } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
@@ -64,7 +65,7 @@ export const QueryTransformCard = memo(
       <div
         role="button"
         tabIndex={0}
-        className={`${styles.card} ${isSelected ? styles.cardSelected : ''}`}
+        className={clsx(styles.card, { [styles.cardSelected]: isSelected, [styles.cardHidden]: isHidden })}
         onClick={onClick}
         onKeyDown={handleKeyDown}
         data-testid={`${type}-card-${index}`}
@@ -84,48 +85,46 @@ export const QueryTransformCard = memo(
             <Icon name={icon} className={styles.headerIcon} />
             <span className={styles.typeLabel}>{typeLabel}</span>
           </div>
-          <div className={`${styles.actions} ${styles.actionsClass}`}>
-            <Stack gap={0.5}>
-              {(type === 'query' || type === 'expression') && onToggleVisibility && (
-                <IconButton
-                  name={isHidden ? 'eye-slash' : 'eye'}
-                  size="sm"
-                  variant="secondary"
-                  tooltip={
-                    isHidden
-                      ? t('dashboard-scene.query-transform-card.show-response', 'Show response')
-                      : t('dashboard-scene.query-transform-card.hide-response', 'Hide response')
-                  }
-                  onClick={(e) => handleAction(e, onToggleVisibility)}
-                  className={styles.actionButton}
-                />
-              )}
-              {(type === 'query' || type === 'expression') && onDuplicate && (
-                <IconButton
-                  name="copy"
-                  size="sm"
-                  variant="secondary"
-                  tooltip={t('dashboard-scene.query-transform-card.duplicate', 'Duplicate query')}
-                  onClick={(e) => handleAction(e, onDuplicate)}
-                  className={styles.actionButton}
-                />
-              )}
-              {onRemove && (
-                <IconButton
-                  name="trash-alt"
-                  size="sm"
-                  variant="secondary"
-                  tooltip={
-                    type === 'query'
-                      ? t('dashboard-scene.query-transform-card.remove-query', 'Remove query')
-                      : t('dashboard-scene.query-transform-card.remove-transform', 'Remove transformation')
-                  }
-                  onClick={(e) => handleAction(e, onRemove)}
-                  className={styles.actionButton}
-                />
-              )}
-            </Stack>
-          </div>
+          <Stack gap={0.5}>
+            {(type === 'query' || type === 'expression') && onToggleVisibility && (
+              <IconButton
+                name={isHidden ? 'eye-slash' : 'eye'}
+                size="sm"
+                variant="secondary"
+                tooltip={
+                  isHidden
+                    ? t('dashboard-scene.query-transform-card.show-response', 'Show response')
+                    : t('dashboard-scene.query-transform-card.hide-response', 'Hide response')
+                }
+                onClick={(e) => handleAction(e, onToggleVisibility)}
+                className={styles.actionButton}
+              />
+            )}
+            {(type === 'query' || type === 'expression') && onDuplicate && (
+              <IconButton
+                name="copy"
+                size="sm"
+                variant="secondary"
+                tooltip={t('dashboard-scene.query-transform-card.duplicate', 'Duplicate query')}
+                onClick={(e) => handleAction(e, onDuplicate)}
+                className={styles.actionButton}
+              />
+            )}
+            {onRemove && (
+              <IconButton
+                name="trash-alt"
+                size="sm"
+                variant="secondary"
+                tooltip={
+                  type === 'query'
+                    ? t('dashboard-scene.query-transform-card.remove-query', 'Remove query')
+                    : t('dashboard-scene.query-transform-card.remove-transform', 'Remove transformation')
+                }
+                onClick={(e) => handleAction(e, onRemove)}
+                className={styles.actionButton}
+              />
+            )}
+          </Stack>
         </div>
 
         {/* Content: Name */}
@@ -145,8 +144,8 @@ export const QueryTransformCard = memo(
 QueryTransformCard.displayName = 'QueryTransformCard';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const actionsClass = 'actions-container';
   const selectedClass = 'card-selected';
+  const hiddenClass = 'card-hidden';
 
   return {
     card: css({
@@ -157,9 +156,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       background: theme.colors.background.primary,
       width: '100%',
-      [`&:hover .${actionsClass}`]: {
-        opacity: 1,
-      },
       '&:hover': {
         borderColor: theme.colors.border.strong,
       },
@@ -171,8 +167,12 @@ const getStyles = (theme: GrafanaTheme2) => {
         borderColor: theme.colors.primary.border,
         boxShadow: `0 0 0 1px ${theme.colors.primary.border}`,
       },
+      [`&.${hiddenClass}`]: {
+        opacity: 0.5,
+      },
     }),
     cardSelected: selectedClass,
+    cardHidden: hiddenClass,
     headerQuery: css({
       display: 'flex',
       alignItems: 'center',
@@ -220,11 +220,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
     }),
-    actions: css({
-      opacity: 0,
-      flexShrink: 0,
-    }),
-    actionsClass,
     actionButton: css({
       '&:hover': {
         background: theme.colors.action.hover,
