@@ -4,6 +4,10 @@ import { useCallback, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ButtonGroup, Dropdown, Menu, MenuItem, useStyles2 } from '@grafana/ui';
+import pyroscopeIconSvg from 'app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg';
+import lokiIconSvg from 'app/plugins/datasource/loki/img/loki_icon.svg';
+import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';
+import tempoLogoSvg from 'app/plugins/datasource/tempo/img/tempo_logo.svg';
 import { useDispatch } from 'app/types/store';
 
 import { addPanel } from '../state/crdtSlice';
@@ -84,24 +88,28 @@ export function ExploreMapFloatingToolbar() {
         icon="plus"
         onClick={handleAddPanel}
       />
-      <MenuItem
+      <MenuItemWithLogo
         label={t('explore-map.toolbar.add-metrics-drilldown-panel', 'Add Metrics Drilldown panel')}
-        icon="chart-line"
+        logoSrc={prometheusLogoSvg}
+        logoAlt="Prometheus"
         onClick={handleAddMetricsDrilldownPanel}
       />
-      <MenuItem
+      <MenuItemWithLogo
         label={t('explore-map.toolbar.add-logs-drilldown-panel', 'Add Logs Drilldown panel')}
-        icon="file-alt"
+        logoSrc={lokiIconSvg}
+        logoAlt="Loki"
         onClick={handleAddLogsDrilldownPanel}
       />
-      <MenuItem
+      <MenuItemWithLogo
         label={t('explore-map.toolbar.add-traces-drilldown-panel', 'Add Traces Drilldown panel')}
-        icon="drilldown"
+        logoSrc={tempoLogoSvg}
+        logoAlt="Tempo"
         onClick={handleAddTracesDrilldownPanel}
       />
-      <MenuItem
+      <MenuItemWithLogo
         label={t('explore-map.toolbar.add-profiles-drilldown-panel', 'Add Profiles Drilldown panel')}
-        icon="clock-nine"
+        logoSrc={pyroscopeIconSvg}
+        logoAlt="Pyroscope"
         onClick={handleAddProfilesDrilldownPanel}
       />
     </Menu>
@@ -125,6 +133,23 @@ export function ExploreMapFloatingToolbar() {
   );
 }
 
+interface MenuItemWithLogoProps {
+  label: string;
+  logoSrc: string;
+  logoAlt: string;
+  onClick: () => void;
+}
+
+function MenuItemWithLogo({ label, logoSrc, logoAlt, onClick }: MenuItemWithLogoProps) {
+  const styles = useStyles2(getMenuItemStyles);
+  return (
+    <div className={styles.menuItemWrapper}>
+      <img src={logoSrc} alt={logoAlt} className={styles.logo} aria-hidden="true" />
+      <MenuItem label={label} onClick={onClick} className={styles.menuItemWithLogo} />
+    </div>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     floatingToolbar: css({
@@ -141,6 +166,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
       zIndex: 1000,
+    }),
+  };
+};
+
+const getMenuItemStyles = (theme: GrafanaTheme2) => {
+  return {
+    menuItemWrapper: css({
+      position: 'relative',
+    }),
+    logo: css({
+      position: 'absolute',
+      left: theme.spacing(1.5),
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: '16px',
+      height: '16px',
+      flexShrink: 0,
+      zIndex: 1,
+      pointerEvents: 'none',
+    }),
+    menuItemWithLogo: css({
+      paddingLeft: theme.spacing(4.5), // Make room for the logo
     }),
   };
 };
