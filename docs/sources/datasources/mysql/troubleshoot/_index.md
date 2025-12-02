@@ -1,5 +1,5 @@
 ---
-description: Learn how to troubleshoot common problems for the GitHub data source plugin
+description: Learn how to troubleshoot common problems with the Grafana MySQL data source plugin
 keywords:
   - grafana
   - mysql
@@ -10,7 +10,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Troubleshoot
-title: Troubleshooting common problems for the Grafana MySQL data source plugin
+title: Troubleshoot common problems with the Grafana MySQL data source plugin
 weight: 40
 refs:
   variables:
@@ -63,15 +63,15 @@ refs:
     - destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/
 ---
 
-# Troubleshooting common problems for the Grafana MySQL data source plugin
+# Troubleshoot common problems wiyj the Grafana MySQL data source plugin
 
-This page lists some common issues you may experience when setting up the Grafana MySQL data source plugin. You can check the possible reasons and suggested solutions below.
+This page lists common issues you might experience when setting up the Grafana MySQL data source plugin.
 
-### Why does my data source connection fails when using the Grafana MySQL data source plugin
+### My data source connection fails when using the Grafana MySQL data source plugin
 
 - Check if the MySQL server is up and running.
 - Make sure that your firewall is open for MySQL server (default port is `3306`).
-- Ensure that the user have the right permissions to access the MySQL server and also have permission to access the database.
+- Ensure that you have the correct permissions to access the MySQL server and also have permission to access the database.
 - If the error persists, create a new user for the Grafana MySQL data source plugin with correct permissions and try to connect with it.
 
 ### What should I do if I see "An unexpected error happened" or "Could not connect to MySQL" after trying all of the above?
