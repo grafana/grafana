@@ -138,7 +138,9 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	}
 
 	// Create a shared dashboard conversion shim and cache for all dashboard resources
+	// The versionClients map will be shared across all dashboard conversion calls
 	var dashboardShim conversionShim
+	var versionClients map[string]dynamic.ResourceInterface
 
 	for _, resourceRef := range options.Resources {
 		result := jobs.JobResourceResult{
@@ -233,8 +235,9 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 		// Handle dashboard version conversion using the shared shim logic
 		if gvr.GroupResource() == resources.DashboardResource.GroupResource() {
 			// Create or reuse the dashboard shim (shared across all dashboard resources)
+			// The versionClients map is shared across all calls to preserve client caching
 			if dashboardShim == nil {
-				dashboardShim, _ = createDashboardConversionShim(ctx, clients, gvr)
+				dashboardShim, versionClients = createDashboardConversionShim(ctx, clients, gvr)
 			}
 
 			item, err = dashboardShim(ctx, item)
