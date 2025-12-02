@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 import { config } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
@@ -35,12 +35,27 @@ export function useSelectionUnmanagedStatus(
     []
   );
 
+  // Memoize the selected item UIDs to avoid unnecessary re-runs when children are loaded
+  const selectedDashboardUIDs = useMemo(
+    () => Object.keys(selectedItems.dashboard || {}).filter((uid) => selectedItems.dashboard[uid]),
+    [selectedItems.dashboard]
+  );
+  const selectedFolderUIDs = useMemo(
+    () => Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]),
+    [selectedItems.folder]
+  );
+
+  // Use a ref to always access the latest browseState without causing re-renders
+  const browseStateRef = useRef(browseState);
+  browseStateRef.current = browseState;
+
   const findItemInState = useCallback(
     (uid: string) => {
-      const item = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, uid);
+      const state = browseStateRef.current;
+      const item = findItem(state.rootItems?.items || [], state.childrenByParentUID, uid);
       return item ? { parentUID: item.parentUID, managedBy: item.managedBy } : undefined;
     },
-    [browseState]
+    [] // No dependencies - always uses latest state via ref
   );
 
   const getFolderMeta = useCallback(
@@ -116,20 +131,15 @@ export function useSelectionUnmanagedStatus(
     const checkUnmanagedStatus = async () => {
       setStatus({ hasUnmanaged: false, isLoading: true });
 
-      const selectedDashboards = Object.keys(selectedItems.dashboard || {}).filter(
-        (uid) => selectedItems.dashboard[uid]
-      );
-      const selectedFolders = Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
-
-      if (selectedDashboards.length === 0 && selectedFolders.length === 0) {
+      if (selectedDashboardUIDs.length === 0 && selectedFolderUIDs.length === 0) {
         setStatus({ hasUnmanaged: false, isLoading: false });
         return;
       }
 
       // Check all selected items
       const checks = [
-        ...selectedDashboards.map((uid) => checkItemUnmanaged(uid, false)),
-        ...selectedFolders.map((uid) => checkItemUnmanaged(uid, true)),
+        ...selectedDashboardUIDs.map((uid) => checkItemUnmanaged(uid, false)),
+        ...selectedFolderUIDs.map((uid) => checkItemUnmanaged(uid, true)),
       ];
 
       const results = await Promise.all(checks);
@@ -139,7 +149,7 @@ export function useSelectionUnmanagedStatus(
     };
 
     checkUnmanagedStatus();
-  }, [selectedItems, provisioningEnabled, checkItemUnmanaged]);
+  }, [selectedDashboardUIDs, selectedFolderUIDs, provisioningEnabled, checkItemUnmanaged]);
 
   return status;
 }
