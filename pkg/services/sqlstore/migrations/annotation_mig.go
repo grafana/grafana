@@ -2,7 +2,10 @@ package migrations
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -243,30 +246,86 @@ func (m *SetDashboardUIDMigration) SQL(dialect Dialect) string {
 }
 
 func (m *SetDashboardUIDMigration) Exec(sess *xorm.Session, mg *Migrator) error {
-	return RunDashboardUIDMigrations(sess, mg.Dialect.DriverName())
+	return RunDashboardUIDMigrations(sess, mg.Dialect.DriverName(), mg.Logger)
 }
 
-func RunDashboardUIDMigrations(sess *xorm.Session, driverName string) error {
-	sql := `UPDATE annotation
-	SET dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = annotation.dashboard_id)
-	WHERE dashboard_uid IS NULL AND dashboard_id != 0 AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = annotation.dashboard_id);`
+func RunDashboardUIDMigrations(sess *xorm.Session, driverName string, logger log.Logger) error {
+	batchSize := 5000
+	if size := os.Getenv("ANNOTATION_DASHBOARD_UID_MIGRATION_BATCH_SIZE"); size != "" {
+		n, err := strconv.ParseInt(size, 10, 64)
+		if err == nil {
+			batchSize = int(n)
+		}
+	}
+
+	logger.Info("Starting batched dashboard_uid migration for annotations (newest first)", "batchSize", batchSize)
+	updateSQL := `UPDATE annotation
+		SET dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = annotation.dashboard_id)
+		WHERE dashboard_uid IS NULL 
+		  AND dashboard_id != 0 
+		  AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = annotation.dashboard_id)
+		  AND annotation.id IN (
+			SELECT id FROM annotation
+			WHERE dashboard_uid IS NULL AND dashboard_id != 0
+			ORDER BY id DESC
+			LIMIT ?
+		  )`
 	switch driverName {
 	case Postgres:
-		sql = `UPDATE annotation
+		updateSQL = `UPDATE annotation
 		SET dashboard_uid = dashboard.uid
 		FROM dashboard
 		WHERE annotation.dashboard_id = dashboard.id
 		 AND annotation.dashboard_id != 0
-		 AND annotation.dashboard_uid IS NULL;`
+		 AND annotation.dashboard_uid IS NULL
+		 AND annotation.id IN (
+			SELECT id FROM annotation
+			WHERE dashboard_uid IS NULL AND dashboard_id != 0
+			ORDER BY id DESC
+			LIMIT $1
+		 )`
 	case MySQL:
-		sql = `UPDATE annotation
-		LEFT JOIN dashboard ON annotation.dashboard_id = dashboard.id
+		updateSQL = `UPDATE annotation
+		INNER JOIN dashboard ON annotation.dashboard_id = dashboard.id
 		SET annotation.dashboard_uid = dashboard.uid
-		WHERE annotation.dashboard_uid IS NULL and annotation.dashboard_id != 0;`
-	}
-	if _, err := sess.Exec(sql); err != nil {
-		return fmt.Errorf("failed to set dashboard_uid for annotation: %w", err)
+		WHERE annotation.dashboard_uid IS NULL 
+		  AND annotation.dashboard_id != 0
+		  AND annotation.id IN (
+			SELECT id FROM (
+				SELECT id FROM annotation
+				WHERE dashboard_uid IS NULL AND dashboard_id != 0
+				ORDER BY id DESC
+				LIMIT ?
+			) AS batch
+		  )`
 	}
 
+	updatedTotal := int64(0)
+	batchNum := 0
+	for {
+		batchNum++
+		result, err := sess.Exec(updateSQL, batchSize)
+		if err != nil {
+			return fmt.Errorf("failed to set dashboard_uid for annotation batch %d: %w", batchNum, err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to get rows affected for batch %d: %w", batchNum, err)
+		}
+
+		if rowsAffected == 0 {
+			break
+		}
+
+		updatedTotal += rowsAffected
+		logger.Info("Updated annotation batch", "batch", batchNum, "rowsInBatch", rowsAffected, "totalUpdated", updatedTotal)
+
+		if rowsAffected < int64(batchSize) {
+			break
+		}
+	}
+
+	logger.Info("Completed dashboard_uid migration for annotations", "totalUpdated", updatedTotal)
 	return nil
 }
