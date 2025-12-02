@@ -224,7 +224,7 @@ function FormContent({ initialValues, selectedItems, workflowOptions, onDismiss 
                 <Alert severity="info" title={t('browse-dashboards.bulk-export-resources-form.folders-info', 'Folders in selection')}>
                   {t(
                     'browse-dashboards.bulk-export-resources-form.folders-info-description',
-                    'Folders will be left behind. New folders will be created in the repository based on the dashboard folder structure.'
+                    'Folders will be left behind. New folders will be created in the repository based on the resource folder structure.'
                   )}
                 </Alert>
               )}
