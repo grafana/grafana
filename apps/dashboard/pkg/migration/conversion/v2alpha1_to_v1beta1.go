@@ -198,6 +198,9 @@ func convertLinksToV1(links []dashv2alpha1.DashboardDashboardLink) []map[string]
 		if link.Url != nil {
 			linkMap["url"] = *link.Url
 		}
+		if link.Placement != nil {
+			linkMap["placement"] = *link.Placement
+		}
 		result = append(result, linkMap)
 	}
 	return result
@@ -1725,7 +1728,7 @@ func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryK
 			for k, v := range annotation.Spec.LegacyOptions {
 				// Skip fields already handled
 				if k != "name" && k != "enable" && k != "hide" && k != "iconColor" &&
-					k != "datasource" && k != "target" && k != "filter" && k != "builtIn" {
+					k != "datasource" && k != "target" && k != "filter" && k != "builtIn" && k != "placement" {
 					annotationMap[k] = v
 				}
 			}

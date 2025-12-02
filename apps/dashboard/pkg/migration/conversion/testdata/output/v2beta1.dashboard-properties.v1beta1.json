@@ -1,6 +1,6 @@
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
   "metadata": {
     "name": "dashboard-properties-test",
     "labels": {
@@ -11,7 +11,6 @@
     "annotations": {
       "list": [
         {
-          "builtIn": 0,
           "enable": true,
           "hide": false,
           "iconColor": "blue",
@@ -25,9 +24,7 @@
     "description": "Testing dashboard-level property transformations including time settings, cursor sync, and links",
     "editable": true,
     "fiscalYearStartMonth": 4,
-    "gnetId": 12345,
     "graphTooltip": 2,
-    "iteration": 1640995200000,
     "links": [
       {
         "asDropdown": false,
@@ -88,33 +85,8 @@
       }
     ],
     "liveNow": true,
-    "meta": {
-      "canAdmin": false,
-      "canEdit": true,
-      "canSave": true,
-      "canStar": true,
-      "created": "2023-01-01T00:00:00Z",
-      "createdBy": "admin",
-      "expires": "2024-01-01T00:00:00Z",
-      "folderId": 0,
-      "folderTitle": "General",
-      "folderUrl": "",
-      "hasAcl": false,
-      "isFolder": false,
-      "provisioned": false,
-      "provisionedExternalId": "",
-      "slug": "dashboard-properties-test",
-      "updated": "2023-06-01T00:00:00Z",
-      "updatedBy": "admin",
-      "url": "/d/test/dashboard-properties-test",
-      "version": 42
-    },
     "panels": [
       {
-        "fieldConfig": {
-          "defaults": {},
-          "overrides": []
-        },
         "gridPos": {
           "h": 8,
           "w": 12,
@@ -123,6 +95,7 @@
         },
         "id": 1,
         "options": {},
+        "pluginVersion": "",
         "targets": [
           {
             "refId": "A"
@@ -134,12 +107,7 @@
     ],
     "preload": true,
     "refresh": "30s",
-    "schemaVersion": 39,
-    "snapshot": {
-      "originalUrl": "http://localhost:3000/d/test",
-      "timestamp": "2023-01-01T00:00:00Z"
-    },
-    "style": "dark",
+    "schemaVersion": 42,
     "tags": [
       "test",
       "properties",
@@ -148,12 +116,16 @@
     "templating": {
       "list": [
         {
+          "allowCustomValue": true,
           "current": {
             "text": "value1",
             "value": "value1"
           },
           "hide": 0,
+          "includeAll": false,
+          "multi": false,
           "name": "simple_var",
+          "options": [],
           "query": "value1,value2,value3",
           "skipUrlSync": false,
           "type": "custom"
@@ -165,11 +137,6 @@
       "to": "now"
     },
     "timepicker": {
-      "collapse": false,
-      "enable": true,
-      "hidden": false,
-      "notice": false,
-      "now": true,
       "nowDelay": "1m",
       "refresh_intervals": [
         "5s",
@@ -182,30 +149,16 @@
         "1h",
         "2h",
         "1d"
-      ],
-      "status": "Stable",
-      "time_options": [
-        "5m",
-        "15m",
-        "1h",
-        "6h",
-        "12h",
-        "24h",
-        "2d",
-        "7d",
-        "30d"
-      ],
-      "type": "timepicker"
+      ]
     },
     "timezone": "America/New_York",
     "title": "Dashboard Properties Test",
-    "version": 42,
     "weekStart": "sunday"
   },
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v2beta1"
     }
   }
 }

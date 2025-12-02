@@ -474,7 +474,7 @@
                               "name": "existing-ref-uid"
                             },
                             "spec": {
-                              "__legacyStringValue": "up"
+                              "query": "up"
                             }
                           },
                           "refId": "A",
