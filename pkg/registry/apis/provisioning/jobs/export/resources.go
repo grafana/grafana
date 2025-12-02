@@ -119,10 +119,10 @@ func createDashboardConversionShimWithCache(ctx context.Context, clients resourc
 
 func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "start resource export")
-	
+
 	// Create a shared versionClients map for dashboard conversion caching
 	versionClients := make(map[string]dynamic.ResourceInterface)
-	
+
 	for _, kind := range resources.SupportedProvisioningResources {
 		// skip from folders as we do them first... so only dashboards
 		if kind == resources.FolderResource {
@@ -139,7 +139,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 		// Always use the cache version to share clients across all dashboard exports
 		var shim conversionShim
 		if kind.GroupResource() == resources.DashboardResource.GroupResource() {
-			shim = createDashboardConversionShimWithCache(ctx, clients, kind, versionClients)
+			shim = createDashboardConversionShim(ctx, clients, kind, versionClients)
 		}
 
 		if err := exportResource(ctx, kind.Resource, options, client, shim, repositoryResources, progress); err != nil {
@@ -371,7 +371,7 @@ func convertDashboardIfNeeded(
 	// Create or reuse the dashboard shim (shared across all dashboard resources)
 	// Pass the shared versionClients map to ensure client caching works correctly
 	if *dashboardShim == nil {
-		*dashboardShim = createDashboardConversionShimWithCache(ctx, clients, gvr, versionClients)
+		*dashboardShim = createDashboardConversionShim(ctx, clients, gvr, versionClients)
 	}
 
 	var err error
