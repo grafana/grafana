@@ -670,104 +670,6 @@ func getLayoutHeightFromTab(layout *dashv2alpha1.DashboardGridLayoutKindOrRowsLa
 	return maxY
 }
 
-// extractCollapsedPanels extracts panels for a collapsed row with relative Y positions.
-// This is used when V1 normalization will later adjust Y positions.
-// Recursively extracts panels from nested RowsLayout and TabsLayout.
-func extractCollapsedPanels(elements map[string]dashv2alpha1.DashboardElement, layout *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
-	panels := make([]interface{}, 0)
-
-	if layout.GridLayoutKind != nil {
-		for _, item := range layout.GridLayoutKind.Spec.Items {
-			element, ok := elements[item.Spec.Element.Name]
-			if !ok {
-				return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
-			}
-			panel, err := convertPanelFromElement(&element, &item, dsIndex)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
-			}
-			panels = append(panels, panel)
-		}
-	}
-	// Handle AutoGridLayout for collapsed rows
-	if layout.AutoGridLayoutKind != nil {
-		autoGridPanels, err := convertAutoGridLayoutToPanels(elements, layout.AutoGridLayoutKind, dsIndex)
-		if err != nil {
-			return nil, err
-		}
-		panels = append(panels, autoGridPanels...)
-	}
-	// For nested rows/tabs in collapsed state, recursively extract all panels
-	if layout.RowsLayoutKind != nil {
-		for _, row := range layout.RowsLayoutKind.Spec.Rows {
-			nestedPanels, err := extractCollapsedPanels(elements, &row.Spec.Layout, dsIndex)
-			if err != nil {
-				return nil, err
-			}
-			panels = append(panels, nestedPanels...)
-		}
-	}
-	if layout.TabsLayoutKind != nil {
-		for _, tab := range layout.TabsLayoutKind.Spec.Tabs {
-			nestedPanels, err := extractCollapsedPanelsFromTabLayout(elements, &tab.Spec.Layout, dsIndex)
-			if err != nil {
-				return nil, err
-			}
-			panels = append(panels, nestedPanels...)
-		}
-	}
-
-	return panels, nil
-}
-
-// extractCollapsedPanelsFromTabLayout extracts panels from a tab layout for collapsed state.
-// Similar to extractCollapsedPanels but handles the tab-specific layout type.
-func extractCollapsedPanelsFromTabLayout(elements map[string]dashv2alpha1.DashboardElement, layout *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
-	panels := make([]interface{}, 0)
-
-	if layout.GridLayoutKind != nil {
-		for _, item := range layout.GridLayoutKind.Spec.Items {
-			element, ok := elements[item.Spec.Element.Name]
-			if !ok {
-				return nil, fmt.Errorf("panel with uid %s not found in the dashboard elements", item.Spec.Element.Name)
-			}
-			panel, err := convertPanelFromElement(&element, &item, dsIndex)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
-			}
-			panels = append(panels, panel)
-		}
-	}
-	// Handle AutoGridLayout for collapsed tabs
-	if layout.AutoGridLayoutKind != nil {
-		autoGridPanels, err := convertAutoGridLayoutToPanels(elements, layout.AutoGridLayoutKind, dsIndex)
-		if err != nil {
-			return nil, err
-		}
-		panels = append(panels, autoGridPanels...)
-	}
-	if layout.RowsLayoutKind != nil {
-		for _, row := range layout.RowsLayoutKind.Spec.Rows {
-			nestedPanels, err := extractCollapsedPanels(elements, &row.Spec.Layout, dsIndex)
-			if err != nil {
-				return nil, err
-			}
-			panels = append(panels, nestedPanels...)
-		}
-	}
-	if layout.TabsLayoutKind != nil {
-		for _, tab := range layout.TabsLayoutKind.Spec.Tabs {
-			nestedPanels, err := extractCollapsedPanelsFromTabLayout(elements, &tab.Spec.Layout, dsIndex)
-			if err != nil {
-				return nil, err
-			}
-			panels = append(panels, nestedPanels...)
-		}
-	}
-
-	return panels, nil
-}
-
 // extractExpandedPanels extracts panels for an expanded row, adding them to the top level.
 // Y position handling:
 //   - Hidden header: Keep original relative Y (no adjustment)
@@ -886,18 +788,25 @@ func getLayoutHeight(layout *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayou
 func convertAutoGridLayoutToPanelsWithOffset(elements map[string]dashv2alpha1.DashboardElement, autoGridLayout *dashv2alpha1.DashboardAutoGridLayoutKind, dsIndex *schemaversion.DatasourceIndex, yOffset int64) ([]interface{}, error) {
 	panels := make([]interface{}, 0, len(autoGridLayout.Spec.Items))
 
-	const gridWidth int64 = 24
-	const gridCellHeight float64 = 30
-	const gridCellVMargin float64 = 8
-	const defaultMaxColumnCount float64 = 3
+	const (
+		gridTotalColumns       int64   = 24
+		gridCellHeightPx       float64 = 30
+		gridCellVerticalMargin float64 = 8
+		defaultMaxColumnCount  float64 = 3
+	)
+
+	pixelsToGridUnits := func(pixels float64) int64 {
+		gridUnitSize := gridCellHeightPx + gridCellVerticalMargin
+		return int64((pixels + gridUnitSize - 1) / gridUnitSize)
+	}
 
 	maxColumnCount := defaultMaxColumnCount
 	if autoGridLayout.Spec.MaxColumnCount != nil && *autoGridLayout.Spec.MaxColumnCount > 0 {
 		maxColumnCount = *autoGridLayout.Spec.MaxColumnCount
 	}
-	panelWidth := int64(float64(gridWidth) / maxColumnCount)
+	panelWidth := int64(float64(gridTotalColumns) / maxColumnCount)
 
-	var panelHeight int64 = 9
+	var panelHeight int64
 	switch autoGridLayout.Spec.RowHeightMode {
 	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeShort:
 		panelHeight = 5
@@ -907,12 +816,15 @@ func convertAutoGridLayoutToPanelsWithOffset(elements map[string]dashv2alpha1.Da
 		panelHeight = 14
 	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeCustom:
 		if autoGridLayout.Spec.RowHeight != nil && *autoGridLayout.Spec.RowHeight > 0 {
-			rowHeightPx := *autoGridLayout.Spec.RowHeight
-			panelHeight = int64((rowHeightPx + gridCellHeight + gridCellVMargin - 1) / (gridCellHeight + gridCellVMargin))
+			panelHeight = pixelsToGridUnits(*autoGridLayout.Spec.RowHeight)
+		} else {
+			panelHeight = 9
 		}
+	default:
+		panelHeight = 9
 	}
 
-	var currentY int64 = yOffset
+	currentY := yOffset
 	var currentX int64 = 0
 
 	for _, item := range autoGridLayout.Spec.Items {
@@ -942,7 +854,7 @@ func convertAutoGridLayoutToPanelsWithOffset(elements map[string]dashv2alpha1.Da
 		panels = append(panels, panel)
 
 		currentX += panelWidth
-		if currentX >= gridWidth {
+		if currentX >= gridTotalColumns {
 			currentX = 0
 			currentY += panelHeight
 		}
@@ -953,41 +865,60 @@ func convertAutoGridLayoutToPanelsWithOffset(elements map[string]dashv2alpha1.Da
 
 // convertAutoGridLayoutToPanels converts V2 AutoGridLayout to V1 panels with calculated gridPos.
 // AutoGridLayout arranges panels automatically; V1 requires explicit x/y/w/h coordinates.
-// Calculation:
-//   - Width: 24 / maxColumnCount (default 3 columns = 8 units wide)
-//   - Height: Based on rowHeightMode (short=5, standard=9, tall=14 grid units)
-//   - Position: Panels flow left-to-right, wrapping to next row when full
+//
+// Grid System:
+//   - V1 uses a 24-column grid where each cell is 30px tall with 8px vertical margin
+//   - To convert pixels to grid units: ceil(pixels / 38)
+//   - Panels flow left-to-right, wrapping to next row when column limit reached
+//
+// Width: 24 / maxColumnCount (default 3 columns = 8 units wide)
+// Height: Predefined grid units per mode (see pixelsToGridUnits for custom)
 func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, autoGridLayout *dashv2alpha1.DashboardAutoGridLayoutKind, dsIndex *schemaversion.DatasourceIndex) ([]interface{}, error) {
 	panels := make([]interface{}, 0, len(autoGridLayout.Spec.Items))
 
-	const gridWidth int64 = 24
-	const gridCellHeight float64 = 30 // GRID_CELL_HEIGHT in pixels
-	const gridCellVMargin float64 = 8 // GRID_CELL_VMARGIN in pixels
-	const defaultMaxColumnCount float64 = 3
+	const (
+		gridTotalColumns       int64   = 24 // V1 grid is 24 columns wide
+		gridCellHeightPx       float64 = 30 // GRID_CELL_HEIGHT: height of one grid cell in pixels
+		gridCellVerticalMargin float64 = 8  // GRID_CELL_VMARGIN: margin between grid cells in pixels
+		defaultMaxColumnCount  float64 = 3  // Default number of columns in AutoGrid
+	)
 
-	// Calculate panel width based on maxColumnCount
+	// pixelsToGridUnits converts a pixel height to grid units.
+	// Formula: ceil(pixels / (cellHeight + margin)) = ceil(pixels / 38)
+	pixelsToGridUnits := func(pixels float64) int64 {
+		gridUnitSize := gridCellHeightPx + gridCellVerticalMargin // 38px per grid unit
+		return int64((pixels + gridUnitSize - 1) / gridUnitSize)  // Ceiling division
+	}
+
+	// Calculate panel width: divide 24-column grid by number of columns
 	maxColumnCount := defaultMaxColumnCount
 	if autoGridLayout.Spec.MaxColumnCount != nil && *autoGridLayout.Spec.MaxColumnCount > 0 {
 		maxColumnCount = *autoGridLayout.Spec.MaxColumnCount
 	}
-	panelWidth := int64(float64(gridWidth) / maxColumnCount)
+	panelWidth := int64(float64(gridTotalColumns) / maxColumnCount)
 
-	// Calculate panel height based on rowHeightMode/rowHeight
-	var panelHeight int64 = 9 // default: standard (320px → 9 grid units)
+	// Calculate panel height based on rowHeightMode
+	// Each mode has a target pixel height that maps to a specific grid unit count:
+	//   short:    ~168px -> 5 grid units
+	//   standard: ~320px -> 9 grid units (default)
+	//   tall:     ~512px -> 14 grid units
+	//   custom:   user-specified pixels -> calculated grid units
+	var panelHeight int64
 	switch autoGridLayout.Spec.RowHeightMode {
 	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeShort:
-		panelHeight = 5 // 168px → 5 grid units
+		panelHeight = 5
 	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeStandard:
-		panelHeight = 9 // 320px → 9 grid units
+		panelHeight = 9
 	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeTall:
-		panelHeight = 14 // 512px → 14 grid units
+		panelHeight = 14
 	case dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeCustom:
-		// Convert rowHeight from pixels to grid units
 		if autoGridLayout.Spec.RowHeight != nil && *autoGridLayout.Spec.RowHeight > 0 {
-			rowHeightPx := *autoGridLayout.Spec.RowHeight
-			// Math.ceil(height / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN))
-			panelHeight = int64((rowHeightPx + gridCellHeight + gridCellVMargin - 1) / (gridCellHeight + gridCellVMargin))
+			panelHeight = pixelsToGridUnits(*autoGridLayout.Spec.RowHeight)
+		} else {
+			panelHeight = 9 // Fall back to standard
 		}
+	default:
+		panelHeight = 9 // Default to standard
 	}
 
 	var currentY int64 = 0
@@ -1011,10 +942,22 @@ func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardEle
 					Kind: item.Spec.Element.Kind,
 					Name: item.Spec.Element.Name,
 				},
-				// Note: AutoGridLayout uses DashboardAutoGridRepeatOptions which is different
-				// from DashboardRepeatOptions, so we can't directly copy it
-				// TODO: Convert AutoGridRepeatOptions to RepeatOptions if needed
 			},
+		}
+
+		// Convert AutoGridRepeatOptions to RepeatOptions if present
+		// AutoGridRepeatOptions only has mode and value; infer direction and maxPerRow from AutoGrid settings:
+		// - direction: always "h" (AutoGrid flows horizontally, left-to-right then wraps)
+		// - maxPerRow: from AutoGrid's maxColumnCount
+		if item.Spec.Repeat != nil {
+			directionH := dashv2alpha1.DashboardRepeatOptionsDirectionH
+			maxPerRow := int64(maxColumnCount)
+			gridItem.Spec.Repeat = &dashv2alpha1.DashboardRepeatOptions{
+				Mode:      item.Spec.Repeat.Mode,
+				Value:     item.Spec.Repeat.Value,
+				Direction: &directionH,
+				MaxPerRow: &maxPerRow,
+			}
 		}
 
 		panel, err := convertPanelFromElement(&element, &gridItem, dsIndex)
@@ -1025,7 +968,7 @@ func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardEle
 
 		// Move to next position: wrap to next row when exceeding maxColumnCount
 		currentX += panelWidth
-		if currentX >= gridWidth {
+		if currentX >= gridTotalColumns {
 			currentX = 0
 			currentY += panelHeight
 		}
@@ -1223,7 +1166,7 @@ func convertPanelQueryToV1(query *dashv2alpha1.DashboardPanelQueryKind, dsIndex 
 // 1. If explicit datasource with UID is provided, use it
 // 2. Otherwise, find a datasource matching the queryKind (type)
 // 3. Fall back to the default datasource
-// Used for variables and annotations. Panel queries handle datasource inline (only explicit ones).
+// Used for variables and annotations. Panel queries handle datasource inline.
 func getDataSourceForQuery(explicitDS *dashv2alpha1.DashboardDataSourceRef, queryKind string, dsIndex *schemaversion.DatasourceIndex) map[string]interface{} {
 	// If explicit datasource is provided (with UID), use it
 	if explicitDS != nil && explicitDS.Uid != nil && *explicitDS.Uid != "" {
@@ -1909,96 +1852,14 @@ func convertFieldConfigSourceToV1(fieldConfig *dashv2alpha1.DashboardFieldConfig
 	result := make(map[string]interface{})
 
 	// Convert defaults
-	if fieldConfig.Defaults.Custom != nil || fieldConfig.Defaults.Decimals != nil ||
-		fieldConfig.Defaults.Max != nil || fieldConfig.Defaults.Min != nil ||
-		fieldConfig.Defaults.Description != nil || fieldConfig.Defaults.DisplayName != nil ||
-		fieldConfig.Defaults.DisplayNameFromDS != nil || fieldConfig.Defaults.NoValue != nil ||
-		fieldConfig.Defaults.Path != nil || fieldConfig.Defaults.Unit != nil ||
-		fieldConfig.Defaults.Filterable != nil || fieldConfig.Defaults.Writeable != nil ||
-		fieldConfig.Defaults.Links != nil || fieldConfig.Defaults.Color != nil ||
-		fieldConfig.Defaults.Mappings != nil || fieldConfig.Defaults.Thresholds != nil {
-		defaults := make(map[string]interface{})
-
-		if fieldConfig.Defaults.Custom != nil {
-			defaults["custom"] = fieldConfig.Defaults.Custom
-		}
-		if fieldConfig.Defaults.Decimals != nil {
-			defaults["decimals"] = *fieldConfig.Defaults.Decimals
-		}
-		if fieldConfig.Defaults.Max != nil {
-			defaults["max"] = *fieldConfig.Defaults.Max
-		}
-		if fieldConfig.Defaults.Min != nil {
-			defaults["min"] = *fieldConfig.Defaults.Min
-		}
-		if fieldConfig.Defaults.Description != nil {
-			defaults["description"] = *fieldConfig.Defaults.Description
-		}
-		if fieldConfig.Defaults.DisplayName != nil {
-			defaults["displayName"] = *fieldConfig.Defaults.DisplayName
-		}
-		if fieldConfig.Defaults.DisplayNameFromDS != nil {
-			defaults["displayNameFromDS"] = *fieldConfig.Defaults.DisplayNameFromDS
-		}
-		if fieldConfig.Defaults.NoValue != nil {
-			defaults["noValue"] = *fieldConfig.Defaults.NoValue
-		}
-		if fieldConfig.Defaults.Path != nil {
-			defaults["path"] = *fieldConfig.Defaults.Path
-		}
-		if fieldConfig.Defaults.Unit != nil {
-			defaults["unit"] = *fieldConfig.Defaults.Unit
-		}
-		if fieldConfig.Defaults.Filterable != nil {
-			defaults["filterable"] = *fieldConfig.Defaults.Filterable
-		}
-		if fieldConfig.Defaults.Writeable != nil {
-			defaults["writeable"] = *fieldConfig.Defaults.Writeable
-		}
-		if fieldConfig.Defaults.Links != nil {
-			defaults["links"] = fieldConfig.Defaults.Links
-		}
-		if fieldConfig.Defaults.Color != nil {
-			defaults["color"] = convertFieldColorToV1(fieldConfig.Defaults.Color)
-		}
-		if fieldConfig.Defaults.Mappings != nil {
-			defaults["mappings"] = convertMappingsToV1(fieldConfig.Defaults.Mappings)
-		}
-		if fieldConfig.Defaults.Thresholds != nil {
-			defaults["thresholds"] = convertThresholdsToV1(fieldConfig.Defaults.Thresholds)
-		}
-
+	defaults := convertFieldConfigDefaultsToV1(&fieldConfig.Defaults)
+	if defaults != nil {
 		result["defaults"] = defaults
 	}
 
 	// Convert overrides
-	if len(fieldConfig.Overrides) > 0 {
-		overrides := make([]map[string]interface{}, 0, len(fieldConfig.Overrides))
-		for _, override := range fieldConfig.Overrides {
-			overrideMap := make(map[string]interface{})
-
-			if override.SystemRef != nil {
-				overrideMap["__systemRef"] = *override.SystemRef
-			}
-
-			overrideMap["matcher"] = map[string]interface{}{
-				"id":      override.Matcher.Id,
-				"options": override.Matcher.Options,
-			}
-
-			if len(override.Properties) > 0 {
-				properties := make([]map[string]interface{}, 0, len(override.Properties))
-				for _, prop := range override.Properties {
-					properties = append(properties, map[string]interface{}{
-						"id":    prop.Id,
-						"value": prop.Value,
-					})
-				}
-				overrideMap["properties"] = properties
-			}
-
-			overrides = append(overrides, overrideMap)
-		}
+	overrides := convertFieldConfigOverridesToV1(fieldConfig.Overrides)
+	if overrides != nil {
 		result["overrides"] = overrides
 	}
 
@@ -2006,6 +1867,103 @@ func convertFieldConfigSourceToV1(fieldConfig *dashv2alpha1.DashboardFieldConfig
 		return nil
 	}
 
+	return result
+}
+
+func convertFieldConfigDefaultsToV1(defaults *dashv2alpha1.DashboardFieldConfig) map[string]interface{} {
+	if defaults == nil {
+		return nil
+	}
+
+	result := make(map[string]interface{})
+
+	if defaults.Custom != nil {
+		result["custom"] = defaults.Custom
+	}
+	if defaults.Decimals != nil {
+		result["decimals"] = *defaults.Decimals
+	}
+	if defaults.Max != nil {
+		result["max"] = *defaults.Max
+	}
+	if defaults.Min != nil {
+		result["min"] = *defaults.Min
+	}
+	if defaults.Description != nil {
+		result["description"] = *defaults.Description
+	}
+	if defaults.DisplayName != nil {
+		result["displayName"] = *defaults.DisplayName
+	}
+	if defaults.DisplayNameFromDS != nil {
+		result["displayNameFromDS"] = *defaults.DisplayNameFromDS
+	}
+	if defaults.NoValue != nil {
+		result["noValue"] = *defaults.NoValue
+	}
+	if defaults.Path != nil {
+		result["path"] = *defaults.Path
+	}
+	if defaults.Unit != nil {
+		result["unit"] = *defaults.Unit
+	}
+	if defaults.Filterable != nil {
+		result["filterable"] = *defaults.Filterable
+	}
+	if defaults.Writeable != nil {
+		result["writeable"] = *defaults.Writeable
+	}
+	if defaults.Links != nil {
+		result["links"] = defaults.Links
+	}
+	if defaults.Color != nil {
+		result["color"] = convertFieldColorToV1(defaults.Color)
+	}
+	if defaults.Mappings != nil {
+		result["mappings"] = convertMappingsToV1(defaults.Mappings)
+	}
+	if defaults.Thresholds != nil {
+		result["thresholds"] = convertThresholdsToV1(defaults.Thresholds)
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+
+	return result
+}
+
+func convertFieldConfigOverridesToV1(overrides []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides) []map[string]interface{} {
+	if len(overrides) == 0 {
+		return nil
+	}
+
+	result := make([]map[string]interface{}, 0, len(overrides))
+	for _, override := range overrides {
+		overrideMap := make(map[string]interface{})
+
+		if override.SystemRef != nil {
+			overrideMap["__systemRef"] = *override.SystemRef
+		}
+
+		overrideMap["matcher"] = map[string]interface{}{
+			"id":      override.Matcher.Id,
+			"options": override.Matcher.Options,
+		}
+
+		if len(override.Properties) > 0 {
+			properties := make([]map[string]interface{}, 0, len(override.Properties))
+			for _, prop := range override.Properties {
+				properties = append(properties, map[string]interface{}{
+					"id":    prop.Id,
+					"value": prop.Value,
+				})
+			}
+			overrideMap["properties"] = properties
+		}
+
+		result = append(result, overrideMap)
+	}
 	return result
 }
 

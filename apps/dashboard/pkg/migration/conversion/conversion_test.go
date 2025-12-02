@@ -458,6 +458,8 @@ func writeOrCompareOutputFile(t *testing.T, obj interface{}, outputPath string, 
 	} else {
 		// Ensure output directory exists
 		outputDir := filepath.Dir(outputPath)
+		// ignore gosec G301 as this function is only used in the test process
+		//nolint:gosec
 		err = os.MkdirAll(outputDir, 0755)
 		require.NoError(t, err, "Failed to create output directory")
 
@@ -496,6 +498,8 @@ func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputD
 
 	if _, err := os.Stat(outPath); os.IsNotExist(err) || outputOverride {
 		// Ensure the output directory exists
+		// ignore gosec G301 as this function is only used in the test process
+		//nolint:gosec
 		err = os.MkdirAll(outputDir, 0755)
 		require.NoError(t, err, "failed to create output directory %s", outputDir)
 

@@ -107,6 +107,20 @@ Panel width = 24 / maxColumnCount
 Panel height: short=5, standard=9, tall=14
 ```
 
+### AutoGrid Repeat Options
+
+V2 `AutoGridRepeatOptions` only has `mode` and `value`. When converting to V1 `RepeatOptions`, we infer additional fields from the AutoGrid settings:
+
+| V2 AutoGrid | V1 Panel |
+|-------------|----------|
+| `repeat.mode` | `repeat` (variable name) |
+| `repeat.value` | `repeat` value |
+| (inferred) | `repeatDirection: "h"` |
+| `maxColumnCount` | `maxPerRow` |
+
+AutoGrid always flows horizontally (left-to-right, then wraps), so `direction` is always `"h"`.
+The `maxPerRow` is derived from the layout's `maxColumnCount` setting.
+
 ---
 
 ## Nested Layout Handling

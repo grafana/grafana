@@ -362,9 +362,9 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 		assert.Equal(t, int64(0), gridPos["y"], "Panel should be at y=0 (first row)")
 		// gridPos values can be int or int64 depending on JSON unmarshaling
 		// Width: 24 / 3 (default maxColumnCount) = 8
-		assert.Equal(t, int64(8), int64(getIntValue(gridPos["w"])), "Panel should be width=8 (24/3 columns)")
+		assert.Equal(t, int64(8), getIntValue(gridPos["w"]), "Panel should be width=8 (24/3 columns)")
 		// Height: standard mode = 9 grid units (320px)
-		assert.Equal(t, int64(9), int64(getIntValue(gridPos["h"])), "Panel should be height=9 (standard mode)")
+		assert.Equal(t, int64(9), getIntValue(gridPos["h"]), "Panel should be height=9 (standard mode)")
 	})
 
 	t.Run("TabsLayout converts tabs to row panels with extracted panels", func(t *testing.T) {
@@ -457,8 +457,8 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 		rowGridPos, ok := rowPanel["gridPos"].(map[string]interface{})
 		require.True(t, ok, "Row panel should have gridPos")
 		assert.Equal(t, int64(0), rowGridPos["y"], "Row panel should be at y=0")
-		assert.Equal(t, int64(24), int64(getIntValue(rowGridPos["w"])), "Row panel should be full width")
-		assert.Equal(t, int64(1), int64(getIntValue(rowGridPos["h"])), "Row panel should be height=1")
+		assert.Equal(t, int64(24), getIntValue(rowGridPos["w"]), "Row panel should be full width")
+		assert.Equal(t, int64(1), getIntValue(rowGridPos["h"]), "Row panel should be height=1")
 		// Tab row's panels array should be empty (panels extracted to top level)
 		rowPanels, ok := rowPanel["panels"].([]interface{})
 		require.True(t, ok, "Row panel should have panels array")
@@ -473,9 +473,9 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 		require.True(t, ok, "Panel should have gridPos")
 		assert.Equal(t, int64(0), gridPos["x"], "Panel should be at x=0")
 		// Y position should be offset by 1 (after the row panel)
-		assert.Equal(t, int64(1), int64(getIntValue(gridPos["y"])), "Panel should be at y=1 (after row)")
-		assert.Equal(t, int64(12), int64(getIntValue(gridPos["w"])), "Panel width should be preserved")
-		assert.Equal(t, int64(3), int64(getIntValue(gridPos["h"])), "Panel height should be preserved")
+		assert.Equal(t, int64(1), getIntValue(gridPos["y"]), "Panel should be at y=1 (after row)")
+		assert.Equal(t, int64(12), getIntValue(gridPos["w"]), "Panel width should be preserved")
+		assert.Equal(t, int64(3), getIntValue(gridPos["h"]), "Panel height should be preserved")
 	})
 }
 
