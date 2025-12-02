@@ -47,10 +47,11 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	// Create repository
 	const repo = "export-resources-test-repo"
 	testRepo := TestRepo{
-		Name:               repo,
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0, // No dashboards expected after sync (we'll export manually)
-		ExpectedFolders:    0,
+		Name:                   repo,
+		Copies:                 map[string]string{},
+		ExpectedDashboards:     0, // No dashboards expected after sync (we'll export manually)
+		ExpectedFolders:        0,
+		SkipResourceAssertions: true, // Skip assertions since we created dashboards before repo
 	}
 	helper.CreateRepo(t, testRepo)
 
@@ -115,10 +116,11 @@ func TestIntegrationProvisioning_ExportSpecificResourcesWithPath(t *testing.T) {
 	// Create repository
 	const repo = "export-resources-path-test-repo"
 	testRepo := TestRepo{
-		Name:               repo,
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+		Name:                   repo,
+		Copies:                 map[string]string{},
+		ExpectedDashboards:     0,
+		ExpectedFolders:        0,
+		SkipResourceAssertions: true, // Skip assertions since we created dashboard before repo
 	}
 	helper.CreateRepo(t, testRepo)
 
@@ -176,10 +178,11 @@ func TestIntegrationProvisioning_ExportSpecificResourcesRejectsFolders(t *testin
 	// Create repository
 	const repo = "export-reject-folders-test-repo"
 	testRepo := TestRepo{
-		Name:               repo,
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+		Name:                   repo,
+		Copies:                 map[string]string{},
+		ExpectedDashboards:     0,
+		ExpectedFolders:        0,
+		SkipResourceAssertions: true, // Skip assertions since we created folder before repo
 	}
 	helper.CreateRepo(t, testRepo)
 
@@ -241,13 +244,15 @@ func TestIntegrationProvisioning_ExportSpecificResourcesRejectsManagedResources(
 	manager, found := managedDashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 	require.True(t, found && manager != "", "dashboard should be managed")
 
-	// Create another repository for export
+	// Create another repository for export (must be folder target since instance can only exist alone)
 	const exportRepo = "export-managed-reject-test-repo"
 	exportTestRepo := TestRepo{
-		Name:               exportRepo,
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+		Name:                   exportRepo,
+		Target:                 "folder",
+		Copies:                 map[string]string{},
+		ExpectedDashboards:     0,
+		ExpectedFolders:        0,
+		SkipResourceAssertions: true, // Skip assertions since we're testing export, not sync
 	}
 	helper.CreateRepo(t, exportTestRepo)
 
@@ -333,10 +338,11 @@ func TestIntegrationProvisioning_ExportSpecificResourcesWithFolderStructure(t *t
 	// Create repository
 	const repo = "export-folder-structure-test-repo"
 	testRepo := TestRepo{
-		Name:               repo,
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+		Name:                   repo,
+		Copies:                 map[string]string{},
+		ExpectedDashboards:     0,
+		ExpectedFolders:        0,
+		SkipResourceAssertions: true, // Skip assertions since we created folder and dashboard before repo
 	}
 	helper.CreateRepo(t, testRepo)
 

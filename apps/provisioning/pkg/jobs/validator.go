@@ -101,7 +101,11 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 	}
 
 	// Validate resources if specified
-	if len(opts.Resources) > 0 {
+	// If Resources is provided, it must not be empty
+	if opts.Resources != nil {
+		if len(opts.Resources) == 0 {
+			list = append(list, field.Required(field.NewPath("spec", "push", "resources"), "resources list cannot be empty when specified"))
+		}
 		for i, r := range opts.Resources {
 			resourcePath := field.NewPath("spec", "push", "resources").Index(i)
 
