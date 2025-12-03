@@ -59,8 +59,9 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
             print(f"Page title: {page.title()}")
 
             # Take screenshot to see what's on the page
-            page.screenshot(path="login_page.png")
-            print("Screenshot saved as login_page.png")
+            screenshot_path = os.environ.get("GITHUB_WORKSPACE", ".") + "/login_page.png"
+            page.screenshot(path=screenshot_path)
+            print(f"Screenshot saved as {screenshot_path}")
 
             try:
                 # Wait for login form using Grafana's data-testid selectors
@@ -124,8 +125,9 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
                 except Exception as content_err:
                     print(f"Could not get page content: {content_err}")
 
-                page.screenshot(path="login_error.png")
-                print("Error screenshot saved as login_error.png")
+                error_screenshot_path = os.environ.get("GITHUB_WORKSPACE", ".") + "/login_error.png"
+                page.screenshot(path=error_screenshot_path)
+                print(f"Error screenshot saved as {error_screenshot_path}")
                 raise
 
         print(f"Navigating to: {target_url}")

@@ -269,8 +269,8 @@ jobs:
           path: |
             ${{ env.OUTPUT_TEXT_PATH }}
             ${{ env.SCREENSHOT_PATH }}
-            .github/actions/usability-review-agent/login_page.png
-            .github/actions/usability-review-agent/login_error.png
+            login_page.png
+            login_error.png
           if-no-files-found: warn
           retention-days: 7
 
