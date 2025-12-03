@@ -88,24 +88,31 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
                 page.get_by_role("button", name="Log in").click()
                 print("Login form submitted")
 
-                # Wait for login to complete - check for skip button first
+                # Wait for login to complete
                 print("Waiting for post-login navigation...")
+
+                # Try to wait for multiple possible indicators of successful login
+                # The page might redirect to setup guide, dashboard, or other pages
                 try:
-                    # Check if password change prompt appears
-                    skip_button = page.get_by_test_id("Skip change password button")
-                    skip_button.wait_for(state="visible", timeout=5000)
-                    print("Skip password change prompt detected, clicking...")
-                    skip_button.click()
-                except Exception:
-                    print("No password change prompt (or timed out)")
+                    # Wait for either: navigation away from login OR any logged-in UI element
+                    page.locator('body:not(:has-text("Welcome to Grafana Cloud"))').or_(
+                        page.locator('[aria-label="Profile"]')
+                    ).or_(
+                        page.locator('a:has-text("Home")')
+                    ).first.wait_for(state="attached", timeout=15000)
 
-                # Wait for successful login by checking we're no longer on login page
-                # and that navigation has occurred
-                print("Waiting for dashboard to load...")
-                page.wait_for_load_state("networkidle", timeout=30000)
+                    print(f"Post-login navigation detected, current URL: {page.url}")
 
-                if "/login" in page.url:
-                    raise Exception(f"Still on login page after form submission: {page.url}")
+                    # Verify we actually left the login page
+                    if "/login" in page.url:
+                        raise Exception("Still on login page after navigation")
+
+                except Exception as wait_err:
+                    print(f"Login completion wait failed: {wait_err}")
+                    if "/login" in page.url:
+                        raise Exception(f"Login failed - still on login page: {page.url}")
+                    else:
+                        print(f"Continuing anyway - URL shows we're logged in: {page.url}")
 
                 print(f"Login successful, current URL: {page.url}")
 
