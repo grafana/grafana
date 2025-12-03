@@ -1,6 +1,6 @@
 module jb
 
-go 1.25.3
+go 1.25.5
 
 tool github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb
 
