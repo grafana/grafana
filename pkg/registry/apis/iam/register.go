@@ -129,6 +129,7 @@ func NewAPIService(
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		logger:                     log.New("iam.apis"),
 		features:                   features,
+		accessClient:               accessClient,
 		zClient:                    zClient,
 		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
 		reg:                        reg,
