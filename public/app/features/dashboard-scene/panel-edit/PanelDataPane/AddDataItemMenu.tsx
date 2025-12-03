@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, Stack } from '@grafana/ui';
+import { EXPRESSION_ICON_MAP } from 'app/features/expressions/consts';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 interface AddDataItemMenuProps {
@@ -38,7 +39,7 @@ export const AddDataItemMenu = memo(({ onAddQuery, onAddTransform, onAddExpressi
   }
 
   const expressionSubItems = expressionTypes.map(({ type, label }) => (
-    <Menu.Item key={type} label={label} icon="calculator-alt" onClick={() => onAddExpression(type)} />
+    <Menu.Item key={type} label={label} icon={EXPRESSION_ICON_MAP[type]} onClick={() => onAddExpression(type)} />
   ));
 
   const menu = (
