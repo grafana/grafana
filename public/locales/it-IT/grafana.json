@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Mostra solo sovrascritture",
       "placeholder-search-options": "Opzioni di ricerca",
-      "visualization-button-label": "Visualizzazione",
       "visualization-button-tooltip": "Opzioni di ricerca"
     },
     "panel-editor-table-view": {
@@ -5394,6 +5393,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "Caricamento e inizializzazione della dashboard",
       "title-not-found": "Pannello con ID {{panelId}} non trovato"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Variabili del modello"
@@ -6219,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Cerca...",
       "radio-options": {
         "label": {
@@ -6530,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Cambia visualizzazione",
-      "tooltip-click-to-change-visualization": "Fai clic per cambiare la visualizzazione"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Apri il riquadro della query",
@@ -7326,7 +7332,8 @@
       "title-failed-volume-query": "Impossibile caricare il volume dei registri per questa query",
       "title-no-logs-volume-available": "Nessun volume di registri disponibile",
       "title-showing-partial-data": "Visualizzazione di dati parziali",
-      "title-unable-to-show-log-volume": "Impossibile mostrare il volume del registro"
+      "title-unable-to-show-log-volume": "Impossibile mostrare il volume del registro",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nessuna informazione sul volume disponibile per le query e l'intervallo di tempo correnti."
@@ -11084,11 +11091,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Cancella tipi",
@@ -13273,6 +13291,7 @@
     "create-team": {
       "create": "Crea",
       "description-email": "Questo è facoltativo e viene utilizzato principalmente per consentire avatar di team personalizzati",
+      "failed-to-create": "",
       "label-email": "Email",
       "label-name": "Nome",
       "label-role": "Ruolo"
@@ -13304,6 +13323,7 @@
         "title-edit-team": "Modifica team",
         "tooltip-edit-team": "Modifica team"
       },
+      "loading-teams": "",
       "new-team": "Nuovo team",
       "placeholder-search-teams": "Cerca team"
     },

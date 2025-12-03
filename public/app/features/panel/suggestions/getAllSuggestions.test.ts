@@ -2,11 +2,13 @@ import {
   DataFrame,
   FieldType,
   getDefaultTimeRange,
+  getPanelDataSummary,
   LoadingState,
   PanelData,
-  PanelPluginMeta,
   PanelPluginVisualizationSuggestion,
+  PluginType,
   toDataFrame,
+  VisualizationSuggestionScore,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -18,26 +20,69 @@ import {
 } from '@grafana/schema';
 import { config } from 'app/core/config';
 
-import { getAllSuggestions, panelsToCheckFirst } from './getAllSuggestions';
+import { panelsToCheckFirst } from './consts';
+import { getAllSuggestions, sortSuggestions } from './getAllSuggestions';
 
+config.featureToggles.externalVizSuggestions = true;
+
+let idx = 0;
 for (const pluginId of panelsToCheckFirst) {
+  if (pluginId === 'geomap') {
+    continue;
+  }
   config.panels[pluginId] = {
-    module: `core:plugin/${pluginId}`,
     id: pluginId,
-  } as PanelPluginMeta;
+    module: `core:plugin/${pluginId}`,
+    sort: idx++,
+    name: pluginId,
+    type: PluginType.panel,
+    baseUrl: 'public/app/plugins/panel',
+    suggestions: true,
+    info: {
+      version: '1.0.0',
+      updated: '2025-01-01',
+      links: [],
+      screenshots: [],
+      author: {
+        name: 'Grafana Labs',
+      },
+      description: pluginId,
+      logos: { small: 'small/logo', large: 'large/logo' },
+    },
+  };
 }
 
-const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart', 'radialbar'];
-
-config.panels['text'] = {
+config.panels.text = {
   id: 'text',
+  module: 'core:plugin/text',
+  sort: idx++,
   name: 'Text',
+  type: PluginType.panel,
+  baseUrl: 'public/app/plugins/panel',
   skipDataQuery: true,
+  suggestions: false,
   info: {
-    description: 'pretty decent plugin',
+    version: '1.0.0',
+    updated: '2025-01-01',
+    links: [],
+    screenshots: [],
+    author: {
+      name: 'Grafana Labs',
+    },
+    description: 'Text panel',
     logos: { small: 'small/logo', large: 'large/logo' },
   },
-} as PanelPluginMeta;
+};
+
+jest.mock('../state/util', () => {
+  const originalModule = jest.requireActual('../state/util');
+  return {
+    ...originalModule,
+    getAllPanelPluginMeta: jest.fn().mockImplementation(() => [...Object.values(config.panels)]),
+  };
+});
+
+const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart', 'radialbar'];
 
 class ScenarioContext {
   data: DataFrame[] = [];
@@ -289,10 +334,8 @@ scenario('Single frame with string and number field', (ctx) => {
         pluginId: 'stat',
         options: expect.objectContaining({ colorMode: BigValueColorMode.Background }),
       }),
-
       expect.objectContaining({
         pluginId: 'bargauge',
-        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
       }),
       expect.objectContaining({
         pluginId: 'bargauge',
@@ -444,6 +487,70 @@ scenario('Given a preferredVisualisationType', (ctx) => {
 
   it('should return the preferred visualization first', () => {
     expect(ctx.suggestions[0]).toEqual(expect.objectContaining({ pluginId: 'table' }));
+  });
+});
+
+describe('sortSuggestions', () => {
+  it('should sort suggestions correctly by score', () => {
+    const suggestions = [
+      { pluginId: 'timeseries', name: 'Time series', hash: 'b', score: VisualizationSuggestionScore.OK },
+      { pluginId: 'table', name: 'Table', hash: 'a', score: VisualizationSuggestionScore.OK },
+      { pluginId: 'stat', name: 'Stat', hash: 'c', score: VisualizationSuggestionScore.Good },
+    ] satisfies PanelPluginVisualizationSuggestion[];
+
+    const dataSummary = getPanelDataSummary([
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2, 3, 4, 5] },
+          { name: 'ServerA', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+          { name: 'ServerB', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+        ],
+      }),
+    ]);
+
+    sortSuggestions(suggestions, dataSummary);
+
+    expect(suggestions[0].pluginId).toBe('stat');
+    expect(suggestions[1].pluginId).toBe('timeseries');
+    expect(suggestions[2].pluginId).toBe('table');
+  });
+
+  it('should sort suggestions based on core module', () => {
+    const suggestions = [
+      {
+        pluginId: 'fake-external-panel',
+        name: 'Time series',
+        hash: 'b',
+        score: VisualizationSuggestionScore.Good,
+      },
+      {
+        pluginId: 'fake-external-panel',
+        name: 'Time series',
+        hash: 'd',
+        score: VisualizationSuggestionScore.Best,
+      },
+      { pluginId: 'timeseries', name: 'Table', hash: 'a', score: VisualizationSuggestionScore.OK },
+      { pluginId: 'stat', name: 'Stat', hash: 'c', score: VisualizationSuggestionScore.Good },
+    ] satisfies PanelPluginVisualizationSuggestion[];
+
+    const dataSummary = getPanelDataSummary([
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2, 3, 4, 5] },
+          { name: 'ServerA', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+          { name: 'ServerB', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+        ],
+      }),
+    ]);
+
+    sortSuggestions(suggestions, dataSummary);
+
+    expect(suggestions[0].pluginId).toBe('stat');
+    expect(suggestions[1].pluginId).toBe('timeseries');
+    expect(suggestions[2].pluginId).toBe('fake-external-panel');
+    expect(suggestions[2].hash).toBe('d');
+    expect(suggestions[3].pluginId).toBe('fake-external-panel');
+    expect(suggestions[3].hash).toBe('b');
   });
 });
 

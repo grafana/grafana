@@ -5226,7 +5226,6 @@
       },
       "only-overrides-button-tooltip": "Zobrazit pouze přepsání",
       "placeholder-search-options": "Možnosti hledání",
-      "visualization-button-label": "Vizualizace",
       "visualization-button-tooltip": "Možnosti hledání"
     },
     "panel-editor-table-view": {
@@ -5436,6 +5435,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "Načítání a inicializace nástěnky",
       "title-not-found": "Panel s ID {{panelId}} nebyl nalezen"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Proměnné šablony"
@@ -6265,6 +6268,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Hledat…",
       "radio-options": {
         "label": {
@@ -6578,7 +6584,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Změnit vizualizaci",
-      "tooltip-click-to-change-visualization": "Klikněte pro změnu vizualizace"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Otevřít podokno dotazu",
@@ -7374,7 +7380,8 @@
       "title-failed-volume-query": "Objem protokolu pro tento dotaz se nepodařilo načíst",
       "title-no-logs-volume-available": "Není k dispozici žádný objem protokolů",
       "title-showing-partial-data": "Zobrazují se částečná data",
-      "title-unable-to-show-log-volume": "Nelze zobrazit objem protokolu"
+      "title-unable-to-show-log-volume": "Nelze zobrazit objem protokolu",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nejsou dostupné žádné informace o objemu pro aktuální dotazy a časový rozsah."
@@ -11178,11 +11185,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Nenašly jsme žádnou shodu s vaším dotazem"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Vymazat typy",
@@ -13387,6 +13405,7 @@
     "create-team": {
       "create": "Vytvořit",
       "description-email": "Toto je volitelné a používá se především k povolení vlastních týmových avatarů",
+      "failed-to-create": "",
       "label-email": "E-mail",
       "label-name": "Název",
       "label-role": "Role"
@@ -13418,6 +13437,7 @@
         "title-edit-team": "Upravit tým",
         "tooltip-edit-team": "Upravit tým"
       },
+      "loading-teams": "",
       "new-team": "Nový tým",
       "placeholder-search-teams": "Hledat týmy"
     },

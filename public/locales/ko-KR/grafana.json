@@ -5163,7 +5163,6 @@
       },
       "only-overrides-button-tooltip": "재정의만 표시",
       "placeholder-search-options": "검색 옵션",
-      "visualization-button-label": "시각화",
       "visualization-button-tooltip": "검색 옵션"
     },
     "panel-editor-table-view": {
@@ -5373,6 +5372,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "대시보드 로딩 및 초기화",
       "title-not-found": "ID가 {{panelId}}인 패널을 찾을 수 없음"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "템플릿 변수"
@@ -6196,6 +6199,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "검색…",
       "radio-options": {
         "label": {
@@ -6506,7 +6512,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "시각화 변경",
-      "tooltip-click-to-change-visualization": "시각화를 변경하려면 클릭하세요"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "쿼리 창 열기",
@@ -7302,7 +7308,8 @@
       "title-failed-volume-query": "이 쿼리에 대한 로그 볼륨 로딩 실패",
       "title-no-logs-volume-available": "사용 가능한 로그 볼륨 없음",
       "title-showing-partial-data": "부분 데이터 표시 중",
-      "title-unable-to-show-log-volume": "로그 볼륨을 표시할 수 없습니다"
+      "title-unable-to-show-log-volume": "로그 볼륨을 표시할 수 없습니다",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "현재 쿼리 및 시간 범위에 대해 사용할 수 있는 볼륨 정보가 없습니다."
@@ -11037,11 +11044,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "유형 초기화",
@@ -13216,6 +13234,7 @@
     "create-team": {
       "create": "생성",
       "description-email": "이 항목은 선택 사항이며 주로 사용자 지정 팀 아바타를 허용하는 데 사용됩니다",
+      "failed-to-create": "",
       "label-email": "이메일",
       "label-name": "이름",
       "label-role": "역할"
@@ -13247,6 +13266,7 @@
         "title-edit-team": "팀 편집",
         "tooltip-edit-team": "팀 편집"
       },
+      "loading-teams": "",
       "new-team": "새 팀",
       "placeholder-search-teams": "팀 검색"
     },

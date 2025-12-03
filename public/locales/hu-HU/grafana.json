@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Csak a felülbírálások megjelenítése",
       "placeholder-search-options": "Keresési beállítások",
-      "visualization-button-label": "Vizualizáció",
       "visualization-button-tooltip": "Keresési beállítások"
     },
     "panel-editor-table-view": {
@@ -5394,6 +5393,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "Irányítópult betöltése és inicializálása",
       "title-not-found": "A(z) {{panelId}} azonosítójú panel nem található"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Sablonváltozók"
@@ -6219,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Keresés a következőre…",
       "radio-options": {
         "label": {
@@ -6530,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Vizualizáció módosítása",
-      "tooltip-click-to-change-visualization": "Kattintson a vizualizáció módosításához"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Lekérdezési ablaktábla megnyitása",
@@ -7326,7 +7332,8 @@
       "title-failed-volume-query": "A lekérdezés naplómennyiségének betöltése nem sikerült",
       "title-no-logs-volume-available": "Nincs rendelkezésre álló naplómennyiség",
       "title-showing-partial-data": "Részadatok megjelenítése",
-      "title-unable-to-show-log-volume": "Nem lehet megjeleníteni a naplómennyiséget"
+      "title-unable-to-show-log-volume": "Nem lehet megjeleníteni a naplómennyiséget",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nem áll rendelkezésre mennyiséginformáció az aktuális lekérdezésekhez és időtartományhoz."
@@ -11084,11 +11091,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Nincs találat a lekérdezésre"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Típusok törlése",
@@ -13273,6 +13291,7 @@
     "create-team": {
       "create": "Létrehozás",
       "description-email": "Ez nem kötelező, és elsősorban egyéni csapatavatárok engedélyezésére szolgál",
+      "failed-to-create": "",
       "label-email": "E-mail",
       "label-name": "Név",
       "label-role": "Szerepkör"
@@ -13304,6 +13323,7 @@
         "title-edit-team": "Csapat szerkesztése",
         "tooltip-edit-team": "Csapat szerkesztése"
       },
+      "loading-teams": "",
       "new-team": "Új csapat",
       "placeholder-search-teams": "Csapatok keresése"
     },

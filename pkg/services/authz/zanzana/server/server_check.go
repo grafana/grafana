@@ -9,6 +9,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -25,6 +26,8 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	res, err := s.check(ctx, r)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("failed to perform check request", "error", err, "namespace", r.GetNamespace())
 		return nil, errors.New("failed to perform check request")
 	}
