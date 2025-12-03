@@ -21,12 +21,12 @@ type ExportFn func(ctx context.Context, repoName string, options provisioning.Ex
 type WrapWithStageFn func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repo repository.Repository, staged bool) error) error
 
 type ExportWorker struct {
-	clientFactory              resources.ClientFactory
-	repositoryResources        resources.RepositoryResourcesFactory
-	exportAllFn                ExportFn
-	exportSpecificResourcesFn  ExportFn
-	wrapWithStageFn            WrapWithStageFn
-	metrics                    jobs.JobMetrics
+	clientFactory             resources.ClientFactory
+	repositoryResources       resources.RepositoryResourcesFactory
+	exportAllFn               ExportFn
+	exportSpecificResourcesFn ExportFn
+	wrapWithStageFn           WrapWithStageFn
+	metrics                   jobs.JobMetrics
 }
 
 func NewExportWorker(
@@ -38,12 +38,12 @@ func NewExportWorker(
 	metrics jobs.JobMetrics,
 ) *ExportWorker {
 	return &ExportWorker{
-		clientFactory:              clientFactory,
-		repositoryResources:        repositoryResources,
-		exportAllFn:                exportAllFn,
-		exportSpecificResourcesFn:  exportSpecificResourcesFn,
-		wrapWithStageFn:            wrapWithStageFn,
-		metrics:                    metrics,
+		clientFactory:             clientFactory,
+		repositoryResources:       repositoryResources,
+		exportAllFn:               exportAllFn,
+		exportSpecificResourcesFn: exportSpecificResourcesFn,
+		wrapWithStageFn:           wrapWithStageFn,
+		metrics:                   metrics,
 	}
 }
 

@@ -388,5 +388,3 @@ func TestIntegrationProvisioning_ExportSpecificResourcesWithFolderStructure(t *t
 	require.NoError(t, err)
 	require.Equal(t, "test-v1", val)
 }
-
-
