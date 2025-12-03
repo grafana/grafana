@@ -482,7 +482,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       });
 
       // Get a reference to the DS references mapping
-      const dsReferencesMap = new Map<string, string>([['A', '']]);
+      const dsReferencesMap = new Map<string, string | undefined>([['A', undefined]]);
 
       // Test the query without DS originally - should return undefined
       const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
@@ -527,7 +527,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       });
 
       // Get a reference to the DS references mapping
-      const dsReferencesMap = new Map<string, string>([['A', '']]);
+      const dsReferencesMap = new Map<string, string | undefined>([['A', undefined]]);
 
       // Test the variable without DS originally - should return undefined
       const resultA = getPersistedDSFor(variableWithoutDS, dsReferencesMap, 'variable');
@@ -541,13 +541,13 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       const resultC = getPersistedDSFor(variableWithOnlyDSType, dsReferencesMap, 'variable');
       expect(resultC).toEqual({ type: 'prometheus' });
 
-      // Test a variable with no DS originally but not in the mapping - should get empty object
+      // Test a variable with no DS originally but not in the mapping - should return undefined
       const variableNotInMapping = new QueryVariable({
         name: 'D',
         // No datasource, but not in mapping
       });
       const resultD = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
-      expect(resultD).toEqual({});
+      expect(resultD).toBeUndefined();
     });
   });
 

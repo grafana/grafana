@@ -864,11 +864,11 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   }
 
   if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
-    return element.state.datasource || {};
+    return element.state.datasource || undefined;
   }
 
   if (type === 'annotation' && 'datasource' in element) {
-    return element.datasource || {};
+    return element.datasource || undefined;
   }
 
   return undefined;
