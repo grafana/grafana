@@ -334,16 +334,16 @@ func (b *batchRunner) RollbackRequested() bool {
 }
 
 type bulkRV struct {
-	max      int64
-	counters map[int64]int64
+	max     int64
+	counter int64
 }
 
 // Used when executing a bulk import so that we can generate snowflake RVs in the past
 func newBulkRV() *bulkRV {
 	t := snowflakeFromTime(time.Now())
 	return &bulkRV{
-		max:      t,
-		counters: make(map[int64]int64),
+		max:     t,
+		counter: 0,
 	}
 }
 
@@ -361,26 +361,8 @@ func (x *bulkRV) next(obj metav1.Object) int64 {
 		ts = x.max
 	}
 
-	counter := x.counters[ts]
-	counter++
-
-	if counter > 65535 {
-		for {
-			ts += (1 << 22) // Add 1ms in snowflake format
-			if x.counters[ts] < 65535 {
-				break
-			}
-		}
-
-		counter = x.counters[ts] + 1
-
-		if ts > x.max {
-			x.max = ts
-		}
-	}
-
-	x.counters[ts] = counter
-	return ts + counter
+	x.counter++
+	return ts + x.counter
 }
 
 type BulkLock struct {
