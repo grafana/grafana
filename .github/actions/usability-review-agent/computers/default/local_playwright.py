@@ -64,24 +64,23 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
             print(f"Screenshot saved as {screenshot_path}")
 
             try:
-                # Wait for login form using Grafana's data-testid selectors
-                # Increase timeout since form takes time to render via JavaScript
+                # Wait for login form using Grafana's getByTestId (matching official e2e tests)
                 print("Waiting for login form...")
-                page.wait_for_selector('[data-testid="Username input field"]', state="visible", timeout=30000)
+                page.get_by_test_id("Username input field").wait_for(state="visible", timeout=30000)
                 print("Login form detected")
 
-                # Fill credentials
+                # Fill credentials using getByTestId like official Grafana e2e tests
                 print(f"Filling username (length: {len(grafana_username)})")
-                page.locator('[data-testid="Username input field"]').fill(grafana_username)
+                page.get_by_test_id("Username input field").fill(grafana_username)
 
                 print(f"Filling password (length: {len(grafana_password)})")
-                page.locator('[data-testid="Password input field"]').fill(grafana_password)
+                page.get_by_test_id("Password input field").fill(grafana_password)
 
                 print("Credentials filled successfully")
 
                 # Click login button
                 print("Clicking login button...")
-                page.click('[data-testid="Login button"]')
+                page.get_by_test_id("Login button").click()
                 print("Login form submitted")
 
                 # Try to wait for navigation, but don't fail if it doesn't happen
