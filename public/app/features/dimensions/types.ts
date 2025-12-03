@@ -46,6 +46,10 @@ export interface TextDimensionOptions {
   // anything?
 }
 
+export interface PositionDimensionOptions {
+  // anything?
+}
+
 export const defaultTextConfig: TextDimensionConfig = Object.freeze({
   fixed: '',
   mode: TextDimensionMode.Field,

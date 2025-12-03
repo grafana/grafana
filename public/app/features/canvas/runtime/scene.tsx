@@ -9,6 +9,7 @@ import { AppEvents, PanelData, OneClickMode, ActionType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   ColorDimensionConfig,
+  PositionDimensionConfig,
   ResourceDimensionConfig,
   ScalarDimensionConfig,
   ScaleDimensionConfig,
@@ -21,6 +22,7 @@ import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import {
   getColorDimensionFromData,
+  getPositionDimensionFromData,
   getResourceDimensionFromData,
   getScalarDimensionFromData,
   getScaleDimensionFromData,
@@ -108,6 +110,22 @@ export class Scene {
   subscription: Subscription;
 
   targetsToSelect = new Set<HTMLDivElement>();
+
+  // Track currently selected field-driven element (these aren't in Selecto)
+  private fieldDrivenSelectedElement?: ElementState;
+
+  clearFieldDrivenSelection = () => {
+    if (this.fieldDrivenSelectedElement) {
+      this.fieldDrivenSelectedElement.setFieldDrivenSelected(false);
+      this.fieldDrivenSelectedElement = undefined;
+    }
+  };
+
+  setFieldDrivenSelection = (element: ElementState) => {
+    this.clearFieldDrivenSelection();
+    this.fieldDrivenSelectedElement = element;
+    element.setFieldDrivenSelected(true);
+  };
 
   constructor(
     options: Options,
@@ -211,6 +229,7 @@ export class Scene {
     getColor: (color: ColorDimensionConfig) => getColorDimensionFromData(this.data, color),
     getScale: (scale: ScaleDimensionConfig) => getScaleDimensionFromData(this.data, scale),
     getScalar: (scalar: ScalarDimensionConfig) => getScalarDimensionFromData(this.data, scalar),
+    getPosition: (pos: PositionDimensionConfig) => getPositionDimensionFromData(this.data, pos),
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.data, res),
     getDirection: (direction: DirectionDimensionConfig) => getDirectionDimensionFromData(this.data, direction),
@@ -267,6 +286,8 @@ export class Scene {
 
   clearCurrentSelection(skipNextSelectionBroadcast = false) {
     this.skipNextSelectionBroadcast = skipNextSelectionBroadcast;
+    // Clear field-driven selection
+    this.clearFieldDrivenSelection();
     let event: MouseEvent = new MouseEvent('click');
     if (config.featureToggles.canvasPanelPanZoom) {
       this.selecto?.clickTarget(event, this.viewportDiv);
@@ -324,6 +345,9 @@ export class Scene {
 
   select = (selection: SelectionParams) => {
     if (this.selecto) {
+      // Clear any field-driven selection when selecting via Selecto
+      this.clearFieldDrivenSelection();
+
       this.selecto.setSelectedTargets(selection.targets);
       this.updateSelection(selection);
       this.editModeEnabled.next(false);

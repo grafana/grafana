@@ -1,6 +1,18 @@
 import { PanelModel, OneClickMode } from '@grafana/data';
+import { PositionDimensionMode, ScalarDimensionMode } from '@grafana/schema';
 
 import { Options } from './panelcfg.gen';
+
+// Helper to migrate a position value from number to PositionDimensionConfig
+const migratePositionValue = (value: number | undefined) => {
+  if (value === undefined) {
+    return undefined;
+  }
+  return {
+    fixed: value,
+    mode: PositionDimensionMode.Fixed,
+  };
+};
 
 export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
   const pluginVersion = panel?.pluginVersion ?? '';
@@ -93,6 +105,53 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
               mode: 'fixed',
               fixed: 'forward',
             };
+          }
+        }
+      }
+    }
+  }
+
+  // migrate placement values from numbers to dimension configs
+  if (parseFloat(pluginVersion) <= 12.4) {
+    const root = panel.options?.root;
+    if (root?.elements) {
+      for (const element of root.elements) {
+        if (element.placement) {
+          // Migrate rotation from number to ScalarDimensionConfig
+          if (typeof element.placement.rotation === 'number') {
+            element.placement.rotation = {
+              fixed: element.placement.rotation,
+              min: 0,
+              max: 360,
+              mode: ScalarDimensionMode.Clamped,
+            };
+          } else if (!element.placement.rotation) {
+            element.placement.rotation = {
+              fixed: 0,
+              min: 0,
+              max: 360,
+              mode: ScalarDimensionMode.Clamped,
+            };
+          }
+
+          // Migrate position values from numbers to PositionDimensionConfig
+          if (typeof element.placement.top === 'number') {
+            element.placement.top = migratePositionValue(element.placement.top);
+          }
+          if (typeof element.placement.left === 'number') {
+            element.placement.left = migratePositionValue(element.placement.left);
+          }
+          if (typeof element.placement.width === 'number') {
+            element.placement.width = migratePositionValue(element.placement.width);
+          }
+          if (typeof element.placement.height === 'number') {
+            element.placement.height = migratePositionValue(element.placement.height);
+          }
+          if (typeof element.placement.right === 'number') {
+            element.placement.right = migratePositionValue(element.placement.right);
+          }
+          if (typeof element.placement.bottom === 'number') {
+            element.placement.bottom = migratePositionValue(element.placement.bottom);
           }
         }
       }

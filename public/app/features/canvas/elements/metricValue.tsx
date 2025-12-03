@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 
 import { DataFrame, FieldNamePickerConfigSettings, GrafanaTheme2, StandardEditorsRegistryItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TextDimensionMode } from '@grafana/schema';
+import { TextDimensionMode, ScalarDimensionMode, PositionDimensionMode } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker, frameHasName, getFrameFieldsDisplayNames } from '@grafana/ui/internal';
 import { DimensionContext } from 'app/features/dimensions/context';
@@ -171,9 +171,9 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
     placement: {
       width: options?.placement?.width,
       height: options?.placement?.height,
-      top: options?.placement?.top ?? 100,
-      left: options?.placement?.left ?? 100,
-      rotation: options?.placement?.rotation ?? 0,
+      top: options?.placement?.top ?? { fixed: 100, mode: PositionDimensionMode.Fixed },
+      left: options?.placement?.left ?? { fixed: 100, mode: PositionDimensionMode.Fixed },
+      rotation: options?.placement?.rotation ?? { fixed: 0, min: 0, max: 360, mode: ScalarDimensionMode.Clamped },
     },
     links: options?.links ?? [],
   }),
