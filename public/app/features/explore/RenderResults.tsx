@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { createSelector } from '@reduxjs/toolkit';
 import { groupBy } from 'lodash';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
 
 import {
@@ -9,6 +9,7 @@ import {
   DataFrame,
   EventBus,
   GrafanaTheme2,
+  LoadingState,
   SplitOpen,
   SupplementaryQueryType,
 } from '@grafana/data';
@@ -16,6 +17,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { AdHocFilterItem, ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 
+import { ExplorePanelData } from '../../types/explore';
 import { StoreState, useDispatch, useSelector } from '../../types/store';
 import { getTimeZone } from '../profile/state/selectors';
 
@@ -32,6 +34,7 @@ import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize } from './state/explorePane';
 import { scanStart, scanStopAction, setSupplementaryQueryEnabled } from './state/query';
+import { updateTimeRange } from './state/time';
 
 type Props = {
   onSplitOpen: (panelType: string) => SplitOpen;
@@ -90,19 +93,26 @@ export function RenderResults(props: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const dispatch = useDispatch();
-  const {
-    showLogs,
-    showLogsSample,
-    showPanels,
-    showCustom,
-    showMetrics,
-    showNoData,
-    showTable,
-    showNodeGraph,
-    showRawPrometheus,
-    showFlameGraph,
-    showTrace,
-  } = useShowDatatype(exploreId);
+  const { showLogs, showCustom, showMetrics, showTable, showNodeGraph, showRawPrometheus, showFlameGraph, showTrace } =
+    useShowDatatype(exploreId);
+  const { showLogsSample } = useLogsSample(exploreId);
+
+  const queryResponse = useQueryResponse(exploreId);
+  const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
+
+  const showNoData =
+    queryResponse.state === LoadingState.Done &&
+    [
+      queryResponse.logsFrames,
+      queryResponse.graphFrames,
+      queryResponse.nodeGraphFrames,
+      queryResponse.flameGraphFrames,
+      queryResponse.tableFrames,
+      queryResponse.rawPrometheusFrames,
+      queryResponse.traceFrames,
+      queryResponse.customFrames,
+    ].every((e) => e.length === 0);
+
   const onResize = useCallback(
     (size: HorizontalSize) => {
       dispatch(changeSize(exploreId, size));
@@ -120,41 +130,49 @@ export function RenderResults(props: Props) {
         return (
           <main className={cx(styles.exploreMain)} style={{ width }}>
             <ErrorBoundaryAlert boundaryName="explore-main">
-              {showPanels && (
-                <>
-                  {showMetrics && graphResult && (
-                    <ErrorBoundaryAlert boundaryName="explore-graph-panel">
-                      <RenderGraphPanel
-                        width={width}
-                        graphResult={graphResult}
-                        onSplitOpen={onSplitOpen}
+              {(() => {
+                if (!showPanels) {
+                  return null;
+                }
+
+                if (showCustom) {
+                  return (
+                    <ErrorBoundaryAlert boundaryName="explore-custom-panel">
+                      <RenderCustom width={width} exploreId={exploreId} eventBus={eventBus} onSplitOpen={onSplitOpen} />
+                    </ErrorBoundaryAlert>
+                  );
+                }
+
+                if (showNodeGraph) {
+                  return (
+                    <ErrorBoundaryAlert boundaryName="explore-node-graph-panel">
+                      <RenderNodeGraphPanel exploreId={exploreId} showTrace={!!showTrace} onSplitOpen={onSplitOpen} />
+                    </ErrorBoundaryAlert>
+                  );
+                }
+
+                if (showFlameGraph) {
+                  return (
+                    <ErrorBoundaryAlert boundaryName="explore-flame-graph-panel">
+                      <RenderFlameGraphPanel exploreId={exploreId} />
+                    </ErrorBoundaryAlert>
+                  );
+                }
+
+                if (showTrace) {
+                  return (
+                    <ErrorBoundaryAlert boundaryName="explore-trace-view-panel">
+                      <RenderTraceViewPanel
                         exploreId={exploreId}
-                        graphEventBus={graphEventBus}
-                        showFlameGraph={showFlameGraph}
+                        onSplitOpen={onSplitOpen}
+                        scrollElement={scrollElement}
                       />
                     </ErrorBoundaryAlert>
-                  )}
-                  {showRawPrometheus && (
-                    <ErrorBoundaryAlert boundaryName="explore-raw-prometheus">
-                      <RenderRawPrometheus
-                        width={width}
-                        exploreId={exploreId}
-                        onSplitOpen={onSplitOpen}
-                        onCellFilterAdded={onCellFilterAdded}
-                      />
-                    </ErrorBoundaryAlert>
-                  )}
-                  {showTable && (
-                    <ErrorBoundaryAlert boundaryName="explore-table-panel">
-                      <RenderTablePanel
-                        width={width}
-                        exploreId={exploreId}
-                        onSplitOpen={onSplitOpen}
-                        onCellFilterAdded={onCellFilterAdded}
-                      />
-                    </ErrorBoundaryAlert>
-                  )}
-                  {showLogs && (
+                  );
+                }
+
+                if (showLogs) {
+                  return (
                     <ErrorBoundaryAlert boundaryName="explore-logs-panel">
                       <RenderLogsPanel
                         width={width}
@@ -169,43 +187,68 @@ export function RenderResults(props: Props) {
                         onPinLineCallback={onPinLineCallback}
                       />
                     </ErrorBoundaryAlert>
-                  )}
-                  {showNodeGraph && (
-                    <ErrorBoundaryAlert boundaryName="explore-node-graph-panel">
-                      <RenderNodeGraphPanel exploreId={exploreId} showTrace={showTrace} onSplitOpen={onSplitOpen} />
-                    </ErrorBoundaryAlert>
-                  )}
-                  {showFlameGraph && (
-                    <ErrorBoundaryAlert boundaryName="explore-flame-graph-panel">
-                      <RenderFlameGraphPanel exploreId={exploreId} />
-                    </ErrorBoundaryAlert>
-                  )}
-                  {showTrace && (
-                    <ErrorBoundaryAlert boundaryName="explore-trace-view-panel">
-                      <RenderTraceViewPanel
-                        exploreId={exploreId}
-                        onSplitOpen={onSplitOpen}
-                        scrollElement={scrollElement}
-                      />
-                    </ErrorBoundaryAlert>
-                  )}
-                  {showLogsSample && (
+                  );
+                }
+
+                if (showLogsSample) {
+                  return (
                     <ErrorBoundaryAlert boundaryName="explore-logs-sample-panel">
                       <RenderLogsSamplePanel exploreId={exploreId} onSplitOpen={onSplitOpen} />
                     </ErrorBoundaryAlert>
-                  )}
-                  {showCustom && (
-                    <ErrorBoundaryAlert boundaryName="explore-custom-panel">
-                      <RenderCustom width={width} exploreId={exploreId} eventBus={eventBus} onSplitOpen={onSplitOpen} />
+                  );
+                }
+
+                if (showMetrics && graphResult) {
+                  return (
+                    <ErrorBoundaryAlert boundaryName="explore-graph-panel">
+                      <RenderGraphPanel
+                        width={width}
+                        graphResult={graphResult}
+                        onSplitOpen={onSplitOpen}
+                        exploreId={exploreId}
+                        graphEventBus={graphEventBus}
+                        showFlameGraph={!!showFlameGraph}
+                      />
                     </ErrorBoundaryAlert>
-                  )}
-                  {showNoData && (
+                  );
+                }
+
+                if (showRawPrometheus) {
+                  return (
+                    <ErrorBoundaryAlert boundaryName="explore-raw-prometheus">
+                      <RenderRawPrometheus
+                        width={width}
+                        exploreId={exploreId}
+                        onSplitOpen={onSplitOpen}
+                        onCellFilterAdded={onCellFilterAdded}
+                      />
+                    </ErrorBoundaryAlert>
+                  );
+                }
+
+                if (showTable) {
+                  return (
+                    <ErrorBoundaryAlert boundaryName="explore-table-panel">
+                      <RenderTablePanel
+                        width={width}
+                        exploreId={exploreId}
+                        onSplitOpen={onSplitOpen}
+                        onCellFilterAdded={onCellFilterAdded}
+                      />
+                    </ErrorBoundaryAlert>
+                  );
+                }
+
+                if (showNoData) {
+                  return (
                     <ErrorBoundaryAlert boundaryName="explore-no-data">
                       <NoData />
                     </ErrorBoundaryAlert>
-                  )}
-                </>
-              )}
+                  );
+                }
+
+                return null;
+              })()}
             </ErrorBoundaryAlert>
           </main>
         );
@@ -520,26 +563,26 @@ function getSyncedTimesSelector(state: StoreState) {
   return state.explore.syncedTimes;
 }
 
-function queryResponseSelector(exploreId) {
+function queryResponseSelector(exploreId: string) {
   return (state: StoreState) => {
-    return state.explore.items[exploreId].queryResponse;
+    return state.explore.panes[exploreId]!.queryResponse;
   };
 }
 
-function queriesSelector(exploreId) {
+function queriesSelector(exploreId: string) {
   return (state: StoreState) => {
-    return state.explore.items[exploreId].queries;
+    return state.explore.panes[exploreId]!.queries;
   };
 }
 
-function dataSourceInstanceSelector(exploreId) {
+function dataSourceInstanceSelector(exploreId: string) {
   return (state: StoreState) => {
-    return state.explore.items[exploreId].queryResponse;
+    return state.explore.panes[exploreId]!.datasourceInstance;
   };
 }
 
 function logsSampleSelector(exploreId: string) {
-  const baseSelector = (state: StoreState) => state.explore[exploreId];
+  const baseSelector = (state: StoreState) => state.explore.panes[exploreId]!;
 
   const selectLogsSample = createSelector(
     baseSelector,
@@ -557,7 +600,7 @@ function logsSampleSelector(exploreId: string) {
 }
 
 function showDataTypeSelector(exploreId: string) {
-  const baseSelector = (state: StoreState) => state.explore[exploreId];
+  const baseSelector = (state: StoreState) => state.explore.panes[exploreId]!;
 
   const selectShowLogs = createSelector(baseSelector, (exploreItem) => exploreItem.showLogs);
   const selectShowMetrics = createSelector(baseSelector, (exploreItem) => exploreItem.showMetrics);
@@ -590,37 +633,27 @@ function showDataTypeSelector(exploreId: string) {
   );
 }
 
-function useQueryResponse(exploreId: string) {
-  const queryResponseSelectorFinal = useCallback(() => {
-    return queryResponseSelector(exploreId);
-  }, [exploreId]);
+function useQueryResponse(exploreId: string): ExplorePanelData {
+  const queryResponseSelectorFinal = useMemo(() => queryResponseSelector(exploreId), [exploreId]);
   return useSelector(queryResponseSelectorFinal);
 }
 
 function useDataSourceInstance(exploreId: string) {
-  const dataSourceInstanceSelectorFinal = useCallback(() => {
-    return dataSourceInstanceSelector(exploreId);
-  }, [exploreId]);
+  const dataSourceInstanceSelectorFinal = useMemo(() => dataSourceInstanceSelector(exploreId), [exploreId]);
   return useSelector(dataSourceInstanceSelectorFinal);
 }
 
 function useQueries(exploreId: string) {
-  const queriesSelectorFinal = useCallback(() => {
-    return queriesSelector(exploreId);
-  }, [exploreId]);
+  const queriesSelectorFinal = useMemo(() => queriesSelector(exploreId), [exploreId]);
   return useSelector(queriesSelectorFinal);
 }
 
 function useLogsSample(exploreId: string) {
-  const logsSampleSelectorFinal = useCallback(() => {
-    return logsSampleSelector(exploreId);
-  }, [exploreId]);
+  const logsSampleSelectorFinal = useMemo(() => logsSampleSelector(exploreId), [exploreId]);
   return useSelector(logsSampleSelectorFinal);
 }
 
 function useShowDatatype(exploreId: string) {
-  const showDataTypeSelectorFinal = useCallback(() => {
-    return showDataTypeSelector(exploreId);
-  }, [exploreId]);
+  const showDataTypeSelectorFinal = useMemo(() => showDataTypeSelector(exploreId), [exploreId]);
   return useSelector(showDataTypeSelectorFinal);
 }

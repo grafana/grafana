@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { get, groupBy } from 'lodash';
+import { get } from 'lodash';
 import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -13,41 +13,35 @@ import {
   RawTimeRange,
   SplitOpenOptions,
   store,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import {
-  AdHocFilterItem,
-  ErrorBoundaryAlert,
-  PanelContainer,
-  ScrollContainer,
-  Themeable2,
-  withTheme2,
-} from '@grafana/ui';
+import { AdHocFilterItem, PanelContainer, ScrollContainer, Themeable2, withTheme2 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types/store';
 
 import { getTimeZone } from '../profile/state/selectors';
 
+import { Blocks } from './Blocks';
 import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
-import { QueryRows } from './QueryRows';
 import { RenderResults } from './RenderResults';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
-import { SecondaryActions } from './SecondaryActions';
+import { AddQueryButtons } from './SecondaryActions';
 import { changeDatasource } from './state/datasource';
 import { changeCompactMode } from './state/explorePane';
 import { splitOpen } from './state/main';
 import { addQueryRow, modifyQueries, selectIsWaitingForData, setQueries } from './state/query';
 import { isSplit, selectExploreDSMaps } from './state/selectors';
+import { updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -323,42 +317,15 @@ export class Explore extends PureComponent<Props, ExploreState> {
     const {
       datasourceInstance,
       exploreId,
-      graphResult,
-      queryResponse,
       isLive,
       theme,
-      showMetrics,
-      showTable,
-      showRawPrometheus,
-      showLogs,
-      showTrace,
-      showCustom,
-      showNodeGraph,
-      showFlameGraph,
-      showLogsSample,
       correlationEditorDetails,
       correlationEditorHelperData,
-      showQueryInspector,
-      setShowQueryInspector,
       compact,
       queryLibraryRef,
     } = this.props;
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
-    const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
-    const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
-    const showNoData =
-      queryResponse.state === LoadingState.Done &&
-      [
-        queryResponse.logsFrames,
-        queryResponse.graphFrames,
-        queryResponse.nodeGraphFrames,
-        queryResponse.flameGraphFrames,
-        queryResponse.tableFrames,
-        queryResponse.rawPrometheusFrames,
-        queryResponse.traceFrames,
-        queryResponse.customFrames,
-      ].every((e) => e.length === 0);
 
     let correlationsBox = undefined;
     const isCorrelationsEditorMode = correlationEditorDetails?.editorMode;
@@ -401,73 +368,58 @@ export class Explore extends PureComponent<Props, ExploreState> {
                       icon="arrow"
                       mergeSingleChild={true}
                     >
-                      <PanelContainer className={styles.queryContainer}>
-                        {correlationsBox}
-                        <QueryRows
-                          exploreId={exploreId}
-                          // Don't simply pass isOpen here to avoid opening the row when content outline is openend and
-                          // triggers exiting from compact mode. If it's confusing we can change the behavior to exit
-                          // compact mode explicitly with a button in the UI instead of exiting when row is opened or
-                          // content outline is opened.
-                          isOpen={compact ? false : undefined}
-                          changeCompactMode={(compact: boolean) =>
-                            this.props.changeCompactMode(this.props.exploreId, false)
-                          }
-                        />
-                        <SecondaryActions
-                          // do not allow people to add queries with potentially different datasources in correlations editor mode
-                          addQueryRowButtonDisabled={
-                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed) || !!queryLibraryRef
-                          }
-                          // We cannot show multiple traces at the same time right now so we do not show add query button.
-                          //TODO:unification
-                          addQueryRowButtonHidden={false}
-                          richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                          queryInspectorButtonActive={showQueryInspector}
-                          onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                          onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
-                          onSelectQueryFromLibrary={async (query) => {
-                            const { changeDatasource, queries, setQueries } = this.props;
-                            const newQueries = [
-                              ...queries,
-                              {
-                                ...query,
-                                refId: getNextRefId(queries),
-                              },
-                            ];
-                            setQueries(exploreId, newQueries);
-                            if (query.datasource?.uid) {
-                              const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
-                              const isMixed = uniqueDatasources.size > 1;
-                              const newDatasourceRef = {
-                                uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
-                              };
-                              const shouldChangeDatasource = datasourceInstance.uid !== newDatasourceRef.uid;
-                              if (shouldChangeDatasource) {
-                                await changeDatasource({ exploreId, datasource: newDatasourceRef });
-                              }
-                            }
-                          }}
-                        />
-                        <ResponseErrorContainer exploreId={exploreId} />
-                      </PanelContainer>
+                      {correlationsBox}
+                      <Blocks
+                        exploreId={exploreId}
+                        changeCompactMode={(compact: boolean) =>
+                          this.props.changeCompactMode(this.props.exploreId, false)
+                        }
+                        onSplitOpen={this.onSplitOpen}
+                        graphEventBus={this.graphEventBus}
+                        logsEventBus={this.logsEventBus}
+                        onCellFilterAdded={this.onCellFilterAdded}
+                        onClickFilterLabel={this.onClickFilterLabel}
+                        onClickFilterOutLabel={this.onClickFilterOutLabel}
+                        onClickFilterString={this.onClickFilterString}
+                        onClickFilterOutString={this.onClickFilterOutString}
+                        isFilterLabelActive={this.isFilterLabelActive}
+                        onPinLineCallback={this.onPinLineCallback}
+                        scrollElement={this.scrollElement}
+                      />
+                      <ResponseErrorContainer exploreId={exploreId} />
                     </ContentOutlineItem>
 
-                    <RenderResults
-                      exploreId={exploreId}
-                      graphResult={graphResult}
-                      onSplitOpen={this.onSplitOpen}
-                      graphEventBus={this.graphEventBus}
-                      logsEventBus={this.logsEventBus}
-                      eventBus={this.props.eventBus}
-                      onCellFilterAdded={this.onCellFilterAdded}
-                      onClickFilterLabel={this.onClickFilterLabel}
-                      onClickFilterOutLabel={this.onClickFilterOutLabel}
-                      onClickFilterString={this.onClickFilterString}
-                      onClickFilterOutString={this.onClickFilterOutString}
-                      isFilterLabelActive={this.isFilterLabelActive}
-                      onPinLineCallback={this.onPinLineCallback}
-                      scrollElement={this.scrollElement}
+                    <AddQueryButtons
+                      onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                      // We cannot show multiple traces at the same time right now so we do not show add query button.
+                      //TODO:unification
+                      addQueryRowButtonHidden={false}
+                      // do not allow people to add queries with potentially different datasources in correlations editor mode
+                      addQueryRowButtonDisabled={
+                        isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed) || !!queryLibraryRef
+                      }
+                      onSelectQueryFromLibrary={async (query) => {
+                        const { changeDatasource, queries, setQueries } = this.props;
+                        const newQueries = [
+                          ...queries,
+                          {
+                            ...query,
+                            refId: getNextRefId(queries),
+                          },
+                        ];
+                        setQueries(exploreId, newQueries);
+                        if (query.datasource?.uid) {
+                          const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+                          const isMixed = uniqueDatasources.size > 1;
+                          const newDatasourceRef = {
+                            uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
+                          };
+                          const shouldChangeDatasource = datasourceInstance.uid !== newDatasourceRef.uid;
+                          if (shouldChangeDatasource) {
+                            await changeDatasource({ exploreId, datasource: newDatasourceRef });
+                          }
+                        }
+                      }}
                     />
                   </>
                 ) : (
@@ -553,6 +505,7 @@ const mapDispatchToProps = {
   addQueryRow,
   splitOpen,
   changeCompactMode,
+  updateTimeRange,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
