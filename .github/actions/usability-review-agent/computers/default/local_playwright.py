@@ -88,35 +88,21 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
                 page.get_by_role("button", name="Log in").click()
                 print("Login form submitted")
 
-                # Try to wait for navigation, but don't fail if it doesn't happen
+                # Wait for login to complete - check for skip button first
+                print("Waiting for post-login navigation...")
                 try:
-                    print("Waiting for navigation...")
-                    page.wait_for_navigation(timeout=5000)
-                    print("Navigation occurred after login")
-                except Exception as nav_err:
-                    print(f"No navigation detected: {nav_err}")
-                    print("Waiting for in-page changes...")
-                    page.wait_for_timeout(2000)
+                    # Check if password change prompt appears
+                    skip_button = page.get_by_test_id("Skip change password button")
+                    skip_button.wait_for(state="visible", timeout=5000)
+                    print("Skip password change prompt detected, clicking...")
+                    skip_button.click()
+                except Exception:
+                    print("No password change prompt (or timed out)")
 
-                print(f"Current URL after login: {page.url}")
-                print(f"Page title: {page.title()}")
-
-                # Check for login errors
-                error_locator = page.locator('[data-testid="alert-error"]')
-                print("Checking for error alerts...")
-                if error_locator.is_visible():
-                    error_text = error_locator.text_content()
-                    print(f"Error alert found: {error_text}")
-                    raise Exception(f"Login failed with error: {error_text}")
-                else:
-                    print("No error alerts found")
-
-                # Verify we're no longer on the login page
-                if "/login" in page.url:
-                    print("Still on login page - login failed")
-                    raise Exception(f"Login appears to have failed - still on login page: {page.url}")
-
-                print(f"Login successful, navigated to: {page.url}")
+                # Wait for command palette trigger to confirm we're logged in and on dashboard
+                print("Waiting for dashboard to load...")
+                page.get_by_test_id("Command palette trigger").wait_for(state="visible", timeout=30000)
+                print(f"Login successful, current URL: {page.url}")
 
             except Exception as e:
                 print(f"Login failed: {e}")
