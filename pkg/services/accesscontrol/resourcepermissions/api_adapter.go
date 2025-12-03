@@ -107,7 +107,7 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 			IsInherited: false,
 		}
 
-		switch iamv0.ResourcePermissionSpecPermissionKind(kind) {
+		switch kind {
 		case iamv0.ResourcePermissionSpecPermissionKindUser, iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
 			userDetails, err := a.service.userService.GetByUID(context.Background(), &user.GetUserByUIDQuery{UID: name})
 			if err == nil {
