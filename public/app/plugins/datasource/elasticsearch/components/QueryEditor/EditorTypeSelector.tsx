@@ -5,7 +5,7 @@ import { useDispatch } from '../../hooks/useStatelessReducer';
 import { EditorType } from '../../types';
 
 import { useQuery } from './ElasticsearchQueryContext';
-import { changeEditorType } from './state';
+import { changeEditorTypeAndResetQuery } from './state';
 
 const BASE_OPTIONS: Array<SelectableValue<EditorType>> = [
   { value: 'builder', label: 'Builder' },
@@ -20,7 +20,7 @@ export const EditorTypeSelector = () => {
   const editorType: EditorType = query.editorType === 'code' ? 'code' : 'builder';
 
   const onChange = (newEditorType: EditorType) => {
-    dispatch(changeEditorType(newEditorType));
+    dispatch(changeEditorTypeAndResetQuery(newEditorType));
   };
 
   return <RadioButtonGroup<EditorType> fullWidth={false} options={BASE_OPTIONS} value={editorType} onChange={onChange} />;

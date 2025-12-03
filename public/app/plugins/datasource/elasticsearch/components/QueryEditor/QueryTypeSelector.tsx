@@ -1,5 +1,4 @@
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { RadioButtonGroup } from '@grafana/ui';
 
 import { MetricAggregation } from '../../dataquery.gen';
@@ -17,21 +16,11 @@ const BASE_OPTIONS: Array<SelectableValue<QueryType>> = [
   { value: 'raw_document', label: 'Raw Document' },
 ];
 
-const RAW_DSL_OPTION: SelectableValue<QueryType> = { value: 'raw_dsl', label: 'Raw Query DSL' };
-
-function getOptions(): Array<SelectableValue<QueryType>> {
-  if (config.featureToggles.elasticsearchRawDSLQuery) {
-    return [...BASE_OPTIONS, RAW_DSL_OPTION];
-  }
-  return BASE_OPTIONS;
-}
-
 function queryTypeToMetricType(type: QueryType): MetricAggregation['type'] {
   switch (type) {
     case 'logs':
     case 'raw_data':
     case 'raw_document':
-    case 'raw_dsl':
       return type;
     case 'metrics':
       return 'count';
@@ -58,5 +47,5 @@ export const QueryTypeSelector = () => {
     dispatch(changeMetricType({ id: firstMetric.id, type: queryTypeToMetricType(newQueryType) }));
   };
 
-  return <RadioButtonGroup<QueryType> fullWidth={false} options={getOptions()} value={queryType} onChange={onChange} />;
+  return <RadioButtonGroup<QueryType> fullWidth={false} options={BASE_OPTIONS} value={queryType} onChange={onChange} />;
 };

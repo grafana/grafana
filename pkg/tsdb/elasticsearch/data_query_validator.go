@@ -2,14 +2,12 @@ package elasticsearch
 
 import (
 	"fmt"
-
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/kinds/dataquery"
 )
 
 // isQueryWithError validates the query and returns an error if invalid
 func isQueryWithError(query *Query) error {
-	// TODO might want to check stuff here
-	if query.RawDSLQuery.Query != nil {
+	// Skip validation for raw DSL queries because no easy way to see it is valid without just running it
+	if query.EditorType != nil && *query.EditorType == "code" && query.RawDSLQuery != "" {
 		return nil
 	}
 	if len(query.BucketAggs) == 0 {
@@ -23,7 +21,7 @@ func isQueryWithError(query *Query) error {
 
 // isLogsQuery checks if the query is a logs query
 func isLogsQuery(query *Query) bool {
-	return len(query.Metrics) > 0 && query.Metrics[0].Type == logsType || query.RawDSLQuery.Query != nil && query.RawDSLQuery.ProcessAs != nil && *query.RawDSLQuery.ProcessAs == dataquery.ProcessAsTypeLogs
+	return len(query.Metrics) > 0 && query.Metrics[0].Type == logsType
 }
 
 // isDocumentQuery checks if the query is a document query (raw_data or raw_document)
@@ -33,7 +31,7 @@ func isDocumentQuery(query *Query) bool {
 
 // isRawDataQuery checks if the query is a raw_data query
 func isRawDataQuery(query *Query) bool {
-	return len(query.Metrics) > 0 && query.Metrics[0].Type == rawDataType || query.RawDSLQuery.Query != nil && query.RawDSLQuery.ProcessAs != nil && *query.RawDSLQuery.ProcessAs == dataquery.ProcessAsTypeRawData
+	return len(query.Metrics) > 0 && query.Metrics[0].Type == rawDataType
 }
 
 // isRawDocumentQuery checks if the query is a raw_document query

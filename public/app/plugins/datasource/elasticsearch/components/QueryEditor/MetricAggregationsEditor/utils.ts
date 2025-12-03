@@ -276,18 +276,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasMeta: false,
     defaults: {},
   },
-  raw_dsl: {
-    label: 'Raw DSL',
-    requiresField: false,
-    impliedQueryType: 'raw_dsl',
-    isPipelineAgg: false,
-    supportsMissing: false,
-    supportsMultipleBucketPaths: false,
-    hasSettings: false,
-    supportsInlineScript: false,
-    hasMeta: false,
-    defaults: {},
-  },
 };
 
 interface PipelineOption {

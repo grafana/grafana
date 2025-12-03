@@ -1,36 +1,14 @@
 package elasticsearch
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/kinds/dataquery"
 )
 
-/*
-	{
-	  "query": {
-	    "bool": {
-	      "must": [
-	        {
-	          "range": {
-	            "@timestamp": {
-	              "gte": "$__from",
-	              "lte": "$__to",
-	              "format": "epoch_millis"
-	            }
-	          }
-	        }
-	      ]
-	    }
-	  },
-	  "size": 500
-	}
-*/
 func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, error) {
 	queries := make([]*Query, 0)
 	for _, q := range tsdbQuery {
@@ -43,19 +21,11 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
 
 		rawQuery := model.Get("query").MustString()
-		rawDSLQuery := dataquery.RawDSLQuery{}
-		rr := model.Get("rawDSLQuery")
-		if rrBytes, err := rr.Encode(); err == nil {
-			// Try to unmarshal as the new struct format first
-			if err := json.Unmarshal(rrBytes, &rawDSLQuery); err != nil {
-				// If that fails, it might be a string (old format)
-				var rawDSLQueryString string
-				if err := json.Unmarshal(rrBytes, &rawDSLQueryString); err == nil {
-					rawDSLQuery = dataquery.RawDSLQuery{
-						Query: &rawDSLQueryString,
-					}
-				}
-			}
+		rawDSLQuery := model.Get("rawDSLQuery").MustString()
+
+		var editorType *string
+		if et := model.Get("editorType").MustString(); et != "" {
+			editorType = &et
 		}
 
 		bucketAggs, err := parseBucketAggs(model)
@@ -74,6 +44,7 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 
 		queries = append(queries, &Query{
 			RawQuery:      rawQuery,
+			RawDSLQuery:   rawDSLQuery,
 			BucketAggs:    bucketAggs,
 			Metrics:       metrics,
 			Alias:         alias,
@@ -82,7 +53,7 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			TimeRange:     q.TimeRange,
-			RawDSLQuery:   rawDSLQuery,
+			EditorType:    editorType,
 		})
 	}
 

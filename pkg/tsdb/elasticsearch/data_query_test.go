@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -1888,6 +1889,11 @@ func newDataQuery(body string) (backend.QueryDataRequest, error) {
 
 func executeElasticsearchDataQuery(c es.Client, body string, from, to time.Time) (
 	*backend.QueryDataResponse, error) {
+	return executeElasticsearchDataQueryWithContext(c, body, from, to, context.Background())
+}
+
+func executeElasticsearchDataQueryWithContext(c es.Client, body string, from, to time.Time, ctx context.Context) (
+	*backend.QueryDataResponse, error) {
 	timeRange := backend.TimeRange{
 		From: from,
 		To:   to,
@@ -1901,7 +1907,7 @@ func executeElasticsearchDataQuery(c es.Client, body string, from, to time.Time)
 			},
 		},
 	}
-	query := newElasticsearchDataQuery(context.Background(), c, &dataRequest, log.New())
+	query := newElasticsearchDataQuery(ctx, c, &dataRequest, log.New())
 	return query.execute()
 }
 
@@ -1909,13 +1915,19 @@ func TestRawDSLQuery(t *testing.T) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 
+	// Create context with raw DSL query feature toggle enabled
+	cfg := backend.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "elasticsearchRawDSLQuery",
+	})
+	ctx := backend.WithGrafanaConfig(context.Background(), cfg)
+
 	t.Run("With raw DSL query", func(t *testing.T) {
 		t.Run("Basic raw DSL query with aggregations", func(t *testing.T) {
 			c := newFakeClient()
-			_, err := executeElasticsearchDataQuery(c, `{
-				"rawDsl": true,
-				"rawDslQuery": "{\"query\":{\"bool\":{\"filter\":[{\"range\":{\"@timestamp\":{\"gte\":1526405400000,\"lte\":1526405700000,\"format\":\"epoch_millis\"}}}]}},\"aggs\":{\"date_histogram\":{\"date_histogram\":{\"field\":\"@timestamp\",\"interval\":\"1m\"}}},\"size\":0}"
-			}`, from, to)
+			_, err := executeElasticsearchDataQueryWithContext(c, `{
+				"editorType": "code",
+				"rawDSLQuery": "{\"query\":{\"bool\":{\"filter\":[{\"range\":{\"@timestamp\":{\"gte\":1526405400000,\"lte\":1526405700000,\"format\":\"epoch_millis\"}}}]}},\"aggs\":{\"date_histogram\":{\"date_histogram\":{\"field\":\"@timestamp\",\"interval\":\"1m\"}}},\"size\":0}"
+			}`, from, to, ctx)
 			require.NoError(t, err)
 			require.Len(t, c.multisearchRequests, 1)
 			require.Len(t, c.multisearchRequests[0].Requests, 1)
@@ -1934,10 +1946,10 @@ func TestRawDSLQuery(t *testing.T) {
 
 		t.Run("Raw DSL query with query_string", func(t *testing.T) {
 			c := newFakeClient()
-			_, err := executeElasticsearchDataQuery(c, `{
-				"rawDsl": true,
-				"rawDslQuery": "{\"query\":{\"query_string\":{\"query\":\"status:200\",\"analyze_wildcard\":true}},\"size\":100}"
-			}`, from, to)
+			_, err := executeElasticsearchDataQueryWithContext(c, `{
+				"editorType": "code",
+				"rawDSLQuery": "{\"query\":{\"query_string\":{\"query\":\"status:200\",\"analyze_wildcard\":true}},\"size\":100}"
+			}`, from, to, ctx)
 			require.NoError(t, err)
 			require.Len(t, c.multisearchRequests, 1)
 			sr := c.multisearchRequests[0].Requests[0]
@@ -1959,10 +1971,10 @@ func TestRawDSLQuery(t *testing.T) {
 
 		t.Run("Raw DSL query with sort", func(t *testing.T) {
 			c := newFakeClient()
-			_, err := executeElasticsearchDataQuery(c, `{
-				"rawDsl": true,
-				"rawDslQuery": "{\"query\":{\"match_all\":{}},\"sort\":[{\"@timestamp\":{\"order\":\"desc\"}}],\"size\":50}"
-			}`, from, to)
+			_, err := executeElasticsearchDataQueryWithContext(c, `{
+				"editorType": "code",
+				"rawDSLQuery": "{\"query\":{\"match_all\":{}},\"sort\":[{\"@timestamp\":{\"order\":\"desc\"}}],\"size\":50}"
+			}`, from, to, ctx)
 			require.NoError(t, err)
 			require.Len(t, c.multisearchRequests, 1)
 			sr := c.multisearchRequests[0].Requests[0]
@@ -1978,23 +1990,12 @@ func TestRawDSLQuery(t *testing.T) {
 			require.NotEmpty(t, sort)
 		})
 
-		t.Run("Empty raw DSL query returns error", func(t *testing.T) {
-			c := newFakeClient()
-			response, err := executeElasticsearchDataQuery(c, `{
-				"rawDsl": true,
-				"rawDslQuery": ""
-			}`, from, to)
-			require.NoError(t, err)
-			require.NotNil(t, response.Responses["A"].Error)
-			require.Contains(t, response.Responses["A"].Error.Error(), "raw DSL query is empty")
-		})
-
 		t.Run("Invalid JSON in raw DSL query returns error", func(t *testing.T) {
 			c := newFakeClient()
-			response, err := executeElasticsearchDataQuery(c, `{
-				"rawDsl": true,
-				"rawDslQuery": "{ invalid json }"
-			}`, from, to)
+			response, err := executeElasticsearchDataQueryWithContext(c, `{
+				"editorType": "code",
+				"rawDSLQuery": "{ invalid json }"
+			}`, from, to, ctx)
 			require.NoError(t, err)
 			require.NotNil(t, response.Responses["A"].Error)
 			require.Contains(t, response.Responses["A"].Error.Error(), "invalid raw DSL query JSON")

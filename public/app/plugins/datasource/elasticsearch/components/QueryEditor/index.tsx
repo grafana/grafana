@@ -20,7 +20,7 @@ import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 import { QueryTypeSelector } from './QueryTypeSelector';
 import { RawQueryEditor } from './RawQueryEditor';
-import { changeAliasPattern, changeQuery, changeRawQuery } from './state';
+import { changeAliasPattern, changeQuery, changeRawDSLQuery } from './state';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchDataQuery, ElasticsearchOptions>;
 
@@ -99,9 +99,7 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
 
   const isTimeSeries = isTimeSeriesQuery(value);
 
-  const firstMetric = value.metrics?.[0];
-  const queryType = firstMetric ? metricAggregationConfig[firstMetric.type].impliedQueryType : 'metrics';
-  const isRawDSL = queryType === 'raw_dsl';
+  const isCodeEditor = value.editorType === 'code';
   const rawDSLFeatureEnabled = config.featureToggles.elasticsearchRawDSLQuery;
 
   const showBucketAggregationsEditor = value.metrics?.every(
@@ -123,15 +121,15 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
         </div>
       </div>
 
-      {isRawDSL && rawDSLFeatureEnabled && (
+      {isCodeEditor && rawDSLFeatureEnabled && (
         <RawQueryEditor
           value={value.rawDSLQuery}
-          onChange={(rawDSLQuery) => dispatch(changeRawQuery(rawDSLQuery))}
+          onChange={(rawDSLQuery) => dispatch(changeRawDSLQuery(rawDSLQuery))}
           onRunQuery={onRunQuery}
         />
       )}
 
-      {!isRawDSL && (
+      {!isCodeEditor && (
         <>
           <div className={styles.root}>
             <InlineLabel width={17}>Lucene Query</InlineLabel>

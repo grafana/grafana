@@ -65,7 +65,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   oauthPassThru?: boolean;
 }
 
-export type QueryType = 'metrics' | 'logs' | 'raw_data' | 'raw_document' | 'raw_dsl';
+export type QueryType = 'metrics' | 'logs' | 'raw_data' | 'raw_document';
 export type EditorType = 'code' | 'builder';
 
 interface MetricConfiguration<T extends MetricAggregationType> {

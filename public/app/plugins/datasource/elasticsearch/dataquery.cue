@@ -31,6 +31,8 @@ composableKinds: DataQuery: {
 				alias?: string
 				// Lucene query
 				query?: string
+				// Raw DSL query
+				rawDSLQuery?: string
 				// Name of time field
 				timeField?: string
 				// Editor type
@@ -39,9 +41,6 @@ composableKinds: DataQuery: {
 				bucketAggs?: [...#BucketAggregation]
 				// List of metric aggregations
 				metrics?: [...#MetricAggregation]
-				// settingsfor raw query
-
-				rawDSLQuery?: #RawDSLQuery
 
 				#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
 				#MetricAggregation: #Count | #PipelineMetricAggregation | #MetricAggregationWithSettings     @cuetsy(kind="type")
@@ -64,13 +63,6 @@ composableKinds: DataQuery: {
 					type:      #BucketAggregationType & "date_histogram"
 					settings?: #DateHistogramSettings
 				} @cuetsy(kind="interface")
-
-				#RawDSLQuery: {
-					query?: string
-					processAs?: #ProcessAsType
-				} @cuetsy(kind="interface")
-
-				#ProcessAsType: "logs" | "metrics" | "raw_data" @cuetsy(kind="enum")
 
 				#DateHistogramSettings: {
 					interval?:      string
@@ -139,7 +131,7 @@ composableKinds: DataQuery: {
 				} @cuetsy(kind="interface")
 
 				#PipelineMetricAggregationType: "moving_avg" | "moving_fn" | "derivative" | "serial_diff" | "cumulative_sum" | "bucket_script"                                                                                                             @cuetsy(kind="type")
-				#MetricAggregationType:         "count" | "avg" | "sum" | "min" | "max" | "extended_stats" | "percentiles" | "cardinality" | "raw_document" | "raw_data" | "logs" | "rate" | "top_metrics" | "raw_dsl" | #PipelineMetricAggregationType @cuetsy(kind="type")
+				#MetricAggregationType:         "count" | "avg" | "sum" | "min" | "max" | "extended_stats" | "percentiles" | "cardinality" | "raw_document" | "raw_data" | "logs" | "rate" | "top_metrics" | #PipelineMetricAggregationType @cuetsy(kind="type")
 
 				#BaseMetricAggregation: {
 					type:  #MetricAggregationType
@@ -270,12 +262,6 @@ composableKinds: DataQuery: {
 					#BaseMetricAggregation
 					type: #MetricAggregationType & "logs"
 					settings?: limit?: string
-				} @cuetsy(kind="interface")
-
-				#RawDSL: {
-					#BaseMetricAggregation
-					type: #MetricAggregationType & "raw_dsl"
-					settings?: {}
 				} @cuetsy(kind="interface")
 
 				#Rate: {
@@ -415,7 +401,7 @@ composableKinds: DataQuery: {
 				} @cuetsy(kind="interface")
 
 				#PipelineMetricAggregation:     #MovingAverage | #Derivative | #CumulativeSum | #BucketScript                                                                                                                                                                                          @cuetsy(kind="type")
-				#MetricAggregationWithSettings: #BucketScript | #CumulativeSum | #Derivative | #SerialDiff | #RawData | #RawDocument | #UniqueCount | #Percentiles | #ExtendedStats | #Min | #Max | #Sum | #Average | #MovingAverage | #MovingFunction | #Logs | #RawDSL | #Rate | #TopMetrics @cuetsy(kind="type")
+				#MetricAggregationWithSettings: #BucketScript | #CumulativeSum | #Derivative | #SerialDiff | #RawData | #RawDocument | #UniqueCount | #Percentiles | #ExtendedStats | #Min | #Max | #Sum | #Average | #MovingAverage | #MovingFunction | #Logs | #Rate | #TopMetrics @cuetsy(kind="type")
 			}
 		}]
 		lenses: []
