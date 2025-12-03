@@ -17,6 +17,28 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// Helper function to create a repository config with folder sync target
+func createFolderSyncRepository() *provisioningV0.Repository {
+	return &provisioningV0.Repository{
+		Spec: provisioningV0.RepositorySpec{
+			Sync: provisioningV0.SyncOptions{
+				Target: provisioningV0.SyncTargetTypeFolder,
+			},
+		},
+	}
+}
+
+// Helper function to create a repository config with instance sync target
+func createInstanceSyncRepository() *provisioningV0.Repository {
+	return &provisioningV0.Repository{
+		Spec: provisioningV0.RepositorySpec{
+			Sync: provisioningV0.SyncOptions{
+				Target: provisioningV0.SyncTargetTypeInstance,
+			},
+		},
+	}
+}
+
 // Helper function to create folder objects
 func createFolderObject(name, uid, parentFolderUID string) unstructured.Unstructured {
 	folder := unstructured.Unstructured{
@@ -50,7 +72,7 @@ func createDashboardObjectWithFolder(name, folderID string) unstructured.Unstruc
 }
 
 // Helper function to run ExportSpecificResources test
-func runExportSpecificResourcesTest(t *testing.T, resourceRefs []provisioningV0.ResourceRef, folderItems []unstructured.Unstructured, setupProgress func(*jobs.MockJobProgressRecorder), setupResources func(*resources.MockRepositoryResources, *resources.MockResourceClients)) error {
+func runExportSpecificResourcesTest(t *testing.T, repoConfig *provisioningV0.Repository, resourceRefs []provisioningV0.ResourceRef, folderItems []unstructured.Unstructured, setupProgress func(*jobs.MockJobProgressRecorder), setupResources func(*resources.MockRepositoryResources, *resources.MockResourceClients)) error {
 	resourceClients := resources.NewMockResourceClients(t)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 	setupProgress(mockProgress)
@@ -64,7 +86,7 @@ func runExportSpecificResourcesTest(t *testing.T, resourceRefs []provisioningV0.
 		Resources: resourceRefs,
 	}
 
-	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, mockProgress)
+	err := ExportSpecificResources(context.Background(), repoConfig, options, resourceClients, repoResources, mockProgress)
 
 	mockProgress.AssertExpectations(t)
 	repoResources.AssertExpectations(t)
@@ -74,6 +96,8 @@ func runExportSpecificResourcesTest(t *testing.T, resourceRefs []provisioningV0.
 }
 
 func TestExportSpecificResources_Success(t *testing.T) {
+	repoConfig := createFolderSyncRepository()
+
 	resourceRefs := []provisioningV0.ResourceRef{
 		{
 			Name:  "dashboard-1",
@@ -148,11 +172,13 @@ func TestExportSpecificResources_Success(t *testing.T) {
 			})).Return("grafana/dashboard-2.json", nil)
 	}
 
-	err := runExportSpecificResourcesTest(t, resourceRefs, folderItems, setupProgress, setupResources)
+	err := runExportSpecificResourcesTest(t, repoConfig, resourceRefs, folderItems, setupProgress, setupResources)
 	require.NoError(t, err)
 }
 
 func TestExportSpecificResources_EmptyResources(t *testing.T) {
+	repoConfig := createFolderSyncRepository()
+
 	options := provisioningV0.ExportJobOptions{
 		Path:      "grafana",
 		Branch:    "feature/branch",
@@ -163,11 +189,36 @@ func TestExportSpecificResources_EmptyResources(t *testing.T) {
 	repoResources := resources.NewMockRepositoryResources(t)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, mockProgress)
+	err := ExportSpecificResources(context.Background(), repoConfig, options, resourceClients, repoResources, mockProgress)
 	require.EqualError(t, err, "no resources specified for export")
 }
 
+func TestExportSpecificResources_RejectsInstanceSyncTarget(t *testing.T) {
+	repoConfig := createInstanceSyncRepository()
+
+	options := provisioningV0.ExportJobOptions{
+		Path:   "grafana",
+		Branch: "feature/branch",
+		Resources: []provisioningV0.ResourceRef{
+			{
+				Name:  "dashboard-1",
+				Kind:  "Dashboard",
+				Group: resources.DashboardResource.Group,
+			},
+		},
+	}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+	err := ExportSpecificResources(context.Background(), repoConfig, options, resourceClients, repoResources, mockProgress)
+	require.EqualError(t, err, "specific resource export is only supported for folder sync targets, but repository has target type 'instance'")
+}
+
 func TestExportSpecificResources_RejectsFolders(t *testing.T) {
+	repoConfig := createFolderSyncRepository()
+
 	resourceRefs := []provisioningV0.ResourceRef{
 		{
 			Name:  "my-folder",
@@ -196,11 +247,13 @@ func TestExportSpecificResources_RejectsFolders(t *testing.T) {
 		// No ForKind or WriteResourceFileFromObject calls expected for folders
 	}
 
-	err := runExportSpecificResourcesTest(t, resourceRefs, folderItems, setupProgress, setupResources)
+	err := runExportSpecificResourcesTest(t, repoConfig, resourceRefs, folderItems, setupProgress, setupResources)
 	require.NoError(t, err)
 }
 
 func TestExportSpecificResources_RejectsManagedResources(t *testing.T) {
+	repoConfig := createFolderSyncRepository()
+
 	resourceRefs := []provisioningV0.ResourceRef{
 		{
 			Name:  "managed-dashboard",
@@ -246,11 +299,13 @@ func TestExportSpecificResources_RejectsManagedResources(t *testing.T) {
 		// No WriteResourceFileFromObject call expected for managed resources
 	}
 
-	err := runExportSpecificResourcesTest(t, resourceRefs, folderItems, setupProgress, setupResources)
+	err := runExportSpecificResourcesTest(t, repoConfig, resourceRefs, folderItems, setupProgress, setupResources)
 	require.NoError(t, err)
 }
 
 func TestExportSpecificResources_RejectsUnsupportedResources(t *testing.T) {
+	repoConfig := createFolderSyncRepository()
+
 	resourceRefs := []provisioningV0.ResourceRef{
 		{
 			Name:  "some-resource",
@@ -292,11 +347,13 @@ func TestExportSpecificResources_RejectsUnsupportedResources(t *testing.T) {
 		// No WriteResourceFileFromObject call expected for unsupported resources
 	}
 
-	err := runExportSpecificResourcesTest(t, resourceRefs, folderItems, setupProgress, setupResources)
+	err := runExportSpecificResourcesTest(t, repoConfig, resourceRefs, folderItems, setupProgress, setupResources)
 	require.NoError(t, err)
 }
 
 func TestExportSpecificResources_FolderPathResolution(t *testing.T) {
+	repoConfig := createFolderSyncRepository()
+
 	resourceRefs := []provisioningV0.ResourceRef{
 		{
 			Name:  "dashboard-in-nested-folder",
@@ -346,11 +403,13 @@ func TestExportSpecificResources_FolderPathResolution(t *testing.T) {
 			})).Return("grafana/team-a/subteam/dashboard-in-nested-folder.json", nil)
 	}
 
-	err := runExportSpecificResourcesTest(t, resourceRefs, folderItems, setupProgress, setupResources)
+	err := runExportSpecificResourcesTest(t, repoConfig, resourceRefs, folderItems, setupProgress, setupResources)
 	require.NoError(t, err)
 }
 
 func TestExportSpecificResources_FolderClientError(t *testing.T) {
+	repoConfig := createFolderSyncRepository()
+
 	resourceRefs := []provisioningV0.ResourceRef{
 		{
 			Name:  "dashboard-1",
@@ -368,11 +427,13 @@ func TestExportSpecificResources_FolderClientError(t *testing.T) {
 		resourceClients.On("Folder", mock.Anything).Return(nil, fmt.Errorf("folder client error"))
 	}
 
-	err := runExportSpecificResourcesTest(t, resourceRefs, nil, setupProgress, setupResources)
+	err := runExportSpecificResourcesTest(t, repoConfig, resourceRefs, nil, setupProgress, setupResources)
 	require.EqualError(t, err, "get folder client: folder client error")
 }
 
 func TestExportSpecificResources_ResourceNotFound(t *testing.T) {
+	repoConfig := createFolderSyncRepository()
+
 	resourceRefs := []provisioningV0.ResourceRef{
 		{
 			Name:  "non-existent-dashboard",
@@ -410,11 +471,13 @@ func TestExportSpecificResources_ResourceNotFound(t *testing.T) {
 		resourceClients.On("ForKind", mock.Anything, gvk).Return(dashboardClient, resources.DashboardResource, nil)
 	}
 
-	err := runExportSpecificResourcesTest(t, resourceRefs, folderItems, setupProgress, setupResources)
+	err := runExportSpecificResourcesTest(t, repoConfig, resourceRefs, folderItems, setupProgress, setupResources)
 	require.NoError(t, err)
 }
 
 func TestExportSpecificResources_DashboardVersionConversion(t *testing.T) {
+	repoConfig := createFolderSyncRepository()
+
 	resourceRefs := []provisioningV0.ResourceRef{
 		{
 			Name:  "v2-dashboard",
@@ -490,11 +553,13 @@ func TestExportSpecificResources_DashboardVersionConversion(t *testing.T) {
 			})).Return("grafana/v2-dashboard.json", nil)
 	}
 
-	err := runExportSpecificResourcesTest(t, resourceRefs, folderItems, setupProgress, setupResources)
+	err := runExportSpecificResourcesTest(t, repoConfig, resourceRefs, folderItems, setupProgress, setupResources)
 	require.NoError(t, err)
 }
 
 func TestExportSpecificResources_TooManyErrors(t *testing.T) {
+	repoConfig := createFolderSyncRepository()
+
 	resourceRefs := []provisioningV0.ResourceRef{
 		{
 			Name:  "dashboard-1",
@@ -537,6 +602,6 @@ func TestExportSpecificResources_TooManyErrors(t *testing.T) {
 			mock.Anything).Return("", fmt.Errorf("write error"))
 	}
 
-	err := runExportSpecificResourcesTest(t, resourceRefs, folderItems, setupProgress, setupResources)
+	err := runExportSpecificResourcesTest(t, repoConfig, resourceRefs, folderItems, setupProgress, setupResources)
 	require.EqualError(t, err, "too many errors")
 }
