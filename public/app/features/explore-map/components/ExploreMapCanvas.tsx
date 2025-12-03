@@ -8,9 +8,11 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { useTransformContext } from '../context/TransformContext';
 import { useCursorSync } from '../hooks/useCursorSync';
+import { useCursorViewportTracking } from '../hooks/useCursorViewportTracking';
 import { selectPanel as selectPanelCRDT, updateViewport as updateViewportCRDT, selectMultiplePanels as selectMultiplePanelsCRDT } from '../state/crdtSlice';
 import { selectPanels, selectViewport, selectCursors, selectSelectedPanelIds, selectMapUid } from '../state/selectors';
 
+import { EdgeCursorIndicator } from './EdgeCursorIndicator';
 import { ExploreMapComment } from './ExploreMapComment';
 import { ExploreMapPanelContainer } from './ExploreMapPanelContainer';
 import { UserCursor } from './UserCursor';
@@ -26,10 +28,12 @@ export function ExploreMapCanvas() {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { transformRef: contextTransformRef } = useTransformContext();
   const [selectionRect, setSelectionRect] = useState<SelectionRect | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const justCompletedSelectionRef = useRef(false);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   const panels = useSelector((state) => selectPanels(state.exploreMapCRDT));
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
@@ -42,6 +46,40 @@ export function ExploreMapCanvas() {
     mapUid: mapUid || '',
     enabled: !!mapUid,
   });
+
+  // Track cursor viewport positions for edge indicators
+  const cursorViewportInfo = useCursorViewportTracking({
+    cursors,
+    viewport,
+    transformRef: contextTransformRef,
+    containerWidth: containerSize.width,
+    containerHeight: containerSize.height,
+  });
+
+  // Track container size for viewport calculations
+  useEffect(() => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setContainerSize({ width: rect.width, height: rect.height });
+      }
+    };
+
+    // Initial size
+    updateSize();
+
+    // Update on resize
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   // Send selection update immediately when selection changes
   // Use position (0, 0) since we only care about the selection, not cursor position
@@ -248,7 +286,7 @@ export function ExploreMapCanvas() {
   );
 
   return (
-    <div className={styles.canvasWrapper} onMouseMove={handleCanvasMouseMove}>
+    <div ref={containerRef} className={styles.canvasWrapper} onMouseMove={handleCanvasMouseMove}>
       <TransformWrapper
         ref={contextTransformRef}
         initialScale={viewport.zoom}
@@ -287,9 +325,11 @@ export function ExploreMapCanvas() {
             {Object.values(panels).map((panel) => {
               return <ExploreMapPanelContainer key={panel.id} panel={panel} />;
             })}
-            {Object.values(cursors).map((cursor) => (
-              <UserCursor key={cursor.sessionId} cursor={cursor} zoom={viewport.zoom} />
-            ))}
+            {cursorViewportInfo
+              .filter((info) => info.isVisible)
+              .map((info) => (
+                <UserCursor key={info.cursor.sessionId} cursor={info.cursor} zoom={viewport.zoom} />
+              ))}
             {selectionRect && (
               <div
                 className={styles.selectionRect}
@@ -304,6 +344,12 @@ export function ExploreMapCanvas() {
           </div>
         </TransformComponent>
       </TransformWrapper>
+      {/* Render edge indicators for off-screen cursors */}
+      {cursorViewportInfo
+        .filter((info) => !info.isVisible)
+        .map((info) => (
+          <EdgeCursorIndicator key={info.cursor.sessionId} cursorInfo={info} />
+        ))}
       <ExploreMapComment />
     </div>
   );

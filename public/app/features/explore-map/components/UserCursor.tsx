@@ -56,9 +56,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       // Smooth transition matching the update frequency (100ms)
       // Using linear for more predictive movement
       // Also transition transform for smooth scaling when zoom changes
-      transition: 'left 0.1s linear, top 0.1s linear, transform 0.2s ease-out',
+      // Add opacity transition for smooth fade in/out when entering/leaving view
+      transition: 'left 0.1s linear, top 0.1s linear, transform 0.2s ease-out, opacity 0.2s ease-out',
       // Will-change hint for better performance
-      willChange: 'left, top, transform',
+      willChange: 'left, top, transform, opacity',
+      // Fade in animation
+      animation: 'fadeIn 0.2s ease-out',
+      '@keyframes fadeIn': {
+        from: {
+          opacity: 0,
+        },
+        to: {
+          opacity: 1,
+        },
+      },
     }),
     cursorSvg: css({
       display: 'block',
