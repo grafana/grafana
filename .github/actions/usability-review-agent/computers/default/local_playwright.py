@@ -66,7 +66,12 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
 
                 username_input.fill(grafana_username)
                 password_input.fill(grafana_password)
-                print("Credentials filled")
+                print(f"Credentials filled - username length: {len(grafana_username)}, password length: {len(grafana_password)}")
+
+                # Verify the values were actually filled
+                filled_username = username_input.input_value()
+                filled_password = password_input.input_value()
+                print(f"Verified filled values - username length: {len(filled_username)}, password length: {len(filled_password)}")
 
                 # Submit form and wait for navigation
                 submit_button = page.locator('button[type="submit"]').first
