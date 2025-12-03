@@ -405,7 +405,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 	}
 
 	// Not ideal, the alternative is to wrap both stores that dualwrite uses
-	regStoreDW, ok := dw.(*registry.Store)
+	regStoreDW, ok := dw.(storewrapper.K8sStorage)
 	if !ok {
 		return fmt.Errorf("expected RegistryStoreDualWrite, got %T", dw)
 	}
