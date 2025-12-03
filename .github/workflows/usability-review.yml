@@ -47,6 +47,7 @@ jobs:
             # Remove these if stack-users:write token becomes available
             GRAFANA_USERNAME=usability-review-agent:USERNAME
             GRAFANA_PASSWORD=usability-review-agent:PASSWORD
+            SLACK_WEBHOOK_URL=usability-review-agent:SLACK_WEBHOOK_URL
 
       - name: Verify credentials retrieved
         run: |
@@ -250,6 +251,8 @@ jobs:
           PYTHON
 
       - name: Run usability review agent
+        id: run-agent
+        continue-on-error: true
         uses: ./.github/actions/usability-review-agent
         with:
           target_url: ${{ env.TARGET_URL }}
@@ -260,6 +263,52 @@ jobs:
           prompt_file: "dynamic_prompt.txt"
           output_text_path: ${{ env.OUTPUT_TEXT_PATH }}
           screenshot_path: ${{ env.SCREENSHOT_PATH }}
+
+      - name: Post failure comment to PR
+        if: steps.run-agent.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # Try to determine the error reason
+          ERROR_SUMMARY="Unknown error occurred"
+
+          if [ -f login_error.png ]; then
+            ERROR_SUMMARY="Failed to log in to Grafana instance"
+          elif [ ! -f ${{ env.SCREENSHOT_PATH }} ] && [ ! -f login_page.png ]; then
+            ERROR_SUMMARY="Failed to connect to target URL: ${{ env.TARGET_URL }}"
+          elif [ -f ${{ env.SCREENSHOT_PATH }} ] && [ ! -s ${{ env.OUTPUT_TEXT_PATH }} ]; then
+            ERROR_SUMMARY="Agent connected but failed to generate review output"
+          fi
+
+          COMMENT_FILE=$(mktemp)
+
+          cat > "$COMMENT_FILE" <<EOF
+          ## ❌ Usability Review Failed
+
+          **Error:** ${ERROR_SUMMARY}
+
+          **Target URL:** ${{ env.TARGET_URL }}
+
+          ### Debug Information
+          - Check the [full workflow logs]($RUN_URL) for detailed error messages
+          - Screenshots and artifacts have been uploaded for debugging
+
+          ### 🔄 Retry
+          You can retry the usability review by:
+          1. Going to the [workflow run page]($RUN_URL)
+          2. Clicking the "Re-run failed jobs" button in the top right
+
+          Or remove and re-add the \`usability-review\` label to trigger a fresh run.
+
+          ---
+          📸 [View debug artifacts and screenshots]($RUN_URL)
+          EOF
+
+          gh pr comment $PR_NUMBER --body-file "$COMMENT_FILE"
+          rm "$COMMENT_FILE"
 
       - name: Upload review artifacts
         if: always()
@@ -275,7 +324,7 @@ jobs:
           retention-days: 7
 
       - name: Post review results to PR
-        if: always()
+        if: steps.run-agent.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -303,3 +352,265 @@ jobs:
 
           gh pr comment $PR_NUMBER --body-file "$COMMENT_FILE"
           rm "$COMMENT_FILE"
+
+      - name: Post individual suggestions as separate comments
+        if: steps.run-agent.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OUTPUT_TEXT_PATH: ${{ env.OUTPUT_TEXT_PATH }}
+        run: |
+          python3 <<'PYTHON'
+          import os
+          import subprocess
+          import re
+
+          # Read the AI output
+          output_path = os.environ['OUTPUT_TEXT_PATH']
+          if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+              print("No output file found, skipping individual comments")
+              exit(0)
+
+          with open(output_path, 'r') as f:
+              content = f.read()
+
+          # Extract table rows (skip header and separator)
+          table_pattern = r'\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|'
+          matches = re.findall(table_pattern, content)
+
+          if len(matches) < 3:
+              print(f"Not enough table rows found ({len(matches)}), skipping individual comments")
+              exit(0)
+
+          # Skip first 2 matches (header + separator)
+          issue_rows = matches[2:5]  # Get exactly 3 issues
+
+          pr_number = os.environ['PR_NUMBER']
+
+          for severity, issue, impact, suggestion in issue_rows:
+              # Clean up whitespace
+              severity = severity.strip()
+              issue = issue.strip()
+              impact = impact.strip()
+              suggestion = suggestion.strip()
+
+              # Create individual comment
+              comment = f"""### {severity}: {issue}
+
+**Impact:** {impact}
+
+**Suggestion:** {suggestion}
+
+---
+_Posted by Usability Review Agent_"""
+
+              # Post comment
+              subprocess.run(
+                  ['gh', 'pr', 'comment', pr_number, '--body', comment],
+                  check=True
+              )
+              print(f"Posted comment for: {issue}")
+
+          PYTHON
+
+      - name: Send Slack notification on success
+        if: steps.run-agent.outcome == 'success'
+        env:
+          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          OUTPUT_TEXT_PATH: ${{ env.OUTPUT_TEXT_PATH }}
+        run: |
+          python3 <<'PYTHON'
+          import os
+          import json
+          import subprocess
+          import re
+
+          # Read the AI output to extract issues
+          with open(os.environ['OUTPUT_TEXT_PATH'], 'r') as f:
+              content = f.read()
+
+          # Extract the summary section
+          summary_match = re.search(r'## Summary\s*\n(.*?)(?=\n##|\Z)', content, re.DOTALL)
+          summary = summary_match.group(1).strip() if summary_match else "No summary available"
+
+          # Extract table rows for issues
+          table_pattern = r'\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|'
+          matches = re.findall(table_pattern, content)
+
+          # Build issues text
+          issues_text = ""
+          if len(matches) >= 3:
+              issue_rows = matches[2:5]  # Skip header rows
+              for severity, issue, impact, suggestion in issue_rows:
+                  severity = severity.strip()
+                  issue = issue.strip()
+                  suggestion = suggestion.strip()
+                  issues_text += f"• *{severity}*: {issue}\n  → {suggestion}\n"
+          else:
+              issues_text = "No specific issues found"
+
+          pr_number = os.environ['PR_NUMBER']
+          pr_title = os.environ['PR_TITLE']
+          pr_url = os.environ['PR_URL']
+          pr_author = os.environ['PR_AUTHOR']
+
+          # Build Slack message
+          slack_payload = {
+              "channel": "#hackathon15-agentic-usability-review",
+              "username": "Usability Review Agent",
+              "icon_emoji": ":mag:",
+              "blocks": [
+                  {
+                      "type": "header",
+                      "text": {
+                          "type": "plain_text",
+                          "text": f"✅ Usability Review Complete: PR #{pr_number}",
+                          "emoji": True
+                      }
+                  },
+                  {
+                      "type": "section",
+                      "text": {
+                          "type": "mrkdwn",
+                          "text": f"*<{pr_url}|{pr_title}>*\nby @{pr_author}"
+                      }
+                  },
+                  {
+                      "type": "section",
+                      "text": {
+                          "type": "mrkdwn",
+                          "text": f"*Summary*\n{summary}"
+                      }
+                  },
+                  {
+                      "type": "section",
+                      "text": {
+                          "type": "mrkdwn",
+                          "text": f"*Issues & Suggestions*\n{issues_text}"
+                      }
+                  },
+                  {
+                      "type": "actions",
+                      "elements": [
+                          {
+                              "type": "button",
+                              "text": {
+                                  "type": "plain_text",
+                                  "text": "View Full Review",
+                                  "emoji": True
+                              },
+                              "url": pr_url
+                          }
+                      ]
+                  }
+              ]
+          }
+
+          # Send to Slack
+          webhook_url = os.environ['SLACK_WEBHOOK_URL']
+          subprocess.run(
+              ['curl', '-X', 'POST', '-H', 'Content-type: application/json',
+               '--data', json.dumps(slack_payload), webhook_url],
+              check=True
+          )
+          print("Slack notification sent successfully")
+          PYTHON
+
+      - name: Send Slack notification on failure
+        if: steps.run-agent.outcome == 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python3 <<'PYTHON'
+          import os
+          import json
+          import subprocess
+
+          # Determine error summary
+          error_summary = "Unknown error occurred"
+          if os.path.exists("login_error.png"):
+              error_summary = "Failed to log in to Grafana instance"
+          elif not os.path.exists(os.environ.get('SCREENSHOT_PATH', 'usability-screenshot.png')) and not os.path.exists("login_page.png"):
+              error_summary = "Failed to connect to target URL"
+          elif os.path.exists(os.environ.get('SCREENSHOT_PATH', 'usability-screenshot.png')) and not os.path.getsize(os.environ.get('OUTPUT_TEXT_PATH', 'usability-review.txt')):
+              error_summary = "Agent connected but failed to generate review output"
+
+          pr_number = os.environ['PR_NUMBER']
+          pr_title = os.environ['PR_TITLE']
+          pr_url = os.environ['PR_URL']
+          pr_author = os.environ['PR_AUTHOR']
+          run_url = os.environ['RUN_URL']
+
+          # Build Slack message
+          slack_payload = {
+              "channel": "#hackathon15-agentic-usability-review",
+              "username": "Usability Review Agent",
+              "icon_emoji": ":x:",
+              "blocks": [
+                  {
+                      "type": "header",
+                      "text": {
+                          "type": "plain_text",
+                          "text": f"❌ Usability Review Failed: PR #{pr_number}",
+                          "emoji": True
+                      }
+                  },
+                  {
+                      "type": "section",
+                      "text": {
+                          "type": "mrkdwn",
+                          "text": f"*<{pr_url}|{pr_title}>*\nby @{pr_author}"
+                      }
+                  },
+                  {
+                      "type": "section",
+                      "text": {
+                          "type": "mrkdwn",
+                          "text": f"*Error*\n{error_summary}"
+                      }
+                  },
+                  {
+                      "type": "actions",
+                      "elements": [
+                          {
+                              "type": "button",
+                              "text": {
+                                  "type": "plain_text",
+                                  "text": "View Logs & Retry",
+                                  "emoji": True
+                              },
+                              "url": run_url,
+                              "style": "danger"
+                          },
+                          {
+                              "type": "button",
+                              "text": {
+                                  "type": "plain_text",
+                                  "text": "View PR",
+                                  "emoji": True
+                              },
+                              "url": pr_url
+                          }
+                      ]
+                  }
+              ]
+          }
+
+          # Send to Slack
+          webhook_url = os.environ['SLACK_WEBHOOK_URL']
+          subprocess.run(
+              ['curl', '-X', 'POST', '-H', 'Content-type: application/json',
+               '--data', json.dumps(slack_payload), webhook_url],
+              check=True
+          )
+          print("Slack failure notification sent successfully")
+          PYTHON
