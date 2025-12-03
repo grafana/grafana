@@ -104,7 +104,7 @@
             "uid": "existing-ref-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "__legacyStringValue": "label_values(up, instance)"
             }
@@ -318,6 +318,19 @@
         }
       },
       {
+        "kind": "SwitchVariable",
+        "spec": {
+          "name": "switch_var",
+          "current": "false",
+          "enabledValue": "true",
+          "disabledValue": "false",
+          "label": "Enable Feature",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Toggle feature on/off"
+        }
+      },
+      {
         "kind": "QueryVariable",
         "spec": {
           "name": "legacy_string_var",
@@ -335,7 +348,7 @@
             "uid": "existing-ref-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "__legacyStringValue": "up"
             }
@@ -374,7 +387,7 @@
             "uid": "existing-target-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "elasticsearch",
             "spec": {
               "bucketAggs": [
                 {

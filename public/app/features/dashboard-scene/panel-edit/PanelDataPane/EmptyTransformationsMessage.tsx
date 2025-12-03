@@ -25,6 +25,9 @@ const TRANSFORMATION_IDS = [
   DataTransformerID.filterByValue,
 ];
 
+const GRID_COLUMNS_WITH_SQL = 5;
+const GRID_COLUMNS_WITHOUT_SQL = 4;
+
 export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPicker: () => void }) {
   return (
     <Box alignItems="center" padding={4}>
@@ -89,14 +92,17 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
     props.onShowPicker();
   };
 
+  const showSqlCard = hasGoToQueries && config.featureToggles.sqlExpressions;
+  const gridColumns = showSqlCard ? GRID_COLUMNS_WITH_SQL : GRID_COLUMNS_WITHOUT_SQL;
+
   return (
     <Box alignItems="center" padding={4}>
       <Stack direction="column" alignItems="center" gap={4}>
         {(hasAddTransformation || hasGoToQueries) && (
-          <Grid columns={5} gap={1}>
-            {hasGoToQueries && (
+          <Grid columns={gridColumns} gap={1}>
+            {showSqlCard && (
               <SqlExpressionCard
-                name={t('dashboard-scene.empty-transformations-message.sql-name', 'SQL Expressions')}
+                name={t('dashboard-scene.empty-transformations-message.sql-name', 'Transform with SQL')}
                 description={t(
                   'dashboard-scene.empty-transformations-message.sql-transformation-description',
                   'Manipulate your data using MySQL-like syntax'

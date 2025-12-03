@@ -24,6 +24,8 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
+import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -95,6 +97,7 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
 
   return null;
 }
+
 export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
     return null;
@@ -257,8 +260,15 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultVizPanel(): VizPanel {
-  const defaultPluginId = config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
-  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
+  const defaultPluginId =
+    config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
+      ? UNCONFIGURED_PANEL_PLUGIN_ID
+      : 'timeseries';
+
+  const newPanelTitle =
+    config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
+      ? ''
+      : t('dashboard.new-panel-title', 'New panel');
 
   return new VizPanel({
     title: newPanelTitle,
@@ -267,9 +277,15 @@ export function getDefaultVizPanel(): VizPanel {
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
     $behaviors: [],
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
     extendPanelContext: setDashboardPanelContext,
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
+    }),
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
     }),
     $data: new SceneDataTransformer({
       $data: new SceneQueryRunner({

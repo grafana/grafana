@@ -303,9 +303,7 @@ test.describe(
 
       const repeatedPanelUrl = page.url();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      await page.keyboard.press('Escape');
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`))

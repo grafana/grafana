@@ -162,7 +162,7 @@ describe('NavToolbarActions', () => {
         await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
         expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
           dashboardUid: 'dash-1',
-          outlineExpanded: false,
+          outlineExpanded: true,
         });
       });
 

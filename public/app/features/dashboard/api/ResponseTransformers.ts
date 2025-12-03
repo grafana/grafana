@@ -1,7 +1,6 @@
-import { MetricFindValue, TypedVariableModel } from '@grafana/data';
+import { MetricFindValue, TypedVariableModel, AnnotationQuery } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  AnnotationQuery,
   DataQuery,
   DataSourceRef,
   Panel,
@@ -34,6 +33,7 @@ import {
   IntervalVariableKind,
   TextVariableKind,
   GroupByVariableKind,
+  SwitchVariableKind,
   LibraryPanelKind,
   PanelKind,
   GridLayoutItemKind,
@@ -215,6 +215,7 @@ export function ensureV2Response(
       keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
       includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
       targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
+      ...(link.placement !== undefined && { placement: link.placement }),
     })),
     annotations,
     variables,
@@ -809,6 +810,29 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
 
         variables.push(gb);
         break;
+      case 'switch':
+        // V1 switch variables have options array with exactly 2 options
+        // First option is typically enabledValue, second is disabledValue
+        const options = v.options ?? [];
+        const enabledValueRaw = options[0]?.value ?? 'true';
+        const disabledValueRaw = options[1]?.value ?? 'false';
+        const enabledValue = Array.isArray(enabledValueRaw) ? enabledValueRaw[0] : enabledValueRaw;
+        const disabledValue = Array.isArray(disabledValueRaw) ? disabledValueRaw[0] : disabledValueRaw;
+        // Current value should be a string (not array)
+        const currentValueRaw = v.current?.value ?? disabledValue;
+        const currentValue = Array.isArray(currentValueRaw) ? currentValueRaw[0] : currentValueRaw;
+
+        const sw: SwitchVariableKind = {
+          kind: 'SwitchVariable',
+          spec: {
+            ...commonProperties,
+            current: currentValue,
+            enabledValue,
+            disabledValue,
+          },
+        };
+        variables.push(sw);
+        break;
       default:
         // do not throw error, just log it
         console.error(`Variable transformation not implemented: ${v.type}`);
@@ -820,7 +844,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
 function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annotations'] {
   return annotations.map((a) => {
     // Extract properties that are explicitly handled
-    const { name, enable, hide, iconColor, builtIn, datasource, target, filter, ...legacyOptions } = a;
+    const { name, enable, hide, iconColor, builtIn, datasource, target, filter, mappings, ...legacyOptions } = a;
 
     const aq: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
@@ -830,6 +854,7 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
         hide: Boolean(hide),
         iconColor: iconColor,
         builtIn: Boolean(builtIn),
+        ...(mappings && { mappings: transformAnnotationMappingsV1ToV2(mappings) }),
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
@@ -996,6 +1021,29 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           defaultKeys: v.spec.defaultKeys,
         };
         variables.push(av);
+        break;
+      case 'SwitchVariable':
+        const sv: VariableModel = {
+          ...commonProperties,
+          current: {
+            text: v.spec.current,
+            value: v.spec.current,
+          },
+          options: [
+            {
+              text: v.spec.enabledValue,
+              value: v.spec.enabledValue,
+              selected: v.spec.current === v.spec.enabledValue,
+            },
+            {
+              text: v.spec.disabledValue,
+              value: v.spec.disabledValue,
+              selected: v.spec.current === v.spec.disabledValue,
+            },
+          ],
+          query: '',
+        };
+        variables.push(sv);
         break;
       default:
         // do not throw error, just log it
@@ -1256,6 +1304,8 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
       return 'groupby';
     case 'AdhocVariable':
       return 'adhoc';
+    case 'SwitchVariable':
+      return 'switch';
     default:
       throw new Error(`Unknown variable type: ${variable}`);
   }
@@ -1298,4 +1348,26 @@ export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: Ob
     panels,
     templating: { list: variables },
   };
+}
+
+export function transformAnnotationMappingsV1ToV2(
+  mappings: AnnotationQuery['mappings']
+): AnnotationQueryKind['spec']['mappings'] {
+  if (!mappings) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(mappings).map(([key, value]) => {
+      if (typeof value === 'string') {
+        return [key, { source: 'field', value }];
+      }
+
+      if (typeof value === 'object') {
+        return [key, value.source ? value : { source: 'field', ...value }];
+      }
+
+      return [key, value];
+    })
+  );
 }

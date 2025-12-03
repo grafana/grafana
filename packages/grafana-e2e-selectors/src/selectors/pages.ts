@@ -85,6 +85,9 @@ export const versionedPages = {
     dataSources: {
       [MIN_GRAFANA_VERSION]: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
     },
+    dataSourceAddButton: {
+      '12.4.0': 'data-testid data-source-add-button',
+    },
   },
   EditDataSource: {
     url: {
@@ -179,6 +182,14 @@ export const versionedPages = {
   Dashboard: {
     url: {
       [MIN_GRAFANA_VERSION]: (uid: string) => `/d/${uid}`,
+    },
+    Sidebar: {
+      optionsButton: {
+        '12.4.0': 'data-testid Dashboard Sidebar options button',
+      },
+      outlineButton: {
+        '12.4.0': 'data-testid Dashboard Sidebar outline button',
+      },
     },
     DashNav: {
       nav: {

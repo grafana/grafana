@@ -10,6 +10,10 @@ import {
 } from 'app/features/alerting/unified/mocks';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
 setPluginLinksHook(() => ({
   links: [],
   isLoading: false,

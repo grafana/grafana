@@ -13,6 +13,8 @@ import (
 
 func Convert_V1beta1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv0.APIVERSION
+	out.Kind = in.Kind
 
 	out.Spec.Object = in.Spec.Object
 
@@ -25,8 +27,8 @@ func Convert_V1beta1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope co
 	return nil
 }
 
-func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider) error {
-	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, out, scope, dsIndexProvider); err != nil {
+func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
+	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, out, scope, dsIndexProvider, leIndexProvider); err != nil {
 		out.Status = dashv2alpha1.DashboardStatus{
 			Conversion: &dashv2alpha1.DashboardConversionStatus{
 				StoredVersion: ptr.To(dashv1.VERSION),
@@ -60,9 +62,9 @@ func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboa
 	return nil
 }
 
-func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider) error {
+func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
 	v2alpha1 := &dashv2alpha1.Dashboard{}
-	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, v2alpha1, scope, dsIndexProvider); err != nil {
+	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, v2alpha1, scope, dsIndexProvider, leIndexProvider); err != nil {
 		out.Status = dashv2beta1.DashboardStatus{
 			Conversion: &dashv2beta1.DashboardConversionStatus{
 				StoredVersion: ptr.To(dashv1.VERSION),

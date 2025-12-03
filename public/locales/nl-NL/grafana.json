@@ -477,6 +477,7 @@
       "noOptionsMessage-no-datasources-found": "Geen gegevensbronnen gevonden"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "Link kopiëren",
       "duplicate": "Dupliceren",
       "export": "Exporteren",
@@ -1982,9 +1983,11 @@
     },
     "notification-preview": {
       "alertmanager": "Waarschuwingsmanager:",
-      "disabled-tooltip": "",
       "error": "Kon routeringsvoorbeeld niet laden voor {{alertmanager}}",
       "initialized": "Op basis van de toegevoegde labels worden waarschuwingsinstanties gerouteerd naar het volgende meldingsbeleid. Vouw elk meldingsbeleid hieronder uit voor meer informatie.",
+      "no-condition-tooltip": "",
+      "permission-warning": "",
+      "permission-warning-message": "",
       "preview-routing": "Voorbeeld routering",
       "select-folder-tooltip": "",
       "text-loading-preview": "Voorbeeldweergave laden...",
@@ -2079,7 +2082,7 @@
         "warning-1": "Als je dit meldingsbeleid verwijdert, wordt dit permanent verwijderd.",
         "warning-2": "Weet je zeker dat je dit beleid wil verwijderen?"
       },
-      "filter-description": "",
+      "filter-description": "Filter meldingsbeleid met behulp van een door komma's gescheiden lijst met matchers, bijv.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Automatisch gegenereerd beleid",
       "matchers": "Matchers",
       "metadata": {
@@ -2598,8 +2601,7 @@
         "firing": "Geactiveerd",
         "normal": "Normaal",
         "pending": "In afwachting",
-        "recovering": "Herstellen",
-        "unknown": "Onbekend"
+        "recovering": "Herstellen"
       },
       "type": {
         "alert": "Waarschuwingsregel",
@@ -2623,15 +2625,20 @@
         "placeholder-search-input": "Zoeken op naam of filterquery invoeren..."
       },
       "grafana-folder": "Grafana-map",
+      "group-no-results": "",
+      "group-search-error": "",
+      "group-search-prompt": "",
       "health": "Gezondheid",
       "label": {
         "hide": "Verbergen",
         "show": "Tonen"
       },
       "manage-alerts": "In deze gegevensbronnen kun je waarschuwingen beheren via de waarschuwingsinterface om deze waarschuwingsregels te kunnen beheren in de Grafana-gebruikersinterface en in de gegevensbron waar ze zijn geconfigureerd.",
+      "namespace-autocomplete-unavailable": "",
       "placeholder-all-data-sources": "Alle gegevensbronnen",
       "placeholder-contact-point": "Contactpunt selecteren",
       "placeholder-data-sources": "Gegevensbronnen selecteren",
+      "placeholder-group-search": "",
       "placeholder-labels": "Labels selecteren",
       "plugin-rules": "Plug-inregels",
       "rule-source": {
@@ -2805,7 +2812,7 @@
     "template-data-docs": {
       "alert-template-data-table": {
         "alert-template-data": "Waarschuwingssjabloongegevens",
-        "only-in-alert": "Alleen beschikbaar in de context van een waarschuwing (bijv. in .Waarschuwingslus)"
+        "only-in-alert": ""
       },
       "available-context-notification": "Beschikbaar in het kader van een melding.",
       "notification-template-data": "Meldingssjabloongegevens"
@@ -3242,7 +3249,7 @@
       "auth-settings": "Auth-instellingen"
     },
     "auth-drawer-unconneced": {
-      "subtitle": ""
+      "subtitle": "Auth-instellingen configureren. Lees meer in onze <2>documentatie</2>."
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Geavanceerde auth",
@@ -3276,7 +3283,7 @@
       "allowed-organizations-description": "Lijst van door komma's of spaties gescheiden organisaties. De gebruiker moet lid zijn van ten minste\néén organisatie om in te loggen.",
       "allowed-organizations-label": "Toegestane organisaties",
       "allowed-organizations-placeholder": "Voer organisaties in (my-team, myteam...) en druk op Enter om toe te voegen",
-      "api-url-description": "",
+      "api-url-description": "Het eindpunt voor gebruikersinformatie van je OAuth2-provider. Informatie die door dit eindpunt wordt geretourneerd, moet compatibel zijn met <2>OpenID-gebruikersinformatie</2>.",
       "api-url-required": "Dit veld moet een geldige URL zijn, indien ingesteld.",
       "auth-style-description": "Het bepaalt hoe '{{ clientIDLabel }}' en '{{ clientSecretLabel }}' worden verzonden naar de Oauth2-provider. Standaard is AutoDetect.",
       "auth-style-label": "Auth-stijl",
@@ -3421,7 +3428,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": ""
+    "subtitle": "Je auth-instellingen beheren en single sign-on configureren. Lees meer in onze <2>documentatie</2>."
   },
   "bar-chart": {
     "warn": {
@@ -3470,6 +3477,14 @@
         "label-negative-y": "Negatieve Y"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Ruimte van de rechterkant vereisen",
       "gaps-options": {
@@ -3514,6 +3529,10 @@
     },
     "name-show-unfilled-area": "Niet-gevuld gebied weergeven",
     "name-value-display": "Weergave van waarden",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "Verborgen",
       "label-text-color": "Tekstkleur",
@@ -3540,6 +3559,7 @@
       "delete-modal-invalid-title": "Kan de map niet verwijderen",
       "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Met deze actie wordt de volgende inhoud verwijderd:",
+      "delete-modal-text-one-folder": "",
       "delete-modal-title": "Verwijderen",
       "delete-provisioned-folder": "Geprovisioneerde map verwijderen",
       "deleting": "Bezig met verwijderen ...",
@@ -3548,6 +3568,7 @@
       "move-modal-alert": "Het verplaatsen van dit item kan de toestemmingen wijzigen.",
       "move-modal-field-label": "Mapnaam",
       "move-modal-text": "Met deze actie wordt de volgende inhoud verplaatst:",
+      "move-modal-text-one-folder": "",
       "move-modal-title": "Verplaatsen",
       "move-provisioned-folder": "",
       "moving": "Bezig met verplaatsen ...",
@@ -3635,11 +3656,11 @@
       "title-folder": "Deze map heeft nog geen dashboards"
     },
     "folder-actions-button": {
-      "delete": "Verwijderen",
+      "delete": "",
       "delete-folder-error": "Fout bij verwijderen van map. Probeer het later opnieuw.",
       "folder-actions": "Mapacties",
       "manage-permissions": "Toestemmingen beheren",
-      "move": "Verplaatsen"
+      "move": ""
     },
     "folder-picker": {
       "accessible-label": "Map selecteren: {{ label }} is momenteel geselecteerd",
@@ -4164,6 +4185,7 @@
     "clear": "Wissen",
     "collapse": "Samenvouwen",
     "disabled": "",
+    "discard": "",
     "edit": "Bewerken",
     "help": "Help",
     "loading": "Bezig met laden ...",
@@ -4781,7 +4803,6 @@
         "variable": "{{type}}variabele",
         "variable-set": "Variabelen"
       },
-      "open": "Deelvenster Opties openen",
       "row": {
         "header": {
           "hide": "Verbergen",
@@ -4839,7 +4860,7 @@
       "add-visualization-body": "Selecteer een gegevensbron en zoek en visualiseer je gegevens met grafieken, statistieken en tabellen of maak lijsten, prijsverlagingen en andere widgets.",
       "add-visualization-button": "Visualisatie toevoegen",
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
-      "import-a-dashboard-body": "",
+      "import-a-dashboard-body": "Importeer dashboards uit bestanden of <1>grafana.com</1>.",
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
       "show-less-dashboards": "",
@@ -5095,8 +5116,12 @@
     "new-panel": {
       "configure-button": "Configureren",
       "configure-button-menu": "Navigatiemenu",
+      "empty-state-message": "",
       "menu-open-panel-editor": "Configureren",
-      "menu-use-library-panel": "Bibliotheekpaneel gebruiken"
+      "menu-use-library-panel": "Bibliotheekpaneel gebruiken",
+      "suggestions": {
+        "empty-state-message": ""
+      }
     },
     "new-panel-title": "Nieuw paneel",
     "on-create-new-row": {
@@ -5128,6 +5153,7 @@
       "title-matched_other": "{{count}} overeenkomende/{{totalCount}} opties"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "Herhalen",
       "tree-item": {
         "empty": "(leeg)",
@@ -5158,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Alleen overschrijvingen weergeven",
       "placeholder-search-options": "Zoekopties",
-      "visualization-button-label": "Visualisatie",
       "visualization-button-tooltip": "Zoekopties"
     },
     "panel-editor-table-view": {
@@ -5339,9 +5364,39 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "Configuratie laden"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "Dashboard laden en initialiseren",
       "title-not-found": "Paneel met id {{panelId}} niet gevonden"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Sjabloonvariabelen"
@@ -5442,11 +5497,8 @@
           "tooltip": "Dit dashboard is gemarkeerd als alleen lezen"
         },
         "export": {
-          "arrow": "Exporteren",
-          "title": "Exporteren",
           "tooltip": {
-            "as-code": "Exporteren als code",
-            "json": "Exporteren als JSON"
+            "as-code": "Exporteren als code"
           }
         },
         "more-save-options": "Meer opties voor opslaan",
@@ -5498,6 +5550,9 @@
       "save-library-panel": "Bibliotheekpaneel",
       "settings": "Dashboardinstellingen",
       "share-button": "Delen",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5826,9 +5881,6 @@
       "custom-options": "Aangepaste opties",
       "name-values-separated-comma": "Waarden gescheiden door komma",
       "selection-options": "Selectiemogelijkheden"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "Schetsen"
     },
     "dashboard-link-form": {
       "back-to-list": "Terug naar lijst",
@@ -6170,11 +6222,14 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Zoeken naar...",
       "radio-options": {
         "label": {
-          "suggestions": "Suggesties",
-          "visualizations": "Visualisaties"
+          "all-visualizations": "",
+          "suggestions": "Suggesties"
         }
       },
       "title-close": "Sluiten"
@@ -6481,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Visualisatie wijzigen",
-      "tooltip-click-to-change-visualization": "Klik om de visualisatie te wijzigen"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Querydeelvenster openen",
@@ -6614,7 +6669,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klik <2>hier</2> voor meer informatie over deze fout.",
-    "success-more-details-links": ""
+    "success-more-details-links": "Vervolgens kun je beginnen met het visualiseren van gegevens door <2> een dashboard te bouwen </2> of door gegevens op te vragen in de <5> Verkennen-weergave</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6710,7 +6765,7 @@
       "test": "Testen"
     },
     "cloud-info-box": {
-      "body-alert": "",
+      "body-alert": "Of bespaar je de moeite en krijg {{mainDS}} (en {{extraDS}}) als volledig beheerde, schaalbare en gehoste gegevensbronnen van Grafana Labs met het <6>altijd gratis Grafana Cloud-abonnement</6>.",
       "title-alert": "Configureer hieronder je gegevensbron voor {{mainDS}}"
     },
     "dashboards-table": {
@@ -7215,6 +7270,7 @@
       "logs-volume": {
         "add-filters": "Voeg meer labels toe aan je query om je zoekopdracht te verfijnen.",
         "decrease-timerange": "Verkort het tijdsbereik van je query.",
+        "max-bytes-error": "",
         "much-data": "De query probeert toegang te krijgen tot te veel gegevens. Probeer een of meer van de volgende oplossingen:"
       },
       "maximum-pinned-logs": "Maximum aantal van {{PINNED_LOGS_LIMIT}} vastgezette logs bereikt. Maak een logboek los om een ander toe te voegen.",
@@ -7264,16 +7320,20 @@
       "tooltip-select-query-visualize-table": "Selecteer een query om te visualiseren in de tabel"
     },
     "logs-volume-panel": {
-      "content-streaming": "Streamen"
+      "content-streaming": "Streamen",
+      "partial-data-tips": ""
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "Logvolume opnieuw laden",
       "label-reload-log-volume": "Logvolume opnieuw laden",
       "loading": "Laden...",
+      "message-showing-partial-data-max-bytes": "",
+      "message-showing-partial-data-timeout": "",
       "title-failed-volume-query": "Kan het logvolume voor deze query niet laden",
       "title-no-logs-volume-available": "Geen logvolume beschikbaar",
       "title-showing-partial-data": "Gedeeltelijke gegevens weergeven",
-      "title-unable-to-show-log-volume": "Kan logvolume niet weergeven"
+      "title-unable-to-show-log-volume": "Kan logvolume niet weergeven",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Geen volume-informatie beschikbaar voor de huidige query's en het huidige tijdbereik."
@@ -7691,7 +7751,7 @@
     "math": {
       "available-math-functions": "Beschikbare wiskundige functies",
       "run-math-operations": "",
-      "tooltip-footer": "",
+      "tooltip-footer": "Zie onze aanvullende documentatie over <2>wiskundige expressies</2>.",
       "tooltip-title": "Wiskundige operator",
       "tooltip-trigger": "Expressie"
     },
@@ -7717,10 +7777,23 @@
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10s, 1m, 30m, 1u"
     },
+    "schema-inspector-panel": {
+      "aria-label-close-schema-inspector": ""
+    },
     "sql-expr": {
       "button-run-query": "Query uitvoeren",
       "modal-title": "SQL-editor",
       "tooltip-experimental": "SQL Expressions LLM-integratie is experimenteel. Meld eventuele problemen aan het Grafana-team."
+    },
+    "sql-schema": {
+      "close-schema-inspector": "",
+      "error-title": "",
+      "inspect-button": "",
+      "loading": "",
+      "no-data-title": "",
+      "no-fields-desc": "",
+      "no-fields-title": "",
+      "query-error-title": ""
     },
     "threshold": {
       "label-input": "Invoer"
@@ -7792,6 +7865,15 @@
     "name-show-threshold-labels": "Drempellabels weergeven",
     "name-show-threshold-markers": "Drempelmarkeringen weergeven",
     "placeholder-neutral": "automatisch",
+    "suggestions": {
+      "arc": "",
+      "circular": "",
+      "no-thresholds": "",
+      "style": {
+        "circular": "",
+        "simple": ""
+      }
+    },
     "threshold": ""
   },
   "gen-ai": {
@@ -8083,14 +8165,6 @@
         }
       }
     }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "Ga terug"
-      }
-    },
-    "select-group": "Groep selecteren"
   },
   "grafana-data": {
     "datetime": {
@@ -8578,7 +8652,13 @@
       "saving": "Opslaan <1></1>"
     },
     "axis-builder": {
-      "linear-threshold": "Lineaire drempel",
+      "linear-threshold": {
+        "label": "",
+        "warning": {
+          "nan": "",
+          "zero": ""
+        }
+      },
       "log-base": "Logboekbase"
     },
     "builder": {
@@ -8984,6 +9064,11 @@
     "series-color-picker-popover": {
       "y-axis-usage": "Rechter y-as gebruiken"
     },
+    "sidebar": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "slider": {
       "drag-handle-aria-label": ""
     },
@@ -9002,6 +9087,13 @@
       "copy": "Naar klembord kopiëren",
       "csv-counts": "",
       "csv-placeholder": "Voer hier csv in ...",
+      "filter": {
+        "add-all": "",
+        "remove-all": "",
+        "select-all": "",
+        "selected": "",
+        "selected-some-hidden": ""
+      },
       "filter-placeholder": "Filter waarden",
       "filter-popup-apply": "Ok",
       "filter-popup-aria-label-match-case": "Case matchen",
@@ -9268,6 +9360,7 @@
       "toggle-panel-edit": "Paneelbewerkingsweergave in-/uitschakelen",
       "toggle-panel-fullscreen": "Paneelweergave volledig scherm in-/uitschakelen",
       "toggle-panel-legend": "Paneellegenda in-/uitschakelen",
+      "zoom-in-time-range": "",
       "zoom-out-time-range": "Tijdsbereik uitzoomen"
     },
     "title": "Snelkoppelingen"
@@ -9943,11 +10036,7 @@
       "wrap-lines": "Lijnen omsluiten"
     },
     "logs-navigation": {
-      "newer-logs": "Nieuwere logboeken",
-      "older-logs": "Oudere logboeken",
-      "scroll-bottom": "Naar beneden scrollen",
-      "scroll-top": "Naar boven scrollen",
-      "start-of-range": "Begin van het bereik"
+      "scroll-top": "Naar boven scrollen"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -10892,10 +10981,10 @@
       "placeholder-optional": "(optioneel)",
       "role": "Rol",
       "submit": "Verzenden",
-      "tooltip": ""
+      "tooltip": "Je kunt nu de optie 'Geen basisrol' selecteren en toestemmingen toevoegen aan je aangepaste behoeften. Meer informatie vind je in <1>onze documentatie</1>."
     },
     "user-invite-page": {
-      "sub-title": "",
+      "sub-title": "Stuur uitnodiging of voeg een bestaande Grafana-gebruiker toe aan de organisatie.<1> {{orgName}}</1>",
       "text": {
         "invite-user": "Gebruiker uitnodigen"
       }
@@ -11001,12 +11090,23 @@
       "tooltip-delete": "Verwijderen"
     },
     "visualization-suggestions": {
-      "based-on-current-data": "Op basis van huidige gegevens",
-      "no-results-matched-your-query": "Geen resultaten gevonden voor je query"
+      "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
+      "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Kon niets vinden dat overeenkomt met je query"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Types wissen",
@@ -11034,6 +11134,10 @@
     "pie-chart-type-options": {
       "label-donut": "Donut",
       "label-pie": "Taart"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -11617,13 +11721,6 @@
       "saving": "Opslaan",
       "title-error-loading-file": "Er is een fout opgetreden bij het laden van het bestand"
     },
-    "files-view": {
-      "columns": {
-        "history": "Geschiedenis",
-        "view": "Weergave"
-      },
-      "placeholder-search": "Zoeken"
-    },
     "finish-step": {
       "description-enable-previews": "Voegt een afbeeldingsvoorbeeld toe van dashboardwijzigingen in pull requests. Afbeeldingen van je Grafana-dashboards worden gedeeld in je Git-repository en zijn zichtbaar voor iedereen met toegang tot de repository.",
       "description-generate-dashboard-previews": "Voorbeeldlinks maken voor pull-verzoeken",
@@ -11834,9 +11931,6 @@
       "source-code": "Broncode"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Alleen lezen",
       "settings": "Instellingen",
       "view": "Weergave"
@@ -11873,14 +11967,6 @@
       "webhook-last-event": "Laatste gebeurtenis:",
       "webhook-url": "Webhook bekijken"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Geschiedenis",
-        "view-dashboard": "Weergave",
-        "view-folder": "Weergave"
-      },
-      "placeholder-search": "Zoeken"
-    },
     "repository-status-page": {
       "back-to-repositories": "Terug naar repositories",
       "cleaning-up-resources": "Bronnen van repository opschonen",
@@ -11888,12 +11974,10 @@
       "not-found": "niet gevonden",
       "not-found-message": "Repository niet gevonden",
       "repository-config-exists-configuration": "Zorg ervoor dat de repository-configuratie in het configuratiebestand bestaat.",
-      "tab-files": "Bestanden",
-      "tab-files-title": "De lijst met onbewerkte bestanden uit de repository",
       "tab-overview": "Overzicht",
       "tab-overview-title": "Repository-overzicht",
       "tab-resources": "Bronnen",
-      "tab-resources-title": "Bronnen opgeslagen in Grafana-database",
+      "tab-resources-title": "",
       "title": "Repository-status",
       "title-legacy-storage": "Legacy-opslag",
       "title-queued-for-deletion": "In de wachtrij voor verwijdering"
@@ -11915,6 +11999,17 @@
       "local-description": "Bestandsprovisioning configureren",
       "pure-git": "Pure Git",
       "pure-git-description": "Verbinden met elke Git-repository"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Basis",
@@ -12347,7 +12442,7 @@
     },
     "menu": {
       "clear-button": "Alles wissen",
-      "tooltip": ""
+      "tooltip": "Je kunt nu de optie 'Geen basisrol' selecteren en toestemmingen toevoegen aan je aangepaste behoeften. Meer informatie vind je in <1>onze documentatie</1>."
     },
     "menu-aria-label": "Menu rolkiezer",
     "menu-group-option-aria-label": "Optie rolkiezer",
@@ -12406,8 +12501,10 @@
       "cancel": "Annuleren",
       "error-title": "",
       "input": {
-        "placeholder": "Scopes selecteren ...",
-        "removeAll": "Alle scopes verwijderen"
+        "placeholder": "",
+        "remove-all": "",
+        "removeAll": "Alle scopes verwijderen",
+        "tooltip": ""
       },
       "title": "Scopes selecteren"
     },
@@ -12518,11 +12615,14 @@
       "copy-clipboard": "Kopiëren naar klembord",
       "copy-to-clipboard-and-close": "Kopiëren naar klembord en sluiten",
       "description-name-to-easily-identify-the-token": "Naam om het token gemakkelijk te identificeren",
+      "description-no-expiration-disabled": "",
       "description-token": "Kopieer het token nu, want hierna kun je het niet meer zien. Als je een token verliest, moet je een nieuw token maken.",
       "generate-token": "Token genereren",
       "label-display-name": "Weergavenaam",
       "label-expiration": "Vervaldatum",
       "label-expiration-date": "Vervaldatum",
+      "label-no-expiration": "",
+      "label-set-expiration-date": "",
       "label-token": "Token"
     },
     "get-actions-cell": {
@@ -12668,7 +12768,7 @@
       "info-text": "Maak een directe link naar dit dashboard of paneel, aangepast met de onderstaande opties.",
       "link-url": "Link-URL",
       "render-alert": "Afbeeldingweergave-plug-in niet geïnstalleerd",
-      "render-instructions": "",
+      "render-instructions": "Om een afbeelding weer te geven, moet je de <2>Grafana- afbeeldingsweergave-plug-in </2> installeren. Neem contact op met je Grafana-beheerder om de plug-in te installeren.",
       "rendered-image": "Directe link naar gerenderde afbeelding",
       "save-alert": "Dashboard is niet opgeslagen",
       "save-dashboard": "Om een paneelafbeelding weer te geven, moet je eerst het dashboard opslaan.",
@@ -12977,6 +13077,12 @@
       "label-same-as-value": "Hetzelfde als waarde",
       "label-standard": "Standaard"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "Automatisch",
       "label-center": "Midden"
@@ -13185,6 +13291,7 @@
     "create-team": {
       "create": "Aanmaken",
       "description-email": "Dit is optioneel en wordt voornamelijk gebruikt voor het toestaan van aangepaste teamavatars",
+      "failed-to-create": "",
       "label-email": "E-mailadres",
       "label-name": "Naam",
       "label-role": "Rol"
@@ -13216,6 +13323,7 @@
         "title-edit-team": "Team bewerken",
         "tooltip-edit-team": "Team bewerken"
       },
+      "loading-teams": "",
       "new-team": "Nieuw team",
       "placeholder-search-teams": "Teams zoeken"
     },
@@ -13314,7 +13422,8 @@
       "forwards-time-aria-label": "Tijdsbereik vooruitzetten",
       "to": "tot",
       "zoom-out-button": "Tijdsbereik uitzoomen",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "Tijdsbereik toepassen",
@@ -13415,6 +13524,16 @@
         "label-never": "Nooit",
         "label-threshold": "Drempelwaarde"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Tijdzone toevoegen",
@@ -13709,7 +13828,7 @@
       "label-format": "Formaat",
       "label-set-timezone": "Tijdzone instellen",
       "label-time-field": "Tijdveld",
-      "tooltip-format": "",
+      "tooltip-format": "De uitvoerindeling voor het veld dat is opgegeven als een <2>Moment.js-indelingsreeks</2>.",
       "tooltip-timezone-manually": "Stel de tijdzone van de datum handmatig in"
     },
     "format-time-transformer-editor": {

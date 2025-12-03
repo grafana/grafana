@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"log/slog"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -14,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -25,7 +25,7 @@ const (
 	mdOrgRole = "grafana-org-role"
 )
 
-var logger = slog.Default().With("logger", "legacy.grpc.Authenticator")
+var logger = log.New("legacy.grpc.Authenticator")
 
 // This is in a package we can no import
 // var _ interceptors.Authenticator = (*Authenticator)(nil)
