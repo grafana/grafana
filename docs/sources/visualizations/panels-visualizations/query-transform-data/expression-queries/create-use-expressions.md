@@ -247,8 +247,8 @@ Expressions only work with backend (server-side) data sources. Browser-based dat
 
 Expressions work differently in alerting contexts than in panels:
 
-- Alerting requires expressions to evaluate server-side
-- Most alert conditions need single values (use Reduce operations)
-- Test your expressions with the same time ranges your alerts will use
-- Legacy dashboard alerts don't support expressions - use [Grafana Alerting](ref:grafana-alerting) instead
+- Alerting requires expressions to evaluate server-side.
+- Most alert conditions need single values (use Reduce operations).
+- Test your expressions with the same time ranges your alerts will use.
+- Legacy dashboard alerts don't support expressions - use [Grafana Alerting](ref:grafana-alerting) instead.
 

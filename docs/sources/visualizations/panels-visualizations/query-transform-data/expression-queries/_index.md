@@ -63,6 +63,6 @@ Without expressions, you'd need to either modify your data source queries (when 
 
 Explore these resources to start using expressions:
 
-- [Create and use expressions](create-use-expressions/) - Learn how to create expressions and use Math, Reduce, and Resample operations
-- [Expression examples](expression-examples/) - Practical examples from basic to advanced for common monitoring scenarios
-- [Troubleshoot expressions](troubleshoot-expressions/) - Debug and resolve common expression issues
+- [Create and use expressions](create-use-expressions/) - Learn how to create expressions and use Math, Reduce, and Resample operations.
+- [Expression examples](expression-examples/) - Practical examples from basic to advanced for common monitoring scenarios.
+- [Troubleshoot expressions](troubleshoot-expressions/) - Debug and resolve common expression issues.

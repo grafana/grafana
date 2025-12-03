@@ -79,7 +79,7 @@ Use the Table view in panels to see the labels on your series and verify they ma
 
 ## Common errors and solutions
 
-Following are common errors and how to troubleshoot them. 
+Following are common errors and how to troubleshoot them.
 
 ### "NoData" result
 
