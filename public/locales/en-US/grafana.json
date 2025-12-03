@@ -3563,6 +3563,9 @@
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
+      "export-folder": "Export Folder to Repository",
+      "export-provisioned-resources": "Export Resources",
+      "export-to-repository-button": "Export to Repository",
       "manage-permissions-button": "Manage permissions",
       "move-button": "Move",
       "move-modal-alert": "Moving this item may change its permissions.",
@@ -3681,6 +3684,8 @@
     "folder-actions-button": {
       "delete": "Delete this folder",
       "delete-folder-error": "Error deleting folder. Please try again later.",
+      "export": "Export to Repository",
+      "export-folder-error": "Error collecting dashboards. Please try again later.",
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
       "move": "Move this folder"
@@ -12737,6 +12742,7 @@
     "menu": {
       "export-image-title": "Export as image",
       "export-json-title": "Export as JSON",
+      "export-to-repository-title": "Export to Repository",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
@@ -12764,6 +12770,7 @@
     "export": {
       "back-button": "Back to export config",
       "cancel-button": "Cancel",
+      "export-to-repository-button": "Export to Repository",
       "export-to-repository-title": "Export Dashboard to Repository",
       "info-text": "Export this dashboard.",
       "loading": "Loading...",
