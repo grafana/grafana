@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { config, CorrelationsData } from '@grafana/runtime';
 

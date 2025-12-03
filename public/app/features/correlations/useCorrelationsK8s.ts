@@ -1,5 +1,3 @@
-import { useCallback } from 'react';
-
 import {
   Correlation as CorrelationK8s,
   useListCorrelationQuery,

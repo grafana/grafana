@@ -157,8 +157,6 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     </Button>
   );
 
-  console.log(correlations?.totalCount, correlations?.limit);
-
   return (
     <Page
       navModel={navModel}
