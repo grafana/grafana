@@ -427,7 +427,7 @@
     "slate": "0.47.9",
     "slate-plain-serializer": "0.7.13",
     "slate-react": "0.22.10",
-    "swagger-ui-react": "5.30.2",
+    "swagger-ui-react": "5.30.3",
     "symbol-observable": "4.0.0",
     "systemjs": "6.15.1",
     "tslib": "2.8.1",
@@ -458,7 +458,9 @@
     "@mapbox/jsonlint-lines-primitives": "github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954",
     "get-document": "github:webmodules/get-document#commit=a04ccb499d6e0433a368c3bb150b4899b698461f",
     "gitconfiglocal": "2.1.0",
-    "tmp@npm:^0.0.33": "~0.2.1"
+    "tmp@npm:^0.0.33": "~0.2.1",
+    "js-yaml@npm:4.1.0": "^4.1.0",
+    "js-yaml@npm:=4.1.0": "^4.1.0"
   },
   "workspaces": {
     "packages": [

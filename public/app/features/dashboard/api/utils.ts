@@ -13,6 +13,10 @@ export function isV2StoredVersion(version: string | undefined): boolean {
   return version === 'v2alpha1' || version === 'v2beta1';
 }
 
+export function isV0V1StoredVersion(version: string | undefined): boolean {
+  return version === 'v0alpha1' || version === 'v1alpha1' || version === 'v1beta1';
+}
+
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   const isDashboardSceneEnabled = config.featureToggles.dashboardScene;
   const isKubernetesDashboardsEnabled = config.featureToggles.kubernetesDashboards;

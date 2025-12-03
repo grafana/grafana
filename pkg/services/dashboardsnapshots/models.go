@@ -3,8 +3,8 @@ package dashboardsnapshots
 import (
 	"time"
 
+	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -50,7 +50,7 @@ type DashboardSnapshotDTO struct {
 type CreateDashboardSnapshotCommand struct {
 	// The "public" fields are defined in this struct while the private/SQL/response params are
 	// defied in the rest of this command
-	dashboardsnapshot.DashboardCreateCommand
+	snapshot.DashboardCreateCommand
 
 	ExternalURL       string `json:"-"`
 	ExternalDeleteURL string `json:"-"`
