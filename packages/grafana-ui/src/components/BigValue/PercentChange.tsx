@@ -29,5 +29,5 @@ export const PercentChange = ({ percentChange, styles }: Props) => {
 
 // percentChange is expected to be a value between 0-100
 export const percentChangeString = (percentChange: number) => {
-  return (percentChange / 100).toLocaleString(undefined, { style: 'percent', maximumSignificantDigits: 3 });
+  return (percentChange / 100).toLocaleString(undefined, { style: 'percent', maximumFractionDigits: 2 });
 };
