@@ -58,6 +58,7 @@ type kvStorageBackend struct {
 	bulkLock                     *BulkLock
 	dataStore                    *dataStore
 	eventStore                   *eventStore
+	internalStore                *internalStore
 	notifier                     *notifier
 	builder                      DocumentBuilder
 	log                          logging.Logger
@@ -107,6 +108,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
 		bulkLock:                     NewBulkLock(),
 		dataStore:                    newDataStore(kv),
 		eventStore:                   eventStore,
+		internalStore:                newInternalStore(kv),
 		notifier:                     newNotifier(eventStore, notifierOptions{}),
 		snowflake:                    s,
 		builder:                      StandardDocumentBuilder(), // For now we use the standard document builder.
@@ -1233,21 +1235,62 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 	return k.dataStore.GetResourceStats(ctx, nsr.Namespace, minCount)
 }
 
+const lastImportTimeSubsection = "lastimporttime"
+
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		yield(ResourceLastImportTime{}, fmt.Errorf("not implemented"))
+		for key, err := range k.internalStore.GetSubsection(ctx, lastImportTimeSubsection) {
+			if err != nil {
+				yield(ResourceLastImportTime{}, err)
+				return
+			}
+
+			data, err := k.internalStore.Get(ctx, key)
+			if err != nil {
+				yield(ResourceLastImportTime{}, err)
+				return
+			}
+
+			value, err := time.Parse(time.RFC3339, data.Value)
+			if err != nil {
+				yield(ResourceLastImportTime{}, err)
+				return
+			}
+
+			if !yield(ResourceLastImportTime{
+				NamespacedResource: NamespacedResource{
+					Namespace: data.Namespace,
+					Group:     data.Group,
+					Resource:  data.Resource,
+				},
+				LastImportTime: value,
+			}, nil) {
+				return
+			}
+		}
 	}
 }
 
-func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func (k *kvStorageBackend) updateLastImportTime(ctx context.Context, key *resourcepb.ResourceKey, now time.Time) error {
+	dataKey := InternalKey{
+		Namespace:  key.Namespace,
+		Group:      key.Group,
+		Resource:   key.Resource,
+		Subsection: lastImportTimeSubsection,
+	}
+
+	return k.internalStore.Save(ctx, dataKey, now.UTC().Format(time.RFC3339))
+}
+
+func (k *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
 	// TODO cross-node lock
-	err := b.bulkLock.Start(setting.Collection)
+	err := k.bulkLock.Start(setting.Collection)
 	if err != nil {
 		return &resourcepb.BulkResponse{
 			Error: AsErrorResult(err),
 		}
 	}
-	defer b.bulkLock.Finish(setting.Collection)
+	defer k.bulkLock.Finish(setting.Collection)
 
 	bulkRvGenerator := newBulkRV()
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
@@ -1256,15 +1299,15 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	if setting.RebuildCollection {
 		for _, key := range setting.Collection {
 			events := make([]string, 0)
-			for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1) {
+			for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, 1) {
 				if err != nil {
-					b.log.Error("failed to list event: %s", err)
+					k.log.Error("failed to list event: %s", err)
 					return rsp
 				}
 
 				evtKey, err := ParseEventKey(evtKeyStr)
 				if err != nil {
-					b.log.Error("error parsing event key: %s", err)
+					k.log.Error("error parsing event key: %s", err)
 					return rsp
 				}
 
@@ -1275,20 +1318,20 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				events = append(events, evtKeyStr)
 			}
 
-			if err := b.eventStore.batchDelete(ctx, events); err != nil {
-				b.log.Error("failed to delete events: %s", err)
+			if err := k.eventStore.batchDelete(ctx, events); err != nil {
+				k.log.Error("failed to delete events: %s", err)
 				return rsp
 			}
 
 			historyKeys := make([]DataKey, 0)
 
-			for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
+			for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{
 				Namespace: key.Namespace,
 				Group:     key.Group,
 				Resource:  key.Resource,
 			}, SortOrderAsc) {
 				if err != nil {
-					b.log.Error("failed to list collection before delete: %s", err)
+					k.log.Error("failed to list collection before delete: %s", err)
 					return rsp
 				}
 
@@ -1296,8 +1339,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			}
 
 			previousCount := int64(len(historyKeys))
-			if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
-				b.log.Error("failed to delete collection: %s", err)
+			if err := k.dataStore.batchDelete(ctx, historyKeys); err != nil {
+				k.log.Error("failed to delete collection: %s", err)
 				return rsp
 			}
 			summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
@@ -1322,9 +1365,9 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	saved := make([]DataKey, 0)
 	rollback := func() {
 		// we don't have transactions in the kv store, so we simply delete everything we created
-		err = b.dataStore.batchDelete(ctx, saved)
+		err = k.dataStore.batchDelete(ctx, saved)
 		if err != nil {
-			b.log.Error("failed to delete during rollback: %s", err)
+			k.log.Error("failed to delete during rollback: %s", err)
 		}
 	}
 
@@ -1348,7 +1391,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		case resourcepb.WatchEvent_ADDED:
 			action = DataActionCreated
 			// Check if resource already exists for create operations
-			_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+			_, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 				Group:     req.Key.Group,
 				Resource:  req.Key.Resource,
 				Namespace: req.Key.Namespace,
@@ -1402,7 +1445,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			Action:          action,
 			Folder:          req.Folder,
 		}
-		err = b.dataStore.Save(ctx, dataKey, bytes.NewReader(req.Value))
+		err = k.dataStore.Save(ctx, dataKey, bytes.NewReader(req.Value))
 		if err != nil {
 			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
 				Key:    req.Key,
@@ -1415,7 +1458,13 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		saved = append(saved, dataKey)
 	}
 
-	// TODO update last import time
+	for _, key := range setting.Collection {
+		if err := k.updateLastImportTime(ctx, key, time.Now()); err != nil {
+			rollback()
+			rsp.Error = AsErrorResult(err)
+			return rsp
+		}
+	}
 
 	return rsp
 }
