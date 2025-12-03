@@ -104,15 +104,6 @@ func (e *fieldExtractor) getFloat(data map[string]any, key string) float64 {
 	return 0
 }
 
-func (e *fieldExtractor) getBool(data map[string]any, key string) bool {
-	if val, ok := data[key]; ok {
-		if b, ok := val.(bool); ok {
-			return b
-		}
-	}
-	return false
-}
-
 func (e *fieldExtractor) getMap(data map[string]any, key string) map[string]any {
 	if val, ok := data[key]; ok {
 		if m, ok := val.(map[string]any); ok {
@@ -190,7 +181,6 @@ func (p *termsParser) Parse(id, aggType string, aggValue map[string]any) (*dslAg
 	}
 
 	if order := p.extractor.getMap(aggValue, "order"); order != nil {
-
 		for k := range order {
 			settings["orderBy"] = k
 			orderJSON := p.extractor.getString(order, k)
@@ -611,9 +601,10 @@ func (p *compositeParser) parseAggregations(aggsData map[string]any) ([]*BucketA
 
 		// Try to parse as agg aggregation
 		if agg, err := parser.Parse(aggID, aggType, aggValue); err == nil && agg != nil {
-			if agg.AggType == aggTypeBucket {
+			switch agg.AggType {
+			case aggTypeBucket:
 				bucketAggs = append(bucketAggs, agg.toBucketAgg())
-			} else if agg.AggType == aggTypeMetric {
+			case aggTypeMetric:
 				metricAggs = append(metricAggs, agg.toMetricAgg())
 			}
 		}

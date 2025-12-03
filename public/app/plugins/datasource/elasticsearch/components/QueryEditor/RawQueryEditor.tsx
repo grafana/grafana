@@ -21,14 +21,7 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       onRunQuery();
     });
-
-    // Format the document on mount if there's content
-    if (value) {
-      setTimeout(() => {
-        editor.getAction('editor.action.formatDocument')?.run();
-      }, 100);
-    }
-  }, [onRunQuery, value]);
+  }, [onRunQuery]);
 
   const handleFormat = useCallback(() => {
     if (editorRef.current) {
@@ -68,7 +61,7 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
         </Stack>
       </div>
       <CodeEditor
-        value={value ?? DEFAULT_RAW_QUERY}
+        value={value ?? ""}
         language="json"
         height={200}
         width="100%"
@@ -98,25 +91,6 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
     </div>
   );
 }
-
-const DEFAULT_RAW_QUERY = `{
-  "query": {
-    "bool": {
-      "must": [
-        {
-          "range": {
-            "@timestamp": {
-              "gte": "$__from",
-              "lte": "$__to",
-              "format": "epoch_millis"
-            }
-          }
-        }
-      ]
-    }
-  },
-  "size": 500
-}`;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
