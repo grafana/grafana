@@ -34,6 +34,8 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
+			featuremgmt.FlagKubernetesAlertingHistorian,
+			featuremgmt.FlagKubernetesLogsDrilldown,
 		},
 	})
 
@@ -107,6 +109,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "rules.alerting.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "historian.alerting.grafana.app",
+		Version: "v0alpha1",
+	}, {
 		Group:   "correlations.grafana.app",
 		Version: "v0alpha1",
 	}, {
@@ -115,6 +120,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "testdata.datasource.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "logsdrilldown.grafana.app",
+		Version: "v1alpha1",
 	}}
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)
