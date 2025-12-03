@@ -5163,7 +5163,6 @@
       },
       "only-overrides-button-tooltip": "オーバーライドのみ表示",
       "placeholder-search-options": "検索オプション",
-      "visualization-button-label": "‌可視化",
       "visualization-button-tooltip": "検索オプション"
     },
     "panel-editor-table-view": {
@@ -6200,6 +6199,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "次を検索...",
       "radio-options": {
         "label": {
@@ -6510,7 +6512,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "可視化を変更",
-      "tooltip-click-to-change-visualization": "クリックして可視化を変更"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "クエリペインを開く",
@@ -7306,7 +7308,8 @@
       "title-failed-volume-query": "このクエリのログ量の読み込みに失敗しました",
       "title-no-logs-volume-available": "利用可能なログ量がありません",
       "title-showing-partial-data": "部分的なデータの表示",
-      "title-unable-to-show-log-volume": "ログ量を表示できません"
+      "title-unable-to-show-log-volume": "ログ量を表示できません",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "現在のクエリと時間範囲で利用可能なログ量情報はありません。"
@@ -11041,6 +11044,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {

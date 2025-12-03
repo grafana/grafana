@@ -5163,7 +5163,6 @@
       },
       "only-overrides-button-tooltip": "재정의만 표시",
       "placeholder-search-options": "검색 옵션",
-      "visualization-button-label": "시각화",
       "visualization-button-tooltip": "검색 옵션"
     },
     "panel-editor-table-view": {
@@ -6200,6 +6199,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "검색…",
       "radio-options": {
         "label": {
@@ -6510,7 +6512,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "시각화 변경",
-      "tooltip-click-to-change-visualization": "시각화를 변경하려면 클릭하세요"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "쿼리 창 열기",
@@ -7306,7 +7308,8 @@
       "title-failed-volume-query": "이 쿼리에 대한 로그 볼륨 로딩 실패",
       "title-no-logs-volume-available": "사용 가능한 로그 볼륨 없음",
       "title-showing-partial-data": "부분 데이터 표시 중",
-      "title-unable-to-show-log-volume": "로그 볼륨을 표시할 수 없습니다"
+      "title-unable-to-show-log-volume": "로그 볼륨을 표시할 수 없습니다",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "현재 쿼리 및 시간 범위에 대해 사용할 수 있는 볼륨 정보가 없습니다."
@@ -11041,6 +11044,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {

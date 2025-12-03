@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Alleen overschrijvingen weergeven",
       "placeholder-search-options": "Zoekopties",
-      "visualization-button-label": "Visualisatie",
       "visualization-button-tooltip": "Zoekopties"
     },
     "panel-editor-table-view": {
@@ -6223,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Zoeken naar...",
       "radio-options": {
         "label": {
@@ -6534,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Visualisatie wijzigen",
-      "tooltip-click-to-change-visualization": "Klik om de visualisatie te wijzigen"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Querydeelvenster openen",
@@ -7330,7 +7332,8 @@
       "title-failed-volume-query": "Kan het logvolume voor deze query niet laden",
       "title-no-logs-volume-available": "Geen logvolume beschikbaar",
       "title-showing-partial-data": "Gedeeltelijke gegevens weergeven",
-      "title-unable-to-show-log-volume": "Kan logvolume niet weergeven"
+      "title-unable-to-show-log-volume": "Kan logvolume niet weergeven",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Geen volume-informatie beschikbaar voor de huidige query's en het huidige tijdbereik."
@@ -11088,6 +11091,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {

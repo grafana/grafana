@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Mostrar solo anulaciones",
       "placeholder-search-options": "Opciones de búsqueda",
-      "visualization-button-label": "Visualización",
       "visualization-button-tooltip": "Opciones de búsqueda"
     },
     "panel-editor-table-view": {
@@ -6223,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Buscar...",
       "radio-options": {
         "label": {
@@ -6534,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Cambiar visualización",
-      "tooltip-click-to-change-visualization": "Haz clic para cambiar la visualización"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir panel de consulta",
@@ -7330,7 +7332,8 @@
       "title-failed-volume-query": "Error al cargar el volumen de logs para esta consulta",
       "title-no-logs-volume-available": "No hay volumen de logs disponible",
       "title-showing-partial-data": "Mostrando datos parciales",
-      "title-unable-to-show-log-volume": "No se puede mostrar el volumen de logs"
+      "title-unable-to-show-log-volume": "No se puede mostrar el volumen de logs",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No hay información de volumen disponible para las consultas y el intervalo de tiempo actuales."
@@ -11088,6 +11091,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {

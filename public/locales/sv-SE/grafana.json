@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Visa endast åsidosättningar",
       "placeholder-search-options": "Sökalternativ",
-      "visualization-button-label": "Visualisering",
       "visualization-button-tooltip": "Sökalternativ"
     },
     "panel-editor-table-view": {
@@ -6223,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Sök efter …",
       "radio-options": {
         "label": {
@@ -6534,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Ändra visualisering",
-      "tooltip-click-to-change-visualization": "Klicka för att ändra visualisering"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Öppna frågefönstret",
@@ -7330,7 +7332,8 @@
       "title-failed-volume-query": "Det gick inte att ladda loggvolym för denna fråga",
       "title-no-logs-volume-available": "Ingen loggvolym tillgänglig",
       "title-showing-partial-data": "Visar partiella data",
-      "title-unable-to-show-log-volume": "Det gick inte att visa loggvolym"
+      "title-unable-to-show-log-volume": "Det gick inte att visa loggvolym",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Ingen volyminformation tillgänglig för de aktuella frågorna och tidsintervallet."
@@ -11088,6 +11091,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {

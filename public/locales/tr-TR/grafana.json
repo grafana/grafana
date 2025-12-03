@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Sadece geçersiz kılmaları göster",
       "placeholder-search-options": "Arama seçenekleri",
-      "visualization-button-label": "Görselleştirme",
       "visualization-button-tooltip": "Arama seçenekleri"
     },
     "panel-editor-table-view": {
@@ -6223,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Ara...",
       "radio-options": {
         "label": {
@@ -6534,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Görselleştirmeyi değiştir",
-      "tooltip-click-to-change-visualization": "Görselleştirmeyi değiştirmek için tıklayın"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Sorgu bölmesini aç",
@@ -7330,7 +7332,8 @@
       "title-failed-volume-query": "Bu sorgu için günlük kaydı birimi yüklenemedi",
       "title-no-logs-volume-available": "Günlük kaydı birimi yok",
       "title-showing-partial-data": "Kısmi veriler gösteriliyor",
-      "title-unable-to-show-log-volume": "Günlük kaydı birimi gösterilemiyor"
+      "title-unable-to-show-log-volume": "Günlük kaydı birimi gösterilemiyor",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Mevcut sorgular ve zaman aralığı için birim bilgisi mevcut değil."
@@ -11088,6 +11091,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
