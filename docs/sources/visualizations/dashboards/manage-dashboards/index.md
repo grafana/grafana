@@ -146,7 +146,7 @@ To restore one or more dashboards, follow these steps:
 
 ### Limitations
 
-When you restore dashboards, be aware of the following limitations:
+Restoring dashboards has the following limitations:
 
 - **Permissions aren't preserved** - Dashboard-specific permissions are not restored. After restoration, you'll need to manually reconfigure any custom permissions that were previously set on the dashboard.
 - **Folder-level permissions apply** - Restored dashboards inherit the permissions of the target folder you select during restoration.
