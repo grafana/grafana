@@ -48,6 +48,12 @@ jobs:
             GRAFANA_USERNAME=usability-review-agent:USERNAME
             GRAFANA_PASSWORD=usability-review-agent:PASSWORD
 
+      - name: Verify credentials retrieved
+        run: |
+          echo "Username length: ${#GRAFANA_USERNAME}"
+          echo "Password length: ${#GRAFANA_PASSWORD}"
+          echo "Username ends with: ...${GRAFANA_USERNAME: -3}"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
