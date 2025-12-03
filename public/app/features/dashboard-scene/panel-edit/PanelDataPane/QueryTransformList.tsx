@@ -69,31 +69,28 @@ export const QueryTransformList = memo(
     };
 
     const onDragEnd = (result: DropResult) => {
-      // Defer state updates until after drop animation
-      setTimeout(() => {
-        setIsDragging(false);
+      setIsDragging(false);
 
-        if (!result.destination) {
-          return;
-        }
+      if (!result.destination) {
+        return;
+      }
 
-        const startIndex = result.source.index;
-        const endIndex = result.destination.index;
+      const startIndex = result.source.index;
+      const endIndex = result.destination.index;
 
-        if (startIndex === endIndex) {
-          return;
-        }
+      if (startIndex === endIndex) {
+        return;
+      }
 
-        // Handle reordering based on droppable ID
-        if (result.source.droppableId === 'data-sources' && result.destination.droppableId === 'data-sources') {
-          onReorderDataSources?.(startIndex, endIndex);
-        } else if (
-          result.source.droppableId === 'transformations' &&
-          result.destination.droppableId === 'transformations'
-        ) {
-          onReorderTransforms?.(startIndex, endIndex);
-        }
-      }, 0);
+      // Handle reordering based on droppable ID
+      if (result.source.droppableId === 'data-sources' && result.destination.droppableId === 'data-sources') {
+        onReorderDataSources?.(startIndex, endIndex);
+      } else if (
+        result.source.droppableId === 'transformations' &&
+        result.destination.droppableId === 'transformations'
+      ) {
+        onReorderTransforms?.(startIndex, endIndex);
+      }
     };
 
     const allConnections = useMemo(() => {
