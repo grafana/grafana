@@ -22,10 +22,18 @@ type iamAuthorizer struct {
 func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient authlib.AccessClient) authorizer.Authorizer {
 	resourceAuthorizer := make(map[string]authorizer.Authorizer)
 
-	// ServiceAuthorizer validates access based on token permissions.
-	// Note: This does not handle user authorization; that responsibility lies
-	// with the underlying storage layer (e.g., storage wrapper or uniStore).
-	serviceAuthorizer := gfauthorizer.NewServiceAuthorizer()
+	// Authorizer that allows any authenticated user
+	// To be used when authorization is handled at the storage layer
+	allowAuthorizer := authorizer.AuthorizerFunc(func(
+		ctx context.Context, attr authorizer.Attributes,
+	) (authorized authorizer.Decision, reason string, err error) {
+		if !attr.IsResourceRequest() {
+			return authorizer.DecisionNoOpinion, "", nil
+		}
+
+		// Any authenticated user can access the API
+		return authorizer.DecisionAllow, "", nil
+	})
 
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
@@ -36,7 +44,7 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = authorizer
-	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = serviceAuthorizer
+	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = allowAuthorizer // Handled at storage layer
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
