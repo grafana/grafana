@@ -68,14 +68,20 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
                 password_input.fill(grafana_password)
                 print("Credentials filled")
 
-                # Submit form
+                # Submit form and wait for navigation
                 submit_button = page.locator('button[type="submit"]').first
                 submit_button.click()
                 print("Login form submitted")
 
-                # Wait for navigation after login (use load state instead of URL check)
-                page.wait_for_load_state("networkidle", timeout=30000)
-                print(f"Login complete, current URL: {page.url}")
+                # Wait for navigation away from login page
+                page.wait_for_load_state("domcontentloaded", timeout=60000)
+                print(f"Page loaded after login, current URL: {page.url}")
+
+                # Verify we're no longer on the login page
+                if "/login" in page.url:
+                    raise Exception(f"Login appears to have failed - still on login page: {page.url}")
+
+                print(f"Login successful, navigated to: {page.url}")
 
             except Exception as e:
                 print(f"Login failed: {e}")
