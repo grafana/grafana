@@ -158,6 +158,9 @@ const injectedRtkApi = api
           url: `/searchTeams`,
           params: {
             query: queryArg.query,
+            limit: queryArg.limit,
+            offset: queryArg.offset,
+            page: queryArg.page,
           },
         }),
         providesTags: ['Search'],
@@ -886,6 +889,12 @@ export type GetSearchTeamsApiResponse = /** status 200 undefined */ {
 export type GetSearchTeamsApiArg = {
   /** team name query string */
   query?: string;
+  /** limit the number of results */
+  limit?: number;
+  /** start the query at the given offset */
+  offset?: number;
+  /** page number to start from */
+  page?: number;
 };
 export type ListServiceAccountApiResponse = /** status 200 OK */ ServiceAccountList;
 export type ListServiceAccountApiArg = {
