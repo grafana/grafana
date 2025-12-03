@@ -5163,7 +5163,6 @@
       },
       "only-overrides-button-tooltip": "Tampilkan penimpaan saja",
       "placeholder-search-options": "Opsi pencarian",
-      "visualization-button-label": "Visualisasi",
       "visualization-button-tooltip": "Opsi pencarian"
     },
     "panel-editor-table-view": {
@@ -5373,6 +5372,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "Memuat & menginisialisasi dasbor",
       "title-not-found": "Panel dengan id {{panelId}} tidak ditemukan"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Variabel templat"
@@ -6196,6 +6199,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Cari...",
       "radio-options": {
         "label": {
@@ -6506,7 +6512,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Ubah visualisasi",
-      "tooltip-click-to-change-visualization": "Klik untuk mengubah visualisasi"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Buka panel kueri",
@@ -7302,7 +7308,8 @@
       "title-failed-volume-query": "Gagal memuat volume log untuk kueri ini",
       "title-no-logs-volume-available": "Tidak ada volume log yang tersedia",
       "title-showing-partial-data": "Menampilkan data parsial",
-      "title-unable-to-show-log-volume": "Tidak dapat menampilkan volume log"
+      "title-unable-to-show-log-volume": "Tidak dapat menampilkan volume log",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Tidak ada informasi volume yang tersedia untuk kueri dan rentang waktu saat ini."
@@ -11037,11 +11044,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Tidak dapat menemukan sesuatu yang cocok dengan kueri Anda"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Hapus jenis",
@@ -11653,13 +11671,6 @@
       "saving": "Menyimpan",
       "title-error-loading-file": "Kesalahan saat memuat file"
     },
-    "files-view": {
-      "columns": {
-        "history": "Sejarah",
-        "view": "Lihat"
-      },
-      "placeholder-search": "Cari"
-    },
     "finish-step": {
       "description-enable-previews": "Menambahkan pratinjau gambar dari perubahan dasbor di permintaan pull. Gambar dasbor Grafana Anda akan dibagikan di repositori Git Anda dan dapat dilihat oleh siapa saja yang memiliki akses repositori.",
       "description-generate-dashboard-previews": "Buat tautan pratinjau untuk permintaan penarikan",
@@ -11868,9 +11879,6 @@
       "source-code": "Kode sumber"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Hanya baca",
       "settings": "Pengaturan",
       "view": "Lihat"
@@ -11907,14 +11915,6 @@
       "webhook-last-event": "Peristiwa Terakhir:",
       "webhook-url": "Lihat Webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Sejarah",
-        "view-dashboard": "Lihat",
-        "view-folder": "Lihat"
-      },
-      "placeholder-search": "Cari"
-    },
     "repository-status-page": {
       "back-to-repositories": "Kembali ke repositori",
       "cleaning-up-resources": "Membersihkan sumber daya repositori",
@@ -11922,12 +11922,10 @@
       "not-found": "tidak ditemukan",
       "not-found-message": "Repositori tidak ditemukan",
       "repository-config-exists-configuration": "Pastikan konfigurasi repositori ada dalam file konfigurasi.",
-      "tab-files": "File",
-      "tab-files-title": "Daftar file mentah dari repositori",
       "tab-overview": "Gambaran Umum",
       "tab-overview-title": "Gambaran umum repositori",
       "tab-resources": "Sumber Daya",
-      "tab-resources-title": "Sumber daya disimpan dalam database grafana",
+      "tab-resources-title": "",
       "title": "Status Repositori",
       "title-legacy-storage": "Penyimpanan Lama",
       "title-queued-for-deletion": "Diantrekan untuk dihapus"
@@ -11949,6 +11947,17 @@
       "local-description": "Konfigurasikan penyediaan file",
       "pure-git": "Pure Git",
       "pure-git-description": "Hubungkan ke repositori Git mana pun"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Dasar",
@@ -13225,6 +13234,7 @@
     "create-team": {
       "create": "Buat",
       "description-email": "Hal ini opsional dan secara spesifik digunakan untuk mengizinkan avatar tim kustom",
+      "failed-to-create": "",
       "label-email": "Email",
       "label-name": "Nama",
       "label-role": "Peran"
@@ -13256,6 +13266,7 @@
         "title-edit-team": "Edit tim",
         "tooltip-edit-team": "Edit tim"
       },
+      "loading-teams": "",
       "new-team": "Tim Baru",
       "placeholder-search-teams": "Cari tim"
     },

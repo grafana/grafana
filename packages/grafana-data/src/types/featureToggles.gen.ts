@@ -377,6 +377,10 @@ export interface FeatureToggles {
   */
   perPanelNonApplicableDrilldowns?: boolean;
   /**
+  * Enabled a group by action per panel
+  */
+  panelGroupBy?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
   panelFilterVariable?: boolean;
@@ -1138,6 +1142,11 @@ export interface FeatureToggles {
   * @default false
   */
   newVizSuggestions?: boolean;
+  /**
+  * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
+  * @default false
+  */
+  externalVizSuggestions?: boolean;
   /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true

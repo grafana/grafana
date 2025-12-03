@@ -5163,7 +5163,6 @@
       },
       "only-overrides-button-tooltip": "僅顯示覆寫",
       "placeholder-search-options": "搜尋選項",
-      "visualization-button-label": "可視化",
       "visualization-button-tooltip": "搜尋選項"
     },
     "panel-editor-table-view": {
@@ -5373,6 +5372,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "正在載入並初始化儀表板",
       "title-not-found": "未找到 ID 為 {{panelId}} 的面板"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "範本變數"
@@ -6196,6 +6199,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "搜尋…",
       "radio-options": {
         "label": {
@@ -6506,7 +6512,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "變更視覺效果",
-      "tooltip-click-to-change-visualization": "按一下以變更視覺效果"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "開啟查詢窗格",
@@ -7302,7 +7308,8 @@
       "title-failed-volume-query": "無法載入此查詢的紀錄容量",
       "title-no-logs-volume-available": "沒有可用的紀錄容量",
       "title-showing-partial-data": "顯示部分資料",
-      "title-unable-to-show-log-volume": "無法顯示紀錄容量"
+      "title-unable-to-show-log-volume": "無法顯示紀錄容量",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "目前的查詢和時間範圍沒有可用的容量資訊。"
@@ -11037,11 +11044,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "找不到符合您查詢的內容"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "清除類型",
@@ -11653,13 +11671,6 @@
       "saving": "正在儲存",
       "title-error-loading-file": "載入檔案時發生錯誤"
     },
-    "files-view": {
-      "columns": {
-        "history": "歷史紀錄",
-        "view": "檢視"
-      },
-      "placeholder-search": "搜尋"
-    },
     "finish-step": {
       "description-enable-previews": "在拉取請求中新增儀表板變更的圖片預覽。您的 Grafana 儀表板圖像將在您的 Git 儲存庫中共用，並且任何具有儲存庫存取權限者都可以看見。",
       "description-generate-dashboard-previews": "建立拉取請求的預覽連結",
@@ -11868,9 +11879,6 @@
       "source-code": "原始碼"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "唯讀",
       "settings": "設定",
       "view": "檢視"
@@ -11907,14 +11915,6 @@
       "webhook-last-event": "上次事件：",
       "webhook-url": "檢視 Webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "歷史紀錄",
-        "view-dashboard": "檢視",
-        "view-folder": "檢視"
-      },
-      "placeholder-search": "搜尋"
-    },
     "repository-status-page": {
       "back-to-repositories": "返回至儲存庫",
       "cleaning-up-resources": "清理儲存庫資源",
@@ -11922,12 +11922,10 @@
       "not-found": "找不到",
       "not-found-message": "找不到儲存庫",
       "repository-config-exists-configuration": "請確認儲存庫設定存在於設定檔案中。",
-      "tab-files": "檔案",
-      "tab-files-title": "儲存庫中的原始檔案清單",
       "tab-overview": "概覽",
       "tab-overview-title": "儲存庫概覽",
       "tab-resources": "資源",
-      "tab-resources-title": "資源儲存在 grafana 資料庫中",
+      "tab-resources-title": "",
       "title": "儲存庫狀態",
       "title-legacy-storage": "舊版儲存空間",
       "title-queued-for-deletion": "已排入刪除佇列"
@@ -11949,6 +11947,17 @@
       "local-description": "設定檔案佈建",
       "pure-git": "純 Git",
       "pure-git-description": "連接到任何 Git 儲存庫"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "基數",
@@ -13225,6 +13234,7 @@
     "create-team": {
       "create": "建立",
       "description-email": "這是可選項目，主要用於允許自訂團隊頭像",
+      "failed-to-create": "",
       "label-email": "電子郵件",
       "label-name": "名稱",
       "label-role": "角色"
@@ -13256,6 +13266,7 @@
         "title-edit-team": "編輯團隊",
         "tooltip-edit-team": "編輯團隊"
       },
+      "loading-teams": "",
       "new-team": "新團隊",
       "placeholder-search-teams": "搜尋團隊"
     },

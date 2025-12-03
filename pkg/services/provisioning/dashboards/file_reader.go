@@ -429,7 +429,8 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return 0, "", dashboards.ErrFolderInvalidUID
 	}
 
-	// When we expect folders in unified storage, they should have a manager indicated
+	// When we expect folders in unified storage, they should have a manager indicated.
+	// NOTE: when everything has been running in mode5 for a while, this check can be removed.
 	if err == nil && result != nil && result.ManagedBy == "" && fr.foldersInUnified {
 		result, err = service.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
 		if err != nil {

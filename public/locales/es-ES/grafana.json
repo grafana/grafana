@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Mostrar solo anulaciones",
       "placeholder-search-options": "Opciones de búsqueda",
-      "visualization-button-label": "Visualización",
       "visualization-button-tooltip": "Opciones de búsqueda"
     },
     "panel-editor-table-view": {
@@ -5394,6 +5393,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "Cargando e iniciando el dashboard",
       "title-not-found": "Panel con ID {{panelId}} no encontrado"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Variables de plantilla"
@@ -6219,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Buscar...",
       "radio-options": {
         "label": {
@@ -6530,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Cambiar visualización",
-      "tooltip-click-to-change-visualization": "Haz clic para cambiar la visualización"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir panel de consulta",
@@ -7326,7 +7332,8 @@
       "title-failed-volume-query": "Error al cargar el volumen de logs para esta consulta",
       "title-no-logs-volume-available": "No hay volumen de logs disponible",
       "title-showing-partial-data": "Mostrando datos parciales",
-      "title-unable-to-show-log-volume": "No se puede mostrar el volumen de logs"
+      "title-unable-to-show-log-volume": "No se puede mostrar el volumen de logs",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No hay información de volumen disponible para las consultas y el intervalo de tiempo actuales."
@@ -11084,11 +11091,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "No se ha encontrado nada que coincida con tu consulta"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Borrar tipos",
@@ -11703,13 +11721,6 @@
       "saving": "Guardando",
       "title-error-loading-file": "Error al cargar el archivo"
     },
-    "files-view": {
-      "columns": {
-        "history": "Historial",
-        "view": "Vista"
-      },
-      "placeholder-search": "Buscar"
-    },
     "finish-step": {
       "description-enable-previews": "Añade una vista previa de la imagen de los cambios del dashboard en las solicitudes de extracción. Las imágenes de tus paneles de Grafana se compartirán en tu repositorio Git y serán visibles para cualquier persona con acceso al repositorio.",
       "description-generate-dashboard-previews": "Crear enlaces de vista previa para las solicitudes de extracción",
@@ -11920,9 +11931,6 @@
       "source-code": "Código fuente"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Solo lectura",
       "settings": "Configuración",
       "view": "Vista"
@@ -11959,14 +11967,6 @@
       "webhook-last-event": "Último evento:",
       "webhook-url": "Ver webhook"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Historial",
-        "view-dashboard": "Vista",
-        "view-folder": "Vista"
-      },
-      "placeholder-search": "Buscar"
-    },
     "repository-status-page": {
       "back-to-repositories": "Volver a los repositorios",
       "cleaning-up-resources": "Limpiando los recursos del repositorio",
@@ -11974,12 +11974,10 @@
       "not-found": "no ha sido encontrado",
       "not-found-message": "Repositorio no encontrado",
       "repository-config-exists-configuration": "Asegúrate de que la configuración del repositorio exista en el archivo de configuración.",
-      "tab-files": "Archivos",
-      "tab-files-title": "La lista de archivos sin procesar del repositorio",
       "tab-overview": "Resumen",
       "tab-overview-title": "Resumen del repositorio",
       "tab-resources": "Recursos",
-      "tab-resources-title": "Recursos guardados en la base de datos de Grafana",
+      "tab-resources-title": "",
       "title": "Estado del repositorio",
       "title-legacy-storage": "Almacenamiento heredado",
       "title-queued-for-deletion": "En cola para su eliminación"
@@ -12001,6 +11999,17 @@
       "local-description": "Configurar el aprovisionamiento de archivos",
       "pure-git": "Git puro",
       "pure-git-description": "Conectar a cualquier repositorio Git"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Base",
@@ -13282,6 +13291,7 @@
     "create-team": {
       "create": "Crear",
       "description-email": "Esto es opcional y se utiliza principalmente para permitir avatares de equipo personalizados",
+      "failed-to-create": "",
       "label-email": "Correo electrónico",
       "label-name": "Nombre",
       "label-role": "Rol"
@@ -13313,6 +13323,7 @@
         "title-edit-team": "Editar equipo",
         "tooltip-edit-team": "Editar equipo"
       },
+      "loading-teams": "",
       "new-team": "Nuevo equipo",
       "placeholder-search-teams": "Buscar equipos"
     },

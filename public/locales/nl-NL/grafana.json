@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Alleen overschrijvingen weergeven",
       "placeholder-search-options": "Zoekopties",
-      "visualization-button-label": "Visualisatie",
       "visualization-button-tooltip": "Zoekopties"
     },
     "panel-editor-table-view": {
@@ -5394,6 +5393,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "Dashboard laden en initialiseren",
       "title-not-found": "Paneel met id {{panelId}} niet gevonden"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Sjabloonvariabelen"
@@ -6219,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Zoeken naar...",
       "radio-options": {
         "label": {
@@ -6530,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Visualisatie wijzigen",
-      "tooltip-click-to-change-visualization": "Klik om de visualisatie te wijzigen"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Querydeelvenster openen",
@@ -7326,7 +7332,8 @@
       "title-failed-volume-query": "Kan het logvolume voor deze query niet laden",
       "title-no-logs-volume-available": "Geen logvolume beschikbaar",
       "title-showing-partial-data": "Gedeeltelijke gegevens weergeven",
-      "title-unable-to-show-log-volume": "Kan logvolume niet weergeven"
+      "title-unable-to-show-log-volume": "Kan logvolume niet weergeven",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Geen volume-informatie beschikbaar voor de huidige query's en het huidige tijdbereik."
@@ -11084,11 +11091,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Kon niets vinden dat overeenkomt met je query"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Types wissen",
@@ -11703,13 +11721,6 @@
       "saving": "Opslaan",
       "title-error-loading-file": "Er is een fout opgetreden bij het laden van het bestand"
     },
-    "files-view": {
-      "columns": {
-        "history": "Geschiedenis",
-        "view": "Weergave"
-      },
-      "placeholder-search": "Zoeken"
-    },
     "finish-step": {
       "description-enable-previews": "Voegt een afbeeldingsvoorbeeld toe van dashboardwijzigingen in pull requests. Afbeeldingen van je Grafana-dashboards worden gedeeld in je Git-repository en zijn zichtbaar voor iedereen met toegang tot de repository.",
       "description-generate-dashboard-previews": "Voorbeeldlinks maken voor pull-verzoeken",
@@ -11920,9 +11931,6 @@
       "source-code": "Broncode"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Webhook"
-      },
       "read-only-badge": "Alleen lezen",
       "settings": "Instellingen",
       "view": "Weergave"
@@ -11959,14 +11967,6 @@
       "webhook-last-event": "Laatste gebeurtenis:",
       "webhook-url": "Webhook bekijken"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "Geschiedenis",
-        "view-dashboard": "Weergave",
-        "view-folder": "Weergave"
-      },
-      "placeholder-search": "Zoeken"
-    },
     "repository-status-page": {
       "back-to-repositories": "Terug naar repositories",
       "cleaning-up-resources": "Bronnen van repository opschonen",
@@ -11974,12 +11974,10 @@
       "not-found": "niet gevonden",
       "not-found-message": "Repository niet gevonden",
       "repository-config-exists-configuration": "Zorg ervoor dat de repository-configuratie in het configuratiebestand bestaat.",
-      "tab-files": "Bestanden",
-      "tab-files-title": "De lijst met onbewerkte bestanden uit de repository",
       "tab-overview": "Overzicht",
       "tab-overview-title": "Repository-overzicht",
       "tab-resources": "Bronnen",
-      "tab-resources-title": "Bronnen opgeslagen in Grafana-database",
+      "tab-resources-title": "",
       "title": "Repository-status",
       "title-legacy-storage": "Legacy-opslag",
       "title-queued-for-deletion": "In de wachtrij voor verwijdering"
@@ -12001,6 +11999,17 @@
       "local-description": "Bestandsprovisioning configureren",
       "pure-git": "Pure Git",
       "pure-git-description": "Verbinden met elke Git-repository"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Basis",
@@ -13282,6 +13291,7 @@
     "create-team": {
       "create": "Aanmaken",
       "description-email": "Dit is optioneel en wordt voornamelijk gebruikt voor het toestaan van aangepaste teamavatars",
+      "failed-to-create": "",
       "label-email": "E-mailadres",
       "label-name": "Naam",
       "label-role": "Rol"
@@ -13313,6 +13323,7 @@
         "title-edit-team": "Team bewerken",
         "tooltip-edit-team": "Team bewerken"
       },
+      "loading-teams": "",
       "new-team": "Nieuw team",
       "placeholder-search-teams": "Teams zoeken"
     },

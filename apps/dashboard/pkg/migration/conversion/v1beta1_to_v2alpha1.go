@@ -376,6 +376,13 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 					}
 				}
 
+				// Optional placement field - only set if present
+				if placement, exists := linkMap["placement"]; exists {
+					if placementStr, ok := placement.(string); ok {
+						dashLink.Placement = &placementStr
+					}
+				}
+
 				result = append(result, dashLink)
 			}
 		}
@@ -956,6 +963,10 @@ func transformVariables(ctx context.Context, dashboard map[string]interface{}, d
 			if textVar, err := buildTextVariable(varMap, commonProps); err == nil {
 				variables = append(variables, textVar)
 			}
+		case "switch":
+			if switchVar, err := buildSwitchVariable(varMap, commonProps); err == nil {
+				variables = append(variables, switchVar)
+			}
 		case "groupby":
 			if groupByVar, err := buildGroupByVariable(ctx, varMap, commonProps, dsIndexProvider); err == nil {
 				variables = append(variables, groupByVar)
@@ -1415,6 +1426,75 @@ func buildTextVariable(varMap map[string]interface{}, commonProps CommonVariable
 	}, nil
 }
 
+// Helper function to extract string value from an option map (value or text field)
+func getOptionValue(optMap map[string]interface{}) string {
+	if val, ok := optMap["value"].(string); ok && val != "" {
+		return val
+	}
+	if val, ok := optMap["text"].(string); ok && val != "" {
+		return val
+	}
+	return ""
+}
+
+// Switch Variable
+func buildSwitchVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
+	current := ""
+	if currentVal, exists := varMap["current"]; exists {
+		if currentMap, ok := currentVal.(map[string]interface{}); ok {
+			current = getOptionValue(currentMap)
+		}
+	}
+
+	// In V1 the enabled value is the first value of the options array,
+	// while the disabled value is second one.
+	// (Falling back to "true" and "false" if options are not available)
+	enabledValue := "true"
+	disabledValue := "false"
+
+	if options, ok := varMap["options"].([]interface{}); ok {
+		// Get enabledValue from first option
+		if len(options) > 0 {
+			if opt1, ok := options[0].(map[string]interface{}); ok {
+				if val := getOptionValue(opt1); val != "" {
+					enabledValue = val
+				}
+			}
+		}
+		// Get disabledValue from second option
+		if len(options) > 1 {
+			if opt2, ok := options[1].(map[string]interface{}); ok {
+				if val := getOptionValue(opt2); val != "" {
+					disabledValue = val
+				}
+			}
+		}
+	}
+
+	// Set current to disabledValue if not set
+	if current == "" {
+		current = disabledValue
+	}
+
+	switchVar := &dashv2alpha1.DashboardSwitchVariableKind{
+		Kind: "SwitchVariable",
+		Spec: dashv2alpha1.DashboardSwitchVariableSpec{
+			Name:          commonProps.Name,
+			Current:       current,
+			EnabledValue:  enabledValue,
+			DisabledValue: disabledValue,
+			Label:         commonProps.Label,
+			Description:   commonProps.Description,
+			Hide:          commonProps.Hide,
+			SkipUrlSync:   commonProps.SkipUrlSync,
+		},
+	}
+
+	return dashv2alpha1.DashboardVariableKind{
+		SwitchVariableKind: switchVar,
+	}, nil
+}
+
 // Adhoc Variable
 func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties, dsIndexProvider schemaversion.DataSourceIndexProvider) (dashv2alpha1.DashboardVariableKind, error) {
 	datasource := varMap["datasource"]
@@ -1704,6 +1784,12 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 		filter = buildAnnotationFilter(filterMap)
 	}
 
+	// Transform mappings
+	var mappings map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping
+	if mappingsMap, ok := annotationMap["mappings"].(map[string]interface{}); ok && mappingsMap != nil {
+		mappings = convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap)
+	}
+
 	// Transform builtIn from float64 to bool
 	var builtInPtr *bool
 	if builtInVal, ok := annotationMap["builtIn"]; ok && builtInVal != nil {
@@ -1729,6 +1815,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 		IconColor:  schemaversion.GetStringValue(annotationMap, "iconColor", defaultAnnotationQuerySpec.IconColor),
 		BuiltIn:    builtInPtr,
 		Filter:     filter,
+		Mappings:   mappings,
 	}
 
 	// Handle any additional properties in LegacyOptions
@@ -1740,7 +1827,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	// Add other legacy fields if they exist
 	for key, value := range annotationMap {
 		switch key {
-		case "name", "datasource", "enable", "hide", "iconColor", "filter", "target", "builtIn", "type":
+		case "name", "datasource", "enable", "hide", "iconColor", "filter", "target", "builtIn", "type", "mappings":
 			// Skip already handled fields
 		default:
 			legacyOptions[key] = value
@@ -1784,6 +1871,52 @@ func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.Dashb
 	}
 
 	return filter
+}
+
+func convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap map[string]interface{}) map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping {
+	mappings := make(map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping)
+
+	for key, value := range mappingsMap {
+		mapping := dashv2alpha1.DashboardAnnotationEventFieldMapping{}
+
+		// Handle simple string format (v1beta1 legacy format: "fieldName": "targetFieldName")
+		if valueStr, ok := value.(string); ok && valueStr != "" {
+			// Simple string mapping: treat as field source with the value as the field name
+			defaultSource := "field"
+			mapping.Source = &defaultSource
+			mapping.Value = &valueStr
+			mappings[key] = mapping
+			continue
+		}
+
+		// Handle object format (v2alpha1 format: "fieldName": {"source": "field", "value": "...", "regex": "..."})
+		mappingMap, ok := value.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Extract source (defaults to "field" if not specified)
+		if source, ok := mappingMap["source"].(string); ok && source != "" {
+			mapping.Source = &source
+		} else {
+			defaultSource := "field"
+			mapping.Source = &defaultSource
+		}
+
+		// Extract value (optional)
+		if valueStr, ok := mappingMap["value"].(string); ok && valueStr != "" {
+			mapping.Value = &valueStr
+		}
+
+		// Extract regex (optional)
+		if regex, ok := mappingMap["regex"].(string); ok && regex != "" {
+			mapping.Regex = &regex
+		}
+
+		mappings[key] = mapping
+	}
+
+	return mappings
 }
 
 // Panel helper functions
