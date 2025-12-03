@@ -17,6 +17,7 @@ import { ExploreMapFloatingToolbar } from './components/ExploreMapFloatingToolba
 import { ExploreMapToolbar } from './components/ExploreMapToolbar';
 import { TransformProvider } from './context/TransformContext';
 import { useCanvasPersistence } from './hooks/useCanvasPersistence';
+import { useMapActiveUsers } from './hooks/useMapActiveUsers';
 import { useRealtimeSync } from './realtime/useRealtimeSync';
 
 // Register custom components for the Grafana Assistant using providePageContext
@@ -93,6 +94,10 @@ export default function ExploreMapPage(props: GrafanaRouteComponentProps<{ uid?:
     onError: handleError,
   });
 
+  // Track active users for this map and update Redux state
+  // This ensures users active in this map show in both toolbar and list view
+  useMapActiveUsers(uid, !!uid, true);
+
   useEffect(() => {
     chrome.update({
       sectionNav: navModel,
@@ -103,7 +108,7 @@ export default function ExploreMapPage(props: GrafanaRouteComponentProps<{ uid?:
     return (
       <div className={styles.loadingWrapper}>
         <p>
-          <Trans i18nKey="explore-map.loading">Loading explore map...</Trans>
+          <Trans i18nKey="explore-map.page.loading">Loading explore map...</Trans>
         </p>
       </div>
     );

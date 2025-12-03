@@ -1,3 +1,4 @@
+/* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
@@ -9,6 +10,7 @@ import {
   ErrorBoundaryAlert,
   Input,
   LoadingPlaceholder,
+  UsersIndicator,
   useStyles2,
 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -16,6 +18,7 @@ import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { exploreMapApi, ExploreMapListItem } from './api/exploreMapApi';
+import { useMapActiveUsers } from './hooks/useMapActiveUsers';
 import { initialExploreMapState } from './state/types';
 
 export default function ExploreMapListPage(props: GrafanaRouteComponentProps) {
@@ -171,33 +174,7 @@ export default function ExploreMapListPage(props: GrafanaRouteComponentProps) {
         ) : (
           <div className={styles.mapGrid}>
             {filteredMaps.map((map) => (
-              <div key={map.uid} className={styles.mapCard}>
-                <div className={styles.mapCardContent}>
-                  <h3 className={styles.mapTitle}>{map.title}</h3>
-                  <div className={styles.mapMeta}>
-                    <span className={styles.metaItem}>
-                      <span className="fa fa-clock-o" /> Updated {formatDate(map.updatedAt)}
-                    </span>
-                  </div>
-                </div>
-                <div className={styles.mapCardActions}>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => (window.location.href = `/explore-maps/${map.uid}`)}
-                  >
-                    Open
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    fill="text"
-                    size="sm"
-                    icon="trash-alt"
-                    onClick={() => setDeleteConfirmUid(map.uid)}
-                    aria-label="Delete map"
-                  />
-                </div>
-              </div>
+              <MapCard key={map.uid} map={map} onDelete={() => setDeleteConfirmUid(map.uid)} formatDate={formatDate} />
             ))}
           </div>
         )}
@@ -219,6 +196,52 @@ export default function ExploreMapListPage(props: GrafanaRouteComponentProps) {
         )}
       </div>
     </ErrorBoundaryAlert>
+  );
+}
+
+interface MapCardProps {
+  map: ExploreMapListItem;
+  onDelete: () => void;
+  formatDate: (dateStr: string) => string;
+}
+
+function MapCard({ map, onDelete, formatDate }: MapCardProps) {
+  const styles = useStyles2(getStyles);
+  const activeUsers = useMapActiveUsers(map.uid, true, false, true);
+
+  return (
+    <div className={styles.mapCard}>
+      <div className={styles.mapCardContent}>
+        <h3 className={styles.mapTitle}>{map.title}</h3>
+        <div className={styles.mapMeta}>
+          <span className={styles.metaItem}>
+            <span className="fa fa-clock-o" /> Updated {formatDate(map.updatedAt)}
+          </span>
+          {activeUsers.length > 0 && (
+            <div className={styles.activeUsersMeta}>
+              <UsersIndicator users={activeUsers} limit={3} />
+            </div>
+          )}
+        </div>
+      </div>
+      <div className={styles.mapCardActions}>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => (window.location.href = `/explore-maps/${map.uid}`)}
+        >
+          Open
+        </Button>
+        <Button
+          variant="destructive"
+          fill="text"
+          size="sm"
+          icon="trash-alt"
+          onClick={onDelete}
+          aria-label="Delete map"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -303,6 +326,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(2),
+      // eslint-disable-next-line @grafana/no-unreduced-motion
       transition: 'all 0.2s',
       '&:hover': {
         borderColor: theme.colors.border.strong,
@@ -332,6 +356,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
+    }),
+    activeUsersMeta: css({
+      marginTop: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'center',
     }),
     mapCardActions: css({
       display: 'flex',
