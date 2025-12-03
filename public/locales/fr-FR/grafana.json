@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Afficher uniquement les remplacements",
       "placeholder-search-options": "Options de recherche",
-      "visualization-button-label": "Visualisation",
       "visualization-button-tooltip": "Options de recherche"
     },
     "panel-editor-table-view": {
@@ -6223,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Rechercher…",
       "radio-options": {
         "label": {
@@ -6534,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Modifier la visualisation",
-      "tooltip-click-to-change-visualization": "Cliquer pour modifier la visualisation"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Ouvrir le volet de requête",
@@ -7330,7 +7332,8 @@
       "title-failed-volume-query": "Échec du chargement du volume de journal pour cette requête",
       "title-no-logs-volume-available": "Aucun volume de journaux disponible",
       "title-showing-partial-data": "Affichage de données partielles",
-      "title-unable-to-show-log-volume": "Impossible d’afficher le volume de journaux"
+      "title-unable-to-show-log-volume": "Impossible d’afficher le volume de journaux",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Aucune information de volume disponible pour les requêtes actuelles et la plage temporelle."
@@ -11088,6 +11091,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
