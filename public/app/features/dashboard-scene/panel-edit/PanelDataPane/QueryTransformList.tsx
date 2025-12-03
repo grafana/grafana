@@ -69,6 +69,7 @@ export const QueryTransformList = memo(
     const [selectedContextIds, setSelectedContextIds] = useState<string[]>([]);
     const [hovered, setHovered] = useState<string | null>(null);
     const [viewingConnections, setViewingConnections] = useState<boolean>(false);
+    const [collapsed, setCollapsed] = useState({ queries: false, transforms: false });
 
     const onDragStart = () => {
       setIsDragging(true);
@@ -339,193 +340,201 @@ export const QueryTransformList = memo(
                   <Stack direction="column" gap={3}>
                     {/* Data Sources Section (Queries + Expressions) */}
                     <Stack direction="column" gap={2}>
-                      <div className={styles.sectionLabel}>
+                      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
+                      <div
+                        className={styles.sectionLabel}
+                        onClick={() => setCollapsed((c) => ({ ...c, queries: !c.queries }))}
+                      >
+                        <Icon name={collapsed.queries ? 'angle-right' : 'angle-down'} />
                         {t('dashboard-scene.query-transform-list.queries-expressions', 'Queries & Expressions')}
                       </div>
-                      {dataSourceItems.length > 0 ? (
-                        <Droppable droppableId="data-sources">
-                          {(provided, snapshot) => {
-                            // Check if dragging from transformations section
-                            const isDraggingFromOtherSection =
-                              isDragging && snapshot.draggingFromThisWith === null && snapshot.isDraggingOver;
+                      {!collapsed.queries &&
+                        (dataSourceItems.length > 0 ? (
+                          <Droppable droppableId="data-sources">
+                            {(provided, snapshot) => {
+                              // Check if dragging from transformations section
+                              const isDraggingFromOtherSection =
+                                isDragging && snapshot.draggingFromThisWith === null && snapshot.isDraggingOver;
 
-                            return (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.droppableProps}
-                                onMouseMove={cardListHoverHandlerFactory(dataSourceItems, 'queries-last')}
-                                className={cx(
-                                  styles.cardList,
-                                  isDraggingFromOtherSection ? styles.droppableInvalid : undefined
-                                )}
-                              >
-                                <Stack direction="column" gap={2}>
-                                  {filteredDataSourceItems.map((item) => (
-                                    <div key={item.id} className={styles.cardContainer}>
-                                      <Draggable
-                                        isDragDisabled={viewingConnections}
-                                        draggableId={item.id}
-                                        index={item.index}
-                                      >
-                                        {(provided, snapshot) => (
-                                          <div
-                                            ref={provided.innerRef}
-                                            {...provided.draggableProps}
-                                            {...provided.dragHandleProps}
-                                            className={snapshot.isDragging ? styles.dragging : undefined}
-                                          >
-                                            <QueryTransformCard
-                                              item={item.data}
-                                              type={item.type}
-                                              index={item.index}
-                                              isSelected={
-                                                isAiMode ? selectedContextIds.includes(item.id) : selectedId === item.id
-                                              }
-                                              onClick={() => handleCardClick(item.id)}
-                                              onAddQuery={onAddQuery}
-                                              onAddTransform={onAddTransform}
-                                              onAddExpression={onAddExpression}
-                                              {...getHandlers(item)}
-                                            />
-                                          </div>
-                                        )}
-                                      </Draggable>
-                                      <div className={styles.addButtonFloating}>
-                                        <AddDataItemMenu
-                                          onAddQuery={onAddQuery}
-                                          onAddTransform={onAddTransform}
-                                          onAddExpression={onAddExpression}
-                                          onAddFromSavedQueries={onAddFromSavedQueries}
+                              return (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.droppableProps}
+                                  onMouseMove={cardListHoverHandlerFactory(dataSourceItems, 'queries-last')}
+                                  className={cx(
+                                    styles.cardList,
+                                    isDraggingFromOtherSection ? styles.droppableInvalid : undefined
+                                  )}
+                                >
+                                  <Stack direction="column" gap={2}>
+                                    {filteredDataSourceItems.map((item) => (
+                                      <div key={item.id} className={styles.cardContainer}>
+                                        <Draggable
+                                          isDragDisabled={viewingConnections}
+                                          draggableId={item.id}
                                           index={item.index}
-                                          allowedTypes={['query', 'expression']}
-                                          show={canAdd && hovered === item.id}
-                                        />
+                                        >
+                                          {(provided, snapshot) => (
+                                            <div
+                                              ref={provided.innerRef}
+                                              {...provided.draggableProps}
+                                              {...provided.dragHandleProps}
+                                              className={snapshot.isDragging ? styles.dragging : undefined}
+                                            >
+                                              <QueryTransformCard
+                                                item={item.data}
+                                                type={item.type}
+                                                index={item.index}
+                                                isSelected={isAiMode ? selectedContextIds.includes(item.id) : selectedId === item.id}
+                                                onClick={() => handleCardClick(item.id)}
+                                                onAddExpression={onAddExpression}
+                                                onAddQuery={onAddQuery}
+                                                onAddTransform={onAddTransform}
+                                                {...getHandlers(item)}
+                                              />
+                                            </div>
+                                          )}
+                                        </Draggable>
+                                        <div className={styles.addButtonFloating}>
+                                          <AddDataItemMenu
+                                            onAddQuery={onAddQuery}
+                                            onAddTransform={onAddTransform}
+                                            onAddExpression={onAddExpression}
+                                            onAddFromSavedQueries={onAddFromSavedQueries}
+                                            index={item.index}
+                                            allowedTypes={['query', 'expression']}
+                                            show={canAdd && hovered === item.id}
+                                          />
+                                        </div>
                                       </div>
-                                    </div>
-                                  ))}
-                                  {provided.placeholder}
-                                </Stack>
+                                    ))}
+                                    {provided.placeholder}
+                                  </Stack>
 
-                                <div className={cx(styles.cardContainer, styles.cardContainerLast)}>
-                                  <div className={styles.addButtonFloating}>
-                                    <AddDataItemMenu
-                                      onAddQuery={onAddQuery}
-                                      onAddFromSavedQueries={onAddFromSavedQueries}
-                                      onAddTransform={onAddTransform}
-                                      onAddExpression={onAddExpression}
-                                      allowedTypes={['query', 'expression']}
-                                      index={dataSourceItems.length}
-                                      show={canAdd && hovered === 'queries-last'}
-                                    />
+                                  <div className={cx(styles.cardContainer, styles.cardContainerLast)}>
+                                    <div className={styles.addButtonFloating}>
+                                      <AddDataItemMenu
+                                        onAddQuery={onAddQuery}
+                                        onAddFromSavedQueries={onAddFromSavedQueries}
+                                        onAddTransform={onAddTransform}
+                                        onAddExpression={onAddExpression}
+                                        allowedTypes={['query', 'expression']}
+                                        index={dataSourceItems.length}
+                                        show={canAdd && hovered === 'queries-last'}
+                                      />
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          }}
-                        </Droppable>
-                      ) : (
-                        <AddDataItemMenu
-                          onAddQuery={onAddQuery}
-                          onAddFromSavedQueries={onAddFromSavedQueries}
-                          onAddTransform={onAddTransform}
-                          onAddExpression={onAddExpression}
-                          allowedTypes={['query', 'expression']}
-                          text={t('dashboard-scene.query-transform-list.add', 'Add')}
-                        />
-                      )}
+                              );
+                            }}
+                          </Droppable>
+                        ) : (
+                          <AddDataItemMenu
+                            onAddQuery={onAddQuery}
+                            onAddFromSavedQueries={onAddFromSavedQueries}
+                            onAddTransform={onAddTransform}
+                            onAddExpression={onAddExpression}
+                            allowedTypes={['query', 'expression']}
+                            text={t('dashboard-scene.query-transform-list.add', 'Add')}
+                          />
+                        ))}
                     </Stack>
 
                     {/* Transformations Section */}
                     <Stack direction="column" gap={2}>
-                      <div className={styles.sectionLabel}>
+                      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
+                      <div
+                        className={styles.sectionLabel}
+                        onClick={() => setCollapsed((c) => ({ ...c, transforms: !c.transforms }))}
+                      >
+                        <Icon name={collapsed.transforms ? 'angle-right' : 'angle-down'} />
                         {t('dashboard-scene.query-transform-list.transformations', 'Transformations')}
                       </div>
-                      {transformItems.length > 0 ? (
-                        <Droppable droppableId="transformations">
-                          {(provided, snapshot) => {
-                            // Check if dragging from data sources section
-                            const isDraggingFromOtherSection =
-                              isDragging && snapshot.draggingFromThisWith === null && snapshot.isDraggingOver;
+                      {!collapsed.transforms &&
+                        (transformItems.length > 0 ? (
+                          <Droppable droppableId="transformations">
+                            {(provided, snapshot) => {
+                              // Check if dragging from data sources section
+                              const isDraggingFromOtherSection =
+                                isDragging && snapshot.draggingFromThisWith === null && snapshot.isDraggingOver;
 
-                            return (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.droppableProps}
-                                className={cx(
-                                  styles.cardList,
-                                  isDraggingFromOtherSection ? styles.droppableInvalid : undefined
-                                )}
-                                onMouseMove={cardListHoverHandlerFactory(transformItems, 'transformations-last')}
-                              >
-                                <Stack direction="column" gap={2}>
-                                  {transformItems.map((item) => (
-                                    <div key={item.id} className={styles.cardContainer}>
-                                      <Draggable key={item.id} draggableId={item.id} index={item.index}>
-                                        {(provided, snapshot) => (
-                                          <div
-                                            ref={provided.innerRef}
-                                            {...provided.draggableProps}
-                                            {...provided.dragHandleProps}
-                                            className={snapshot.isDragging ? styles.dragging : undefined}
-                                          >
-                                            <QueryTransformCard
-                                              item={item.data}
-                                              type={item.type}
-                                              index={item.index}
-                                              isSelected={
-                                                isAiMode ? selectedContextIds.includes(item.id) : selectedId === item.id
-                                              }
-                                              onClick={() => handleCardClick(item.id)}
-                                              onAddQuery={onAddQuery}
-                                              onAddTransform={onAddTransform}
-                                              onAddExpression={onAddExpression}
-                                              {...getHandlers(item)}
-                                            />
-                                          </div>
-                                        )}
-                                      </Draggable>
-                                      <div className={styles.addButtonFloating}>
-                                        <AddDataItemMenu
-                                          onAddQuery={onAddQuery}
-                                          onAddTransform={onAddTransform}
-                                          onAddExpression={onAddExpression}
-                                          onAddFromSavedQueries={onAddFromSavedQueries}
-                                          index={item.index}
-                                          allowedTypes={['transform']}
-                                          show={canAdd && hovered === item.id}
-                                        />
+                              return (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.droppableProps}
+                                  className={cx(
+                                    styles.cardList,
+                                    isDraggingFromOtherSection ? styles.droppableInvalid : undefined
+                                  )}
+                                  onMouseMove={cardListHoverHandlerFactory(transformItems, 'transformations-last')}
+                                >
+                                  <Stack direction="column" gap={2}>
+                                    {transformItems.map((item) => (
+                                      <div key={item.id} className={styles.cardContainer}>
+                                        <Draggable key={item.id} draggableId={item.id} index={item.index}>
+                                          {(provided, snapshot) => (
+                                            <div
+                                              ref={provided.innerRef}
+                                              {...provided.draggableProps}
+                                              {...provided.dragHandleProps}
+                                              className={snapshot.isDragging ? styles.dragging : undefined}
+                                            >
+                                              <QueryTransformCard
+                                                item={item.data}
+                                                type={item.type}
+                                                index={item.index}
+                                                isSelected={isAiMode ? selectedContextIds.includes(item.id) : selectedId === item.id}
+                                                onClick={() => handleCardClick(item.id)}
+                                                onAddExpression={onAddExpression}
+                                                onAddQuery={onAddQuery}
+                                                onAddTransform={onAddTransform}
+                                                {...getHandlers(item)}
+                                              />
+                                            </div>
+                                          )}
+                                        </Draggable>
+                                        <div className={styles.addButtonFloating}>
+                                          <AddDataItemMenu
+                                            onAddQuery={onAddQuery}
+                                            onAddTransform={onAddTransform}
+                                            onAddExpression={onAddExpression}
+                                            onAddFromSavedQueries={onAddFromSavedQueries}
+                                            index={item.index}
+                                            allowedTypes={['transform']}
+                                            show={canAdd && hovered === item.id}
+                                          />
+                                        </div>
                                       </div>
+                                    ))}
+                                    {provided.placeholder}
+                                  </Stack>
+                                  <div className={cx(styles.cardContainer, styles.cardContainerLast)}>
+                                    <div className={styles.addButtonFloating}>
+                                      <AddDataItemMenu
+                                        onAddQuery={onAddQuery}
+                                        onAddFromSavedQueries={onAddFromSavedQueries}
+                                        onAddTransform={onAddTransform}
+                                        onAddExpression={onAddExpression}
+                                        allowedTypes={['transform']}
+                                        index={transformItems.length}
+                                        show={canAdd && hovered === 'transformations-last'}
+                                      />
                                     </div>
-                                  ))}
-                                  {provided.placeholder}
-                                </Stack>
-                                <div className={cx(styles.cardContainer, styles.cardContainerLast)}>
-                                  <div className={styles.addButtonFloating}>
-                                    <AddDataItemMenu
-                                      onAddQuery={onAddQuery}
-                                      onAddFromSavedQueries={onAddFromSavedQueries}
-                                      onAddTransform={onAddTransform}
-                                      onAddExpression={onAddExpression}
-                                      allowedTypes={['transform']}
-                                      index={transformItems.length}
-                                      show={canAdd && hovered === 'transformations-last'}
-                                    />
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          }}
-                        </Droppable>
-                      ) : (
-                        <AddDataItemMenu
-                          onAddQuery={onAddQuery}
-                          onAddFromSavedQueries={onAddFromSavedQueries}
-                          onAddTransform={onAddTransform}
-                          onAddExpression={onAddExpression}
-                          allowedTypes={['transform']}
-                          text={t('dashboard-scene.query-transform-list.add', 'Add')}
-                        />
-                      )}
+                              );
+                            }}
+                          </Droppable>
+                        ) : (
+                          <AddDataItemMenu
+                            onAddQuery={onAddQuery}
+                            onAddFromSavedQueries={onAddFromSavedQueries}
+                            onAddTransform={onAddTransform}
+                            onAddExpression={onAddExpression}
+                            allowedTypes={['transform']}
+                            text={t('dashboard-scene.query-transform-list.add', 'Add')}
+                          />
+                        ))}
                     </Stack>
                   </Stack>
                 </div>
@@ -592,6 +601,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
     }),
     sectionLabel: css({
+      cursor: 'pointer',
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.maxContrast,
