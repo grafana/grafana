@@ -55,6 +55,13 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
             print(f"Logging in to: {login_url}")
             page.goto(login_url, wait_until="domcontentloaded", timeout=60000)
 
+            print(f"Page loaded, current URL: {page.url}")
+            print(f"Page title: {page.title()}")
+
+            # Take screenshot to see what's on the page
+            page.screenshot(path="login_page.png")
+            print("Screenshot saved as login_page.png")
+
             try:
                 # Wait for login form using Grafana's data-testid selectors
                 print("Waiting for login form...")
@@ -107,7 +114,18 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
 
             except Exception as e:
                 print(f"Login failed: {e}")
+                print(f"Current URL at error: {page.url}")
+                print(f"Page title at error: {page.title()}")
+
+                # Get page content for debugging
+                try:
+                    body_text = page.locator('body').text_content()
+                    print(f"Page body text (first 500 chars): {body_text[:500] if body_text else 'No body text'}")
+                except Exception as content_err:
+                    print(f"Could not get page content: {content_err}")
+
                 page.screenshot(path="login_error.png")
+                print("Error screenshot saved as login_error.png")
                 raise
 
         print(f"Navigating to: {target_url}")
