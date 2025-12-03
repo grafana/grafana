@@ -25,6 +25,13 @@ type Folder struct {
 	Status FolderStatus `json:"status" yaml:"status"`
 }
 
+func NewFolder() *Folder {
+	return &Folder{
+		Spec:   *NewFolderSpec(),
+		Status: *NewFolderStatus(),
+	}
+}
+
 func (o *Folder) GetSpec() any {
 	return o.Spec
 }
