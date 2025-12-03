@@ -60,14 +60,14 @@ func RegisterAppInstaller(
 		if err != nil {
 			return nil, err
 		}
-		sqlAdapter := NewSQLAdapter(service, cleaner, mapper, cfg)
+		// sqlAdapter := NewSQLAdapter(service, cleaner, mapper, cfg)
 		installer.legacy = &restStorage{
 			// store:  sqlAdapter,
 			store:  kvAdapter,
 			mapper: mapper,
 		}
 		// Create the tags handler using the sqlAdapter as TagProvider
-		tagHandler = newTagsHandler(sqlAdapter)
+		tagHandler = newTagsHandler(installer.legacy.store)
 	}
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
@@ -159,6 +159,11 @@ func (s *restStorage) ConvertToTable(ctx context.Context, object runtime.Object,
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
+// TODO: hierarchy of list options (where do tags fit in - seems to be mutually exclusive with dashboard query?)
+// 1. No options: list all for namespace
+// 2. By dashboard: list all annotations for namespace+dashboard (i.e. remove by dashboard)
+// 3. By panel: list all annotations for namespace+dashboard+panel (i.e. remove by dashboard+panel)
+// 4. By time range: list all annotations for namespace in time range
 func (s *restStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
 
@@ -281,8 +286,8 @@ func (s *restStorage) Update(ctx context.Context,
 		}
 	}
 	// TODO: validate that only name/tags are modified
-	_, err = s.store.Update(ctx, newObj)
-	return nil, false, err
+	err = s.store.Update(ctx, newObj)
+	return obj, false, err
 }
 
 func (s *restStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {

@@ -17,14 +17,14 @@ type tagItem struct {
 	Count int64  `json:"count"`
 }
 
-func newTagsHandler(tagProvider TagProvider) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+func newTagsHandler(tagProvider Store) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 		fmt.Println("Handling /tags request")
 		namespace := request.ResourceIdentifier.Namespace
 		if namespace == "" {
 			namespace = "default"
 		}
-		tags, err := tagProvider.ListTags(ctx, namespace, TagListOptions{})
+		tags, err := tagProvider.Tags(ctx, namespace, TagListOptions{})
 		if err != nil {
 			return err
 		}
