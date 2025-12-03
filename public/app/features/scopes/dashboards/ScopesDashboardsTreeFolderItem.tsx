@@ -14,9 +14,11 @@ export interface ScopesDashboardsTreeFolderItemProps {
   folderPath: string[];
   folders: SuggestedNavigationsFoldersMap;
   onFolderUpdate: OnFolderUpdate;
+  subScopePath?: string[];
 }
 
 export function ScopesDashboardsTreeFolderItem({
+  subScopePath,
   folder,
   folderPath,
   folders,
@@ -57,8 +59,13 @@ export function ScopesDashboardsTreeFolderItem({
               e.preventDefault();
               e.stopPropagation();
               if (folder.subScopeName && scopesSelectorService) {
-                scopesDashboardsService?.setNavigationScope(undefined, [folder.subScopeName]);
-                scopesSelectorService.changeScopes([folder.subScopeName]);
+                const activeSubScopePath = scopesDashboardsService?.state.navScopePath;
+                scopesDashboardsService?.setNavigationScope(
+                  undefined,
+                  [folder.subScopeName],
+                  activeSubScopePath?.slice(activeSubScopePath?.indexOf(folder.subScopeName) + 1) ?? []
+                );
+                scopesSelectorService.changeScopes([folder.subScopeName], undefined, undefined, false);
               }
             }}
           />
@@ -68,6 +75,7 @@ export function ScopesDashboardsTreeFolderItem({
       {folder.expanded && (
         <div className={styles.children}>
           <ScopesDashboardsTree
+            subScopePath={subScopePath}
             subScope={folder.subScopeName}
             folders={folders}
             folderPath={folderPath}

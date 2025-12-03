@@ -5,6 +5,7 @@ import { map, distinctUntilChanged } from 'rxjs/operators';
 import { LocationService, ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
 
 import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
+import { deserializeFolderPath, serializeFolderPath } from './dashboards/scopeNavgiationUtils';
 import { ScopesSelectorService } from './selector/ScopesSelectorService';
 
 export interface State {
@@ -74,12 +75,22 @@ export class ScopesService implements ScopesContextValue {
     // TODO: figure out when to remove this. scope_parent is for backward compatibility only
     const parentNodeId = queryParams.get('scope_parent');
     const navigationScope = queryParams.get('navigation_scope');
+    const navScopePath = queryParams.get('nav_scope_path');
 
     if (navigationScope) {
-      this.dashboardsService.setNavigationScope(navigationScope);
+      this.dashboardsService.setNavigationScope(
+        navigationScope,
+        undefined,
+        navScopePath ? deserializeFolderPath(navScopePath) : undefined
+      );
     }
 
-    this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined, scopeNodeId ?? undefined);
+    this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined, scopeNodeId ?? undefined).then(() => {
+      if (navScopePath && !navigationScope) {
+        console.log('No navigation scope, setting nav scope path', navScopePath);
+        this.dashboardsService.setNavScopePath(deserializeFolderPath(navScopePath));
+      }
+    });
 
     // Pre-load scope node (which loads parent too) or fallback to parent node for old URLs
     const nodeToPreload = scopeNodeId ?? parentNodeId;
@@ -141,9 +152,13 @@ export class ScopesService implements ScopesContextValue {
     // Update the URL based on change in the navigation scope
     this.subscriptions.push(
       this.dashboardsService.subscribeToState((state, prevState) => {
-        if (state.navigationScope !== prevState.navigationScope) {
+        if (
+          state.navigationScope !== prevState.navigationScope ||
+          !isEqual(state.navScopePath, prevState.navScopePath)
+        ) {
           this.locationService.partial({
-            navigation_scope: state.navigationScope,
+            navigation_scope: state.navigationScope ? encodeURIComponent(state.navigationScope) : null,
+            nav_scope_path: state.navScopePath ? serializeFolderPath(state.navScopePath) : null,
           });
         }
       })
