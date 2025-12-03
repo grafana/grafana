@@ -44,10 +44,11 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	manager2, found2 := dash2.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 	require.True(t, !found2 || manager2 == "", "dashboard2 should be unmanaged")
 
-	// Create repository
+	// Create repository with folder sync target (required for specific resource export)
 	const repo = "export-resources-test-repo"
 	testRepo := TestRepo{
 		Name:                   repo,
+		Target:                 "folder",
 		Copies:                 map[string]string{},
 		ExpectedDashboards:     0, // No dashboards expected after sync (we'll export manually)
 		ExpectedFolders:        0,
@@ -113,10 +114,11 @@ func TestIntegrationProvisioning_ExportSpecificResourcesWithPath(t *testing.T) {
 	require.NoError(t, err, "should be able to create dashboard")
 	dashboardName := dashboardObj.GetName()
 
-	// Create repository
+	// Create repository with folder sync target (required for specific resource export)
 	const repo = "export-resources-path-test-repo"
 	testRepo := TestRepo{
 		Name:                   repo,
+		Target:                 "folder",
 		Copies:                 map[string]string{},
 		ExpectedDashboards:     0,
 		ExpectedFolders:        0,
@@ -175,10 +177,11 @@ func TestIntegrationProvisioning_ExportSpecificResourcesRejectsFolders(t *testin
 	require.NoError(t, err, "should be able to create folder")
 	folderName := folderObj.GetName()
 
-	// Create repository
+	// Create repository with folder sync target (required for specific resource export)
 	const repo = "export-reject-folders-test-repo"
 	testRepo := TestRepo{
 		Name:                   repo,
+		Target:                 "folder",
 		Copies:                 map[string]string{},
 		ExpectedDashboards:     0,
 		ExpectedFolders:        0,
@@ -337,10 +340,11 @@ func TestIntegrationProvisioning_ExportSpecificResourcesWithFolderStructure(t *t
 	require.NoError(t, err, "should be able to create dashboard in folder")
 	dashboardName := dashboardObj.GetName()
 
-	// Create repository
+	// Create repository with folder sync target (required for specific resource export)
 	const repo = "export-folder-structure-test-repo"
 	testRepo := TestRepo{
 		Name:                   repo,
+		Target:                 "folder",
 		Copies:                 map[string]string{},
 		ExpectedDashboards:     0,
 		ExpectedFolders:        0,
@@ -384,18 +388,19 @@ func TestIntegrationProvisioning_ExportSpecificResourcesEmptyList(t *testing.T) 
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	// Create repository
+	// Create repository with folder sync target (for empty resources test)
 	const repo = "export-empty-resources-test-repo"
 	testRepo := TestRepo{
 		Name:               repo,
+		Target:             "folder",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    0,
 	}
 	helper.CreateRepo(t, testRepo)
 
-	// Try to export with empty resources list (should succeed, as empty is treated same as nil)
-	// Empty resources list means using the old API path (using Folder), so validation is skipped
+	// Try to export with empty resources list (should fail validation with folder target)
+	// Empty resources list means the old API path (using Folder), which doesn't apply here
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.ExportJobOptions{
@@ -403,7 +408,7 @@ func TestIntegrationProvisioning_ExportSpecificResourcesEmptyList(t *testing.T) 
 		},
 	}
 
-	// This should succeed (empty resources is treated same as nil, skipping validation)
+	// This should fail validation (empty resources triggers specific resource validation)
 	body := asJSON(spec)
 	result := helper.AdminREST.Post().
 		Namespace("default").
@@ -414,6 +419,86 @@ func TestIntegrationProvisioning_ExportSpecificResourcesEmptyList(t *testing.T) 
 		SetHeader("Content-Type", "application/json").
 		Do(ctx)
 
-	err := result.Error()
-	require.NoError(t, err, "empty resources list should be treated same as nil and skip validation")
+	// Wait for job to complete and check it failed
+	obj, err := result.Get()
+	require.NoError(t, err, "job should be created")
+	unstruct, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "should get unstructured object")
+
+	// Wait for job to complete
+	job := helper.AwaitJob(t, ctx, unstruct)
+	lastState := mustNestedString(job.Object, "status", "state")
+	lastErrors := mustNestedStringSlice(job.Object, "status", "errors")
+
+	// Job should fail with error about empty resources
+	require.Equal(t, string(provisioning.JobStateError), lastState, "job should fail")
+	require.NotEmpty(t, lastErrors, "job should have errors")
+	require.Contains(t, lastErrors[0], "no resources specified", "error should mention no resources specified")
+}
+
+func TestIntegrationProvisioning_ExportSpecificResourcesRejectsInstanceTarget(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	// Create an unmanaged dashboard
+	dashboard := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+	dashboardObj, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create dashboard")
+	dashboardName := dashboardObj.GetName()
+
+	// Create repository with INSTANCE sync target (should reject specific resource export)
+	const repo = "export-instance-target-reject-test-repo"
+	testRepo := TestRepo{
+		Name:                   repo,
+		Target:                 "instance", // Instance target should reject specific resource export
+		Copies:                 map[string]string{},
+		ExpectedDashboards:     0,
+		ExpectedFolders:        0,
+		SkipResourceAssertions: true,
+	}
+	helper.CreateRepo(t, testRepo)
+
+	// Try to export specific resource with instance target (should fail)
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{
+					Name:  dashboardName,
+					Kind:  "Dashboard",
+					Group: "dashboard.grafana.app",
+				},
+			},
+		},
+	}
+
+	// This should fail with validation error about instance target
+	body := asJSON(spec)
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("jobs").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+
+	// Wait for job to complete and check it failed
+	obj, err := result.Get()
+	require.NoError(t, err, "job should be created")
+	unstruct, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "should get unstructured object")
+
+	// Wait for job to complete
+	job := helper.AwaitJob(t, ctx, unstruct)
+	lastState := mustNestedString(job.Object, "status", "state")
+	lastErrors := mustNestedStringSlice(job.Object, "status", "errors")
+
+	// Job should fail with error about instance target not supporting specific resources
+	require.Equal(t, string(provisioning.JobStateError), lastState, "job should fail")
+	require.NotEmpty(t, lastErrors, "job should have errors")
+	require.Contains(t, lastErrors[0], "folder sync targets", "error should mention folder sync targets required")
+	require.Contains(t, lastErrors[0], "instance", "error should mention instance target")
 }
