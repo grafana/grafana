@@ -41,6 +41,20 @@ export interface ExploreMapPanel {
    * Username of the user who created this panel
    */
   createdBy?: string;
+  /**
+   * Frame association properties
+   */
+  frameId?: string;           // Parent frame ID
+  frameOffsetX?: number;      // Offset from frame origin
+  frameOffsetY?: number;      // Offset from frame origin
+}
+
+export interface ExploreMapFrame {
+  id: string;
+  title: string;
+  position: PanelPosition;  // Reuse position type
+  createdBy?: string;
+  remoteVersion?: number;
 }
 
 export interface CanvasViewport {
@@ -65,6 +79,7 @@ export interface ExploreMapState {
   title?: string;
   viewport: CanvasViewport;
   panels: Record<string, ExploreMapPanel>;
+  frames: Record<string, ExploreMapFrame>;
   selectedPanelIds: string[];
   nextZIndex: number;
   cursors: Record<string, UserCursor>;
@@ -84,6 +99,7 @@ export const initialExploreMapState: ExploreMapState = {
     panY: -4460, // -(5000 - 1080/2) = -4460
   },
   panels: {},
+  frames: {},
   selectedPanelIds: [],
   nextZIndex: 1,
   cursors: {},

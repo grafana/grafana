@@ -11,20 +11,15 @@ export const DebugAssistantContext: React.FC = () => {
   const pageContext = usePageContext();
 
   useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.group('🔍 Assistant Debug Info');
-    // eslint-disable-next-line no-console
-    console.log('Current URL:', window.location.pathname);
-    // eslint-disable-next-line no-console
-    console.log('Registered Components:', Object.keys(pageComponents));
-    // eslint-disable-next-line no-console
-    console.log('Component Details:', pageComponents);
-    // eslint-disable-next-line no-console
-    console.log('Page Context Items:', pageContext.length);
-    // eslint-disable-next-line no-console
-    console.log('Page Context:', pageContext);
-    // eslint-disable-next-line no-console
-    console.groupEnd();
+    // Debug logging disabled to reduce console noise
+    // Uncomment if needed for assistant debugging
+    // console.group('🔍 Assistant Debug Info');
+    // console.log('Current URL:', window.location.pathname);
+    // console.log('Registered Components:', Object.keys(pageComponents));
+    // console.log('Component Details:', pageComponents);
+    // console.log('Page Context Items:', pageContext.length);
+    // console.log('Page Context:', pageContext);
+    // console.groupEnd();
   }, [pageComponents, pageContext]);
 
   return null;

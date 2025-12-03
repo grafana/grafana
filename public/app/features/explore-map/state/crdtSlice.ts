@@ -48,6 +48,11 @@ export interface ExploreMapCRDTState {
       deltaX: number;
       deltaY: number;
     };
+    activeFrameDrag?: {
+      draggedFrameId: string;
+      deltaX: number;
+      deltaY: number;
+    };
   };
 }
 
@@ -78,6 +83,7 @@ export function createInitialCRDTState(mapUid?: string): ExploreMapCRDTState {
       isOnline: false,
       isSyncing: false,
       activeDrag: undefined,
+      activeFrameDrag: undefined,
     },
   };
 }
@@ -120,11 +126,20 @@ const crdtSlice = createSlice({
      * Load CRDT state from server
      */
     loadState: (state, action: PayloadAction<{ crdtState: CRDTExploreMapStateJSON }>) => {
+      // eslint-disable-next-line no-console
+      console.log('[Frame CRDT] Loading state from JSON:', {
+        hasFrames: !!action.payload.crdtState.frames,
+        hasFrameData: !!action.payload.crdtState.frameData,
+        frames: action.payload.crdtState.frames,
+        frameData: action.payload.crdtState.frameData,
+      });
       const manager = CRDTStateManager.fromJSON(action.payload.crdtState, state.nodeId);
       saveCRDTManager(state, manager);
       // Restore uid from the loaded CRDT state
       const crdtState = manager.getState();
       state.uid = crdtState.uid;
+      // eslint-disable-next-line no-console
+      console.log('[Frame CRDT] State loaded, frame IDs:', manager.getFrameIds());
     },
 
     /**
@@ -576,6 +591,226 @@ const crdtSlice = createSlice({
     },
 
     /**
+     * Add a frame
+     */
+    addFrame: (state, action: PayloadAction<{
+      position?: { x: number; y: number; width: number; height: number };
+      title?: string;
+      createdBy?: string;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      const frameId = uuidv4();
+      const title = action.payload.title || `Frame ${frameId.slice(0, 8)}`;
+      const position = action.payload.position || {
+        x: 200, y: 200, width: 800, height: 600
+      };
+
+      const operation = manager.createAddFrameOperation(
+        frameId,
+        title,
+        position,
+        action.payload.createdBy
+      );
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      state.pendingOperations.push(operation);
+      state.local.selectedPanelIds = [];  // Clear panel selection
+    },
+
+    /**
+     * Remove a frame
+     */
+    removeFrame: (state, action: PayloadAction<{ frameId: string; deletePanels?: boolean }>) => {
+      const manager = getCRDTManager(state);
+
+      // If deletePanels is true, first remove all panels in the frame
+      if (action.payload.deletePanels) {
+        const panelIds = manager.getPanelsInFrame(action.payload.frameId);
+        for (const panelId of panelIds) {
+          const panelOp = manager.createRemovePanelOperation(panelId);
+          if (panelOp) {
+            manager.applyOperation(panelOp);
+            state.pendingOperations.push(panelOp);
+          }
+        }
+      }
+
+      const operation = manager.createRemoveFrameOperation(action.payload.frameId);
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Update frame position
+     */
+    updateFramePosition: (state, action: PayloadAction<{
+      frameId: string;
+      x: number;
+      y: number;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      // Calculate delta for batch-updating child panels
+      const frame = manager.getFrameData(action.payload.frameId);
+      if (!frame) {
+        return;
+      }
+
+      const deltaX = action.payload.x - frame.positionX.get();
+      const deltaY = action.payload.y - frame.positionY.get();
+
+      // Create frame position operation
+      const frameOp = manager.createUpdateFramePositionOperation(
+        action.payload.frameId,
+        action.payload.x,
+        action.payload.y,
+        deltaX,
+        deltaY
+      );
+
+      if (!frameOp) {
+        return;
+      }
+
+      // Create operations for all child panels
+      const panelOps: any[] = [];
+      const childPanelIds = manager.getPanelsInFrame(action.payload.frameId);
+
+      for (const panelId of childPanelIds) {
+        const panel = manager.getPanelData(panelId);
+        if (panel) {
+          const newX = panel.positionX.get() + deltaX;
+          const newY = panel.positionY.get() + deltaY;
+
+          const panelOp = manager.createUpdatePanelPositionOperation(panelId, newX, newY);
+          if (panelOp) {
+            panelOps.push(panelOp);
+          }
+        }
+      }
+
+      // Apply all operations
+      manager.applyOperation(frameOp);
+      for (const op of panelOps) {
+        manager.applyOperation(op);
+      }
+
+      saveCRDTManager(state, manager);
+
+      // Push all operations for broadcast
+      state.pendingOperations.push(frameOp, ...panelOps);
+    },
+
+    /**
+     * Update frame size
+     */
+    updateFrameSize: (state, action: PayloadAction<{
+      frameId: string;
+      width: number;
+      height: number;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createUpdateFrameSizeOperation(
+        action.payload.frameId,
+        action.payload.width,
+        action.payload.height
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Update frame title
+     */
+    updateFrameTitle: (state, action: PayloadAction<{
+      frameId: string;
+      title: string;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createUpdateFrameTitleOperation(
+        action.payload.frameId,
+        action.payload.title
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Associate panel with frame
+     */
+    associatePanelWithFrame: (state, action: PayloadAction<{
+      panelId: string;
+      frameId: string;
+      offsetX: number;
+      offsetY: number;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createAssociatePanelWithFrameOperation(
+        action.payload.panelId,
+        action.payload.frameId,
+        action.payload.offsetX,
+        action.payload.offsetY
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Disassociate panel from frame
+     */
+    disassociatePanelFromFrame: (state, action: PayloadAction<{
+      panelId: string;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createDisassociatePanelFromFrameOperation(
+        action.payload.panelId
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      state.pendingOperations.push(operation);
+    },
+
+    /**
      * Clear pending operations (after broadcast)
      */
     clearPendingOperations: (state) => {
@@ -672,6 +907,20 @@ const crdtSlice = createSlice({
     },
 
     /**
+     * Set active frame drag info (for frame drag visual feedback)
+     */
+    setActiveFrameDrag: (state, action: PayloadAction<{ draggedFrameId: string; deltaX: number; deltaY: number }>) => {
+      state.local.activeFrameDrag = action.payload;
+    },
+
+    /**
+     * Clear active frame drag info
+     */
+    clearActiveFrameDrag: (state) => {
+      state.local.activeFrameDrag = undefined;
+    },
+
+    /**
      * Clear all state (reset)
      */
     clearMap: (state) => {
@@ -699,6 +948,13 @@ export const {
   addComment,
   removeComment,
   duplicatePanel,
+  addFrame,
+  removeFrame,
+  updateFramePosition,
+  updateFrameSize,
+  updateFrameTitle,
+  associatePanelWithFrame,
+  disassociatePanelFromFrame,
   clearPendingOperations,
   updateViewport,
   selectPanel,
@@ -709,6 +965,8 @@ export const {
   setSyncingStatus,
   setActiveDrag,
   clearActiveDrag,
+  setActiveFrameDrag,
+  clearActiveFrameDrag,
   clearMap,
 } = crdtSlice.actions;
 

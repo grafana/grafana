@@ -9,8 +9,10 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { splitClose } from '../../explore/state/main';
 import {
+  associatePanelWithFrame,
   bringPanelToFront,
   clearActiveDrag,
+  disassociatePanelFromFrame,
   duplicatePanel,
   removePanel,
   selectPanel,
@@ -19,7 +21,7 @@ import {
   updatePanelPosition,
   updatePanelSize,
 } from '../state/crdtSlice';
-import { selectSelectedPanelIds, selectViewport, selectCursors } from '../state/selectors';
+import { selectSelectedPanelIds, selectViewport, selectCursors, selectFrames } from '../state/selectors';
 import { ExploreMapPanel } from '../state/types';
 
 import { ExploreMapPanelContent } from './ExploreMapPanelContent';
@@ -37,6 +39,7 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
   const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
   const cursors = useSelector((state) => selectCursors(state.exploreMapCRDT));
+  const frames = useSelector((state) => selectFrames(state.exploreMapCRDT));
   const isSelected = selectedPanelIds.includes(panel.id);
 
   // Find all users who have this panel selected (excluding current user)
@@ -47,6 +50,47 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
   // Get the active drag info from a parent context (if any panel is being dragged)
   const activeDragInfo = useSelector((state) => state.exploreMapCRDT.local.activeDrag);
 
+  // Get active frame drag info
+  const activeFrameDragInfo = useSelector((state) => state.exploreMapCRDT.local.activeFrameDrag);
+
+  // Check if panel intersects with any frame (>50% overlap)
+  const checkFrameIntersection = useCallback((
+    panelX: number,
+    panelY: number,
+    panelWidth: number,
+    panelHeight: number
+  ): string | null => {
+    for (const frame of Object.values(frames)) {
+      const panelLeft = panelX;
+      const panelRight = panelX + panelWidth;
+      const panelTop = panelY;
+      const panelBottom = panelY + panelHeight;
+
+      const frameLeft = frame.position.x;
+      const frameRight = frame.position.x + frame.position.width;
+      const frameTop = frame.position.y;
+      const frameBottom = frame.position.y + frame.position.height;
+
+      // Calculate intersection area
+      const intersectLeft = Math.max(panelLeft, frameLeft);
+      const intersectRight = Math.min(panelRight, frameRight);
+      const intersectTop = Math.max(panelTop, frameTop);
+      const intersectBottom = Math.min(panelBottom, frameBottom);
+
+      if (intersectRight > intersectLeft && intersectBottom > intersectTop) {
+        const intersectArea = (intersectRight - intersectLeft) * (intersectBottom - intersectTop);
+        const panelArea = panelWidth * panelHeight;
+
+        // If >50% of panel is inside frame, consider it contained
+        if (intersectArea / panelArea > 0.5) {
+          return frame.id;
+        }
+      }
+    }
+
+    return null;
+  }, [frames]);
+
   // Calculate effective position considering active drag
   let effectiveX = panel.position.x;
   let effectiveY = panel.position.y;
@@ -55,6 +99,12 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
   if (activeDragInfo && activeDragInfo.draggedPanelId !== panel.id && isSelected) {
     effectiveX += activeDragInfo.deltaX;
     effectiveY += activeDragInfo.deltaY;
+  }
+
+  // If this panel's frame is being dragged, apply the frame drag offset
+  if (activeFrameDragInfo && panel.frameId === activeFrameDragInfo.draggedFrameId) {
+    effectiveX += activeFrameDragInfo.deltaX;
+    effectiveY += activeFrameDragInfo.deltaY;
   }
 
   const handleDragStart: RndDragCallback = useCallback(
@@ -116,11 +166,76 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
               y: data.y,
             })
           );
+
+          // Check if panel should be associated with a frame
+          const intersectingFrameId = checkFrameIntersection(
+            data.x,
+            data.y,
+            panel.position.width,
+            panel.position.height
+          );
+
+          // eslint-disable-next-line no-console
+          console.log('[Frame Association] Panel drag ended:', {
+            panelId: panel.id,
+            currentFrameId: panel.frameId,
+            intersectingFrameId,
+            panelPos: { x: data.x, y: data.y },
+            willAssociate: intersectingFrameId && intersectingFrameId !== panel.frameId,
+            willDisassociate: !intersectingFrameId && panel.frameId,
+          });
+
+          if (intersectingFrameId && intersectingFrameId !== panel.frameId) {
+            // Panel moved into a frame
+            const frame = frames[intersectingFrameId];
+            const offsetX = data.x - frame.position.x;
+            const offsetY = data.y - frame.position.y;
+
+            // eslint-disable-next-line no-console
+            console.log('[Frame Association] Associating panel with frame:', {
+              panelId: panel.id,
+              frameId: intersectingFrameId,
+              offset: { offsetX, offsetY },
+            });
+
+            dispatch(
+              associatePanelWithFrame({
+                panelId: panel.id,
+                frameId: intersectingFrameId,
+                offsetX,
+                offsetY,
+              })
+            );
+          } else if (!intersectingFrameId && panel.frameId) {
+            // Panel moved out of frame
+            // eslint-disable-next-line no-console
+            console.log('[Frame Association] Disassociating panel from frame:', {
+              panelId: panel.id,
+              frameId: panel.frameId,
+            });
+
+            dispatch(
+              disassociatePanelFromFrame({
+                panelId: panel.id,
+              })
+            );
+          }
         }
       }
       setDragStartPos(null);
     },
-    [dispatch, panel.id, dragStartPos, isSelected, selectedPanelIds.length]
+    [
+      dispatch,
+      panel.id,
+      panel.position.width,
+      panel.position.height,
+      panel.frameId,
+      dragStartPos,
+      isSelected,
+      selectedPanelIds.length,
+      checkFrameIntersection,
+      frames,
+    ]
   );
 
   const handleResizeStop: RndResizeCallback = useCallback(

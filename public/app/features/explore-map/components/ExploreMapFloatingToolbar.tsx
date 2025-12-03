@@ -13,8 +13,8 @@ import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_
 import tempoLogoSvg from 'app/plugins/datasource/tempo/img/tempo_logo.svg';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { addPanel } from '../state/crdtSlice';
-import { selectPanels, selectMapUid } from '../state/selectors';
+import { addPanel, addFrame } from '../state/crdtSlice';
+import { selectPanels, selectMapUid, selectViewport, selectSelectedPanelIds } from '../state/selectors';
 import { AddPanelAction } from './AssistantComponents';
 
 export function ExploreMapFloatingToolbar() {
@@ -29,6 +29,8 @@ export function ExploreMapFloatingToolbar() {
   // Get canvas state for assistant context
   const panels = useSelector((state) => selectPanels(state.exploreMapCRDT));
   const mapUid = useSelector((state) => selectMapUid(state.exploreMapCRDT));
+  const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
+  const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
 
   const handleAddPanel = useCallback(() => {
     dispatch(
@@ -98,6 +100,61 @@ export function ExploreMapFloatingToolbar() {
     );
     setIsOpen(false);
   }, [dispatch, currentUsername]);
+
+  const handleAddFrame = useCallback(() => {
+    // Get selected panels that are not already in a frame
+    const selectedUnframedPanels = selectedPanelIds
+      .map((id) => panels[id])
+      .filter((panel) => panel && !panel.frameId);
+
+    let position: { x: number; y: number; width: number; height: number };
+
+    if (selectedUnframedPanels.length > 0) {
+      // Calculate bounds around selected unframed panels
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+
+      for (const panel of selectedUnframedPanels) {
+        minX = Math.min(minX, panel.position.x);
+        minY = Math.min(minY, panel.position.y);
+        maxX = Math.max(maxX, panel.position.x + panel.position.width);
+        maxY = Math.max(maxY, panel.position.y + panel.position.height);
+      }
+
+      // Add padding around the panels
+      const padding = 50;
+      position = {
+        x: minX - padding,
+        y: minY - padding,
+        width: maxX - minX + padding * 2,
+        height: maxY - minY + padding * 2,
+      };
+    } else {
+      // No selected panels, position at viewport center
+      const viewportSize = { width: window.innerWidth, height: window.innerHeight };
+      const canvasCenterX = (-viewport.panX + viewportSize.width / 2) / viewport.zoom;
+      const canvasCenterY = (-viewport.panY + viewportSize.height / 2) / viewport.zoom;
+
+      const frameWidth = 800;
+      const frameHeight = 600;
+
+      position = {
+        x: canvasCenterX - frameWidth / 2,
+        y: canvasCenterY - frameHeight / 2,
+        width: frameWidth,
+        height: frameHeight,
+      };
+    }
+
+    dispatch(
+      addFrame({
+        position,
+        createdBy: currentUsername,
+      })
+    );
+  }, [dispatch, currentUsername, selectedPanelIds, panels, viewport]);
 
   // Build context for assistant
   const canvasContext = useMemo(() => {
@@ -245,6 +302,9 @@ CRITICAL:
           />
         </Dropdown>
       </ButtonGroup>
+      <Button icon="folder-plus" onClick={handleAddFrame} variant="secondary">
+        <Trans i18nKey="explore-map.toolbar.add-frame">Add frame</Trans>
+      </Button>
       {isAssistantAvailable && Object.keys(panels).length > 0 && (
         <Button icon="ai-sparkle" onClick={handleOpenAssistant} variant="secondary">
           <Trans i18nKey="explore-map.toolbar.ask-assistant">Ask Assistant</Trans>

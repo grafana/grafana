@@ -39,7 +39,34 @@ export interface CRDTPanelData {
   // Creator metadata (username of who created the panel)
   createdBy: LWWRegister<string | undefined>;
 
+  // Frame association properties
+  frameId: LWWRegister<string | undefined>;      // Parent frame ID
+  frameOffsetX: LWWRegister<number | undefined>; // Offset from frame origin
+  frameOffsetY: LWWRegister<number | undefined>; // Offset from frame origin
+
   // Local counter incremented only for remote explore state updates
+  remoteVersion: number;
+}
+
+/**
+ * CRDT state for a single frame
+ */
+export interface CRDTFrameData {
+  // Stable identifier
+  id: string;
+
+  // CRDT-replicated properties
+  title: LWWRegister<string>;
+  positionX: LWWRegister<number>;
+  positionY: LWWRegister<number>;
+  width: LWWRegister<number>;
+  height: LWWRegister<number>;
+  zIndex: LWWRegister<number>;
+
+  // Creator metadata (username of who created the frame)
+  createdBy: LWWRegister<string | undefined>;
+
+  // Local counter incremented only for remote title updates
   remoteVersion: number;
 }
 
@@ -68,6 +95,12 @@ export interface CRDTExploreMapState {
 
   // Panel data (position, size, content)
   panelData: Map<string, CRDTPanelData>;
+
+  // Frame collection (OR-Set for add/remove operations)
+  frames: ORSet<string>;  // Set of frame IDs
+
+  // Frame data (position, size, title)
+  frameData: Map<string, CRDTFrameData>;
 
   // Counter for allocating z-indices
   zIndexCounter: PNCounter;
@@ -121,6 +154,24 @@ export interface CRDTExploreMapStateJSON {
     mode: { value: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown'; timestamp: HLCTimestamp };
     iframeUrl: { value: string | undefined; timestamp: HLCTimestamp };
     createdBy?: { value: string | undefined; timestamp: HLCTimestamp };
+    frameId?: { value: string | undefined; timestamp: HLCTimestamp };
+    frameOffsetX?: { value: number | undefined; timestamp: HLCTimestamp };
+    frameOffsetY?: { value: number | undefined; timestamp: HLCTimestamp };
+    remoteVersion?: number;
+  }>;
+  frames?: {
+    adds: Record<string, string[]>;
+    removes: string[];
+  };
+  frameData?: Record<string, {
+    id: string;
+    title: { value: string; timestamp: HLCTimestamp };
+    positionX: { value: number; timestamp: HLCTimestamp };
+    positionY: { value: number; timestamp: HLCTimestamp };
+    width: { value: number; timestamp: HLCTimestamp };
+    height: { value: number; timestamp: HLCTimestamp };
+    zIndex: { value: number; timestamp: HLCTimestamp };
+    createdBy?: { value: string | undefined; timestamp: HLCTimestamp };
     remoteVersion?: number;
   }>;
   zIndexCounter: {
@@ -143,6 +194,13 @@ export type CRDTOperationType =
   | 'update-title'
   | 'add-comment'
   | 'remove-comment'
+  | 'add-frame'
+  | 'remove-frame'
+  | 'update-frame-position'
+  | 'update-frame-size'
+  | 'update-frame-title'
+  | 'associate-panel-with-frame'
+  | 'disassociate-panel-from-frame'
   | 'batch';  // For batching multiple operations
 
 /**
@@ -277,6 +335,95 @@ export interface RemoveCommentOperation extends CRDTOperationBase {
 }
 
 /**
+ * Add frame operation
+ */
+export interface AddFrameOperation extends CRDTOperationBase {
+  type: 'add-frame';
+  payload: {
+    frameId: string;
+    title: string;
+    position: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+    createdBy?: string;
+  };
+}
+
+/**
+ * Remove frame operation
+ */
+export interface RemoveFrameOperation extends CRDTOperationBase {
+  type: 'remove-frame';
+  payload: {
+    frameId: string;
+    observedTags: string[];  // Tags from OR-Set
+  };
+}
+
+/**
+ * Update frame position operation
+ */
+export interface UpdateFramePositionOperation extends CRDTOperationBase {
+  type: 'update-frame-position';
+  payload: {
+    frameId: string;
+    x: number;
+    y: number;
+    deltaX: number;  // For batch-updating child panels
+    deltaY: number;
+  };
+}
+
+/**
+ * Update frame size operation
+ */
+export interface UpdateFrameSizeOperation extends CRDTOperationBase {
+  type: 'update-frame-size';
+  payload: {
+    frameId: string;
+    width: number;
+    height: number;
+  };
+}
+
+/**
+ * Update frame title operation
+ */
+export interface UpdateFrameTitleOperation extends CRDTOperationBase {
+  type: 'update-frame-title';
+  payload: {
+    frameId: string;
+    title: string;
+  };
+}
+
+/**
+ * Associate panel with frame operation
+ */
+export interface AssociatePanelWithFrameOperation extends CRDTOperationBase {
+  type: 'associate-panel-with-frame';
+  payload: {
+    panelId: string;
+    frameId: string;
+    offsetX: number;  // Relative to frame's top-left
+    offsetY: number;
+  };
+}
+
+/**
+ * Disassociate panel from frame operation
+ */
+export interface DisassociatePanelFromFrameOperation extends CRDTOperationBase {
+  type: 'disassociate-panel-from-frame';
+  payload: {
+    panelId: string;
+  };
+}
+
+/**
  * Batch operation (multiple operations in one)
  */
 export interface BatchOperation extends CRDTOperationBase {
@@ -300,6 +447,13 @@ export type CRDTOperation =
   | UpdateTitleOperation
   | AddCommentOperation
   | RemoveCommentOperation
+  | AddFrameOperation
+  | RemoveFrameOperation
+  | UpdateFramePositionOperation
+  | UpdateFrameSizeOperation
+  | UpdateFrameTitleOperation
+  | AssociatePanelWithFrameOperation
+  | DisassociatePanelFromFrameOperation
   | BatchOperation;
 
 /**

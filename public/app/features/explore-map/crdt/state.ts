@@ -7,7 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { ExploreMapPanel, SerializedExploreState } from '../state/types';
+import { ExploreMapPanel, ExploreMapFrame, SerializedExploreState } from '../state/types';
 
 import { HybridLogicalClock } from './hlc';
 import { LWWRegister, createLWWRegister } from './lwwregister';
@@ -16,6 +16,7 @@ import { PNCounter } from './pncounter';
 import {
   CRDTExploreMapState,
   CRDTPanelData,
+  CRDTFrameData,
   CRDTOperation,
   AddPanelOperation,
   RemovePanelOperation,
@@ -27,6 +28,13 @@ import {
   UpdateTitleOperation,
   AddCommentOperation,
   RemoveCommentOperation,
+  AddFrameOperation,
+  RemoveFrameOperation,
+  UpdateFramePositionOperation,
+  UpdateFrameSizeOperation,
+  UpdateFrameTitleOperation,
+  AssociatePanelWithFrameOperation,
+  DisassociatePanelFromFrameOperation,
   OperationResult,
   CRDTExploreMapStateJSON,
   CommentData,
@@ -56,6 +64,8 @@ export class CRDTStateManager {
       commentData: new Map(),
       panels: new ORSet<string>(),
       panelData: new Map(),
+      frames: new ORSet<string>(),
+      frameData: new Map(),
       zIndexCounter: new PNCounter(),
       local: {
         viewport: {
@@ -123,6 +133,9 @@ export class CRDTStateManager {
       mode: data.mode.get(),
       iframeUrl: data.iframeUrl.get(),
       createdBy: data.createdBy.get(),
+      frameId: data.frameId.get(),
+      frameOffsetX: data.frameOffsetX.get(),
+      frameOffsetY: data.frameOffsetY.get(),
       remoteVersion: data.remoteVersion,
     };
   }
@@ -139,6 +152,75 @@ export class CRDTStateManager {
       }
     }
     return panels;
+  }
+
+  /**
+   * Get all frame IDs currently in the set
+   */
+  getFrameIds(): string[] {
+    return this.state.frames.values();
+  }
+
+  /**
+   * Get frame data by ID
+   */
+  getFrameData(frameId: string): CRDTFrameData | undefined {
+    if (!this.state.frames.contains(frameId)) {
+      return undefined;
+    }
+    return this.state.frameData.get(frameId);
+  }
+
+  /**
+   * Get a plain object representation of a frame for UI rendering
+   */
+  getFrameForUI(frameId: string) {
+    const data = this.getFrameData(frameId);
+    if (!data) {
+      return undefined;
+    }
+
+    return {
+      id: data.id,
+      title: data.title.get(),
+      position: {
+        x: data.positionX.get(),
+        y: data.positionY.get(),
+        width: data.width.get(),
+        height: data.height.get(),
+        zIndex: data.zIndex.get(),
+      },
+      createdBy: data.createdBy.get(),
+      remoteVersion: data.remoteVersion,
+    };
+  }
+
+  /**
+   * Get all frames for UI rendering
+   */
+  getAllFramesForUI(): Record<string, ExploreMapFrame> {
+    const frames: Record<string, ExploreMapFrame> = {};
+    for (const frameId of this.getFrameIds()) {
+      const frame = this.getFrameForUI(frameId);
+      if (frame) {
+        frames[frameId] = frame;
+      }
+    }
+    return frames;
+  }
+
+  /**
+   * Helper to get all panels in a frame
+   */
+  getPanelsInFrame(frameId: string): string[] {
+    const panelIds: string[] = [];
+    for (const panelId of this.getPanelIds()) {
+      const panel = this.getPanelData(panelId);
+      if (panel && panel.frameId.get() === frameId) {
+        panelIds.push(panelId);
+      }
+    }
+    return panelIds;
   }
 
   /**
@@ -377,6 +459,162 @@ export class CRDTStateManager {
   }
 
   /**
+   * Create an add frame operation
+   */
+  createAddFrameOperation(
+    frameId: string,
+    title: string,
+    position: { x: number; y: number; width: number; height: number },
+    createdBy?: string
+  ): AddFrameOperation {
+    const timestamp = this.clock.tick();
+    return {
+      type: 'add-frame',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: { frameId, title, position, createdBy },
+    };
+  }
+
+  /**
+   * Create a remove frame operation
+   */
+  createRemoveFrameOperation(frameId: string): RemoveFrameOperation | null {
+    if (!this.state.frames.contains(frameId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    const observedTags = this.state.frames.getTags(frameId);
+
+    return {
+      type: 'remove-frame',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: { frameId, observedTags },
+    };
+  }
+
+  /**
+   * Create an update frame position operation
+   */
+  createUpdateFramePositionOperation(
+    frameId: string,
+    x: number,
+    y: number,
+    deltaX: number,
+    deltaY: number
+  ): UpdateFramePositionOperation | null {
+    if (!this.state.frames.contains(frameId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'update-frame-position',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: { frameId, x, y, deltaX, deltaY },
+    };
+  }
+
+  /**
+   * Create an update frame size operation
+   */
+  createUpdateFrameSizeOperation(
+    frameId: string,
+    width: number,
+    height: number
+  ): UpdateFrameSizeOperation | null {
+    if (!this.state.frames.contains(frameId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'update-frame-size',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: { frameId, width, height },
+    };
+  }
+
+  /**
+   * Create an update frame title operation
+   */
+  createUpdateFrameTitleOperation(
+    frameId: string,
+    title: string
+  ): UpdateFrameTitleOperation | null {
+    if (!this.state.frames.contains(frameId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'update-frame-title',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: { frameId, title },
+    };
+  }
+
+  /**
+   * Create an associate panel with frame operation
+   */
+  createAssociatePanelWithFrameOperation(
+    panelId: string,
+    frameId: string,
+    offsetX: number,
+    offsetY: number
+  ): AssociatePanelWithFrameOperation | null {
+    if (!this.state.panels.contains(panelId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'associate-panel-with-frame',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: { panelId, frameId, offsetX, offsetY },
+    };
+  }
+
+  /**
+   * Create a disassociate panel from frame operation
+   */
+  createDisassociatePanelFromFrameOperation(
+    panelId: string
+  ): DisassociatePanelFromFrameOperation | null {
+    if (!this.state.panels.contains(panelId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'disassociate-panel-from-frame',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: { panelId },
+    };
+  }
+
+  /**
    * Get all comment IDs
    */
   getCommentIds(): string[] {
@@ -438,6 +676,20 @@ export class CRDTStateManager {
           return this.applyAddComment(operation);
         case 'remove-comment':
           return this.applyRemoveComment(operation);
+        case 'add-frame':
+          return this.applyAddFrame(operation);
+        case 'remove-frame':
+          return this.applyRemoveFrame(operation);
+        case 'update-frame-position':
+          return this.applyUpdateFramePosition(operation);
+        case 'update-frame-size':
+          return this.applyUpdateFrameSize(operation);
+        case 'update-frame-title':
+          return this.applyUpdateFrameTitle(operation);
+        case 'associate-panel-with-frame':
+          return this.applyAssociatePanelWithFrame(operation);
+        case 'disassociate-panel-from-frame':
+          return this.applyDisassociatePanelFromFrame(operation);
         case 'batch':
           return this.applyBatchOperation(operation);
         default:
@@ -479,6 +731,9 @@ export class CRDTStateManager {
         mode: new LWWRegister(panelMode, operation.timestamp),
         iframeUrl: new LWWRegister(undefined, operation.timestamp),
         createdBy: new LWWRegister(createdBy, operation.timestamp),
+        frameId: new LWWRegister(undefined, operation.timestamp),
+        frameOffsetX: new LWWRegister(undefined, operation.timestamp),
+        frameOffsetY: new LWWRegister(undefined, operation.timestamp),
         remoteVersion: 0,
       });
     }
@@ -667,6 +922,130 @@ export class CRDTStateManager {
     };
   }
 
+  private applyAddFrame(operation: AddFrameOperation): OperationResult {
+    const { frameId, title, position, createdBy } = operation.payload;
+
+    // Add to OR-Set with operation ID as tag
+    this.state.frames.add(frameId, operation.operationId);
+
+    // Initialize frame data if it doesn't exist
+    if (!this.state.frameData.has(frameId)) {
+      // Frames always use z-index 0 to stay below panels
+      // Panels start from z-index 1 and increment from there
+      const zIndex = 0;
+
+      this.state.frameData.set(frameId, {
+        id: frameId,
+        title: new LWWRegister(title, operation.timestamp),
+        positionX: new LWWRegister(position.x, operation.timestamp),
+        positionY: new LWWRegister(position.y, operation.timestamp),
+        width: new LWWRegister(position.width, operation.timestamp),
+        height: new LWWRegister(position.height, operation.timestamp),
+        zIndex: new LWWRegister(zIndex, operation.timestamp),
+        createdBy: new LWWRegister(createdBy, operation.timestamp),
+        remoteVersion: 0,
+      });
+    }
+
+    return { success: true, applied: true };
+  }
+
+  private applyRemoveFrame(operation: RemoveFrameOperation): OperationResult {
+    const { frameId, observedTags } = operation.payload;
+
+    // Remove from OR-Set
+    this.state.frames.remove(frameId, observedTags);
+
+    // Disassociate all panels from this frame
+    for (const panelId of this.getPanelIds()) {
+      const panel = this.state.panelData.get(panelId);
+      if (panel && panel.frameId.get() === frameId) {
+        panel.frameId.set(undefined, operation.timestamp);
+        panel.frameOffsetX.set(undefined, operation.timestamp);
+        panel.frameOffsetY.set(undefined, operation.timestamp);
+      }
+    }
+
+    // Keep frame data as tombstone for CRDT correctness
+    return { success: true, applied: true };
+  }
+
+  private applyUpdateFramePosition(operation: UpdateFramePositionOperation): OperationResult {
+    const { frameId, x, y } = operation.payload;
+    const frameData = this.state.frameData.get(frameId);
+
+    if (!frameData) {
+      return { success: true, applied: false, error: 'Frame not found' };
+    }
+
+    const xUpdated = frameData.positionX.set(x, operation.timestamp);
+    const yUpdated = frameData.positionY.set(y, operation.timestamp);
+
+    return { success: true, applied: xUpdated || yUpdated };
+  }
+
+  private applyUpdateFrameSize(operation: UpdateFrameSizeOperation): OperationResult {
+    const { frameId, width, height } = operation.payload;
+    const frameData = this.state.frameData.get(frameId);
+
+    if (!frameData) {
+      return { success: true, applied: false, error: 'Frame not found' };
+    }
+
+    const widthUpdated = frameData.width.set(width, operation.timestamp);
+    const heightUpdated = frameData.height.set(height, operation.timestamp);
+
+    return { success: true, applied: widthUpdated || heightUpdated };
+  }
+
+  private applyUpdateFrameTitle(operation: UpdateFrameTitleOperation): OperationResult {
+    const { frameId, title } = operation.payload;
+    const frameData = this.state.frameData.get(frameId);
+
+    if (!frameData) {
+      return { success: true, applied: false, error: 'Frame not found' };
+    }
+
+    const updated = frameData.title.set(title, operation.timestamp);
+
+    // Increment remoteVersion only for remote operations
+    if (updated && operation.nodeId !== this.nodeId) {
+      frameData.remoteVersion++;
+    }
+
+    return { success: true, applied: updated };
+  }
+
+  private applyAssociatePanelWithFrame(operation: AssociatePanelWithFrameOperation): OperationResult {
+    const { panelId, frameId, offsetX, offsetY } = operation.payload;
+    const panelData = this.state.panelData.get(panelId);
+
+    if (!panelData) {
+      return { success: true, applied: false, error: 'Panel not found' };
+    }
+
+    const frameUpdated = panelData.frameId.set(frameId, operation.timestamp);
+    const offsetXUpdated = panelData.frameOffsetX.set(offsetX, operation.timestamp);
+    const offsetYUpdated = panelData.frameOffsetY.set(offsetY, operation.timestamp);
+
+    return { success: true, applied: frameUpdated || offsetXUpdated || offsetYUpdated };
+  }
+
+  private applyDisassociatePanelFromFrame(operation: DisassociatePanelFromFrameOperation): OperationResult {
+    const { panelId } = operation.payload;
+    const panelData = this.state.panelData.get(panelId);
+
+    if (!panelData) {
+      return { success: true, applied: false, error: 'Panel not found' };
+    }
+
+    const frameUpdated = panelData.frameId.set(undefined, operation.timestamp);
+    const offsetXUpdated = panelData.frameOffsetX.set(undefined, operation.timestamp);
+    const offsetYUpdated = panelData.frameOffsetY.set(undefined, operation.timestamp);
+
+    return { success: true, applied: frameUpdated || offsetXUpdated || offsetYUpdated };
+  }
+
   /**
    * Merge another CRDT state into this one
    */
@@ -705,6 +1084,9 @@ export class CRDTStateManager {
           mode: otherPanelData.mode.clone(),
           iframeUrl: otherPanelData.iframeUrl.clone(),
           createdBy: otherPanelData.createdBy.clone(),
+          frameId: otherPanelData.frameId.clone(),
+          frameOffsetX: otherPanelData.frameOffsetX.clone(),
+          frameOffsetY: otherPanelData.frameOffsetY.clone(),
           remoteVersion: otherPanelData.remoteVersion,
         });
       } else {
@@ -718,6 +1100,41 @@ export class CRDTStateManager {
         myPanelData.mode.merge(otherPanelData.mode);
         myPanelData.iframeUrl.merge(otherPanelData.iframeUrl);
         myPanelData.createdBy.merge(otherPanelData.createdBy);
+        myPanelData.frameId.merge(otherPanelData.frameId);
+        myPanelData.frameOffsetX.merge(otherPanelData.frameOffsetX);
+        myPanelData.frameOffsetY.merge(otherPanelData.frameOffsetY);
+      }
+    }
+
+    // Merge frame OR-Set
+    this.state.frames.merge(other.frames);
+
+    // Merge frame data
+    for (const [frameId, otherFrameData] of other.frameData.entries()) {
+      const myFrameData = this.state.frameData.get(frameId);
+
+      if (!myFrameData) {
+        // Frame doesn't exist locally - copy it
+        this.state.frameData.set(frameId, {
+          id: otherFrameData.id,
+          title: otherFrameData.title.clone(),
+          positionX: otherFrameData.positionX.clone(),
+          positionY: otherFrameData.positionY.clone(),
+          width: otherFrameData.width.clone(),
+          height: otherFrameData.height.clone(),
+          zIndex: otherFrameData.zIndex.clone(),
+          createdBy: otherFrameData.createdBy.clone(),
+          remoteVersion: otherFrameData.remoteVersion,
+        });
+      } else {
+        // Merge each LWW register
+        myFrameData.title.merge(otherFrameData.title);
+        myFrameData.positionX.merge(otherFrameData.positionX);
+        myFrameData.positionY.merge(otherFrameData.positionY);
+        myFrameData.width.merge(otherFrameData.width);
+        myFrameData.height.merge(otherFrameData.height);
+        myFrameData.zIndex.merge(otherFrameData.zIndex);
+        myFrameData.createdBy.merge(otherFrameData.createdBy);
       }
     }
 
@@ -744,6 +1161,9 @@ export class CRDTStateManager {
         mode: data.mode.toJSON(),
         iframeUrl: data.iframeUrl.toJSON(),
         createdBy: data.createdBy.toJSON(),
+        frameId: data.frameId.toJSON(),
+        frameOffsetX: data.frameOffsetX.toJSON(),
+        frameOffsetY: data.frameOffsetY.toJSON(),
         remoteVersion: data.remoteVersion,
       };
     }
@@ -755,6 +1175,23 @@ export class CRDTStateManager {
       }
     }
 
+    const frameData: Record<string, any> = {};
+    for (const [frameId, data] of this.state.frameData.entries()) {
+      if (this.state.frames.contains(frameId)) {
+        frameData[frameId] = {
+          id: data.id,
+          title: data.title.toJSON(),
+          positionX: data.positionX.toJSON(),
+          positionY: data.positionY.toJSON(),
+          width: data.width.toJSON(),
+          height: data.height.toJSON(),
+          zIndex: data.zIndex.toJSON(),
+          createdBy: data.createdBy.toJSON(),
+          remoteVersion: data.remoteVersion,
+        };
+      }
+    }
+
     return {
       uid: this.state.uid,
       title: this.state.title.toJSON(),
@@ -762,6 +1199,8 @@ export class CRDTStateManager {
       commentData,
       panels: this.state.panels.toJSON(),
       panelData,
+      frames: this.state.frames.toJSON(),
+      frameData,
       zIndexCounter: this.state.zIndexCounter.toJSON(),
     };
   }
@@ -782,6 +1221,7 @@ export class CRDTStateManager {
       }
     }
     manager.state.panels = ORSet.fromJSON(json.panels);
+    manager.state.frames = json.frames ? ORSet.fromJSON(json.frames) : new ORSet<string>();
     manager.state.zIndexCounter = PNCounter.fromJSON(json.zIndexCounter);
 
     // Load panel data
@@ -800,8 +1240,29 @@ export class CRDTStateManager {
         mode: data.mode ? LWWRegister.fromJSON(data.mode) : new LWWRegister('explore', defaultTimestamp),
         iframeUrl: data.iframeUrl ? LWWRegister.fromJSON(data.iframeUrl) : new LWWRegister(undefined, defaultTimestamp),
         createdBy: data.createdBy ? LWWRegister.fromJSON(data.createdBy) : new LWWRegister(undefined, defaultTimestamp),
+        frameId: data.frameId ? LWWRegister.fromJSON(data.frameId) : new LWWRegister(undefined, defaultTimestamp),
+        frameOffsetX: data.frameOffsetX ? LWWRegister.fromJSON(data.frameOffsetX) : new LWWRegister(undefined, defaultTimestamp),
+        frameOffsetY: data.frameOffsetY ? LWWRegister.fromJSON(data.frameOffsetY) : new LWWRegister(undefined, defaultTimestamp),
         remoteVersion: data.remoteVersion || 0,
       });
+    }
+
+    // Load frame data
+    if (json.frameData) {
+      for (const [frameId, data] of Object.entries(json.frameData)) {
+        const defaultTimestamp = data.positionX?.timestamp || { nodeId: manager.nodeId, counter: 0, wallClock: Date.now() };
+        manager.state.frameData.set(frameId, {
+          id: data.id,
+          title: LWWRegister.fromJSON(data.title),
+          positionX: LWWRegister.fromJSON(data.positionX),
+          positionY: LWWRegister.fromJSON(data.positionY),
+          width: LWWRegister.fromJSON(data.width),
+          height: LWWRegister.fromJSON(data.height),
+          zIndex: LWWRegister.fromJSON(data.zIndex),
+          createdBy: data.createdBy ? LWWRegister.fromJSON(data.createdBy) : new LWWRegister(undefined, defaultTimestamp),
+          remoteVersion: data.remoteVersion || 0,
+        });
+      }
     }
 
     return manager;

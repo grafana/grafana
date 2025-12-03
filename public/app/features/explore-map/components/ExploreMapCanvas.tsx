@@ -10,10 +10,11 @@ import { useTransformContext } from '../context/TransformContext';
 import { useCursorSync } from '../hooks/useCursorSync';
 import { useCursorViewportTracking } from '../hooks/useCursorViewportTracking';
 import { selectPanel as selectPanelCRDT, updateViewport as updateViewportCRDT, selectMultiplePanels as selectMultiplePanelsCRDT } from '../state/crdtSlice';
-import { selectPanels, selectViewport, selectCursors, selectSelectedPanelIds, selectMapUid } from '../state/selectors';
+import { selectPanels, selectFrames, selectViewport, selectCursors, selectSelectedPanelIds, selectMapUid } from '../state/selectors';
 
 import { EdgeCursorIndicator } from './EdgeCursorIndicator';
 import { ExploreMapComment } from './ExploreMapComment';
+import { ExploreMapFrame } from './ExploreMapFrame';
 import { ExploreMapPanelContainer } from './ExploreMapPanelContainer';
 import { UserCursor } from './UserCursor';
 
@@ -36,6 +37,7 @@ export function ExploreMapCanvas() {
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   const panels = useSelector((state) => selectPanels(state.exploreMapCRDT));
+  const frames = useSelector((state) => selectFrames(state.exploreMapCRDT));
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
   const cursors = useSelector((state) => selectCursors(state.exploreMapCRDT));
   const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
@@ -322,6 +324,11 @@ export function ExploreMapCanvas() {
             role="button"
             tabIndex={0}
           >
+            {/* Render frames first (lower z-index) */}
+            {Object.values(frames).map((frame) => (
+              <ExploreMapFrame key={frame.id} frame={frame} />
+            ))}
+            {/* Render panels on top */}
             {Object.values(panels).map((panel) => {
               return <ExploreMapPanelContainer key={panel.id} panel={panel} />;
             })}

@@ -10,7 +10,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { CRDTStateManager } from '../crdt/state';
 
 import { ExploreMapCRDTState } from './crdtSlice';
-import { ExploreMapPanel } from './types';
+import { ExploreMapFrame, ExploreMapPanel } from './types';
 
 /**
  * Get CRDT manager from state
@@ -29,6 +29,12 @@ function getCRDTManager(state: ExploreMapCRDTState): CRDTStateManager {
  * Key: panelId, Value: { panel object, serialized panel data for comparison }
  */
 const panelCache = new Map<string, { panel: ExploreMapPanel; data: string }>();
+
+/**
+ * Cache for individual frame objects
+ * Key: frameId, Value: { frame object, serialized frame data for comparison }
+ */
+const frameCache = new Map<string, { frame: ExploreMapFrame; data: string }>();
 
 /**
  * Select all panels as a Record (for compatibility with existing UI)
@@ -118,6 +124,111 @@ export const selectPanelIds = createSelector(
   (state): string[] => {
     const manager = getCRDTManager(state);
     return manager.getPanelIds();
+  }
+);
+
+/**
+ * Select all frames as a Record (for compatibility with existing UI)
+ *
+ * OPTIMIZATION: This selector caches individual frame objects and only creates
+ * new frame objects when the underlying CRDT data for that specific frame changes.
+ * This prevents unnecessary re-renders of unchanged frames when another frame is modified.
+ */
+export const selectFrames = createSelector(
+  [
+    (state: ExploreMapCRDTState) => state.crdtStateJSON,
+    (state: ExploreMapCRDTState) => state.nodeId,
+    (state: ExploreMapCRDTState) => state.uid,
+  ],
+  (crdtStateJSON, nodeId, uid): Record<string, ExploreMapFrame> => {
+    const state: ExploreMapCRDTState = {
+      uid,
+      crdtStateJSON,
+      nodeId,
+      sessionId: '', // Not needed for frame selection
+      pendingOperations: [],
+      local: {
+        viewport: { zoom: 1, panX: 0, panY: 0 },
+        selectedPanelIds: [],
+        cursors: {},
+        isOnline: false,
+        isSyncing: false,
+      },
+    };
+    const manager = getCRDTManager(state);
+    const frames: Record<string, ExploreMapFrame> = {};
+    const currentFrameIds = new Set(manager.getFrameIds());
+
+    // Clean up cache for removed frames
+    for (const cachedFrameId of frameCache.keys()) {
+      if (!currentFrameIds.has(cachedFrameId)) {
+        frameCache.delete(cachedFrameId);
+      }
+    }
+
+    // Build frames object, reusing cached objects when data hasn't changed
+    for (const frameId of currentFrameIds) {
+      const frameData = manager.getFrameForUI(frameId);
+      if (!frameData) {
+        continue;
+      }
+
+      // Serialize the frame data to detect changes
+      const serializedData = JSON.stringify(frameData);
+      const cached = frameCache.get(frameId);
+
+      // Reuse cached frame if data hasn't changed
+      if (cached && cached.data === serializedData) {
+        frames[frameId] = cached.frame;
+      } else {
+        // Frame is new or changed, create new object and cache it
+        const frame = frameData as ExploreMapFrame;
+        frames[frameId] = frame;
+        frameCache.set(frameId, { frame, data: serializedData });
+      }
+    }
+
+    return frames;
+  }
+);
+
+/**
+ * Select a single frame by ID
+ */
+export const selectFrame = createSelector(
+  [
+    (state: ExploreMapCRDTState) => state,
+    (_state: ExploreMapCRDTState, frameId: string) => frameId,
+  ],
+  (state, frameId): ExploreMapFrame | undefined => {
+    const manager = getCRDTManager(state);
+    const frameData = manager.getFrameForUI(frameId);
+    return frameData ? (frameData as ExploreMapFrame) : undefined;
+  }
+);
+
+/**
+ * Select frame IDs
+ */
+export const selectFrameIds = createSelector(
+  [(state: ExploreMapCRDTState) => state],
+  (state): string[] => {
+    const manager = getCRDTManager(state);
+    return manager.getFrameIds();
+  }
+);
+
+/**
+ * Select all panels in a specific frame
+ */
+export const selectPanelsInFrame = createSelector(
+  [
+    (state: ExploreMapCRDTState) => state,
+    (_state: ExploreMapCRDTState, frameId: string) => frameId,
+  ],
+  (state, frameId): string[] => {
+    const manager = getCRDTManager(state);
+    return manager.getPanelsInFrame(frameId);
   }
 );
 
@@ -347,6 +458,7 @@ export const selectActiveUsers = createSelector(
 export const selectLegacyState = createSelector(
   [
     selectPanels,
+    selectFrames,
     selectMapTitle,
     selectViewport,
     selectSelectedPanelIds,
@@ -354,7 +466,7 @@ export const selectLegacyState = createSelector(
     selectMapUid,
     (state: ExploreMapCRDTState) => state,
   ],
-  (panels, title, viewport, selectedPanelIds, cursors, uid, state) => {
+  (panels, frames, title, viewport, selectedPanelIds, cursors, uid, state) => {
     const manager = getCRDTManager(state);
     const crdtState = manager.getState();
 
@@ -363,6 +475,7 @@ export const selectLegacyState = createSelector(
       title,
       viewport,
       panels,
+      frames,
       selectedPanelIds,
       nextZIndex: crdtState.zIndexCounter.value() + 1,
       cursors,

@@ -57,7 +57,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       // Using linear for more predictive movement
       // Also transition transform for smooth scaling when zoom changes
       // Add opacity transition for smooth fade in/out when entering/leaving view
-      transition: 'left 0.1s linear, top 0.1s linear, transform 0.2s ease-out, opacity 0.2s ease-out',
+      transition: 'left 0.1s linear, top 0.1s linear, opacity 0.2s ease-out',
       // Will-change hint for better performance
       willChange: 'left, top, transform, opacity',
       // Fade in animation
