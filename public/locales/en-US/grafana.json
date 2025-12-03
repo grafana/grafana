@@ -6643,8 +6643,8 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "Or skip the effort and get {{mainDS}} (and {{extraDS}}) as fully-managed, scalable, and hosted data sources from Grafana Labs with the <6>free-forever Grafana Cloud plan</6> .",
-      "title-alert": "Configure your {{mainDS}} data source below"
+      "body-alert": "Or skip the effort and get {{dsName}} as fully-managed, scalable, and hosted data source from Grafana Labs with the <6>free-forever Grafana Cloud plan</6> .",
+      "title-alert": "Configure your {{dsName}} data source below"
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Delete dashboard",
