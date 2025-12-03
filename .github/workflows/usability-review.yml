@@ -303,3 +303,63 @@ jobs:
 
           gh pr comment $PR_NUMBER --body-file "$COMMENT_FILE"
           rm "$COMMENT_FILE"
+
+      - name: Post individual suggestions as separate comments
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OUTPUT_TEXT_PATH: ${{ env.OUTPUT_TEXT_PATH }}
+        run: |
+          python3 <<'PYTHON'
+          import os
+          import subprocess
+          import re
+
+          # Read the AI output
+          output_path = os.environ['OUTPUT_TEXT_PATH']
+          if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+              print("No output file found, skipping individual comments")
+              exit(0)
+
+          with open(output_path, 'r') as f:
+              content = f.read()
+
+          # Extract table rows (skip header and separator)
+          table_pattern = r'\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|'
+          matches = re.findall(table_pattern, content)
+
+          if len(matches) < 3:
+              print(f"Not enough table rows found ({len(matches)}), skipping individual comments")
+              exit(0)
+
+          # Skip first 2 matches (header + separator)
+          issue_rows = matches[2:5]  # Get exactly 3 issues
+
+          pr_number = os.environ['PR_NUMBER']
+
+          for severity, issue, impact, suggestion in issue_rows:
+              # Clean up whitespace
+              severity = severity.strip()
+              issue = issue.strip()
+              impact = impact.strip()
+              suggestion = suggestion.strip()
+
+              # Create individual comment
+              comment = f"""### {severity}: {issue}
+
+**Impact:** {impact}
+
+**Suggestion:** {suggestion}
+
+---
+_Posted by Usability Review Agent_"""
+
+              # Post comment
+              subprocess.run(
+                  ['gh', 'pr', 'comment', pr_number, '--body', comment],
+                  check=True
+              )
+              print(f"Posted comment for: {issue}")
+
+          PYTHON

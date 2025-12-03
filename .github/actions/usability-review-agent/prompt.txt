@@ -13,11 +13,11 @@ Provide your findings in the following format:
 A brief overview (2-3 sentences) of the overall usability of the feature/workflow you tested.
 
 ## Usability Issues Found
-List each issue with:
-- **Severity**: Critical / Major / Minor
-- **Issue**: Clear description of the problem
-- **Impact**: How this affects users
-- **Suggestion**: Potential improvement
+Present exactly 3 issues in a markdown table with the following columns:
+
+| Severity | Issue | Impact | Suggestion |
+|----------|-------|--------|------------|
+| Critical/Major/Minor | Clear description of the problem | How this affects users | Potential improvement |
 
 ## Testing Process
 Numbered list of steps you took during the review, including which pages/features you interacted with.
