@@ -43,6 +43,10 @@ jobs:
           vault_instance: "dev"
           repo_secrets: |
             OPENAI_API_KEY=usability-review-agent:OPENAI_API_KEY
+            # Using pre-created user credentials (see SETUP.md for manual setup steps)
+            # Remove these if stack-users:write token becomes available
+            GRAFANA_USERNAME=usability-review-agent:USERNAME
+            GRAFANA_PASSWORD=usability-review-agent:PASSWORD
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -196,6 +200,9 @@ jobs:
           fi
 
       - name: Create test user for playwright
+        # NOTE: Temporarily disabled - using pre-created user from Vault instead
+        # Re-enable this if stack-users:write token becomes available
+        if: false
         env:
           GCOM_HOST: ${{ env.GCOM_HOST }}
           GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
