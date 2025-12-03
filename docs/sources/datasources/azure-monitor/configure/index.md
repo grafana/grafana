@@ -91,7 +91,7 @@ For general information about data sources, refer to [Grafana data sources](ref:
 Before configuring the Azure Monitor data source, ensure you have the following:
 
 - **Grafana permissions:** You must have the `Organization administrator` role to configure data sources.
-  Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+  Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system or [using Terraform](#configure-with-terraform).
 
 - **Azure prerequisites:** Depending on your chosen authentication method, you may need:
   - An Azure AD app registration with a service principal (for App Registration authentication)
@@ -138,7 +138,7 @@ Select one of the following authentication methods and complete the configuratio
 
 Use an Azure AD app registration (service principal) to authenticate. This method works with any Grafana deployment.
 
-#### Prerequisites
+#### App Registration prerequisites
 
 1. Create an app registration in Azure AD.
    Refer to the [Azure documentation for creating a service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in).
@@ -149,7 +149,7 @@ Use an Azure AD app registration (service principal) to authenticate. This metho
 1. Assign the `Reader` role to the app registration on the subscription or resources you want to monitor.
    Refer to the [Azure documentation for role assignments](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal?tabs=current).
 
-#### UI configuration
+#### App Registration UI configuration
 
 | Setting | Description |
 |---------|-------------|
@@ -160,7 +160,7 @@ Use an Azure AD app registration (service principal) to authenticate. This metho
 | **Client secret** | The secret key for the app registration. Keep this secure and rotate periodically. |
 | **Default Subscription** | Click **Load Subscriptions** to populate available subscriptions, then select your default. |
 
-#### Provision with YAML
+#### App Registration YAML provisioning
 
 ```yaml
 apiVersion: 1
@@ -188,7 +188,7 @@ Use Azure Managed Identity for secure, credential-free authentication when Grafa
 Managed Identity is available in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or self-hosted Grafana deployed in Azure. It is not available in Grafana Cloud.
 {{< /admonition >}}
 
-#### Prerequisites
+#### Managed Identity prerequisites
 
 - Grafana must be hosted in Azure (App Service, Azure VMs, or Azure Managed Grafana).
 - Managed identity must be enabled on the Azure resource hosting Grafana.
@@ -196,7 +196,7 @@ Managed Identity is available in [Azure Managed Grafana](https://azure.microsoft
 
 For details on Azure managed identities, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview).
 
-#### Grafana server configuration
+#### Managed Identity Grafana server configuration
 
 Enable managed identity in the Grafana server configuration:
 
@@ -215,7 +215,7 @@ managed_identity_client_id = <USER_ASSIGNED_IDENTITY_CLIENT_ID>
 
 Refer to [Grafana Azure configuration](ref:configure-grafana-azure) for more details.
 
-#### UI configuration
+#### Managed Identity UI configuration
 
 | Setting | Description |
 |---------|-------------|
@@ -224,7 +224,7 @@ Refer to [Grafana Azure configuration](ref:configure-grafana-azure) for more det
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity-2.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor data source configured with Managed Identity" >}}
 
-#### Provision with YAML
+#### Managed Identity YAML provisioning
 
 ```yaml
 apiVersion: 1
@@ -243,14 +243,14 @@ datasources:
 
 Use Azure Workload Identity for secure authentication in Kubernetes environments like AKS.
 
-#### Prerequisites
+#### Workload Identity prerequisites
 
 - Grafana must be running in a Kubernetes environment with workload identity federation configured.
 - The workload identity must have the `Reader` role on the subscription or resources you want to monitor.
 
 For details, refer to the [Azure workload identity documentation](https://azure.github.io/azure-workload-identity/docs/).
 
-#### Grafana server configuration
+#### Workload Identity Grafana server configuration
 
 Enable workload identity in the Grafana server configuration:
 
@@ -271,7 +271,7 @@ workload_identity_token_file = <TOKEN_FILE_PATH>      # Path to the token file
 
 Refer to [Grafana Azure configuration](ref:configure-grafana-azure) and the [Azure workload identity documentation](https://azure.github.io/azure-workload-identity/docs/) for more details.
 
-#### UI configuration
+#### Workload Identity UI configuration
 
 | Setting | Description |
 |---------|-------------|
@@ -280,7 +280,7 @@ Refer to [Grafana Azure configuration](ref:configure-grafana-azure) and the [Azu
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-workload-identity.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor data source configured with Workload Identity" >}}
 
-#### Provision with YAML
+#### Workload Identity YAML provisioning
 
 ```yaml
 apiVersion: 1
@@ -303,7 +303,7 @@ Forward the logged-in Grafana user's Azure credentials to the data source for us
 Current User authentication is an [experimental feature](/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is limited. No SLA is provided. Contact Grafana Support to enable this feature in Grafana Cloud.
 {{< /admonition >}}
 
-#### Prerequisites
+#### Current User prerequisites
 
 Your Grafana instance must be configured with Azure Entra (formerly Active Directory) authentication. Refer to the [Azure AD authentication documentation](ref:configure-grafana-azure-auth).
 
@@ -337,7 +337,7 @@ Update the `scopes` section in your Grafana Azure authentication configuration t
 .default openid email profile
 ```
 
-#### Grafana server configuration
+#### Current User Grafana server configuration
 
 Enable current user authentication in the Grafana server configuration:
 
@@ -368,7 +368,7 @@ To support these features, configure **fallback service credentials**. When enab
 Query and resource caching is disabled by default for data sources using Current User authentication.
 {{< /admonition >}}
 
-#### UI configuration
+#### Current User UI configuration
 
 | Setting | Description |
 |---------|-------------|
@@ -378,7 +378,7 @@ Query and resource caching is disabled by default for data sources using Current
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-current-user.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor data source configured with Current User authentication" >}}
 
-#### Provision with YAML
+#### Current User YAML provisioning
 
 {{< admonition type="note" >}}
 The `oauthPassThru` property is required for Current User authentication. The `disableGrafanaCache` property prevents returning cached responses for resources users don't have access to.
@@ -456,3 +456,135 @@ You can define and configure the Azure Monitor data source in YAML files as part
 For more information about provisioning, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
 See the YAML examples in each [authentication method section](#configure-authentication) above.
+
+## Configure with Terraform
+
+You can configure the Azure Monitor data source using the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs). This approach enables infrastructure-as-code workflows and version control for your Grafana configuration.
+
+### Terraform prerequisites
+
+- [Terraform](https://www.terraform.io/downloads) installed
+- Grafana Terraform provider configured with appropriate credentials
+- For Grafana Cloud: A [Cloud Access Policy token](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/) with data source permissions
+
+### Provider configuration
+
+Configure the Grafana provider to connect to your Grafana instance:
+
+```hcl
+terraform {
+  required_providers {
+    grafana = {
+      source  = "grafana/grafana"
+      version = ">= 2.0.0"
+    }
+  }
+}
+
+# For Grafana Cloud
+provider "grafana" {
+  url  = "<YOUR_GRAFANA_CLOUD_STACK_URL>"
+  auth = "<YOUR_SERVICE_ACCOUNT_TOKEN>"
+}
+
+# For self-hosted Grafana
+# provider "grafana" {
+#   url  = "http://localhost:3000"
+#   auth = "<API_KEY_OR_SERVICE_ACCOUNT_TOKEN>"
+# }
+```
+
+### Terraform examples
+
+The following examples show how to configure the Azure Monitor data source for each authentication method.
+
+**App Registration (client secret):**
+
+```hcl
+resource "grafana_data_source" "azure_monitor" {
+  type = "grafana-azure-monitor-datasource"
+  name = "Azure Monitor"
+
+  json_data_encoded = jsonencode({
+    azureAuthType  = "clientsecret"
+    cloudName      = "azuremonitor"
+    tenantId       = "<TENANT_ID>"
+    clientId       = "<CLIENT_ID>"
+    subscriptionId = "<SUBSCRIPTION_ID>"
+  })
+
+  secure_json_data_encoded = jsonencode({
+    clientSecret = "<CLIENT_SECRET>"
+  })
+}
+```
+
+**Managed Identity:**
+
+```hcl
+resource "grafana_data_source" "azure_monitor" {
+  type = "grafana-azure-monitor-datasource"
+  name = "Azure Monitor"
+
+  json_data_encoded = jsonencode({
+    azureAuthType  = "msi"
+    subscriptionId = "<SUBSCRIPTION_ID>"
+  })
+}
+```
+
+**Workload Identity:**
+
+```hcl
+resource "grafana_data_source" "azure_monitor" {
+  type = "grafana-azure-monitor-datasource"
+  name = "Azure Monitor"
+
+  json_data_encoded = jsonencode({
+    azureAuthType  = "workloadidentity"
+    subscriptionId = "<SUBSCRIPTION_ID>"
+  })
+}
+```
+
+**Current User:**
+
+```hcl
+resource "grafana_data_source" "azure_monitor" {
+  type = "grafana-azure-monitor-datasource"
+  name = "Azure Monitor"
+
+  json_data_encoded = jsonencode({
+    azureAuthType       = "currentuser"
+    oauthPassThru       = true
+    disableGrafanaCache = true
+    subscriptionId      = "<SUBSCRIPTION_ID>"
+  })
+}
+```
+
+**With Basic Logs enabled:**
+
+Add `enableBasicLogs = true` to any of the above configurations:
+
+```hcl
+resource "grafana_data_source" "azure_monitor" {
+  type = "grafana-azure-monitor-datasource"
+  name = "Azure Monitor"
+
+  json_data_encoded = jsonencode({
+    azureAuthType   = "clientsecret"
+    cloudName       = "azuremonitor"
+    tenantId        = "<TENANT_ID>"
+    clientId        = "<CLIENT_ID>"
+    subscriptionId  = "<SUBSCRIPTION_ID>"
+    enableBasicLogs = true
+  })
+
+  secure_json_data_encoded = jsonencode({
+    clientSecret = "<CLIENT_SECRET>"
+  })
+}
+```
+
+For more information about the Grafana Terraform provider, refer to the [provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs) and the [grafana_data_source resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
