@@ -18,67 +18,76 @@ interface DetailViewProps {
   selectedItem: QueryTransformItem | undefined;
   panel: VizPanel;
   tabs: Array<{ tabId: TabId }>;
+  onRemoveTransform?: (index: number) => void;
+  onToggleTransformVisibility?: (index: number) => void;
 }
 
-export const DetailView = memo(({ selectedItem, panel, tabs }: DetailViewProps) => {
-  const styles = useStyles2(getStyles);
+export const DetailView = memo(
+  ({ selectedItem, panel, tabs, onRemoveTransform, onToggleTransformVisibility }: DetailViewProps) => {
+    const styles = useStyles2(getStyles);
 
-  const renderContent = useCallback(() => {
-    if (!selectedItem) {
-      return (
-        <div className={styles.emptyState}>
-          <p>
-            <Trans i18nKey="dashboard-scene.panel-data-pane.empty-state">
-              Select a query or transformation to edit
-            </Trans>
-          </p>
-        </div>
-      );
-    }
+    const renderContent = useCallback(() => {
+      if (!selectedItem) {
+        return (
+          <div className={styles.emptyState}>
+            <p>
+              <Trans i18nKey="dashboard-scene.panel-data-pane.empty-state">
+                Select a query or transformation to edit
+              </Trans>
+            </p>
+          </div>
+        );
+      }
 
-    if (selectedItem.type === 'query' && 'refId' in selectedItem.data) {
-      const query = selectedItem.data;
-      return (
-        <>
-          <DetailViewHeader selectedItem={selectedItem} panel={panel} />
-          <ScrollContainer>
-            <QueryDetailView panel={panel} query={query} queryIndex={selectedItem.index} />
-          </ScrollContainer>
-        </>
-      );
-    } else if (selectedItem.type === 'expression' && 'refId' in selectedItem.data) {
-      const data = selectedItem.data;
-      if (isExpressionQuery(data)) {
+      if (selectedItem.type === 'query' && 'refId' in selectedItem.data) {
+        const query = selectedItem.data;
         return (
           <>
             <DetailViewHeader selectedItem={selectedItem} panel={panel} />
             <ScrollContainer>
-              <ExpressionDetailView panel={panel} expression={data} expressionIndex={selectedItem.index} />
+              <QueryDetailView panel={panel} query={query} queryIndex={selectedItem.index} />
             </ScrollContainer>
           </>
         );
+      } else if (selectedItem.type === 'expression' && 'refId' in selectedItem.data) {
+        const data = selectedItem.data;
+        if (isExpressionQuery(data)) {
+          return (
+            <>
+              <DetailViewHeader selectedItem={selectedItem} panel={panel} />
+              <ScrollContainer>
+                <ExpressionDetailView panel={panel} expression={data} expressionIndex={selectedItem.index} />
+              </ScrollContainer>
+            </>
+          );
+        }
+      } else {
+        const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
+        if (transformsTab && 'id' in selectedItem.data) {
+          return (
+            <>
+              <DetailViewHeader
+                selectedItem={selectedItem}
+                panel={panel}
+                onRemoveTransform={onRemoveTransform}
+                onToggleTransformVisibility={onToggleTransformVisibility}
+              />
+              <ScrollContainer>
+                <Container>
+                  <PanelDataTransformationsTabRendered model={transformsTab} selectedIdx={selectedItem.index} />
+                </Container>
+              </ScrollContainer>
+            </>
+          );
+        }
       }
-    } else {
-      const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
-      if (transformsTab && 'id' in selectedItem.data) {
-        return (
-          <>
-            <DetailViewHeader selectedItem={selectedItem} panel={panel} />
-            <ScrollContainer>
-              <Container>
-                <PanelDataTransformationsTabRendered model={transformsTab} selectedIdx={selectedItem.index} />
-              </Container>
-            </ScrollContainer>
-          </>
-        );
-      }
-    }
 
-    return null;
-  }, [selectedItem, panel, tabs, styles.emptyState]);
+      return null;
+    }, [selectedItem, panel, tabs, styles.emptyState, onRemoveTransform, onToggleTransformVisibility]);
 
-  return <div className={styles.container}>{renderContent()}</div>;
-});
+    return <div className={styles.container}>{renderContent()}</div>;
+  }
+);
 
 DetailView.displayName = 'DetailView';
 

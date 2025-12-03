@@ -32,6 +32,8 @@ import { QueryTransformItem } from './QueryTransformList';
 interface DetailViewHeaderProps {
   selectedItem: QueryTransformItem;
   panel: VizPanel;
+  onRemoveTransform?: (index: number) => void;
+  onToggleTransformVisibility?: (index: number) => void;
 }
 
 const ITEM_CONFIG = (theme: GrafanaTheme2) => ({
@@ -49,7 +51,12 @@ const ITEM_CONFIG = (theme: GrafanaTheme2) => ({
   },
 });
 
-export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps) => {
+export const DetailViewHeader = ({
+  selectedItem,
+  panel,
+  onRemoveTransform,
+  onToggleTransformVisibility,
+}: DetailViewHeaderProps) => {
   const theme = useTheme2();
   const config = useMemo(() => ITEM_CONFIG(theme)[selectedItem.type], [theme, selectedItem.type]);
   const styles = useStyles2(getStyles, config);
@@ -243,11 +250,29 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
     queryRunner?.runQueries();
   }, [panel]);
 
+  // Transformation action handlers
+  const onRemoveTransformation = useCallback(() => {
+    if (selectedItem.type !== 'transform' || selectedItem.index === undefined) {
+      return;
+    }
+    onRemoveTransform?.(selectedItem.index);
+  }, [selectedItem, onRemoveTransform]);
+
+  const onToggleTransformationVisibility = useCallback(() => {
+    if (selectedItem.type !== 'transform' || selectedItem.index === undefined) {
+      return;
+    }
+    onToggleTransformVisibility?.(selectedItem.index);
+  }, [selectedItem, onToggleTransformVisibility]);
+
   const refId = 'refId' in selectedItem.data ? selectedItem.data.refId : '';
   const isHidden =
     (selectedItem.type === 'query' || selectedItem.type === 'expression') &&
     'hide' in selectedItem.data &&
     selectedItem.data.hide;
+
+  const isTransformDisabled =
+    selectedItem.type === 'transform' && 'disabled' in selectedItem.data && selectedItem.data.disabled;
 
   // Get transformation display name
   const transformationName = useMemo(() => {
@@ -314,7 +339,7 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
           )}
         </Stack>
 
-        {/* Right side: Run Query + Actions Menu */}
+        {/* Right side: Run Query + Actions Menu for queries/expressions */}
         {(selectedItem.type === 'query' || selectedItem.type === 'expression') && (
           <Stack gap={0.5} alignItems="center">
             <Button
@@ -349,6 +374,39 @@ export const DetailViewHeader = ({ selectedItem, panel }: DetailViewHeaderProps)
                     label={t('dashboard-scene.detail-view-header.remove-query', 'Remove')}
                     icon="trash-alt"
                     onClick={onRemoveQuery}
+                  />
+                </Menu>
+              }
+            >
+              <IconButton
+                name="ellipsis-v"
+                variant="secondary"
+                tooltip={t('dashboard-scene.detail-view-header.actions', 'Actions')}
+              />
+            </Dropdown>
+          </Stack>
+        )}
+
+        {/* Right side: Actions Menu for transformations */}
+        {selectedItem.type === 'transform' && (
+          <Stack gap={0.5} alignItems="center">
+            <Dropdown
+              overlay={
+                <Menu>
+                  <Menu.Item
+                    label={
+                      isTransformDisabled
+                        ? t('dashboard-scene.detail-view-header.enable-transform', 'Enable')
+                        : t('dashboard-scene.detail-view-header.disable-transform', 'Disable')
+                    }
+                    icon={isTransformDisabled ? 'eye' : 'eye-slash'}
+                    onClick={onToggleTransformationVisibility}
+                  />
+                  <Menu.Divider />
+                  <Menu.Item
+                    label={t('dashboard-scene.detail-view-header.remove-transform', 'Remove')}
+                    icon="trash-alt"
+                    onClick={onRemoveTransformation}
                   />
                 </Menu>
               }

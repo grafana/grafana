@@ -501,7 +501,13 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           style={{ ...splitterProps.style, width: '16px' }}
         />
         <div {...secondaryProps}>
-          <DetailView selectedItem={selectedItem} panel={panel} tabs={tabs} />
+          <DetailView
+            selectedItem={selectedItem}
+            panel={panel}
+            tabs={tabs}
+            onRemoveTransform={handleRemoveTransform}
+            onToggleTransformVisibility={handleToggleTransformVisibility}
+          />
         </div>
       </div>
       <TransformationsDrawer
