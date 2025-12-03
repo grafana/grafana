@@ -416,9 +416,6 @@ test.describe(
       // Go back to dashboard options
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      // Expand layouts section
-      await page.getByLabel('Expand Group layout category').click();
-
       // Select tabs layout
       await page.getByLabel('layout-selection-option-Tabs').click();
 
@@ -756,9 +753,6 @@ test.describe(
 
       // Go back to dashboard options
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-
-      // Expand layouts section
-      await page.getByLabel('Expand Group layout category').click();
 
       // Select rows layout
       await page.getByLabel('layout-selection-option-Rows').click();
