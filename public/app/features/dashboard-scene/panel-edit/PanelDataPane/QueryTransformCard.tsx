@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataQuery } from '@grafana/scenes';
 import { Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { usePanelDataPaneColors } from './theme';
 import { queryItemId, transformItemId } from './utils';
@@ -20,10 +21,25 @@ interface QueryTransformCardProps {
   onDuplicate?: () => void;
   onRemove?: () => void;
   onToggleVisibility?: () => void;
+  onAddQuery: (index: number) => void;
+  onAddTransform: (index: number) => void;
+  onAddExpression: (type: ExpressionQueryType, index: number) => void;
 }
 
 export const QueryTransformCard = memo(
-  ({ item, type, index, isSelected, onClick, onDuplicate, onRemove, onToggleVisibility }: QueryTransformCardProps) => {
+  ({
+    item,
+    type,
+    index,
+    isSelected,
+    onClick,
+    onDuplicate,
+    onRemove,
+    onToggleVisibility,
+    onAddQuery,
+    onAddTransform,
+    onAddExpression,
+  }: QueryTransformCardProps) => {
     const colors = usePanelDataPaneColors();
     const styles = useStyles2(getStyles, colors);
 

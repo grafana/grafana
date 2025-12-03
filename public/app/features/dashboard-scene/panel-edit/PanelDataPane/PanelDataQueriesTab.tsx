@@ -273,17 +273,25 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     };
   }
 
-  public addQueryClick = () => {
+  public addQueryClick = (index?: number) => {
     const queries = this.getQueries();
-    this.onQueriesChange(addQuery(queries, this.newQuery()));
+    const dsSettings = this.state.dsSettings;
+    this.onQueriesChange(
+      addQuery(
+        queries,
+        this.newQuery(),
+        dsSettings ? getDataSourceRef(dsSettings) : { type: undefined, uid: undefined },
+        index
+      )
+    );
   };
 
-  public onAddQuery = (query: Partial<DataQuery>) => {
+  public onAddQuery = (query: Partial<DataQuery>, index?: number) => {
     const queries = this.getQueries();
     const dsSettings = this.state.dsSettings;
 
     this.onQueriesChange(
-      addQuery(queries, query, dsSettings ? getDataSourceRef(dsSettings) : { type: undefined, uid: undefined })
+      addQuery(queries, query, dsSettings ? getDataSourceRef(dsSettings) : { type: undefined, uid: undefined }, index)
     );
   };
 
@@ -291,7 +299,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     return (dsSettings.meta.backend || dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
   }
 
-  public onAddExpressionOfType = (type: ExpressionQueryType) => {
+  public onAddExpressionOfType = (type: ExpressionQueryType, index?: number) => {
     const queries = this.getQueries();
     // Create base expression query with the specified type
     const baseQuery = expressionDatasource.newQuery();
@@ -299,7 +307,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     // Apply defaults specific to the expression type
     const queryWithDefaults = getDefaults(queryWithType);
 
-    this.onQueriesChange(addQuery(queries, queryWithDefaults));
+    this.onQueriesChange(addQuery(queries, queryWithDefaults, undefined, index));
   };
 
   public renderExtraActions() {
@@ -411,7 +419,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           <>
             <Button
               icon="plus"
-              onClick={model.addQueryClick}
+              onClick={(ev) => model.addQueryClick()}
               variant="secondary"
               data-testid={selectors.components.QueryTab.addQuery}
             >

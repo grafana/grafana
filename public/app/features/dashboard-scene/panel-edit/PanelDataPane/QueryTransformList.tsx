@@ -1,6 +1,6 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -19,22 +19,21 @@ export interface QueryTransformItem {
   index: number;
 }
 
+const CARD_HEIGHT = 70;
+
 interface QueryTransformListProps {
   allItems: QueryTransformItem[];
   dataSourceItems: QueryTransformItem[];
   transformItems: QueryTransformItem[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onAddQuery: () => void;
-  onAddFromSavedQueries: () => void;
-  onAddTransform: () => void;
-  onAddExpression: (type: ExpressionQueryType) => void;
+  onAddQuery: (index?: number) => void;
+  onAddFromSavedQueries: (index?: number) => void;
+  onAddTransform: (index?: number) => void;
+  onAddExpression: (type: ExpressionQueryType, index?: number) => void;
   onDuplicateQuery?: (index: number) => void;
   onRemoveQuery?: (index: number) => void;
   onToggleQueryVisibility?: (index: number) => void;
-  onDuplicateExpression?: (index: number) => void;
-  onRemoveExpression?: (index: number) => void;
-  onToggleExpressionVisibility?: (index: number) => void;
   onRemoveTransform?: (index: number) => void;
   onToggleTransformVisibility?: (index: number) => void;
   onReorderDataSources?: (startIndex: number, endIndex: number) => void;
@@ -55,9 +54,6 @@ export const QueryTransformList = memo(
     onDuplicateQuery,
     onRemoveQuery,
     onToggleQueryVisibility,
-    onDuplicateExpression,
-    onRemoveExpression,
-    onToggleExpressionVisibility,
     onRemoveTransform,
     onToggleTransformVisibility,
     onReorderDataSources,
@@ -65,6 +61,11 @@ export const QueryTransformList = memo(
   }: QueryTransformListProps) => {
     const styles = useStyles2(getStyles);
     const [isDragging, setIsDragging] = useState(false);
+    const [hovered, setHovered] = useState<string | null>(null);
+
+    useEffect(() => {
+      console.log('hovered changed:', hovered);
+    }, [hovered]);
 
     const onDragStart = () => {
       setIsDragging(true);
@@ -143,19 +144,12 @@ export const QueryTransformList = memo(
 
     const getHandlers = (item: QueryTransformItem) => {
       switch (item.type) {
+        case 'expression':
         case 'query':
           return {
             onDuplicate: onDuplicateQuery ? () => onDuplicateQuery(item.index) : undefined,
             onRemove: onRemoveQuery ? () => onRemoveQuery(item.index) : undefined,
             onToggleVisibility: onToggleQueryVisibility ? () => onToggleQueryVisibility(item.index) : undefined,
-          };
-        case 'expression':
-          return {
-            onDuplicate: onDuplicateExpression ? () => onDuplicateExpression(item.index) : undefined,
-            onRemove: onRemoveExpression ? () => onRemoveExpression(item.index) : undefined,
-            onToggleVisibility: onToggleExpressionVisibility
-              ? () => onToggleExpressionVisibility(item.index)
-              : undefined,
           };
         case 'transform':
           return {
@@ -181,7 +175,7 @@ export const QueryTransformList = memo(
     }, [allItems, dataSourceItems, transformItems]);
 
     return (
-      <div className={styles.container}>
+      <div className={styles.container} onMouseLeave={() => setHovered(null)}>
         <div className={styles.header}>
           <Stack justifyContent="space-between" alignItems="center" gap={2}>
             <span className={styles.headerTitle}>
@@ -212,36 +206,80 @@ export const QueryTransformList = memo(
                               <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                className={isDraggingFromOtherSection ? styles.droppableInvalid : undefined}
+                                onMouseMove={ev => {
+                                  const rect = ev.currentTarget.getBoundingClientRect();
+                                  const y = ev.clientY - rect.top;
+                                  let hoveredIdx = Math.floor(y / CARD_HEIGHT);
+                                  if (hoveredIdx < 0) {
+                                    hoveredIdx = 0;
+                                  }
+                                  if (hoveredIdx > dataSourceItems.length) {
+                                    hoveredIdx = dataSourceItems.length;
+                                  }
+                                  const hoveredId = hoveredIdx === dataSourceItems.length ? 'queries-last' : dataSourceItems[hoveredIdx].id;
+                                  setHovered(hoveredId);
+                                }}
+                                className={cx(styles.cardList, isDraggingFromOtherSection ? styles.droppableInvalid : undefined)}
                               >
                                 <Stack direction="column" gap={2}>
                                   {dataSourceItems.map((item, index) => (
-                                    <Draggable key={item.id} draggableId={item.id} index={index}>
-                                      {(provided, snapshot) => (
-                                        <div
-                                          ref={provided.innerRef}
-                                          {...provided.draggableProps}
-                                          {...provided.dragHandleProps}
-                                          className={snapshot.isDragging ? styles.dragging : undefined}
-                                        >
-                                          <QueryTransformCard
-                                            item={item.data}
-                                            type={item.type}
-                                            index={item.index}
-                                            isSelected={selectedId === item.id}
-                                            onClick={() => onSelect(item.id)}
-                                            {...getHandlers(item)}
-                                          />
-                                        </div>
-                                      )}
-                                    </Draggable>
+                                    <div key={item.id} className={styles.cardContainer}>
+                                      <Draggable draggableId={item.id} index={index}>
+                                        {(provided, snapshot) => (
+                                          <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
+                                            className={snapshot.isDragging ? styles.dragging : undefined}
+                                          >
+                                            <QueryTransformCard
+                                              item={item.data}
+                                              type={item.type}
+                                              index={item.index}
+                                              isSelected={selectedId === item.id}
+                                              onClick={() => onSelect(item.id)}
+                                              onAddExpression={onAddExpression}
+                                              onAddQuery={onAddQuery}
+                                              onAddTransform={onAddTransform}
+                                              {...getHandlers(item)}
+                                            />
+                                          </div>
+                                        )}
+                                      </Draggable>
+                                      <div className={styles.floatingButton}>
+                                        <AddDataItemMenu
+                                          onAddQuery={onAddQuery}
+                                          onAddTransform={onAddTransform}
+                                          onAddExpression={onAddExpression}
+                                          onAddFromSavedQueries={onAddFromSavedQueries}
+                                          index={index}
+                                          allowedTypes={['query', 'expression']}
+                                          show={hovered === item.id}
+                                        />
+                                      </div>
+                                    </div>
                                   ))}
                                   {provided.placeholder}
                                 </Stack>
+
+                                <div className={cx(styles.cardContainer, styles.cardContainerLast)}>
+                                  <div className={styles.floatingButton}>
+                                    <AddDataItemMenu
+                                      onAddQuery={onAddQuery}
+                                      onAddFromSavedQueries={onAddFromSavedQueries}
+                                      onAddTransform={onAddTransform}
+                                      onAddExpression={onAddExpression}
+                                      allowedTypes={['query', 'expression']}
+                                      index={transformItems.length}
+                                      show={hovered === 'queries-last'}
+                                    />
+                                  </div>
+                                </div>
                               </div>
                             );
                           }}
                         </Droppable>
+
                       </Stack>
                     )}
 
@@ -261,45 +299,80 @@ export const QueryTransformList = memo(
                               <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                className={isDraggingFromOtherSection ? styles.droppableInvalid : undefined}
+                                className={cx(styles.cardList, isDraggingFromOtherSection ? styles.droppableInvalid : undefined)}
+                                onMouseMove={ev => {
+                                  const rect = ev.currentTarget.getBoundingClientRect();
+                                  const y = ev.clientY - rect.top;
+                                  let hoveredIdx = Math.floor(((y - 16 + (CARD_HEIGHT / 2)) / CARD_HEIGHT));
+                                  if (hoveredIdx < 0) {
+                                    hoveredIdx = 0;
+                                  }
+                                  if (hoveredIdx > transformItems.length) {
+                                    hoveredIdx = transformItems.length;
+                                  }
+                                  const hoveredId = hoveredIdx === transformItems.length ? 'transformations-last' : transformItems[hoveredIdx].id;
+                                  setHovered(hoveredId);
+                                }}
                               >
                                 <Stack direction="column" gap={2}>
                                   {transformItems.map((item, index) => (
-                                    <Draggable key={item.id} draggableId={item.id} index={index}>
-                                      {(provided, snapshot) => (
-                                        <div
-                                          ref={provided.innerRef}
-                                          {...provided.draggableProps}
-                                          {...provided.dragHandleProps}
-                                          className={snapshot.isDragging ? styles.dragging : undefined}
-                                        >
-                                          <QueryTransformCard
-                                            item={item.data}
-                                            type={item.type}
-                                            index={item.index}
-                                            isSelected={selectedId === item.id}
-                                            onClick={() => onSelect(item.id)}
-                                            {...getHandlers(item)}
-                                          />
-                                        </div>
-                                      )}
-                                    </Draggable>
+                                    <div key={item.id} className={styles.cardContainer}>
+                                      <Draggable key={item.id} draggableId={item.id} index={index}>
+                                        {(provided, snapshot) => (
+                                          <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
+                                            className={snapshot.isDragging ? styles.dragging : undefined}
+                                          >
+                                            <QueryTransformCard
+                                              item={item.data}
+                                              type={item.type}
+                                              index={item.index}
+                                              isSelected={selectedId === item.id}
+                                              onClick={() => onSelect(item.id)}
+                                              onAddExpression={onAddExpression}
+                                              onAddQuery={onAddQuery}
+                                              onAddTransform={onAddTransform}
+                                              {...getHandlers(item)}
+                                            />
+                                          </div>
+                                        )}
+                                      </Draggable>
+                                      <div className={styles.floatingButton}>
+                                        <AddDataItemMenu
+                                          onAddQuery={onAddQuery}
+                                          onAddTransform={onAddTransform}
+                                          onAddExpression={onAddExpression}
+                                          onAddFromSavedQueries={onAddFromSavedQueries}
+                                          index={index}
+                                          allowedTypes={['transform']}
+                                          show={hovered === item.id}
+                                        />
+                                      </div>
+                                    </div>
                                   ))}
                                   {provided.placeholder}
                                 </Stack>
+                                <div className={cx(styles.cardContainer, styles.cardContainerLast)}>
+                                  <div className={styles.floatingButton}>
+                                    <AddDataItemMenu
+                                      onAddQuery={onAddQuery}
+                                      onAddFromSavedQueries={onAddFromSavedQueries}
+                                      onAddTransform={onAddTransform}
+                                      onAddExpression={onAddExpression}
+                                      allowedTypes={['transform']}
+                                      index={transformItems.length}
+                                      show={hovered === 'transformations-last'}
+                                    />
+                                  </div>
+                                </div>
                               </div>
                             );
                           }}
                         </Droppable>
                       </Stack>
                     )}
-
-                    <AddDataItemMenu
-                      onAddQuery={onAddQuery}
-                      onAddFromSavedQueries={onAddFromSavedQueries}
-                      onAddTransform={onAddTransform}
-                      onAddExpression={onAddExpression}
-                    />
                   </Stack>
                 </div>
               </DragDropContext>
@@ -384,7 +457,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       minHeight: '100%',
     }),
     content: css({
-      padding: `${theme.spacing(2)} ${theme.spacing(8)} ${theme.spacing(2)} ${theme.spacing(2)}`,
+      padding: theme.spacing(2, 8, 2, 2),
       position: 'relative',
     }),
     dragging: css({
@@ -433,6 +506,23 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
+    }),
+    cardList: css({
+      paddingLeft: theme.spacing(4),
+      marginLeft: theme.spacing(-2),
+      position: 'relative',
+    }),
+    cardContainer: css({
+      position: 'relative',
+      overflowX: 'visible',
+    }),
+    cardContainerLast: css({
+      marginTop: theme.spacing(2),
+    }),
+    floatingButton: css({
+      position: 'absolute',
+      top: theme.spacing(-2),
+      left: theme.spacing(-2.5),
     }),
   };
 };

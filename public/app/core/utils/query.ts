@@ -17,7 +17,12 @@ export function queryIsEmpty(query: DataQuery): boolean {
   return true;
 }
 
-export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datasource?: DataSourceRef): DataQuery[] {
+export function addQuery(
+  queries: DataQuery[],
+  query?: Partial<DataQuery>,
+  datasource?: DataSourceRef,
+  index = queries.length
+): DataQuery[] {
   const q: DataQuery = {
     ...query,
     refId: getNextRefId(queries),
@@ -28,7 +33,9 @@ export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datas
     q.datasource = datasource;
   }
 
-  return [...queries, q];
+  queries.splice(index, 0, q);
+
+  return [...queries];
 }
 
 export function isDataQuery(url: string): boolean {

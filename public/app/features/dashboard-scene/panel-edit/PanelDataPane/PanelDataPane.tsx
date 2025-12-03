@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 
 import { DataQuery, DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -11,7 +11,6 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   VizPanel,
-  SceneDataTransformer,
   SceneDataQuery,
 } from '@grafana/scenes';
 import { useStyles2, useSplitter } from '@grafana/ui';
@@ -21,8 +20,7 @@ import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
 import { isExpressionQuery } from '../../../expressions/guards';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from '../../../expressions/types';
-import { getDefaults } from '../../../expressions/utils/expressionTypes';
+import { ExpressionQueryType } from '../../../expressions/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 
 import { DetailView } from './DetailView';
@@ -85,32 +83,45 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   }
 }
 
+interface DrawerState {
+  open: boolean;
+  index: number | null;
+}
+
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tabs, panelRef } = model.useState();
   const styles = useStyles2(getStyles);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [transformDrawerOpen, setTransformDrawerOpen] = useState(false);
-  const [savedQueriesDrawerOpen, setSavedQueriesDrawerOpen] = useState(false);
+  const [savedQueriesDrawerState, setSavedQueriesDrawerState] = useState<DrawerState>({
+    open: false,
+    index: null,
+  });
+  const [transformDrawerState, setTransformDrawerState] = useState<DrawerState>({
+    open: false,
+    index: null,
+  });
 
   const panel = panelRef.resolve();
 
-  // Subscribe to query runner state changes
+  // Subscribe to query runner and tab state changes
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
+  const queriesTab = tabs.find((t): t is PanelDataQueriesTab => t.tabId === TabId.Queries);
+  const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
+  const transformer = transformsTab?.getDataTransformer();
+  const transformerState = transformer?.useState();
+  const queries = queryRunnerState?.queries;
+  const transformations = transformerState?.transformations;
 
   // the selectedId is based on the refId of the query. refId is a user-editable property, so it can change,
   // which will break the selectId and result in the UI going into a deselected state. to avoid this,
   // we can subscribe to changes and detect if a single refId just changed, and then assume that change
   // is a rename of the currently selected query.
-  const orderedRefIds = useRef<string[]>(queryRunnerState?.queries.map(({ refId }) => refId) ?? []);
   useEffect(() => {
-    queryRunner?.subscribeToState((newState) => {
+    queryRunner?.subscribeToState((newState, prevState) => {
       // loop over the new queries and confirm that the refIds are the same. if not, then a mutation
       // occurred, but we need to figure out if it was a rename or a reorder
-
-      const oldOrderedRefIds = orderedRefIds.current;
-      orderedRefIds.current = newState.queries.map(({ refId }) => refId);
-
+      const oldOrderedRefIds = prevState.queries.map(({ refId }) => refId);
       if (newState.queries.length !== oldOrderedRefIds.length) {
         return; // add, remove, something else.
       }
@@ -135,17 +146,12 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     });
   }, [queryRunner]);
 
-  // Subscribe to data transformer state changes
-  const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
-  const transformerState = dataTransformer?.useState();
-
   // Build separate lists for queries/expressions and transformations
   const { dataSourceItems, transformItems, allItems } = useMemo(() => {
     const dataSourceItems: QueryTransformItem[] = [];
     const transformItems: QueryTransformItem[] = [];
 
     // Add queries and expressions
-    const queries = queryRunnerState?.queries;
     for (let i = 0; i < (queries?.length ?? 0); i++) {
       const query = queries![i];
       dataSourceItems.push({
@@ -157,7 +163,6 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     }
 
     // Add transformations
-    const transformations = transformerState?.transformations;
     for (let i = 0; i < (transformations?.length ?? 0); i++) {
       const transform = transformations![i];
       if (isDataTransformerConfig(transform)) {
@@ -175,7 +180,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       transformItems,
       allItems: [...dataSourceItems, ...transformItems],
     };
-  }, [queryRunnerState?.queries, transformerState?.transformations]);
+  }, [queries, transformations]);
 
   // Auto-select first item if nothing is selected
   const effectiveSelectedId = useMemo(() => {
@@ -185,48 +190,120 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     return selectedId;
   }, [selectedId, allItems]);
 
-  const selectedItem = useMemo(() => {
-    return allItems.find((item) => item.id === effectiveSelectedId);
-  }, [allItems, effectiveSelectedId]);
+  const selectedItem = useMemo(
+    () => allItems.find((item) => item.id === effectiveSelectedId),
+    [allItems, effectiveSelectedId]
+  );
 
   const handleSelect = useCallback((id: string) => {
     setSelectedId(id);
   }, []);
 
-  const handleAddQuery = useCallback(() => {
-    const queriesTab = tabs.find((t) => t.tabId === TabId.Queries);
-    if (queriesTab instanceof PanelDataQueriesTab) {
-      queriesTab.addQueryClick();
-      // Select the new query after a short delay
-      setTimeout(() => {
-        const newQueries = getQueryRunnerFor(panel)?.state.queries || [];
-        if (newQueries.length > 0) {
-          setSelectedId(queryItemId(newQueries[newQueries.length - 1]));
-        }
-      }, 100);
-    }
-  }, [tabs, panel]);
+  const updateQuerySelectionOnStateChange = useCallback(
+    (index: number) => {
+      if (queryRunner) {
+        const unsub = queryRunner.subscribeToState((newState) => {
+          const newQueries = newState.queries;
+          if (newQueries.length > 0) {
+            const selected = newQueries[index] ?? newQueries[0];
+            setSelectedId(queryItemId(selected));
+          }
+          unsub.unsubscribe();
+        });
+      }
+    },
+    [queryRunner]
+  );
 
-  const handleAddFromSavedQueries = useCallback(() => {
-    setSavedQueriesDrawerOpen(true);
-  }, []);
+  /** QUERIES AND EXPRESSIONS **/
+  const handleAddQuery = useCallback(
+    (index?: number) => {
+      if (queriesTab) {
+        updateQuerySelectionOnStateChange(index ?? queries?.length ?? 0);
+        queriesTab.addQueryClick(index);
+      }
+    },
+    [queries, queriesTab, updateQuerySelectionOnStateChange]
+  );
+
+  const handleAddExpression = useCallback(
+    (type: ExpressionQueryType, index?: number) => {
+      if (queriesTab) {
+        updateQuerySelectionOnStateChange(index ?? queries?.length ?? 0);
+        queriesTab.onAddExpressionOfType(type, index);
+      }
+    },
+    [queriesTab, updateQuerySelectionOnStateChange, queries]
+  );
+
+  const handleDuplicateQuery = useCallback(
+    (index: number) => {
+      if (queryRunner && queriesTab) {
+        const queryToDuplicate = queries?.[index];
+        if (queryToDuplicate) {
+          // Create a copy with a new refId
+          let newRefId = queryToDuplicate.refId;
+          let counter = 1;
+          while (queries.some((q) => q.refId === newRefId)) {
+            newRefId = `${queryToDuplicate.refId}_${counter}`;
+            counter++;
+          }
+
+          const duplicatedQuery = {
+            ...queryToDuplicate,
+            refId: newRefId,
+          };
+
+          updateQuerySelectionOnStateChange(index + 1);
+          queriesTab.onAddQuery(duplicatedQuery, index + 1);
+        }
+      }
+    },
+    [queryRunner, queriesTab, queries, updateQuerySelectionOnStateChange]
+  );
+
+  const handleRemoveQuery = useCallback(
+    (index: number) => {
+      if (queryRunner) {
+        const deletedQuery = queries?.[index];
+        const newQueries = queries?.filter((_, i) => i !== index);
+        queryRunner.setState({ queries: newQueries });
+        queryRunner.runQueries();
+
+        // Clear selection if removing the selected query
+        if (deletedQuery && selectedId === queryItemId(deletedQuery)) {
+          setSelectedId(null);
+        }
+      }
+    },
+    [queryRunner, selectedId, queries]
+  );
+
+  const handleToggleQueryVisibility = useCallback(
+    (index: number) => {
+      if (queryRunner) {
+        const newQueries = queries?.map((q, i) => (i === index ? { ...q, hide: !q.hide } : q));
+        queryRunner.setState({ queries: newQueries });
+        queryRunner.runQueries();
+      }
+    },
+    [queryRunner, queries]
+  );
 
   // This is a stub for the saved queries drawer
   const handleSelectSavedQuery = useCallback(
     (query: DataQuery) => {
-      if (!queryRunner) {
+      if (!queryRunner || !queriesTab) {
         return;
       }
 
-      const queries = queryRunner.state.queries || [];
+      const selectedIndex = savedQueriesDrawerState.index ?? queries?.length ?? 0;
 
       // Get next available refId
-      const existingRefIds = queries.map((q) => q.refId);
       let nextRefId = 'A';
       const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
       for (let i = 0; i < alphabet.length; i++) {
-        if (!existingRefIds.includes(alphabet[i])) {
+        if (!queries?.some(q => q.refId === alphabet[i])) {
           nextRefId = alphabet[i];
           break;
         }
@@ -238,211 +315,47 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         refId: nextRefId,
       };
 
-      queryRunner.setState({ queries: [...queries, newQuery] });
+      updateQuerySelectionOnStateChange(selectedIndex);
+      queriesTab.onAddQuery(newQuery);
 
-      // Select the new query after a short delay
-      setTimeout(() => {
-        setSelectedId(queryItemId(newQuery));
-      }, 100);
-
-      setSavedQueriesDrawerOpen(false);
+      setSavedQueriesDrawerState({ open: false, index: null });
     },
-    [queryRunner]
+    [queryRunner, savedQueriesDrawerState.index, queries, updateQuerySelectionOnStateChange, queriesTab]
   );
 
-  const handleAddTransform = useCallback(() => {
-    setTransformDrawerOpen(true);
-  }, []);
-
-  const handleAddExpression = useCallback(
-    (type: ExpressionQueryType) => {
-      if (queryRunner) {
-        const queries = queryRunner.state.queries || [];
-
-        // Get next available refId
-        const existingRefIds = queries.map((q) => q.refId);
-        let nextRefId = 'A';
-        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-        for (let i = 0; i < alphabet.length; i++) {
-          if (!existingRefIds.includes(alphabet[i])) {
-            nextRefId = alphabet[i];
-            break;
-          }
-        }
-
-        // Create new expression with defaults
-        const newExpression: ExpressionQuery = getDefaults({
-          refId: nextRefId,
-          type,
-          datasource: { uid: ExpressionDatasourceUID, type: '__expr__' },
-        });
-
-        // Add to queries
-        const newQueries = [...queries, newExpression];
-        queryRunner.setState({ queries: newQueries });
-        queryRunner.runQueries();
-
-        // Select the new expression
-        setSelectedId(queryItemId(newExpression));
-      }
-    },
-    [queryRunner]
-  );
-
-  const handleTransformationAdd = useCallback(
+  /** TRANSFORMS **/
+  const handleAddTransform = useCallback(
     (selected: SelectableValue<string>) => {
       if (!selected.value) {
         return;
       }
 
-      const transformsTab = tabs.find((t) => t.tabId === TabId.Transformations);
-      if (transformsTab instanceof PanelDataTransformationsTab) {
-        const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
-          isDataTransformerConfig
-        );
+      if (transformsTab && transformer) {
+        const selectedIndex = transformDrawerState.index ?? transformations?.length ?? 0;
         const newTransformation: DataTransformerConfig = {
           id: selected.value,
           options: {},
         };
 
-        transformsTab.onChangeTransformations([...transformations, newTransformation]);
-        setTransformDrawerOpen(false);
+        const unsub = transformer.subscribeToState((newState) => {
+          const newTransform = newState.transformations[selectedIndex];
 
-        // Select the newly added transformation
-        setTimeout(() => {
-          setSelectedId(transformItemId(transformations.length));
-        }, 100);
+          setSelectedId(!!newTransform ? transformItemId(selectedIndex) : null);
+          setTransformDrawerState({ open: false, index: null });
+          unsub.unsubscribe();
+        });
+
+        const newTransformations = [...(transformations?.filter(isDataTransformerConfig) ?? [])];
+        newTransformations.splice(selectedIndex, 0, newTransformation);
+
+        transformsTab.onChangeTransformations(newTransformations);
       }
     },
-    [tabs]
-  );
-
-  const handleDuplicateQuery = useCallback(
-    (index: number) => {
-      if (queryRunner) {
-        const queries = queryRunner.state.queries || [];
-        const queryToDuplicate = queries[index];
-        if (queryToDuplicate) {
-          // Create a copy with a new refId
-          const existingRefIds = queries.map((q) => q.refId);
-          let newRefId = queryToDuplicate.refId;
-          let counter = 1;
-          while (existingRefIds.includes(newRefId)) {
-            newRefId = `${queryToDuplicate.refId}_${counter}`;
-            counter++;
-          }
-
-          const duplicatedQuery = {
-            ...queryToDuplicate,
-            refId: newRefId,
-          };
-
-          const newQueries = [...queries, duplicatedQuery];
-          queryRunner.setState({ queries: newQueries });
-          queryRunner.runQueries();
-
-          // Select the new query
-          setSelectedId(queryItemId(duplicatedQuery));
-        }
-      }
-    },
-    [queryRunner]
-  );
-
-  const handleRemoveQuery = useCallback(
-    (index: number) => {
-      if (queryRunner) {
-        const queries = queryRunner.state.queries || [];
-        const newQueries = queries.filter((_, i) => i !== index);
-        queryRunner.setState({ queries: newQueries });
-        queryRunner.runQueries();
-
-        // Clear selection if removing the selected query
-        if (selectedId === queryItemId(queries[index])) {
-          setSelectedId(null);
-        }
-      }
-    },
-    [queryRunner, selectedId]
-  );
-
-  const handleToggleQueryVisibility = useCallback(
-    (index: number) => {
-      if (queryRunner) {
-        const queries = queryRunner.state.queries || [];
-        const newQueries = queries.map((q, i) => (i === index ? { ...q, hide: !q.hide } : q));
-        queryRunner.setState({ queries: newQueries });
-        queryRunner.runQueries();
-      }
-    },
-    [queryRunner]
-  );
-
-  // Expression handlers (use actual index in queries array)
-  const handleDuplicateExpression = useCallback(
-    (index: number) => {
-      if (queryRunner) {
-        const queries = queryRunner.state.queries || [];
-        const expressionToDuplicate = queries[index];
-
-        if (expressionToDuplicate && isExpressionQuery(expressionToDuplicate)) {
-          const existingRefIds = queries.map((q) => q.refId);
-          let newRefId = expressionToDuplicate.refId;
-          let counter = 1;
-          while (existingRefIds.includes(newRefId)) {
-            newRefId = `${expressionToDuplicate.refId}_${counter}`;
-            counter++;
-          }
-
-          const duplicatedExpression = {
-            ...expressionToDuplicate,
-            refId: newRefId,
-          };
-
-          const newQueries = [...queries, duplicatedExpression];
-          queryRunner.setState({ queries: newQueries });
-          queryRunner.runQueries();
-
-          setSelectedId(queryItemId(duplicatedExpression));
-        }
-      }
-    },
-    [queryRunner]
-  );
-
-  const handleRemoveExpression = useCallback(
-    (index: number) => {
-      if (queryRunner) {
-        const queries = queryRunner.state.queries || [];
-        const newQueries = queries.filter((_, i) => i !== index);
-        queryRunner.setState({ queries: newQueries });
-        queryRunner.runQueries();
-
-        const expressionToRemove = queries[index];
-        if (expressionToRemove && selectedId === queryItemId(expressionToRemove)) {
-          setSelectedId(null);
-        }
-      }
-    },
-    [queryRunner, selectedId]
-  );
-
-  const handleToggleExpressionVisibility = useCallback(
-    (index: number) => {
-      if (queryRunner) {
-        const queries = queryRunner.state.queries || [];
-        const newQueries = queries.map((q, i) => (i === index ? { ...q, hide: !q.hide } : q));
-        queryRunner.setState({ queries: newQueries });
-        queryRunner.runQueries();
-      }
-    },
-    [queryRunner]
+    [transformsTab, transformer, transformations, transformDrawerState.index]
   );
 
   const handleRemoveTransform = useCallback(
     (index: number) => {
-      const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
       if (transformsTab) {
         const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
           isDataTransformerConfig
@@ -456,12 +369,11 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         }
       }
     },
-    [tabs, selectedId]
+    [transformsTab, selectedId]
   );
 
   const handleToggleTransformVisibility = useCallback(
     (index: number) => {
-      const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
       if (transformsTab) {
         const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
           isDataTransformerConfig
@@ -472,7 +384,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         transformsTab.onChangeTransformations(newTransformations);
       }
     },
-    [tabs]
+    [transformsTab]
   );
 
   const handleReorderDataSources = useCallback(
@@ -490,7 +402,6 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   const handleReorderTransforms = useCallback(
     (startIndex: number, endIndex: number) => {
-      const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
       if (transformsTab) {
         const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
           isDataTransformerConfig
@@ -501,7 +412,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         transformsTab.onChangeTransformations(newTransformations);
       }
     },
-    [tabs]
+    [transformsTab]
   );
 
   // Get data for transformations drawer
@@ -525,16 +436,12 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             selectedId={effectiveSelectedId}
             onSelect={handleSelect}
             onAddQuery={handleAddQuery}
-            onAddFromSavedQueries={handleAddFromSavedQueries}
-            onAddTransform={handleAddTransform}
+            onAddFromSavedQueries={index => setSavedQueriesDrawerState({ open: true, index: index ?? null })}
+            onAddTransform={(index) => setTransformDrawerState({ open: true, index: index ?? null })}
             onAddExpression={handleAddExpression}
             onDuplicateQuery={handleDuplicateQuery}
             onRemoveQuery={handleRemoveQuery}
             onToggleQueryVisibility={handleToggleQueryVisibility}
-            // TODO: can all the expression stuff just be handled with the query handlers since expressions are queries?
-            onDuplicateExpression={handleDuplicateExpression}
-            onRemoveExpression={handleRemoveExpression}
-            onToggleExpressionVisibility={handleToggleExpressionVisibility}
             onRemoveTransform={handleRemoveTransform}
             onToggleTransformVisibility={handleToggleTransformVisibility}
             onReorderDataSources={handleReorderDataSources}
@@ -557,14 +464,14 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         </div>
       </div>
       <TransformationsDrawer
-        isOpen={transformDrawerOpen}
-        onClose={() => setTransformDrawerOpen(false)}
-        onTransformationAdd={handleTransformationAdd}
+        isOpen={transformDrawerState.open}
+        onClose={() => setTransformDrawerState({ open: false, index: null })}
+        onTransformationAdd={handleAddTransform}
         series={series}
       />
       <SavedQueriesDrawer
-        isOpen={savedQueriesDrawerOpen}
-        onClose={() => setSavedQueriesDrawerOpen(false)}
+        isOpen={savedQueriesDrawerState.open}
+        onClose={() => setSavedQueriesDrawerState({ open: false, index: null })}
         onSelectQuery={handleSelectSavedQuery}
       />
     </div>
