@@ -15,7 +15,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/bwmarrin/snowflake"
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -334,11 +333,6 @@ func (b *batchRunner) RollbackRequested() bool {
 	return false
 }
 
-// getDummySnowflake returns a snowflake with machine and counter bits set to 0
-func getDummySnowflake(ts time.Time) int64 {
-	return (ts.UnixMilli() - snowflake.Epoch) << 22
-}
-
 type bulkRV struct {
 	max      int64
 	counters map[int64]int64
@@ -346,7 +340,7 @@ type bulkRV struct {
 
 // Used when executing a bulk import so that we can generate snowflake RVs in the past
 func newBulkRV() *bulkRV {
-	t := getDummySnowflake(time.Now())
+	t := snowflakeFromTime(time.Now())
 	return &bulkRV{
 		max:      t,
 		counters: make(map[int64]int64),
@@ -354,13 +348,13 @@ func newBulkRV() *bulkRV {
 }
 
 func (x *bulkRV) next(obj metav1.Object) int64 {
-	ts := getDummySnowflake(obj.GetCreationTimestamp().Time)
+	ts := snowflakeFromTime(obj.GetCreationTimestamp().Time)
 	anno := obj.GetAnnotations()
 	if anno != nil {
 		v := anno[utils.AnnoKeyUpdatedTimestamp]
 		t, err := time.Parse(time.RFC3339, v)
 		if err == nil {
-			ts = getDummySnowflake(t)
+			ts = snowflakeFromTime(t)
 		}
 	}
 	if ts > x.max || ts < 0 {
