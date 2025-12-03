@@ -39,7 +39,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -123,7 +122,6 @@ func NewAPIService(
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
-	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	registerMetrics(reg)
 	return &IdentityAccessManagementAPIBuilder{
 		store:                      store,
@@ -138,7 +136,8 @@ func NewAPIService(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				// For now only authorize resourcepermissions resource
 				if a.GetResource() == "resourcepermissions" {
-					return resourceAuthorizer.Authorize(ctx, a)
+					// Authorization is handled at the storage layer
+					return authorizer.DecisionAllow, "", nil
 				}
 
 				user, err := identity.GetRequester(ctx)
