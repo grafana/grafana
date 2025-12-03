@@ -39,6 +39,7 @@ import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state
 import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
+  Block,
   ExploreItemState,
   ExplorePanelData,
   ExploreState,
@@ -69,6 +70,7 @@ import {
   getCorrelationsData,
   getDatasourceUIDs,
   getResultsFromCache,
+  buildQueryBlocksFromQueries,
 } from './utils';
 
 /**
@@ -1047,11 +1049,20 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     // Add to queries, which will cause a new row to be rendered
     const nextQueries = [...queries.slice(0, index + 1), { ...query }, ...queries.slice(index + 1)];
+    const previousBlocks = ensureBlocks(state);
+    const previousQueryRef =
+      queries.length === 0
+        ? undefined
+        : index >= queries.length
+          ? queries[queries.length - 1]?.refId
+          : queries[index]?.refId;
+    const nextBlocks = insertQueryBlock(previousBlocks, query.refId, previousQueryRef);
 
     return {
       ...state,
       queries: nextQueries,
       queryKeys: getQueryKeys(nextQueries),
+      blocks: nextBlocks,
     };
   }
 
@@ -1309,6 +1320,36 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
   return state;
 };
+
+function ensureBlocks(state: ExploreItemState): Block[] {
+  if (state.blocks && state.blocks.length) {
+    return state.blocks;
+  }
+  return buildQueryBlocksFromQueries(state.queries);
+}
+
+function insertQueryBlock(blocks: Block[], newQueryRef?: string, afterQueryRef?: string): Block[] {
+  if (!newQueryRef) {
+    return blocks;
+  }
+  const newBlock: Block = { type: 'query', queryRef: newQueryRef };
+
+  if (!blocks.length) {
+    return [newBlock];
+  }
+
+  if (!afterQueryRef) {
+    return [...blocks, newBlock];
+  }
+
+  const insertIndex = blocks.findIndex((block) => block.type === 'query' && block.queryRef === afterQueryRef);
+
+  if (insertIndex === -1) {
+    return [...blocks, newBlock];
+  }
+
+  return [...blocks.slice(0, insertIndex + 1), newBlock, ...blocks.slice(insertIndex + 1)];
+}
 
 const processQueryResponse = (state: ExploreItemState, action: PayloadAction<QueryEndedPayload>): ExploreItemState => {
   const { response } = action.payload;

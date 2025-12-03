@@ -92,6 +92,7 @@ export function Blocks(props: Props) {
     getEventBridge,
     getQueryLibraryRef,
     getGraphResults,
+    getBlocks,
   } = useMemo(() => makeSelectors(exploreId), [exploreId]);
   const styles = useStyles2(getStyles);
 
@@ -103,6 +104,7 @@ export function Blocks(props: Props) {
   const eventBridge = useSelector(getEventBridge);
   const queryLibraryRef = useSelector(getQueryLibraryRef);
   const history = useSelector(getHistory);
+  const blocks = useSelector(getBlocks);
 
   const onChange = useCallback(
     (newQueries: DataQuery[], options?: { skipAutoImport?: boolean }) => {
@@ -225,74 +227,82 @@ export function Blocks(props: Props) {
     );
   };
 
-  return queries.map((query, index) => {
-    const dataSourceSettings = getDataSourceSettings(query, dsSettings);
-    const onChangeDataSourceSettings = dsSettings.meta.mixed
-      ? (settings: DataSourceInstanceSettings) => onDataSourceChange(settings, index)
-      : undefined;
+  return blocks.map((block, index) => {
+    if (block.type === 'query') {
+      const query = queries.find((query) => query.refId === block.queryRef);
+      if (!query) {
+        return null;
+      }
+      const dataSourceSettings = getDataSourceSettings(query, dsSettings);
+      const onChangeDataSourceSettings = dsSettings.meta.mixed
+        ? (settings: DataSourceInstanceSettings) => onDataSourceChange(settings, index)
+        : undefined;
 
-    const queryEditorRow = (
-      <QueryEditorRow
-        id={query.refId}
-        index={index}
-        key={query.refId}
-        data={queryResponse}
-        query={query}
-        dataSource={dataSourceSettings}
-        onChangeDataSource={onChangeDataSourceSettings}
-        onChange={(query) => onChangeQuery(query, index)}
-        onReplace={(query) => onReplaceQuery(query, index)}
-        onRemoveQuery={onRemoveQuery}
-        onAddQuery={onAddQuery}
-        onRunQuery={onRunQueries}
-        onQueryCopied={onQueryCopied}
-        onQueryRemoved={onQueryRemoved}
-        onQueryToggled={onQueryToggled}
-        onQueryOpenChanged={onQueryOpenChanged}
-        onQueryReplacedFromLibrary={onQueryReplacedFromLibrary}
-        queries={queries}
-        app={CoreApp.Explore}
-        range={getTimeSrv().timeRange()}
-        history={history}
-        eventBus={eventBridge}
-        queryLibraryRef={queryLibraryRef}
-        onCancelQueryLibraryEdit={() => {}}
-        isOpen={true}
-      />
-    );
+      const queryEditorRow = (
+        <QueryEditorRow
+          id={query.refId}
+          index={index}
+          key={query.refId}
+          data={queryResponse}
+          query={query}
+          dataSource={dataSourceSettings}
+          onChangeDataSource={onChangeDataSourceSettings}
+          onChange={(query) => onChangeQuery(query, index)}
+          onReplace={(query) => onReplaceQuery(query, index)}
+          onRemoveQuery={onRemoveQuery}
+          onAddQuery={onAddQuery}
+          onRunQuery={onRunQueries}
+          onQueryCopied={onQueryCopied}
+          onQueryRemoved={onQueryRemoved}
+          onQueryToggled={onQueryToggled}
+          onQueryOpenChanged={onQueryOpenChanged}
+          onQueryReplacedFromLibrary={onQueryReplacedFromLibrary}
+          queries={queries}
+          app={CoreApp.Explore}
+          range={getTimeSrv().timeRange()}
+          history={history}
+          eventBus={eventBridge}
+          queryLibraryRef={queryLibraryRef}
+          onCancelQueryLibraryEdit={() => {}}
+          isOpen={true}
+        />
+      );
 
-    return (
-      <ContentOutlineItem
-        title={query.refId}
-        icon="arrow"
-        key={query.refId}
-        panelId="Queries"
-        customTopOffset={-10}
-        level="child"
-      >
-        <PanelContainer className={styles.queryContainer}>
-          {queryEditorRow}
+      return (
+        <ContentOutlineItem
+          title={query.refId}
+          icon="arrow"
+          key={query.refId}
+          panelId="Queries"
+          customTopOffset={-10}
+          level="child"
+        >
+          <PanelContainer className={styles.queryContainer}>
+            {queryEditorRow}
 
-          <RenderResults
-            exploreId={exploreId}
-            queryRef={query.refId}
-            graphResult={graphResult}
-            onSplitOpen={onSplitOpen}
-            graphEventBus={graphEventBus}
-            logsEventBus={logsEventBus}
-            eventBus={eventBridge}
-            onCellFilterAdded={onCellFilterAdded}
-            onClickFilterLabel={onClickFilterLabel}
-            onClickFilterOutLabel={onClickFilterOutLabel}
-            onClickFilterString={onClickFilterString}
-            onClickFilterOutString={onClickFilterOutString}
-            isFilterLabelActive={isFilterLabelActive}
-            onPinLineCallback={onPinLineCallback}
-            scrollElement={scrollElement}
-          />
-        </PanelContainer>
-      </ContentOutlineItem>
-    );
+            <RenderResults
+              exploreId={exploreId}
+              queryRef={query.refId}
+              graphResult={graphResult}
+              onSplitOpen={onSplitOpen}
+              graphEventBus={graphEventBus}
+              logsEventBus={logsEventBus}
+              eventBus={eventBridge}
+              onCellFilterAdded={onCellFilterAdded}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              onClickFilterString={onClickFilterString}
+              onClickFilterOutString={onClickFilterOutString}
+              isFilterLabelActive={isFilterLabelActive}
+              onPinLineCallback={onPinLineCallback}
+              scrollElement={scrollElement}
+            />
+          </PanelContainer>
+        </ContentOutlineItem>
+      );
+    }
+
+    return 'unknown block type';
   });
 }
 
@@ -320,5 +330,18 @@ const makeSelectors = (exploreId: string) => {
     ),
     getQueryLibraryRef: createSelector(exploreItemSelector, (s) => s!.queryLibraryRef),
     getGraphResults: createSelector(exploreItemSelector, (s) => s!.graphResult),
+    getBlocks: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => {
+      if (!s) {
+        return [];
+      }
+
+      if (s.blocks?.length) {
+        return s.blocks;
+      }
+
+      return s.queries
+        .filter((query) => Boolean(query.refId))
+        .map((query) => ({ type: 'query', queryRef: query.refId! }));
+    }),
   };
 };

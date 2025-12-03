@@ -239,6 +239,25 @@ export interface ExploreItemState {
    * If set to true, all query rows will be collapsed initially and the content outline will be hidden
    */
   compact: boolean;
+
+  blocks: Block[];
+}
+
+export type Block = QueryBlock | TextBlock | TransformBlock;
+
+export interface QueryBlock {
+  type: 'query';
+  queryRef: string;
+}
+
+export interface TextBlock {
+  type: 'text';
+  text: string;
+}
+
+export interface TransformBlock {
+  type: 'transform';
+  // TODO
 }
 
 export interface ExploreUpdateState {

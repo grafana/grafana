@@ -1,4 +1,4 @@
-import { DataFrame, LogRowModel } from '@grafana/data';
+import { LogRowModel } from '@grafana/data';
 
 /**
  * Determine if a given refId belongs to the requested query.

@@ -731,6 +731,7 @@ describe('reducer', () => {
         .thenStateShouldEqual({
           queries: [{ refId: 'A', key: 'mockKey' }],
           queryKeys: ['mockKey-0'],
+          blocks: [{ type: 'query', queryRef: 'A' }],
         } as unknown as ExploreItemState);
     });
     it('should add query row when there is already one query row', () => {
@@ -751,6 +752,10 @@ describe('reducer', () => {
             { refId: 'B', key: 'mockKey', datasource: { type: 'loki' } },
           ],
           queryKeys: ['initialRow-0', 'mockKey-1'],
+          blocks: [
+            { type: 'query', queryRef: 'A' },
+            { type: 'query', queryRef: 'B' },
+          ],
         } as unknown as ExploreItemState);
     });
 

@@ -25,7 +25,7 @@ import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExploreItemState, ExplorePanelData, RichHistoryQuery } from 'app/types/explore';
+import { ExploreItemState, ExplorePanelData, QueryBlock, RichHistoryQuery } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
 import store from '../../../core/store';
@@ -76,6 +76,7 @@ export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): Exp
   panelsState: {},
   correlations: undefined,
   compact: false,
+  blocks: [],
   ...overrides,
 });
 
@@ -196,6 +197,12 @@ export function getResultsFromCache(
   const cacheIdx = cache.findIndex((c) => c.key === cacheKey);
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
+}
+
+export function buildQueryBlocksFromQueries(queries: DataQuery[]): QueryBlock[] {
+  return queries
+    .map((query) => (query.refId ? { type: 'query', queryRef: query.refId } : undefined))
+    .filter((block): block is QueryBlock => Boolean(block));
 }
 
 export function getRange(raw: RawTimeRange, timeZone: TimeZone): TimeRange {

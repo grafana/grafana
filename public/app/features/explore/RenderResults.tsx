@@ -71,6 +71,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
+      maxHeight: '400px',
+      overflow: 'auto',
     }),
   };
 };

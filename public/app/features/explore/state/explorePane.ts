@@ -28,6 +28,7 @@ import {
   createEmptyQueryResponse,
   getRange,
   getDatasourceUIDs,
+  buildQueryBlocksFromQueries,
 } from './utils';
 // Types
 
@@ -282,6 +283,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
 
   if (initializeExploreAction.match(action)) {
     const { queries, range, datasourceInstance, history, eventBridge, compact, queryLibraryRef } = action.payload;
+    const hasExistingBlocks = state.blocks?.length;
 
     return {
       ...state,
@@ -297,6 +299,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       correlations: [],
       queryLibraryRef,
       compact,
+      blocks: hasExistingBlocks ? state.blocks : buildQueryBlocksFromQueries(queries),
     };
   }
 
