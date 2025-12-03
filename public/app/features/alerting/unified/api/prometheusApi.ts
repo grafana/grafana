@@ -116,7 +116,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           rule_limit: ruleLimit?.toFixed(0),
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
-          'datasource_uid': datasources,
+          datasource_uid: datasources,
           'search.rule_name': title,
           'search.rule_group': searchGroupName,
           dashboard_uid: dashboardUid,

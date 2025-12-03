@@ -167,15 +167,15 @@ describe('paginationLimits', () => {
         }
       );
 
-      it.each<Partial<RulesFilter>>([
-        { namespace: 'production' },
-        { labels: ['severity=critical'] },
-      ])('should return large limits for both when frontend filters are used: %p', (filterState) => {
-        const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
+      it.each<Partial<RulesFilter>>([{ namespace: 'production' }, { labels: ['severity=critical'] }])(
+        'should return large limits for both when frontend filters are used: %p',
+        (filterState) => {
+          const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
 
-        expect(grafanaManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
-        expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
-      });
+          expect(grafanaManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
+          expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
+        }
+      );
     });
   });
 });
