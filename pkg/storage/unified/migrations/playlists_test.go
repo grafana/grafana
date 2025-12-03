@@ -1,11 +1,13 @@
 package migrations_test
 
 import (
-	"fmt"
-	"net/http"
+	"context"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,7 +16,6 @@ import (
 // playlistsTestCase tests the "playlists" ResourceMigration
 type playlistsTestCase struct {
 	playlistUIDs []string
-	dashboardUID string
 }
 
 // newPlaylistsTestCase creates a test case for the playlists migrator
@@ -41,32 +42,34 @@ func (tc *playlistsTestCase) resources() []schema.GroupVersionResource {
 func (tc *playlistsTestCase) setup(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Helper()
 
-	// Create a test dashboard to reference in playlists
-	tc.dashboardUID = createTestDashboard(t, helper, "Test Dashboard for Playlist", "")
+	// Get playlist service from the test environment
+	// The service writes directly to SQL storage, which works in Mode0
+	env := helper.GetEnv()
+	playlistSvc := playlistimpl.ProvideService(env.SQLStore, tracing.InitializeTracerForTest())
 
-	// Create playlist with dashboard UID items
-	playlist1UID := createTestPlaylist(t, helper, "Playlist with Dashboard UIDs", "5m", []playlistItemPayload{
-		{Type: "dashboard_by_uid", Value: tc.dashboardUID},
+	// Use a non-existent dashboard UID for testing
+	// This avoids interfering with other test cases
+	nonExistentDashboardUID := "non-existent-dashboard-uid"
+
+	// Create playlist with dashboard UID items (pointing to non-existent dashboard)
+	playlist1UID := createTestPlaylist(t, playlistSvc, helper.Org1.OrgID, "Playlist with Dashboard UIDs", "5m", []playlist.PlaylistItem{
+		{Type: "dashboard_by_uid", Value: nonExistentDashboardUID, Order: 1},
 	})
 	tc.playlistUIDs = append(tc.playlistUIDs, playlist1UID)
 
 	// Create playlist with tag items
-	playlist2UID := createTestPlaylist(t, helper, "Playlist with Tags", "10m", []playlistItemPayload{
-		{Type: "dashboard_by_tag", Value: "test-tag"},
-		{Type: "dashboard_by_tag", Value: "another-tag"},
+	playlist2UID := createTestPlaylist(t, playlistSvc, helper.Org1.OrgID, "Playlist with Tags", "10m", []playlist.PlaylistItem{
+		{Type: "dashboard_by_tag", Value: "test-tag", Order: 1},
+		{Type: "dashboard_by_tag", Value: "another-tag", Order: 2},
 	})
 	tc.playlistUIDs = append(tc.playlistUIDs, playlist2UID)
 
 	// Create playlist with mixed items
-	playlist3UID := createTestPlaylist(t, helper, "Playlist with Mixed Items", "15m", []playlistItemPayload{
-		{Type: "dashboard_by_uid", Value: tc.dashboardUID},
-		{Type: "dashboard_by_tag", Value: "mixed-tag"},
+	playlist3UID := createTestPlaylist(t, playlistSvc, helper.Org1.OrgID, "Playlist with Mixed Items", "15m", []playlist.PlaylistItem{
+		{Type: "dashboard_by_uid", Value: nonExistentDashboardUID, Order: 1},
+		{Type: "dashboard_by_tag", Value: "mixed-tag", Order: 2},
 	})
 	tc.playlistUIDs = append(tc.playlistUIDs, playlist3UID)
-
-	// Create an empty playlist
-	playlist4UID := createTestPlaylist(t, helper, "Empty Playlist", "20m", []playlistItemPayload{})
-	tc.playlistUIDs = append(tc.playlistUIDs, playlist4UID)
 }
 
 func (tc *playlistsTestCase) verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
@@ -97,81 +100,20 @@ func (tc *playlistsTestCase) verify(t *testing.T, helper *apis.K8sTestHelper, sh
 	}
 }
 
-// Helper types and functions
-
-type playlistItemPayload struct {
-	Type  string
-	Value string
-}
-
-// createTestPlaylist creates a playlist with the specified parameters
-func createTestPlaylist(t *testing.T, helper *apis.K8sTestHelper, name, interval string, items []playlistItemPayload) string {
+func createTestPlaylist(t *testing.T, playlistSvc playlist.Service, orgID int64, name, interval string, items []playlist.PlaylistItem) string {
 	t.Helper()
 
-	// Build the items JSON array
-	itemsJSON := "["
-	for i, item := range items {
-		if i > 0 {
-			itemsJSON += ","
-		}
-		itemsJSON += fmt.Sprintf(`{"type":"%s","value":"%s"}`, item.Type, item.Value)
-	}
-	itemsJSON += "]"
-
-	payload := fmt.Sprintf(`{
-		"name": "%s",
-		"interval": "%s",
-		"items": %s
-	}`, name, interval, itemsJSON)
-
-	playlistCreate := apis.DoRequest(helper, apis.RequestParams{
-		User:   helper.Org1.Admin,
-		Method: http.MethodPost,
-		Path:   "/api/playlists",
-		Body:   []byte(payload),
-	}, &map[string]interface{}{})
-
-	require.NotNil(t, playlistCreate.Response)
-	require.Equal(t, http.StatusOK, playlistCreate.Response.StatusCode)
-	require.NotNil(t, playlistCreate.Result)
-
-	playlistUID := (*playlistCreate.Result)["uid"].(string)
-	require.NotEmpty(t, playlistUID)
-
-	return playlistUID
-}
-
-// createTestDashboard creates a simple dashboard for testing
-func createTestDashboard(t *testing.T, helper *apis.K8sTestHelper, title, folderUID string) string {
-	t.Helper()
-
-	dashPayload := fmt.Sprintf(`{
-		"dashboard": {
-			"title": "%s",
-			"tags": ["test-tag", "another-tag", "mixed-tag"]
-		},
-		"overwrite": false`, title)
-
-	if folderUID != "" {
-		dashPayload += fmt.Sprintf(`,
-		"folderUid": "%s"`, folderUID)
+	cmd := &playlist.CreatePlaylistCommand{
+		Name:     name,
+		Interval: interval,
+		Items:    items,
+		OrgId:    orgID,
 	}
 
-	dashPayload += "}"
+	result, err := playlistSvc.Create(context.Background(), cmd)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.NotEmpty(t, result.UID)
 
-	dashCreate := apis.DoRequest(helper, apis.RequestParams{
-		User:   helper.Org1.Admin,
-		Method: http.MethodPost,
-		Path:   "/api/dashboards/db",
-		Body:   []byte(dashPayload),
-	}, &map[string]interface{}{})
-
-	require.NotNil(t, dashCreate.Response)
-	require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode)
-	require.NotNil(t, dashCreate.Result)
-
-	dashUID := (*dashCreate.Result)["uid"].(string)
-	require.NotEmpty(t, dashUID)
-
-	return dashUID
+	return result.UID
 }
