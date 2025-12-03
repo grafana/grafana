@@ -86,9 +86,12 @@ export function useExploreStateReceiver(options: UseExploreStateReceiverOptions)
     // Apply time range if it's changed
     if (exploreState.range && JSON.stringify(exploreState.range) !== JSON.stringify(explorePane.range)) {
       console.log('[ExploreReceiver] Updating time range', exploreState.range);
+      // If range.raw exists, use it (for properly structured TimeRange objects)
+      // Otherwise, treat the range itself as a RawTimeRange (for backward compatibility)
+      const rawRange = (exploreState.range as any).raw || exploreState.range;
       dispatch(updateTime({
         exploreId,
-        rawRange: exploreState.range,
+        rawRange: rawRange,
       }));
     }
 

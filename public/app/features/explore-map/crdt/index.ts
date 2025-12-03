@@ -4,6 +4,8 @@
  * Conflict-Free Replicated Data Types for collaborative Explore Map editing
  */
 
+/* eslint-disable no-barrel-files/no-barrel-files */
+
 // Core CRDT types
 export { HybridLogicalClock, compareHLC, happensBefore, happensAfter, timestampEquals, maxTimestamp } from './hlc';
 export type { HLCTimestamp } from './hlc';

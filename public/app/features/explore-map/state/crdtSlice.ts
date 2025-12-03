@@ -8,7 +8,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
-import { dateTime, DataQuery } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import { generateExploreId } from 'app/core/utils/explore';
 
 import { CRDTStateManager } from '../crdt/state';
@@ -230,7 +231,7 @@ const crdtSlice = createSlice({
       const canvasCenterY = (-state.local.viewport.panY + viewportSize.height / 2) / state.local.viewport.zoom;
 
       const mode = action.payload.kind || 'explore';
-      
+
       // Set default panel size based on panel type
       // Drilldown panels are larger to accommodate the iframe content
       const isDrilldownPanel =
@@ -240,7 +241,7 @@ const crdtSlice = createSlice({
         mode === 'logs-drilldown';
       const defaultWidth = isDrilldownPanel ? 1000 : 600;
       const defaultHeight = isDrilldownPanel ? 550 : 400;
-      
+
       const panelWidth = action.payload.position?.width || defaultWidth;
       const panelHeight = action.payload.position?.height || defaultHeight;
       const panelCount = manager.getPanelIds().length;
@@ -257,28 +258,38 @@ const crdtSlice = createSlice({
       const panelId = uuidv4();
       const exploreId = generateExploreId();
 
-      // Build initial explore state if datasource/query provided
-      let initialExploreState: SerializedExploreState | undefined;
-      if (action.payload.datasourceUid || action.payload.query) {
-        initialExploreState = {
-          queries: action.payload.query
-            ? [
-                {
-                  refId: 'A',
-                  datasource: { uid: action.payload.datasourceUid, type: 'prometheus' },
-                  // Using index signature to add query-specific field
-                  ...{ expr: action.payload.query },
-                } as DataQuery,
-              ]
-            : [],
-          datasourceUid: action.payload.datasourceUid,
-          range: {
-            from: dateTime('now-1h'),
-            to: dateTime('now'),
-            raw: { from: 'now-1h', to: 'now' },
-          },
-        };
-      }
+      // Build initial explore state with default time range
+      // Always set a default time range (last 1 hour) to ensure panels work correctly
+      // Note: We store strings instead of DateTime objects because they serialize properly through CRDT.
+      // The receiver (useExploreStateReceiver) will extract the raw values and pass them to updateTime.
+
+      // Type assertion needed because DataQuery doesn't include 'expr', but Prometheus queries use it
+      const queries: DataQuery[] = action.payload.query
+        ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          ([
+            {
+              refId: 'A',
+              datasource: { uid: action.payload.datasourceUid, type: 'prometheus' },
+              expr: action.payload.query,
+            },
+          ] as unknown as DataQuery[])
+        : [];
+
+      // Create a time range that will serialize properly through CRDT.
+      // We use strings for from/to instead of DateTime objects, which the receiver handles correctly.
+      // Type assertion is necessary here because we're intentionally using strings for serialization.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const timeRange = {
+        from: 'now-1h',
+        to: 'now',
+        raw: { from: 'now-1h', to: 'now' },
+      } as unknown as TimeRange;
+
+      const initialExploreState: SerializedExploreState = {
+        queries,
+        datasourceUid: action.payload.datasourceUid,
+        range: timeRange,
+      };
 
       const operation = manager.createAddPanelOperation(panelId, exploreId, position, mode, action.payload.createdBy, initialExploreState);
 
