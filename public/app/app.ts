@@ -18,7 +18,6 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
-  Spec,
 } from '@grafana/data';
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
@@ -43,6 +42,7 @@ import {
   setCorrelationsService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
+  GrafanaBootConfig,
 } from '@grafana/runtime';
 import {
   initOpenFeature,
@@ -262,13 +262,20 @@ export class GrafanaApp {
         const response = await backendSrv.get<PluginMetasResponse>(
           `/apis/plugins.grafana.app/v0alpha1/namespaces/${config.namespace}/pluginmetas`
         );
-        const plugins: Record<string, Spec[]> = {};
+        const plugins: GrafanaBootConfig['plugins'] = { apps: {}, panels: {}, datasources: {} };
         response.items.reduce((acc, curr) => {
-          if (!acc[curr.spec.pluginJson.type]) {
-            acc[curr.spec.pluginJson.type] = [];
+          if (curr.spec.pluginJson.type === 'app') {
+            acc.apps[curr.spec.pluginJson.id] = curr.spec;
           }
 
-          acc[curr.spec.pluginJson.type].push(curr.spec);
+          if (curr.spec.pluginJson.type === 'panel') {
+            acc.panels[curr.spec.pluginJson.id] = curr.spec;
+          }
+
+          if (curr.spec.pluginJson.type === 'datasource') {
+            acc.datasources[curr.spec.pluginJson.id] = curr.spec;
+          }
+
           return acc;
         }, plugins);
 

@@ -9,7 +9,7 @@ import {
   type PluginExtensions,
   AppPlugin,
   OrgRole,
-  Spec,
+  type PluginMetasSpec,
   PluginSignatureStatus,
 } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
@@ -29,7 +29,7 @@ jest.mock('./importer/pluginImporter', () => ({
 const getPluginSettingsMock = jest.mocked(getPluginSettings);
 const importAppPluginMock = jest.mocked(pluginImporter.importApp);
 
-const createMockAppPluginConfig = (overrides: Partial<AppPluginConfig> = {}): Spec => {
+const createMockAppPluginConfig = (overrides: Partial<AppPluginConfig> = {}): PluginMetasSpec => {
   const app: AppPluginConfig = {
     id: 'test-plugin',
     path: '/path/to/plugin',
@@ -55,7 +55,10 @@ const createMockAppPluginConfig = (overrides: Partial<AppPluginConfig> = {}): Sp
   return createMockSpec({ path: app.path, loadingStrategy: app.loadingStrategy }, { id: app.id });
 };
 
-const createMockSpec = (module: Partial<Spec['module']> = {}, pluginJson: Partial<Spec['pluginJson']> = {}): Spec => ({
+const createMockSpec = (
+  module: Partial<PluginMetasSpec['module']> = {},
+  pluginJson: Partial<PluginMetasSpec['pluginJson']> = {}
+): PluginMetasSpec => ({
   module: {
     path: '/path/to/plugin',
     loadingStrategy: PluginLoadingStrategy.fetch,

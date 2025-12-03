@@ -26,8 +26,7 @@ import {
   UnifiedAlertingConfig,
   GrafanaConfig,
   CurrentUserDTO,
-  Spec,
-  PluginType,
+  PluginMetasSpec,
 } from '@grafana/data';
 
 /**
@@ -268,7 +267,11 @@ export class GrafanaBootConfig {
   listScopesEndpoint = '';
 
   openFeatureContext: Record<string, unknown> = {};
-  plugins: Record<PluginType, Spec[]> = { app: [], datasource: [], panel: [], renderer: [] };
+  plugins: Record<'apps' | 'panels' | 'datasources', Record<string, PluginMetasSpec>> = {
+    apps: {},
+    datasources: {},
+    panels: {},
+  };
 
   constructor(
     options: BootData['settings'] & {

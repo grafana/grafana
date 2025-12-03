@@ -269,48 +269,31 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   }
 }
 export interface PluginMetasResponse {
-  items: Item[];
+  items: PluginMetasItem[];
 }
 
-export enum APIVersion {
-  PluginsGrafanaAppV0Alpha1 = 'plugins.grafana.app/v0alpha1',
+export interface PluginMetasItem {
+  spec: PluginMetasSpec;
 }
 
-export interface Item {
-  spec: Spec;
-}
-
-export enum Kind {
-  PluginMeta = 'PluginMeta',
-}
-
-export interface PurpleMetadata {
-  name: string;
-  namespace: Namespace;
-}
-
-export enum Namespace {
-  Default = 'default',
-}
-
-export interface Spec {
+export interface PluginMetasSpec {
   pluginJson: PluginSchema;
-  module: Module;
+  module: PluginMetasModule;
   baseURL: string;
-  signature: Signature;
-  angular: Angular;
+  signature: PluginMetasSignature;
+  angular: PluginMetasAngular;
   translations?: PluginSchema['languages'];
 }
 
-export interface Angular {
+export interface PluginMetasAngular {
   detected: boolean;
 }
 
-export interface Module {
+export interface PluginMetasModule {
   path: string;
   loadingStrategy: PluginLoadingStrategy;
 }
 
-export interface Signature {
+export interface PluginMetasSignature {
   status: PluginSignatureStatus;
 }

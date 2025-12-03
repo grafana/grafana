@@ -2,7 +2,7 @@ import type {
   PluginExtensionAddedLinkConfig,
   PluginExtensionExposedComponentConfig,
   PluginExtensionAddedComponentConfig,
-  Spec,
+  PluginMetasSpec,
 } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -23,7 +23,7 @@ export const clearPreloadedPluginsCache = () => {
   preloadPromises.clear();
 };
 
-export async function preloadPlugins(apps: Spec[] = []) {
+export async function preloadPlugins(apps: PluginMetasSpec[] = []) {
   // Create preload promises for each app, reusing existing promises if already loading
   const promises = apps.map((app) => {
     if (!preloadPromises.has(app.pluginJson.id)) {
@@ -35,7 +35,7 @@ export async function preloadPlugins(apps: Spec[] = []) {
   await Promise.all(promises);
 }
 
-async function preload(config: Spec): Promise<void> {
+async function preload(config: PluginMetasSpec): Promise<void> {
   const showErrorAlert = contextSrv.user.orgRole !== '';
 
   try {
