@@ -5226,7 +5226,6 @@
       },
       "only-overrides-button-tooltip": "Показывать только переопределения",
       "placeholder-search-options": "Поиск параметров",
-      "visualization-button-label": "Визуализация",
       "visualization-button-tooltip": "Поиск параметров"
     },
     "panel-editor-table-view": {
@@ -6269,6 +6268,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Поиск...",
       "radio-options": {
         "label": {
@@ -6582,7 +6584,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Изменить визуализацию",
-      "tooltip-click-to-change-visualization": "Нажмите, чтобы изменить визуализацию"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Открыть панель запросов",
@@ -7378,7 +7380,8 @@
       "title-failed-volume-query": "Не удалось загрузить объем журналов для этого запроса",
       "title-no-logs-volume-available": "Нет доступного объема журналов",
       "title-showing-partial-data": "Отображение частичных данных",
-      "title-unable-to-show-log-volume": "Не удалось показать объем журналов"
+      "title-unable-to-show-log-volume": "Не удалось показать объем журналов",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Информация об объеме недоступна для текущих запросов и временного диапазона."
@@ -11182,6 +11185,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
