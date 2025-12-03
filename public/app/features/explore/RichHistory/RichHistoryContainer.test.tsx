@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { SortOrder } from 'app/core/utils/richHistory';
+import { SortOrder } from 'app/core/utils/richHistoryTypes';
 
 import { RichHistoryContainer, Props } from './RichHistoryContainer';
 

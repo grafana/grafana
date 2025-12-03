@@ -7,6 +7,7 @@
     "description": "Send notifications to LINE notify",
     "versions": [
       {
+        "typeAlias": "line",
         "version": "v1",
         "canCreate": true,
         "options": [
@@ -1329,6 +1330,42 @@
             "description": "",
             "placeholder": "{{ template \"default.message\" . }}",
             "propertyName": "message",
+            "selectOptions": null,
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": null
+          },
+          {
+            "element": "checkbox",
+            "inputType": "",
+            "label": "HideOpenButton",
+            "description": "Hide open URL button",
+            "placeholder": "",
+            "propertyName": "hide_open_button",
+            "selectOptions": null,
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": null
+          },
+          {
+            "element": "checkbox",
+            "inputType": "",
+            "label": "HideVersionInfo",
+            "description": "Hide version info",
+            "placeholder": "",
+            "propertyName": "hide_version_info",
             "selectOptions": null,
             "showWhen": {
               "field": "",
@@ -8143,7 +8180,7 @@
     "type": "sns",
     "currentVersion": "v1",
     "name": "AWS SNS",
-    "heading": "Webex settings",
+    "heading": "AWS SNS settings",
     "description": "Sends notifications to AWS Simple Notification Service",
     "versions": [
       {

@@ -11,7 +11,6 @@ import {
 import { ConfigSection, ConfigSubSection, DataSourceDescription, EditorStack } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import {
-  ConnectionLimits,
   Divider,
   MaxLifetimeField,
   MaxOpenConnectionsField,
@@ -19,16 +18,16 @@ import {
   useMigrateDatabaseFields,
 } from '@grafana/sql';
 import {
-  Input,
-  Select,
-  SecretInput,
-  Field,
-  Tooltip,
-  Label,
-  Icon,
-  Switch,
-  SecureSocksProxySettings,
   Collapse,
+  Field,
+  Icon,
+  Input,
+  Label,
+  SecretInput,
+  SecureSocksProxySettings,
+  Select,
+  Switch,
+  Tooltip,
 } from '@grafana/ui';
 
 import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes, SecureJsonData } from '../types';
@@ -113,7 +112,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
 
       <Divider />
 
-      <Collapse collapsible label="User Permissions" isOpen={isOpen} onToggle={() => setIsOpen((x) => !x)}>
+      <Collapse label="User Permissions" isOpen={isOpen} onToggle={() => setIsOpen((x) => !x)}>
         The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
         query. <br />
         Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
@@ -159,7 +158,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           />
         </Field>
 
-        <Field label="Password" required>
+        <Field label="Password">
           <SecretInput
             width={WIDTH_LONG}
             placeholder="Password"
@@ -412,18 +411,15 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           </Field>
         </ConfigSubSection>
 
-        {config.featureToggles.postgresDSUsePGX ? (
-          <ConfigSubSection title="Connection limits">
-            <MaxOpenConnectionsField
-              labelWidth={WIDTH_LONG}
-              jsonData={jsonData}
-              onMaxConnectionsChanged={onMaxConnectionsChanged}
-            />
-            <MaxLifetimeField labelWidth={WIDTH_LONG} jsonData={jsonData} onMaxLifetimeChanged={onMaxLifetimeChanged} />
-          </ConfigSubSection>
-        ) : (
-          <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
-        )}
+        <ConfigSubSection title="Connection limits">
+          <MaxOpenConnectionsField
+            labelWidth={WIDTH_LONG}
+            jsonData={jsonData}
+            onMaxConnectionsChanged={onMaxConnectionsChanged}
+          />
+          <MaxLifetimeField labelWidth={WIDTH_LONG} jsonData={jsonData} onMaxLifetimeChanged={onMaxLifetimeChanged} />
+        </ConfigSubSection>
+
         {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}

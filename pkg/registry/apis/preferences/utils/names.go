@@ -17,15 +17,15 @@ const (
 )
 
 type OwnerReference struct {
-	Owner ResourceOwner // the resource owner
-	Name  string        // the team|user name
+	Owner      ResourceOwner // the resource owner
+	Identifier string        // the team|user name
 }
 
 func (o OwnerReference) AsName() string {
-	if o.Name == "" || o.Owner == NamespaceResourceOwner {
+	if o.Identifier == "" || o.Owner == NamespaceResourceOwner {
 		return string(o.Owner)
 	}
-	return string(o.Owner) + "-" + o.Name
+	return string(o.Owner) + "-" + o.Identifier
 }
 
 func ParseOwnerFromName(name string) (OwnerReference, bool) {
@@ -33,9 +33,9 @@ func ParseOwnerFromName(name string) (OwnerReference, bool) {
 	if found && len(after) > 0 {
 		switch before {
 		case "user":
-			return OwnerReference{Owner: UserResourceOwner, Name: after}, true
+			return OwnerReference{Owner: UserResourceOwner, Identifier: after}, true
 		case "team":
-			return OwnerReference{Owner: TeamResourceOwner, Name: after}, true
+			return OwnerReference{Owner: TeamResourceOwner, Identifier: after}, true
 		}
 	} else if name == "namespace" {
 		return OwnerReference{Owner: NamespaceResourceOwner}, true

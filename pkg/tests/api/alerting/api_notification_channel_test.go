@@ -17,11 +17,11 @@ import (
 	"time"
 
 	"github.com/grafana/alerting/receivers"
-	alertingLine "github.com/grafana/alerting/receivers/line"
-	alertingPushover "github.com/grafana/alerting/receivers/pushover"
-	alertingSlack "github.com/grafana/alerting/receivers/slack"
-	alertingTelegram "github.com/grafana/alerting/receivers/telegram"
-	alertingThreema "github.com/grafana/alerting/receivers/threema"
+	alertingLine "github.com/grafana/alerting/receivers/line/v1"
+	alertingPushover "github.com/grafana/alerting/receivers/pushover/v1"
+	alertingSlack "github.com/grafana/alerting/receivers/slack/v1"
+	alertingTelegram "github.com/grafana/alerting/receivers/telegram/v1"
+	alertingThreema "github.com/grafana/alerting/receivers/threema/v1"
 	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
@@ -137,7 +137,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 				"__dashboardUid__": "dashboard_uid",
 				"__orgId__": "1",
 				"__panelId__": "1",
-				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
@@ -225,7 +225,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 				"__dashboardUid__": "dashboard_uid",
 				"__orgId__": "1",
 				"__panelId__": "1",
-				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
@@ -307,7 +307,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 					"__dashboardUid__": "dashboard_uid",
 					"__orgId__": "1",
 					"__panelId__": "1",
-					"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+					"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 					"__values__": "{\"B\":22,\"C\":1}"
 				},
 				"labels": {
@@ -400,7 +400,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 				"__dashboardUid__": "dashboard_uid",
 				"__orgId__": "1",
 				"__panelId__": "1",
-				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
@@ -506,7 +506,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 				"__dashboardUid__": "dashboard_uid",
 				"__orgId__": "1",
 				"__panelId__": "1",
-				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
@@ -805,7 +805,7 @@ func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
 				"__dashboardUid__": "dashboard_uid",
 				"__orgId__": "1",
 				"__panelId__": "1",
-				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
@@ -2440,7 +2440,7 @@ var expEmailNotifications = []*notifications.SendEmailCommandSync{
 						PanelURL:     "",
 						OrgID:        util.Pointer(int64(1)),
 						Values:       map[string]float64{"A": 1},
-						ValueString:  "[ var='A' labels={} value=1 ]",
+						ValueString:  "[ var='A' labels={} type='math' value=1 ]",
 					},
 				},
 				"GroupLabels":       template.KV{"alertname": "EmailAlert"},
@@ -2594,10 +2594,10 @@ var expNonEmailNotifications = map[string][]string{
 				"grafana_folder": "default"
 			  },
 			  "annotations": {},
-			  "startsAt": "%s",
+              "startsAt": "%s",
               "values": {"A": 1},
-              "valueString": "[ var='A' labels={} value=1 ]",
-			  "endsAt": "0001-01-01T00:00:00Z",
+              "valueString": "[ var='A' labels={} type='math' value=1 ]",
+              "endsAt": "0001-01-01T00:00:00Z",
 			  "generatorURL": "http://localhost:3000/alerting/grafana/UID_WebhookAlert/view?orgId=1",
 			  "fingerprint": "15c59b0a380bd9f1",
 			  "silenceURL": "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%%3DUID_WebhookAlert&orgId=1",
@@ -2768,10 +2768,10 @@ var expNonEmailNotifications = map[string][]string{
 			  "alertname": "AlertmanagerAlert",
 			  "grafana_folder": "default"
 			},
-			"annotations": {
-			  "__orgId__":"1",
+		"annotations": {
+		  "__orgId__":"1",
               "__values__": "{\"A\":1}",
-              "__value_string__": "[ var='A' labels={} value=1 ]"
+              "__value_string__": "[ var='A' labels={} type='math' value=1 ]"
             },
 			"startsAt": "%s",
 			"endsAt": "0001-01-01T00:00:00Z",

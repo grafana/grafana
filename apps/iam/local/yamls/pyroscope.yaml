@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyroscope
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: pyroscope
+  template:
+    metadata:
+      labels:
+        name: pyroscope
+    spec:
+      containers:
+        - name: pyroscope
+          image: grafana/pyroscope:1.14.0
+          ports:
+            - containerPort: 4040
+              name: http
+          env:
+            - name: PYROSCOPE_LOG_LEVEL
+              value: "info"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes: []
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pyroscope
+  namespace: default
+spec:
+  selector:
+    name: pyroscope
+  ports:
+    - name: http
+      port: 4040
+      targetPort: 4040

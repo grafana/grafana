@@ -22,12 +22,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       textAlign: 'center',
       padding: theme.spacing(2),
       background: footerBg,
+      borderRadius: theme.shape.radius.lg,
     }),
     header: css({
       height: '137px',
       padding: theme.spacing(4, 0, 0, 4),
       position: 'relative',
       background: `url('${backgroundUrl}') right`,
+      borderRadius: theme.shape.radius.lg,
     }),
   };
 };

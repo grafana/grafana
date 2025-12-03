@@ -3706,13 +3706,13 @@
           "group": {
             "type": "string"
           },
+          "kind": {
+            "type": "string"
+          },
           "noop": {
             "description": "No action required (useful for sync)",
             "type": "integer",
             "format": "int64"
-          },
-          "resource": {
-            "type": "string"
           },
           "total": {
             "type": "integer",
@@ -4218,6 +4218,10 @@
           "webhook"
         ],
         "properties": {
+          "deleteError": {
+            "description": "Error information during repository deletion (if any)",
+            "type": "string"
+          },
           "health": {
             "description": "This will get updated with the current health status (and updated periodically)",
             "default": {},
@@ -4305,6 +4309,10 @@
             "type": "string",
             "default": ""
           },
+          "path": {
+            "description": "For git, this is the target path",
+            "type": "string"
+          },
           "target": {
             "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
             "type": "string",
@@ -4330,6 +4338,10 @@
               "gitlab",
               "local"
             ]
+          },
+          "url": {
+            "description": "For git, this is the target URL",
+            "type": "string"
           },
           "workflows": {
             "description": "The supported workflows",

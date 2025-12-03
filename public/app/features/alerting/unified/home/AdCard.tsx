@@ -133,7 +133,7 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
   cardBody: css({
     padding: `${theme.spacing(3)} ${theme.spacing(4)} ${theme.spacing(2.25)} ${theme.spacing(4)}`,
     backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     border: `1px solid ${theme.colors.border.weak}`,
     flex: 1,
   }),

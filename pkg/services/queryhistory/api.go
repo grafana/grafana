@@ -192,7 +192,6 @@ func (s *QueryHistoryService) unstarHandler(c *contextmodel.ReqContext) response
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
-
 	query, err := s.UnstarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to unstar query in query history", err)

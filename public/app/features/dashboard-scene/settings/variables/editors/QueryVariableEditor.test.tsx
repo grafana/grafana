@@ -148,6 +148,22 @@ describe('QueryVariableEditor', () => {
     expect(staticOptionsToggle).toBeInTheDocument();
   });
 
+  it('should update the variable with default datasource when opening editor', async () => {
+    const onRunQueryMock = jest.fn();
+    const variable = new QueryVariable({ datasource: undefined, query: '' });
+
+    await act(() =>
+      setup({
+        variable,
+        onRunQuery: onRunQueryMock,
+      })
+    );
+
+    await waitFor(async () => {
+      expect(variable.state.datasource).not.toBe(undefined);
+    });
+  });
+
   it('should update the variable with default query for the selected DS', async () => {
     const onRunQueryMock = jest.fn();
     const variable = new QueryVariable({ datasource: { uid: 'mock-ds-2', type: 'test' }, query: '' });
@@ -384,17 +400,15 @@ describe('QueryVariableEditor', () => {
     await userEvent.click(staticOptionsToggle);
 
     // Add first static option
-    const addButton = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsAddButton
-    );
+    const addButton = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton);
     await user.click(addButton);
 
     // Enter label and value for first option
     const labelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
     );
     const valueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
     );
 
     await user.type(labelInputs[0], 'First Option');
@@ -411,10 +425,10 @@ describe('QueryVariableEditor', () => {
 
     // Get updated inputs (now there should be 2 sets)
     const updatedLabelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
     );
     const updatedValueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
     );
 
     // Enter label and value for second option
@@ -459,7 +473,7 @@ describe('QueryVariableEditor', () => {
       title: 'Mock Parent',
     });
 
-    const { queryByRole } = render(descriptor.render());
+    const { queryByRole } = render(descriptor.renderElement());
     const user = userEvent.setup();
 
     // 1. Initial state: "Open variable editor" button is visible, Modal is not.

@@ -273,7 +273,7 @@ func setupSimpleHTTPServer(features featuremgmt.FeatureToggles) *HTTPServer {
 		AccessControl:   acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
 		authInfoService: &authinfotest.FakeService{
-			ExpectedLabels: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
+			ExpectedRecentlyUsedLabel: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
 		},
 		tracer: tracing.InitializeTracerForTest(),
 	}

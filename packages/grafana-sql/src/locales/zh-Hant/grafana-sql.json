@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "自動最大閒置時間",
-        "content-auto-max-idle": "若啟用，<1>最大閒置連線數</1>的數量將會自動設定為與<3>最大開啟連線數</3>相同的數值。如果未設定最大開啟連線數，則將設定為預設值 ({{defaultMaxIdle}})。",
-        "content-max-idle": "閒置連線池中的最大連線數。若<1>最大開啟連線數</1>大於 0，但小於 <3>最大閒置連線數</3>，則<5>最大閒置連線數</5>將會縮減，以符合<8>最大開啟連線數</8>限制。若設定為 0，則不會保留任何閒置連線。",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "可以重複使用連線的最長時間（秒）。若設定為 0，則會永遠重複使用連線。",
-        "content-max-open": "資料庫的最大開啟連線數。若<1>最大閒置連線數</1>大於 0，且<3>最大開啟連線數</3>小於<5>最大閒置連線數</5>，則<7>最大閒置連線數</7>將會縮減，以符合<9>最大開啟連線數</9>限制。若設定為 0，則不會限制開啟連線數。",
+        "content-max-open": "",
         "max-idle": "最大閒置",
         "max-lifetime": "最大存活期",
         "max-open": "最大開啟數量",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "您的查詢無效。請參閱下方詳細資訊。<1></1>不過，您仍然可以執行此查詢。",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "建立器",
           "label-code": "代碼"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "格式化查詢"
       },
       "query-validator": {
-        "query-will-process": "<0></0>此查詢將在執行時處理 <2>{{bytes}}</2>。",
+        "query-will-process": "",
         "validating-query": "正在驗證查詢…"
       },
       "raw-editor": {

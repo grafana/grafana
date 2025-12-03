@@ -1,17 +1,18 @@
 import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
-import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
 import { useClipboardState } from './useClipboardState';
@@ -24,6 +25,38 @@ export interface Props {
 export function CanvasGridAddActions({ layoutManager }: Props) {
   const styles = useStyles2(getStyles);
   const { hasCopiedPanel } = useClipboardState();
+
+  const { disableGrouping, disableTabs } = useMemo(() => {
+    if (config.featureToggles.unlimitedLayoutsNesting) {
+      return { disableGrouping: false, disableTabs: false };
+    }
+
+    let parent = layoutManager.parent;
+    const layouts = [];
+
+    while (parent) {
+      if (isDashboardLayoutManager(parent)) {
+        layouts.push(parent.descriptor.id);
+      }
+
+      if (layouts.length === 2) {
+        parent = undefined;
+        break;
+      }
+
+      parent = parent.parent;
+    }
+
+    if (layouts.length === 2) {
+      return { disableGrouping: true, disableTabs: true };
+    }
+
+    if (layouts.length === 1 && layouts[0] === TabsLayoutManager.descriptor.id) {
+      return { disableGrouping: false, disableTabs: true };
+    }
+
+    return { disableGrouping: false, disableTabs: false };
+  }, [layoutManager]);
 
   return (
     <div className={cx(styles.addAction, 'dashboard-canvas-add-button')}>
@@ -55,6 +88,12 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
               icon="layers"
               testId={selectors.components.CanvasGridAddActions.addTab}
               label={t('dashboard.canvas-actions.group-into-tab', 'Group into tab')}
+              disabled={disableTabs}
+              description={
+                disableTabs
+                  ? t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs')
+                  : undefined
+              }
               onClick={() => {
                 addNewTabTo(layoutManager);
                 DashboardInteractions.trackGroupTabClick();
@@ -68,6 +107,12 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           fill="text"
           icon="layers"
           data-testid={selectors.components.CanvasGridAddActions.groupPanels}
+          disabled={disableGrouping}
+          tooltip={
+            disableGrouping
+              ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 2 levels')
+              : undefined
+          }
         >
           <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
         </Button>
@@ -109,10 +154,6 @@ function renderUngroupAction(layoutManager: DashboardLayoutManager) {
     return <UngroupButtonTabs parentLayout={parentLayout} onClick={onUngroup} />;
   }
 
-  if (parentLayout instanceof RowsLayoutManager) {
-    return <UngroupButtonRows parentLayout={parentLayout} onClick={onUngroup} />;
-  }
-
   return null;
 }
 
@@ -125,26 +166,6 @@ function UngroupButtonTabs({ parentLayout, onClick }: UngroupButtonProps<TabsLay
   const { tabs } = parentLayout.useState();
 
   if (tabs.length > 1) {
-    return null;
-  }
-
-  return (
-    <Button
-      variant="primary"
-      fill="text"
-      icon="layers-slash"
-      onClick={onClick}
-      data-testid={selectors.components.CanvasGridAddActions.ungroup}
-    >
-      <Trans i18nKey="dashboard.canvas-actions.un-group-panels">Ungroup</Trans>
-    </Button>
-  );
-}
-
-function UngroupButtonRows({ parentLayout, onClick }: UngroupButtonProps<RowsLayoutManager>) {
-  const { rows } = parentLayout.useState();
-
-  if (rows.length > 1) {
     return null;
   }
 

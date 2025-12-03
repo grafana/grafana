@@ -1317,7 +1317,7 @@ func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *s
 	for k, v := range rule.Labels {
 		s.Labels[k] = v
 	}
-	for k, v := range state.GetRuleExtraLabels(&logtest.Fake{}, rule, "", true) {
+	for k, v := range state.GetRuleExtraLabels(&logtest.Fake{}, rule, "", true, featuremgmt.WithFeatures()) {
 		if _, ok := s.Labels[k]; !ok {
 			s.Labels[k] = v
 		}

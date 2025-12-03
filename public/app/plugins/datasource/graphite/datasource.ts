@@ -1029,9 +1029,15 @@ export class GraphiteDatasource
     };
 
     if (config.featureToggles.graphiteBackendMode) {
-      const functions = await this.getResource<string>('functions');
-      this.funcDefs = gfunc.parseFuncDefs(functions);
-      return this.funcDefs;
+      try {
+        const functions = await this.getResource<string>('functions');
+        this.funcDefs = gfunc.parseFuncDefs(functions);
+        return this.funcDefs;
+      } catch (error) {
+        console.error('Fetching graphite functions error', error);
+        this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+        return this.funcDefs;
+      }
     }
 
     return lastValueFrom(

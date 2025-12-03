@@ -22,7 +22,7 @@ jest.mock('./scopesUtils', () => {
 });
 
 const mockScopeServicesState = {
-  updateNode: jest.fn(),
+  filterNode: jest.fn(),
   selectScope: jest.fn(),
   resetSelection: jest.fn(),
   nodes: {},
@@ -99,12 +99,12 @@ describe('useRegisterScopesActions', () => {
   });
 
   it('should register scope tree actions and return scopesRow when scopes are selected', () => {
-    const mockUpdateNode = jest.fn();
+    const mockFilterNode = jest.fn();
 
     // First run with empty scopes in the scopes service
     (useScopeServicesState as jest.Mock).mockReturnValue({
       ...mockScopeServicesState,
-      updateNode: mockUpdateNode,
+      filterNode: mockFilterNode,
       selectedScopes: [{ scopeId: 'scope1', name: 'Scope 1' }],
     });
 
@@ -112,14 +112,14 @@ describe('useRegisterScopesActions', () => {
       return useRegisterScopesActions('', jest.fn());
     });
 
-    expect(mockUpdateNode).toHaveBeenCalledWith('', true, '');
+    expect(mockFilterNode).toHaveBeenCalledWith('', '');
     expect(useRegisterActions).toHaveBeenLastCalledWith([rootScopeAction], [[rootScopeAction]]);
     expect(result.current.scopesRow).toBeDefined();
 
     // Simulate loading of scopes in the service
     (useScopeServicesState as jest.Mock).mockReturnValue({
       ...mockScopeServicesState,
-      updateNode: mockUpdateNode,
+      filterNode: mockFilterNode,
       selectedScopes: [{ scopeId: 'scope1', name: 'Scope 1' }],
       nodes,
       tree,
@@ -151,12 +151,12 @@ describe('useRegisterScopesActions', () => {
   });
 
   it('should load next level of scopes', () => {
-    const mockUpdateNode = jest.fn();
+    const mockFilterNode = jest.fn();
 
     // First run with empty scopes in the scopes service
     (useScopeServicesState as jest.Mock).mockReturnValue({
       ...mockScopeServicesState,
-      updateNode: mockUpdateNode,
+      filterNode: mockFilterNode,
       nodes,
       tree,
     });
@@ -165,7 +165,7 @@ describe('useRegisterScopesActions', () => {
       return useRegisterScopesActions('', jest.fn(), 'scopes/scope1');
     });
 
-    expect(mockUpdateNode).toHaveBeenCalledWith('scope1', true, '');
+    expect(mockFilterNode).toHaveBeenCalledWith('scope1', '');
   });
 
   it('does not return component if no scopes are selected', () => {
@@ -230,6 +230,7 @@ describe('useRegisterScopesActions', () => {
         // The main difference here is that we map it to a parent if we are in the "scopes" section of the cmdK.
         // In the previous test the scope actions were mapped to global level to show correctly.
         parent: 'scopes',
+        subtitle: 'some parent',
       },
     ];
 
@@ -258,12 +259,12 @@ describe('useRegisterScopesActions', () => {
   });
 
   it('should not use global scope search when searching in some deeper scope category', async () => {
-    const mockUpdateNode = jest.fn();
+    const mockFilterNode = jest.fn();
 
     // First run with empty scopes in the scopes service
     (useScopeServicesState as jest.Mock).mockReturnValue({
       ...mockScopeServicesState,
-      updateNode: mockUpdateNode,
+      filterNode: mockFilterNode,
       nodes,
       tree,
     });
@@ -272,17 +273,17 @@ describe('useRegisterScopesActions', () => {
       return useRegisterScopesActions('something', jest.fn(), 'scopes/scope1');
     });
 
-    expect(mockUpdateNode).toHaveBeenCalledWith('scope1', true, 'something');
+    expect(mockFilterNode).toHaveBeenCalledWith('scope1', 'something');
     expect(mockScopeServicesState.searchAllNodes).not.toHaveBeenCalled();
   });
 
   it('should not use global scope search if feature flag is off', async () => {
     config.featureToggles.scopeSearchAllLevels = false;
-    const mockUpdateNode = jest.fn();
+    const mockFilterNode = jest.fn();
     // First run with empty scopes in the scopes service
     (useScopeServicesState as jest.Mock).mockReturnValue({
       ...mockScopeServicesState,
-      updateNode: mockUpdateNode,
+      filterNode: mockFilterNode,
       nodes,
       tree,
     });
@@ -291,7 +292,7 @@ describe('useRegisterScopesActions', () => {
       return useRegisterScopesActions('something', jest.fn(), '');
     });
 
-    expect(mockUpdateNode).toHaveBeenCalledWith('', true, 'something');
+    expect(mockFilterNode).toHaveBeenCalledWith('', 'something');
     expect(mockScopeServicesState.searchAllNodes).not.toHaveBeenCalled();
   });
 

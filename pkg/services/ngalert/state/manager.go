@@ -72,6 +72,10 @@ type ManagerCfg struct {
 	// StatePeriodicSaveBatchSize controls the size of the alert instance batch that is saved periodically when the
 	// alertingSaveStatePeriodic feature flag is enabled.
 	StatePeriodicSaveBatchSize int
+	// StatePeriodicSaveInterval controls the interval for periodic state saves.
+	StatePeriodicSaveInterval time.Duration
+	// StatePeriodicSaveJitterEnabled enables jitter for periodic state saves to distribute database load.
+	StatePeriodicSaveJitterEnabled bool
 
 	RulesPerRuleGroupLimit int64
 
@@ -528,7 +532,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 	missingTransitions := []StateTransition{}
 	var staleStatesCount int64 = 0
 
-	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+	toDelete := func(s *State) bool {
 		// We need only states that are not present in the current evaluation, so
 		// skip the state if it was just evaluated.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
@@ -580,6 +584,20 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 		missingTransitions = append(missingTransitions, record)
 
 		return isStale
+	}
+
+	states := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+
+	toDeleteStates := map[data.Fingerprint]struct{}{}
+	for _, s := range states {
+		if toDelete(s) {
+			toDeleteStates[s.CacheID] = struct{}{}
+		}
+	}
+
+	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+		_, ok := toDeleteStates[s.CacheID]
+		return ok
 	})
 
 	return missingTransitions, staleStatesCount

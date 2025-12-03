@@ -101,7 +101,9 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         // If `filterData` exists filter data feeding into location editor
         if (options.filterData) {
           const matcherFunc = getFrameMatchers(options.filterData);
-          data = data.filter(matcherFunc);
+          if (data.some(matcherFunc)) {
+            data = data.filter(matcherFunc);
+          }
         }
 
         addLocationFields('Location', 'location.', builder, options.location, data);

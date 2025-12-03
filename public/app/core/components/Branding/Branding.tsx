@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { FC } from 'react';
+import { FC, type JSX } from 'react';
 
 import { colorManipulator } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
@@ -33,7 +33,10 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
       backgroundRepeat: 'no-repeat',
 
       opacity: 0,
-      transition: 'opacity 3s ease-in-out',
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 3s ease-in-out',
+      },
 
       [theme.breakpoints.up('md')]: {
         backgroundPosition: 'center',

@@ -14,11 +14,11 @@
 
 import { render, screen } from '@testing-library/react';
 
-import { createTheme } from '@grafana/data';
+import { createTheme, dateTime } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
 
 import DetailState from './SpanDetail/DetailState';
-import { UnthemedSpanDetailRow, SpanDetailRowProps } from './SpanDetailRow';
+import SpanDetailRow, { type SpanDetailRowProps } from './SpanDetailRow';
 
 const testSpan = {
   spanID: 'testSpanID',
@@ -40,7 +40,7 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
     processToggle: jest.fn(),
-    createFocusSpanLink: jest.fn(),
+    createFocusSpanLink: jest.fn().mockReturnValue({}),
     hoverIndentGuideIds: new Map(),
     span: testSpan,
     tagsToggle: jest.fn(),
@@ -48,6 +48,8 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
     theme: createTheme(),
     traceFlameGraphs: {},
     timeRange: {
+      from: dateTime(0),
+      to: dateTime(1000000000000),
       raw: {
         from: 0,
         to: 1000000000000,
@@ -55,7 +57,7 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
     },
     ...propOverrides,
   };
-  return render(<UnthemedSpanDetailRow {...(props as SpanDetailRowProps)} />);
+  return render(<SpanDetailRow {...(props as SpanDetailRowProps)} />);
 };
 
 describe('SpanDetailRow tests', () => {

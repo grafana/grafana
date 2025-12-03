@@ -1,3 +1,0 @@
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1,ResolvedToggleState,Toggles
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1,FeatureSpec,FrontendOnly
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1,FeatureSpec,Owner

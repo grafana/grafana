@@ -276,12 +276,8 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 			UID:       item.Name,
 			Title:     item.Title,
 			ParentUID: item.Folder,
+			ManagedBy: item.ManagedBy.Kind,
 		}
-
-		if item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND) != "" {
-			f.ManagedBy = utils.ParseManagerKindString(item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND))
-		}
-
 		hits = append(hits, f)
 	}
 
@@ -302,7 +298,7 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 			ele := queue[0]
 			queue = queue[1:]
 			if parentUID != nil && *parentUID == ele {
-				return 0, folder.ErrCircularReference
+				return 0, folder.ErrCircularReference.Errorf("circular reference detected")
 			}
 			folders, err := ss.GetChildren(ctx, folder.GetChildrenQuery{UID: ele, OrgID: orgID})
 			if err != nil {
@@ -392,7 +388,9 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		}
 
 		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
-			buildFolderFullPaths(f, relations, folderMap)
+			if err := buildFolderFullPaths(f, relations, folderMap); err != nil {
+				return nil, err
+			}
 		}
 
 		hits = append(hits, f)
@@ -441,7 +439,10 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 	}
 
 	descendantsMap := map[string]*folder.Folder{}
-	getDescendants(nodes, tree, ancestor_uid, descendantsMap)
+	err = getDescendants(nodes, tree, ancestor_uid, descendantsMap, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	descendants := []*folder.Folder{}
 	for _, f := range descendantsMap {
@@ -451,11 +452,27 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 	return descendants, nil
 }
 
-func getDescendants(nodes map[string]*folder.Folder, tree map[string]map[string]*folder.Folder, ancestor_uid string, descendantsMap map[string]*folder.Folder) {
-	for uid := range tree[ancestor_uid] {
-		descendantsMap[uid] = nodes[uid]
-		getDescendants(nodes, tree, uid, descendantsMap)
+func getDescendants(
+	nodes map[string]*folder.Folder,
+	tree map[string]map[string]*folder.Folder,
+	ancestorUID string,
+	descendantsMap map[string]*folder.Folder,
+	seen map[string]bool,
+) error {
+	if seen == nil {
+		seen = map[string]bool{}
 	}
+	if seen[ancestorUID] {
+		return folder.ErrCircularReference.Errorf("circular reference detected at folder uid: %s", ancestorUID)
+	}
+	seen[ancestorUID] = true
+	for uid := range tree[ancestorUID] {
+		descendantsMap[uid] = nodes[uid]
+		if err := getDescendants(nodes, tree, uid, descendantsMap, seen); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID int64, ancestor_uid string) (folder.DescendantCounts, error) {
@@ -563,15 +580,20 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
 }
 
-func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) {
+func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) error {
 	titles := make([]string, 0)
 	uids := make([]string, 0)
 
 	titles = append(titles, f.Title)
 	uids = append(uids, f.UID)
 
+	seen := make(map[string]bool)
 	currentUID := f.UID
 	for currentUID != "" {
+		if seen[currentUID] {
+			return folder.ErrCircularReference.Errorf("circular reference detected for folder %s", currentUID)
+		}
+		seen[currentUID] = true
 		parentUID, exists := relations[currentUID]
 		if !exists {
 			break
@@ -592,6 +614,7 @@ func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderM
 
 	f.Fullpath = strings.Join(util.Reverse(titles), "/")
 	f.FullpathUIDs = strings.Join(util.Reverse(uids), "/")
+	return nil
 }
 
 func shouldSkipFolder(f *folder.Folder, filterUIDs map[string]struct{}) bool {

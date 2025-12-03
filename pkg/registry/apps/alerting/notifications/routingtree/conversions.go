@@ -12,7 +12,7 @@ import (
 
 	promModel "github.com/prometheus/common/model"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -28,6 +28,7 @@ func ConvertToK8sResource(orgID int64, r definitions.Route, version string, name
 			RepeatInterval: optionalPrometheusDurationToString(r.RepeatInterval),
 			Receiver:       r.Receiver,
 		},
+		Routes: make([]model.RoutingTreeRoute, 0, len(r.Routes)),
 	}
 	for _, route := range r.Routes {
 		if route == nil {

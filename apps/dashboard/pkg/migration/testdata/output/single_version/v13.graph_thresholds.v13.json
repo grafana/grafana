@@ -1,0 +1,98 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "autoMigrateFrom": "graph",
+      "grid": {
+        "threshold1": 200,
+        "threshold1Color": "yellow",
+        "threshold2": 400,
+        "threshold2Color": "red",
+        "thresholdLine": true
+      },
+      "id": 1,
+      "title": "Graph with Line Thresholds",
+      "type": "timeseries"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "grid": {
+        "threshold1": 100,
+        "threshold1Color": "green",
+        "threshold2": 300,
+        "threshold2Color": "blue",
+        "thresholdLine": false
+      },
+      "id": 2,
+      "title": "Graph with Fill Thresholds",
+      "type": "timeseries"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "grid": {
+        "threshold1": 150,
+        "threshold1Color": "orange",
+        "thresholdLine": true
+      },
+      "id": 3,
+      "title": "Graph with Single Threshold",
+      "type": "timeseries"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "grid": {
+        "threshold1": 200,
+        "threshold1Color": "yellow",
+        "thresholdLine": false
+      },
+      "id": 4,
+      "thresholds": [
+        {
+          "color": "purple",
+          "colorMode": "custom",
+          "value": 50
+        }
+      ],
+      "title": "Graph with Existing Thresholds",
+      "type": "timeseries"
+    },
+    {
+      "autoMigrateFrom": "singlestat",
+      "id": 5,
+      "title": "Non-Graph Panel",
+      "type": "stat"
+    }
+  ],
+  "schemaVersion": 13,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V13 Graph Thresholds Migration Test",
+  "weekStart": ""
+}

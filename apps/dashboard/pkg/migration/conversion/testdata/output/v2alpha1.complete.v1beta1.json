@@ -10,11 +10,389 @@
       "description": "Complete example of v2alpha1 dashboard features"
     }
   },
-  "spec": null,
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "yellow",
+          "name": "Prometheus Annotations",
+          "target": {
+            "expr": "changes(process_start_time_seconds[1m])",
+            "refId": "Anno"
+          }
+        }
+      ]
+    },
+    "description": "This dashboard demonstrates all features that need to be converted from v2alpha1 to v2beta1",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 2,
+    "liveNow": true,
+    "panels": [
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": -1,
+        "title": "Conditional Row",
+        "type": "row"
+      },
+      {
+        "description": "This panel demonstrates conditional rendering features",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [
+              {
+                "options": {
+                  "0": {
+                    "color": "red",
+                    "text": "Down"
+                  },
+                  "1": {
+                    "color": "green",
+                    "text": "Up"
+                  }
+                },
+                "type": "value"
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "textMode": "auto"
+        },
+        "pluginVersion": "12.1.0-pre",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "gdev-prometheus"
+            },
+            "expr": "up{job=\"grafana\"}",
+            "refId": "A"
+          }
+        ],
+        "title": "Panel with Conditional Rendering",
+        "transformations": [
+          {
+            "id": "reduce",
+            "options": {
+              "includeTimeField": false,
+              "mode": "reduceFields",
+              "reducers": [
+                "mean"
+              ]
+            }
+          }
+        ],
+        "type": "stat"
+      }
+    ],
+    "preload": true,
+    "refresh": "10s",
+    "schemaVersion": 42,
+    "tags": [
+      "test",
+      "example",
+      "migration"
+    ],
+    "templating": {
+      "list": [
+        {
+          "allowCustomValue": false,
+          "current": {
+            "text": "All",
+            "value": [
+              "$__all"
+            ]
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
+          "definition": "up",
+          "description": "Shows all up metrics",
+          "hide": 0,
+          "includeAll": true,
+          "label": "Prometheus Query",
+          "multi": true,
+          "name": "prometheus_query",
+          "options": [],
+          "query": {
+            "expr": "up"
+          },
+          "refresh": 0,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "current": {
+            "text": "server1",
+            "value": "server1"
+          },
+          "description": "A simple text variable",
+          "hide": 0,
+          "label": "Text Variable",
+          "name": "text_var",
+          "query": "server1,server2,server3",
+          "skipUrlSync": false,
+          "type": "textbox"
+        },
+        {
+          "current": {
+            "text": "production",
+            "value": "production"
+          },
+          "description": "A constant value",
+          "hide": 2,
+          "label": "Constant",
+          "name": "constant_var",
+          "query": "production",
+          "skipUrlSync": true,
+          "type": "constant"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {
+            "text": "gdev-prometheus",
+            "value": "gdev-prometheus"
+          },
+          "description": "Select a datasource",
+          "hide": 0,
+          "includeAll": false,
+          "label": "Datasource",
+          "multi": false,
+          "name": "ds_var",
+          "options": [
+            {
+              "text": "gdev-prometheus",
+              "value": "gdev-prometheus"
+            }
+          ],
+          "query": "prometheus",
+          "refresh": 0,
+          "regex": "/^gdev-/",
+          "skipUrlSync": false,
+          "type": "datasource"
+        },
+        {
+          "auto": true,
+          "auto_count": 30,
+          "auto_min": "10s",
+          "current": {
+            "text": "5m",
+            "value": "5m"
+          },
+          "description": "Time interval selection",
+          "hide": 0,
+          "label": "Interval",
+          "name": "interval",
+          "options": [
+            {
+              "text": "1m",
+              "value": "1m"
+            },
+            {
+              "text": "5m",
+              "value": "5m"
+            },
+            {
+              "text": "10m",
+              "value": "10m"
+            },
+            {
+              "text": "30m",
+              "value": "30m"
+            },
+            {
+              "text": "1h",
+              "value": "1h"
+            },
+            {
+              "text": "6h",
+              "value": "6h"
+            },
+            {
+              "text": "12h",
+              "value": "12h"
+            },
+            {
+              "text": "1d",
+              "value": "1d"
+            }
+          ],
+          "query": "1m,5m,10m,30m,1h,6h,12h,1d",
+          "skipUrlSync": false,
+          "type": "interval"
+        },
+        {
+          "allValue": "*",
+          "allowCustomValue": true,
+          "current": {
+            "text": [
+              "Production"
+            ],
+            "value": [
+              "prod"
+            ]
+          },
+          "description": "Custom multi-value variable",
+          "hide": 0,
+          "includeAll": true,
+          "label": "Custom Options",
+          "multi": true,
+          "name": "custom_var",
+          "options": [
+            {
+              "text": "Production",
+              "value": "prod"
+            },
+            {
+              "text": "Staging",
+              "value": "staging"
+            },
+            {
+              "text": "Development",
+              "value": "dev"
+            }
+          ],
+          "query": "prod : Production, staging : Staging, dev : Development",
+          "skipUrlSync": false,
+          "type": "custom"
+        },
+        {
+          "current": {
+            "text": "instance",
+            "value": "instance"
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
+          "description": "Group metrics by label",
+          "hide": 0,
+          "label": "Group By",
+          "multi": false,
+          "name": "group_by",
+          "options": [],
+          "skipUrlSync": false,
+          "type": "groupby"
+        },
+        {
+          "allowCustomValue": false,
+          "baseFilters": [
+            {
+              "condition": "AND",
+              "key": "job",
+              "operator": "=",
+              "value": "grafana"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
+          "defaultKeys": [
+            {
+              "expandable": true,
+              "text": "job",
+              "value": "job"
+            },
+            {
+              "expandable": true,
+              "text": "instance",
+              "value": "instance"
+            }
+          ],
+          "hide": 0,
+          "label": "Filters",
+          "name": "filters",
+          "skipUrlSync": false,
+          "type": "adhoc"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
+    "timezone": "browser",
+    "title": "Test: Complete V2alpha1 Dashboard Example",
+    "weekStart": "monday"
+  },
   "status": {
     "conversion": {
-      "failed": true,
-      "error": "backend conversion not yet implemented",
+      "failed": false,
       "storedVersion": "v2alpha1"
     }
   }

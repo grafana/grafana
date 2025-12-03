@@ -21,7 +21,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	featuretoggleapi "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	featuretoggleapi "github.com/grafana/grafana/pkg/services/featuremgmt/feature_toggle_api"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
@@ -50,17 +50,14 @@ func TestFeatureToggleFiles(t *testing.T) {
 			lookup := map[string]featuretoggleapi.FeatureSpec{}
 			for _, flag := range standardFeatureFlags {
 				lookup[flag.Name] = featuretoggleapi.FeatureSpec{
-					Description:       flag.Description,
-					Stage:             flag.Stage.String(),
-					Owner:             string(flag.Owner),
-					RequiresDevMode:   flag.RequiresDevMode,
-					FrontendOnly:      flag.FrontendOnly,
-					RequiresRestart:   flag.RequiresRestart,
-					AllowSelfServe:    flag.AllowSelfServe,
-					HideFromAdminPage: flag.HideFromAdminPage,
-					HideFromDocs:      flag.HideFromDocs,
-					Expression:        flag.Expression,
-					// EnabledVersion: ???,
+					Description:     flag.Description,
+					Stage:           flag.Stage.String(),
+					Owner:           string(flag.Owner),
+					RequiresDevMode: flag.RequiresDevMode,
+					FrontendOnly:    flag.FrontendOnly,
+					RequiresRestart: flag.RequiresRestart,
+					HideFromDocs:    flag.HideFromDocs,
+					Expression:      flag.Expression,
 				}
 
 				// Replace them all
@@ -186,9 +183,6 @@ func verifyFlagsConfiguration(t *testing.T) {
 		}
 		if flag.Name != strings.TrimSpace(flag.Name) {
 			t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
-		}
-		if flag.AllowSelfServe && (flag.Stage != FeatureStageGeneralAvailability && flag.Stage != FeatureStagePublicPreview && flag.Stage != FeatureStageDeprecated) {
-			t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
 		}
 		if flag.Owner == "" {
 			t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
@@ -340,6 +334,10 @@ package featuremgmt
 const (`)
 
 	for _, flag := range standardFeatureFlags {
+		if flag.FrontendOnly {
+			continue // no need to have the golang constant for frontend only flags
+		}
+
 		data.CamelCase = strcase.ToCamel(flag.Name)
 		data.Flag = flag
 		data.Ext = ""

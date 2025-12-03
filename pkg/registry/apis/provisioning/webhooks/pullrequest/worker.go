@@ -28,7 +28,7 @@ func ProvidePullRequestWorker(
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *PullRequestWorker {
-	urlProvider := func(_ string) string {
+	urlProvider := func(_ context.Context, _ string) string {
 		return cfg.AppURL
 	}
 
@@ -38,7 +38,7 @@ func ProvidePullRequestWorker(
 	parsers := resources.NewParserFactory(clients)
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
-	commenter := NewCommenter()
+	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering)
 
 	return NewPullRequestWorker(evaluator, commenter, registry)
 }

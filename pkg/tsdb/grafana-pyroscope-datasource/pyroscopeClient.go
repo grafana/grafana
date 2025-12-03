@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 
@@ -79,10 +80,9 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int
 		End:   end,
 	}))
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting profile types: %w", err))
 	}
 	if res.Msg.ProfileTypes == nil {
 		// Let's make sure we send at least empty array if we don't have any types
@@ -114,10 +114,9 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 
 	resp, err := c.connectClient.SelectSeries(ctx, req)
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+		return nil, backend.DownstreamErrorf("received error from client while getting series: %w", err)
 	}
 
 	series := make([]*Series, len(resp.Msg.Series))
@@ -170,10 +169,9 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 
 	resp, err := c.connectClient.SelectMergeStacktraces(ctx, req)
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting profile: %w", err))
 	}
 
 	if resp.Msg.Flamegraph == nil {
@@ -181,7 +179,7 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 		return nil, nil
 	}
 
-	return profileQuery(ctx, err, span, resp.Msg.Flamegraph, profileTypeID)
+	return profileQuery(resp.Msg.Flamegraph, profileTypeID)
 }
 
 func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
@@ -202,18 +200,18 @@ func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, lab
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting span profile: %w", err))
 	}
 
 	if resp.Msg.Flamegraph == nil {
-		// Not an error, can happen when querying data oout of range.
+		// Not an error, can happen when querying data out of range.
 		return nil, nil
 	}
 
-	return profileQuery(ctx, err, span, resp.Msg.Flamegraph, profileTypeID)
+	return profileQuery(resp.Msg.Flamegraph, profileTypeID)
 }
 
-func profileQuery(ctx context.Context, err error, span trace.Span, flamegraph *querierv1.FlameGraph, profileTypeID string) (*ProfileResponse, error) {
+func profileQuery(flamegraph *querierv1.FlameGraph, profileTypeID string) (*ProfileResponse, error) {
 	levels := make([]*Level, len(flamegraph.Levels))
 	for i, level := range flamegraph.Levels {
 		levels[i] = &Level{
@@ -253,10 +251,9 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, 
 		End:      end,
 	}))
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, fmt.Errorf("error sending LabelNames request %v", err)
+		return nil, backend.DownstreamError(fmt.Errorf("error sending LabelNames request %v", err))
 	}
 
 	if resp.Msg.Names == nil {
@@ -283,10 +280,9 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 		End:      end,
 	}))
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting label values: %w", err))
 	}
 	if resp.Msg.Names == nil {
 		return []string{}, nil

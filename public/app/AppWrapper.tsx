@@ -6,13 +6,12 @@ import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { ErrorBoundaryAlert, getPortalContainer, PortalContainer, TimeRangeProvider } from '@grafana/ui';
+import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
 import { GrafanaApp } from './app';
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
-import { GlobalStylesWrapper } from './core/components/AppChrome/ExtensionSidebar/GlobalStylesWrapper';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
@@ -108,7 +107,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
 
     return (
       <Provider store={store}>
-        <ErrorBoundaryAlert style="page">
+        <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
           <GrafanaContext.Provider value={app.context}>
             <ThemeProvider value={config.theme2}>
               <CacheProvider name={this.iconCacheID}>
@@ -121,7 +120,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
                         <ExtensionSidebarContextProvider>
                           <UNSAFE_PortalProvider getContainer={getPortalContainer}>
-                            <GlobalStylesWrapper />
+                            <GlobalStyles />
                             <div className="grafana-app">
                               <RouterWrapper {...routerWrapperProps} />
                               <LiveConnectionWarning />

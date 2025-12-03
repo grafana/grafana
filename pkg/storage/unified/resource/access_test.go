@@ -34,7 +34,7 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 			Verb:      utils.VerbGet,
 			Namespace: "stacks-1",
 		}
-		resp, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		resp, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req, "")
 		assert.NoError(t, err)
 		assert.Equal(t, test.expected, resp.Allowed)
 	}
@@ -135,7 +135,7 @@ func TestNamespaceMatching(t *testing.T) {
 			// Create a mock auth info with the specified namespace
 			// Test Check method
 			user := &identity.StaticRequester{Namespace: tt.authNamespace}
-			_, checkErr := client.Check(ctx, user, checkReq)
+			_, checkErr := client.Check(ctx, user, checkReq, "")
 
 			// Test Compile method
 			compileReq := authlib.ListRequest{
@@ -199,7 +199,7 @@ func TestNamespaceMatchingFallback(t *testing.T) {
 			// Create a mock auth info with the specified namespace
 			// Test Check method
 			user := &identity.StaticRequester{Namespace: tt.authNamespace}
-			_, checkErr := client.Check(ctx, user, checkReq)
+			_, checkErr := client.Check(ctx, user, checkReq, "")
 
 			// Test Compile method
 			compileReq := authlib.ListRequest{

@@ -79,9 +79,10 @@
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
             Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
             "Segoe UI Symbol";
+          line-height: 1; /* prevent shift when css loads in that changes the body line-height */
         }
 
-        .fs-variant-loader, .fs-variant-error {
+        .fs-variant-loader, .fs-variant-error, .fs-custom-domain-error {
           display: contents;
         }
 
@@ -118,6 +119,10 @@
           opacity: 1;
         }
 
+        .fs-custom-domain-error .fs-loader-text {
+          opacity: 1;
+        }
+
         .fs-error-icon {
           fill: var(--fs-color-error);
         }
@@ -151,6 +156,20 @@
 
         <p class="fs-loader-text">Error loading Grafana</p>
       </div>
+      <div class="fs-custom-domain-error fs-hidden">
+        <svg
+          width="32"
+          height="32"
+          class="fs-error-icon"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M12,14a1.25,1.25,0,1,0,1.25,1.25A1.25,1.25,0,0,0,12,14Zm0-1.5a1,1,0,0,0,1-1v-3a1,1,0,0,0-2,0v3A1,1,0,0,0,12,12.5ZM12,2A10,10,0,1,0,22,12,10.01114,10.01114,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8.00917,8.00917,0,0,1,12,20Z"/>
+        </svg>
+
+        <p class="fs-loader-text">Error loading Grafana</p>
+        <p class="fs-loader-text">Please, use your URL custom domain directly</p>
+      </div>
     </div>
 
     <div id="reactRoot"></div>
@@ -169,11 +188,38 @@
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
       (() => {
-        window.__grafana_load_failed = function(...args) {
-          console.error('Failed to load Grafana', ...args);
+        // Grafana can only fail to load once
+        // However, it can fail to load in multiple different places
+        // To avoid double reporting the error, we use this boolean to check if we've already failed
+        let hasFailedToBoot = false;
+        window.__grafana_load_failed = function(err) {
+          if (hasFailedToBoot) {
+            return;
+          }
+          hasFailedToBoot = true;
+          console.error('Failed to load Grafana', err);
           document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
           document.querySelector('.fs-variant-error').classList.remove('fs-hidden');
+
+          // not a secure random value, but collisions are highly unlikely and 1/1000_000_000 lost requests
+          // doesn't make a difference.
+          fetch(`/-/fe-boot-error?ts=${Date.now()}${Math.random()}`, {
+            // This "should" be a POST request, but we must use GET to interact with the correct service.
+            // no-store and ?ts=_ are used to ensure the request isn't cached.
+            method: 'GET',
+            cache: "no-store",
+          }).catch(err => {
+            console.error('Failed to report boot error to backend: ', err);
+          });
         };
+        // Needed to stop retrying boot data when custom domain error occurs
+        // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
+        const CUSTOM_DOMAIN_ERROR = "Custom domain error";
+        window.__grafana_custom_domain_failed = function(err) {
+          console.error('Failed to load Grafana due to custom domain issue', err);
+          document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
+          document.querySelector('.fs-custom-domain-error').classList.remove('fs-hidden');
+        }
 
         window.onload = function() {
           if (window.__grafana_app_bundle_loaded) {
@@ -194,12 +240,59 @@
 
         const CHECK_INTERVAL = 1 * 1000;
 
+        function getCookie(name) {
+          const cookies = document.cookie.split(";").map(c => c.trim());
+
+          for (const cookie of cookies) {
+            if (cookie.startsWith(name + "=")) {
+              return cookie.substring(name.length + 1);
+            }
+          }
+
+          return null;
+        }
+
+        function getSessionExpiration() {
+          const value = getCookie("grafana_session_expiry") || "0";
+          const realExpiresSeconds = parseInt(value, 10);
+          const expiresSeconds = Math.max(realExpiresSeconds - 10, 0); // Rotate 10s before the real expiration
+          const expiration = new Date(expiresSeconds * 1000);
+          return expiration;
+        }
+
+        async function rotateSession() {
+          await fetch('/api/user/auth-tokens/rotate', { method: 'POST' });
+        }
+
         /**
          * Fetches boot data from the server. If it returns undefined, it should be retried later.
          * Will return a rejected promise on unrecoverable errors.
          **/
         async function fetchBootData() {
-          const resp = await fetch("/bootdata");
+          const queryParams = new URLSearchParams(window.location.search);
+
+          // pass the search params through to the bootdata request
+          // this allows for overriding the theme/language etc
+          const bootDataUrl = new URL('/bootdata', window.location.origin);
+          for (const [key, value] of queryParams.entries()) {
+            bootDataUrl.searchParams.append(key, value);
+          }
+
+          const resp = await fetch(bootDataUrl, {redirect: 'manual'});
+          // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
+          if (resp.type === 'opaqueredirect') {
+            window.__grafana_custom_domain_failed();
+            return CUSTOM_DOMAIN_ERROR;
+          }
+          // manual redirect for custom domains
+          // see pkg/middleware/validate_host.go
+          if (resp.status === 204) {
+            const redirectDomain = resp.headers.get('Redirect-Domain');
+            if (redirectDomain) {
+              window.location.hostname = redirectDomain;
+              return;
+            }
+          }
           const textResponse = await resp.text();
 
           let rawBootData;
@@ -228,12 +321,28 @@
           return new Promise((resolve, reject) => {
             const attemptFetch = async () => {
               try {
+                const sessionExpiration = getSessionExpiration();
+                const now = new Date();
+
+                // If the session has expired, don't continue trying to fetch boot data
+                if (now >= sessionExpiration) {
+                  await rotateSession();
+                }
+              } catch (error) {
+                // Just ignore any errors in session rotation. The user can just log in again.
+                console.warn("Failed to rotate session", error);
+              }
+
+              try {
                 const bootData = await fetchBootData();
 
                 // If the boot data is undefined, retry after a delay
                 if (!bootData) {
                   setLoading();
                   setTimeout(attemptFetch, CHECK_INTERVAL);
+                  return;
+                // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
+                } else if (bootData === CUSTOM_DOMAIN_ERROR) {
                   return;
                 }
 
@@ -258,12 +367,21 @@
             user: [[.DefaultUser]],
           }
 
-          // tenant-specific config
-          // TODO split this into separate API calls
+          // Preserve a mix of values from the initial boot data, and from the backend
+          // - nav tree and user info come from the backend
+          // - merge settings from both. FS settings contains less values
+          // - build info edition comes from the backend
           const { navTree, settings, user } = await loadBootData();
-          window.grafanaBootData.settings = settings;
+
+          window.grafanaBootData.settings = {
+            ...settings,
+            ...window.grafanaBootData.settings,
+          }
           window.grafanaBootData.navTree = navTree;
           window.grafanaBootData.user = user;
+          if (settings?.buildInfo?.edition) {
+            window.grafanaBootData.settings.buildInfo.edition = settings.buildInfo.edition;
+          }
 
           // The per-theme CSS still contains some global styles needed
           // to render the page correctly.
@@ -283,7 +401,6 @@
           cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
           document.head.appendChild(cssLink);
         }
-
 
         window.__grafana_boot_data_promise = initGrafana()
         window.__grafana_boot_data_promise.catch((err) => {

@@ -70,14 +70,22 @@ export class ScopesService implements ScopesContextValue {
 
     // Init from the URL when we first load
     const queryParams = new URLSearchParams(locationService.getLocation().search);
+    const scopeNodeId = queryParams.get('scope_node');
+    // TODO: figure out when to remove this. scope_parent is for backward compatibility only
     const parentNodeId = queryParams.get('scope_parent');
+    const navigationScope = queryParams.get('navigation_scope');
 
-    this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined);
+    if (navigationScope) {
+      this.dashboardsService.setNavigationScope(navigationScope);
+    }
 
-    // Pre-load parent node, to prevent UI flickering
-    if (parentNodeId) {
-      this.selectorService.getScopeNode(parentNodeId).catch((error) => {
-        console.error('Failed to pre-load parent node', error);
+    this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined, scopeNodeId ?? undefined);
+
+    // Pre-load scope node (which loads parent too) or fallback to parent node for old URLs
+    const nodeToPreload = scopeNodeId ?? parentNodeId;
+    if (nodeToPreload) {
+      this.selectorService.resolvePathToRoot(nodeToPreload, this.selectorService.state.tree!).catch((error) => {
+        console.error('Failed to pre-load node path', error);
       });
     }
 
@@ -90,32 +98,53 @@ export class ScopesService implements ScopesContextValue {
         }
         const queryParams = new URLSearchParams(location.search);
 
-        // If we have a parent node in the URL, fetch and expand it
-        const parentNode = queryParams.get('scope_parent');
         const scopes = queryParams.getAll('scopes');
+        const scopeNodeId = queryParams.get('scope_node');
+        // scope_parent is for backward compatibility only
+        const parentNodeId = queryParams.get('scope_parent');
 
-        if (scopes.length) {
+        // Check if new scopes are different from the old scopes
+        const currentScopes = this.selectorService.state.appliedScopes.map((scope) => scope.scopeId);
+        if (scopes.length && !isEqual(scopes, currentScopes)) {
           // We only update scopes but never delete them. This is to keep the scopes in memory if user navigates to
           // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user
           // changes the URL directly, it would trigger a reload so scopes would still be reset.
-          this.changeScopes(scopes, parentNode ?? undefined);
+          this.changeScopes(scopes, parentNodeId ?? undefined, scopeNodeId ?? undefined);
         }
       })
     );
 
     // Update the URL based on change in the scopes state
     this.subscriptions.push(
-      selectorService.subscribeToState((state, prev) => {
-        const oldParentNode = prev.appliedScopes[0]?.parentNodeId;
-        const newParentNode = state.appliedScopes[0]?.parentNodeId;
-        if (oldParentNode !== newParentNode && newParentNode) {
-          this.locationService.partial({ scope_parent: newParentNode }, true);
-        }
+      selectorService.subscribeToState((state, prevState) => {
+        const oldScopeNodeId = prevState.appliedScopes[0]?.scopeNodeId;
+        const newScopeNodeId = state.appliedScopes[0]?.scopeNodeId;
 
-        const oldScopeNames = prev.appliedScopes.map((scope) => scope.scopeId);
+        const oldScopeNames = prevState.appliedScopes.map((scope) => scope.scopeId);
         const newScopeNames = state.appliedScopes.map((scope) => scope.scopeId);
-        if (!isEqual(oldScopeNames, newScopeNames)) {
-          this.locationService.partial({ scopes: newScopeNames }, true);
+
+        const scopesChanged = !isEqual(oldScopeNames, newScopeNames);
+        const scopeNodeChanged = oldScopeNodeId !== newScopeNodeId;
+
+        if (scopesChanged || scopeNodeChanged) {
+          this.locationService.partial(
+            {
+              scopes: newScopeNames,
+              scope_node: newScopeNodeId || null,
+              scope_parent: null,
+            },
+            true
+          );
+        }
+      })
+    );
+    // Update the URL based on change in the navigation scope
+    this.subscriptions.push(
+      this.dashboardsService.subscribeToState((state, prevState) => {
+        if (state.navigationScope !== prevState.navigationScope) {
+          this.locationService.partial({
+            navigation_scope: state.navigationScope,
+          });
         }
       })
     );
@@ -142,8 +171,9 @@ export class ScopesService implements ScopesContextValue {
     return this._stateObservable;
   }
 
-  public changeScopes = (scopeNames: string[], parentNodeId?: string) =>
-    this.selectorService.changeScopes(scopeNames, parentNodeId);
+  public changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string) =>
+    // Don't redirect on apply for initial load from URL. We only want to redirect when selecting from the selector
+    this.selectorService.changeScopes(scopeNames, parentNodeId, scopeNodeId, false);
 
   public setReadOnly = (readOnly: boolean) => {
     if (this.state.readOnly !== readOnly) {
@@ -159,9 +189,12 @@ export class ScopesService implements ScopesContextValue {
     if (this.state.enabled !== enabled) {
       this.updateState({ enabled });
       if (enabled) {
+        const scopeNodeId = this.selectorService.state.appliedScopes[0]?.scopeNodeId;
         this.locationService.partial(
           {
             scopes: this.selectorService.state.appliedScopes.map((s) => s.scopeId),
+            scope_node: scopeNodeId,
+            scope_parent: null,
           },
           true
         );

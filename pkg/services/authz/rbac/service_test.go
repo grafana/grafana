@@ -3,6 +3,7 @@ package rbac
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -323,7 +324,7 @@ func TestService_checkPermission(t *testing.T) {
 
 			s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
 			tc.check.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
-			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
+			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})
@@ -363,6 +364,7 @@ func TestService_mapping(t *testing.T) {
 			},
 			output: &checkRequest{
 				Action:       "folders:create",
+				ActionSets:   []string{"folders:edit", "folders:admin"},
 				Group:        "folder.grafana.app",
 				Resource:     "folders",
 				Name:         "aaa",
@@ -618,6 +620,7 @@ func TestService_getUserPermissions(t *testing.T) {
 	type testCase struct {
 		name          string
 		permissions   []accesscontrol.Permission
+		action        string
 		cacheHit      bool
 		expectedPerms map[string]bool
 	}
@@ -628,12 +631,14 @@ func TestService_getUserPermissions(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
 			},
+			action:        "dashboards:read",
 			cacheHit:      false,
 			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
 		},
 		{
 			name:          "should return error if store fails",
 			permissions:   nil,
+			action:        "dashboards:read",
 			cacheHit:      false,
 			expectedPerms: map[string]bool{},
 		},
@@ -642,6 +647,7 @@ func TestService_getUserPermissions(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: "teams:read", Scope: "teams:id:1"},
 			},
+			action:        "teams:read",
 			cacheHit:      false,
 			expectedPerms: map[string]bool{"teams:uid:t1": true},
 		},
@@ -654,10 +660,9 @@ func TestService_getUserPermissions(t *testing.T) {
 			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userID := &store.UserIdentifiers{UID: "test-uid", ID: 112}
-			action := "dashboards:read"
 
 			if tc.cacheHit {
-				s.permCache.Set(ctx, userPermCacheKey(ns.Value, userID.UID, action), tc.expectedPerms)
+				s.permCache.Set(ctx, userPermCacheKey(ns.Value, userID.UID, tc.action), tc.expectedPerms)
 			}
 
 			store := &fakeStore{
@@ -677,7 +682,7 @@ func TestService_getUserPermissions(t *testing.T) {
 				disableNsCheck: true,
 			}
 
-			perms, err := s.getIdentityPermissions(ctx, ns, types.TypeUser, userID.UID, action)
+			perms, err := s.getIdentityPermissions(ctx, ns, types.TypeUser, userID.UID, tc.action, nil)
 			require.NoError(t, err)
 			require.Len(t, perms, len(tc.expectedPerms))
 			for scope := range perms {
@@ -897,7 +902,7 @@ func TestService_listPermission(t *testing.T) {
 			}
 
 			tc.list.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
-			got, err := s.listPermission(context.Background(), getScopeMap(tc.permissions), &tc.list)
+			got, err := s.listPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.list)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedAll, got.All)
 			assert.ElementsMatch(t, tc.expectedItems, got.Items)
@@ -1086,6 +1091,72 @@ func TestService_Check(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			name: "should take into account action sets",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:admin", Scope: "dashboards:uid:dash1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should take into account folder action sets for dashboard access",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+				Folder:    "some_folder",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "folders:edit", Scope: "folders:uid:some_folder"},
+			},
+			expected: true,
+		},
+		{
+			name: "lower level action set or action set on a different resource should not grant higher level access",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "folder.grafana.app",
+				Resource:  "folders",
+				Verb:      "delete",
+				Name:      "folder1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "folders:view", Scope: "folders:uid:folder1"},
+				{Action: "folders:edit", Scope: "folders:uid:other_folder"},
+			},
+			expected: false,
+		},
+		{
+			// We've had cases where permissions were saved to the database
+			// without splitting the scope into 'kind', 'attribute', and 'identifier'.
+			// Our wildcard check depends on this separation to work correctly.
+			// This test makes sure we can still handle those unsplit permissions.
+			name: "should split wildcard scope if needed",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "iam.grafana.app",
+				Resource:  "teams",
+				Verb:      "get",
+				Name:      "t1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "teams:read", Scope: "teams:*"},
+			},
+			expected: true,
+		},
 	}
 	t.Run("User permission check", func(t *testing.T) {
 		for _, tc := range testCases {
@@ -1116,6 +1187,10 @@ func TestService_Check(t *testing.T) {
 				if tc.req.Resource == "teams" {
 					expAction = "teams:read"
 				}
+				if tc.req.Resource == "folders" {
+					expAction = "folders:delete"
+				}
+
 				perms, ok := s.permCache.Get(ctx, userPermCacheKey("org-12", "test-uid", expAction))
 				require.True(t, ok)
 				require.Len(t, perms, 1)
@@ -1474,6 +1549,27 @@ func TestService_List(t *testing.T) {
 			},
 		},
 		{
+			name: "should list permissions for user with permission or action set permissions",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash2"},
+				{Action: "dashboards:read", Scope: "folders:uid:fold1"},
+				{Action: "dashboards:edit", Scope: "dashboards:uid:dash3"},
+				{Action: "folders:view", Scope: "folders:uid:fold2"},
+			},
+			expected: &authzv1.ListResponse{
+				Items:   []string{"dash1", "dash2", "dash3"},
+				Folders: []string{"fold1", "fold2"},
+			},
+		},
+		{
 			name: "should return empty list for user without permission",
 			req: &authzv1.ListRequest{
 				Namespace: "org-12",
@@ -1805,7 +1901,13 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.Name
 	if f.err {
 		return nil, fmt.Errorf("store error")
 	}
-	return f.userPermissions, nil
+	var permissions []accesscontrol.Permission
+	for _, p := range f.userPermissions {
+		if p.Action == query.Action || slices.Contains(query.ActionSets, p.Action) {
+			permissions = append(permissions, p)
+		}
+	}
+	return permissions, nil
 }
 
 func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceInfo) ([]store.Folder, error) {

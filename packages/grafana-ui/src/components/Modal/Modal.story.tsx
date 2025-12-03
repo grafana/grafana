@@ -21,8 +21,6 @@ const meta: Meta = {
     controls: {
       exclude: ['className', 'contentClassName', 'onDismiss', 'onClickBackdrop'],
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   args: {
     body: oneLineTrim(`Id incididunt do pariatur qui labore. Sint culpa irure cillum et ullamco proident. Deserunt ipsum velit dolore est enim proident dolore consectetur. Et cillum tempor pariatur et. Est tempor cillum ad id nulla. Cillum ut proident
@@ -92,7 +90,7 @@ export const WithTabs: StoryFn = (args) => {
   );
   return (
     <div>
-      <Modal title={modalHeader} isOpen={true}>
+      <Modal ariaLabel={args.title} title={modalHeader} isOpen={true}>
         <TabContent>
           {activeTab === tabs[0].value && <div>{args.body}</div>}
           {activeTab === tabs[1].value && <div>Second tab content</div>}
@@ -110,7 +108,8 @@ WithTabs.args = {
 export const UsingContentClassName: StoryFn = ({ title, body, ...args }) => {
   const override = {
     modalContent: css({
-      backgroundColor: 'darkorange',
+      backgroundColor: 'red',
+      color: 'black',
     }),
   };
   return (

@@ -4,7 +4,6 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -39,7 +38,6 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
     <div
       className={cx(styles.wrapper, {
         [styles.wrapperActive]: isActive,
-        [styles.wrapperBookmark]: config.featureToggles.pinNavItems,
       })}
     >
       <LinkComponent
@@ -52,7 +50,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
       >
         {linkContent}
       </LinkComponent>
-      {config.featureToggles.pinNavItems && contextSrv.isSignedIn && url && url !== '/bookmarks' && (
+      {contextSrv.isSignedIn && url && url !== '/bookmarks' && (
         <IconButton
           name="bookmark"
           className={'pin-icon'}
@@ -77,8 +75,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     justifyContent: 'space-between',
     width: '100%',
     height: '100%',
-  }),
-  wrapperBookmark: css({
     '.pin-icon': {
       visibility: 'hidden',
     },
@@ -124,7 +120,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       boxShadow: 'none',
       outline: `2px solid ${theme.colors.primary.main}`,
       outlineOffset: '-2px',
-      transition: 'none',
     },
   }),
   linkContent: css({

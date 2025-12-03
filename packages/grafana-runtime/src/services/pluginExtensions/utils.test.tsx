@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import React from 'react';
+import React, { type JSX } from 'react';
 
 import {
   ComponentTypeWithExtensionMeta,
@@ -108,11 +108,15 @@ describe('Plugin Extensions / Utils', () => {
 
     test('should work when using class components', () => {
       const props = {};
+      // this specifically needs to be a class component
+      // eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
       const Component1 = class extends React.Component<{}> {
         render() {
           return <div>Test 1</div>;
         }
       };
+      // this specifically needs to be a class component
+      // eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
       const Component2 = class extends React.Component<{}> {
         render() {
           return <div>Test 2</div>;

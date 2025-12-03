@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	stdlog "log"
 	"math/big"
 	"net"
 	"net/http"
@@ -35,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -163,7 +165,6 @@ type HTTPServer struct {
 	LoggerMiddleware             loggermw.Logger
 	SQLStore                     db.DB
 	AlertNG                      *ngalert.AlertNG
-	LibraryPanelService          librarypanels.Service
 	LibraryElementService        libraryelements.Service
 	SocialService                social.Service
 	Listener                     net.Listener
@@ -202,26 +203,28 @@ type HTTPServer struct {
 	pluginsCDNService            *pluginscdn.Service
 	managedPluginsService        managedplugins.Manager
 
-	userService          user.Service
-	tempUserService      tempUser.Service
-	loginAttemptService  loginAttempt.Service
-	orgService           org.Service
-	orgDeletionService   org.DeletionService
-	TeamService          team.Service
-	accesscontrolService accesscontrol.Service
-	annotationsRepo      annotations.Repository
-	tagService           tag.Service
-	oauthTokenService    oauthtoken.OAuthTokenService
-	statsService         stats.Service
-	authnService         authn.Service
-	starApi              *starApi.API
-	promRegister         prometheus.Registerer
-	promGatherer         prometheus.Gatherer
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
-	namespacer           request.NamespaceMapper
-	anonService          anonymous.Service
-	userVerifier         user.Verifier
-	tlsCerts             TLSCerts
+	userService                     user.Service
+	tempUserService                 tempUser.Service
+	loginAttemptService             loginAttempt.Service
+	orgService                      org.Service
+	orgDeletionService              org.DeletionService
+	TeamService                     team.Service
+	accesscontrolService            accesscontrol.Service
+	annotationsRepo                 annotations.Repository
+	tagService                      tag.Service
+	oauthTokenService               oauthtoken.OAuthTokenService
+	statsService                    stats.Service
+	authnService                    authn.Service
+	starApi                         *starApi.API
+	promRegister                    prometheus.Registerer
+	promGatherer                    prometheus.Gatherer
+	clientConfigProvider            grafanaapiserver.DirectRestConfigProvider
+	namespacer                      request.NamespaceMapper
+	anonService                     anonymous.Service
+	userVerifier                    user.Verifier
+	tlsCerts                        TLSCerts
+	htmlHandlerRequestsDuration     *prometheus.HistogramVec
+	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
 }
 
 type TLSCerts struct {
@@ -318,7 +321,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ContextHandler:               contextHandler,
 		LoggerMiddleware:             loggerMiddleware,
 		AlertNG:                      alertNG,
-		LibraryPanelService:          libraryPanelService,
 		LibraryElementService:        libraryElementService,
 		QuotaService:                 quotaService,
 		tracer:                       tracer,
@@ -376,7 +378,21 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
+		htmlHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "grafana",
+			Name:      "html_handler_requests_duration_seconds",
+			Help:      "Duration of requests handled by the index.go HTML handler",
+		}, []string{"handler"}),
+		dsConfigHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "grafana",
+			Name:      "ds_config_handler_requests_duration_seconds",
+			Help:      "Duration of requests handled by datasource configuration handlers",
+		}, []string{"code_path", "handler"}),
 	}
+
+	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
+	promRegister.MustRegister(hs.dsConfigHandlerRequestsDuration)
+
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
 	}
@@ -399,6 +415,26 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
+type customErrorLogger struct {
+	log log.Logger
+}
+
+const tlsHandshakeErrorPrefix = "http: TLS handshake error from"
+const tlsHandshakeErrorSuffix = "EOF"
+
+func (w *customErrorLogger) Write(msg []byte) (int, error) {
+	// checks if the error is a TLS handshake error that ends with EOF
+	if strings.Contains(string(msg), tlsHandshakeErrorPrefix) && strings.Contains(string(msg), tlsHandshakeErrorSuffix) {
+		// log at debug level and remove new lines
+		w.log.Debug(strings.ReplaceAll(string(msg), "\n", ""))
+	} else {
+		// log the error as is using the standard logger (the same way as the default http server does)
+		stdlog.Print(string(msg))
+	}
+
+	return len(msg), nil
+}
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
@@ -411,6 +447,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		Handler:     hs.web,
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
+
+	customErrorLogger := &customErrorLogger{
+		log: hs.log,
+	}
+	hs.httpSrv.ErrorLog = stdlog.New(customErrorLogger, "", 0)
+
 	switch hs.Cfg.Protocol {
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		if err := hs.configureTLS(); err != nil {

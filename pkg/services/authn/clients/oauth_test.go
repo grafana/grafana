@@ -19,10 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -263,6 +265,63 @@ func TestOAuth_Authenticate(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "should return error when no refresh token is available and feature toggle is enabled",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-state"),
+				},
+			},
+			oauthCfg:              &social.OAuthInfo{UsePKCE: true, Enabled: true, UseRefreshToken: true},
+			features:              []any{featuremgmt.FlagRefreshTokenRequired},
+			allowInsecureTakeover: true,
+			addStateCookie:        true,
+			stateCookieValue:      "some-state",
+			addPKCECookie:         true,
+			pkceCookieValue:       "some-pkce-value",
+			isEmailAllowed:        true,
+			expectedErr:           errOAuthMissingRefreshToken,
+		},
+		{
+			desc: "should return identity when no refresh token is available and feature toggle is disabled",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-state"),
+				},
+			},
+			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true, UseRefreshToken: true},
+			addStateCookie:   true,
+			stateCookieValue: "some-state",
+			addPKCECookie:    true,
+			pkceCookieValue:  "some-pkce-value",
+			isEmailAllowed:   true,
+			userInfo: &social.BasicUserInfo{
+				Id:     "123",
+				Name:   "name",
+				Email:  "some@email.com",
+				Role:   "Admin",
+				Groups: []string{"grp1", "grp2"},
+			},
+			expectedIdentity: &authn.Identity{
+				Email:           "some@email.com",
+				AuthenticatedBy: login.AzureADAuthModule,
+				AuthID:          "123",
+				Name:            "name",
+				Groups:          []string{"grp1", "grp2"},
+				OAuthToken:      &oauth2.Token{},
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					SyncTeams:       true,
+					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					LookUpParams:    login.UserLookupParams{},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -481,7 +540,7 @@ func TestOAuth_Logout(t *testing.T) {
 						"id_token": "some.id.token",
 					})
 				},
-				InvalidateOAuthTokensFunc: func(_ context.Context, _ identity.Requester, _ *auth.UserToken) error {
+				InvalidateOAuthTokensFunc: func(_ context.Context, _ identity.Requester, _ *oauthtoken.TokenRefreshMetadata) error {
 					invalidateTokenCalled = true
 					return nil
 				},
@@ -492,7 +551,7 @@ func TestOAuth_Logout(t *testing.T) {
 			}
 			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
 
-			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser}, nil)
+			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser}, &usertoken.UserToken{})
 
 			assert.Equal(t, tt.expectedOK, ok)
 			if tt.expectedOK {

@@ -93,6 +93,7 @@ export { DataTransformerID } from '../transformations/transformers/ids';
 
 export { mergeTransformer } from '../transformations/transformers/merge';
 export { getThemeById } from '../themes/registry';
+export * as experimentalThemeDefinitions from '../themes/themeDefinitions';
 export { GrafanaEdition } from '../types/config';
 export { SIPrefix } from '../valueFormats/symbolFormatters';
 

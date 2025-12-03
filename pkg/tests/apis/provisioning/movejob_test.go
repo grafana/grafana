@@ -171,7 +171,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	})
 
 	t.Run("move without target path", func(t *testing.T) {
-		// Create move job without target path (should fail)
+		// Create move job without target path (should fail validation at creation time)
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
@@ -180,9 +180,20 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			},
 		}
 
-		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		state := mustNestedString(job.Object, "status", "state")
-		assert.Equal(t, "error", state, "move job should have failed due to missing target path")
+		// The job should be rejected by the admission controller with validation error
+		body := asJSON(&spec)
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		require.Error(t, result.Error(), "move job without target path should fail validation")
+		statusError := helper.RequireApiErrorStatus(result.Error(), metav1.StatusReasonInvalid, 422)
+		require.Contains(t, statusError.Message, "spec.move.targetPath", "error should mention missing target path")
 	})
 
 	t.Run("move by resource reference", func(t *testing.T) {

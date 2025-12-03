@@ -1,5 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/parsingUtils.ts
 import { SyntaxNode, TreeCursor } from '@lezer/common';
+import { AggregateExpr, FunctionCallBody } from '@prometheus-io/lezer-promql';
 
 import { QueryBuilderOperation, QueryBuilderOperationParamValue } from './shared/types';
 
@@ -193,4 +194,8 @@ export function replaceBuiltInVariable(expr: string): string {
  */
 export function returnBuiltInVariable(expr: string): string {
   return expr.replace(builtInReplacementRegex, (match) => replacementToVariable[match]);
+}
+
+export function isFunctionOrAggregation(node: SyntaxNode): boolean {
+  return node.type.id === AggregateExpr || node.type.id === FunctionCallBody;
 }

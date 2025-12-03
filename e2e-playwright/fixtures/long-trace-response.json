@@ -598,7 +598,7 @@
                 "auth-validator",
                 "config-loader",
                 "config-writer",
-                "metrics-collector",
+                "metrics-collector-last-span",
                 "log-writer",
                 "log-reader",
                 "event-publisher",

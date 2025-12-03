@@ -5,7 +5,7 @@ import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@gra
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
-import { isAddedLinkMetaInfoMissing, isConfigureFnValid, isLinkPathValid } from '../validators';
+import { isAddedLinkMetaInfoMissing, isConfigureFnValid } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
@@ -64,11 +64,6 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         continue;
       }
 
-      if (path && !isLinkPathValid(pluginId, path)) {
-        configLog.error(`${logPrefix} ${errors.INVALID_PATH}`);
-        continue;
-      }
-
       if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config, configLog)) {
         continue;
       }
@@ -79,13 +74,12 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         const pointIdLog = configLog.child({ extensionPointId });
         const { targets, ...registryItem } = config;
 
-        if (!(extensionPointId in registry)) {
-          registry[extensionPointId] = [];
-        }
-
         pointIdLog.debug('Added link extension successfully registered');
 
-        registry[extensionPointId].push({ ...registryItem, pluginId, extensionPointId });
+        // Creating a new array instead of pushing to get a new references
+        const slice = registry[extensionPointId] ?? [];
+        const result = { ...registryItem, pluginId, extensionPointId };
+        registry[extensionPointId] = slice.concat(result);
       }
     }
 

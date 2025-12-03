@@ -1,23 +1,31 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import { addRulePageEnrichmentSection } from '../../components/rule-viewer/tabs/extensions/RuleViewerExtension';
+import { useEnrichmentAbility } from '../../hooks/useAbilities';
 
 import { __clearRuleViewTabsForTests, addEnrichmentSection, getRuleViewExtensionTabs } from './extensions';
+
+jest.mock('../../hooks/useAbilities');
+
+const mocks = {
+  useEnrichmentAbility: jest.mocked(useEnrichmentAbility),
+};
 
 describe('rule-view-page navigation', () => {
   beforeEach(() => {
     __clearRuleViewTabsForTests();
+    mocks.useEnrichmentAbility.mockReturnValue([false, true]);
   });
 
   it('does not include Alert enrichment tab when not registered', () => {
-    const tabs = getRuleViewExtensionTabs({ activeTab: 'query', setActiveTab: () => {} });
+    const tabs = getRuleViewExtensionTabs({ activeTab: 'query', setActiveTab: () => {} }, true);
     const hasEnrichment = tabs.some((t) => t.text === 'Alert enrichment');
     expect(hasEnrichment).toBe(false);
   });
 
   it('includes Alert enrichment tab when registered (enterprise + toggle on)', () => {
     addEnrichmentSection();
-    const tabs = getRuleViewExtensionTabs({ activeTab: 'query', setActiveTab: () => {} });
+    const tabs = getRuleViewExtensionTabs({ activeTab: 'query', setActiveTab: () => {} }, true);
     const enrichment = tabs.find((t) => t.text === 'Alert enrichment');
     expect(enrichment).toBeTruthy();
     expect(enrichment!.active).toBe(false);
@@ -25,10 +33,17 @@ describe('rule-view-page navigation', () => {
 
   it('marks Alert enrichment tab active when selected', () => {
     addEnrichmentSection();
-    const tabs = getRuleViewExtensionTabs({ activeTab: 'enrichment', setActiveTab: () => {} });
+    const tabs = getRuleViewExtensionTabs({ activeTab: 'enrichment', setActiveTab: () => {} }, true);
     const enrichment = tabs.find((t) => t.text === 'Alert enrichment');
     expect(enrichment).toBeTruthy();
     expect(enrichment!.active).toBe(true);
+  });
+
+  it('excludes Alert enrichment tab when not a Grafana alert rule', () => {
+    addEnrichmentSection();
+    const tabs = getRuleViewExtensionTabs({ activeTab: 'query', setActiveTab: () => {} }, false);
+    const enrichment = tabs.find((t) => t.text === 'Alert enrichment');
+    expect(enrichment).toBeUndefined();
   });
 
   describe('enrichment section registration', () => {

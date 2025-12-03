@@ -71,6 +71,7 @@ public/css/*.min.css
 .vs/
 .cursor/
 .devcontainer/
+.claude/
 
 .eslintcache
 .stylelintcache
@@ -130,6 +131,9 @@ profile.cov
 /public/app/extensions
 !/public/app/extensions/.keep
 
+# Enterprise operators
+/pkg/operators/enterprise_*
+/pkg/operators/**/enterprise_*
 
 debug.test
 /examples/*/dist
@@ -162,6 +166,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 /packages/grafana-ui/.yarn/.cache
 /packages/grafana-ui/.storybook/static
 /packages/grafana-ui/unstable
+/packages/grafana-flamegraph/.storybook/static
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
@@ -247,6 +252,13 @@ public/mockServiceWorker.js
 /e2e-playwright/test-plugins/*/dist
 /apps/provisioning/cmd/job-controller/bin/
 
-
 # Ignore unified storage kv store files
 /grafana-kv-data
+
+# Ignore debug output from test library
+/pkg/storage/secret/metadata/testdata/rapid/TestStateMachine/
+
+/codeowners-manifest/
+
+# Ignore grafana/hippocampus local cache folder
+.hippo

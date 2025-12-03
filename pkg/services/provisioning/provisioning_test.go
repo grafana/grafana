@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -48,7 +50,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.waitForStop()
 
 		assert.False(t, serviceTest.serviceRunning, "Service should not be running")
-		assert.Equal(t, context.Canceled, serviceTest.serviceError, "Service should have returned canceled error")
+		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
 	})
 
 	t.Run("Failed reloading does not stop polling with old provisioned", func(t *testing.T) {
@@ -91,7 +93,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.cancel()
 		serviceTest.waitForStop()
 
-		assert.Equal(t, context.Canceled, serviceTest.serviceError)
+		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
 	})
 
 	t.Run("Should return run error when dashboard provisioning fails for non-allow-listed error", func(t *testing.T) {
@@ -160,7 +162,7 @@ func setup(t *testing.T) *serviceTestStruct {
 	searchStub := searchV2.NewStubSearchService()
 
 	service, err := newProvisioningServiceImpl(
-		func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service, dualwrite.Service) (dashboards.DashboardProvisioner, error) {
+		func(context.Context, string, dashboardstore.DashboardProvisioningService, *setting.Cfg, org.Service, utils.DashboardStore, folder.Service, dualwrite.Service, *serverlock.ServerLockService) (dashboards.DashboardProvisioner, error) {
 			serviceTest.dashboardProvisionerInstantiations++
 			return serviceTest.mock, nil
 		},

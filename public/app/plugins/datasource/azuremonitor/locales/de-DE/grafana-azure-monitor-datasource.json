@@ -13,7 +13,7 @@
       "label-resource-group": "Ressourcengruppe",
       "label-resource-name": "Ressourcenname",
       "label-resource-number": "Ressource {{resourceNum}}",
-      "label-resource-uri": "Ressourcen-URI(s) ",
+      "label-resource-uri": "",
       "label-subscription": "Abonnement",
       "placeholder-resource-name": "Name",
       "tooltip-region": "Die Code-Region der Ressource. Optional für eine Ressource, aber zwingend notwendig bei der Auswahl mehrerer Ressourcen.",

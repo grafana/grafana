@@ -70,7 +70,6 @@ export class TrashStateManager extends SearchStateManager {
     }
   };
 
-  // Only alphabetical sorting is supported for deleted dashboards
   getSortOptions = async (): Promise<SelectableValue[]> => {
     return Promise.resolve([
       {
@@ -80,6 +79,14 @@ export class TrashStateManager extends SearchStateManager {
       {
         label: t('browse-dashboards.trash-state-manager.label.alphabetically-za', 'Alphabetically (Z–A)'),
         value: 'alpha-desc',
+      },
+      {
+        label: t('browse-dashboards.trash-state-manager.label.deleted-oldest', 'Deleted (oldest first)'),
+        value: 'deleted-asc',
+      },
+      {
+        label: t('browse-dashboards.trash-state-manager.label.deleted-newest', 'Deleted (newest first)'),
+        value: 'deleted-desc',
       },
     ]);
   };

@@ -55,6 +55,8 @@ var (
 	errOAuthTokenExchange = errutil.Internal("auth.oauth.token.exchange", errutil.WithPublicMessage("Failed to get token from provider"))
 	errOAuthUserInfo      = errutil.Internal("auth.oauth.userinfo.error")
 
+	errOAuthMissingRefreshToken = errutil.Unauthorized("auth.oauth.token.refresh-token.missing", errutil.WithPublicMessage("Provider did not return a refresh token"))
+
 	errOAuthMissingRequiredEmail = errutil.Unauthorized("auth.oauth.email.missing", errutil.WithPublicMessage("Provider didn't return an email address"))
 	errOAuthEmailNotAllowed      = errutil.Unauthorized("auth.oauth.email.not-allowed", errutil.WithPublicMessage("Required email domain not fulfilled"))
 )
@@ -166,6 +168,15 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 	token.TokenType = "Bearer"
 
+	if oauthCfg.UseRefreshToken && token.RefreshToken == "" {
+		c.log.FromContext(ctx).Warn("No refresh token available with use_refresh_token enabled", "authmodule", c.moduleName)
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if c.features.IsEnabledGlobally(featuremgmt.FlagRefreshTokenRequired) {
+			return nil, errOAuthMissingRefreshToken.Errorf("provider did not return a refresh token")
+		}
+	}
+
 	userInfo, err := connector.UserInfo(ctx, connector.Client(clientCtx, token), token)
 	if err != nil {
 		var sErr *connectors.SocialError
@@ -176,6 +187,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	if userInfo.Id == "" {
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if c.features.IsEnabledGlobally(featuremgmt.FlagOauthRequireSubClaim) {
 			return nil, errOAuthUserInfo.Errorf("missing required sub claims")
 		} else {
@@ -297,7 +309,9 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester, sessionToke
 
 	ctxLogger := c.log.FromContext(ctx).New("userID", userID)
 
-	if err := c.oauthService.InvalidateOAuthTokens(ctx, user, sessionToken); err != nil {
+	if err := c.oauthService.InvalidateOAuthTokens(ctx, user, &oauthtoken.TokenRefreshMetadata{
+		ExternalSessionID: sessionToken.ExternalSessionId,
+		AuthModule:        user.GetAuthenticatedBy()}); err != nil {
 		ctxLogger.Error("Failed to invalidate tokens", "error", err)
 	}
 

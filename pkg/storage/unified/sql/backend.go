@@ -14,11 +14,15 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/sqlite"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -36,6 +40,14 @@ const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
 
+func ProvideStorageBackend(
+	cfg *setting.Cfg,
+) (resource.StorageBackend, error) {
+	// TODO: make this the central place to provide SQL backend
+	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
+	return nil, nil
+}
+
 type Backend interface {
 	resource.StorageBackend
 	resourcepb.DiagnosticsServer
@@ -51,12 +63,11 @@ type BackendOptions struct {
 	IsHA            bool
 	storageMetrics  *resource.StorageMetrics
 
-	// If true, the backend will prune history on write events.
-	// Will be removed once fully rolled out.
-	withPruner bool
-
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
+
+	// If not zero, the backend will regularly remove times from resource_last_import_time table older than this.
+	LastImportTimeMaxAge time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -87,7 +98,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
-		withPruner:              opts.withPruner,
+		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 	}, nil
 }
 
@@ -126,7 +137,9 @@ type backend struct {
 	simulatedNetworkLatency time.Duration
 
 	historyPruner resource.Pruner
-	withPruner    bool
+
+	lastImportTimeMaxAge       time.Duration
+	lastImportTimeDeletionTime atomic.Time
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -180,11 +193,6 @@ func (b *backend) initLocked(ctx context.Context) error {
 }
 
 func (b *backend) initPruner(ctx context.Context) error {
-	if !b.withPruner {
-		b.log.Debug("using noop history pruner")
-		b.historyPruner = &resource.NoopPruner{}
-		return nil
-	}
 	b.log.Debug("using debounced history pruner")
 	// Initialize history pruner.
 	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[resource.PruningKey]{
@@ -255,13 +263,19 @@ func (b *backend) Stop(_ context.Context) error {
 }
 
 // GetResourceStats implements Backend.
-func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
+func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
 	defer span.End()
 
 	req := &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
-		Namespace:   namespace,
+		Namespace:   nsr.Namespace,
+		Group:       nsr.Group,
+		Resource:    nsr.Resource,
 		MinCount:    minCount, // not used in query... yet?
 	}
 
@@ -405,14 +419,17 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 	// Use rvManager.ExecWithRV instead of direct transaction
 	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 		// 1. Update resource
-		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
+			WriteEvent:  event, // includes the RV
 			Folder:      folder,
 			GUID:        event.GUID,
 		})
 		if err != nil {
 			return event.GUID, fmt.Errorf("resource update: %w", err)
+		}
+		if err = b.checkConflict(res, event.Key, event.PreviousRV); err != nil {
+			return event.GUID, err
 		}
 
 		// 2. Insert into resource history
@@ -460,13 +477,16 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	}
 	rv, err := b.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
 		// 1. delete from resource
-		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			GUID:        event.GUID,
 		})
 		if err != nil {
 			return event.GUID, fmt.Errorf("delete resource: %w", err)
+		}
+		if err = b.checkConflict(res, event.Key, event.PreviousRV); err != nil {
+			return event.GUID, err
 		}
 
 		// 2. Add event to resource history
@@ -502,6 +522,28 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	})
 
 	return rv, nil
+}
+
+func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv int64) error {
+	if rv == 0 {
+		return nil
+	}
+
+	// The RV is part of the update request, and it may no longer be the most recent
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("unable to verify RV: %w", err)
+	}
+	if rows == 1 {
+		return nil // expected one result
+	}
+	if rows > 0 {
+		return fmt.Errorf("multiple rows effected (%d)", rows)
+	}
+	return apierrors.NewConflict(schema.GroupResource{
+		Group:    key.Group,
+		Resource: key.Resource,
+	}, key.Name, fmt.Errorf("resource version does not match current value"))
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
@@ -688,7 +730,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 	// Get the RV
 	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
-		continueToken, err := resource.GetContinueToken(req.NextPageToken)
+		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
@@ -790,7 +832,7 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 		useCurrentRV: true, // use the current RV for the continue token instead of the listRV
 	}
 	if req.NextPageToken != "" {
-		continueToken, err := resource.GetContinueToken(req.NextPageToken)
+		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
@@ -925,4 +967,84 @@ func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, 
 		return 0, fmt.Errorf("get resource version: %w", err)
 	}
 	return res.ResourceVersion, nil
+}
+
+// Don't run deletion of "last import times" more often than this duration.
+const limitLastImportTimesDeletion = 1 * time.Hour
+
+func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetLastImportTimes")
+	defer span.End()
+
+	// Delete old entries, if configured, and if enough time has passed since last deletion.
+	if b.lastImportTimeMaxAge > 0 && time.Since(b.lastImportTimeDeletionTime.Load()) > limitLastImportTimesDeletion {
+		now := time.Now()
+
+		res, err := dbutil.Exec(ctx, b.db, sqlResourceLastImportTimeDelete, &sqlResourceLastImportTimeDeleteRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Threshold:   now.Add(-b.lastImportTimeMaxAge),
+		})
+
+		if err != nil {
+			return func(yield func(resource.ResourceLastImportTime, error) bool) {
+				yield(resource.ResourceLastImportTime{}, err)
+			}
+		}
+
+		aff, err := res.RowsAffected()
+		if err == nil && aff > 0 {
+			b.log.Info("Deleted old last import times", "rows", aff)
+		}
+
+		b.lastImportTimeDeletionTime.Store(now)
+	}
+
+	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+	})
+	if err != nil {
+		return func(yield func(resource.ResourceLastImportTime, error) bool) {
+			yield(resource.ResourceLastImportTime{}, err)
+		}
+	}
+
+	return func(yield func(resource.ResourceLastImportTime, error) bool) {
+		closeOnDefer := true
+		defer func() {
+			if closeOnDefer {
+				_ = rows.Close() // Close while ignoring errors.
+			}
+		}()
+
+		for rows.Next() {
+			// If context has finished, return early.
+			if ctx.Err() != nil {
+				yield(resource.ResourceLastImportTime{}, ctx.Err())
+				return
+			}
+
+			row := resource.ResourceLastImportTime{}
+			err = rows.Scan(&row.Namespace, &row.Group, &row.Resource, &row.LastImportTime)
+			if err != nil {
+				yield(resource.ResourceLastImportTime{}, err)
+				return
+			}
+
+			if !yield(row, nil) {
+				return
+			}
+		}
+
+		closeOnDefer = false
+
+		// Close and report error, if any.
+		err := rows.Close()
+		if err != nil {
+			yield(resource.ResourceLastImportTime{}, err)
+		}
+	}
+}
+
+func (b *backend) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("rebuild indexes not supported by unistore sql backend")
 }

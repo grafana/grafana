@@ -199,6 +199,9 @@ func (r *githubClient) DeleteWebhook(ctx context.Context, owner, repository stri
 	if ghErr.Response.StatusCode == http.StatusNotFound {
 		return ErrResourceNotFound
 	}
+	if ghErr.Response.StatusCode == http.StatusUnauthorized || ghErr.Response.StatusCode == http.StatusForbidden {
+		return ErrUnauthorized
+	}
 	return err
 }
 

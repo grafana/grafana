@@ -98,6 +98,10 @@ export interface AnnotationsPermissions {
   organization: AnnotationActions;
 }
 
+export interface SnapshotSpec {
+  dashboard: DashboardDataDTO;
+}
+
 // FIXME: This should not override Dashboard types
 export interface DashboardDataDTO extends Dashboard {
   title: string;
@@ -108,6 +112,7 @@ export interface DashboardDataDTO extends Dashboard {
 export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
+  Template = 'template-dashboard',
   Normal = 'normal-dashboard',
   Provisioning = 'provisioning-dashboard',
   Scripted = 'scripted-dashboard',

@@ -16,6 +16,12 @@ export interface UsersIndicatorProps {
   /** onClick handler for the user number indicator */
   onClick?: () => void;
 }
+
+/**
+ * A component that displays a set of user icons indicating which users are currently active. If there are too many users to display all the icons, it will collapse the icons into a single icon with a number indicating the number of additional users.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/iconography-usersindicator--docs
+ */
 export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProps) => {
   const styles = useStyles2(getStyles);
   if (!users.length) {

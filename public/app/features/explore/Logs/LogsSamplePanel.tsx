@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useRef } from 'react';
+import { useRef, type JSX } from 'react';
 
 import {
   CoreApp,
@@ -138,6 +138,7 @@ export function LogsSamplePanel(props: Props) {
           timeZone={timeZone}
           enableLogDetails
           scrollElement={null}
+          timeRange={props.timeRange}
         />
       );
   }
@@ -155,7 +156,6 @@ export function LogsSamplePanel(props: Props) {
         </div>
       }
       isOpen={enabled}
-      collapsible={true}
       onToggle={onToggleLogsSampleCollapse}
     >
       <OpenInSplitViewButton />

@@ -22,6 +22,11 @@ export interface RadioButtonListProps<T> {
   className?: string;
 }
 
+/**
+ * RadioButtonList is used to select a single value from multiple mutually exclusive options usually in a vertical manner.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-radiobuttonlist--docs
+ */
 export function RadioButtonList<T extends string | number | readonly string[]>({
   name,
   id,

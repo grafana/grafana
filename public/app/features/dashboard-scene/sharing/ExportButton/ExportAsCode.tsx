@@ -83,8 +83,8 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
       )}
 
       <div className={styles.codeEditorBox}>
-        <AutoSizer data-testid={selector.codeEditor}>
-          {({ width, height }) => {
+        <AutoSizer data-testid={selector.codeEditor} disableWidth>
+          {({ height }) => {
             if (stringifiedDashboard) {
               return (
                 <CodeEditor
@@ -93,7 +93,7 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
                   showLineNumbers={true}
                   showMiniMap={false}
                   height={height}
-                  width={width}
+                  width="100%"
                   readOnly={true}
                 />
               );

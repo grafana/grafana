@@ -1,13 +1,15 @@
 import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Box, EmptyState, FilterInput, Icon, Stack } from '@grafana/ui';
+import { Alert, Box, EmptyState, FilterInput, Icon, Stack, TextLink } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryCard } from '../Repository/RepositoryCard';
+import { RepositoryListItem } from '../Repository/RepositoryListItem';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';
+import { UPGRADE_URL } from '../constants';
 import { useIsProvisionedInstance } from '../hooks/useIsProvisionedInstance';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
+import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 
 interface Props {
   items: Repository[];
@@ -43,14 +45,26 @@ export function RepositoryList({ items }: Props) {
               i18nKey="provisioning.folder-repository-list.partial-managed"
               values={{ managedCount, resourceCount }}
             >
-              {{ managedCount }}/{{ resourceCount }} resources managed.
+              {{ managedCount }}/{{ resourceCount }} resources managed by Git sync.
             </Trans>
             {unmanagedCount > 0 && (
               <>
                 {' '}
                 <Trans i18nKey="provisioning.folder-repository-list.unmanaged-resources" count={unmanagedCount}>
-                  {{ count: unmanagedCount }} resources aren&apos;t managed as code yet.
+                  {{ count: unmanagedCount }} resources aren&apos;t managed by Git sync.
                 </Trans>
+              </>
+            )}
+            {isFreeTierLicense() && (
+              <>
+                <br />
+                <Trans i18nKey="provisioning.free-tier-limit.message-connection">
+                  Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,
+                </Trans>{' '}
+                <TextLink href={UPGRADE_URL} external>
+                  <Trans i18nKey="provisioning.free-tier-limit.upgrade-link">upgrade your account</Trans>{' '}
+                </TextLink>
+                .
               </>
             )}
           </Alert>
@@ -75,7 +89,7 @@ export function RepositoryList({ items }: Props) {
         )}
         <Stack direction={'column'} gap={2}>
           {filteredItems.length ? (
-            filteredItems.map((item) => <RepositoryCard key={item.metadata?.name} repository={item} />)
+            filteredItems.map((item) => <RepositoryListItem key={item.metadata?.name} repository={item} />)
           ) : (
             <EmptyState
               variant="not-found"

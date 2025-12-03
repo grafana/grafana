@@ -47,6 +47,7 @@ import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
 import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
+import type { Options } from './panelcfg.gen';
 import {
   GetFieldLinksFn,
   isCoreApp,
@@ -63,7 +64,6 @@ import {
   isReactNodeArray,
   isSetDisplayedFields,
   onNewLogsReceivedType,
-  Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
@@ -114,7 +114,7 @@ interface LogsPanelProps extends PanelProps<Options> {
    * controlsStorageKey?: string
    *
    * If controls are enabled, this function is called when a change is made in one of the options from the controls.
-   * onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
+   * onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
    *
    * When the feature toggle newLogsPanel is enabled, you can pass extra options to the LogLineMenu component.
    * These options are an array of items with { label, onClick } or { divider: true } for dividers.
@@ -128,6 +128,11 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * When showing timestamps, toggle between showing nanoseconds or milliseconds.
    * timestampResolution?: 'ms' | 'ns'
+   *
+   * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.
+   * Requires the `otelLogsFormatting`.
+   * @alpha
+   * showLogAttributes?: boolean
    */
 }
 interface LogsPermalinkUrlState {
@@ -144,6 +149,7 @@ export const LogsPanel = ({
   fieldConfig,
   options: {
     showControls,
+    showFieldSelector,
     controlsStorageKey,
     showLabels,
     showTime,
@@ -170,6 +176,7 @@ export const LogsPanel = ({
     detailsMode: detailsModeProp,
     noInteractions,
     timestampResolution,
+    showLogAttributes,
     ...options
   },
   height,
@@ -457,7 +464,7 @@ export const LogsPanel = ({
 
   const loadMoreLogs = useCallback(
     async (scrollRange: AbsoluteTimeRange) => {
-      if (!data.request || !config.featureToggles.logsInfiniteScrolling || loadingRef.current) {
+      if (!data.request || loadingRef.current) {
         return;
       }
 
@@ -556,8 +563,10 @@ export const LogsPanel = ({
           getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
           getLogRowContextUi={getLogRowContextUi}
           logOptionsStorageKey={controlsStorageKey}
+          logLineMenuCustomItems={isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined}
           timeZone={timeZone}
           displayedFields={displayedFields}
+          onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
           onClickShowField={showField}
           onClickHideField={hideField}
         />
@@ -567,12 +576,15 @@ export const LogsPanel = ({
           onMouseLeave={onLogContainerMouseLeave}
           className={style.logListContainer}
           style={height ? { minHeight: height } : undefined}
-          ref={(element: HTMLDivElement) => setScrollElement(element)}
+          ref={(element: HTMLDivElement) => {
+            setScrollElement(element);
+          }}
         >
           {deduplicatedRows.length > 0 && scrollElement && (
             <LogList
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               containerElement={scrollElement}
+              dataFrames={panelData.series}
               dedupStrategy={dedupStrategy}
               detailsMode={detailsMode}
               displayedFields={displayedFields}
@@ -609,6 +621,8 @@ export const LogsPanel = ({
               prettifyJSON={prettifyLogMessage}
               setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
+              showFieldSelector={showFieldSelector}
+              showLogAttributes={showLogAttributes}
               showTime={showTime}
               showUniqueLabels={showLabels}
               sortOrder={sortOrder}
@@ -623,7 +637,11 @@ export const LogsPanel = ({
         </div>
       )}
       {!config.featureToggles.newLogsPanel && !showControls && (
-        <ScrollContainer ref={(scrollElement) => setScrollElement(scrollElement)}>
+        <ScrollContainer
+          ref={(scrollElement) => {
+            setScrollElement(scrollElement);
+          }}
+        >
           <div onMouseLeave={onLogContainerMouseLeave} className={style.container} ref={logsContainerRef}>
             {showCommonLabels && !isAscending && renderCommonLabels()}
             <InfiniteScroll
@@ -674,6 +692,7 @@ export const LogsPanel = ({
                 logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
                 // Ascending order causes scroll to stick to the bottom, so previewing is futile
                 renderPreview={isAscending ? false : true}
+                timeRange={data.timeRange}
               />
             </InfiniteScroll>
             {showCommonLabels && isAscending && renderCommonLabels()}
@@ -684,7 +703,9 @@ export const LogsPanel = ({
         <div onMouseLeave={onLogContainerMouseLeave} className={style.controlledLogsContainer}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <ControlledLogRows
-            ref={(scrollElement: HTMLDivElement | null) => setScrollElement(scrollElement)}
+            ref={(scrollElement: HTMLDivElement | null) => {
+              setScrollElement(scrollElement);
+            }}
             visualisationType="logs"
             loading={infiniteScrolling}
             loadMoreLogs={enableInfiniteScrolling ? loadMoreLogs : undefined}
@@ -727,6 +748,7 @@ export const LogsPanel = ({
             logOptionsStorageKey={controlsStorageKey}
             // Ascending order causes scroll to stick to the bottom, so previewing is futile
             renderPreview={isAscending ? false : true}
+            timeRange={data.timeRange}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>

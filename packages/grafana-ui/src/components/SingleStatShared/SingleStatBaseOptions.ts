@@ -39,7 +39,7 @@ export function sharedSingleStatPanelChangedHandler(
   };
 
   // Migrating from angular singlestat
-  if (prevPluginId === 'singlestat' && prevOptions.angular) {
+  if ((prevPluginId === 'singlestat' || prevPluginId === 'grafana-singlestat-panel') && prevOptions.angular) {
     return migrateFromAngularSinglestat(panel, prevOptions);
   } else if (prevPluginId === 'graph') {
     // Migrating from Graph panel
@@ -197,7 +197,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
   }
 
   const previousVersion = parseFloat(panel.pluginVersion || '6.1');
-  let options = panel.options as any;
+  let options: any = panel.options;
 
   if (previousVersion < 6.2) {
     options = migrateFromValueOptions(options);

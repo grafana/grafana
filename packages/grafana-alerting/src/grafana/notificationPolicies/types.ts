@@ -1,6 +1,6 @@
 import { OverrideProperties } from 'type-fest';
 
-import { RoutingTreeRoute } from '../api/v0alpha1/api.gen';
+import { RoutingTreeRoute } from '../api/notifications/v0alpha1/notifications.api.gen';
 import { LabelMatcher } from '../matchers/types';
 
 // type-narrow the route tree

@@ -21,8 +21,6 @@ type ResourcePermission struct {
 
 	// Spec is the spec of the ResourcePermission
 	Spec ResourcePermissionSpec `json:"spec" yaml:"spec"`
-
-	Status ResourcePermissionStatus `json:"status" yaml:"status"`
 }
 
 func (o *ResourcePermission) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *ResourcePermission) SetSpec(spec any) error {
 }
 
 func (o *ResourcePermission) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *ResourcePermission) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *ResourcePermission) GetSubresource(name string) (any, bool) {
 
 func (o *ResourcePermission) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(ResourcePermissionStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type ResourcePermissionStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *ResourcePermission) DeepCopyInto(dst *ResourcePermission) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *ResourcePermissionSpec) DeepCopy() *ResourcePermissionSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *ResourcePermissionSpec) DeepCopyInto(dst *ResourcePermissionSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of ResourcePermissionStatus
-func (s *ResourcePermissionStatus) DeepCopy() *ResourcePermissionStatus {
-	cpy := &ResourcePermissionStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies ResourcePermissionStatus into another ResourcePermissionStatus object
-func (s *ResourcePermissionStatus) DeepCopyInto(dst *ResourcePermissionStatus) {
 	resource.CopyObjectInto(dst, s)
 }
