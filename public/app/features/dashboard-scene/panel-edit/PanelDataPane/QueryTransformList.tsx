@@ -187,12 +187,12 @@ export const QueryTransformList = memo(
             </span>
           </Stack>
         </div>
-        <div className={styles.scrollWrapper}>
-          <ScrollContainer data-scrollcontainer>
+        <div className={styles.scrollWrapper} data-testid="query-transform-list-scroll-wrapper">
+          <ScrollContainer data-scrollcontainer height="100%">
             <div className={styles.contentWrapper}>
               <ConnectionLines connections={visibleConnections} isDragging={isDragging} />
               <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-                <div className={styles.content}>
+                <div className={styles.content} data-testid="query-transform-list-content">
                   <Stack direction="column" gap={3}>
                     {/* Data Sources Section (Queries + Expressions) */}
                     {dataSourceItems.length > 0 && (
@@ -365,8 +365,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
-      marginLeft: theme.spacing(-2),
-      marginRight: theme.spacing(-2),
       '&::after': {
         content: '""',
         flex: 1,
@@ -383,7 +381,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       minHeight: '100%',
     }),
     content: css({
-      padding: `${theme.spacing(2)} ${theme.spacing(8)} ${theme.spacing(4)} ${theme.spacing(6)}`,
+      padding: `${theme.spacing(2)} ${theme.spacing(8)} ${theme.spacing(2)} ${theme.spacing(2)}`,
       position: 'relative',
     }),
     dragging: css({

@@ -150,6 +150,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     pointerEvents: 'none',
     zIndex: 10,
     overflow: 'visible',
+    width: '100%',
   }),
   connectionGroup: css({
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
