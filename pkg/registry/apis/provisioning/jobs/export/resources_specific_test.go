@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-
-
 // Helper function to create folder objects
 func createFolderObject(name, uid, parentFolderUID string) unstructured.Unstructured {
 	folder := unstructured.Unstructured{
@@ -170,7 +168,6 @@ func TestExportSpecificResources_EmptyResources(t *testing.T) {
 	err := ExportSpecificResources(context.Background(), "test-repo", options, resourceClients, repoResources, mockProgress)
 	require.EqualError(t, err, "no resources specified for export")
 }
-
 
 func TestExportSpecificResources_RejectsFolders(t *testing.T) {
 
