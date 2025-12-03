@@ -16,13 +16,18 @@ import { config } from '@grafana/runtime';
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
+import { isBuiltinPluginPath } from '../built_in_plugins';
 import {
   addedComponentsRegistry,
   addedFunctionsRegistry,
   addedLinksRegistry,
   exposedComponentsRegistry,
 } from '../extensions/registry/setup';
-import { pluginsLogger } from '../utils';
+import { clearPluginInfoInCache } from '../loader/pluginInfoCache';
+import { SystemJS } from '../loader/systemjs';
+import { resolveModulePath } from '../loader/utils';
+import { clearPluginSettingsCache, getPluginSettings } from '../pluginSettings';
+import { pluginsLogger, loadPlugin } from '../utils';
 
 import { importPluginModule } from './importPluginModule';
 import { PluginImporter, PostImportStrategy, PreImportStrategy } from './types';
@@ -181,4 +186,97 @@ export const pluginImporter: PluginImporter = {
 export const clearCaches = () => {
   promisesCache.clear();
   pluginsCache.clear();
+};
+
+/**
+ * Reloads a plugin by clearing its caches and re-importing it.
+ * @param pluginId - The ID of the plugin to reload
+ * @returns Promise that resolves when the plugin has been reloaded
+ */
+export async function reloadPlugin(pluginId: string): Promise<void> {
+  pluginsLogger.logDebug(`Reloading plugin`, { pluginId });
+
+  // Get plugin metadata to resolve module path
+  const meta = await getPluginSettings(pluginId);
+
+  // Clear plugin from caches
+  pluginsCache.delete(pluginId);
+  promisesCache.delete(pluginId);
+
+  // Clear plugin settings cache
+  clearPluginSettingsCache(pluginId);
+
+  // Clear plugin info cache (used for URL resolution)
+  clearPluginInfoInCache(pluginId);
+
+  // Clear SystemJS module cache to force a fresh fetch
+  if (!isBuiltinPluginPath(meta.module)) {
+    const modulePath = resolveModulePath(meta.module);
+    try {
+      // Resolve the module path to get the actual URL SystemJS uses
+      const resolvedPath = SystemJS.resolve(modulePath);
+
+      // Delete from SystemJS cache - try both the resolved path and original path
+      if (SystemJS.has(resolvedPath)) {
+        SystemJS.delete(resolvedPath);
+        pluginsLogger.logDebug(`Deleted SystemJS cache for resolved path`, { resolvedPath, pluginId });
+      }
+      if (SystemJS.has(modulePath)) {
+        SystemJS.delete(modulePath);
+        pluginsLogger.logDebug(`Deleted SystemJS cache for module path`, { modulePath, pluginId });
+      }
+
+      // Also try deleting any entries that match the plugin ID
+      for (const [key] of SystemJS.entries()) {
+        const keyStr = String(key);
+        if (keyStr.includes(pluginId) || keyStr.includes(meta.module)) {
+          SystemJS.delete(key);
+          pluginsLogger.logDebug(`Deleted SystemJS cache entry`, { key: keyStr, pluginId });
+        }
+      }
+    } catch (error) {
+      // If resolution fails, try to delete by module path anyway
+      pluginsLogger.logDebug(`Could not resolve module path, attempting direct delete`, {
+        modulePath,
+        pluginId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      if (SystemJS.has(modulePath)) {
+        SystemJS.delete(modulePath);
+      }
+    }
+  }
+
+  try {
+    // Re-import the plugin (this will re-register extensions for app plugins)
+    // Note: Extension registries use scan/accumulate, so entries may accumulate on reload.
+    // This is acceptable for a reload feature.
+    await loadPlugin(pluginId);
+
+    pluginsLogger.logDebug(`Plugin reloaded successfully`, { pluginId });
+  } catch (error) {
+    pluginsLogger.logError(error instanceof Error ? error : new Error('Failed to reload plugin'), {
+      pluginId,
+    });
+    throw error;
+  }
+}
+
+function clearWebpackCache(pluginId: string) {
+  const pluginNormalisedCacheName = pluginId.replaceAll('-', '_');
+  const pluginCacheName = `webpackChunk${pluginNormalisedCacheName}`;
+
+  if (window[pluginCacheName]) {
+    // Remove the plugin's webpack cache by name
+    delete (window)[pluginCacheName];
+  }
+}
+
+window.reloadPlugin = async (options: { id: string }) => {
+  if (!options?.id) {
+    throw new Error('Plugin ID is required');
+  }
+
+  clearWebpackCache(options.id);
+  return reloadPlugin(options.id);
 };

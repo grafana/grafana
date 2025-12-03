@@ -12,6 +12,18 @@ export declare global {
      **/
     __grafana_boot_data_promise: Promise<void>;
 
+    /**
+     * Reloads a plugin without refreshing the browser.
+     * @param options - Options object containing the plugin ID
+     * @param options.id - The ID of the plugin to reload
+     * @returns Promise that resolves when the plugin has been reloaded
+     * @example
+     * ```typescript
+     * await window.reloadPlugin({ id: 'grafana-synthetic-monitoring-app' });
+     * ```
+     */
+    reloadPlugin: (options: { id: string }) => Promise<void>;
+
     public_cdn_path: string;
     nonce: string | undefined;
     System: typeof System;
