@@ -35,11 +35,13 @@ import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize } from './state/explorePane';
 import { scanStart, scanStopAction, setSupplementaryQueryEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
+import { filterByQueryRef, hasItemsForQuery, matchesQueryRef } from './utils/queryRef';
 
 type Props = {
   onSplitOpen: (panelType: string) => SplitOpen;
   graphResult: DataFrame[] | null;
   exploreId: string;
+  queryRef: string;
 
   graphEventBus: EventBus;
   logsEventBus: EventBus;
@@ -78,6 +80,7 @@ export function RenderResults(props: Props) {
     onSplitOpen,
     graphResult,
     exploreId,
+    queryRef,
     graphEventBus,
     logsEventBus,
     eventBus,
@@ -98,20 +101,31 @@ export function RenderResults(props: Props) {
   const { showLogsSample } = useLogsSample(exploreId);
 
   const queryResponse = useQueryResponse(exploreId);
+  const queries = useQueries(exploreId);
+  const allowUntypedFrames = queries.length <= 1;
   const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
+
+  const hasLogsData = hasItemsForQuery(queryResponse.logsFrames, queryRef, allowUntypedFrames);
+  const hasGraphData = hasItemsForQuery(queryResponse.graphFrames, queryRef, allowUntypedFrames);
+  const hasNodeGraphData = hasItemsForQuery(queryResponse.nodeGraphFrames, queryRef, allowUntypedFrames);
+  const hasFlameGraphData = hasItemsForQuery(queryResponse.flameGraphFrames, queryRef, allowUntypedFrames);
+  const hasTableData = hasItemsForQuery(queryResponse.tableFrames, queryRef, allowUntypedFrames);
+  const hasRawPrometheusData = hasItemsForQuery(queryResponse.rawPrometheusFrames, queryRef, allowUntypedFrames);
+  const hasTraceData = hasItemsForQuery(queryResponse.traceFrames, queryRef, allowUntypedFrames);
+  const hasCustomData = hasItemsForQuery(queryResponse.customFrames, queryRef, allowUntypedFrames);
 
   const showNoData =
     queryResponse.state === LoadingState.Done &&
-    [
-      queryResponse.logsFrames,
-      queryResponse.graphFrames,
-      queryResponse.nodeGraphFrames,
-      queryResponse.flameGraphFrames,
-      queryResponse.tableFrames,
-      queryResponse.rawPrometheusFrames,
-      queryResponse.traceFrames,
-      queryResponse.customFrames,
-    ].every((e) => e.length === 0);
+    !(
+      hasLogsData ||
+      hasGraphData ||
+      hasNodeGraphData ||
+      hasFlameGraphData ||
+      hasTableData ||
+      hasRawPrometheusData ||
+      hasTraceData ||
+      hasCustomData
+    );
 
   const onResize = useCallback(
     (size: HorizontalSize) => {
@@ -135,43 +149,62 @@ export function RenderResults(props: Props) {
                   return null;
                 }
 
-                if (showCustom) {
+                if (showCustom && hasCustomData) {
                   return (
                     <ErrorBoundaryAlert boundaryName="explore-custom-panel">
-                      <RenderCustom width={width} exploreId={exploreId} eventBus={eventBus} onSplitOpen={onSplitOpen} />
+                      <RenderCustom
+                        width={width}
+                        exploreId={exploreId}
+                        eventBus={eventBus}
+                        onSplitOpen={onSplitOpen}
+                        queryRef={queryRef}
+                        allowUntypedFrames={allowUntypedFrames}
+                      />
                     </ErrorBoundaryAlert>
                   );
                 }
 
-                if (showNodeGraph) {
+                if (showNodeGraph && hasNodeGraphData) {
                   return (
                     <ErrorBoundaryAlert boundaryName="explore-node-graph-panel">
-                      <RenderNodeGraphPanel exploreId={exploreId} showTrace={!!showTrace} onSplitOpen={onSplitOpen} />
+                      <RenderNodeGraphPanel
+                        exploreId={exploreId}
+                        showTrace={!!showTrace}
+                        onSplitOpen={onSplitOpen}
+                        queryRef={queryRef}
+                        allowUntypedFrames={allowUntypedFrames}
+                      />
                     </ErrorBoundaryAlert>
                   );
                 }
 
-                if (showFlameGraph) {
+                if (showFlameGraph && hasFlameGraphData) {
                   return (
                     <ErrorBoundaryAlert boundaryName="explore-flame-graph-panel">
-                      <RenderFlameGraphPanel exploreId={exploreId} />
+                      <RenderFlameGraphPanel
+                        exploreId={exploreId}
+                        queryRef={queryRef}
+                        allowUntypedFrames={allowUntypedFrames}
+                      />
                     </ErrorBoundaryAlert>
                   );
                 }
 
-                if (showTrace) {
+                if (showTrace && hasTraceData) {
                   return (
                     <ErrorBoundaryAlert boundaryName="explore-trace-view-panel">
                       <RenderTraceViewPanel
                         exploreId={exploreId}
                         onSplitOpen={onSplitOpen}
                         scrollElement={scrollElement}
+                        queryRef={queryRef}
+                        allowUntypedFrames={allowUntypedFrames}
                       />
                     </ErrorBoundaryAlert>
                   );
                 }
 
-                if (showLogs) {
+                if (showLogs && hasLogsData) {
                   return (
                     <ErrorBoundaryAlert boundaryName="explore-logs-panel">
                       <RenderLogsPanel
@@ -185,6 +218,7 @@ export function RenderResults(props: Props) {
                         onClickFilterOutString={onClickFilterOutString}
                         isFilterLabelActive={isFilterLabelActive}
                         onPinLineCallback={onPinLineCallback}
+                        queryRef={queryRef}
                       />
                     </ErrorBoundaryAlert>
                   );
@@ -198,7 +232,7 @@ export function RenderResults(props: Props) {
                   );
                 }
 
-                if (showMetrics && graphResult) {
+                if (showMetrics && graphResult && hasGraphData) {
                   return (
                     <ErrorBoundaryAlert boundaryName="explore-graph-panel">
                       <RenderGraphPanel
@@ -208,12 +242,14 @@ export function RenderResults(props: Props) {
                         exploreId={exploreId}
                         graphEventBus={graphEventBus}
                         showFlameGraph={!!showFlameGraph}
+                        queryRef={queryRef}
+                        allowUntypedFrames={allowUntypedFrames}
                       />
                     </ErrorBoundaryAlert>
                   );
                 }
 
-                if (showRawPrometheus) {
+                if (showRawPrometheus && hasRawPrometheusData) {
                   return (
                     <ErrorBoundaryAlert boundaryName="explore-raw-prometheus">
                       <RenderRawPrometheus
@@ -221,12 +257,13 @@ export function RenderResults(props: Props) {
                         exploreId={exploreId}
                         onSplitOpen={onSplitOpen}
                         onCellFilterAdded={onCellFilterAdded}
+                        queryRef={queryRef}
                       />
                     </ErrorBoundaryAlert>
                   );
                 }
 
-                if (showTable) {
+                if (showTable && hasTableData) {
                   return (
                     <ErrorBoundaryAlert boundaryName="explore-table-panel">
                       <RenderTablePanel
@@ -234,6 +271,7 @@ export function RenderResults(props: Props) {
                         exploreId={exploreId}
                         onSplitOpen={onSplitOpen}
                         onCellFilterAdded={onCellFilterAdded}
+                        queryRef={queryRef}
                       />
                     </ErrorBoundaryAlert>
                   );
@@ -264,12 +302,19 @@ function RenderGraphPanel(props: {
   onSplitOpen: (panelType: string) => SplitOpen;
   exploreId: string;
   graphEventBus: EventBus;
+  queryRef: string;
+  allowUntypedFrames: boolean;
 }) {
-  const { graphResult, showFlameGraph, width, onSplitOpen, exploreId, graphEventBus } = props;
+  const { graphResult, showFlameGraph, width, onSplitOpen, exploreId, graphEventBus, queryRef, allowUntypedFrames } =
+    props;
 
   const timeZone = useSelector(getTimeZoneSelector);
   const queryResponse = useQueryResponse(exploreId);
   const dispatch = useDispatch();
+  const filteredGraphResult = useMemo(
+    () => filterByQueryRef(graphResult ?? [], queryRef, allowUntypedFrames),
+    [graphResult, queryRef, allowUntypedFrames]
+  );
 
   const onUpdateTimeRange = useCallback(
     (absoluteRange: AbsoluteTimeRange) => {
@@ -278,10 +323,14 @@ function RenderGraphPanel(props: {
     [exploreId, dispatch]
   );
 
+  if (!filteredGraphResult.length) {
+    return null;
+  }
+
   return (
     <ContentOutlineItem panelId="Graph" title={t('explore.explore.title-graph', 'Graph')} icon="graph-bar">
       <GraphContainer
-        data={graphResult!}
+        data={filteredGraphResult}
         height={showFlameGraph ? 180 : 400}
         width={width}
         timeRange={queryResponse.timeRange}
@@ -301,8 +350,9 @@ function RenderRawPrometheus(props: {
   exploreId: string;
   onSplitOpen: (panelType: string) => SplitOpen;
   onCellFilterAdded: (filter: AdHocFilterItem) => void;
+  queryRef: string;
 }) {
-  const { exploreId, width, onSplitOpen, onCellFilterAdded } = props;
+  const { exploreId, width, onSplitOpen, onCellFilterAdded, queryRef } = props;
   const timeZone = useSelector(getTimeZoneSelector);
   const datasourceInstance = useDataSourceInstance(exploreId);
 
@@ -320,6 +370,7 @@ function RenderRawPrometheus(props: {
         onCellFilterAdded={datasourceInstance?.modifyQuery ? onCellFilterAdded : undefined}
         timeZone={timeZone}
         splitOpenFn={onSplitOpen('table')}
+        queryRef={queryRef}
       />
     </ContentOutlineItem>
   );
@@ -330,8 +381,9 @@ function RenderTablePanel(props: {
   exploreId: string;
   onSplitOpen: (panelType: string) => SplitOpen;
   onCellFilterAdded: (filter: AdHocFilterItem) => void;
+  queryRef: string;
 }) {
-  const { exploreId, width, onSplitOpen, onCellFilterAdded } = props;
+  const { exploreId, width, onSplitOpen, onCellFilterAdded, queryRef } = props;
   const timeZone = useSelector(getTimeZoneSelector);
 
   return (
@@ -343,6 +395,7 @@ function RenderTablePanel(props: {
         onCellFilterAdded={onCellFilterAdded}
         timeZone={timeZone}
         splitOpenFn={onSplitOpen('table')}
+        queryRef={queryRef}
       />
     </ContentOutlineItem>
   );
@@ -362,6 +415,7 @@ function RenderLogsPanel(props: {
   isFilterLabelActive: (key: string, value: string | number, refId?: string) => Promise<boolean>;
 
   onPinLineCallback: () => void;
+  queryRef: string;
 }) {
   const {
     exploreId,
@@ -374,6 +428,7 @@ function RenderLogsPanel(props: {
     onClickFilterString,
     onClickFilterOutString,
     onPinLineCallback,
+    queryRef,
   } = props;
 
   const theme = useTheme2();
@@ -418,6 +473,7 @@ function RenderLogsPanel(props: {
         onClickFilterString={onClickFilterString}
         onClickFilterOutString={onClickFilterOutString}
         onPinLineCallback={onPinLineCallback}
+        queryRef={queryRef}
       />
     </ContentOutlineItem>
   );
@@ -427,12 +483,22 @@ function RenderNodeGraphPanel(props: {
   exploreId: string;
   showTrace: boolean;
   onSplitOpen: (panelType: string) => SplitOpen;
+  queryRef: string;
+  allowUntypedFrames: boolean;
 }) {
-  const { exploreId, showTrace, onSplitOpen } = props;
+  const { exploreId, showTrace, onSplitOpen, queryRef, allowUntypedFrames } = props;
 
   const queryResponse = useQueryResponse(exploreId);
   const datasourceInstance = useDataSourceInstance(exploreId);
   const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
+  const dataFrames = useMemo(
+    () => filterByQueryRef(queryResponse.nodeGraphFrames, queryRef, allowUntypedFrames),
+    [queryResponse.nodeGraphFrames, queryRef, allowUntypedFrames]
+  );
+
+  if (!dataFrames.length) {
+    return null;
+  }
 
   return (
     <ContentOutlineItem
@@ -441,7 +507,7 @@ function RenderNodeGraphPanel(props: {
       icon="code-branch"
     >
       <NodeGraphContainer
-        dataFrames={queryResponse.nodeGraphFrames}
+        dataFrames={dataFrames}
         exploreId={exploreId}
         withTraceView={showTrace}
         datasourceType={datasourceType}
@@ -451,12 +517,20 @@ function RenderNodeGraphPanel(props: {
   );
 }
 
-function RenderFlameGraphPanel(props: { exploreId: string }) {
-  const { exploreId } = props;
+function RenderFlameGraphPanel(props: { exploreId: string; queryRef: string; allowUntypedFrames: boolean }) {
+  const { exploreId, queryRef, allowUntypedFrames } = props;
   const queryResponse = useQueryResponse(exploreId);
+  const frames = useMemo(
+    () => filterByQueryRef(queryResponse.flameGraphFrames, queryRef, allowUntypedFrames),
+    [queryResponse.flameGraphFrames, queryRef, allowUntypedFrames]
+  );
+
+  if (!frames.length) {
+    return null;
+  }
   return (
     <ContentOutlineItem panelId="Flame Graph" title={t('explore.explore.title-flame-graph', 'Flame graph')} icon="fire">
-      <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} />
+      <FlameGraphExploreContainer dataFrames={frames} />
     </ContentOutlineItem>
   );
 }
@@ -465,25 +539,36 @@ function RenderTraceViewPanel(props: {
   exploreId: string;
   onSplitOpen: (panelType: string) => SplitOpen;
   scrollElement: HTMLDivElement | undefined;
+  queryRef: string;
+  allowUntypedFrames: boolean;
 }) {
-  const { exploreId, onSplitOpen, scrollElement } = props;
+  const { exploreId, onSplitOpen, scrollElement, queryRef, allowUntypedFrames } = props;
 
   const queryResponse = useQueryResponse(exploreId);
-  const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
+  const dataFrames = useMemo(
+    () =>
+      queryResponse.series.filter(
+        (series) =>
+          series.meta?.preferredVisualisationType === 'trace' &&
+          matchesQueryRef(series.refId, queryRef, allowUntypedFrames)
+      ),
+    [queryResponse.series, queryRef, allowUntypedFrames]
+  );
+
+  if (!dataFrames.length) {
+    return null;
+  }
 
   return (
-    // If there is no data (like 404) we show a separate error so no need to show anything here
-    dataFrames.length && (
-      <ContentOutlineItem panelId="Traces" title={t('explore.explore.title-traces', 'Traces')} icon="file-alt">
-        <TraceViewContainer
-          exploreId={exploreId}
-          dataFrames={dataFrames}
-          splitOpenFn={onSplitOpen('traceView')}
-          scrollElement={scrollElement}
-          timeRange={queryResponse.timeRange}
-        />
-      </ContentOutlineItem>
-    )
+    <ContentOutlineItem panelId="Traces" title={t('explore.explore.title-traces', 'Traces')} icon="file-alt">
+      <TraceViewContainer
+        exploreId={exploreId}
+        dataFrames={dataFrames}
+        splitOpenFn={onSplitOpen('traceView')}
+        scrollElement={scrollElement}
+        timeRange={queryResponse.timeRange}
+      />
+    </ContentOutlineItem>
   );
 }
 
@@ -528,21 +613,31 @@ function RenderCustom(props: {
   eventBus: EventBus;
   onSplitOpen: (panelType: string) => SplitOpen;
   exploreId: string;
+  queryRef: string;
+  allowUntypedFrames: boolean;
 }) {
-  const { eventBus, width, onSplitOpen, exploreId } = props;
+  const { eventBus, width, onSplitOpen, exploreId, queryRef, allowUntypedFrames } = props;
   const queryResponse = useQueryResponse(exploreId);
   const timeZone = useSelector(getTimeZoneSelector);
+  const frames = useMemo(
+    () => filterByQueryRef(queryResponse.customFrames, queryRef, allowUntypedFrames),
+    [queryResponse.customFrames, queryRef, allowUntypedFrames]
+  );
 
-  const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
+  if (!frames.length) {
+    return null;
+  }
 
-  return Object.entries(groupedByPlugin).map(([pluginId, frames], index) => {
+  const groupedByPlugin = groupBy(frames, 'meta.preferredVisualisationPluginId');
+
+  return Object.entries(groupedByPlugin).map(([pluginId, pluginFrames], index) => {
     return (
-      <ContentOutlineItem panelId={pluginId} title={pluginId} icon="plug" key={index}>
+      <ContentOutlineItem panelId={pluginId} title={pluginId} icon="plug" key={pluginId}>
         <CustomContainer
           key={index}
           timeZone={timeZone}
           pluginId={pluginId}
-          frames={frames}
+          frames={pluginFrames}
           state={queryResponse.state}
           timeRange={queryResponse.timeRange}
           height={400}

@@ -53,6 +53,7 @@ const dataFrame = toDataFrame({
 
 const defaultProps = {
   exploreId: 'left',
+  queryRef: 'A',
   loading: LoadingState.NotStarted,
   width: 800,
   onCellFilterAdded: jest.fn(),

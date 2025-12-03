@@ -19,25 +19,28 @@ import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';
 import { MetaInfoText } from '../MetaInfoText';
 import { selectIsWaitingForData } from '../state/query';
 import { exploreDataLinkPostProcessorFactory } from '../utils/links';
+import { filterByQueryRef } from '../utils/queryRef';
 
 const MAX_NUMBER_OF_COLUMNS = 20;
 
 interface TableContainerProps extends Themeable2 {
   ariaLabel?: string;
   exploreId: string;
+  queryRef: string;
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: AdHocFilterItem) => void;
   splitOpenFn: SplitOpen;
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
+function mapStateToProps(state: StoreState, { exploreId, queryRef }: TableContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { tableResult, range } = item;
+  const allowUntypedFrames = item.queries.length <= 1;
+  const tableResult = filterByQueryRef(item.queryResponse.tableFrames, queryRef, allowUntypedFrames);
   const loadingInState = selectIsWaitingForData(exploreId);
-  const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
-  return { loading, tableResult, range };
+  const loading = tableResult.length > 0 ? false : loadingInState;
+  return { loading, tableResult, range: item.range };
 }
 
 const connector = connect(mapStateToProps, {});

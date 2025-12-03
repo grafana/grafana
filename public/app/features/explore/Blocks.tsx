@@ -275,6 +275,7 @@ export function Blocks(props: Props) {
 
           <RenderResults
             exploreId={exploreId}
+            queryRef={query.refId}
             graphResult={graphResult}
             onSplitOpen={onSplitOpen}
             graphEventBus={graphEventBus}
