@@ -5226,7 +5226,6 @@
       },
       "only-overrides-button-tooltip": "Pokaż tylko zastąpienia",
       "placeholder-search-options": "Opcje wyszukiwania",
-      "visualization-button-label": "Wizualizacja",
       "visualization-button-tooltip": "Opcje wyszukiwania"
     },
     "panel-editor-table-view": {
@@ -6269,6 +6268,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Szukaj…",
       "radio-options": {
         "label": {
@@ -6582,7 +6584,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Zmień wizualizację",
-      "tooltip-click-to-change-visualization": "Kliknij, aby zmienić wizualizację"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Otwórz okienko zapytania",
@@ -7378,7 +7380,8 @@
       "title-failed-volume-query": "Nie udało się załadować woluminu logów dla tego zapytania",
       "title-no-logs-volume-available": "Brak dostępnego woluminu logów",
       "title-showing-partial-data": "Wyświetlanie częściowych danych",
-      "title-unable-to-show-log-volume": "Nie można wyświetlić woluminu logów"
+      "title-unable-to-show-log-volume": "Nie można wyświetlić woluminu logów",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Brak dostępnych informacji o wolumenie dla bieżących zapytań i zakresu czasu."
@@ -11182,6 +11185,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {

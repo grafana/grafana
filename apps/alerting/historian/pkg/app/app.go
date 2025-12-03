@@ -16,6 +16,12 @@ import (
 func New(cfg app.Config) (app.App, error) {
 	runtimeConfig := cfg.SpecificConfig.(config.RuntimeConfig)
 
+	alertStateHandler := runtimeConfig.GetAlertStateHistoryHandler
+	if alertStateHandler == nil {
+		alertStateHandler = NewErrorHandler("no alert state handler")
+	}
+	notificationHandler := NewErrorHandler("unimplemented")
+
 	simpleConfig := simple.AppConfig{
 		Name:       "alerting.historian",
 		KubeConfig: cfg.KubeConfig,
@@ -25,12 +31,12 @@ func New(cfg app.Config) (app.App, error) {
 					Namespaced: true,
 					Path:       "/alertstate/history",
 					Method:     "GET",
-				}: runtimeConfig.GetAlertStateHistoryHandler,
+				}: alertStateHandler,
 				{
 					Namespaced: true,
 					Path:       "/notification/query",
 					Method:     "POST",
-				}: UnimplementedHandler,
+				}: notificationHandler,
 			},
 		},
 		// TODO: Remove when SDK is fixed.
@@ -54,12 +60,14 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-func UnimplementedHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-	return &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusUnprocessableEntity,
-			Message: "unimplemented",
-		},
+func NewErrorHandler(message string) simple.AppCustomRouteHandler {
+	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+		return &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusUnprocessableEntity,
+				Message: message,
+			},
+		}
 	}
 }
