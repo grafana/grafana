@@ -5799,6 +5799,7 @@
     },
     "add-data-item-menu": {
       "add-button": "Add",
+      "add-from-saved-queries": "From saved queries",
       "add-query": "Query",
       "add-transformation": "Transformation",
       "expression-classic": "Classic condition",
@@ -5836,6 +5837,13 @@
       "title": {
         "new-panel": "New panel"
       }
+    },
+    "ai-mode-card": {
+      "add-nodes-to-context": "Add nodes to context",
+      "aria-label": "AI prompt input",
+      "prompt-placeholder": "Describe what you want to do...",
+      "remove-context": "Remove context",
+      "submit": "Send message"
     },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
@@ -5977,11 +5985,15 @@
     },
     "detail-view-header": {
       "actions": "Actions",
+      "disable-transform": "Disable",
       "duplicate-query": "Duplicate",
       "edit-query-name": "Edit query name",
+      "enable-transform": "Enable",
       "hide-response": "Hide response",
       "remove-query": "Remove",
+      "remove-transform": "Remove",
       "run-query": "RUN QUERY",
+      "save-query": "SAVE",
       "show-response": "Show response"
     },
     "edit-link-view": {
@@ -6264,21 +6276,28 @@
     "query-detail-view": {
       "loading": "Loading data source...",
       "no-editor": "This data source does not have a query editor",
-      "options": "Options"
+      "options": "Options",
+      "query-options": "Query Options"
     },
     "query-editor": {
       "query": "Query"
     },
     "query-transform-card": {
+      "disable-transform": "Disable transformation",
       "duplicate": "Duplicate query",
+      "enable-transform": "Enable transformation",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
       "remove-transform": "Remove transformation",
       "show-response": "Show response"
     },
     "query-transform-list": {
+      "ai-mode": "AI Mode",
+      "close": "Close",
       "header": "Pipeline flow",
-      "nodes": "nodes"
+      "nodes": "nodes",
+      "queries-expressions": "Queries & Expressions",
+      "transformations": "Transformations"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
@@ -6389,6 +6408,23 @@
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
       "title-validation-failed": "Dashboard title validation failed."
+    },
+    "saved-queries-drawer": {
+      "browse-tab": "Browse",
+      "description-label": "Description",
+      "description-placeholder": "Enter description...",
+      "name-label": "Name",
+      "name-placeholder": "Enter query name...",
+      "no-results": "No queries found",
+      "query-preview": "Query Preview",
+      "save-button": "Save Query",
+      "save-success": "Query saved successfully! (stub)",
+      "save-tab": "Save Current",
+      "save-title": "Save Query",
+      "search-placeholder": "Search saved queries...",
+      "stub-notice": "This is a stub implementation. Enable the queryLibrary feature toggle for full functionality.",
+      "title": "Saved Queries",
+      "use-query": "Use"
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",
@@ -12358,13 +12394,11 @@
         "interval": "Interval",
         "interval-tooltip": "The evaluated interval that is sent to data source and is used in <1>$__interval</1> and <4>$__interval_ms</4>. This value is not exactly equal to <6>Time range / max data points</6>, it will approximate a series of magic number.",
         "min-interval": "Min interval",
-        "min-interval-tooltip": "A lower limit for the interval. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute. Default value can be set in data source settings for most data sources.",
-        "time-range-max-data-points": "Time range / max data points"
+        "min-interval-tooltip": "A lower limit for the interval. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute. Default value can be set in data source settings for most data sources."
       },
       "render-max-data-points-option": {
         "max-data-points": "Max data points",
-        "max-data-points-tooltip": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer.",
-        "width-of-panel": "Width of panel"
+        "max-data-points-tooltip": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
       },
       "render-query-caching-ttloption": {
         "cache-ttl": "Cache TTL"

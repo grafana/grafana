@@ -1,14 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneDataQuery } from '@grafana/scenes';
-import { Icon, ScrollContainer, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Icon, ScrollContainer, Stack, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { AddDataItemMenu } from './AddDataItemMenu';
+import { AiModeCard } from './AiModeCard';
 import { ConnectionLines } from './ConnectionLines';
 import { QueryTransformCard } from './QueryTransformCard';
 
@@ -38,6 +39,7 @@ interface QueryTransformListProps {
   onToggleTransformVisibility?: (index: number) => void;
   onReorderDataSources?: (startIndex: number, endIndex: number) => void;
   onReorderTransforms?: (startIndex: number, endIndex: number) => void;
+  onAddOrganizeFieldsTransform?: () => void;
 }
 
 export const QueryTransformList = memo(
@@ -58,14 +60,14 @@ export const QueryTransformList = memo(
     onToggleTransformVisibility,
     onReorderDataSources,
     onReorderTransforms,
+    onAddOrganizeFieldsTransform,
   }: QueryTransformListProps) => {
     const styles = useStyles2(getStyles);
     const [isDragging, setIsDragging] = useState(false);
+    const [isAiMode, setIsAiMode] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
+    const [selectedContextIds, setSelectedContextIds] = useState<string[]>([]);
     const [hovered, setHovered] = useState<string | null>(null);
-
-    useEffect(() => {
-      console.log('hovered changed:', hovered);
-    }, [hovered]);
 
     const onDragStart = () => {
       setIsDragging(true);
@@ -174,6 +176,69 @@ export const QueryTransformList = memo(
       };
     }, [allItems, dataSourceItems, transformItems]);
 
+    const handleCardClick = (id: string) => {
+      if (isAiMode) {
+        // Toggle context selection in AI mode
+        setSelectedContextIds((prev) => (prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]));
+      } else {
+        // Normal selection behavior
+        onSelect(id);
+      }
+    };
+
+    const selectedContexts = useMemo(() => {
+      return selectedContextIds
+        .map((id) => {
+          const item = allItems.find((i) => i.id === id);
+          if (!item) {
+            return null;
+          }
+
+          let label = '';
+          if ((item.type === 'query' || item.type === 'expression') && 'refId' in item.data) {
+            label = item.data.refId || `${item.type === 'expression' ? 'Expression' : 'Query'} ${item.index + 1}`;
+          } else if ('id' in item.data) {
+            label = item.data.id.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+          }
+
+          const icon: 'database' | 'code' | 'pivot' =
+            item.type === 'query' ? 'database' : item.type === 'expression' ? 'code' : 'pivot';
+
+          return {
+            id,
+            label,
+            type: item.type,
+            icon,
+          };
+        })
+        .filter((c) => c !== null);
+    }, [selectedContextIds, allItems]);
+
+    const handleRemoveContext = (id: string) => {
+      setSelectedContextIds((prev) => prev.filter((cid) => cid !== id));
+    };
+
+    const handleAiSubmit = (prompt: string) => {
+      // TODO: Implement AI prompt submission
+      console.log('AI Prompt:', prompt);
+      console.log('Selected contexts:', selectedContexts);
+    };
+
+    const handleToggleAiMode = () => {
+      if (isAiMode) {
+        // Trigger closing animation
+        setIsClosing(true);
+        // Wait for animation to complete before actually closing
+        setTimeout(() => {
+          setIsAiMode(false);
+          setIsClosing(false);
+          setSelectedContextIds([]);
+        }, 300); // Match animation duration
+      } else {
+        setIsAiMode(true);
+      }
+    };
+
     return (
       <div className={styles.container} onMouseLeave={() => setHovered(null)}>
         <div className={styles.header}>
@@ -181,14 +246,57 @@ export const QueryTransformList = memo(
             <span className={styles.headerTitle}>
               {t('dashboard-scene.query-transform-list.header', 'Pipeline flow')}
             </span>
+            <Button size="sm" onClick={handleToggleAiMode} className={styles.aiModeButton}>
+              <Stack direction="row" gap={0.5} alignItems="center">
+                <Icon name={isAiMode ? 'times' : 'ai'} size="sm" />
+                {isAiMode
+                  ? t('dashboard-scene.query-transform-list.close', 'Close')
+                  : t('dashboard-scene.query-transform-list.ai-mode', 'AI Mode')}
+              </Stack>
+            </Button>
           </Stack>
         </div>
+        {isAiMode && (
+          <div className={cx(styles.aiModeContent, isClosing && styles.aiModeClosing)}>
+            <AiModeCard
+              selectedContexts={selectedContexts}
+              onRemoveContext={handleRemoveContext}
+              onSubmit={handleAiSubmit}
+              onDemoWorkflow={
+                onAddOrganizeFieldsTransform
+                  ? {
+                      availableCardIds: allItems.map((item) => item.id),
+                      onSelectContext: (id) => {
+                        setSelectedContextIds((prev) => [...prev, id]);
+                      },
+                      onAddOrganizeFieldsTransformation: onAddOrganizeFieldsTransform,
+                      onCloseAiMode: () => {
+                        setIsClosing(true);
+                        setTimeout(() => {
+                          setIsAiMode(false);
+                          setIsClosing(false);
+                          setSelectedContextIds([]);
+                        }, 300);
+                      },
+                    }
+                  : undefined
+              }
+            />
+          </div>
+        )}
         <div className={styles.scrollWrapper} data-testid="query-transform-list-scroll-wrapper">
           <ScrollContainer data-scrollcontainer height="100%">
             <div className={styles.contentWrapper}>
               <ConnectionLines connections={visibleConnections} isDragging={isDragging} />
               <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-                <div className={styles.content} data-testid="query-transform-list-content">
+                <div
+                  className={cx(
+                    styles.content,
+                    isAiMode && !isClosing && styles.contentGradientBorder,
+                    isClosing && styles.contentGradientBorderClosing
+                  )}
+                  data-testid="query-transform-list-content"
+                >
                   <Stack direction="column" gap={3}>
                     {/* Data Sources Section (Queries + Expressions) */}
                     {dataSourceItems.length > 0 && (
@@ -206,7 +314,7 @@ export const QueryTransformList = memo(
                               <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                onMouseMove={ev => {
+                                onMouseMove={(ev) => {
                                   const rect = ev.currentTarget.getBoundingClientRect();
                                   const y = ev.clientY - rect.top;
                                   let hoveredIdx = Math.floor(y / CARD_HEIGHT);
@@ -216,10 +324,16 @@ export const QueryTransformList = memo(
                                   if (hoveredIdx > dataSourceItems.length) {
                                     hoveredIdx = dataSourceItems.length;
                                   }
-                                  const hoveredId = hoveredIdx === dataSourceItems.length ? 'queries-last' : dataSourceItems[hoveredIdx].id;
+                                  const hoveredId =
+                                    hoveredIdx === dataSourceItems.length
+                                      ? 'queries-last'
+                                      : dataSourceItems[hoveredIdx].id;
                                   setHovered(hoveredId);
                                 }}
-                                className={cx(styles.cardList, isDraggingFromOtherSection ? styles.droppableInvalid : undefined)}
+                                className={cx(
+                                  styles.cardList,
+                                  isDraggingFromOtherSection ? styles.droppableInvalid : undefined
+                                )}
                               >
                                 <Stack direction="column" gap={2}>
                                   {dataSourceItems.map((item, index) => (
@@ -236,11 +350,13 @@ export const QueryTransformList = memo(
                                               item={item.data}
                                               type={item.type}
                                               index={item.index}
-                                              isSelected={selectedId === item.id}
-                                              onClick={() => onSelect(item.id)}
-                                              onAddExpression={onAddExpression}
+                                              isSelected={
+                                                isAiMode ? selectedContextIds.includes(item.id) : selectedId === item.id
+                                              }
+                                              onClick={() => handleCardClick(item.id)}
                                               onAddQuery={onAddQuery}
                                               onAddTransform={onAddTransform}
+                                              onAddExpression={onAddExpression}
                                               {...getHandlers(item)}
                                             />
                                           </div>
@@ -279,7 +395,6 @@ export const QueryTransformList = memo(
                             );
                           }}
                         </Droppable>
-
                       </Stack>
                     )}
 
@@ -299,18 +414,24 @@ export const QueryTransformList = memo(
                               <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                className={cx(styles.cardList, isDraggingFromOtherSection ? styles.droppableInvalid : undefined)}
-                                onMouseMove={ev => {
+                                className={cx(
+                                  styles.cardList,
+                                  isDraggingFromOtherSection ? styles.droppableInvalid : undefined
+                                )}
+                                onMouseMove={(ev) => {
                                   const rect = ev.currentTarget.getBoundingClientRect();
                                   const y = ev.clientY - rect.top;
-                                  let hoveredIdx = Math.floor(((y - 16 + (CARD_HEIGHT / 2)) / CARD_HEIGHT));
+                                  let hoveredIdx = Math.floor((y - 16 + CARD_HEIGHT / 2) / CARD_HEIGHT);
                                   if (hoveredIdx < 0) {
                                     hoveredIdx = 0;
                                   }
                                   if (hoveredIdx > transformItems.length) {
                                     hoveredIdx = transformItems.length;
                                   }
-                                  const hoveredId = hoveredIdx === transformItems.length ? 'transformations-last' : transformItems[hoveredIdx].id;
+                                  const hoveredId =
+                                    hoveredIdx === transformItems.length
+                                      ? 'transformations-last'
+                                      : transformItems[hoveredIdx].id;
                                   setHovered(hoveredId);
                                 }}
                               >
@@ -329,11 +450,13 @@ export const QueryTransformList = memo(
                                               item={item.data}
                                               type={item.type}
                                               index={item.index}
-                                              isSelected={selectedId === item.id}
-                                              onClick={() => onSelect(item.id)}
-                                              onAddExpression={onAddExpression}
+                                              isSelected={
+                                                isAiMode ? selectedContextIds.includes(item.id) : selectedId === item.id
+                                              }
+                                              onClick={() => handleCardClick(item.id)}
                                               onAddQuery={onAddQuery}
                                               onAddTransform={onAddTransform}
+                                              onAddExpression={onAddExpression}
                                               {...getHandlers(item)}
                                             />
                                           </div>
@@ -427,6 +550,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       ...barBase,
       height: headerHeight,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+
+      '& > div:first-child': {
+        width: '100%',
+      },
     }),
     headerTitle: css({
       fontFamily: theme.typography.fontFamilyMonospace,
@@ -456,9 +583,62 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       minHeight: '100%',
     }),
+    aiModeContent: css({
+      padding: theme.spacing(1, 1),
+      position: 'relative',
+      zIndex: 15,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: 'slideDown 0.3s ease-out',
+        '@keyframes slideDown': {
+          from: {
+            opacity: 0,
+            transform: 'translateY(-20px)',
+          },
+          to: {
+            opacity: 1,
+            transform: 'translateY(0)',
+          },
+        },
+      },
+    }),
+    aiModeClosing: css({
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: 'slideUp 0.3s ease-out forwards',
+        '@keyframes slideUp': {
+          from: {
+            opacity: 1,
+            transform: 'translateY(0)',
+          },
+          to: {
+            opacity: 0,
+            transform: 'translateY(-20px)',
+          },
+        },
+      },
+    }),
     content: css({
       padding: theme.spacing(2, 8, 2, 2),
       position: 'relative',
+    }),
+    contentGradientBorder: css({
+      borderTop: '2px solid transparent',
+      borderImage: 'linear-gradient(90deg, #FF9830 0%, #B877D9 100%) 1',
+      paddingTop: theme.spacing(3),
+    }),
+    contentGradientBorderClosing: css({
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: 'fadeBorderOut 0.3s ease-out forwards',
+        '@keyframes fadeBorderOut': {
+          from: {
+            borderTopColor: 'rgba(255, 152, 48, 1)',
+            paddingTop: theme.spacing(3),
+          },
+          to: {
+            borderTopColor: 'transparent',
+            paddingTop: theme.spacing(2),
+          },
+        },
+      },
     }),
     dragging: css({
       opacity: 0.8,
@@ -523,6 +703,24 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       top: theme.spacing(-2),
       left: theme.spacing(-2.5),
+    }),
+    aiModeButton: css({
+      background: 'linear-gradient(90deg, #FF9830 0%, #B877D9 100%)',
+      border: 'none',
+      borderRadius: theme.shape.radius.default,
+      color: '#ffffff',
+      fontWeight: theme.typography.fontWeightMedium,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em',
+      '&:hover': {
+        background: 'linear-gradient(90deg, #FFB050 0%, #C88FE5 100%)',
+        boxShadow: '0 4px 12px rgba(255, 152, 48, 0.4)',
+      },
+      '&:focus, &:active, &:focus:active': {
+        background: 'linear-gradient(90deg, #FF9830 0%, #B877D9 100%)',
+        boxShadow: '0 4px 12px rgba(255, 152, 48, 0.4)',
+      },
     }),
   };
 };

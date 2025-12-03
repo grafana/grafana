@@ -43,6 +43,7 @@ export const availableIconsIndex = {
   'expand-arrows-alt': true,
   at: true,
   ai: true,
+  'ai-pointer': true,
   backward: true,
   bars: true,
   bell: true,

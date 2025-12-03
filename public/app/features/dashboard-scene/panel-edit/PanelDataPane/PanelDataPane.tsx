@@ -303,7 +303,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       let nextRefId = 'A';
       const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       for (let i = 0; i < alphabet.length; i++) {
-        if (!queries?.some(q => q.refId === alphabet[i])) {
+        if (!queries?.some((q) => q.refId === alphabet[i])) {
           nextRefId = alphabet[i];
           break;
         }
@@ -325,7 +325,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   /** TRANSFORMS **/
   const handleAddTransform = useCallback(
-    (selected: SelectableValue<string>) => {
+    (selected: SelectableValue<string>, customOptions?: Record<string, unknown>) => {
       if (!selected.value) {
         return;
       }
@@ -334,7 +334,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         const selectedIndex = transformDrawerState.index ?? transformations?.length ?? 0;
         const newTransformation: DataTransformerConfig = {
           id: selected.value,
-          options: {},
+          options: customOptions ?? {},
         };
 
         const unsub = transformer.subscribeToState((newState) => {
@@ -436,7 +436,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             selectedId={effectiveSelectedId}
             onSelect={handleSelect}
             onAddQuery={handleAddQuery}
-            onAddFromSavedQueries={index => setSavedQueriesDrawerState({ open: true, index: index ?? null })}
+            onAddFromSavedQueries={(index) => setSavedQueriesDrawerState({ open: true, index: index ?? null })}
             onAddTransform={(index) => setTransformDrawerState({ open: true, index: index ?? null })}
             onAddExpression={handleAddExpression}
             onDuplicateQuery={handleDuplicateQuery}
@@ -446,6 +446,24 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             onToggleTransformVisibility={handleToggleTransformVisibility}
             onReorderDataSources={handleReorderDataSources}
             onReorderTransforms={handleReorderTransforms}
+            onAddOrganizeFieldsTransform={() =>
+              handleAddTransform(
+                { value: 'organize' },
+                {
+                  excludeByName: {},
+                  indexByName: {},
+                  renameByName: {},
+                  includeByName: {},
+                  orderByMode: 'auto',
+                  orderBy: [
+                    {
+                      type: 'name',
+                      desc: false,
+                    },
+                  ],
+                }
+              )
+            }
           />
         </div>
         <div
