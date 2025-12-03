@@ -10,11 +10,13 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
+	authlib "github.com/grafana/authlib/types"
 	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
@@ -68,7 +70,7 @@ type PluginAppConfig struct {
 
 func ProvideAppInstaller(
 	metaProviderManager *meta.ProviderManager,
-) (appsdkapiserver.AppInstaller, error) {
+) (*PluginAppInstaller, error) {
 	specificConfig := &PluginAppConfig{
 		MetaProviderManager: metaProviderManager,
 	}
@@ -83,7 +85,7 @@ func ProvideAppInstaller(
 		return nil, err
 	}
 
-	appInstaller := &pluginAppInstaller{
+	appInstaller := &PluginAppInstaller{
 		AppInstaller: defaultInstaller,
 		metaManager:  metaProviderManager,
 		ready:        make(chan struct{}),
@@ -91,16 +93,22 @@ func ProvideAppInstaller(
 	return appInstaller, nil
 }
 
-type pluginAppInstaller struct {
+func (p *PluginAppInstaller) WithAccessChecker(access authlib.AccessChecker) *PluginAppInstaller {
+	p.access = access
+	return p
+}
+
+type PluginAppInstaller struct {
 	appsdkapiserver.AppInstaller
 	metaManager *meta.ProviderManager
+	access      authlib.AccessChecker
 
 	// restConfig is set during InitializeApp and used by the client factory
 	restConfig *restclient.Config
 	ready      chan struct{}
 }
 
-func (p *pluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
+func (p *PluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
 	if p.restConfig == nil {
 		p.restConfig = &restConfig
 		close(p.ready)
@@ -108,7 +116,7 @@ func (p *pluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
 	return p.AppInstaller.InitializeApp(restConfig)
 }
 
-func (p *pluginAppInstaller) InstallAPIs(
+func (p *PluginAppInstaller) InstallAPIs(
 	server appsdkapiserver.GenericAPIServer,
 	restOptsGetter generic.RESTOptionsGetter,
 ) error {
@@ -138,4 +146,37 @@ func (p *pluginAppInstaller) InstallAPIs(
 		replace: replacedStorage,
 	}
 	return p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter)
+}
+
+func (p *PluginAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	if p.access == nil {
+		return nil
+	}
+
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
+			info, ok := authlib.AuthInfoFrom(ctx)
+			if !ok {
+				return authorizer.DecisionDeny, "failed to get auth info", nil
+			}
+
+			res, err := p.access.Check(ctx, info, authlib.CheckRequest{
+				Verb:        a.GetVerb(),
+				Group:       a.GetAPIGroup(),
+				Resource:    a.GetResource(),
+				Name:        a.GetName(),
+				Namespace:   a.GetNamespace(),
+				Subresource: a.GetSubresource(),
+				Path:        a.GetPath(),
+			}, "")
+			if err != nil {
+				return authorizer.DecisionDeny, "failed to perform authorization", err
+			}
+
+			if !res.Allowed {
+				return authorizer.DecisionDeny, "permission denied", nil
+			}
+
+			return authorizer.DecisionAllow, "", nil
+		})
 }
