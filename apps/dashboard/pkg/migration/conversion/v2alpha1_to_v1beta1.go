@@ -1721,6 +1721,14 @@ func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryK
 			}
 		}
 
+		// Convert mappings from v2alpha1 format back to v1beta1 format
+		if len(annotation.Spec.Mappings) > 0 {
+			mappings := convertAnnotationMappings_V2alpha1_to_V1beta1(annotation.Spec.Mappings)
+			if len(mappings) > 0 {
+				annotationMap["mappings"] = mappings
+			}
+		}
+
 		// Copy legacy options
 		// This is used to copy any unknown properties from the v1 at the root of the annotations that were not handled by the conversion.
 		// When they are converted into V2 they are moved to legacyOptions. Now we move them back to the root of the annotation.
@@ -1728,13 +1736,53 @@ func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryK
 			for k, v := range annotation.Spec.LegacyOptions {
 				// Skip fields already handled
 				if k != "name" && k != "enable" && k != "hide" && k != "iconColor" &&
-					k != "datasource" && k != "target" && k != "filter" && k != "builtIn" && k != "placement" {
+					k != "datasource" && k != "target" && k != "filter" && k != "builtIn" && k != "placement" && k != "mappings" {
 					annotationMap[k] = v
 				}
 			}
 		}
 
 		result = append(result, annotationMap)
+	}
+
+	return result
+}
+
+// convertAnnotationMappings_V2alpha1_to_V1beta1 converts mappings from v2alpha1 structured format
+// back to v1beta1 format. v1beta1 supports both simple string format and structured format with source/value/regex.
+// v2alpha1 format: map[string]DashboardAnnotationEventFieldMapping with Source, Value, Regex
+// v1beta1 format: map[string]interface{} where values can be either:
+//   - string (legacy simple format: "fieldName": "targetFieldName")
+//   - object (structured format: "fieldName": {"source": "field", "value": "...", "regex": "..."})
+func convertAnnotationMappings_V2alpha1_to_V1beta1(mappings map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	for key, mapping := range mappings {
+		// Always convert to structured format with source and value fields
+		mappingMap := make(map[string]interface{})
+
+		// Source defaults to "field" if not specified
+		source := "field"
+		if mapping.Source != nil {
+			source = *mapping.Source
+		}
+		mappingMap["source"] = source
+
+		// Value is optional (required for "field" and "text" sources, but "skip" doesn't need it)
+		if mapping.Value != nil && *mapping.Value != "" {
+			mappingMap["value"] = *mapping.Value
+		}
+
+		// Regex is optional
+		if mapping.Regex != nil && *mapping.Regex != "" {
+			mappingMap["regex"] = *mapping.Regex
+		}
+
+		// Include the mapping if it has source (and value for non-skip sources)
+		// Skip source doesn't require a value
+		if source == "skip" || (mapping.Value != nil && *mapping.Value != "") {
+			result[key] = mappingMap
+		}
 	}
 
 	return result
