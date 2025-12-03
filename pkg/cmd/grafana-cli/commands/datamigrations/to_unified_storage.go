@@ -103,7 +103,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return runNonInteractiveMigration(ctx, opts, dashboardAccess, grpcClient, start)
 	}
 
-	return runInteractiveMigration(ctx, cfg, opts, dashboardAccess, grpcClient, start, last)
+	return runInteractiveMigration(ctx, cfg, opts, dashboardAccess, grpcClient, start)
 }
 
 func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
@@ -123,7 +123,7 @@ func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions,
 	return nil
 }
 
-func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start, last time.Time) error {
+func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
 	yes, err := promptYesNo(fmt.Sprintf("Count legacy resources for namespace: %s?", opts.Namespace))
 	if err != nil {
 		return err
@@ -165,7 +165,6 @@ func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.
 		}
 		migrator := migrations.ProvideUnifiedMigratorParquet(dashboardAccess, parquetClient)
 		start = time.Now()
-		last = time.Now()
 		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
 			return err
@@ -209,7 +208,6 @@ func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.
 		if yes {
 			migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
 			start = time.Now()
-			last = time.Now()
 			rsp, err := migrator.Migrate(ctx, opts)
 			if err != nil {
 				return err
