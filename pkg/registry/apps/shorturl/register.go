@@ -5,6 +5,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
@@ -12,7 +13,7 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis"
-	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
+	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	shorturlapp "github.com/grafana/grafana/apps/shorturl/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -53,6 +54,10 @@ func RegisterAppInstaller(
 	}
 	installer.AppInstaller = i
 	return installer, nil
+}
+
+func (a *ShortURLAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return shorturlapp.GetAuthorizer()
 }
 
 func (s *ShortURLAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {

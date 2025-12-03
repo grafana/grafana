@@ -1,6 +1,13 @@
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  VizPanel,
+  SceneGridItemLike,
+} from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -324,6 +331,33 @@ export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManager
     });
 
     return layoutManager;
+  }
+
+  public addGridItem(gridItem: SceneGridItemLike): void {
+    if (!(gridItem instanceof AutoGridItem)) {
+      // If it's a DashboardGridItem, convert it to AutoGridItem
+      if (gridItem instanceof DashboardGridItem) {
+        if (!(gridItem.state.body instanceof VizPanel)) {
+          throw new Error('DashboardGridItem body is not a VizPanel');
+        }
+        const panel = gridItem.state.body;
+        panel.clearParent();
+
+        const newGridItem = new AutoGridItem({
+          body: panel,
+          variableName: gridItem.state.variableName,
+        });
+
+        this.state.layout.setState({ children: [...this.state.layout.state.children, newGridItem] });
+        return;
+      }
+      throw new Error('Grid item must be an AutoGridItem or DashboardGridItem');
+    }
+
+    // Clear parent before moving
+    gridItem.clearParent();
+
+    this.state.layout.setState({ children: [...this.state.layout.state.children, gridItem] });
   }
 }
 

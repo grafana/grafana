@@ -95,11 +95,30 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 	}
 }
 
+// ProvideStandaloneZanzanaClient provides a standalone Zanzana client, without registering the Zanzana service.
+// Client connects to a remote Zanzana server specified in the configuration.
+func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return zClient.NewNoopClient(), nil
+	}
+
+	zanzanaConfig := ZanzanaClientConfig{
+		URL:              cfg.ZanzanaClient.Addr,
+		Token:            cfg.ZanzanaClient.Token,
+		TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
+		ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
+	}
+
+	return NewRemoteZanzanaClient(cfg.ZanzanaClient.TokenNamespace, zanzanaConfig)
+}
+
 type ZanzanaClientConfig struct {
 	URL              string
 	Token            string
 	TokenExchangeURL string
 	ServerCertFile   string
+	TokenNamespace   string
 }
 
 // NewRemoteZanzanaClient creates a new Zanzana client that connects to remote Zanzana server.

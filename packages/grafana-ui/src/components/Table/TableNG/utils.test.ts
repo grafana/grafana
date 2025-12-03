@@ -1388,6 +1388,14 @@ describe('TableNG utils', () => {
       expect(displayJsonValue(field)(42).text).toBe('**42**ms');
       expect(displayJsonValue(field)(42).numeric).toBe(42);
     });
+
+    it('should not mangle objects into [object Object]', () => {
+      expect(displayJsonValue(field)({ a: 1, b: 2 }).text).toBe('{\n "a": 1,\n "b": 2\n}');
+    });
+
+    it('should render arrays as JSON', () => {
+      expect(displayJsonValue(field)([1, 2, 3]).text).toBe('[\n 1,\n 2,\n 3\n]');
+    });
   });
 
   describe('applySort', () => {
@@ -1611,6 +1619,7 @@ describe('TableNG utils', () => {
     };
     const jsonStringField: Field = {
       ...stringField,
+      values: ['{"valid": "json"}', '{"invalid": "json', null, '{"another": "one"}'],
       config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
     };
     const booleanField: Field = {
@@ -1667,11 +1676,12 @@ describe('TableNG utils', () => {
     it.each([
       { name: 'numbers', input: { valueIdx: 0, field: numberFieldWithNulls } },
       { name: 'string', input: { valueIdx: 0, field: stringField } },
-      { name: 'string w/ JSON', input: { valueIdx: 2, field: jsonStringField } },
+      { name: 'string w/ JSON', input: { valueIdx: 0, field: jsonStringField } },
+      { name: 'string w/ JSON (invalid JSON)', input: { valueIdx: 1, field: jsonStringField } },
       { name: 'boolean', input: { valueIdx: 0, field: booleanField } },
       { name: 'NaN', input: { valueIdx: 4, field: numberFieldWithNulls } },
       { name: 'null', input: { valueIdx: 3, field: numberFieldWithNulls } },
-      { name: 'null w/ JSON', input: { valueIdx: 3, field: jsonStringField } },
+      { name: 'null w/ JSON', input: { valueIdx: 2, field: jsonStringField } },
       { name: 'undefined', input: { valueIdx: 6, field: numberFieldWithNulls } },
       { name: 'sparkline', input: { valueIdx: 0, field: sparklineField } },
       { name: 'sparkline (no x)', input: { valueIdx: 0, field: sparklineFieldNoX } },

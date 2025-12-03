@@ -1,0 +1,17 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "iam.grafana.app",
+    "resource": "externalgroupmappings",
+    "name": "mapping-with-team-and-group"
+  },
+  "name": "mapping-with-team-and-group",
+  "rv": 1234,
+  "fields": {
+    "team": "team1",
+    "external_group": "group1"
+  },
+  "title": "mapping-with-team-and-group",
+  "title_ngram": "mapping-with-team-and-group",
+  "title_phrase": "mapping-with-team-and-group"
+}

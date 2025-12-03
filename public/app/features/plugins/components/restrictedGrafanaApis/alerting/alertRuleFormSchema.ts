@@ -1,68 +1,14 @@
 import { z } from 'zod';
 
-import alertDef from 'app/features/alerting/state/alertDef';
 import { RuleFormType } from 'app/features/alerting/unified/types/rule-form';
-import { ExpressionQueryType } from 'app/features/expressions/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
-// Schema for __expr__ type queries (reduce, threshold, etc.)
-export const exprQuerySchema = z.object({
-  refId: z.string().describe('Reference ID for the query, e.g., "B", "C", etc.'),
-  type: z.enum(ExpressionQueryType).describe('Expression type'),
-  datasource: z.object({
-    uid: z.literal('__expr__').describe('Must be "__expr__" for expression queries'),
-    type: z.literal('__expr__').describe('Must be "__expr__" for expression queries'),
-  }),
-  conditions: z
-    .array(
-      z.object({
-        type: z.string().describe('Condition type, e.g., "query"'),
-        evaluator: z.object({
-          params: z.array(z.any()).describe('Parameters for the evaluator'),
-          type: z.enum(alertDef.evalFunctions.map((ef) => ef.value)).describe('Evaluator type'),
-        }),
-        operator: z.object({
-          type: z.enum(alertDef.evalOperators.map((eo) => eo.value)).describe('Operator type'),
-        }),
-        query: z.object({
-          params: z.array(z.string()).describe('Query parameters, typically the refId to evaluate'),
-        }),
-        reducer: z.object({
-          params: z.array(z.any()).describe('Parameters for the reducer'),
-          type: z.string().describe('Reducer type, e.g., "last", "avg", "sum", "count", "min", "max"'),
-        }),
-      })
-    )
-    .optional()
-    .describe('Conditions for the expression query'),
-  reducer: z.string().optional().describe('Reducer function, e.g., "last", "avg", "sum"'),
-  expression: z.string().optional().describe('Expression referencing other queries, e.g., "A"'),
-  math: z.string().optional().describe('Math expression for math type queries'),
-});
-
-// Schema for regular datasource queries
-export const alertingQuerySchema = z.object({
-  refId: z.string().describe('Reference ID for the query, e.g., "A", "B", etc.'),
-  queryType: z.string().optional().default('alerting').describe('Type of query (e.g., "alerting", "recording")'),
-  expression: z
-    .string()
-    .optional()
-    .default('')
-    .describe('Query expression to be executed. This can not include variables (e.g. $var).'),
-  instant: z.boolean().optional().default(true).describe('Whether the query is an instant query'),
-  range: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe('Whether the query is a range query, should be false if instant is true'),
-  datasource: z.object({
-    type: z.string().optional().describe('Datasource type or "__expr__" when it is an expression query'),
-    uid: z.string().optional().describe('Datasource UID'),
-  }),
-});
-
 // Combined schema that supports both regular and expression queries
-export const alertingModelSchema = z.union([alertingQuerySchema, exprQuerySchema]);
+export const alertingModelSchema = z.looseObject({
+  refId: z.string(),
+  maxDataPoints: z.number().optional().describe('Maximum number of data points to return'),
+  intervalMs: z.number().optional().describe('Interval in milliseconds'),
+});
 
 // Main navigate to alert form schema - merged from both alertingSchemaApi and formDefaults
 export const alertingAlertRuleFormSchema = z.object({
@@ -112,11 +58,11 @@ export const alertingAlertRuleFormSchema = z.object({
     .array(
       z.object({
         refId: z.string().describe('Reference ID for the query (e.g., "A", "B", "C")'),
-        queryType: z.string().optional().default('instant').describe('Type of query (e.g., "instant")'),
+        queryType: z.string().default('').describe('Datasource-specific'),
         relativeTimeRange: z
           .object({
             from: z.number().describe('Relative time from in seconds (e.g., 3600 for 1 hour)'),
-            to: z.number().default(0).describe('Relative time to in seconds (usually 0 for "now")'),
+            to: z.number().describe('Relative time to in seconds (usually 0 for "now")'),
           })
           .optional(),
         datasourceUid: z.string().describe('Datasource UID for the query'),
@@ -193,8 +139,6 @@ export const alertingAlertRuleFormSchema = z.object({
 
 // Export types for use in plugins
 export type AlertingAlertRuleFormSchemaType = z.infer<typeof alertingAlertRuleFormSchema>;
-export type AlertingQuerySchemaType = z.infer<typeof alertingQuerySchema>;
-export type ExprQuerySchemaType = z.infer<typeof exprQuerySchema>;
 export type AlertingModelSchemaType = z.infer<typeof alertingModelSchema>;
 
 // Simple API that only exposes the navigate to alert rule form schema

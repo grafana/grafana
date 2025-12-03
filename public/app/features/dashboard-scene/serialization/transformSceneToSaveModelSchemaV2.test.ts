@@ -31,6 +31,7 @@ import {
   AutoGridLayoutSpec,
   RowsLayoutSpec,
   TabsLayoutSpec,
+  defaultDataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
@@ -113,12 +114,12 @@ jest.mock('@grafana/runtime', () => ({
       Prometheus: {
         name: 'Prometheus',
         meta: { id: 'prometheus' },
-        type: 'datasource',
+        type: 'prometheus',
       },
       '-- Grafana --': {
         name: 'Grafana',
         meta: { id: 'grafana' },
-        type: 'datasource',
+        type: 'grafana',
       },
       loki: {
         name: 'Loki',
@@ -130,7 +131,7 @@ jest.mock('@grafana/runtime', () => ({
           module: 'app/plugins/datasource/loki/module',
           baseUrl: '/plugins/loki',
         },
-        type: 'datasource',
+        type: 'loki',
       },
     },
   },
@@ -408,6 +409,45 @@ describe('transformSceneToSaveModelSchemaV2', () => {
 
     // Check that the annotation layers are correctly transformed
     expect(result.annotations).toHaveLength(2);
+  });
+
+  it('should transform links with placement property', () => {
+    const sceneWithPlacementLink = new DashboardScene({
+      links: [
+        {
+          title: 'Link in Controls Menu',
+          url: 'http://test.com',
+          type: 'link',
+          placement: 'inControlsMenu',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+        {
+          title: 'Link without placement',
+          url: 'http://test2.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+      ],
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithPlacementLink);
+
+    expect(result.links).toBeDefined();
+    expect(result.links).toHaveLength(2);
+    expect(result.links![0]).toHaveProperty('placement', 'inControlsMenu');
+    expect(result.links![1]).not.toHaveProperty('placement');
   });
 
   it('should transform the minimum scene to save model schema v2', () => {
@@ -847,7 +887,7 @@ describe('getVizPanelQueries', () => {
     expect(result.length).toBe(2);
     expect(result[0].spec.query.kind).toBe('DataQuery');
     expect(result[0].spec.query.datasource).toBeUndefined(); // ignore datasource if it wasn't provided
-    expect(result[0].spec.query.group).toBe('default');
+    expect(result[0].spec.query.group).toBe(defaultDataQueryKind().group); // this is a default query that contains only refId and therefore group should be the default group
     expect(result[0].spec.query.version).toBe('v0');
 
     expect(result[1].spec.query.kind).toBe('DataQuery');

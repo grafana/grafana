@@ -81,6 +81,58 @@ var appManifestData = app.ManifestData{
 					Plural:     "Teams",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Routes: map[string]spec3.PathProps{
+						"/groups": {
+							Get: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "getGroups",
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"items": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"array"},
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"items",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
+					},
 				},
 
 				{
@@ -93,6 +145,13 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "ServiceAccount",
 					Plural:     "ServiceAccounts",
+					Scope:      "Namespaced",
+					Conversion: false,
+				},
+
+				{
+					Kind:       "ExternalGroupMapping",
+					Plural:     "ExternalGroupMappings",
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
@@ -115,16 +174,17 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"GlobalRole/v0alpha1":         v0alpha1.GlobalRoleKind(),
-	"GlobalRoleBinding/v0alpha1":  v0alpha1.GlobalRoleBindingKind(),
-	"CoreRole/v0alpha1":           v0alpha1.CoreRoleKind(),
-	"Role/v0alpha1":               v0alpha1.RoleKind(),
-	"RoleBinding/v0alpha1":        v0alpha1.RoleBindingKind(),
-	"ResourcePermission/v0alpha1": v0alpha1.ResourcePermissionKind(),
-	"User/v0alpha1":               v0alpha1.UserKind(),
-	"Team/v0alpha1":               v0alpha1.TeamKind(),
-	"TeamBinding/v0alpha1":        v0alpha1.TeamBindingKind(),
-	"ServiceAccount/v0alpha1":     v0alpha1.ServiceAccountKind(),
+	"GlobalRole/v0alpha1":           v0alpha1.GlobalRoleKind(),
+	"GlobalRoleBinding/v0alpha1":    v0alpha1.GlobalRoleBindingKind(),
+	"CoreRole/v0alpha1":             v0alpha1.CoreRoleKind(),
+	"Role/v0alpha1":                 v0alpha1.RoleKind(),
+	"RoleBinding/v0alpha1":          v0alpha1.RoleBindingKind(),
+	"ResourcePermission/v0alpha1":   v0alpha1.ResourcePermissionKind(),
+	"User/v0alpha1":                 v0alpha1.UserKind(),
+	"Team/v0alpha1":                 v0alpha1.TeamKind(),
+	"TeamBinding/v0alpha1":          v0alpha1.TeamBindingKind(),
+	"ServiceAccount/v0alpha1":       v0alpha1.ServiceAccountKind(),
+	"ExternalGroupMapping/v0alpha1": v0alpha1.ExternalGroupMappingKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
@@ -134,7 +194,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 	return goType, exists
 }
 
-var customRouteToGoResponseType = map[string]any{}
+var customRouteToGoResponseType = map[string]any{
+	"v0alpha1|Team|groups|GET": v0alpha1.GetGroups{},
+}
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
