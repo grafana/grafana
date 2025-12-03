@@ -59,10 +59,14 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
             print(f"Page title: {page.title()}")
 
             try:
-                # Wait for login form using Grafana's getByTestId (matching official e2e tests)
-                # Don't rely on page load state - wait directly for the form element
+                # Wait for login form - try multiple selector strategies
                 print("Waiting for login form to appear...")
-                page.get_by_test_id("Username input field").wait_for(state="visible", timeout=60000)
+
+                # Try to find by placeholder first (more reliable for older versions)
+                username_field = page.get_by_placeholder("email or username")
+                password_field = page.get_by_placeholder("password", exact=True)
+
+                username_field.wait_for(state="visible", timeout=60000)
                 print("Login form detected")
 
                 # Take screenshot after form is visible
@@ -70,18 +74,18 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
                 page.screenshot(path=screenshot_path)
                 print(f"Screenshot saved as {screenshot_path}")
 
-                # Fill credentials using getByTestId like official Grafana e2e tests
+                # Fill credentials using placeholder selectors
                 print(f"Filling username (length: {len(grafana_username)})")
-                page.get_by_test_id("Username input field").fill(grafana_username)
+                username_field.fill(grafana_username)
 
                 print(f"Filling password (length: {len(grafana_password)})")
-                page.get_by_test_id("Password input field").fill(grafana_password)
+                password_field.fill(grafana_password)
 
                 print("Credentials filled successfully")
 
-                # Click login button
+                # Click login button by text
                 print("Clicking login button...")
-                page.get_by_test_id("Login button").click()
+                page.get_by_role("button", name="Log in").click()
                 print("Login form submitted")
 
                 # Try to wait for navigation, but don't fail if it doesn't happen
