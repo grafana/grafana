@@ -16,7 +16,7 @@ Please encrypt your message to us; please use our PGP key. The key fingerprint i
 
 225E 6A9B BB15 A37E 95EB 6312 C66A 51CC B44C 27E0
 
-The key is available from [keyserver.ubuntu.com](https://keyserver.ubuntu.com/pks/lookup?search=0x225E6A9BBB15A37E95EB6312C66A51CCB44C27E0&fingerprint=on&op=index).
+The key is available from [keyserver.ubuntu.com](https://keyserver.ubuntu.com/pks/lookup?search=0x225E6A9BBB15A37E95EB6312C66A51CCB44C27E0&fingerprint=on&op=index). This GPG key is published for encrypted communications and, even if the primary key is expired, its valid subkeys remain authorized for secure contact as listed in this repository’s security policy.
 
 Grafana Labs will send you a response indicating the next steps in handling your report. After the initial reply to your report, the security team will keep you informed of the progress towards a fix and full announcement, and may ask for additional information or guidance.
 
