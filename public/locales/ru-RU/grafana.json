@@ -483,6 +483,7 @@
       "noOptionsMessage-no-datasources-found": "Источники данных не найдены"
     },
     "alert-menu": {
+      "analyze-rule": "",
       "copy-link": "Копировать ссылку",
       "duplicate": "Дублировать",
       "export": "Экспорт",
@@ -3500,6 +3501,14 @@
         "label-negative-y": "Отрицательные для оси Y"
       }
     },
+    "suggestions": {
+      "horizontal": "",
+      "hz-stacked": "",
+      "hz-stacked-percent": "",
+      "vert-stacked": "",
+      "vert-stacked-percent": "",
+      "vertical": ""
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Требуется пространство с правой стороны",
       "gaps-options": {
@@ -3544,6 +3553,10 @@
     },
     "name-show-unfilled-area": "Показывать незаполненную область",
     "name-value-display": "Отображение значений",
+    "suggestions": {
+      "basic": "",
+      "lcd": ""
+    },
     "value-display-options": {
       "label-hidden": "Скрыты",
       "label-text-color": "Цвет текста",
@@ -4212,6 +4225,7 @@
     "clear": "Очистить",
     "collapse": "Свернуть",
     "disabled": "",
+    "discard": "",
     "edit": "Редактировать",
     "help": "Справка",
     "loading": "Загрузка…",
@@ -4829,7 +4843,6 @@
         "variable": "Тип переменной: {{type}}",
         "variable-set": "Переменные"
       },
-      "open": "Открыть область параметров",
       "row": {
         "header": {
           "hide": "Скрыть",
@@ -5182,6 +5195,7 @@
       "title-matched_other": "Совпадение: {{count}}/{{totalCount}} параметра"
     },
     "outline": {
+      "pane-header": "",
       "repeated-item": "Повторить",
       "tree-item": {
         "empty": "(пусто)",
@@ -5212,7 +5226,6 @@
       },
       "only-overrides-button-tooltip": "Показывать только переопределения",
       "placeholder-search-options": "Поиск параметров",
-      "visualization-button-label": "Визуализация",
       "visualization-button-tooltip": "Поиск параметров"
     },
     "panel-editor-table-view": {
@@ -5393,9 +5406,39 @@
     "share-public-dashboard-loader": {
       "loading-configuration": "Загрузка конфигурации"
     },
+    "sidebar": {
+      "dashboard-options": {
+        "title": "",
+        "tooltip": ""
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
+      },
+      "export": {
+        "title": "",
+        "unsaved-modal": {
+          "text": "",
+          "title": ""
+        }
+      },
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      },
+      "redo": "",
+      "snapshot": {
+        "tooltip": ""
+      },
+      "undo": ""
+    },
     "solo-panel": {
       "loading-initializing-dashboard": "Загрузка и инициализация дашборда",
       "title-not-found": "Панель с идентификатором {{panelId}} не найдена"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Переменные шаблона"
@@ -5496,11 +5539,8 @@
           "tooltip": "Дашборд был помечен как «только для чтения»"
         },
         "export": {
-          "arrow": "Экспорт",
-          "title": "Экспорт",
           "tooltip": {
-            "as-code": "Экспортировать как код",
-            "json": "Экспорт в формате JSON"
+            "as-code": "Экспортировать как код"
           }
         },
         "more-save-options": "Больше параметров сохранения",
@@ -5552,6 +5592,9 @@
       "save-library-panel": "Сохранить панель библиотеки",
       "settings": "Параметры дашборда",
       "share-button": "Общий доступ",
+      "snapshot": {
+        "title": ""
+      },
       "star-add-error": "",
       "star-added": "",
       "star-remove-error": "",
@@ -5882,9 +5925,6 @@
       "custom-options": "Пользовательские параметры",
       "name-values-separated-comma": "Значения, разделенные запятыми",
       "selection-options": "Параметры выбора"
-    },
-    "dashboard-edit-pane-renderer": {
-      "outline": "Структура"
     },
     "dashboard-link-form": {
       "back-to-list": "Назад к списку",
@@ -6228,6 +6268,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Поиск...",
       "radio-options": {
         "label": {
@@ -6541,7 +6584,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Изменить визуализацию",
-      "tooltip-click-to-change-visualization": "Нажмите, чтобы изменить визуализацию"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Открыть панель запросов",
@@ -7337,7 +7380,8 @@
       "title-failed-volume-query": "Не удалось загрузить объем журналов для этого запроса",
       "title-no-logs-volume-available": "Нет доступного объема журналов",
       "title-showing-partial-data": "Отображение частичных данных",
-      "title-unable-to-show-log-volume": "Не удалось показать объем журналов"
+      "title-unable-to-show-log-volume": "Не удалось показать объем журналов",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Информация об объеме недоступна для текущих запросов и временного диапазона."
@@ -7876,6 +7920,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
+      "no-thresholds": "",
       "style": {
         "circular": "",
         "simple": ""
@@ -8170,13 +8215,6 @@
           "create-slo": "Создайте цель уровня обслуживания",
           "enable-slo-alerting": "Включите оповещения о целях уровня обслуживания"
         }
-      }
-    }
-  },
-  "grafana": {
-    "dashboard": {
-      "edit-pane": {
-        "go-back": "Назад"
       }
     }
   },
@@ -11147,11 +11185,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Не удалось найти данные, соответствующие вашему запросу"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Очистить типы",
@@ -11179,6 +11228,10 @@
     "pie-chart-type-options": {
       "label-donut": "Кольцевая",
       "label-pie": "Круговая"
+    },
+    "suggestions": {
+      "donut": "",
+      "pie": ""
     }
   },
   "playlist": {
@@ -11768,13 +11821,6 @@
       "saving": "Сохранение",
       "title-error-loading-file": "Ошибка при загрузке файла"
     },
-    "files-view": {
-      "columns": {
-        "history": "История",
-        "view": "Просмотр"
-      },
-      "placeholder-search": "Поиск"
-    },
     "finish-step": {
       "description-enable-previews": "Обеспечивает возможность просмотра изображений с изменениями дашборда в запросах на включение изменений. Изображения дашбордов Grafana будут публиковаться в вашем репозитории Git и видны всем, у кого есть доступ к репозиторию.",
       "description-generate-dashboard-previews": "Создать ссылки для предварительного просмотра запросов на включение изменений",
@@ -11989,9 +12035,6 @@
       "source-code": "Исходный код"
     },
     "repository-card": {
-      "get-repository-meta": {
-        "webhook": "Веб-перехватчик"
-      },
       "read-only-badge": "Только для чтения",
       "settings": "Параметры",
       "view": "Просмотр"
@@ -12028,14 +12071,6 @@
       "webhook-last-event": "Последнее событие:",
       "webhook-url": "Просмотр веб-перехватчика"
     },
-    "repository-resources": {
-      "columns": {
-        "history": "История",
-        "view-dashboard": "Просмотр",
-        "view-folder": "Просмотр"
-      },
-      "placeholder-search": "Поиск"
-    },
     "repository-status-page": {
       "back-to-repositories": "Назад к репозиториям",
       "cleaning-up-resources": "Очистка ресурсов репозитория",
@@ -12043,12 +12078,10 @@
       "not-found": "не найдено",
       "not-found-message": "Репозиторий не найден",
       "repository-config-exists-configuration": "Убедитесь, что конфигурация репозитория существует в файле конфигурации.",
-      "tab-files": "Файлы",
-      "tab-files-title": "Список необработанных файлов из репозитория",
       "tab-overview": "Обзор",
       "tab-overview-title": "Обзор репозитория",
       "tab-resources": "Ресурсы",
-      "tab-resources-title": "Ресурсы, сохраненные в базе данных Grafana",
+      "tab-resources-title": "",
       "title": "Состояние репозитория",
       "title-legacy-storage": "Устаревшее хранилище",
       "title-queued-for-deletion": "В очереди на удаление"
@@ -12070,6 +12103,17 @@
       "local-description": "Настроить подготовку файлов",
       "pure-git": "Pure Git",
       "pure-git-description": "Подключиться к любому репозиторию Git"
+    },
+    "resource-tree": {
+      "header-hash": "",
+      "header-status": "",
+      "header-title": "",
+      "header-type": "",
+      "search-placeholder": "",
+      "source": "",
+      "status-pending": "",
+      "status-synced": "",
+      "view": ""
     },
     "resource-view": {
       "base": "Основа",
@@ -13145,6 +13189,12 @@
       "label-same-as-value": "Аналогичный значению",
       "label-standard": "Стандартный"
     },
+    "suggestions": {
+      "stat-color-background": "",
+      "stat-discrete-values": "",
+      "stat-discrete-values-color-background": "",
+      "stat-single-string": ""
+    },
     "text-alignment-options": {
       "label-auto": "Авто",
       "label-center": "По центру"
@@ -13355,6 +13405,7 @@
     "create-team": {
       "create": "Создать",
       "description-email": "Это необязательное действие, которое используется в основном для создания пользовательских аватаров команд.",
+      "failed-to-create": "",
       "label-email": "Адрес электронной почты",
       "label-name": "Имя",
       "label-role": "Роль"
@@ -13386,6 +13437,7 @@
         "title-edit-team": "Редактирование команды",
         "tooltip-edit-team": "Редактировать команду"
       },
+      "loading-teams": "",
       "new-team": "Новая команда",
       "placeholder-search-teams": "Поиск команд"
     },
@@ -13484,7 +13536,8 @@
       "forwards-time-aria-label": "Переместить временной диапазон вперед",
       "to": "на",
       "zoom-out-button": "Уменьшение масштаба временного диапазона",
-      "zoom-out-tooltip": ""
+      "zoom-out-tooltip": "",
+      "zoom-out-tooltip-new": ""
     },
     "time-range": {
       "apply": "Применить временной диапазон",
@@ -13585,6 +13638,16 @@
         "label-never": "Никогда",
         "label-threshold": "Пороговое значение"
       }
+    },
+    "suggestions": {
+      "area": "",
+      "area-stacked": "",
+      "area-stacked-percentage": "",
+      "bar": "",
+      "bar-stacked": "",
+      "bar-stacked-percent": "",
+      "line": "",
+      "line-smooth": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Добавить часовой пояс",

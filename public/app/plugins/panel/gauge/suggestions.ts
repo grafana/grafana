@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
 
-import { ThresholdsMode, FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplierFn } from '@grafana/data';
+import { ThresholdsMode, FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
@@ -33,7 +33,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
 
 const GAUGE_LIMIT = 10;
 
-export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
+export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (dataSummary) => {
   if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
     return;
   }

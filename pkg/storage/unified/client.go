@@ -211,6 +211,19 @@ func newClient(opts options.StorageOptions,
 			serverOptions.QOSQueue = queue
 		}
 
+		// only enable if an overrides file path is provided
+		if cfg.OverridesFilePath != "" {
+			overridesSvc, err := resource.NewOverridesService(ctx, cfg.Logger, reg, tracer, resource.ReloadOptions{
+				FilePath:     cfg.OverridesFilePath,
+				ReloadPeriod: cfg.OverridesReloadInterval,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			serverOptions.OverridesService = overridesSvc
+		}
+
 		server, err := sql.NewResourceServer(serverOptions)
 		if err != nil {
 			return nil, err
