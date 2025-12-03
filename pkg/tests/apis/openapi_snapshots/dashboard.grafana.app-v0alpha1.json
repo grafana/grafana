@@ -1751,6 +1751,7 @@
           "Search"
         ],
         "description": "Dashboard search",
+        "operationId": "searchDashboardsAndFolders",
         "parameters": [
           {
             "name": "namespace",
@@ -1891,6 +1892,7 @@
           "Search"
         ],
         "description": "Get sortable fields",
+        "operationId": "getSortableFields",
         "parameters": [
           {
             "name": "namespace",

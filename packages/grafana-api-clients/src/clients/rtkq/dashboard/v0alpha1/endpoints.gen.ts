@@ -235,7 +235,7 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['LibraryPanel'],
       }),
-      getSearch: build.query<GetSearchApiResponse, GetSearchApiArg>({
+      searchDashboardsAndFolders: build.query<SearchDashboardsAndFoldersApiResponse, SearchDashboardsAndFoldersApiArg>({
         query: (queryArg) => ({
           url: `/search`,
           params: {
@@ -253,7 +253,7 @@ const injectedRtkApi = api
         }),
         providesTags: ['Search'],
       }),
-      getSearchSortable: build.query<GetSearchSortableApiResponse, GetSearchSortableApiArg>({
+      getSortableFields: build.query<GetSortableFieldsApiResponse, GetSortableFieldsApiArg>({
         query: () => ({ url: `/search/sortable` }),
         providesTags: ['Search'],
       }),
@@ -653,8 +653,8 @@ export type UpdateLibraryPanelApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetSearchApiResponse = /** status 200 undefined */ SearchResults;
-export type GetSearchApiArg = {
+export type SearchDashboardsAndFoldersApiResponse = /** status 200 undefined */ SearchResults;
+export type SearchDashboardsAndFoldersApiArg = {
   /** user query string */
   query?: string;
   /** search dashboards or folders.  When empty, this will search both */
@@ -676,7 +676,7 @@ export type GetSearchApiArg = {
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
 };
-export type GetSearchSortableApiResponse = /** status 200 undefined */ {
+export type GetSortableFieldsApiResponse = /** status 200 undefined */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Sortable fields (depends on backend support) */
@@ -684,7 +684,7 @@ export type GetSearchSortableApiResponse = /** status 200 undefined */ {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
-export type GetSearchSortableApiArg = void;
+export type GetSortableFieldsApiArg = void;
 export type ListSnapshotApiResponse = /** status 200 OK */ SnapshotList;
 export type ListSnapshotApiArg = {
   /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
@@ -1262,10 +1262,10 @@ export const {
   useReplaceLibraryPanelMutation,
   useDeleteLibraryPanelMutation,
   useUpdateLibraryPanelMutation,
-  useGetSearchQuery,
-  useLazyGetSearchQuery,
-  useGetSearchSortableQuery,
-  useLazyGetSearchSortableQuery,
+  useSearchDashboardsAndFoldersQuery,
+  useLazySearchDashboardsAndFoldersQuery,
+  useGetSortableFieldsQuery,
+  useLazyGetSortableFieldsQuery,
   useListSnapshotQuery,
   useLazyListSnapshotQuery,
   useCreateSnapshotMutation,
