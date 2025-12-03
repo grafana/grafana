@@ -296,12 +296,16 @@ export function Blocks(props: Props) {
         />
       );
 
+      const queryTitle = t('explore.blocks.query-block.title', 'Query {{refId}}', {
+        refId: query.refId,
+      });
+
       return (
         <ContentOutlineItem
-          title={'query-' + query.refId}
+          title={queryTitle}
           icon="arrow"
-          key={'query-' + query.refId}
-          panelId={'query-' + query.refId}
+          key={`query-${query.refId}`}
+          panelId={`query-${query.refId}`}
         >
           <PanelContainer className={styles.queryContainer}>
             {queryEditorRow}
@@ -330,28 +334,31 @@ export function Blocks(props: Props) {
 
     if (block.type === 'text') {
       const icon = 'paragraph';
-      const firstTenCharacters = block.text.slice(0, 10);
+      const firstWord = block.text.trim().split(/\s+/)[0] ?? '';
+      const title = firstWord
+        ? t('explore.blocks.text-block.title', 'Text "{{word}}"', { word: firstWord })
+        : t('explore.blocks.text-block.empty', 'Text block');
       return (
-        <ContentOutlineItem title={`Text "${firstTenCharacters}"`} icon={icon} key={`${block.type}-${index}`} panelId={`${block.type}-${index}`}>
+        <ContentOutlineItem title={title} icon={icon} key={`${block.type}-${index}`} panelId={`${block.type}-${index}`}>
           <PanelContainer className={styles.queryContainer}>
-              <TextBlockEditor
-                value={block.text}
-                onChange={(value) => handleTextBlockChange(index, value)}
-                placeholder={t('explore.blocks.text-block.placeholder', 'Enter text')}
-                className={styles.textBlockArea}
-              />
+            <TextBlockEditor
+              value={block.text}
+              onChange={(value) => handleTextBlockChange(index, value)}
+              placeholder={t('explore.blocks.text-block.placeholder', 'Enter text')}
+              className={styles.textBlockArea}
+            />
           </PanelContainer>
         </ContentOutlineItem>
       );
     }
 
-    if (block.type === 'transform') {
-      const title = t('explore.blocks.transform-block.title', 'Transform block');
+    if (block.type === 'expression') {
+      const title = t('explore.blocks.expression-block.title', 'Expression block');
       const icon = 'magic';
       return (
-        <ContentOutlineItem title={title} icon={icon} key={`transform-${index}`} panelId={`transform-${index}`}>
+        <ContentOutlineItem title={title} icon={icon} key={`expression-${index}`} panelId={`expression-${index}`}>
           <PanelContainer className={styles.queryContainer}>
-            {t('explore.blocks.transform-block.placeholder', 'Transform blocks are coming soon.')}
+            {t('explore.blocks.expression-block.placeholder', 'Expression blocks are coming soon.')}
           </PanelContainer>
         </ContentOutlineItem>
       );

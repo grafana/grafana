@@ -243,7 +243,7 @@ export interface ExploreItemState {
   blocks: Block[];
 }
 
-export type Block = QueryBlock | TextBlock | TransformBlock;
+export type Block = QueryBlock | TextBlock | ExpressionBlock;
 
 export interface QueryBlock {
   type: 'query';
@@ -255,9 +255,9 @@ export interface TextBlock {
   text: string;
 }
 
-export interface TransformBlock {
-  type: 'transform';
-  // TODO
+export interface ExpressionBlock {
+  type: 'expression';
+  expression?: string;
 }
 
 export interface ExploreUpdateState {

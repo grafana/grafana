@@ -70,15 +70,15 @@ export function AddQueryButtons({
   const blockOptions: Array<{ label: string; value: Block['type'] }> = [
     { label: t('explore.secondary-actions.block-type-query', 'Query block'), value: 'query' },
     { label: t('explore.secondary-actions.block-type-text', 'Text block'), value: 'text' },
-    { label: t('explore.secondary-actions.block-type-transform', 'Transform block'), value: 'transform' },
+    { label: t('explore.secondary-actions.block-type-expression', 'Expression block'), value: 'expression' },
   ];
 
   const createBlock = (type: Block['type']): Block | null => {
     if (type === 'text') {
       return { type: 'text', text: '' };
     }
-    if (type === 'transform') {
-      return { type: 'transform' };
+    if (type === 'expression') {
+      return { type: 'expression', expression: '' };
     }
     return null;
   };
