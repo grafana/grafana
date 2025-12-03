@@ -99,9 +99,14 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
                 except Exception:
                     print("No password change prompt (or timed out)")
 
-                # Wait for command palette trigger to confirm we're logged in and on dashboard
+                # Wait for successful login by checking we're no longer on login page
+                # and that navigation has occurred
                 print("Waiting for dashboard to load...")
-                page.get_by_test_id("Command palette trigger").wait_for(state="visible", timeout=30000)
+                page.wait_for_load_state("networkidle", timeout=30000)
+
+                if "/login" in page.url:
+                    raise Exception(f"Still on login page after form submission: {page.url}")
+
                 print(f"Login successful, current URL: {page.url}")
 
             except Exception as e:
