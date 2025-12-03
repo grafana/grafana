@@ -278,6 +278,66 @@ Value"
       expect(logListModel.isJSON).toBe(false);
     });
 
+    test('setCustomHighlights invalidates highlight tokens', () => {
+      const logListModel = createLogLine(
+        { labels: { place: 'luna' }, entry: 'error message error' },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true,
+          customHighlights: [{ text: 'error', colorIndex: 0 }],
+        }
+      );
+
+      // Access highlightedBodyTokens to populate the cache
+      const initialTokens = logListModel.highlightedBodyTokens;
+      expect(initialTokens).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'log-search-match log-custom-highlight-0' })])
+      );
+
+      // Update custom highlights
+      logListModel.setCustomHighlights([{ text: 'message', colorIndex: 1 }]);
+
+      // After setCustomHighlights, tokens should be regenerated with new highlights
+      const updatedTokens = logListModel.highlightedBodyTokens;
+      expect(updatedTokens).not.toEqual(initialTokens);
+      expect(updatedTokens).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'log-search-match log-custom-highlight-1' })])
+      );
+      expect(updatedTokens).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'log-search-match log-custom-highlight-0' })])
+      );
+    });
+
+    test('setCustomHighlights with empty array removes custom highlights', () => {
+      const logListModel = createLogLine(
+        { labels: { place: 'luna' }, entry: 'error message' },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true,
+          customHighlights: [{ text: 'error', colorIndex: 0 }],
+        }
+      );
+
+      // Access highlightedBodyTokens with custom highlight
+      const initialTokens = logListModel.highlightedBodyTokens;
+      expect(initialTokens).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'log-search-match log-custom-highlight-0' })])
+      );
+
+      // Clear custom highlights
+      logListModel.setCustomHighlights([]);
+
+      // After clearing, no custom highlight tokens should exist
+      const updatedTokens = logListModel.highlightedBodyTokens;
+      expect(updatedTokens).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'log-search-match log-custom-highlight-0' })])
+      );
+    });
+
     describe('OTel logs', () => {
       const originalState = config.featureToggles.otelLogsFormatting;
 

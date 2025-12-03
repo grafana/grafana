@@ -76,6 +76,11 @@ export interface ExploreTracePanelState {
   spanFilters?: TraceSearchProps;
 }
 
+export interface CustomHighlight {
+  text: string;
+  colorIndex: number;
+}
+
 export interface ExploreLogsPanelState {
   id?: string;
   columns?: Record<number, string>;
@@ -85,6 +90,7 @@ export interface ExploreLogsPanelState {
   refId?: string;
   displayedFields?: string[];
   sortOrder?: LogsSortOrder;
+  customHighlights?: CustomHighlight[];
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {

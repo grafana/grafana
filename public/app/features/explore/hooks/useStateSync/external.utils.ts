@@ -35,7 +35,7 @@ function pruneObject(obj: object): object | undefined {
     }
     return value;
   });
-  pruned = omitBy<typeof pruned>(pruned, isEmpty);
+  pruned = omitBy<typeof pruned>(pruned, (value) => isEmpty(value) && typeof value !== 'number');
   if (isEmpty(pruned)) {
     return undefined;
   }

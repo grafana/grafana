@@ -1,8 +1,10 @@
 import Prism, { Token } from 'prismjs';
 
+import { CustomHighlight } from '@grafana/data';
+
 import { createLogLine } from '../mocks/logRow';
 
-import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
+import { generateCustomHighlightGrammar, generateLogGrammar, generateTextMatchGrammar } from './grammar';
 
 describe('generateLogGrammar', () => {
   function generateScenario(entry: string) {
@@ -123,5 +125,83 @@ describe('generateTextMatchGrammar', () => {
     expect(generateTextMatchGrammar(['search', '(?i)(TRACE|DEBUG|INFO|WARN|ERROR|OTHER)'], 'word')).toEqual({
       'log-search-match': [/(?:search)/g, /(?:(TRACE|DEBUG|INFO|WARN|ERROR|OTHER))/gi, /word/gi],
     });
+  });
+});
+
+describe('generateCustomHighlightGrammar', () => {
+  const originalErr = console.error;
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterAll(() => {
+    console.error = originalErr;
+  });
+
+  test('returns empty grammar for empty highlights array', () => {
+    expect(generateCustomHighlightGrammar([])).toEqual({});
+  });
+
+  test('creates token for single highlight', () => {
+    const highlights: CustomHighlight[] = [{ text: 'error', colorIndex: 0 }];
+    const grammar = generateCustomHighlightGrammar(highlights) as Record<string, RegExp | RegExp[]>;
+
+    expect(grammar).toHaveProperty('log-search-match log-custom-highlight-0');
+    expect(grammar['log-search-match log-custom-highlight-0']).toEqual(/error/g);
+  });
+
+  test('creates tokens for multiple highlights with different colors', () => {
+    const highlights: CustomHighlight[] = [
+      { text: 'error', colorIndex: 0 },
+      { text: 'warning', colorIndex: 1 },
+      { text: 'info', colorIndex: 2 },
+    ];
+    const grammar = generateCustomHighlightGrammar(highlights) as Record<string, RegExp | RegExp[]>;
+
+    expect(grammar).toHaveProperty('log-search-match log-custom-highlight-0');
+    expect(grammar).toHaveProperty('log-search-match log-custom-highlight-1');
+    expect(grammar).toHaveProperty('log-search-match log-custom-highlight-2');
+    expect(grammar['log-search-match log-custom-highlight-0']).toEqual(/error/g);
+    expect(grammar['log-search-match log-custom-highlight-1']).toEqual(/warning/g);
+    expect(grammar['log-search-match log-custom-highlight-2']).toEqual(/info/g);
+  });
+
+  test('escapes regex special characters in highlight text', () => {
+    const highlights: CustomHighlight[] = [{ text: 'test.log[0]', colorIndex: 0 }];
+    const grammar = generateCustomHighlightGrammar(highlights) as Record<string, RegExp | RegExp[]>;
+
+    expect(grammar).toHaveProperty('log-search-match log-custom-highlight-0');
+    // Verify it escaped the special characters by trying to match the literal text
+    const regex = grammar['log-search-match log-custom-highlight-0'] as RegExp;
+    expect(regex.test('test.log[0]')).toBe(true);
+    expect(regex.test('testXlogY0Z')).toBe(false); // Should not match if . and [] were treated as regex
+  });
+
+  test('groups multiple highlights with same color index', () => {
+    const highlights: CustomHighlight[] = [
+      { text: 'error', colorIndex: 0 },
+      { text: 'failure', colorIndex: 0 },
+    ];
+    const grammar = generateCustomHighlightGrammar(highlights) as Record<string, RegExp | RegExp[]>;
+
+    expect(grammar).toHaveProperty('log-search-match log-custom-highlight-0');
+    const tokenValue = grammar['log-search-match log-custom-highlight-0'];
+    expect(Array.isArray(tokenValue)).toBe(true);
+    expect(tokenValue).toHaveLength(2);
+    expect(tokenValue).toEqual([/error/g, /failure/g]);
+  });
+
+  test('handles invalid regex gracefully', () => {
+    const highlights: CustomHighlight[] = [{ text: '(?invalid', colorIndex: 0 }];
+    // Should not throw, but may log error to console (which we've mocked)
+    expect(() => generateCustomHighlightGrammar(highlights)).not.toThrow();
+  });
+
+  test('uses case-sensitive matching', () => {
+    const highlights: CustomHighlight[] = [{ text: 'Error', colorIndex: 0 }];
+    const grammar = generateCustomHighlightGrammar(highlights) as Record<string, RegExp | RegExp[]>;
+    const regex = grammar['log-search-match log-custom-highlight-0'] as RegExp;
+
+    expect(regex.test('Error')).toBe(true);
+    expect(regex.test('error')).toBe(false); // Case-sensitive
   });
 });

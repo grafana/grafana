@@ -3,6 +3,7 @@ import { LosslessNumber, parse, stringify } from 'lossless-json';
 import Prism, { Grammar, Token } from 'prismjs';
 
 import {
+  CustomHighlight,
   DataFrame,
   dateTimeFormat,
   Labels,
@@ -20,7 +21,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { FieldDef, getAllFields } from '../logParser';
 import { identifyOTelLanguage, getOtelAttributesField, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
-import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
+import { generateCustomHighlightGrammar, generateLogGrammar, generateTextMatchGrammar } from './grammar';
 import { LogLineVirtualization } from './virtualization';
 
 const TRUNCATION_DEFAULT_LENGTH = 50000;
@@ -58,6 +59,7 @@ export class LogListModel implements LogRowModel {
 
   private _body: string | undefined = undefined;
   private _currentSearch: string | undefined = undefined;
+  private _customHighlights: CustomHighlight[] = [];
   private _grammar?: Grammar;
   private _highlightedBody: string | undefined = undefined;
   private _highlightedLogAttributesTokens: Array<string | Token> | undefined = undefined;
@@ -72,7 +74,16 @@ export class LogListModel implements LogRowModel {
 
   constructor(
     log: LogRowModel,
-    { escape, getFieldLinks, grammar, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
+    {
+      customHighlights,
+      escape,
+      getFieldLinks,
+      grammar,
+      prettifyJSON,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    }: PreProcessLogOptions
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -101,6 +112,7 @@ export class LogListModel implements LogRowModel {
 
     // LogListModel
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
+    this._customHighlights = customHighlights ?? [];
     this._getFieldLinks = getFieldLinks;
     this._grammar = grammar;
     this._prettifyJSON = Boolean(prettifyJSON);
@@ -185,8 +197,10 @@ export class LogListModel implements LogRowModel {
       // Body is accessed first to trigger the getter code before generateLogGrammar()
       const body = this.body;
       this._grammar = this._grammar ?? generateLogGrammar(this);
+      const customHighlightGrammar = generateCustomHighlightGrammar(this._customHighlights);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._highlightTokens = Prism.tokenize(body, { ...extraGrammar, ...this._grammar });
+      // Custom highlights first (higher priority), then search, then base grammar
+      this._highlightTokens = Prism.tokenize(body, { ...customHighlightGrammar, ...extraGrammar, ...this._grammar });
     }
     return this._highlightTokens;
   }
@@ -198,8 +212,13 @@ export class LogListModel implements LogRowModel {
         return [];
       }
       this._grammar = this._grammar ?? generateLogGrammar(this);
+      const customHighlightGrammar = generateCustomHighlightGrammar(this._customHighlights);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._highlightedLogAttributesTokens = Prism.tokenize(attributes, { ...extraGrammar, ...this._grammar });
+      this._highlightedLogAttributesTokens = Prism.tokenize(attributes, {
+        ...customHighlightGrammar,
+        ...extraGrammar,
+        ...this._grammar,
+      });
     }
     return this._highlightedLogAttributesTokens;
   }
@@ -275,9 +294,16 @@ export class LogListModel implements LogRowModel {
     this._highlightTokens = undefined;
     this._highlightedLogAttributesTokens = undefined;
   }
+
+  setCustomHighlights(highlights: CustomHighlight[]) {
+    this._customHighlights = highlights;
+    this._highlightTokens = undefined;
+    this._highlightedLogAttributesTokens = undefined;
+  }
 }
 
 export interface PreProcessOptions {
+  customHighlights?: CustomHighlight[];
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   order: LogsSortOrder;
@@ -289,12 +315,22 @@ export interface PreProcessOptions {
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessOptions,
+  {
+    customHighlights,
+    escape,
+    getFieldLinks,
+    order,
+    prettifyJSON,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  }: PreProcessOptions,
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
   return orderedLogs.map((log) =>
     preProcessLog(log, {
+      customHighlights,
       escape,
       getFieldLinks,
       grammar,
@@ -307,6 +343,7 @@ export const preProcessLogs = (
 };
 
 interface PreProcessLogOptions {
+  customHighlights?: CustomHighlight[];
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   grammar?: Grammar;
@@ -336,7 +373,7 @@ function countNewLines(log: string, limit = Infinity) {
   let count = 0;
   for (let i = 0; i < log.length; ++i) {
     // No need to iterate further
-    if (count > Infinity) {
+    if (count > limit) {
       return count;
     }
     if (log[i] === '\n') {
