@@ -19,9 +19,40 @@ weight: 155
 
 [Role-based access control (RBAC)](/docs/grafana/latest/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/) for Grafana Enterprise and Grafana Cloud provides a standardized way of granting, changing, and revoking access, so that users can view and modify Grafana resources.
 
-A user is any individual who can log in to Grafana. Each user is associated with a role that includes permissions. Permissions determine the tasks a user can perform in the system.
+A user is any individual who can log in to Grafana. Each user has a role that includes permissions. Permissions determine the tasks a user can perform in the system.
 
 Each permission contains one or more actions and a scope.
+
+## Role types
+
+Grafana has three types of roles for managing access:
+
+- **Basic roles**: Admin, Editor, Viewer, and No basic role. These are assigned to users and provide default access levels.
+- **Fixed roles**: Predefined groups of permissions for specific use cases. Basic roles automatically include certain fixed roles.
+- **Custom roles**: User-defined roles that combine specific permissions for granular access control.
+
+## Basic role permissions
+
+The following table summarizes the default alerting permissions for each basic role.
+
+| Capability                              | Admin | Editor | Viewer |
+| --------------------------------------- | :---: | :----: | :----: |
+| View alert rules                        |   ✓   |   ✓    |   ✓    |
+| Create, edit, and delete alert rules    |   ✓   |   ✓    |        |
+| View silences                           |   ✓   |   ✓    |   ✓    |
+| Create, edit, and expire silences       |   ✓   |   ✓    |        |
+| View contact points and templates       |   ✓   |   ✓    |   ✓    |
+| Create, edit, and delete contact points |   ✓   |   ✓    |        |
+| View notification policies              |   ✓   |   ✓    |   ✓    |
+| Create, edit, and delete policies       |   ✓   |   ✓    |        |
+| View mute timings                       |   ✓   |   ✓    |   ✓    |
+| Create, edit, and delete mute timings   |   ✓   |   ✓    |        |
+| Access provisioning API                 |   ✓   |        |        |
+| Export with decrypted secrets           |   ✓   |        |        |
+
+{{< admonition type="note" >}}
+Access to alert rules also requires permission to read the folder containing the rules and permission to query the data sources used in the rules.
+{{< /admonition >}}
 
 ## Permissions
 
