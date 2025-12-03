@@ -8,9 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
-// nolint:unused
 var migratedUnifiedResources = []string{
-	//"playlists.playlist.grafana.app",
+	"playlists.playlist.grafana.app",
 	"folders.folder.grafana.app",
 	"dashboards.dashboard.grafana.app",
 }
@@ -63,7 +62,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	if !cfg.DisableDataMigrations && cfg.getUnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
 		cfg.Logger.Info("Unified migration configs not yet enforced")
-		//cfg.enforceMigrationToUnifiedConfigs() // TODO: uncomment when ready for release
+		// cfg.enforceMigrationToUnifiedConfigs() // TODO: uncomment when ready for release
 	} else {
 		// Helper log to find instances disabling migration
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.getUnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
