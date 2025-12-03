@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -31,13 +32,15 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder  = (*APIBuilder)(nil)
-	_ builder.APIGroupMutation = (*APIBuilder)(nil)
+	_ builder.APIGroupBuilder    = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation   = (*APIBuilder)(nil)
+	_ builder.APIGroupValidation = (*APIBuilder)(nil)
 )
 
 type APIBuilder struct {
-	authorizer  authorizer.Authorizer
-	legacyStars *legacy.DashboardStarsStorage
+	authorizer                authorizer.Authorizer
+	legacyStars               *legacy.DashboardStarsStorage
+	datasourceStacksValidator builder.APIGroupValidation
 }
 
 func RegisterAPIService(
@@ -56,6 +59,7 @@ func RegisterAPIService(
 
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
+		datasourceStacksValidator: GetDatasourceStacksValidator(),
 		authorizer: &utils.AuthorizeFromName{
 			Resource: map[string][]utils.ResourceOwner{
 				"stars":       {utils.UserResourceOwner},
@@ -116,13 +120,16 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// no need for dual writer for a kind that does not exist in the legacy database
 	resourceInfo := collections.DatasourceStacksResourceInfo
 	datasourcesStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
-	datasources := &datasourceStorage{Storage: datasourcesStorage}
-	if err != nil {
-		return err
-	}
-	storage[resourceInfo.StoragePath()] = datasources
+	storage[resourceInfo.StoragePath()] = datasourcesStorage
 
 	apiGroupInfo.VersionedResourcesStorageMap[collections.APIVersion] = storage
+	return nil
+}
+
+func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	if a.GetKind().Group == collections.DatasourceStacksResourceInfo.GroupResource().Group {
+		return b.datasourceStacksValidator.Validate(ctx, a, o)
+	}
 	return nil
 }
 
