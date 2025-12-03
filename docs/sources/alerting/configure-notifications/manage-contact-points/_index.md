@@ -137,11 +137,11 @@ On the **Contact Points** tab, you can:
 Contact points are assigned to a [specific Alertmanager](ref:configure-alertmanager) and cannot be used by notification policies in other Alertmanagers.
 {{< /admonition >}}
 
-## Protected fields
+## Grafana Cloud Protected fields
 
-Contact points may contain protected fields that require admin permissions to modify. Protected fields are sensitive configuration settings that affect where notifications are sent, such as:
+For Grafana Cloud users, contact points may contain protected fields that require admin permissions to modify. Protected fields are sensitive configuration settings that affect where notifications are sent, such as:
 
-- Target URLs for integrations (webhooks, PagerDuty, Opsgenie, etc.)
+- Target URLs for integrations (webhooks, PagerDuty, Opsgenie, or other integrations.)
 - API endpoints
 - Other destination-related settings
 
@@ -149,7 +149,7 @@ These fields are protected to prevent unauthorized users from redirecting notifi
 
 Users with edit permissions can modify most contact point settings and can add or remove integrations, but cannot change protected fields in existing integrations. Only users with admin permissions to the contact point can update protected fields.
 
-The ability to modify protected fields is controlled by the RBAC action `alert.notifications.receivers.protected:write`, which is granted by default to:
+The ability to modify protected fields is controlled by the RBAC action `alert.notifications.receivers.protected:write`. This role is granted by default to:
 
 - Users with the fixed "Alerting Admin" role
 - Users with admin permissions for the specific contact point

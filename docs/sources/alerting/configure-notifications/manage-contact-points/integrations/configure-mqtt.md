@@ -54,9 +54,9 @@ For more details on contact points, including how to test them and enable notifi
 
 ### Required Settings
 
-| Option     | Description                                                                                                             |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Broker URL | The URL of the MQTT broker. This field is [protected](ref:configure-contact-points#protected-fields) from modification. |
+| Option     | Description                                                                                                                        |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Broker URL | The URL of the MQTT broker. This field is [protected](ref:configure-contact-points#protected-fields) from modification in Grafana Cloud. |
 | Topic      | The topic to which the message will be sent.                                                                            |
 
 ### Optional Settings
