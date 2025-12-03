@@ -26,7 +26,7 @@ type InternalKey struct {
 }
 
 func (k InternalKey) String() string {
-	return fmt.Sprintf("%s/%s/%s/%s/%s", strings.ToLower(k.Subsection), k.Group, k.Resource, k.Namespace)
+	return fmt.Sprintf("%s/%s/%s/%s", strings.ToLower(k.Subsection), k.Group, k.Resource, k.Namespace)
 }
 
 func (k InternalKey) Validate() error {
