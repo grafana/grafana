@@ -2256,14 +2256,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard/components/ShareModal/ShareExport.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/ShareModal/ShareLink.tsx": {
     "no-restricted-syntax": {
       "count": 3
