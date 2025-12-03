@@ -1,8 +1,13 @@
 package app
 
 import (
+	"context"
+	"net/http"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis/alertinghistorian/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
@@ -10,6 +15,12 @@ import (
 
 func New(cfg app.Config) (app.App, error) {
 	runtimeConfig := cfg.SpecificConfig.(config.RuntimeConfig)
+
+	alertStateHandler := runtimeConfig.GetAlertStateHistoryHandler
+	if alertStateHandler == nil {
+		alertStateHandler = NewErrorHandler("no alert state handler")
+	}
+	notificationHandler := NewErrorHandler("unimplemented")
 
 	simpleConfig := simple.AppConfig{
 		Name:       "alerting.historian",
@@ -20,7 +31,12 @@ func New(cfg app.Config) (app.App, error) {
 					Namespaced: true,
 					Path:       "/alertstate/history",
 					Method:     "GET",
-				}: runtimeConfig.GetAlertStateHistoryHandler,
+				}: alertStateHandler,
+				{
+					Namespaced: true,
+					Path:       "/notification/query",
+					Method:     "POST",
+				}: notificationHandler,
 			},
 		},
 		// TODO: Remove when SDK is fixed.
@@ -42,4 +58,16 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
+}
+
+func NewErrorHandler(message string) simple.AppCustomRouteHandler {
+	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+		return &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusUnprocessableEntity,
+				Message: message,
+			},
+		}
+	}
 }
