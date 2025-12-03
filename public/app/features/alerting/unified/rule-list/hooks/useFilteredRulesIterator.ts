@@ -86,8 +86,7 @@ export function useFilteredRulesIteratorProvider() {
 
     const { backendFilter, frontendFilter, hasInvalidDataSourceNames } = getGrafanaFilter(filterState);
 
-    // Short-circuit: if all provided data source names are invalid, return empty results.
-    // This prevents making a backend request that would return all rules.
+    // Short-circuit: if all provided data source names are invalid, return empty results (no rules can match).
     if (hasInvalidDataSourceNames) {
       return { iterable: empty(), abortController };
     }
