@@ -102,7 +102,9 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	columns := getDefaultColumns()
 
 	for _, field := range fields {
-		columns = append(columns, builders.TeamSearchTableColumnDefinitions[field])
+		if col, ok := builders.TeamSearchTableColumnDefinitions[field]; ok {
+			columns = append(columns, col)
+		}
 	}
 
 	return columns

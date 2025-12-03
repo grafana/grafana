@@ -73,6 +73,33 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 										Schema:      spec.StringProperty(),
 									},
 								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "limit",
+										In:          "query",
+										Description: "limit the number of results",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "offset",
+										In:          "query",
+										Description: "start the query at the given offset",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "page",
+										In:          "query",
+										Description: "page number to start from",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
@@ -152,10 +179,14 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	s.write(w, searchResults)
+	if err := s.write(w, searchResults); err != nil {
+		s.log.Error("failed to write team search results", "error", err)
+		errhttp.Write(ctx, err, w)
+		return
+	}
 }
 
-func (s *TeamSearchHandler) write(w http.ResponseWriter, obj any) {
+func (s *TeamSearchHandler) write(w http.ResponseWriter, obj any) error {
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(obj)
+	return json.NewEncoder(w).Encode(obj)
 }

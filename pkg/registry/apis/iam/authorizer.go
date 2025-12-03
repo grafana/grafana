@@ -26,7 +26,6 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
 	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = legacyAuthorizer
 	resourceAuthorizer["display"] = legacyAuthorizer
-	resourceAuthorizer["searchTeams"] = legacyAuthorizer
 
 	// Access specific resources
 	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
@@ -38,6 +37,9 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = authorizer
+
+	serviceAuthorizer := gfauthorizer.NewServiceAuthorizer()
+	resourceAuthorizer["searchTeams"] = serviceAuthorizer
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }

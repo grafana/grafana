@@ -78,7 +78,7 @@ func TestTeamSearchBuilder(t *testing.T) {
 		Group:     "iam.grafana.app",
 		Resource:  "searchTeams",
 	}, []string{
-		"team-with-email-and-external-uid",
+		"with-email-and-external-uid",
 	})
 }
 

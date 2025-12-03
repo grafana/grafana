@@ -49,6 +49,10 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	}
 
 	for i, row := range result.Results.Rows {
+		if len(row.Cells) != len(result.Results.Columns) {
+			return v0alpha1.TeamSearchResults{}, fmt.Errorf("error parsing team search response: mismatch number of columns and cells")
+		}
+
 		hit := &v0alpha1.TeamHit{
 			Name: row.Key.Name,
 		}
