@@ -1,6 +1,5 @@
 import { sceneGraph } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
-import { Stack } from '@grafana/ui';
 
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 import { DashboardScene } from './DashboardScene';
@@ -19,12 +18,12 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
   }
 
   return (
-    <Stack gap={1}>
+    <>
       {links
         .filter((link) => link.placement === undefined)
         .map((link: DashboardLink, index: number) => (
           <DashboardLinkRenderer link={link} dashboardUID={uid} key={`${link.title}-$${index}`} />
         ))}
-    </Stack>
+    </>
   );
 }

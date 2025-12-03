@@ -1,5 +1,4 @@
 import { SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
-import { Stack } from '@grafana/ui';
 
 import { isDashboardDataLayerSetState } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
@@ -16,11 +15,11 @@ export function DashboardDataLayerControls({ dashboard }: { dashboard: Dashboard
 
   if (isDashboardDataLayerSetState(state)) {
     return (
-      <Stack gap={1}>
+      <>
         {state.annotationLayers.filter(isDefaultPlacement).map((layer) => (
           <DataLayerControl key={layer.state.key} layer={layer} />
         ))}
-      </Stack>
+      </>
     );
   }
 

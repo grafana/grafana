@@ -17,7 +17,7 @@ import {
   SceneObjectUrlValues,
   CancelActivationHandler,
 } from '@grafana/scenes';
-import { Box, Button, useStyles2 } from '@grafana/ui';
+import { Box, Button, Stack, useStyles2 } from '@grafana/ui';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
@@ -52,7 +52,13 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   });
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, {
-    keys: ['_dash.hideTimePicker', '_dash.hideVariables', '_dash.hideLinks', '_dash.hideDashboardControls'],
+    keys: [
+      '_dash.hideTimePicker',
+      '_dash.hideVariables',
+      '_dash.hideAnnotations',
+      '_dash.hideLinks',
+      '_dash.hideDashboardControls',
+    ],
   });
 
   /**
@@ -171,17 +177,17 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {/* Time controls */}
         {!hideTimeControls && (
-          <div className={styles.fixedControls}>
+          <Stack gap={1} justifyContent={'flex-end'}>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
-          </div>
+          </Stack>
         )}
 
         {/* Actions (edit, play, share, etc.) */}
         {config.featureToggles.dashboardNewLayouts && (
-          <div className={styles.fixedControls}>
+          <Stack gap={1} justifyContent={'flex-end'}>
             <DashboardControlActions dashboard={dashboard} />
-          </div>
+          </Stack>
         )}
       </div>
 
@@ -191,7 +197,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {!hideVariableControls && <VariableControls dashboard={dashboard} />}
         {!hideAnnotationControls && <DashboardDataLayerControls dashboard={dashboard} />}
         {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
-        {!hideDashboardControls && hasDashboardControls(dashboard) && <DashboardControlsButton dashboard={dashboard} />}
+        {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       </div>
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
@@ -250,13 +256,14 @@ function getStyles(theme: GrafanaTheme2) {
     controls: css({
       gap: theme.spacing(1),
       padding: theme.spacing(2, 2, 1, 2),
-      flexDirection: 'row',
+      display: 'flex',
+      flexDirection: 'row-reverse',
       flexWrap: 'nowrap',
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
       [theme.breakpoints.down('sm')]: {
-        flexDirection: 'column-reverse',
+        flexDirection: 'column',
         alignItems: 'stretch',
       },
       '&:hover .dashboard-canvas-add-button': {
@@ -276,37 +283,32 @@ function getStyles(theme: GrafanaTheme2) {
     leftControls: css({
       display: 'flex',
       gap: theme.spacing(1),
-      float: 'left',
       alignItems: 'flex-start',
+      justifyContent: 'flex-start',
+      flex: 1,
       flexWrap: 'wrap',
       maxWidth: '100%',
       minWidth: 0,
     }),
     rightControls: css({
-      display: 'flex',
+      display: 'inline-flex',
       gap: theme.spacing(1),
-      float: 'right',
       alignItems: 'flex-start',
-      flexWrap: 'wrap',
+      justifyContent: 'flex-end',
+      flexWrap: 'nowrap',
+      flexShrink: 0,
       maxWidth: '100%',
       minWidth: 0,
-    }),
-    fixedControls: css({
-      display: 'flex',
-      justifyContent: 'flex-end',
-      gap: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-      order: 2,
-      marginLeft: 'auto',
-      flexShrink: 0,
-      alignSelf: 'flex-start',
-    }),
-    dashboardControlsButton: css({
-      order: 2,
-      marginLeft: 'auto',
+      [theme.breakpoints.down('sm')]: {
+        flexWrap: 'wrap',
+      },
     }),
     rightControlsWrap: css({
       flexWrap: 'wrap',
+      marginLeft: 'auto',
+    }),
+    dashboardControlsButton: css({
+      order: 2,
       marginLeft: 'auto',
     }),
   };

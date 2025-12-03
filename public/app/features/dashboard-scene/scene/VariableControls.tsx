@@ -12,7 +12,7 @@ import {
   ControlsLayout,
   sceneUtils,
 } from '@grafana/scenes';
-import { Stack, useElementSelection, useStyles2 } from '@grafana/ui';
+import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
@@ -21,14 +21,14 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
 
   return (
-    <Stack gap={1}>
+    <>
       {variables
         .filter((v) => v.state.hide !== VariableHide.inControlsMenu)
         .map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}
       {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
-    </Stack>
+    </>
   );
 }
 
@@ -173,7 +173,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderTopLeftRadius: 'unset',
       borderBottomLeftRadius: 'unset',
     }),
-    marginBottom: theme.spacing(1),
   }),
   verticalContainer: css({
     display: 'flex',
