@@ -13,7 +13,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
-import { fetchNextChildrenPage } from '../state/actions';
+import { fetchNextChildrenPage, selectFolderWithAllDashboards } from '../state/actions';
 import {
   useFlatTreeState,
   useCheckboxSelectionState,
@@ -22,7 +22,6 @@ import {
   useLoadNextChildrenPage,
   rootItemsSelector,
 } from '../state/hooks';
-import { selectFolderWithAllDashboards } from '../state/actions';
 import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../state/slice';
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState, BrowseDashboardsPermissions } from '../types';
 

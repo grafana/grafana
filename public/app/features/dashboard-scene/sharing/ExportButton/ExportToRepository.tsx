@@ -1,6 +1,7 @@
-import { SceneComponentProps } from '@grafana/scenes';
 import { t } from '@grafana/i18n';
+import { SceneComponentProps } from '@grafana/scenes';
 import { BulkExportProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkExportProvisionedResource';
+
 import { DashboardScene } from '../../scene/DashboardScene';
 import { ShareExportTab } from '../ShareExportTab';
 

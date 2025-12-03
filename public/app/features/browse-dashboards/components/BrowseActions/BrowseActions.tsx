@@ -228,7 +228,7 @@ export function BrowseActions({ folderDTO }: Props) {
           title={
             // Heading levels should only increase by one (a11y)
             <Text variant="h3" element="h2">
-              {t('browse-dashboards.action.bulk-export-provisioned-resources', 'Bulk Export Resources')}
+              {t('browse-dashboards.action.export-provisioned-resources', 'Export Resources')}
             </Text>
           }
           onClose={() => setShowBulkExportProvisionedResource(false)}

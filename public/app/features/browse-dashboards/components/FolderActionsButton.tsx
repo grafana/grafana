@@ -160,10 +160,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
   const exportLabel = t('browse-dashboards.folder-actions-button.export', 'Export to Repository');
 
-  const provisioningEnabled = config.featureToggles.provisioning;
-  // isProvisionedFolder means the folder IS managed/provisioned
-  // So !isProvisionedFolder means the folder is unmanaged (not provisioned)
-  const isUnmanagedFolder = !isProvisionedFolder;
+  const canExportToRepository = config.featureToggles.provisioning && !isProvisionedFolder;
 
   const menu = (
     <Menu>
@@ -183,7 +180,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
           label={deleteLabel}
         />
       )}
-      {provisioningEnabled && isUnmanagedFolder && <MenuItem onClick={handleExportFolder} label={exportLabel} />}
+      {canExportToRepository && <MenuItem onClick={handleExportFolder} label={exportLabel} />}
     </Menu>
   );
 
@@ -192,7 +189,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     (canViewPermissions && !isProvisionedFolder) ||
     (canMoveFolder && !isReadOnlyRepo) ||
     (canDeleteFolders && !isReadOnlyRepo) ||
-    (provisioningEnabled && isUnmanagedFolder);
+    canExportToRepository;
 
   if (!hasAnyActions) {
     return null;

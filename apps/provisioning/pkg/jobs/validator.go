@@ -101,10 +101,7 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 	}
 
 	// Validate resources if specified
-	// Only validate Resources when it has items (not nil and not empty).
-	// When Resources is nil or empty, the old API path (using Folder) is used, so we skip validation.
-	// Empty and nil slices are treated the same for validation purposes.
-	if opts.Resources != nil && len(opts.Resources) > 0 {
+	if len(opts.Resources) > 0 {
 		for i, r := range opts.Resources {
 			resourcePath := field.NewPath("spec", "push", "resources").Index(i)
 

@@ -3551,7 +3551,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
-      "bulk-export-provisioned-resources": "Bulk Export Resources",
       "bulk-move-provisioned-resources": "Bulk Move Provisioned Resources",
       "cancel-button": "Cancel",
       "confirmation-text": "Delete",
@@ -3565,6 +3564,7 @@
       "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
       "export-folder": "Export Folder to Repository",
+      "export-provisioned-resources": "Export Resources",
       "export-to-repository-button": "Export to Repository",
       "manage-permissions-button": "Manage permissions",
       "move-button": "Move",
