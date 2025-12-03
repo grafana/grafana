@@ -1,3 +1,6 @@
+/* eslint-disable */
+/* tslint:disable:react-prefer-stateless-function */
+
 import { css, cx } from '@emotion/css';
 import { get } from 'lodash';
 import { PureComponent } from 'react';
@@ -390,6 +393,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                     </ContentOutlineItem>
 
                     <AddQueryButtons
+                      exploreId={exploreId}
                       onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                       // We cannot show multiple traces at the same time right now so we do not show add query button.
                       //TODO:unification
@@ -511,3 +515,5 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export default withTheme2(connector(Explore));
+/* eslint-enable */
+/* tslint:enable:react-prefer-stateless-function */

@@ -3,10 +3,14 @@ import { css } from '@emotion/css';
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { ToolbarButton, useTheme2 } from '@grafana/ui';
+import { Dropdown, Menu, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Block } from 'app/types/explore';
+
+import { useDispatch } from '../../types/store';
 
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueryType } from './QueryLibrary/types';
+import { addBlock } from './state/query';
 
 type Props = {
   queryInspectorButtonActive?: boolean;
@@ -20,6 +24,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       gap: theme.spacing(1),
       marginTop: theme.spacing(2),
+    }),
+    addBlockButton: css({
+      alignSelf: 'flex-start',
     }),
   };
 };
@@ -46,27 +53,70 @@ export function AddQueryButtons({
   addQueryRowButtonDisabled,
   addQueryRowButtonHidden,
   onClickAddQueryRowButton,
+  exploreId,
   onSelectQueryFromLibrary,
 }: {
   addQueryRowButtonDisabled?: boolean;
   addQueryRowButtonHidden?: boolean;
 
   onClickAddQueryRowButton: () => void;
+  exploreId: string;
   onSelectQueryFromLibrary: OnSelectQueryType;
 }) {
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
+
+  const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
+  const blockOptions: Array<{ label: string; value: Block['type'] }> = [
+    { label: t('explore.secondary-actions.block-type-query', 'Query block'), value: 'query' },
+    { label: t('explore.secondary-actions.block-type-text', 'Text block'), value: 'text' },
+    { label: t('explore.secondary-actions.block-type-transform', 'Transform block'), value: 'transform' },
+  ];
+
+  const createBlock = (type: Block['type']): Block | null => {
+    if (type === 'text') {
+      return { type: 'text', text: '' };
+    }
+    if (type === 'transform') {
+      return { type: 'transform' };
+    }
+    return null;
+  };
+
+  const onAddBlock = (type: Block['type']) => {
+    if (type === 'query') {
+      onClickAddQueryRowButton();
+      return;
+    }
+
+    const block = createBlock(type);
+    if (block) {
+      dispatch(addBlock(exploreId, block));
+    }
+  };
+
+  const addBlockMenu = (
+    <Menu>
+      {blockOptions.map((option) => (
+        <Menu.Item key={option.value} label={option.label} onClick={() => onAddBlock(option.value)} icon="plus" />
+      ))}
+    </Menu>
+  );
+
   return (
     !addQueryRowButtonHidden && (
       <>
-        <ToolbarButton
-          variant="canvas"
-          aria-label={t('explore.secondary-actions.query-add-button-aria-label', 'Add query')}
-          onClick={onClickAddQueryRowButton}
-          disabled={addQueryRowButtonDisabled}
-          icon="plus"
-        >
-          <Trans i18nKey="explore.secondary-actions.query-add-button">Add query</Trans>
-        </ToolbarButton>
+        <Dropdown overlay={addBlockMenu} placement="bottom-start">
+          <ToolbarButton
+            variant="canvas"
+            aria-label={t('explore.secondary-actions.block-add-button-aria-label', 'Add block')}
+            disabled={addQueryRowButtonDisabled}
+            icon="plus"
+            className={styles.addBlockButton}
+          >
+            <Trans i18nKey="explore.secondary-actions.block-add-button">Add block</Trans>
+          </ToolbarButton>
+        </Dropdown>
         {queryLibraryEnabled && (
           <ToolbarButton
             data-testid={selectors.pages.Explore.General.addFromQueryLibrary}

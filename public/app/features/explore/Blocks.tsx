@@ -13,6 +13,7 @@ import {
   GrafanaTheme2,
   SplitOpen,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
 import { AdHocFilterItem, useStyles2, PanelContainer } from '@grafana/ui';
@@ -302,7 +303,22 @@ export function Blocks(props: Props) {
       );
     }
 
-    return 'unknown block type';
+    if (block.type === 'text' || block.type === 'transform') {
+      const title =
+        block.type === 'text'
+          ? t('explore.blocks.text-block.title', 'Text block')
+          : t('explore.blocks.transform-block.title', 'Transform block');
+      const icon = block.type === 'text' ? 'paragraph' : 'magic';
+      return (
+        <ContentOutlineItem title={title} icon={icon} key={`${block.type}-${index}`} panelId={`${block.type}-${index}`}>
+          <PanelContainer className={styles.queryContainer}>
+            {t('explore.blocks.placeholder', 'This block type will be available soon.')}
+          </PanelContainer>
+        </ContentOutlineItem>
+      );
+    }
+
+    return null;
   });
 }
 

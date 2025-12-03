@@ -99,6 +99,12 @@ export interface AddQueryRowPayload {
 }
 export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQueryRow');
 
+export interface AddBlockPayload {
+  exploreId: string;
+  block: Block;
+}
+export const addBlockAction = createAction<AddBlockPayload>('explore/addBlock');
+
 /**
  * Query change handler for the query row with the given index.
  * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
@@ -276,6 +282,12 @@ export function addQueryRow(exploreId: string, index: number): ThunkResult<Promi
     const query = await generateEmptyQuery(pane.queries, index, datasourceOverride);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
+  };
+}
+
+export function addBlock(exploreId: string, block: Block): ThunkResult<void> {
+  return (dispatch) => {
+    dispatch(addBlockAction({ exploreId, block }));
   };
 }
 /**
@@ -1063,6 +1075,14 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       queries: nextQueries,
       queryKeys: getQueryKeys(nextQueries),
       blocks: nextBlocks,
+    };
+  }
+
+  if (addBlockAction.match(action)) {
+    const blocks = ensureBlocks(state);
+    return {
+      ...state,
+      blocks: [...blocks, action.payload.block],
     };
   }
 
