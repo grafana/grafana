@@ -143,6 +143,7 @@ export const availableIconsIndex = {
   'gf-bar-alignment-center': true,
   'gf-glue': true,
   'gf-grid': true,
+  'gf-grotfood': true,
   'gf-interpolation-linear': true,
   'gf-interpolation-smooth': true,
   'gf-interpolation-step-after': true,
