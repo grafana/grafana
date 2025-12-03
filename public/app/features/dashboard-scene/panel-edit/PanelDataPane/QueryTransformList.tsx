@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { memo, useMemo, useState } from 'react';
+import { HTMLAttributes, memo, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -170,6 +170,25 @@ export const QueryTransformList = memo(
       };
     }, [allItems, dataSourceItems, transformItems]);
 
+    const cardListHoverHandlerFactory = (
+      itemList: QueryTransformItem[],
+      lastItemId: string
+    ): HTMLAttributes<HTMLDivElement>['onMouseMove'] => {
+      return (ev) => {
+        const rect = ev.currentTarget.getBoundingClientRect();
+        const y = ev.clientY - rect.top;
+        let hoveredIdx = Math.floor((y - 16 + CARD_HEIGHT / 2) / CARD_HEIGHT);
+        if (hoveredIdx < 0) {
+          hoveredIdx = 0;
+        }
+        if (hoveredIdx > itemList.length) {
+          hoveredIdx = itemList.length;
+        }
+        const hoveredId = hoveredIdx === itemList.length ? lastItemId : itemList[hoveredIdx].id;
+        setHovered(hoveredId);
+      };
+    };
+
     return (
       <div className={styles.container} onMouseLeave={() => setHovered(null)}>
         <div className={styles.header}>
@@ -202,22 +221,7 @@ export const QueryTransformList = memo(
                               <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                onMouseMove={(ev) => {
-                                  const rect = ev.currentTarget.getBoundingClientRect();
-                                  const y = ev.clientY - rect.top;
-                                  let hoveredIdx = Math.floor(y / CARD_HEIGHT);
-                                  if (hoveredIdx < 0) {
-                                    hoveredIdx = 0;
-                                  }
-                                  if (hoveredIdx > dataSourceItems.length) {
-                                    hoveredIdx = dataSourceItems.length;
-                                  }
-                                  const hoveredId =
-                                    hoveredIdx === dataSourceItems.length
-                                      ? 'queries-last'
-                                      : dataSourceItems[hoveredIdx].id;
-                                  setHovered(hoveredId);
-                                }}
+                                onMouseMove={cardListHoverHandlerFactory(dataSourceItems, 'queries-last')}
                                 className={cx(
                                   styles.cardList,
                                   isDraggingFromOtherSection ? styles.droppableInvalid : undefined
@@ -272,7 +276,7 @@ export const QueryTransformList = memo(
                                       onAddTransform={onAddTransform}
                                       onAddExpression={onAddExpression}
                                       allowedTypes={['query', 'expression']}
-                                      index={transformItems.length}
+                                      index={dataSourceItems.length}
                                       show={!isDragging && hovered === 'queries-last'}
                                     />
                                   </div>
@@ -313,22 +317,7 @@ export const QueryTransformList = memo(
                                   styles.cardList,
                                   isDraggingFromOtherSection ? styles.droppableInvalid : undefined
                                 )}
-                                onMouseMove={(ev) => {
-                                  const rect = ev.currentTarget.getBoundingClientRect();
-                                  const y = ev.clientY - rect.top;
-                                  let hoveredIdx = Math.floor((y - 16 + CARD_HEIGHT / 2) / CARD_HEIGHT);
-                                  if (hoveredIdx < 0) {
-                                    hoveredIdx = 0;
-                                  }
-                                  if (hoveredIdx > transformItems.length) {
-                                    hoveredIdx = transformItems.length;
-                                  }
-                                  const hoveredId =
-                                    hoveredIdx === transformItems.length
-                                      ? 'transformations-last'
-                                      : transformItems[hoveredIdx].id;
-                                  setHovered(hoveredId);
-                                }}
+                                onMouseMove={cardListHoverHandlerFactory(transformItems, 'transformations-last')}
                               >
                                 <Stack direction="column" gap={2}>
                                   {transformItems.map((item, index) => (
