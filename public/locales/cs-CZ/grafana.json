@@ -5226,7 +5226,6 @@
       },
       "only-overrides-button-tooltip": "Zobrazit pouze přepsání",
       "placeholder-search-options": "Možnosti hledání",
-      "visualization-button-label": "Vizualizace",
       "visualization-button-tooltip": "Možnosti hledání"
     },
     "panel-editor-table-view": {
@@ -6269,6 +6268,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Hledat…",
       "radio-options": {
         "label": {
@@ -6582,7 +6584,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Změnit vizualizaci",
-      "tooltip-click-to-change-visualization": "Klikněte pro změnu vizualizace"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Otevřít podokno dotazu",
@@ -7378,7 +7380,8 @@
       "title-failed-volume-query": "Objem protokolu pro tento dotaz se nepodařilo načíst",
       "title-no-logs-volume-available": "Není k dispozici žádný objem protokolů",
       "title-showing-partial-data": "Zobrazují se částečná data",
-      "title-unable-to-show-log-volume": "Nelze zobrazit objem protokolu"
+      "title-unable-to-show-log-volume": "Nelze zobrazit objem protokolu",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nejsou dostupné žádné informace o objemu pro aktuální dotazy a časový rozsah."
@@ -11182,6 +11185,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
