@@ -5921,7 +5921,8 @@
       },
       "title": {
         "dashboard": "Dashboard",
-        "discard-changes-to-dashboard": "Discard changes to dashboard?"
+        "save-changes-question": "Do you want to save your changes?",
+        "unsaved-changes": "Unsaved changes"
       }
     },
     "dashboard-scene-page-state-manager": {
