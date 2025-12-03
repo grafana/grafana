@@ -18,22 +18,23 @@ import (
 )
 
 // Helper function to create folder objects
-func createFolderObject(name, parentFolder string) unstructured.Unstructured {
+func createFolderObject(name, uid, parentFolderUID string) unstructured.Unstructured {
 	folder := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": resources.FolderResource.GroupVersion().String(),
 			"kind":       "Folder",
 			"metadata": map[string]interface{}{
 				"name": name,
+				"uid":  uid,
 			},
 			"spec": map[string]interface{}{
 				"title": name,
 			},
 		},
 	}
-	if parentFolder != "" {
+	if parentFolderUID != "" {
 		meta, _ := utils.MetaAccessor(&folder)
-		meta.SetFolder(parentFolder)
+		meta.SetFolder(parentFolderUID)
 	}
 	return folder
 }
@@ -87,10 +88,10 @@ func TestExportSpecificResources_Success(t *testing.T) {
 	}
 
 	folderItems := []unstructured.Unstructured{
-		createFolderObject("team-a", ""),
+		createFolderObject("team-a", "team-a-uid", ""),
 	}
 
-	dashboard1 := createDashboardObjectWithFolder("dashboard-1", "team-a")
+	dashboard1 := createDashboardObjectWithFolder("dashboard-1", "team-a-uid")
 	dashboard2 := createDashboardObject("dashboard-2")
 
 	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
@@ -306,11 +307,11 @@ func TestExportSpecificResources_FolderPathResolution(t *testing.T) {
 
 	// Create folder hierarchy: team-a -> subteam
 	folderItems := []unstructured.Unstructured{
-		createFolderObject("team-a", ""),
-		createFolderObject("subteam", "team-a"),
+		createFolderObject("team-a", "team-a-uid", ""),
+		createFolderObject("subteam", "subteam-uid", "team-a-uid"),
 	}
 
-	dashboard := createDashboardObjectWithFolder("dashboard-in-nested-folder", "subteam")
+	dashboard := createDashboardObjectWithFolder("dashboard-in-nested-folder", "subteam-uid")
 
 	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
 		progress.On("SetMessage", mock.Anything, "exporting specific resources").Return()
