@@ -78,6 +78,15 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
 
   // Called once per panel (graph)
   query(options: DataQueryRequest<OpenTsdbQuery>): Observable<DataQueryResponse> {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return super.query(options).pipe(
+        map((response) => {
+          this._saveTagKeysFromFrames(response.data);
+          return response;
+        })
+      );
+    }
+
     // migrate annotations
     if (options.targets.some((target: OpenTsdbQuery) => target.fromAnnotations)) {
       const streams: Array<Observable<DataQueryResponse>> = [];
@@ -263,6 +272,15 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     });
 
     this.tagKeys[metricData.metric] = tagKeys;
+  }
+
+  _saveTagKeysFromFrames(frames: any[]) {
+    for (const frame of frames) {
+      const tagKeys = frame.meta?.custom?.tagKeys;
+      if (frame.name && tagKeys) {
+        this.tagKeys[frame.name] = tagKeys;
+      }
+    }
   }
 
   _performSuggestQuery(query: string, type: string) {
