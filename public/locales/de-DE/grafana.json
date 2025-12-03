@@ -5184,7 +5184,6 @@
       },
       "only-overrides-button-tooltip": "Nur Überschreibungen anzeigen",
       "placeholder-search-options": "Suchoptionen",
-      "visualization-button-label": "Visualisierung",
       "visualization-button-tooltip": "Suchoptionen"
     },
     "panel-editor-table-view": {
@@ -6223,6 +6222,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Suche nach ...",
       "radio-options": {
         "label": {
@@ -6534,7 +6536,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Visualisierung ändern",
-      "tooltip-click-to-change-visualization": "Klicken, um Visualisierung zu ändern"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abfragebereich öffnen",
@@ -7330,7 +7332,8 @@
       "title-failed-volume-query": "Das Log-Volumen für diese Abfrage konnte nicht geladen werden",
       "title-no-logs-volume-available": "Kein Logs-Volumen verfügbar",
       "title-showing-partial-data": "Teildaten werden angezeigt",
-      "title-unable-to-show-log-volume": "Log-Volumen kann nicht angezeigt werden"
+      "title-unable-to-show-log-volume": "Log-Volumen kann nicht angezeigt werden",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Für die aktuellen Abfragen und den aktuellen Zeitbereich sind keine Volumeninformationen verfügbar."
@@ -11088,6 +11091,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {

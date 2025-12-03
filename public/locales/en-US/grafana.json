@@ -3563,9 +3563,6 @@
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
-      "export-folder": "Export Folder to Repository",
-      "export-provisioned-resources": "Export Resources",
-      "export-to-repository-button": "Export to Repository",
       "manage-permissions-button": "Manage permissions",
       "move-button": "Move",
       "move-modal-alert": "Moving this item may change its permissions.",
@@ -3595,29 +3592,6 @@
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
       "error-deleting-resources": "Error deleting resources"
-    },
-    "bulk-export-resources-form": {
-      "button-cancel": "Cancel",
-      "button-export": "Export",
-      "button-exporting": "Exporting...",
-      "dashboards-count_one": "{{count}} dashboard",
-      "dashboards-count_other": "{{count}} dashboard",
-      "error-exporting-resources": "Error exporting resources",
-      "error-no-dashboards": "No dashboards selected. Only dashboards can be exported.",
-      "error-no-repository": "Please select a repository",
-      "export-total": "In total, this will export:",
-      "folders-count_one": "{{count}} folder",
-      "folders-count_other": "{{count}} folder",
-      "folders-info": "Folders in selection",
-      "folders-info-description": "Folders will be left behind. New folders will be created in the repository based on the resource folder structure.",
-      "no-items": "No items selected",
-      "path": "Path",
-      "path-description": "Path relative to the repository root (optional). Resources will be exported under this path.",
-      "path-description-with-repo": "Add a sub-path below to organize exported resources.",
-      "path-placeholder": "e.g., dashboards/",
-      "path-placeholder-with-repo": "e.g., dashboards/team-a/",
-      "repository": "Repository",
-      "repository-placeholder": "Select a repository"
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
@@ -3684,8 +3658,6 @@
     "folder-actions-button": {
       "delete": "Delete this folder",
       "delete-folder-error": "Error deleting folder. Please try again later.",
-      "export": "Export to Repository",
-      "export-folder-error": "Error collecting dashboards. Please try again later.",
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
       "move": "Move this folder"
@@ -6587,7 +6559,7 @@
       "delete-button": "Delete",
       "title": "Delete"
     },
-    "delete-modal-restore-dashboards-text": "This action will mark the dashboard for deletion in 30 days. Your organization administrator can restore it anytime before the 30 days expire.",
+    "delete-modal-restore-dashboards-text": "This action will delete the dashboard. Deleted dashboards will be kept in the history for up to 12 months and can be restored by your organization administrator during that time. The history is limited to 1000 dashboards—older ones will be removed sooner if the limit is reached.",
     "delete-modal-text": "Do you want to delete this dashboard?",
     "general": {
       "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list. Use the format '5s' for seconds, '1m' for minutes, '1h' for hours, and '1d' for days (e.g.: '5s,10s,30s,1m,5m,15m,30m,1h,2h,1d').",
@@ -11765,7 +11737,6 @@
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resource is managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
-      "export-remaining-resources-button": "Export remaining resources",
       "no-results-matching-your-query": "No results matching your query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
@@ -12742,7 +12713,6 @@
     "menu": {
       "export-image-title": "Export as image",
       "export-json-title": "Export as JSON",
-      "export-to-repository-title": "Export to Repository",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
@@ -12770,8 +12740,6 @@
     "export": {
       "back-button": "Back to export config",
       "cancel-button": "Cancel",
-      "export-to-repository-button": "Export to Repository",
-      "export-to-repository-title": "Export Dashboard to Repository",
       "info-text": "Export this dashboard.",
       "loading": "Loading...",
       "save-button": "Save to file",

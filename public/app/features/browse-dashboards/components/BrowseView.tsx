@@ -13,7 +13,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
-import { fetchNextChildrenPage, selectFolderWithAllDashboards } from '../state/actions';
+import { fetchNextChildrenPage } from '../state/actions';
 import {
   useFlatTreeState,
   useCheckboxSelectionState,
@@ -81,13 +81,7 @@ export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRe
 
   const handleItemSelectionChange = useCallback(
     (item: DashboardViewItem, isSelected: boolean) => {
-      // If selecting a folder, use the async thunk to collect all dashboards recursively
-      // When deselecting, the normal reducer will handle deselecting all children
-      if (item.kind === 'folder') {
-        dispatch(selectFolderWithAllDashboards({ folderUID: item.uid, isSelected }));
-      } else {
-        dispatch(setItemSelectionState({ item, isSelected }));
-      }
+      dispatch(setItemSelectionState({ item, isSelected }));
     },
     [dispatch]
   );
