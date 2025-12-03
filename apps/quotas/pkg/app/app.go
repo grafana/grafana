@@ -10,10 +10,10 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
-	unifiedStorage "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
-	//"github.com/grafana/grafana-app-sdk/resource"
+	unifiedStorage "github.com/grafana/grafana/pkg/storage/unified/resource"
+
 	"github.com/grafana/grafana-app-sdk/simple"
 	quotasv0alpha1 "github.com/grafana/grafana/apps/quotas/pkg/apis/quotas/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -118,11 +118,5 @@ func New(cfg app.Config) (app.App, error) {
 }
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
-	gv := schema.GroupVersion{
-		Group:   quotasv0alpha1.QuotaKind().Group(),
-		Version: quotasv0alpha1.QuotaKind().Version(),
-	}
-	return map[schema.GroupVersion][]resource.Kind{
-		gv: {quotasv0alpha1.QuotaKind()},
-	}
+	return map[schema.GroupVersion][]resource.Kind{}
 }

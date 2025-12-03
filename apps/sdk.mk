@@ -20,4 +20,4 @@ $(APP_SDK_BIN):
 update-app-sdk: ## Update the Grafana App SDK dependency in go.mod
 	@pwd
 	go get github.com/grafana/grafana-app-sdk@$(APP_SDK_VERSION)
-	go mod tidy
+	#go mod tidy

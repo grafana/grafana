@@ -6,7 +6,6 @@
 package apis
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -19,11 +18,7 @@ import (
 	v0alpha1 "github.com/grafana/grafana/apps/quotas/pkg/apis/quotas/v0alpha1"
 )
 
-var (
-	rawSchemaQuotav0alpha1     = []byte(`{"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Quota":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"count":{"type":"string"},"kind":{"type":"string"},"limit":{"type":"string"}},"required":["count","limit","kind"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
-	versionSchemaQuotav0alpha1 app.VersionSchema
-	_                          = json.Unmarshal(rawSchemaQuotav0alpha1, &versionSchemaQuotav0alpha1)
-)
+var ()
 
 var appManifestData = app.ManifestData{
 	AppName:          "quotas",
@@ -33,15 +28,7 @@ var appManifestData = app.ManifestData{
 		{
 			Name:   "v0alpha1",
 			Served: true,
-			Kinds: []app.ManifestVersionKind{
-				{
-					Kind:       "Quota",
-					Plural:     "Quotas",
-					Scope:      "Namespaced",
-					Conversion: false,
-					Schema:     &versionSchemaQuotav0alpha1,
-				},
-			},
+			Kinds:  []app.ManifestVersionKind{},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/usage": {
@@ -131,9 +118,7 @@ func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("quotas")
 }
 
-var kindVersionToGoType = map[string]resource.Kind{
-	"Quota/v0alpha1": v0alpha1.QuotaKind(),
-}
+var kindVersionToGoType = map[string]resource.Kind{}
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
 // If there is no association for the provided Kind and Version, exists will return false.
