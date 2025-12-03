@@ -68,7 +68,7 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	}
 	if err := s.AddConversionFunc((*dashv2alpha1.Dashboard)(nil), (*dashv1.Dashboard)(nil),
 		withConversionMetrics(dashv2alpha1.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V2alpha1_to_V1beta1(a.(*dashv2alpha1.Dashboard), b.(*dashv1.Dashboard), scope)
+			return Convert_V2alpha1_to_V1beta1(a.(*dashv2alpha1.Dashboard), b.(*dashv1.Dashboard), scope, dsIndexProvider)
 		})); err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	}
 	if err := s.AddConversionFunc((*dashv2beta1.Dashboard)(nil), (*dashv1.Dashboard)(nil),
 		withConversionMetrics(dashv2beta1.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V2beta1_to_V1beta1(a.(*dashv2beta1.Dashboard), b.(*dashv1.Dashboard), scope)
+			return Convert_V2beta1_to_V1beta1(a.(*dashv2beta1.Dashboard), b.(*dashv1.Dashboard), scope, dsIndexProvider)
 		})); err != nil {
 		return err
 	}
