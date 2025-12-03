@@ -56,34 +56,51 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
             page.goto(login_url, wait_until="domcontentloaded", timeout=60000)
 
             try:
-                # Wait for login form
-                page.wait_for_selector('input[name="user"], input[name="username"]', timeout=10000)
+                # Wait for login form using Grafana's data-testid selectors
+                print("Waiting for login form...")
+                page.wait_for_selector('[data-testid="Username input field"]', state="visible", timeout=10000)
                 print("Login form detected")
 
                 # Fill credentials
-                username_input = page.locator('input[name="user"], input[name="username"]').first
-                password_input = page.locator('input[name="password"]').first
+                print(f"Filling username (length: {len(grafana_username)})")
+                page.locator('[data-testid="Username input field"]').fill(grafana_username)
 
-                username_input.fill(grafana_username)
-                password_input.fill(grafana_password)
-                print(f"Credentials filled - username length: {len(grafana_username)}, password length: {len(grafana_password)}")
+                print(f"Filling password (length: {len(grafana_password)})")
+                page.locator('[data-testid="Password input field"]').fill(grafana_password)
 
-                # Verify the values were actually filled
-                filled_username = username_input.input_value()
-                filled_password = password_input.input_value()
-                print(f"Verified filled values - username length: {len(filled_username)}, password length: {len(filled_password)}")
+                print("Credentials filled successfully")
 
-                # Submit form and wait for navigation
-                submit_button = page.locator('button[type="submit"]').first
-                submit_button.click()
+                # Click login button
+                print("Clicking login button...")
+                page.click('[data-testid="Login button"]')
                 print("Login form submitted")
 
-                # Wait for navigation away from login page
-                page.wait_for_load_state("domcontentloaded", timeout=60000)
-                print(f"Page loaded after login, current URL: {page.url}")
+                # Try to wait for navigation, but don't fail if it doesn't happen
+                try:
+                    print("Waiting for navigation...")
+                    page.wait_for_navigation(timeout=5000)
+                    print("Navigation occurred after login")
+                except Exception as nav_err:
+                    print(f"No navigation detected: {nav_err}")
+                    print("Waiting for in-page changes...")
+                    page.wait_for_timeout(2000)
+
+                print(f"Current URL after login: {page.url}")
+                print(f"Page title: {page.title()}")
+
+                # Check for login errors
+                error_locator = page.locator('[data-testid="alert-error"]')
+                print("Checking for error alerts...")
+                if error_locator.is_visible():
+                    error_text = error_locator.text_content()
+                    print(f"Error alert found: {error_text}")
+                    raise Exception(f"Login failed with error: {error_text}")
+                else:
+                    print("No error alerts found")
 
                 # Verify we're no longer on the login page
                 if "/login" in page.url:
+                    print("Still on login page - login failed")
                     raise Exception(f"Login appears to have failed - still on login page: {page.url}")
 
                 print(f"Login successful, navigated to: {page.url}")
