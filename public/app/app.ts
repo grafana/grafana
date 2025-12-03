@@ -11,12 +11,14 @@ import { createRoot } from 'react-dom/client';
 import {
   locationUtil,
   monacoLanguageRegistry,
+  PluginMetasResponse,
   setLocale,
   setTimeZoneResolver,
   setWeekStart,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
+  Spec,
 } from '@grafana/data';
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
@@ -257,6 +259,21 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
+        const response = await backendSrv.get<PluginMetasResponse>(
+          `/apis/plugins.grafana.app/v0alpha1/namespaces/${config.namespace}/pluginmetas`
+        );
+        const plugins: Record<string, Spec[]> = {};
+        response.items.reduce((acc, curr) => {
+          if (!acc[curr.spec.pluginJson.type]) {
+            acc[curr.spec.pluginJson.type] = [];
+          }
+
+          acc[curr.spec.pluginJson.type].push(curr.spec);
+          return acc;
+        }, plugins);
+
+        updateConfig({ plugins });
+
         const appPluginsToAwait = getAppPluginsToAwait();
         const appPluginsToPreload = getAppPluginsToPreload();
 

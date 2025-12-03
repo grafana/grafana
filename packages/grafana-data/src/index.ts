@@ -921,3 +921,4 @@ export {
 } from './rbac/rbac';
 
 export { type UserStorage } from './types/userStorage';
+export { type PluginMetasResponse, type Spec } from './types/plugin';
