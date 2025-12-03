@@ -12,10 +12,12 @@ interface Connection {
 interface ConnectionLinesProps {
   connections: Connection[];
   isDragging?: boolean;
+  onClick?: () => void;
+  selected?: boolean;
 }
 
-export function ConnectionLines({ connections, isDragging = false }: ConnectionLinesProps) {
-  const styles = useStyles2(getStyles);
+export function ConnectionLines({ connections, isDragging = false, selected, onClick }: ConnectionLinesProps) {
+  const styles = useStyles2(getStyles, selected);
   const [positions, setPositions] = useState<Map<string, DOMRect>>(new Map());
   const containerRef = useRef<SVGSVGElement>(null);
 
@@ -61,7 +63,7 @@ export function ConnectionLines({ connections, isDragging = false }: ConnectionL
         if (mutationTimeout) {
           clearTimeout(mutationTimeout);
         }
-        mutationTimeout = window.setTimeout(updatePositions, 100);
+        mutationTimeout = window.setTimeout(updatePositions, 50);
       });
       observer.observe(container, { childList: true, subtree: true });
 
@@ -125,7 +127,7 @@ export function ConnectionLines({ connections, isDragging = false }: ConnectionL
 
   return (
     <svg ref={containerRef} className={styles.svg}>
-      <g className={styles.connectionGroup}>
+      <g className={styles.connectionGroup} onClick={onClick}>
         <line x1={swimlaneX} y1={minY} x2={swimlaneX} y2={maxY} className={styles.swimlane} />
         {Array.from(refIds).map((refId) => {
           const cardRect = findCardRect(refId);
@@ -140,19 +142,21 @@ export function ConnectionLines({ connections, isDragging = false }: ConnectionL
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, selected?: boolean) => ({
   svg: css({
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    pointerEvents: 'none',
     zIndex: 10,
     overflow: 'visible',
+    pointerEvents: 'none',
     width: '100%',
   }),
   connectionGroup: css({
+    pointerEvents: 'auto',
+    cursor: 'pointer',
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       animation: 'fadeIn 0.2s ease-in-out',
       '@keyframes fadeIn': {
@@ -166,12 +170,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   swimlane: css({
-    stroke: theme.colors.text.maxContrast,
-    strokeWidth: 2,
-    opacity: 0.3,
+    stroke: selected ? theme.colors.primary.border : theme.colors.text.maxContrast,
+    strokeWidth: 4,
+    opacity: 0.6,
   }),
   point: css({
-    fill: theme.colors.text.maxContrast,
+    fill: selected ? theme.colors.primary.border : theme.colors.text.maxContrast,
     opacity: 0.8,
   }),
 });

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { HTMLAttributes, memo, useMemo, useState } from 'react';
+import { HTMLAttributes, memo, useCallback, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -68,6 +68,7 @@ export const QueryTransformList = memo(
     const [isClosing, setIsClosing] = useState(false);
     const [selectedContextIds, setSelectedContextIds] = useState<string[]>([]);
     const [hovered, setHovered] = useState<string | null>(null);
+    const [viewingConnections, setViewingConnections] = useState<boolean>(false);
 
     const onDragStart = () => {
       setIsDragging(true);
@@ -126,14 +127,13 @@ export const QueryTransformList = memo(
       return conns;
     }, [allItems]);
 
+    const activeItem = useMemo(
+      () => (selectedId ? allItems.find((item) => item.id === selectedId) : undefined),
+      [allItems, selectedId]
+    );
+
     // Filter connections to only show for selected card
     const visibleConnections = useMemo(() => {
-      if (!selectedId) {
-        return [];
-      }
-
-      // Find the item to get its refId
-      const activeItem = allItems.find((item) => item.id === selectedId);
       if (!activeItem || !('refId' in activeItem.data)) {
         return [];
       }
@@ -142,7 +142,7 @@ export const QueryTransformList = memo(
 
       // Show connections where this card is involved (either as source or destination)
       return allConnections.filter((conn) => conn.from === activeRefId || conn.to === activeRefId);
-    }, [allConnections, selectedId, allItems]);
+    }, [activeItem, allConnections]);
 
     const getHandlers = (item: QueryTransformItem) => {
       switch (item.type) {
@@ -239,24 +239,39 @@ export const QueryTransformList = memo(
       }
     };
 
-    const cardListHoverHandlerFactory = (
-      itemList: QueryTransformItem[],
-      lastItemId: string
-    ): HTMLAttributes<HTMLDivElement>['onMouseMove'] => {
-      return (ev) => {
-        const rect = ev.currentTarget.getBoundingClientRect();
-        const y = ev.clientY - rect.top;
-        let hoveredIdx = Math.floor((y - 16 + CARD_HEIGHT / 2) / CARD_HEIGHT);
-        if (hoveredIdx < 0) {
-          hoveredIdx = 0;
-        }
-        if (hoveredIdx > itemList.length) {
-          hoveredIdx = itemList.length;
-        }
-        const hoveredId = hoveredIdx === itemList.length ? lastItemId : itemList[hoveredIdx].id;
-        setHovered(hoveredId);
-      };
-    };
+    const filteredDataSourceItems = useMemo(() => {
+      if (!viewingConnections) {
+        return dataSourceItems;
+      }
+      const visibleConnectionsRefIds = new Set<string>();
+      for (const conn of visibleConnections) {
+        visibleConnectionsRefIds.add(conn.from);
+        visibleConnectionsRefIds.add(conn.to);
+      }
+      return dataSourceItems.filter((item) => {
+        return 'refId' in item.data && visibleConnectionsRefIds.has(item.data.refId);
+      });
+    }, [dataSourceItems, viewingConnections, visibleConnections]);
+
+    const canAdd = !isDragging && !viewingConnections;
+
+    const cardListHoverHandlerFactory = useCallback(
+      (itemList: QueryTransformItem[], lastItemId: string): HTMLAttributes<HTMLDivElement>['onMouseMove'] =>
+        (ev) => {
+          const rect = ev.currentTarget.getBoundingClientRect();
+          const y = ev.clientY - rect.top;
+          let hoveredIdx = Math.floor((y - 16 + CARD_HEIGHT / 2) / CARD_HEIGHT);
+          if (hoveredIdx < 0) {
+            hoveredIdx = 0;
+          }
+          if (hoveredIdx > itemList.length) {
+            hoveredIdx = itemList.length;
+          }
+          const hoveredId = hoveredIdx === itemList.length ? lastItemId : itemList[hoveredIdx].id;
+          setHovered(hoveredId);
+        },
+      []
+    );
 
     return (
       <div className={styles.container} onMouseLeave={() => setHovered(null)}>
@@ -306,7 +321,12 @@ export const QueryTransformList = memo(
         <div className={styles.scrollWrapper} data-testid="query-transform-list-scroll-wrapper">
           <ScrollContainer data-scrollcontainer height="100%">
             <div className={styles.contentWrapper}>
-              <ConnectionLines connections={visibleConnections} isDragging={isDragging} />
+              <ConnectionLines
+                connections={visibleConnections}
+                isDragging={isDragging}
+                selected={viewingConnections}
+                onClick={() => setViewingConnections((current) => !current)}
+              />
               <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
                 <div
                   className={cx(
@@ -340,9 +360,13 @@ export const QueryTransformList = memo(
                                 )}
                               >
                                 <Stack direction="column" gap={2}>
-                                  {dataSourceItems.map((item, index) => (
+                                  {filteredDataSourceItems.map((item) => (
                                     <div key={item.id} className={styles.cardContainer}>
-                                      <Draggable draggableId={item.id} index={index}>
+                                      <Draggable
+                                        isDragDisabled={viewingConnections}
+                                        draggableId={item.id}
+                                        index={item.index}
+                                      >
                                         {(provided, snapshot) => (
                                           <div
                                             ref={provided.innerRef}
@@ -372,9 +396,9 @@ export const QueryTransformList = memo(
                                           onAddTransform={onAddTransform}
                                           onAddExpression={onAddExpression}
                                           onAddFromSavedQueries={onAddFromSavedQueries}
-                                          index={index}
+                                          index={item.index}
                                           allowedTypes={['query', 'expression']}
-                                          show={!isDragging && hovered === item.id}
+                                          show={canAdd && hovered === item.id}
                                         />
                                       </div>
                                     </div>
@@ -391,7 +415,7 @@ export const QueryTransformList = memo(
                                       onAddExpression={onAddExpression}
                                       allowedTypes={['query', 'expression']}
                                       index={dataSourceItems.length}
-                                      show={!isDragging && hovered === 'queries-last'}
+                                      show={canAdd && hovered === 'queries-last'}
                                     />
                                   </div>
                                 </div>
@@ -434,9 +458,9 @@ export const QueryTransformList = memo(
                                 onMouseMove={cardListHoverHandlerFactory(transformItems, 'transformations-last')}
                               >
                                 <Stack direction="column" gap={2}>
-                                  {transformItems.map((item, index) => (
+                                  {transformItems.map((item) => (
                                     <div key={item.id} className={styles.cardContainer}>
-                                      <Draggable key={item.id} draggableId={item.id} index={index}>
+                                      <Draggable key={item.id} draggableId={item.id} index={item.index}>
                                         {(provided, snapshot) => (
                                           <div
                                             ref={provided.innerRef}
@@ -466,9 +490,9 @@ export const QueryTransformList = memo(
                                           onAddTransform={onAddTransform}
                                           onAddExpression={onAddExpression}
                                           onAddFromSavedQueries={onAddFromSavedQueries}
-                                          index={index}
+                                          index={item.index}
                                           allowedTypes={['transform']}
-                                          show={!isDragging && hovered === item.id}
+                                          show={canAdd && hovered === item.id}
                                         />
                                       </div>
                                     </div>
@@ -484,7 +508,7 @@ export const QueryTransformList = memo(
                                       onAddExpression={onAddExpression}
                                       allowedTypes={['transform']}
                                       index={transformItems.length}
-                                      show={!isDragging && hovered === 'transformations-last'}
+                                      show={canAdd && hovered === 'transformations-last'}
                                     />
                                   </div>
                                 </div>
