@@ -3593,6 +3593,29 @@
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
       "error-deleting-resources": "Error deleting resources"
     },
+    "bulk-export-resources-form": {
+      "button-cancel": "Cancel",
+      "button-export": "Export",
+      "button-exporting": "Exporting...",
+      "dashboards-count_one": "{{count}} dashboard",
+      "dashboards-count_other": "{{count}} dashboard",
+      "error-exporting-resources": "Error exporting resources",
+      "error-no-dashboards": "No dashboards selected. Only dashboards can be exported.",
+      "error-no-repository": "Please select a repository",
+      "export-total": "In total, this will export:",
+      "folders-count_one": "{{count}} folder",
+      "folders-count_other": "{{count}} folder",
+      "folders-info": "Folders in selection",
+      "folders-info-description": "Folders will be left behind. New folders will be created in the repository based on the resource folder structure.",
+      "no-items": "No items selected",
+      "path": "Path",
+      "path-description": "Path relative to the repository root (optional). Resources will be exported under this path.",
+      "path-description-with-repo": "Add a sub-path below to organize exported resources.",
+      "path-placeholder": "e.g., dashboards/",
+      "path-placeholder-with-repo": "e.g., dashboards/team-a/",
+      "repository": "Repository",
+      "repository-placeholder": "Select a repository"
+    },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
       "button-move": "Move",
@@ -11737,6 +11760,7 @@
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resource is managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
+      "export-remaining-resources-button": "Export remaining resources",
       "no-results-matching-your-query": "No results matching your query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
@@ -12740,6 +12764,7 @@
     "export": {
       "back-button": "Back to export config",
       "cancel-button": "Cancel",
+      "export-to-repository-title": "Export Dashboard to Repository",
       "info-text": "Export this dashboard.",
       "loading": "Loading...",
       "save-button": "Save to file",
