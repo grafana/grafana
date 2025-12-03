@@ -350,6 +350,14 @@ func NewTypedTuple(typ, subject, relation, name string) *openfgav1.TupleKey {
 	}
 }
 
+func NewTuple(subject, relation, object string) *openfgav1.TupleKey {
+	return &openfgav1.TupleKey{
+		User:     subject,
+		Relation: relation,
+		Object:   object,
+	}
+}
+
 func ToAuthzExtTupleKey(t *openfgav1.TupleKey) *authzextv1.TupleKey {
 	tupleKey := &authzextv1.TupleKey{
 		User:     t.GetUser(),
@@ -439,6 +447,14 @@ func ToOpenFGATuples(tuples []*authzextv1.Tuple) []*openfgav1.Tuple {
 	return result
 }
 
+func ToOpenFGADeleteTupleKey(tuples *openfgav1.TupleKey) *openfgav1.TupleKeyWithoutCondition {
+	return &openfgav1.TupleKeyWithoutCondition{
+		User:     tuples.GetUser(),
+		Relation: tuples.GetRelation(),
+		Object:   tuples.GetObject(),
+	}
+}
+
 func AddRenderContext(req *openfgav1.CheckRequest) {
 	if req.ContextualTuples == nil {
 		req.ContextualTuples = &openfgav1.ContextualTupleKeys{}
@@ -456,4 +472,22 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 			"",
 		),
 	})
+}
+
+func SplitTupleObject(object string) (string, string, string) {
+	var objectType, name, relation string
+	parts := strings.Split(object, ":")
+	if len(parts) < 2 {
+		return "", "", ""
+	}
+
+	objectType = parts[0]
+	nameRel := parts[1]
+	parts = strings.Split(nameRel, "#")
+	if len(parts) > 1 {
+		relation = parts[1]
+	}
+	name = parts[0]
+
+	return objectType, name, relation
 }

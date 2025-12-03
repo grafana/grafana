@@ -33,6 +33,7 @@ import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { shouldForceV2API } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -45,6 +46,8 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
+import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
+import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -242,7 +245,9 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
     layout: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         // If the row is collapsed it will have panels within the row model.
-        children: (row.panels?.map((p) => buildGridItemForPanel(p)) ?? []).concat(panels),
+        children: (
+          row.panels?.map((p) => buildGridItemForPanel(p instanceof PanelModel ? p : new PanelModel(p))) ?? []
+        ).concat(panels),
       }),
     }),
     repeatByVariable: row.repeat,
@@ -255,7 +260,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = oldModel.uid;
-  const serializerVersion = config.featureToggles.dashboardNewLayouts && !oldModel.meta.isSnapshot ? 'v2' : 'v1';
+  const serializerVersion = shouldForceV2API() && !oldModel.meta.isSnapshot ? 'v2' : 'v1';
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
@@ -272,6 +277,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         name: a.name,
         isEnabled: Boolean(a.enable),
         isHidden: Boolean(a.hide),
+        placement: a.placement,
       });
     });
   }
@@ -437,6 +443,12 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
+    }),
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),

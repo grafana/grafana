@@ -13,6 +13,18 @@ alertRulev0alpha1: alertRuleKind & {
 	schema: {
 		spec: v0alpha1.AlertRuleSpec
 	}
+	validation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
+	mutation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	selectableFields: [
 		"spec.title",
 		"spec.paused",
