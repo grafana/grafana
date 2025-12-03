@@ -11,57 +11,84 @@ interface Connection {
 
 interface ConnectionLinesProps {
   connections: Connection[];
+  isDragging?: boolean;
 }
 
-export function ConnectionLines({ connections }: ConnectionLinesProps) {
+export function ConnectionLines({ connections, isDragging = false }: ConnectionLinesProps) {
   const styles = useStyles2(getStyles);
   const [positions, setPositions] = useState<Map<string, DOMRect>>(new Map());
   const containerRef = useRef<SVGSVGElement>(null);
 
   useLayoutEffect(() => {
+    let rafId: number | null = null;
+    let isUpdating = false;
+
     const updatePositions = () => {
-      const newPositions = new Map<string, DOMRect>();
-      const cards = document.querySelectorAll('[data-card-id]');
+      if (isUpdating) {
+        return;
+      }
 
-      cards.forEach((element) => {
-        const cardId = element.getAttribute('data-card-id');
-        if (cardId) {
-          newPositions.set(cardId, element.getBoundingClientRect());
-        }
+      isUpdating = true;
+      rafId = requestAnimationFrame(() => {
+        const newPositions = new Map<string, DOMRect>();
+        const cards = document.querySelectorAll('[data-card-id]');
+
+        cards.forEach((element) => {
+          const cardId = element.getAttribute('data-card-id');
+          if (cardId) {
+            newPositions.set(cardId, element.getBoundingClientRect());
+          }
+        });
+
+        setPositions(newPositions);
+        isUpdating = false;
       });
-
-      setPositions(newPositions);
     };
 
-    const timeoutId = setTimeout(updatePositions, 100);
-    window.addEventListener('resize', updatePositions);
+    // Initial update and update when drag ends
+    if (!isDragging) {
+      updatePositions();
+    }
 
     const container = containerRef.current?.parentElement;
     if (container) {
-      const scrollContainer = container.querySelector('[data-scrollcontainer]');
-      scrollContainer?.addEventListener('scroll', updatePositions);
-
-      const observer = new MutationObserver(() => setTimeout(updatePositions, 50));
+      // Only observe mutations when not dragging (for card add/remove/reorder)
+      let mutationTimeout: number | null = null;
+      const observer = new MutationObserver(() => {
+        if (isDragging) {
+          return;
+        }
+        if (mutationTimeout) {
+          clearTimeout(mutationTimeout);
+        }
+        mutationTimeout = window.setTimeout(updatePositions, 100);
+      });
       observer.observe(container, { childList: true, subtree: true });
 
+      // Track container resize (from splitter drag)
       const resizeObserver = new ResizeObserver(updatePositions);
       resizeObserver.observe(container);
 
       return () => {
-        clearTimeout(timeoutId);
-        window.removeEventListener('resize', updatePositions);
-        scrollContainer?.removeEventListener('scroll', updatePositions);
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+        }
+        if (mutationTimeout) {
+          clearTimeout(mutationTimeout);
+        }
         observer.disconnect();
         resizeObserver.disconnect();
       };
     }
 
     return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', updatePositions);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
     };
-  }, [connections]);
+  }, [connections, isDragging]);
 
+  // Get container rect from the SVG's parent (contentWrapper)
   const containerRect = containerRef.current?.parentElement?.getBoundingClientRect();
 
   if (!containerRect || connections.length === 0) {
@@ -79,7 +106,7 @@ export function ConnectionLines({ connections }: ConnectionLinesProps) {
     refIds.add(to);
   });
 
-  const swimlaneX = containerRect.width - 24;
+  const swimlaneX = containerRect.width - 40; // Adjusted for increased right padding (64px)
 
   const cardPositions: number[] = [];
   refIds.forEach((refId) => {
@@ -118,8 +145,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     top: 0,
     left: 0,
-    width: '100%',
-    height: '100%',
+    right: 0,
+    bottom: 0,
     pointerEvents: 'none',
     zIndex: 10,
     overflow: 'visible',

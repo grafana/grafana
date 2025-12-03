@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import { memo, useMemo } from 'react';
+import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { memo, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -35,6 +36,8 @@ interface QueryTransformListProps {
   onToggleExpressionVisibility?: (index: number) => void;
   onRemoveTransform?: (index: number) => void;
   onToggleTransformVisibility?: (index: number) => void;
+  onReorderDataSources?: (startIndex: number, endIndex: number) => void;
+  onReorderTransforms?: (startIndex: number, endIndex: number) => void;
 }
 
 export const QueryTransformList = memo(
@@ -55,8 +58,43 @@ export const QueryTransformList = memo(
     onToggleExpressionVisibility,
     onRemoveTransform,
     onToggleTransformVisibility,
+    onReorderDataSources,
+    onReorderTransforms,
   }: QueryTransformListProps) => {
     const styles = useStyles2(getStyles);
+    const [isDragging, setIsDragging] = useState(false);
+
+    const onDragStart = () => {
+      setIsDragging(true);
+    };
+
+    const onDragEnd = (result: DropResult) => {
+      // Defer state updates until after drop animation
+      setTimeout(() => {
+        setIsDragging(false);
+
+        if (!result.destination) {
+          return;
+        }
+
+        const startIndex = result.source.index;
+        const endIndex = result.destination.index;
+
+        if (startIndex === endIndex) {
+          return;
+        }
+
+        // Handle reordering based on droppable ID
+        if (result.source.droppableId === 'data-sources' && result.destination.droppableId === 'data-sources') {
+          onReorderDataSources?.(startIndex, endIndex);
+        } else if (
+          result.source.droppableId === 'transformations' &&
+          result.destination.droppableId === 'transformations'
+        ) {
+          onReorderTransforms?.(startIndex, endIndex);
+        }
+      }, 0);
+    };
 
     const allConnections = useMemo(() => {
       const conns: Array<{ from: string; to: string }> = [];
@@ -152,57 +190,119 @@ export const QueryTransformList = memo(
             </span>
           </Stack>
         </div>
-        <ConnectionLines connections={visibleConnections} />
         <div className={styles.scrollWrapper}>
           <ScrollContainer data-scrollcontainer>
-            <div className={styles.content}>
-              <Stack direction="column" gap={3}>
-                {/* Data Sources Section (Queries + Expressions) */}
-                {dataSourceItems.length > 0 && (
-                  <Stack direction="column" gap={2}>
-                    <div className={styles.sectionLabel}>
-                      {t('dashboard-scene.query-transform-list.queries-expressions', 'Queries & Expressions')}
-                    </div>
-                    {dataSourceItems.map((item) => (
-                      <QueryTransformCard
-                        key={item.id}
-                        item={item.data}
-                        type={item.type}
-                        index={item.index}
-                        isSelected={selectedId === item.id}
-                        onClick={() => onSelect(item.id)}
-                        {...getHandlers(item)}
-                      />
-                    ))}
-                  </Stack>
-                )}
+            <div className={styles.contentWrapper}>
+              <ConnectionLines connections={visibleConnections} isDragging={isDragging} />
+              <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+                <div className={styles.content}>
+                  <Stack direction="column" gap={3}>
+                    {/* Data Sources Section (Queries + Expressions) */}
+                    {dataSourceItems.length > 0 && (
+                      <Stack direction="column" gap={2}>
+                        <div className={styles.sectionLabel}>
+                          {t('dashboard-scene.query-transform-list.queries-expressions', 'Queries & Expressions')}
+                        </div>
+                        <Droppable droppableId="data-sources">
+                          {(provided, snapshot) => {
+                            // Check if dragging from transformations section
+                            const isDraggingFromOtherSection =
+                              isDragging && snapshot.draggingFromThisWith === null && snapshot.isDraggingOver;
 
-                {/* Transformations Section */}
-                {transformItems.length > 0 && (
-                  <Stack direction="column" gap={2}>
-                    <div className={styles.sectionLabel}>
-                      {t('dashboard-scene.query-transform-list.transformations', 'Transformations')}
-                    </div>
-                    {transformItems.map((item) => (
-                      <QueryTransformCard
-                        key={item.id}
-                        item={item.data}
-                        type={item.type}
-                        index={item.index}
-                        isSelected={selectedId === item.id}
-                        onClick={() => onSelect(item.id)}
-                        {...getHandlers(item)}
-                      />
-                    ))}
-                  </Stack>
-                )}
+                            return (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.droppableProps}
+                                className={isDraggingFromOtherSection ? styles.droppableInvalid : undefined}
+                              >
+                                <Stack direction="column" gap={2}>
+                                  {dataSourceItems.map((item, index) => (
+                                    <Draggable key={item.id} draggableId={item.id} index={index}>
+                                      {(provided, snapshot) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                          className={snapshot.isDragging ? styles.dragging : undefined}
+                                        >
+                                          <QueryTransformCard
+                                            item={item.data}
+                                            type={item.type}
+                                            index={item.index}
+                                            isSelected={selectedId === item.id}
+                                            onClick={() => onSelect(item.id)}
+                                            {...getHandlers(item)}
+                                          />
+                                        </div>
+                                      )}
+                                    </Draggable>
+                                  ))}
+                                  {provided.placeholder}
+                                </Stack>
+                              </div>
+                            );
+                          }}
+                        </Droppable>
+                      </Stack>
+                    )}
 
-                <AddDataItemMenu
-                  onAddQuery={onAddQuery}
-                  onAddTransform={onAddTransform}
-                  onAddExpression={onAddExpression}
-                />
-              </Stack>
+                    {/* Transformations Section */}
+                    {transformItems.length > 0 && (
+                      <Stack direction="column" gap={2}>
+                        <div className={styles.sectionLabel}>
+                          {t('dashboard-scene.query-transform-list.transformations', 'Transformations')}
+                        </div>
+                        <Droppable droppableId="transformations">
+                          {(provided, snapshot) => {
+                            // Check if dragging from data sources section
+                            const isDraggingFromOtherSection =
+                              isDragging && snapshot.draggingFromThisWith === null && snapshot.isDraggingOver;
+
+                            return (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.droppableProps}
+                                className={isDraggingFromOtherSection ? styles.droppableInvalid : undefined}
+                              >
+                                <Stack direction="column" gap={2}>
+                                  {transformItems.map((item, index) => (
+                                    <Draggable key={item.id} draggableId={item.id} index={index}>
+                                      {(provided, snapshot) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                          className={snapshot.isDragging ? styles.dragging : undefined}
+                                        >
+                                          <QueryTransformCard
+                                            item={item.data}
+                                            type={item.type}
+                                            index={item.index}
+                                            isSelected={selectedId === item.id}
+                                            onClick={() => onSelect(item.id)}
+                                            {...getHandlers(item)}
+                                          />
+                                        </div>
+                                      )}
+                                    </Draggable>
+                                  ))}
+                                  {provided.placeholder}
+                                </Stack>
+                              </div>
+                            );
+                          }}
+                        </Droppable>
+                      </Stack>
+                    )}
+
+                    <AddDataItemMenu
+                      onAddQuery={onAddQuery}
+                      onAddTransform={onAddTransform}
+                      onAddExpression={onAddExpression}
+                    />
+                  </Stack>
+                </div>
+              </DragDropContext>
             </div>
           </ScrollContainer>
         </div>
@@ -270,7 +370,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       marginLeft: theme.spacing(-2),
       marginRight: theme.spacing(-2),
-      '&::before, &::after': {
+      '&::after': {
         content: '""',
         flex: 1,
         height: '1px',
@@ -280,10 +380,43 @@ const getStyles = (theme: GrafanaTheme2) => {
     scrollWrapper: css({
       flex: 1,
       minHeight: 0,
+    }),
+    contentWrapper: css({
       position: 'relative',
+      minHeight: '100%',
     }),
     content: css({
-      padding: `${theme.spacing(2)} ${theme.spacing(6)} ${theme.spacing(4)} ${theme.spacing(4)}`,
+      padding: `${theme.spacing(2)} ${theme.spacing(8)} ${theme.spacing(4)} ${theme.spacing(6)}`,
+      position: 'relative',
+    }),
+    dragging: css({
+      opacity: 0.8,
+      cursor: 'grabbing !important',
+      // Use GPU-accelerated properties only
+      willChange: 'transform',
+    }),
+    droppableActive: css({
+      // Minimal styling for performance
+    }),
+    droppableInvalid: css({
+      position: 'relative',
+      cursor: 'not-allowed',
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: -4,
+        left: -4,
+        right: -4,
+        bottom: -4,
+        background: theme.colors.error.transparent,
+        borderRadius: theme.shape.radius.default,
+        pointerEvents: 'none',
+        zIndex: 0,
+      },
+      '& > *': {
+        position: 'relative',
+        zIndex: 1,
+      },
     }),
     footer: css({
       ...barBase,

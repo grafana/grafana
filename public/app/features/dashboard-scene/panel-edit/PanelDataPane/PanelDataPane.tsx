@@ -430,6 +430,35 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     [tabs]
   );
 
+  const handleReorderDataSources = useCallback(
+    (startIndex: number, endIndex: number) => {
+      if (queryRunner) {
+        const queries = queryRunner.state.queries || [];
+        const newQueries = Array.from(queries);
+        const [removed] = newQueries.splice(startIndex, 1);
+        newQueries.splice(endIndex, 0, removed);
+        queryRunner.setState({ queries: newQueries });
+      }
+    },
+    [queryRunner]
+  );
+
+  const handleReorderTransforms = useCallback(
+    (startIndex: number, endIndex: number) => {
+      const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
+      if (transformsTab) {
+        const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
+          isDataTransformerConfig
+        );
+        const newTransformations = Array.from(transformations);
+        const [removed] = newTransformations.splice(startIndex, 1);
+        newTransformations.splice(endIndex, 0, removed);
+        transformsTab.onChangeTransformations(newTransformations);
+      }
+    },
+    [tabs]
+  );
+
   // Get data for transformations drawer
   const sourceData = queryRunner?.useState();
   const series = sourceData?.data?.series || [];
@@ -462,6 +491,8 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             onToggleExpressionVisibility={handleToggleExpressionVisibility}
             onRemoveTransform={handleRemoveTransform}
             onToggleTransformVisibility={handleToggleTransformVisibility}
+            onReorderDataSources={handleReorderDataSources}
+            onReorderTransforms={handleReorderTransforms}
           />
         </div>
         <div
@@ -497,9 +528,9 @@ export function shouldShowAlertingTab(pluginId: string) {
   return isGraph || isTimeseries;
 }
 
-// Left pane sizing: cards grow from 180px-300px, plus content padding (32px + 48px = 80px)
-const LEFT_PANE_MIN = 180 + 80; // 260px (180px card min + 80px padding)
-const LEFT_PANE_MAX = 300 + 80; // 380px (300px card max + 80px padding)
+// Left pane sizing: cards grow from 180px-300px, plus content padding (48px + 64px = 112px)
+const LEFT_PANE_MIN = 180 + 112; // 292px (180px card min + 112px padding)
+const LEFT_PANE_MAX = 300 + 112; // 412px (300px card max + 112px padding)
 
 function getStyles(theme: GrafanaTheme2) {
   return {
