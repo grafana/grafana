@@ -3783,6 +3783,7 @@ __metadata:
     "@monaco-editor/react": "npm:4.7.0"
     "@popperjs/core": "npm:2.11.8"
     "@rc-component/drawer": "npm:1.3.0"
+    "@rc-component/slider": "npm:1.0.1"
     "@react-aria/dialog": "npm:3.5.31"
     "@react-aria/focus": "npm:3.21.2"
     "@react-aria/overlays": "npm:3.30.0"
@@ -3865,7 +3866,6 @@ __metadata:
     process: "npm:^0.11.10"
     rc-cascader: "npm:3.34.0"
     rc-picker: "npm:4.11.3"
-    rc-slider: "npm:11.1.9"
     rc-tooltip: "npm:6.4.0"
     react: "npm:18.3.1"
     react-calendar: "npm:^6.0.0"
@@ -6844,6 +6844,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rc-component/slider@npm:1.0.1":
+  version: 1.0.1
+  resolution: "@rc-component/slider@npm:1.0.1"
+  dependencies:
+    "@rc-component/util": "npm:^1.3.0"
+    clsx: "npm:^2.1.1"
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 10/23ee6d696e7e60fa0d707ef0d58aba7892e4e3630b0f466b4ffda374210be0cd2e63fff034fcfcf11f72c03d4a4e980560ab5be3807f441cf8e20280793ba33e
+  languageName: node
+  linkType: hard
+
 "@rc-component/trigger@npm:^2.0.0, @rc-component/trigger@npm:^2.1.1":
   version: 2.2.0
   resolution: "@rc-component/trigger@npm:2.2.0"
@@ -6861,7 +6874,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/util@npm:^1.2.0, @rc-component/util@npm:^1.2.1":
+"@rc-component/util@npm:^1.2.0, @rc-component/util@npm:^1.2.1, @rc-component/util@npm:^1.3.0":
   version: 1.4.0
   resolution: "@rc-component/util@npm:1.4.0"
   dependencies:
@@ -19316,6 +19329,7 @@ __metadata:
     "@playwright/test": "npm:1.56.1"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.6.1"
     "@popperjs/core": "npm:2.11.8"
+    "@rc-component/slider": "npm:1.0.1"
     "@react-aria/dialog": "npm:3.5.31"
     "@react-aria/focus": "npm:3.21.2"
     "@react-aria/overlays": "npm:3.30.0"
@@ -19526,7 +19540,6 @@ __metadata:
     prismjs: "npm:1.30.0"
     prom-client: "npm:^15.1.3"
     publint: "npm:^0.3.12"
-    rc-slider: "npm:11.1.9"
     rc-tree: "npm:5.13.1"
     re-resizable: "npm:6.11.2"
     react: "npm:18.3.1"
@@ -28085,20 +28098,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-slider@npm:11.1.9":
-  version: 11.1.9
-  resolution: "rc-slider@npm:11.1.9"
-  dependencies:
-    "@babel/runtime": "npm:^7.10.1"
-    classnames: "npm:^2.2.5"
-    rc-util: "npm:^5.36.0"
-  peerDependencies:
-    react: ">=16.9.0"
-    react-dom: ">=16.9.0"
-  checksum: 10/b9b1c5b9e690db565a09fde0d6cc9b8562cbb15dd8a0d1eb0a7039c4fcb6c4307ba1cb58047322b8be518a6eb226af9db5c7d974d6ff197fe07f0db84d56cc5e
-  languageName: node
-  linkType: hard
-
 "rc-tooltip@npm:6.4.0":
   version: 6.4.0
   resolution: "rc-tooltip@npm:6.4.0"
@@ -28130,7 +28129,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-util@npm:^5.15.0, rc-util@npm:^5.16.1, rc-util@npm:^5.21.0, rc-util@npm:^5.24.4, rc-util@npm:^5.36.0, rc-util@npm:^5.37.0, rc-util@npm:^5.38.0, rc-util@npm:^5.43.0, rc-util@npm:^5.44.1, rc-util@npm:^5.44.3":
+"rc-util@npm:^5.15.0, rc-util@npm:^5.16.1, rc-util@npm:^5.21.0, rc-util@npm:^5.24.4, rc-util@npm:^5.37.0, rc-util@npm:^5.38.0, rc-util@npm:^5.43.0, rc-util@npm:^5.44.1, rc-util@npm:^5.44.3":
   version: 5.44.3
   resolution: "rc-util@npm:5.44.3"
   dependencies:
