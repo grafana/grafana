@@ -38,6 +38,7 @@ export interface DashboardControlsState extends SceneObjectState {
   refreshPicker: SceneRefreshPicker;
   hideTimeControls?: boolean;
   hideVariableControls?: boolean;
+  hideAnnotationControls?: boolean;
   hideLinksControls?: boolean;
   // Hides the dashboard-controls dropdown menu
   hideDashboardControls?: boolean;
@@ -63,7 +64,8 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    const { hideTimeControls, hideVariableControls, hideLinksControls, hideDashboardControls } = this.state;
+    const { hideTimeControls, hideVariableControls, hideLinksControls, hideDashboardControls, hideAnnotationControls } =
+      this.state;
     const isEnabledViaUrl = (key: string) => values[key] === 'true' || values[key] === '';
 
     // Only allow hiding, never "unhiding" from url
@@ -75,6 +77,10 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 
     if (!hideVariableControls && isEnabledViaUrl('_dash.hideVariables')) {
       this.setState({ hideVariableControls: true });
+    }
+
+    if (!hideAnnotationControls && isEnabledViaUrl('_dash.hideAnnotations')) {
+      this.setState({ hideAnnotationControls: true });
     }
 
     if (!hideLinksControls && isEnabledViaUrl('_dash.hideLinks')) {
@@ -126,11 +132,12 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const hasAnnotations = sceneGraph.getDataLayers(this).some((d) => d.state.isEnabled && !d.state.isHidden);
     const hasLinks = getDashboardSceneFor(this).state.links?.length > 0;
     const hideLinks = this.state.hideLinksControls || !hasLinks;
-    const hideVariables = this.state.hideVariableControls || (!hasAnnotations && !hasVariables);
+    const hideVariables = this.state.hideVariableControls || !hasVariables;
+    const hideAnnotationControls = this.state.hideAnnotationControls || !hasAnnotations;
     const hideTimePicker = this.state.hideTimeControls;
     const hideDashboardControls = this.state.hideDashboardControls || !hasDashboardControls(dashboard);
 
-    return !(hideVariables && hideLinks && hideTimePicker && hideDashboardControls);
+    return !(hideVariables && hideLinks && hideTimePicker && hideDashboardControls && hideAnnotationControls);
   }
 }
 
@@ -140,6 +147,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     timePicker,
     hideTimeControls,
     hideVariableControls,
+    hideAnnotationControls,
     hideLinksControls,
     hideDashboardControls,
   } = model.useState();
@@ -159,27 +167,32 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       data-testid={selectors.pages.Dashboard.Controls}
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
+      {/* Right controls */}
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+        {/* Time controls */}
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
+
+        {/* Actions (edit, play, share, etc.) */}
         {config.featureToggles.dashboardNewLayouts && (
           <div className={styles.fixedControls}>
             <DashboardControlActions dashboard={dashboard} />
           </div>
         )}
-        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
-      {!hideVariableControls && (
-        <>
-          <VariableControls dashboard={dashboard} />
-          <DashboardDataLayerControls dashboard={dashboard} />
-        </>
-      )}
-      {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+
+      {/* Left controls */}
+      <div className={styles.leftControls}>
+        {/* Variables */}
+        {!hideVariableControls && <VariableControls dashboard={dashboard} />}
+        {!hideAnnotationControls && <DashboardDataLayerControls dashboard={dashboard} />}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+        {!hideDashboardControls && hasDashboardControls(dashboard) && <DashboardControlsButton dashboard={dashboard} />}
+      </div>
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
@@ -259,6 +272,15 @@ function getStyles(theme: GrafanaTheme2) {
     embedded: css({
       background: 'unset',
       position: 'unset',
+    }),
+    leftControls: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      float: 'left',
+      alignItems: 'flex-start',
+      flexWrap: 'wrap',
+      maxWidth: '100%',
+      minWidth: 0,
     }),
     rightControls: css({
       display: 'flex',

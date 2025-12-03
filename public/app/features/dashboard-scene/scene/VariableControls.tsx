@@ -12,28 +12,23 @@ import {
   ControlsLayout,
   sceneUtils,
 } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { Stack, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
-  const styles = useStyles2(getStyles);
 
   return (
-    <>
+    <Stack gap={1}>
       {variables
         .filter((v) => v.state.hide !== VariableHide.inControlsMenu)
         .map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}
-      {config.featureToggles.dashboardNewLayouts ? (
-        <div className={styles.addButton}>
-          <AddVariableButton dashboard={dashboard} />
-        </div>
-      ) : null}
-    </>
+      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
+    </Stack>
   );
 }
 
@@ -179,7 +174,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderBottomLeftRadius: 'unset',
     }),
     marginBottom: theme.spacing(1),
-    marginRight: theme.spacing(1),
   }),
   verticalContainer: css({
     display: 'flex',
@@ -210,12 +204,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
-  }),
-  addButton: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    verticalAlign: 'middle',
-    marginBottom: theme.spacing(1),
-    marginRight: theme.spacing(1),
   }),
 });
