@@ -112,7 +112,10 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
     });
 
     if (!isSourceRow) {
+      rowClone.state.conditionalRendering?.setTarget(rowClone);
       clonedRows.push(rowClone);
+    } else {
+      row.state.conditionalRendering?.setTarget(row);
     }
   }
 

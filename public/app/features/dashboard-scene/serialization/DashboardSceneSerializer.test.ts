@@ -1393,8 +1393,8 @@ describe('DashboardSceneSerializer', () => {
         serializer.initializeDSReferencesMapping(v1SaveModel as unknown as DashboardV2Spec);
         expect(serializer.getDSReferencesMapping()).toEqual({
           panels: new Map(),
-          variables: new Set(),
-          annotations: new Set(),
+          variables: new Map(),
+          annotations: new Map(),
         });
         expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
       });
@@ -1411,8 +1411,8 @@ describe('DashboardSceneSerializer', () => {
         serializer.initializeDSReferencesMapping(undefined);
         expect(serializer.getDSReferencesMapping()).toEqual({
           panels: expect.any(Map),
-          variables: expect.any(Set),
-          annotations: expect.any(Set),
+          variables: expect.any(Map),
+          annotations: expect.any(Map),
         });
         expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
       });

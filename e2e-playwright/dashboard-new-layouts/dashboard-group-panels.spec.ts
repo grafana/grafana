@@ -414,13 +414,10 @@ test.describe(
       ).toBeVisible();
 
       // Go back to dashboard options
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click({ force: true });
-
-      // Expand layouts section
-      await page.getByLabel('Expand Group layout category').click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       // Select tabs layout
-      await page.getByLabel('Tabs').click();
+      await page.getByLabel('layout-selection-option-Tabs').click();
 
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New row'))).toBeVisible();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New row 1'))).toBeVisible();
@@ -518,14 +515,14 @@ test.describe(
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
         .fill('Test row 1');
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
 
       // clear the title input to simulate no title and click away to trigger onBlur
       await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('Test row 1')).click();
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
         .fill('');
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
 
       // title should be set to a default name
       await expect(
@@ -543,14 +540,14 @@ test.describe(
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
         .fill('Test row 2');
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
 
       // clear the title input to simulate no title and click away to trigger onBlur
       await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('Test row 2')).click();
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
         .fill('');
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
 
       // title should be set to a default name + 1 to avoid duplicates
       await expect(
@@ -755,13 +752,10 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab 2'))).toBeVisible();
 
       // Go back to dashboard options
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click({ force: true });
-
-      // Expand layouts section
-      await page.getByLabel('Expand Group layout category').click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       // Select rows layout
-      await page.getByLabel('Rows').click();
+      await page.getByLabel('layout-selection-option-Rows').click();
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 1'))
@@ -903,14 +897,14 @@ test.describe(
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
         .fill('Test tab 1');
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
 
       // clear the title input to simulate no title and click away to trigger onBlur
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Test tab 1')).click();
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
         .fill('');
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
 
       // title should be set to a default name
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab'))).toBeVisible();
@@ -923,14 +917,14 @@ test.describe(
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
         .fill('Test tab 2');
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
 
       // clear the title input to simulate no title and click away to trigger onBlur
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Test tab 2')).click();
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
         .fill('');
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
 
       // title should be set to a default name + 1 to avoid duplicates
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab 1'))).toBeVisible();

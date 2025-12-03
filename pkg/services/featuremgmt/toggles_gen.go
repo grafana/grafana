@@ -259,6 +259,10 @@ const (
 	// Enables experimental new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagKubernetesDashboardsV2
+	// Use the v2 kubernetes API in the frontend for dashboards
+	FlagKubernetesDashboardsV2 = "kubernetesDashboardsV2"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
@@ -638,6 +642,10 @@ const (
 	// Enables create, delete, and update mutations for resources owned by IAM identity
 	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
 
+	// FlagKubernetesExternalGroupMapping
+	// Routes external group mapping requests from /api to the /apis endpoint
+	FlagKubernetesExternalGroupMapping = "kubernetesExternalGroupMapping"
+
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
@@ -738,10 +746,6 @@ const (
 	// Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
 	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
 
-	// FlagNewPanelPadding
-	// Increases panel padding globally
-	FlagNewPanelPadding = "newPanelPadding"
-
 	// FlagOnlyStoreActionSets
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
@@ -757,4 +761,8 @@ const (
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
+
+	// FlagKubernetesAlertingHistorian
+	// Adds support for Kubernetes alerting historian APIs
+	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 )

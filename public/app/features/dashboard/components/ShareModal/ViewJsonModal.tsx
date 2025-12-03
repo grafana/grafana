@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, type JSX } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans, t } from '@grafana/i18n';

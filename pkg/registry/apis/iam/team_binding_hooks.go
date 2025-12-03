@@ -10,41 +10,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
-
-// convertTeamBindingToTuple converts a TeamBinding to a v1 TupleKey format
-// TeamBinding represents a user's membership in a team with a specific permission level
-func convertTeamBindingToTuple(tb *iamv0.TeamBinding) (*v1.TupleKey, error) {
-	if tb.Spec.Subject.Name == "" {
-		return nil, errEmptyName
-	}
-
-	if tb.Spec.TeamRef.Name == "" {
-		return nil, errEmptyName
-	}
-
-	// Map permission to relation
-	var relation string
-	switch tb.Spec.Permission {
-	case iamv0.TeamBindingTeamPermissionAdmin:
-		relation = zanzana.RelationTeamAdmin
-	case iamv0.TeamBindingTeamPermissionMember:
-		relation = zanzana.RelationTeamMember
-	default:
-		// Default to member if unknown permission
-		relation = zanzana.RelationTeamMember
-	}
-
-	// Create tuple: user:{subjectUID} has {relation} relation to team:{teamUID}
-	tuple := &v1.TupleKey{
-		User:     zanzana.NewTupleEntry(zanzana.TypeUser, tb.Spec.Subject.Name, ""),
-		Relation: relation,
-		Object:   zanzana.NewTupleEntry(zanzana.TypeTeam, tb.Spec.TeamRef.Name, ""),
-	}
-
-	return tuple, nil
-}
 
 // AfterTeamBindingCreate is a post-create hook that writes the team binding to Zanzana (openFGA)
 func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingCreate(obj runtime.Object, _ *metav1.CreateOptions) {
@@ -79,20 +45,6 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingCreate(obj runtime.
 			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
-		tuple, err := convertTeamBindingToTuple(tb)
-		if err != nil {
-			b.logger.Error("failed to convert team binding to tuple",
-				"namespace", tb.Namespace,
-				"name", tb.Name,
-				"subject", tb.Spec.Subject.Name,
-				"teamRef", tb.Spec.TeamRef.Name,
-				"permission", tb.Spec.Permission,
-				"err", err,
-			)
-			status = "failure"
-			return
-		}
-
 		b.logger.Debug("writing team binding to zanzana",
 			"namespace", tb.Namespace,
 			"name", tb.Name,
@@ -104,12 +56,21 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingCreate(obj runtime.
 		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
 		defer cancel()
 
-		err = b.zClient.Write(ctx, &v1.WriteRequest{
+		err := b.zClient.Mutate(ctx, &v1.MutateRequest{
 			Namespace: tb.Namespace,
-			Writes: &v1.WriteRequestWrites{
-				TupleKeys: []*v1.TupleKey{tuple},
+			Operations: []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_CreateTeamBinding{
+						CreateTeamBinding: &v1.CreateTeamBindingOperation{
+							SubjectName: tb.Spec.Subject.Name,
+							TeamName:    tb.Spec.TeamRef.Name,
+							Permission:  string(tb.Spec.Permission),
+						},
+					},
+				},
 			},
 		})
+
 		if err != nil {
 			status = "failure"
 			b.logger.Error("failed to write team binding to zanzana",
@@ -159,34 +120,28 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 		return nil, nil
 	}
 
-	// Convert old team binding to tuple for deletion
-	var oldTuple *v1.TupleKey
-	var oldErr error
-	if oldTB.Spec.Subject.Name != "" && oldTB.Spec.TeamRef.Name != "" {
-		oldTuple, oldErr = convertTeamBindingToTuple(oldTB)
-		if oldErr != nil {
-			b.logger.Error("failed to convert old team binding to tuple",
-				"namespace", oldTB.Namespace,
-				"name", oldTB.Name,
-				"err", oldErr,
-			)
-			return nil, nil
-		}
-	}
-
-	// Convert new team binding to tuple for writing
-	var newTuple *v1.TupleKey
-	var newErr error
-	if newTB.Spec.Subject.Name != "" && newTB.Spec.TeamRef.Name != "" {
-		newTuple, newErr = convertTeamBindingToTuple(newTB)
-		if newErr != nil {
-			b.logger.Error("failed to convert new team binding to tuple",
-				"namespace", newTB.Namespace,
-				"name", newTB.Name,
-				"err", newErr,
-			)
-			return nil, nil
-		}
+	operations := make([]*v1.MutateOperation, 0, 2)
+	operations = append(operations, &v1.MutateOperation{
+		Operation: &v1.MutateOperation_DeleteTeamBinding{
+			DeleteTeamBinding: &v1.DeleteTeamBindingOperation{
+				SubjectName: oldTB.Spec.Subject.Name,
+				TeamName:    oldTB.Spec.TeamRef.Name,
+				Permission:  string(oldTB.Spec.Permission),
+			},
+		},
+	})
+	operations = append(operations, &v1.MutateOperation{
+		Operation: &v1.MutateOperation_CreateTeamBinding{
+			CreateTeamBinding: &v1.CreateTeamBindingOperation{
+				SubjectName: newTB.Spec.Subject.Name,
+				TeamName:    newTB.Spec.TeamRef.Name,
+				Permission:  string(newTB.Spec.Permission),
+			},
+		},
+	})
+	if len(operations) == 0 {
+		b.logger.Debug("no updates to team binding in zanzana", "namespace", newTB.Namespace, "name", newTB.Name)
+		return func(ctx context.Context, success bool) {}, nil
 	}
 
 	// Return a finish function that performs the zanzana write only on success
@@ -224,57 +179,22 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 			ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
 			defer cancel()
 
-			// Prepare write request
-			req := &v1.WriteRequest{
-				Namespace: newTB.Namespace,
-			}
-
-			// Add delete for old tuple
-			if oldTuple != nil && oldErr == nil {
-				deleteTuple := toTupleKeysWithoutCondition([]*v1.TupleKey{oldTuple})
-				req.Deletes = &v1.WriteRequestDeletes{
-					TupleKeys: deleteTuple,
-				}
-				b.logger.Debug("deleting existing team binding from zanzana",
-					"namespace", newTB.Namespace,
-					"subject", oldTB.Spec.Subject.Name,
-					"teamRef", oldTB.Spec.TeamRef.Name,
-				)
-			}
-
-			// Add write for new tuple
-			if newTuple != nil && newErr == nil {
-				req.Writes = &v1.WriteRequestWrites{
-					TupleKeys: []*v1.TupleKey{newTuple},
-				}
-				b.logger.Debug("writing new team binding to zanzana",
-					"namespace", newTB.Namespace,
-					"subject", newTB.Spec.Subject.Name,
-					"teamRef", newTB.Spec.TeamRef.Name,
-				)
-			}
-
 			// Only make the request if there are deletes or writes
-			if (req.Deletes != nil && len(req.Deletes.TupleKeys) > 0) || (req.Writes != nil && len(req.Writes.TupleKeys) > 0) {
-				err := b.zClient.Write(ctx, req)
-				if err != nil {
-					status = "failure"
-					b.logger.Error("failed to update team binding in zanzana",
-						"err", err,
-						"namespace", newTB.Namespace,
-						"name", newTB.Name,
-					)
-				} else {
-					// Record successful tuple operations
-					if oldTuple != nil && oldErr == nil {
-						hooksTuplesCounter.WithLabelValues("teambinding", "update", "delete").Inc()
-					}
-					if newTuple != nil && newErr == nil {
-						hooksTuplesCounter.WithLabelValues("teambinding", "update", "write").Inc()
-					}
-				}
+			err := b.zClient.Mutate(ctx, &v1.MutateRequest{
+				Namespace:  newTB.Namespace,
+				Operations: operations,
+			})
+			if err != nil {
+				status = "failure"
+				b.logger.Error("failed to update team binding in zanzana",
+					"err", err,
+					"namespace", newTB.Namespace,
+					"name", newTB.Name,
+				)
 			} else {
-				b.logger.Debug("no tuples to update in zanzana", "namespace", newTB.Namespace, "name", newTB.Name)
+				// Record successful tuple operations
+				hooksTuplesCounter.WithLabelValues("teambinding", "update", "delete").Inc()
+				hooksTuplesCounter.WithLabelValues("teambinding", "update", "write").Inc()
 			}
 		}()
 	}, nil
@@ -313,22 +233,6 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingDelete(obj runtime.
 			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
-		tuple, err := convertTeamBindingToTuple(tb)
-		if err != nil {
-			b.logger.Error("failed to convert team binding to tuple for deletion",
-				"namespace", tb.Namespace,
-				"name", tb.Name,
-				"subject", tb.Spec.Subject.Name,
-				"teamRef", tb.Spec.TeamRef.Name,
-				"err", err,
-			)
-			status = "failure"
-			return
-		}
-
-		// Convert tuple to TupleKeyWithoutCondition for deletion
-		deleteTuple := toTupleKeysWithoutCondition([]*v1.TupleKey{tuple})
-
 		b.logger.Debug("deleting team binding from zanzana",
 			"namespace", tb.Namespace,
 			"name", tb.Name,
@@ -340,10 +244,18 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingDelete(obj runtime.
 		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
 		defer cancel()
 
-		err = b.zClient.Write(ctx, &v1.WriteRequest{
+		err := b.zClient.Mutate(ctx, &v1.MutateRequest{
 			Namespace: tb.Namespace,
-			Deletes: &v1.WriteRequestDeletes{
-				TupleKeys: deleteTuple,
+			Operations: []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_DeleteTeamBinding{
+						DeleteTeamBinding: &v1.DeleteTeamBindingOperation{
+							SubjectName: tb.Spec.Subject.Name,
+							TeamName:    tb.Spec.TeamRef.Name,
+							Permission:  string(tb.Spec.Permission),
+						},
+					},
+				},
 			},
 		})
 		if err != nil {

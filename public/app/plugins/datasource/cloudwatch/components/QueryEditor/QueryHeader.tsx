@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 import { CoreApp, LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorHeader, InlineSelect, FlexItem } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
