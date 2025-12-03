@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { createSelector } from '@reduxjs/toolkit';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   CoreApp,
@@ -19,7 +19,7 @@ import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
 import { AdHocFilterItem, useStyles2, PanelContainer } from '@grafana/ui';
 
 import { MIXED_DATASOURCE_NAME } from '../../plugins/datasource/mixed/MixedDataSource';
-import { ExploreItemState } from '../../types/explore';
+import { Block, ExploreItemState } from '../../types/explore';
 import { useDispatch, useSelector } from '../../types/store';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getDatasourceSrv } from '../plugins/datasource_srv';
@@ -28,7 +28,7 @@ import { QueryEditorRow } from '../query/components/QueryEditorRow';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { RenderResults } from './RenderResults';
 import { changeDatasource } from './state/datasource';
-import { changeQueries, runQueries } from './state/query';
+import { changeQueries, runQueries, updateTextBlock } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -37,6 +37,26 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'queryContainer',
       padding: theme.spacing(2),
       marginBottom: theme.spacing(2),
+    }),
+    textBlockArea: css({
+      width: '100%',
+      minHeight: theme.typography.bodySmall.lineHeight,
+      border: 'none',
+      background: 'transparent',
+      color: theme.colors.text.primary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      fontFamily: theme.typography.body.fontFamily,
+      resize: 'vertical',
+      padding: 0,
+      outline: 'none',
+      overflow: 'hidden',
+      '&:focus': {
+        outline: 'none',
+      },
+      '::placeholder': {
+        color: theme.colors.text.secondary,
+      },
     }),
   };
 };
@@ -228,6 +248,13 @@ export function Blocks(props: Props) {
     );
   };
 
+  const handleTextBlockChange = useCallback(
+    (index: number, text: string) => {
+      dispatch(updateTextBlock(exploreId, index, text));
+    },
+    [dispatch, exploreId]
+  );
+
   return blocks.map((block, index) => {
     if (block.type === 'query') {
       const query = queries.find((query) => query.refId === block.queryRef);
@@ -271,12 +298,10 @@ export function Blocks(props: Props) {
 
       return (
         <ContentOutlineItem
-          title={query.refId}
+          title={'query-' + query.refId}
           icon="arrow"
-          key={query.refId}
-          panelId="Queries"
-          customTopOffset={-10}
-          level="child"
+          key={'query-' + query.refId}
+          panelId={'query-' + query.refId}
         >
           <PanelContainer className={styles.queryContainer}>
             {queryEditorRow}
@@ -303,16 +328,30 @@ export function Blocks(props: Props) {
       );
     }
 
-    if (block.type === 'text' || block.type === 'transform') {
-      const title =
-        block.type === 'text'
-          ? t('explore.blocks.text-block.title', 'Text block')
-          : t('explore.blocks.transform-block.title', 'Transform block');
-      const icon = block.type === 'text' ? 'paragraph' : 'magic';
+    if (block.type === 'text') {
+      const icon = 'paragraph';
+      const firstTenCharacters = block.text.slice(0, 10);
       return (
-        <ContentOutlineItem title={title} icon={icon} key={`${block.type}-${index}`} panelId={`${block.type}-${index}`}>
+        <ContentOutlineItem title={`Text "${firstTenCharacters}"`} icon={icon} key={`${block.type}-${index}`} panelId={`${block.type}-${index}`}>
           <PanelContainer className={styles.queryContainer}>
-            {t('explore.blocks.placeholder', 'This block type will be available soon.')}
+              <TextBlockEditor
+                value={block.text}
+                onChange={(value) => handleTextBlockChange(index, value)}
+                placeholder={t('explore.blocks.text-block.placeholder', 'Enter text')}
+                className={styles.textBlockArea}
+              />
+          </PanelContainer>
+        </ContentOutlineItem>
+      );
+    }
+
+    if (block.type === 'transform') {
+      const title = t('explore.blocks.transform-block.title', 'Transform block');
+      const icon = 'magic';
+      return (
+        <ContentOutlineItem title={title} icon={icon} key={`transform-${index}`} panelId={`transform-${index}`}>
+          <PanelContainer className={styles.queryContainer}>
+            {t('explore.blocks.transform-block.placeholder', 'Transform blocks are coming soon.')}
           </PanelContainer>
         </ContentOutlineItem>
       );
@@ -320,6 +359,40 @@ export function Blocks(props: Props) {
 
     return null;
   });
+}
+
+function TextBlockEditor({
+  value,
+  onChange,
+  placeholder,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  className: string;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) {
+      return;
+    }
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      className={className}
+      rows={1}
+      value={value}
+      onChange={(event) => onChange(event.currentTarget.value)}
+      placeholder={placeholder}
+    />
+  );
 }
 
 const getDataSourceSettings = (
@@ -355,9 +428,11 @@ const makeSelectors = (exploreId: string) => {
         return s.blocks;
       }
 
-      return s.queries
+      const fallbackBlocks: Block[] = s.queries
         .filter((query) => Boolean(query.refId))
-        .map((query) => ({ type: 'query', queryRef: query.refId! }));
+        .map((query) => ({ type: 'query' as const, queryRef: query.refId! }));
+
+      return fallbackBlocks;
     }),
   };
 };

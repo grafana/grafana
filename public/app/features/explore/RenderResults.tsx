@@ -330,20 +330,18 @@ function RenderGraphPanel(props: {
   }
 
   return (
-    <ContentOutlineItem panelId="Graph" title={t('explore.explore.title-graph', 'Graph')} icon="graph-bar">
-      <GraphContainer
-        data={filteredGraphResult}
-        height={showFlameGraph ? 180 : 400}
-        width={width}
-        timeRange={queryResponse.timeRange}
-        timeZone={timeZone}
-        onChangeTime={onUpdateTimeRange}
-        annotations={queryResponse.annotations}
-        splitOpenFn={onSplitOpen('graph')}
-        loadingState={queryResponse.state}
-        eventBus={graphEventBus}
-      />
-    </ContentOutlineItem>
+    <GraphContainer
+      data={filteredGraphResult}
+      height={showFlameGraph ? 180 : 400}
+      width={width}
+      timeRange={queryResponse.timeRange}
+      timeZone={timeZone}
+      onChangeTime={onUpdateTimeRange}
+      annotations={queryResponse.annotations}
+      splitOpenFn={onSplitOpen('graph')}
+      loadingState={queryResponse.state}
+      eventBus={graphEventBus}
+    />
   );
 }
 
@@ -359,22 +357,16 @@ function RenderRawPrometheus(props: {
   const datasourceInstance = useDataSourceInstance(exploreId);
 
   return (
-    <ContentOutlineItem
-      panelId="Raw Prometheus"
-      title={t('explore.explore.title-raw-prometheus', 'Raw Prometheus')}
-      icon="gf-prometheus"
-    >
-      <RawPrometheusContainer
-        showRawPrometheus={true}
-        ariaLabel={selectors.pages.Explore.General.table}
-        width={width}
-        exploreId={exploreId}
-        onCellFilterAdded={datasourceInstance?.modifyQuery ? onCellFilterAdded : undefined}
-        timeZone={timeZone}
-        splitOpenFn={onSplitOpen('table')}
-        queryRef={queryRef}
-      />
-    </ContentOutlineItem>
+    <RawPrometheusContainer
+      showRawPrometheus={true}
+      ariaLabel={selectors.pages.Explore.General.table}
+      width={width}
+      exploreId={exploreId}
+      onCellFilterAdded={datasourceInstance?.modifyQuery ? onCellFilterAdded : undefined}
+      timeZone={timeZone}
+      splitOpenFn={onSplitOpen('table')}
+      queryRef={queryRef}
+    />
   );
 }
 
@@ -389,17 +381,15 @@ function RenderTablePanel(props: {
   const timeZone = useSelector(getTimeZoneSelector);
 
   return (
-    <ContentOutlineItem panelId="Table" title={t('explore.explore.title-table', 'Table')} icon="table">
-      <TableContainer
-        ariaLabel={selectors.pages.Explore.General.table}
-        width={width}
-        exploreId={exploreId}
-        onCellFilterAdded={onCellFilterAdded}
-        timeZone={timeZone}
-        splitOpenFn={onSplitOpen('table')}
-        queryRef={queryRef}
-      />
-    </ContentOutlineItem>
+    <TableContainer
+      ariaLabel={selectors.pages.Explore.General.table}
+      width={width}
+      exploreId={exploreId}
+      onCellFilterAdded={onCellFilterAdded}
+      timeZone={timeZone}
+      splitOpenFn={onSplitOpen('table')}
+      queryRef={queryRef}
+    />
   );
 }
 
@@ -454,30 +444,23 @@ function RenderLogsPanel(props: {
     gap: theme.spacing(1),
   });
   return (
-    <ContentOutlineItem
-      panelId="Logs"
-      title={t('explore.explore.title-logs', 'Logs')}
-      icon="gf-logs"
-      className={logsContentOutlineWrapper}
-    >
-      <LogsContainer
-        exploreId={exploreId}
-        loadingState={queryResponse.state}
-        syncedTimes={syncedTimes}
-        width={width - spacing}
-        onClickFilterLabel={onClickFilterLabel}
-        onClickFilterOutLabel={onClickFilterOutLabel}
-        onStartScanning={onStartScanning}
-        onStopScanning={onStopScanning}
-        eventBus={logsEventBus}
-        splitOpenFn={onSplitOpen('logs')}
-        isFilterLabelActive={isFilterLabelActive}
-        onClickFilterString={onClickFilterString}
-        onClickFilterOutString={onClickFilterOutString}
-        onPinLineCallback={onPinLineCallback}
-        queryRef={queryRef}
-      />
-    </ContentOutlineItem>
+    <LogsContainer
+      exploreId={exploreId}
+      loadingState={queryResponse.state}
+      syncedTimes={syncedTimes}
+      width={width - spacing}
+      onClickFilterLabel={onClickFilterLabel}
+      onClickFilterOutLabel={onClickFilterOutLabel}
+      onStartScanning={onStartScanning}
+      onStopScanning={onStopScanning}
+      eventBus={logsEventBus}
+      splitOpenFn={onSplitOpen('logs')}
+      isFilterLabelActive={isFilterLabelActive}
+      onClickFilterString={onClickFilterString}
+      onClickFilterOutString={onClickFilterOutString}
+      onPinLineCallback={onPinLineCallback}
+      queryRef={queryRef}
+    />
   );
 }
 
@@ -503,19 +486,13 @@ function RenderNodeGraphPanel(props: {
   }
 
   return (
-    <ContentOutlineItem
-      panelId="Node Graph"
-      title={t('explore.explore.title-node-graph', 'Node graph')}
-      icon="code-branch"
-    >
-      <NodeGraphContainer
-        dataFrames={dataFrames}
-        exploreId={exploreId}
-        withTraceView={showTrace}
-        datasourceType={datasourceType}
-        splitOpenFn={onSplitOpen('nodeGraph')}
-      />
-    </ContentOutlineItem>
+    <NodeGraphContainer
+      dataFrames={dataFrames}
+      exploreId={exploreId}
+      withTraceView={showTrace}
+      datasourceType={datasourceType}
+      splitOpenFn={onSplitOpen('nodeGraph')}
+    />
   );
 }
 
@@ -530,11 +507,7 @@ function RenderFlameGraphPanel(props: { exploreId: string; queryRef: string; all
   if (!frames.length) {
     return null;
   }
-  return (
-    <ContentOutlineItem panelId="Flame Graph" title={t('explore.explore.title-flame-graph', 'Flame graph')} icon="fire">
-      <FlameGraphExploreContainer dataFrames={frames} />
-    </ContentOutlineItem>
-  );
+  return <FlameGraphExploreContainer dataFrames={frames} />;
 }
 
 function RenderTraceViewPanel(props: {
@@ -562,15 +535,13 @@ function RenderTraceViewPanel(props: {
   }
 
   return (
-    <ContentOutlineItem panelId="Traces" title={t('explore.explore.title-traces', 'Traces')} icon="file-alt">
-      <TraceViewContainer
-        exploreId={exploreId}
-        dataFrames={dataFrames}
-        splitOpenFn={onSplitOpen('traceView')}
-        scrollElement={scrollElement}
-        timeRange={queryResponse.timeRange}
-      />
-    </ContentOutlineItem>
+    <TraceViewContainer
+      exploreId={exploreId}
+      dataFrames={dataFrames}
+      splitOpenFn={onSplitOpen('traceView')}
+      scrollElement={scrollElement}
+      timeRange={queryResponse.timeRange}
+    />
   );
 }
 
@@ -591,22 +562,16 @@ function RenderLogsSamplePanel(props: { exploreId: string; onSplitOpen: (panelTy
   );
 
   return (
-    <ContentOutlineItem
-      panelId="Logs Sample"
-      title={t('explore.explore.title-logs-sample', 'Logs sample')}
-      icon="gf-logs"
-    >
-      <LogsSamplePanel
-        queryResponse={logsSample.data}
-        timeZone={timeZone}
-        enabled={logsSample.enabled}
-        queries={queries}
-        datasourceInstance={datasourceInstance}
-        splitOpen={onSplitOpen('logsSample')}
-        setLogsSampleEnabled={setLogsSampleEnabled}
-        timeRange={queryResponse.timeRange}
-      />
-    </ContentOutlineItem>
+    <LogsSamplePanel
+      queryResponse={logsSample.data}
+      timeZone={timeZone}
+      enabled={logsSample.enabled}
+      queries={queries}
+      datasourceInstance={datasourceInstance}
+      splitOpen={onSplitOpen('logsSample')}
+      setLogsSampleEnabled={setLogsSampleEnabled}
+      timeRange={queryResponse.timeRange}
+    />
   );
 }
 
@@ -634,20 +599,18 @@ function RenderCustom(props: {
 
   return Object.entries(groupedByPlugin).map(([pluginId, pluginFrames], index) => {
     return (
-      <ContentOutlineItem panelId={pluginId} title={pluginId} icon="plug" key={pluginId}>
-        <CustomContainer
-          key={index}
-          timeZone={timeZone}
-          pluginId={pluginId}
-          frames={pluginFrames}
-          state={queryResponse.state}
-          timeRange={queryResponse.timeRange}
-          height={400}
-          width={width}
-          splitOpenFn={onSplitOpen(pluginId)}
-          eventBus={eventBus}
-        />
-      </ContentOutlineItem>
+      <CustomContainer
+        key={index}
+        timeZone={timeZone}
+        pluginId={pluginId}
+        frames={pluginFrames}
+        state={queryResponse.state}
+        timeRange={queryResponse.timeRange}
+        height={400}
+        width={width}
+        splitOpenFn={onSplitOpen(pluginId)}
+        eventBus={eventBus}
+      />
     );
   });
 }

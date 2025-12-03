@@ -365,32 +365,25 @@ export class Explore extends PureComponent<Props, ExploreState> {
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
                   <>
-                    <ContentOutlineItem
-                      panelId="Queries"
-                      title={t('explore.explore.title-queries', 'Queries')}
-                      icon="arrow"
-                      mergeSingleChild={true}
-                    >
-                      {correlationsBox}
-                      <Blocks
-                        exploreId={exploreId}
-                        changeCompactMode={(compact: boolean) =>
-                          this.props.changeCompactMode(this.props.exploreId, false)
-                        }
-                        onSplitOpen={this.onSplitOpen}
-                        graphEventBus={this.graphEventBus}
-                        logsEventBus={this.logsEventBus}
-                        onCellFilterAdded={this.onCellFilterAdded}
-                        onClickFilterLabel={this.onClickFilterLabel}
-                        onClickFilterOutLabel={this.onClickFilterOutLabel}
-                        onClickFilterString={this.onClickFilterString}
-                        onClickFilterOutString={this.onClickFilterOutString}
-                        isFilterLabelActive={this.isFilterLabelActive}
-                        onPinLineCallback={this.onPinLineCallback}
-                        scrollElement={this.scrollElement}
-                      />
-                      <ResponseErrorContainer exploreId={exploreId} />
-                    </ContentOutlineItem>
+                    {correlationsBox}
+                    <Blocks
+                      exploreId={exploreId}
+                      changeCompactMode={(compact: boolean) =>
+                        this.props.changeCompactMode(this.props.exploreId, false)
+                      }
+                      onSplitOpen={this.onSplitOpen}
+                      graphEventBus={this.graphEventBus}
+                      logsEventBus={this.logsEventBus}
+                      onCellFilterAdded={this.onCellFilterAdded}
+                      onClickFilterLabel={this.onClickFilterLabel}
+                      onClickFilterOutLabel={this.onClickFilterOutLabel}
+                      onClickFilterString={this.onClickFilterString}
+                      onClickFilterOutString={this.onClickFilterOutString}
+                      isFilterLabelActive={this.isFilterLabelActive}
+                      onPinLineCallback={this.onPinLineCallback}
+                      scrollElement={this.scrollElement}
+                    />
+                    <ResponseErrorContainer exploreId={exploreId} />
 
                     <AddQueryButtons
                       exploreId={exploreId}
