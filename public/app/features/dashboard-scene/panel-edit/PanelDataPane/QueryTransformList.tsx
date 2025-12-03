@@ -191,11 +191,11 @@ export const QueryTransformList = memo(
                 <div className={styles.content} data-testid="query-transform-list-content">
                   <Stack direction="column" gap={3}>
                     {/* Data Sources Section (Queries + Expressions) */}
-                    {dataSourceItems.length > 0 && (
-                      <Stack direction="column" gap={2}>
-                        <div className={styles.sectionLabel}>
-                          {t('dashboard-scene.query-transform-list.queries-expressions', 'Queries & Expressions')}
-                        </div>
+                    <Stack direction="column" gap={2}>
+                      <div className={styles.sectionLabel}>
+                        {t('dashboard-scene.query-transform-list.queries-expressions', 'Queries & Expressions')}
+                      </div>
+                      {dataSourceItems.length > 0 ? (
                         <Droppable droppableId="data-sources">
                           {(provided, snapshot) => {
                             // Check if dragging from transformations section
@@ -206,7 +206,7 @@ export const QueryTransformList = memo(
                               <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                onMouseMove={ev => {
+                                onMouseMove={(ev) => {
                                   const rect = ev.currentTarget.getBoundingClientRect();
                                   const y = ev.clientY - rect.top;
                                   let hoveredIdx = Math.floor(y / CARD_HEIGHT);
@@ -216,10 +216,16 @@ export const QueryTransformList = memo(
                                   if (hoveredIdx > dataSourceItems.length) {
                                     hoveredIdx = dataSourceItems.length;
                                   }
-                                  const hoveredId = hoveredIdx === dataSourceItems.length ? 'queries-last' : dataSourceItems[hoveredIdx].id;
+                                  const hoveredId =
+                                    hoveredIdx === dataSourceItems.length
+                                      ? 'queries-last'
+                                      : dataSourceItems[hoveredIdx].id;
                                   setHovered(hoveredId);
                                 }}
-                                className={cx(styles.cardList, isDraggingFromOtherSection ? styles.droppableInvalid : undefined)}
+                                className={cx(
+                                  styles.cardList,
+                                  isDraggingFromOtherSection ? styles.droppableInvalid : undefined
+                                )}
                               >
                                 <Stack direction="column" gap={2}>
                                   {dataSourceItems.map((item, index) => (
@@ -246,7 +252,7 @@ export const QueryTransformList = memo(
                                           </div>
                                         )}
                                       </Draggable>
-                                      <div className={styles.floatingButton}>
+                                      <div className={styles.addButtonFloating}>
                                         <AddDataItemMenu
                                           onAddQuery={onAddQuery}
                                           onAddTransform={onAddTransform}
@@ -254,7 +260,7 @@ export const QueryTransformList = memo(
                                           onAddFromSavedQueries={onAddFromSavedQueries}
                                           index={index}
                                           allowedTypes={['query', 'expression']}
-                                          show={hovered === item.id}
+                                          show={!isDragging && hovered === item.id}
                                         />
                                       </div>
                                     </div>
@@ -263,7 +269,7 @@ export const QueryTransformList = memo(
                                 </Stack>
 
                                 <div className={cx(styles.cardContainer, styles.cardContainerLast)}>
-                                  <div className={styles.floatingButton}>
+                                  <div className={styles.addButtonFloating}>
                                     <AddDataItemMenu
                                       onAddQuery={onAddQuery}
                                       onAddFromSavedQueries={onAddFromSavedQueries}
@@ -271,7 +277,7 @@ export const QueryTransformList = memo(
                                       onAddExpression={onAddExpression}
                                       allowedTypes={['query', 'expression']}
                                       index={transformItems.length}
-                                      show={hovered === 'queries-last'}
+                                      show={!isDragging && hovered === 'queries-last'}
                                     />
                                   </div>
                                 </div>
@@ -279,16 +285,24 @@ export const QueryTransformList = memo(
                             );
                           }}
                         </Droppable>
-
-                      </Stack>
-                    )}
+                      ) : (
+                        <AddDataItemMenu
+                          onAddQuery={onAddQuery}
+                          onAddFromSavedQueries={onAddFromSavedQueries}
+                          onAddTransform={onAddTransform}
+                          onAddExpression={onAddExpression}
+                          allowedTypes={['query', 'expression']}
+                          text={t('dashboard-scene.query-transform-list.add', 'Add')}
+                        />
+                      )}
+                    </Stack>
 
                     {/* Transformations Section */}
-                    {transformItems.length > 0 && (
-                      <Stack direction="column" gap={2}>
-                        <div className={styles.sectionLabel}>
-                          {t('dashboard-scene.query-transform-list.transformations', 'Transformations')}
-                        </div>
+                    <Stack direction="column" gap={2}>
+                      <div className={styles.sectionLabel}>
+                        {t('dashboard-scene.query-transform-list.transformations', 'Transformations')}
+                      </div>
+                      {transformItems.length > 0 ? (
                         <Droppable droppableId="transformations">
                           {(provided, snapshot) => {
                             // Check if dragging from data sources section
@@ -299,18 +313,24 @@ export const QueryTransformList = memo(
                               <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                className={cx(styles.cardList, isDraggingFromOtherSection ? styles.droppableInvalid : undefined)}
-                                onMouseMove={ev => {
+                                className={cx(
+                                  styles.cardList,
+                                  isDraggingFromOtherSection ? styles.droppableInvalid : undefined
+                                )}
+                                onMouseMove={(ev) => {
                                   const rect = ev.currentTarget.getBoundingClientRect();
                                   const y = ev.clientY - rect.top;
-                                  let hoveredIdx = Math.floor(((y - 16 + (CARD_HEIGHT / 2)) / CARD_HEIGHT));
+                                  let hoveredIdx = Math.floor((y - 16 + CARD_HEIGHT / 2) / CARD_HEIGHT);
                                   if (hoveredIdx < 0) {
                                     hoveredIdx = 0;
                                   }
                                   if (hoveredIdx > transformItems.length) {
                                     hoveredIdx = transformItems.length;
                                   }
-                                  const hoveredId = hoveredIdx === transformItems.length ? 'transformations-last' : transformItems[hoveredIdx].id;
+                                  const hoveredId =
+                                    hoveredIdx === transformItems.length
+                                      ? 'transformations-last'
+                                      : transformItems[hoveredIdx].id;
                                   setHovered(hoveredId);
                                 }}
                               >
@@ -339,7 +359,7 @@ export const QueryTransformList = memo(
                                           </div>
                                         )}
                                       </Draggable>
-                                      <div className={styles.floatingButton}>
+                                      <div className={styles.addButtonFloating}>
                                         <AddDataItemMenu
                                           onAddQuery={onAddQuery}
                                           onAddTransform={onAddTransform}
@@ -347,7 +367,7 @@ export const QueryTransformList = memo(
                                           onAddFromSavedQueries={onAddFromSavedQueries}
                                           index={index}
                                           allowedTypes={['transform']}
-                                          show={hovered === item.id}
+                                          show={!isDragging && hovered === item.id}
                                         />
                                       </div>
                                     </div>
@@ -355,7 +375,7 @@ export const QueryTransformList = memo(
                                   {provided.placeholder}
                                 </Stack>
                                 <div className={cx(styles.cardContainer, styles.cardContainerLast)}>
-                                  <div className={styles.floatingButton}>
+                                  <div className={styles.addButtonFloating}>
                                     <AddDataItemMenu
                                       onAddQuery={onAddQuery}
                                       onAddFromSavedQueries={onAddFromSavedQueries}
@@ -363,7 +383,7 @@ export const QueryTransformList = memo(
                                       onAddExpression={onAddExpression}
                                       allowedTypes={['transform']}
                                       index={transformItems.length}
-                                      show={hovered === 'transformations-last'}
+                                      show={!isDragging && hovered === 'transformations-last'}
                                     />
                                   </div>
                                 </div>
@@ -371,8 +391,17 @@ export const QueryTransformList = memo(
                             );
                           }}
                         </Droppable>
-                      </Stack>
-                    )}
+                      ) : (
+                        <AddDataItemMenu
+                          onAddQuery={onAddQuery}
+                          onAddFromSavedQueries={onAddFromSavedQueries}
+                          onAddTransform={onAddTransform}
+                          onAddExpression={onAddExpression}
+                          allowedTypes={['transform']}
+                          text={t('dashboard-scene.query-transform-list.add', 'Add')}
+                        />
+                      )}
+                    </Stack>
                   </Stack>
                 </div>
               </DragDropContext>
@@ -519,7 +548,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     cardContainerLast: css({
       marginTop: theme.spacing(2),
     }),
-    floatingButton: css({
+    addButtonFloating: css({
       position: 'absolute',
       top: theme.spacing(-2),
       left: theme.spacing(-2.5),
