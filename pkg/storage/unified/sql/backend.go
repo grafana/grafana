@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/atomic"
@@ -262,13 +263,19 @@ func (b *backend) Stop(_ context.Context) error {
 }
 
 // GetResourceStats implements Backend.
-func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
+func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
 	defer span.End()
 
 	req := &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
-		Namespace:   namespace,
+		Namespace:   nsr.Namespace,
+		Group:       nsr.Group,
+		Resource:    nsr.Resource,
 		MinCount:    minCount, // not used in query... yet?
 	}
 
@@ -723,7 +730,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 	// Get the RV
 	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
-		continueToken, err := resource.GetContinueToken(req.NextPageToken)
+		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
@@ -825,7 +832,7 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 		useCurrentRV: true, // use the current RV for the continue token instead of the listRV
 	}
 	if req.NextPageToken != "" {
-		continueToken, err := resource.GetContinueToken(req.NextPageToken)
+		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
@@ -992,7 +999,9 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 		b.lastImportTimeDeletionTime.Store(now)
 	}
 
-	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{SQLTemplate: sqltemplate.New(b.dialect)})
+	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+	})
 	if err != nil {
 		return func(yield func(resource.ResourceLastImportTime, error) bool) {
 			yield(resource.ResourceLastImportTime{}, err)
@@ -1034,4 +1043,8 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 			yield(resource.ResourceLastImportTime{}, err)
 		}
 	}
+}
+
+func (b *backend) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("rebuild indexes not supported by unistore sql backend")
 }

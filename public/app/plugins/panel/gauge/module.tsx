@@ -8,7 +8,7 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 import { GaugePanel } from './GaugePanel';
 import { Options, defaultOptions } from './panelcfg.gen';
-import { GaugeSuggestionsSupplier } from './suggestions';
+import { gaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(GaugePanel)
   .useFieldConfig({
@@ -88,5 +88,5 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
     commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
   })
   .setPanelChangeHandler(gaugePanelChangedHandler)
-  .setSuggestionsSupplier(new GaugeSuggestionsSupplier())
+  .setSuggestionsSupplier(gaugeSuggestionsSupplier)
   .setMigrationHandler(gaugePanelMigrationHandler);

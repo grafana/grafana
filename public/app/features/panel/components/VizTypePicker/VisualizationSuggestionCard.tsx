@@ -1,61 +1,60 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { CSSProperties } from 'react';
+import { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 
-import { GrafanaTheme2, PanelData, VisualizationSuggestion } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelRenderer } from '../PanelRenderer';
 
-import { VizTypeChangeDetails } from './types';
-
-export interface Props {
+export interface Props extends HTMLAttributes<HTMLButtonElement> {
   data: PanelData;
   width: number;
-  suggestion: VisualizationSuggestion;
-  onChange: (details: VizTypeChangeDetails) => void;
+  suggestion: PanelPluginVisualizationSuggestion;
+  isSelected?: boolean;
 }
 
-export function VisualizationSuggestionCard({ data, suggestion, onChange, width }: Props) {
+export function VisualizationSuggestionCard({
+  data,
+  suggestion,
+  width,
+  isSelected = false,
+  className,
+  ...restProps
+}: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
+  const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: styles.vizBox,
+    className: cx(className, styles.vizBox),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
-    onClick: () => {
-      onChange({
-        pluginId: suggestion.pluginId,
-        options: suggestion.options,
-        fieldConfig: suggestion.fieldConfig,
-      });
-    },
+    ...restProps,
   };
 
+  let content: ReactNode;
+
   if (cardOptions.imgSrc) {
-    return (
-      <Tooltip content={suggestion.description ?? suggestion.name}>
-        <button {...commonButtonProps} className={cx(styles.vizBox, styles.imgBox)}>
-          <div className={styles.name}>{suggestion.name}</div>
-          <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
-        </button>
-      </Tooltip>
+    content = (
+      <button {...commonButtonProps} className={cx(commonButtonProps.className, styles.imgBox)}>
+        <div className={styles.name}>{suggestion.name}</div>
+        <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
+      </button>
     );
-  }
+  } else {
+    let preview = suggestion;
+    if (suggestion.cardOptions?.previewModifier) {
+      preview = cloneDeep(suggestion);
+      suggestion.cardOptions.previewModifier(preview);
+    }
 
-  let preview = suggestion;
-  if (suggestion.cardOptions?.previewModifier) {
-    preview = cloneDeep(suggestion);
-    suggestion.cardOptions.previewModifier(preview);
-  }
-
-  return (
-    <button {...commonButtonProps}>
-      <Tooltip content={suggestion.name}>
+    content = (
+      <button {...commonButtonProps}>
         <div style={innerStyles} className={styles.renderContainer}>
           <PanelRenderer
             title=""
@@ -66,22 +65,38 @@ export function VisualizationSuggestionCard({ data, suggestion, onChange, width 
             options={preview.options}
             fieldConfig={preview.fieldConfig}
           />
-          <div className={styles.hoverPane} />
+          {/* this prevents interaction with the underlying panel. */}
+          <div className={cx(styles.hoverPane, isSelected && styles.hoverPaneSelected)} />
         </div>
-      </Tooltip>
-    </button>
-  );
+      </button>
+    );
+  }
+
+  if (!isNewVizSuggestionsEnabled) {
+    return <Tooltip content={suggestion.description ?? suggestion.name}>{content}</Tooltip>;
+  }
+
+  return content;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     hoverPane: css({
       position: 'absolute',
-      top: 0,
-      right: 0,
-      left: 0,
-      borderRadius: theme.spacing(2),
-      bottom: 0,
+      top: -4,
+      left: -4,
+      right: -2,
+      bottom: -2,
+      borderRadius: theme.spacing(0.5),
+      background: 'transparent',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+    }),
+    hoverPaneSelected: css({
+      background: colorManipulator.alpha(theme.colors.text.primary, 0.1),
     }),
     vizBox: css({
       position: 'relative',

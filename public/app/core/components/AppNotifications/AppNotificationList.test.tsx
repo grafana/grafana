@@ -98,6 +98,49 @@ describe('AppNotificationList', () => {
     });
   });
 
+  describe('Event listener cleanup', () => {
+    let onSpy: jest.SpyInstance;
+    let offSpy: jest.SpyInstance;
+
+    const eventTypes = [AppEvents.alertWarning, AppEvents.alertSuccess, AppEvents.alertError, AppEvents.alertInfo];
+
+    beforeEach(() => {
+      onSpy = jest.spyOn(appEvents, 'on');
+      offSpy = jest.spyOn(appEvents, 'off');
+    });
+
+    afterEach(() => {
+      onSpy.mockRestore();
+      offSpy.mockRestore();
+    });
+
+    it('should register event listeners on mount', () => {
+      renderWithContext();
+
+      expect(onSpy).toHaveBeenCalledTimes(4);
+      eventTypes.forEach((eventType) => {
+        expect(onSpy).toHaveBeenCalledWith(eventType, expect.any(Function));
+      });
+    });
+
+    it('should unregister event listeners on unmount', () => {
+      const { unmount } = renderWithContext();
+
+      const handlers = eventTypes.map((eventType) => {
+        const handler = onSpy.mock.calls.find((call) => call[0] === eventType)?.[1];
+        expect(handler).toBeDefined();
+        return { eventType, handler };
+      });
+
+      unmount();
+
+      expect(offSpy).toHaveBeenCalledTimes(4);
+      handlers.forEach(({ eventType, handler }) => {
+        expect(offSpy).toHaveBeenCalledWith(eventType, handler);
+      });
+    });
+  });
+
   describe('Edge cases', () => {
     it('should show error on dashboard page with uid and slug', async () => {
       renderWithContext(undefined, '/d/test-uid/test-slug');

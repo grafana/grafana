@@ -48,8 +48,9 @@ export const flows = {
   },
   async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.section).click();
+    await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
     await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.dockToggle).click();
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
       .click();
@@ -97,12 +98,18 @@ export async function checkRepeatedPanelTitles(
   dashboardPage: DashboardPage,
   selectors: E2ESelectorGroups,
   title: string,
-  options: Array<string | number>
+  options: Array<string | number>,
+  expectHidden = false
 ) {
   for (const option of options) {
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(`${title}${option}`))
-    ).toBeVisible();
+    const titleLocator = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Panel.title(`${title}${option}`)
+    );
+    if (expectHidden) {
+      await expect(titleLocator).toBeHidden();
+    } else {
+      await expect(titleLocator).toBeVisible();
+    }
   }
 }
 

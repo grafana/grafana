@@ -152,10 +152,12 @@ describe('QueryVariableEditor', () => {
     const onRunQueryMock = jest.fn();
     const variable = new QueryVariable({ datasource: undefined, query: '' });
 
-    await setup({
-      variable,
-      onRunQuery: onRunQueryMock,
-    });
+    await act(() =>
+      setup({
+        variable,
+        onRunQuery: onRunQueryMock,
+      })
+    );
 
     await waitFor(async () => {
       expect(variable.state.datasource).not.toBe(undefined);

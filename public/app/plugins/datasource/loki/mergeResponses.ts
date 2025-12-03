@@ -36,6 +36,11 @@ function getFrameKey(frame: DataFrame): string | undefined {
   return frame.refId ?? frame.name;
 }
 
+/**
+ * @todo test new response is error, current response is not
+ * @param currentResponse
+ * @param newResponse
+ */
 export function combineResponses(currentResponse: DataQueryResponse | null, newResponse: DataQueryResponse) {
   if (!currentResponse) {
     return cloneQueryResponse(newResponse);
@@ -65,6 +70,7 @@ export function combineResponses(currentResponse: DataQueryResponse | null, newR
   const mergedErrors = [...(currentResponse.errors ?? []), ...(newResponse.errors ?? [])];
   if (mergedErrors.length > 0) {
     currentResponse.errors = mergedErrors;
+    currentResponse.state = LoadingState.Error;
   }
 
   // the `.error` attribute is obsolete now,
@@ -75,6 +81,7 @@ export function combineResponses(currentResponse: DataQueryResponse | null, newR
   const mergedError = currentResponse.error ?? newResponse.error;
   if (mergedError != null) {
     currentResponse.error = mergedError;
+    currentResponse.state = LoadingState.Error;
   }
 
   const mergedTraceIds = [...(currentResponse.traceIds ?? []), ...(newResponse.traceIds ?? [])];
