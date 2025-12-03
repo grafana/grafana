@@ -49,6 +49,11 @@ jobs:
       - name: Build Grafana
         continue-on-error: true
         run: |
+          echo "RUN_ID=${GITHUB_RUN_ID}"
+          echo "RUN_ATTEMPT=${GITHUB_RUN_ATTEMPT}"
+          echo "GITHUB_JOB=${GITHUB_JOB}"
+          echo "STEP_NAME=Build Grafana"
+
           ls ./
           GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./atool connect 5930" make build-go
 
