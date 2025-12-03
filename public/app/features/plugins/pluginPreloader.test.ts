@@ -9,6 +9,8 @@ import {
   type PluginExtensions,
   AppPlugin,
   OrgRole,
+  Spec,
+  PluginSignatureStatus,
 } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -27,26 +29,71 @@ jest.mock('./importer/pluginImporter', () => ({
 const getPluginSettingsMock = jest.mocked(getPluginSettings);
 const importAppPluginMock = jest.mocked(pluginImporter.importApp);
 
-const createMockAppPluginConfig = (overrides: Partial<AppPluginConfig> = {}): AppPluginConfig => ({
-  id: 'test-plugin',
-  path: '/path/to/plugin',
-  version: '1.0.0',
-  preload: true,
-  angular: { detected: false, hideDeprecation: false } as AngularMeta,
-  loadingStrategy: PluginLoadingStrategy.fetch,
-  dependencies: {
-    grafanaVersion: '*',
-    plugins: [],
-    extensions: { exposedComponents: [] },
-  } as PluginDependencies,
-  extensions: {
-    addedComponents: [],
-    addedLinks: [],
-    addedFunctions: [],
-    exposedComponents: [],
-    extensionPoints: [],
-  } as PluginExtensions,
-  ...overrides,
+const createMockAppPluginConfig = (overrides: Partial<AppPluginConfig> = {}): Spec => {
+  const app: AppPluginConfig = {
+    id: 'test-plugin',
+    path: '/path/to/plugin',
+    version: '1.0.0',
+    preload: true,
+    angular: { detected: false, hideDeprecation: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.fetch,
+    dependencies: {
+      grafanaVersion: '*',
+      plugins: [],
+      extensions: { exposedComponents: [] },
+    } as PluginDependencies,
+    extensions: {
+      addedComponents: [],
+      addedLinks: [],
+      addedFunctions: [],
+      exposedComponents: [],
+      extensionPoints: [],
+    } as PluginExtensions,
+    ...overrides,
+  };
+
+  return createMockSpec({ path: app.path, loadingStrategy: app.loadingStrategy }, { id: app.id });
+};
+
+const createMockSpec = (module: Partial<Spec['module']> = {}, pluginJson: Partial<Spec['pluginJson']> = {}): Spec => ({
+  module: {
+    path: '/path/to/plugin',
+    loadingStrategy: PluginLoadingStrategy.fetch,
+    ...module,
+  },
+  pluginJson: {
+    id: 'test-plugin',
+    name: 'Test Plugin',
+    type: 'app',
+    info: {
+      version: '1.0.0',
+      keywords: [],
+      logos: { large: '', small: '' },
+      updated: '',
+    },
+    preload: true,
+    dependencies: {
+      grafanaVersion: '*',
+      grafanaDependency: '',
+      plugins: [],
+      extensions: { exposedComponents: [] },
+    },
+    extensions: {
+      addedComponents: [],
+      addedLinks: [],
+      addedFunctions: [],
+      exposedComponents: [],
+      extensionPoints: [],
+    },
+    ...pluginJson,
+  },
+  angular: {
+    detected: false,
+  },
+  baseURL: '/path/to/plugin',
+  signature: {
+    status: PluginSignatureStatus.missing,
+  },
 });
 
 const createMockPluginMeta = (overrides: Partial<PluginMeta> = {}): PluginMeta => ({

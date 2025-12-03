@@ -269,9 +269,6 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   }
 }
 export interface PluginMetasResponse {
-  kind: string;
-  apiVersion: APIVersion;
-  metadata: StatusClass;
   items: Item[];
 }
 
@@ -280,11 +277,7 @@ export enum APIVersion {
 }
 
 export interface Item {
-  kind: Kind;
-  apiVersion: APIVersion;
-  metadata: PurpleMetadata;
   spec: Spec;
-  status: StatusClass;
 }
 
 export enum Kind {
