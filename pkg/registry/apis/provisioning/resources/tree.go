@@ -145,9 +145,12 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 		return fmt.Errorf("extract meta accessor: %w", err)
 	}
 
+	// Use UID as the identifier since GetFolder() returns UID
+	// In Grafana's folder API, folders are identified by UID
+	folderUID := string(item.GetUID())
 	folder := Folder{
 		Title: meta.FindTitle(item.GetName()),
-		ID:    item.GetName(),
+		ID:    folderUID,
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()

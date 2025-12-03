@@ -356,7 +356,12 @@ func computeExportPath(basePath string, meta utils.GrafanaMetaAccessor, tree res
 	if resourceFolder != "" {
 		// Get the folder path from the unmanaged tree (rootFolder is empty string for unmanaged tree)
 		fid, ok := tree.DirPath(resourceFolder, "")
-		if ok && fid.Path != "" {
+		if !ok {
+			// Folder not found in tree - this shouldn't happen for unmanaged folders
+			// but if it does, we'll just use the base path
+			return exportPath
+		}
+		if fid.Path != "" {
 			if exportPath != "" {
 				exportPath = safepath.Join(exportPath, fid.Path)
 			} else {
