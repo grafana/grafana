@@ -111,7 +111,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const transformer = transformsTab?.getDataTransformer();
   const transformerState = transformer?.useState();
   const queries = queryRunnerState?.queries;
-  const transformations = transformerState?.transformations;
+  const transformations = transformerState?.transformations?.filter(isDataTransformerConfig);
 
   // the selectedId is based on the refId of the query. refId is a user-editable property, so it can change,
   // which will break the selectId and result in the UI going into a deselected state. to avoid this,
@@ -272,7 +272,8 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
         // Clear selection if removing the selected query
         if (deletedQuery && selectedId === queryItemId(deletedQuery)) {
-          setSelectedId(null);
+          const prevQuery = newQueries?.[index - 1];
+          setSelectedId(prevQuery ? queryItemId(prevQuery) : null);
         }
       }
     },
@@ -345,7 +346,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           unsub.unsubscribe();
         });
 
-        const newTransformations = [...(transformations?.filter(isDataTransformerConfig) ?? [])];
+        const newTransformations = [...(transformations ?? [])];
         newTransformations.splice(selectedIndex, 0, newTransformation);
 
         transformsTab.onChangeTransformations(newTransformations);
@@ -357,34 +358,28 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const handleRemoveTransform = useCallback(
     (index: number) => {
       if (transformsTab) {
-        const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
-          isDataTransformerConfig
-        );
-        const newTransformations = transformations.filter((_, i) => i !== index);
+        const newTransformations = transformations?.filter((_, i) => i !== index) ?? [];
         transformsTab.onChangeTransformations(newTransformations);
 
         // Clear selection if removing the selected transformation
         if (selectedId === transformItemId(index)) {
-          setSelectedId(null);
+          const prevTransform = newTransformations[index - 1];
+          setSelectedId(prevTransform ? transformItemId(index - 1) : null);
         }
       }
     },
-    [transformsTab, selectedId]
+    [transformations, transformsTab, selectedId]
   );
 
   const handleToggleTransformVisibility = useCallback(
     (index: number) => {
       if (transformsTab) {
-        const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
-          isDataTransformerConfig
-        );
-        const newTransformations = transformations.map((t, i) =>
-          i === index ? { ...t, disabled: t.disabled ? undefined : true } : t
-        );
+        const newTransformations =
+          transformations?.map((t, i) => (i === index ? { ...t, disabled: t.disabled ? undefined : true } : t)) ?? [];
         transformsTab.onChangeTransformations(newTransformations);
       }
     },
-    [transformsTab]
+    [transformations, transformsTab]
   );
 
   const handleReorderDataSources = useCallback(
@@ -403,16 +398,13 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const handleReorderTransforms = useCallback(
     (startIndex: number, endIndex: number) => {
       if (transformsTab) {
-        const transformations = (transformsTab.getDataTransformer().state.transformations || []).filter(
-          isDataTransformerConfig
-        );
-        const newTransformations = Array.from(transformations);
+        const newTransformations = [...(transformations ?? [])];
         const [removed] = newTransformations.splice(startIndex, 1);
         newTransformations.splice(endIndex, 0, removed);
         transformsTab.onChangeTransformations(newTransformations);
       }
     },
-    [transformsTab]
+    [transformations, transformsTab]
   );
 
   // Get data for transformations drawer

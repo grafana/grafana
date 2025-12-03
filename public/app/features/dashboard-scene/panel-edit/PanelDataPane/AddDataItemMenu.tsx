@@ -1,8 +1,10 @@
-import { memo, useState } from 'react';
+import { css } from '@emotion/css';
+import { ComponentProps, memo, useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Dropdown, IconButton, Menu } from '@grafana/ui';
+import { Button, Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { EXPRESSION_ICON_MAP } from 'app/features/expressions/consts';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
@@ -14,6 +16,7 @@ interface AddDataItemMenuProps {
   index?: number;
   allowedTypes?: Array<'query' | 'transform' | 'expression'>;
   show?: boolean;
+  text?: string;
 }
 
 export const AddDataItemMenu = memo(
@@ -23,13 +26,35 @@ export const AddDataItemMenu = memo(
     onAddExpression,
     onAddFromSavedQueries,
     index,
+    text,
     allowedTypes = ['query', 'expression', 'transform'],
     show = true,
   }: AddDataItemMenuProps) => {
+    const styles = useStyles2(getStyles);
     const [menuShown, setMenuShown] = useState(false);
 
     if (!show && !menuShown) {
       return;
+    }
+
+    const renderButton = (onClick?: ComponentProps<typeof Button>['onClick']) => {
+      return text ? (
+        <Button onClick={onClick} className={styles.textButton} size="md" variant="primary" icon="plus" fill="text">
+          {text}
+        </Button>
+      ) : (
+        <IconButton
+          onClick={onClick}
+          name="plus"
+          size="xs"
+          variant="primary"
+          tooltip={t('dashboard-scene.add-data-item-menu.add-button', 'Add')}
+        />
+      );
+    };
+
+    if (allowedTypes.length === 1 && allowedTypes[0] === 'transform') {
+      return renderButton(() => onAddTransform(index));
     }
 
     const expressionTypes = [
@@ -102,10 +127,17 @@ export const AddDataItemMenu = memo(
 
     return (
       <Dropdown overlay={menu} placement="top-end" onVisibleChange={(shown) => setMenuShown(shown)}>
-        <IconButton name="plus" size="xs" variant="primary" tooltip={t('dashboard-scene.add-data-item-menu.add-button', 'Add')} />
+        {renderButton()}
       </Dropdown>
     );
   }
 );
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  textButton: css({
+    paddingLeft: 0,
+    fontFamily: theme.typography.fontFamilyMonospace,
+  }),
+});
 
 AddDataItemMenu.displayName = 'AddDataItemMenu';
