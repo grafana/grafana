@@ -18,6 +18,9 @@ import (
 )
 
 // Helper function to create folder objects
+// name should be the Grafana folder UID (which becomes metadata.name)
+// uid is the Kubernetes UID (metadata.uid)
+// title defaults to name but can be overridden via spec.title
 func createFolderObject(name, uid, parentFolderUID string) unstructured.Unstructured {
 	folder := unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -28,7 +31,7 @@ func createFolderObject(name, uid, parentFolderUID string) unstructured.Unstruct
 				"uid":  uid,
 			},
 			"spec": map[string]interface{}{
-				"title": name,
+				"title": name, // title defaults to name, tests can override if needed
 			},
 		},
 	}
@@ -88,9 +91,11 @@ func TestExportSpecificResources_Success(t *testing.T) {
 		},
 	}
 
-	folderItems := []unstructured.Unstructured{
-		createFolderObject("team-a", "team-a-uid", ""),
-	}
+	// Create folder with UID as name (matching real Grafana behavior)
+	teamAFolder := createFolderObject("team-a-uid", "k8s-uid-1", "")
+	_ = unstructured.SetNestedField(teamAFolder.Object, "team-a", "spec", "title")
+
+	folderItems := []unstructured.Unstructured{teamAFolder}
 
 	dashboard1 := createDashboardObjectWithFolder("dashboard-1", "team-a-uid")
 	dashboard2 := createDashboardObject("dashboard-2")
@@ -312,10 +317,14 @@ func TestExportSpecificResources_FolderPathResolution(t *testing.T) {
 	}
 
 	// Create folder hierarchy: team-a -> subteam
-	folderItems := []unstructured.Unstructured{
-		createFolderObject("team-a", "team-a-uid", ""),
-		createFolderObject("subteam", "subteam-uid", "team-a-uid"),
-	}
+	// In Grafana, folder UIDs are stored as metadata.name (matching real behavior)
+	parentFolder := createFolderObject("team-a-uid", "k8s-uid-1", "")
+	_ = unstructured.SetNestedField(parentFolder.Object, "team-a", "spec", "title")
+
+	childFolder := createFolderObject("subteam-uid", "k8s-uid-2", "team-a-uid")
+	_ = unstructured.SetNestedField(childFolder.Object, "subteam", "spec", "title")
+
+	folderItems := []unstructured.Unstructured{parentFolder, childFolder}
 
 	dashboard := createDashboardObjectWithFolder("dashboard-in-nested-folder", "subteam-uid")
 
