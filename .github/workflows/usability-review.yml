@@ -28,7 +28,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Get vault secrets (ops)"
+      - name: "Get vault secrets (ops) - for GCOM API"
         id: vault-secrets-ops
         uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0
         with:
@@ -206,9 +206,7 @@ jobs:
           fi
 
       - name: Create test user for playwright
-        # NOTE: Temporarily disabled - using pre-created user from Vault instead
-        # Re-enable this if stack-users:write token becomes available
-        if: false
+        # Using ephemeral-instances-bot GCOM token (grafanaUniversity org exception)
         env:
           GCOM_HOST: ${{ env.GCOM_HOST }}
           GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
