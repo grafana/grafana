@@ -15,9 +15,10 @@ import { Unsubscribable } from 'rxjs';
 import { LiveChannelAddress, LiveChannelScope, isLiveChannelMessageEvent, store } from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 import { UserView } from '@grafana/ui';
-import { useDispatch } from 'app/types/store';
+import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { updateCursor, removeCursor } from '../state/crdtSlice';
+import { selectSessionId } from '../state/selectors';
 import { UserCursor } from '../state/types';
 
 interface CursorUpdateMessage {
@@ -29,6 +30,7 @@ interface CursorUpdateMessage {
     x: number;
     y: number;
     color: string;
+    selectedPanelIds: string[];
   };
   timestamp: number;
 }
@@ -105,6 +107,7 @@ export function useMapActiveUsers(
   // Track all users who have been active, even after they disconnect
   const usersHistoryRef = useRef<Map<string, { userId: string; userName: string; lastUpdated: number }>>(new Map());
   const dispatch = useDispatch();
+  const sessionId = useSelector((state: StoreState) => selectSessionId(state.exploreMapCRDT));
 
   useEffect(() => {
     if (!enabled || !mapUid) {
@@ -132,6 +135,7 @@ export function useMapActiveUsers(
             x: 0,
             y: 0,
             lastUpdated: user.lastUpdated,
+            selectedPanelIds: [],
           };
           dispatch(updateCursor(cursor));
         }
@@ -206,6 +210,11 @@ export function useMapActiveUsers(
               if (isLiveChannelMessageEvent(event)) {
                 const message = event.message as CursorMessage;
 
+                // Skip our own messages to avoid showing local cursor
+                if (message.sessionId === sessionId) {
+                  return;
+                }
+
                 if (message.type === 'cursor_update') {
                   // Update user history (persist even after disconnect)
                   usersHistoryRef.current.set(message.userId, {
@@ -227,6 +236,7 @@ export function useMapActiveUsers(
                       x: message.data.x,
                       y: message.data.y,
                       lastUpdated: message.timestamp,
+                      selectedPanelIds: message.data.selectedPanelIds,
                     };
                     dispatch(updateCursor(cursor));
                   }
@@ -273,7 +283,7 @@ export function useMapActiveUsers(
       // Only clear if explicitly needed (e.g., when mapUid changes)
       clearInterval(cleanupInterval);
     };
-  }, [mapUid, enabled, updateRedux, showAllUsers, dispatch]);
+  }, [mapUid, enabled, updateRedux, showAllUsers, dispatch, sessionId]);
 
   return activeUsers;
 }
