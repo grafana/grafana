@@ -328,6 +328,7 @@ export class V2DashboardSerializer
             const elementId = this.getElementIdForPanel(elementPanel.spec.id);
             const panelDsqueries = this.defaultDsReferencesMap.panels.get(elementId) || new Map<string, string>();
             panelDsqueries.set(query.spec.refId, query.spec.query.group || '');
+            this.defaultDsReferencesMap.panels.set(elementId, panelDsqueries);
           }
         }
       }

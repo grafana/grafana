@@ -808,13 +808,13 @@ export function getAutoAssignedDSRef(
   element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer,
   type: 'panels' | 'variables' | 'annotations',
   elementMapReferences?: DSReferencesMapping
-): Set<string> {
+): Map<string, string> {
   if (!elementMapReferences) {
-    return new Set();
+    return new Map<string, string>();
   }
   if (type === 'panels' && isVizPanel(element)) {
     const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(element);
-    return elementMapReferences.panels.get(elementKey) || new Set();
+    return elementMapReferences.panels.get(elementKey) || new Map<string, string>();
   }
 
   if (type === 'variables') {
@@ -843,19 +843,17 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   const elementId = getElementIdentifier(element, type);
 
   // If the element is in the auto-assigned set, it didn't have a datasource specified
-  //TODO: If autoassignedDsRef was undefined
-  if (autoAssignedDsRef?.get(elementId)) {
+  if (autoAssignedDsRef?.has(elementId)) {
     return undefined;
   }
 
-  const autoAssignedDsType = autoAssignedDsRef?.get(elementId);
-  if (autoAssignedDsType !== undefined) {
-    if (autoAssignedDsType !== '') {
-      // If the autoassignedDsType is not empty, return the datasource with only the type
-      return { type: autoAssignedDsType };
-    } else {
-      return undefined; // If the autoassignedDsType is empty, return undefined
+  // If the autoassignedDsType is not empty, return the datasource with only the type
+  if (autoAssignedDsRef?.has(elementId)) {
+    const dsType = autoAssignedDsRef.get(elementId);
+    if (dsType !== '') {
+      return { type: dsType };
     }
+    return undefined;
   }
 
   // Return appropriate datasource reference based on element type
