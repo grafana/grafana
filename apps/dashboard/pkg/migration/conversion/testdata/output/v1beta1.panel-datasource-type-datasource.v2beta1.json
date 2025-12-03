@@ -61,7 +61,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -79,7 +79,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -97,7 +97,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -115,7 +115,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -133,7 +133,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -151,7 +151,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -169,7 +169,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -187,7 +187,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "labels": "",
@@ -206,7 +206,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -224,7 +224,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -242,7 +242,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -260,7 +260,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -278,7 +278,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -296,7 +296,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -314,7 +314,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "labels": "",
@@ -333,7 +333,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"
@@ -351,7 +351,7 @@
                       "group": "datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "grafana"
+                        "name": "-- Grafana --"
                       },
                       "spec": {
                         "scenarioId": "random_walk"

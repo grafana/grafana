@@ -488,18 +488,24 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
     const datasource = getElementDatasource(layer, layer.state.query, 'annotation', undefined, dsReferencesMapping);
 
     let layerDs = layer.state.query.datasource;
+    const isBuiltIn = layer.state.query.builtIn === 1;
 
     if (!layerDs || !layerDs.type) {
       // This can happen only if we are transforming a scene that was created
       // from a v1 spec. In v1 annotation layer can contain no datasource ref, which is guaranteed
       // for layers created for v2 schema. See transform transformSaveModelSchemaV2ToScene.ts.
-      // In this case we will resolve default data source
-      layerDs = getDefaultDataSourceRef();
-      console.error(
-        'Misconfigured AnnotationsDataLayer: Data source is required for annotations. Resolving default data source',
-        layer,
-        layerDs
-      );
+      if (isBuiltIn) {
+        // For built-in annotations, use the Grafana datasource
+        layerDs = { type: 'grafana', uid: '-- Grafana --' };
+      } else {
+        // For other annotations, resolve to the default datasource
+        layerDs = getDefaultDataSourceRef();
+        console.error(
+          'Misconfigured AnnotationsDataLayer: Data source is required for annotations. Resolving default data source',
+          layer,
+          layerDs
+        );
+      }
     }
 
     const result = transformV1ToV2AnnotationQuery(layer.state.query, layerDs.type!, layerDs.uid!, {

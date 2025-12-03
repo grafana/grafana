@@ -77,7 +77,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 
 				// Verify datasource UID is resolved to "grafana"
 				assert.NotNil(t, query.Spec.Datasource.Uid)
-				assert.Equal(t, grafanads.DatasourceUID, *query.Spec.Datasource.Uid, "type: 'datasource' with no UID should resolve to uid: 'grafana'")
+				assert.Equal(t, grafanads.DatasourceName, *query.Spec.Datasource.Uid, "type: 'datasource' with no UID should resolve to uid: '-- Grafana --'")
 
 				// Verify query kind matches datasource type
 				assert.Equal(t, "datasource", query.Spec.Query.Kind)

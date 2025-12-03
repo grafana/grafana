@@ -62,7 +62,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "A",
                     "hidden": false
@@ -79,7 +79,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "B",
                     "hidden": false
@@ -96,7 +96,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "C",
                     "hidden": false
@@ -113,7 +113,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "D",
                     "hidden": false
@@ -130,7 +130,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "E",
                     "hidden": false
@@ -147,7 +147,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "F",
                     "hidden": false
@@ -164,7 +164,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "G",
                     "hidden": false
@@ -182,7 +182,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "H",
                     "hidden": false
@@ -199,7 +199,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "I",
                     "hidden": false
@@ -216,7 +216,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "J",
                     "hidden": false
@@ -233,7 +233,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "K",
                     "hidden": false
@@ -250,7 +250,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "L",
                     "hidden": false
@@ -267,7 +267,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "M",
                     "hidden": false
@@ -284,7 +284,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "N",
                     "hidden": false
@@ -302,7 +302,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "O",
                     "hidden": false
@@ -319,7 +319,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "P",
                     "hidden": false
@@ -336,7 +336,7 @@
                     },
                     "datasource": {
                       "type": "datasource",
-                      "uid": "grafana"
+                      "uid": "-- Grafana --"
                     },
                     "refId": "Q",
                     "hidden": false

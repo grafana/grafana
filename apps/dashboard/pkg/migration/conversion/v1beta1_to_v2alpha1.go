@@ -58,7 +58,7 @@ func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemavers
 // datasource: { type: "datasource" } with no UID, it should resolve to uid: "grafana".
 func resolveGrafanaDatasourceUID(dsType, dsUID string) string {
 	if dsType == "datasource" && dsUID == "" {
-		return grafanads.DatasourceUID
+		return grafanads.DatasourceName
 	}
 	return dsUID
 }
