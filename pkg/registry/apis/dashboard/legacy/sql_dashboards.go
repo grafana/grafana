@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 var (
@@ -140,9 +141,20 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 }
 
 func (a *dashboardSqlAccess) executeQuery(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query string, args ...any) (*sql.Rows, error) {
-	// Use transaction if available in context.
-	// This allows us to run migrations in a transaction which is specifically required for SQLite.
-	if tx := resource.TransactionFromContext(ctx); tx != nil {
+	var tx *sql.Tx
+	helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		var coreTx *core.Tx
+		coreTx, err = sess.Tx()
+
+		if err != nil {
+			return nil
+		}
+
+		tx = coreTx.Tx
+		return nil
+	})
+	if tx != nil {
 		return tx.QueryContext(ctx, query, args...)
 	}
 	return helper.DB.GetSqlxSession().Query(ctx, query, args...)
