@@ -55,17 +55,27 @@ export function ScopesDashboardsTreeFolderItem({
               scope: folder.subScopeName || '',
             })}
             name="exchange-alt"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.preventDefault();
               e.stopPropagation();
               if (folder.subScopeName && scopesSelectorService) {
                 const activeSubScopePath = scopesDashboardsService?.state.navScopePath;
-                scopesDashboardsService?.setNavigationScope(
+                // Check if the active scope is a child of the current folder's scope
+                const activeScope = activeSubScopePath?.[activeSubScopePath.length - 1];
+                const folderLocationInActivePath = activeSubScopePath?.indexOf(folder.subScopeName) ?? -1;
+
+                await scopesDashboardsService?.setNavigationScope(
+                  folderLocationInActivePath >= 0 ? folder.subScopeName : undefined,
                   undefined,
-                  [folder.subScopeName],
-                  activeSubScopePath?.slice(activeSubScopePath?.indexOf(folder.subScopeName) + 1) ?? []
+                  activeSubScopePath?.slice(folderLocationInActivePath + 1) ?? []
                 );
-                scopesSelectorService.changeScopes([folder.subScopeName], undefined, undefined, false);
+                // Now changeScopes will skip fetchDashboards because navigationScope is set
+                scopesSelectorService.changeScopes(
+                  folderLocationInActivePath >= 0 && activeScope ? [activeScope] : [folder.subScopeName],
+                  undefined,
+                  undefined,
+                  false
+                );
               }
             }}
           />

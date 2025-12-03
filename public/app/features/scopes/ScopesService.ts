@@ -156,10 +156,13 @@ export class ScopesService implements ScopesContextValue {
           state.navigationScope !== prevState.navigationScope ||
           !isEqual(state.navScopePath, prevState.navScopePath)
         ) {
-          this.locationService.partial({
-            navigation_scope: state.navigationScope ? encodeURIComponent(state.navigationScope) : null,
-            nav_scope_path: state.navScopePath ? serializeFolderPath(state.navScopePath) : null,
-          });
+          this.locationService.partial(
+            {
+              navigation_scope: state.navigationScope ? encodeURIComponent(state.navigationScope) : null,
+              nav_scope_path: state.navScopePath?.length ? serializeFolderPath(state.navScopePath) : null,
+            },
+            true
+          );
         }
       })
     );
