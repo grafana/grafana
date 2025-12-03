@@ -5163,7 +5163,6 @@
       },
       "only-overrides-button-tooltip": "僅顯示覆寫",
       "placeholder-search-options": "搜尋選項",
-      "visualization-button-label": "可視化",
       "visualization-button-tooltip": "搜尋選項"
     },
     "panel-editor-table-view": {
@@ -6200,6 +6199,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "搜尋…",
       "radio-options": {
         "label": {
@@ -6510,7 +6512,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "變更視覺效果",
-      "tooltip-click-to-change-visualization": "按一下以變更視覺效果"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "開啟查詢窗格",
@@ -7306,7 +7308,8 @@
       "title-failed-volume-query": "無法載入此查詢的紀錄容量",
       "title-no-logs-volume-available": "沒有可用的紀錄容量",
       "title-showing-partial-data": "顯示部分資料",
-      "title-unable-to-show-log-volume": "無法顯示紀錄容量"
+      "title-unable-to-show-log-volume": "無法顯示紀錄容量",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "目前的查詢和時間範圍沒有可用的容量資訊。"
@@ -11041,6 +11044,11 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
