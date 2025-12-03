@@ -28,6 +28,7 @@ const (
 	TestKVUnixTimestamp  = "unix timestamp"
 	TestKVBatchGet       = "batch get operations"
 	TestKVBatchDelete    = "batch delete operations"
+	TestKVTxn            = "transaction operations"
 )
 
 // NewKVFunc is a function that creates a new KV instance for testing
@@ -69,6 +70,7 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 		{TestKVUnixTimestamp, runTestKVUnixTimestamp},
 		{TestKVBatchGet, runTestKVBatchGet},
 		{TestKVBatchDelete, runTestKVBatchDelete},
+		{TestKVTxn, runTestKVTxn},
 	}
 
 	for _, tc := range cases {
@@ -800,4 +802,358 @@ func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, ke
 	require.NoError(t, err)
 	err = writer.Close()
 	require.NoError(t, err)
+}
+
+func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	section := nsPrefix + "-txn"
+
+	t.Run("txn with empty section", func(t *testing.T) {
+		_, err := kv.Txn(ctx, "", nil, nil, nil)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "section is required")
+	})
+
+	t.Run("txn with no comparisons executes success ops", func(t *testing.T) {
+		// With no comparisons, all comparisons "pass" so success ops should run
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "no-cmp-key", Value: []byte("success-value")},
+		}
+
+		resp, err := kv.Txn(ctx, section, nil, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+
+		// Verify the key was created
+		reader, err := kv.Get(ctx, section, "no-cmp-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "success-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("txn compare exists false for non-existent key", func(t *testing.T) {
+		// Key doesn't exist, so exists should be false
+		cmps := []resource.Compare{
+			resource.CompareKeyExists("non-existent-key", false),
+		}
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "created-key", Value: []byte("created-value")},
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+
+		// Verify the key was created
+		reader, err := kv.Get(ctx, section, "created-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "created-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("txn compare exists true for existing key", func(t *testing.T) {
+		// First create a key
+		saveKVHelper(t, kv, ctx, section, "existing-key", strings.NewReader("existing-value"))
+
+		// Key exists, so exists should be true
+		cmps := []resource.Compare{
+			resource.CompareKeyExists("existing-key", true),
+		}
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "existing-key", Value: []byte("updated-value")},
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+
+		// Verify the key was updated
+		reader, err := kv.Get(ctx, section, "existing-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "updated-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("txn compare exists fails when key exists but expected not to", func(t *testing.T) {
+		// First create a key
+		saveKVHelper(t, kv, ctx, section, "exists-fail-key", strings.NewReader("some-value"))
+
+		// Key exists but we expect it not to
+		cmps := []resource.Compare{
+			resource.CompareKeyExists("exists-fail-key", false),
+		}
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "exists-fail-result", Value: []byte("should-not-exist")},
+		}
+		failureOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "exists-fail-marker", Value: []byte("failure-executed")},
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, failureOps)
+		require.NoError(t, err)
+		assert.False(t, resp.Succeeded)
+
+		// Verify success op was not executed
+		_, err = kv.Get(ctx, section, "exists-fail-result")
+		assert.Error(t, err)
+		assert.Equal(t, resource.ErrNotFound, err)
+
+		// Verify failure ops were executed
+		reader, err := kv.Get(ctx, section, "exists-fail-marker")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "failure-executed", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("txn compare value equals", func(t *testing.T) {
+		// First create a key with known value
+		saveKVHelper(t, kv, ctx, section, "value-cmp-key", strings.NewReader("expected-value"))
+
+		cmps := []resource.Compare{
+			resource.CompareKeyValue("value-cmp-key", resource.CompareEqual, []byte("expected-value")),
+		}
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "value-cmp-key", Value: []byte("new-value")},
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+
+		// Verify the key was updated
+		reader, err := kv.Get(ctx, section, "value-cmp-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "new-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("txn compare value fails executes failure ops", func(t *testing.T) {
+		// First create a key with known value
+		saveKVHelper(t, kv, ctx, section, "value-fail-key", strings.NewReader("actual-value"))
+
+		cmps := []resource.Compare{
+			resource.CompareKeyValue("value-fail-key", resource.CompareEqual, []byte("wrong-value")),
+		}
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "value-fail-key", Value: []byte("should-not-be-set")},
+		}
+		failureOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "failure-marker", Value: []byte("failure-executed")},
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, failureOps)
+		require.NoError(t, err)
+		assert.False(t, resp.Succeeded)
+
+		// Verify the original key was not changed
+		reader, err := kv.Get(ctx, section, "value-fail-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "actual-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+
+		// Verify failure ops were executed
+		reader, err = kv.Get(ctx, section, "failure-marker")
+		require.NoError(t, err)
+		value, err = io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "failure-executed", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("txn delete operation", func(t *testing.T) {
+		// First create a key
+		saveKVHelper(t, kv, ctx, section, "delete-txn-key", strings.NewReader("to-be-deleted"))
+
+		cmps := []resource.Compare{
+			resource.CompareKeyExists("delete-txn-key", true),
+		}
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpDelete, Key: "delete-txn-key"},
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+
+		// Verify the key was deleted
+		_, err = kv.Get(ctx, section, "delete-txn-key")
+		assert.Error(t, err)
+		assert.Equal(t, resource.ErrNotFound, err)
+	})
+
+	t.Run("txn multiple comparisons all must pass", func(t *testing.T) {
+		// Create two keys
+		saveKVHelper(t, kv, ctx, section, "multi-cmp-key1", strings.NewReader("value1"))
+		saveKVHelper(t, kv, ctx, section, "multi-cmp-key2", strings.NewReader("value2"))
+
+		cmps := []resource.Compare{
+			resource.CompareKeyValue("multi-cmp-key1", resource.CompareEqual, []byte("value1")),
+			resource.CompareKeyValue("multi-cmp-key2", resource.CompareEqual, []byte("value2")),
+		}
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "multi-success", Value: []byte("both-passed")},
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+
+		// Verify success op was executed
+		reader, err := kv.Get(ctx, section, "multi-success")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "both-passed", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("txn multiple comparisons one fails", func(t *testing.T) {
+		// Create two keys
+		saveKVHelper(t, kv, ctx, section, "multi-fail-key1", strings.NewReader("value1"))
+		saveKVHelper(t, kv, ctx, section, "multi-fail-key2", strings.NewReader("value2"))
+
+		cmps := []resource.Compare{
+			resource.CompareKeyValue("multi-fail-key1", resource.CompareEqual, []byte("value1")),
+			resource.CompareKeyValue("multi-fail-key2", resource.CompareEqual, []byte("wrong-value")),
+		}
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "multi-fail-success", Value: []byte("should-not-exist")},
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.False(t, resp.Succeeded)
+
+		// Verify success op was not executed
+		_, err = kv.Get(ctx, section, "multi-fail-success")
+		assert.Error(t, err)
+		assert.Equal(t, resource.ErrNotFound, err)
+	})
+
+	t.Run("txn too many comparisons", func(t *testing.T) {
+		cmps := make([]resource.Compare, resource.MaxTxnCompares+1)
+		for i := range cmps {
+			cmps[i] = resource.CompareKeyExists(fmt.Sprintf("key-%d", i), false)
+		}
+
+		_, err := kv.Txn(ctx, section, cmps, nil, nil)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "too many comparisons")
+	})
+
+	t.Run("txn too many success operations", func(t *testing.T) {
+		ops := make([]resource.TxnOp, resource.MaxTxnOps+1)
+		for i := range ops {
+			ops[i] = resource.TxnOp{Type: resource.TxnOpPut, Key: fmt.Sprintf("key-%d", i), Value: []byte("value")}
+		}
+
+		_, err := kv.Txn(ctx, section, nil, ops, nil)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "too many success operations")
+	})
+
+	t.Run("txn too many failure operations", func(t *testing.T) {
+		ops := make([]resource.TxnOp, resource.MaxTxnOps+1)
+		for i := range ops {
+			ops[i] = resource.TxnOp{Type: resource.TxnOpPut, Key: fmt.Sprintf("key-%d", i), Value: []byte("value")}
+		}
+
+		_, err := kv.Txn(ctx, section, nil, nil, ops)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "too many failure operations")
+	})
+
+	t.Run("txn compare greater than", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, "greater-key", strings.NewReader("bbb"))
+
+		cmps := []resource.Compare{
+			resource.CompareKeyValue("greater-key", resource.CompareGreater, []byte("aaa")),
+		}
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "greater-result", Value: []byte("passed")},
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+	})
+
+	t.Run("txn compare less than", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, "less-key", strings.NewReader("aaa"))
+
+		cmps := []resource.Compare{
+			resource.CompareKeyValue("less-key", resource.CompareLess, []byte("bbb")),
+		}
+		successOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "less-result", Value: []byte("passed")},
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+	})
+
+	t.Run("txn compare not equal for non-existent value key", func(t *testing.T) {
+		// Key doesn't exist, comparing value should fail for equal but pass for not-equal
+		cmps := []resource.Compare{
+			resource.CompareKeyValue("non-existent-value-key", resource.CompareNotEqual, []byte("any-value")),
+		}
+		successOps := []resource.TxnOp{
+			resource.TxnPut("not-equal-result", []byte("passed")),
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+	})
+
+	t.Run("txn using constructor functions", func(t *testing.T) {
+		// Test that constructor functions work correctly
+		saveKVHelper(t, kv, ctx, section, "constructor-key", strings.NewReader("constructor-value"))
+
+		cmps := []resource.Compare{
+			resource.CompareKeyExists("constructor-key", true),
+		}
+		successOps := []resource.TxnOp{
+			resource.TxnPut("constructor-new", []byte("new-value")),
+			resource.TxnDelete("constructor-key"),
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+
+		// Verify the operations actually happened
+		_, err = kv.Get(ctx, section, "constructor-key")
+		assert.Error(t, err)
+		assert.Equal(t, resource.ErrNotFound, err)
+
+		reader, err := kv.Get(ctx, section, "constructor-new")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "new-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
 }
