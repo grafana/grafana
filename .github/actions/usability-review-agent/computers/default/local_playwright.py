@@ -53,21 +53,22 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
             login_url = urljoin(base_url, "/login")
 
             print(f"Logging in to: {login_url}")
-            page.goto(login_url, wait_until="networkidle", timeout=60000)
+            page.goto(login_url, timeout=60000)
 
             print(f"Page loaded, current URL: {page.url}")
             print(f"Page title: {page.title()}")
 
-            # Take screenshot to see what's on the page
-            screenshot_path = os.environ.get("GITHUB_WORKSPACE", ".") + "/login_page.png"
-            page.screenshot(path=screenshot_path)
-            print(f"Screenshot saved as {screenshot_path}")
-
             try:
                 # Wait for login form using Grafana's getByTestId (matching official e2e tests)
-                print("Waiting for login form...")
-                page.get_by_test_id("Username input field").wait_for(state="visible", timeout=30000)
+                # Don't rely on page load state - wait directly for the form element
+                print("Waiting for login form to appear...")
+                page.get_by_test_id("Username input field").wait_for(state="visible", timeout=60000)
                 print("Login form detected")
+
+                # Take screenshot after form is visible
+                screenshot_path = os.environ.get("GITHUB_WORKSPACE", ".") + "/login_page.png"
+                page.screenshot(path=screenshot_path)
+                print(f"Screenshot saved as {screenshot_path}")
 
                 # Fill credentials using getByTestId like official Grafana e2e tests
                 print(f"Filling username (length: {len(grafana_username)})")
