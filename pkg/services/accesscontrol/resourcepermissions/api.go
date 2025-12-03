@@ -188,8 +188,13 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 		if err == nil {
 			return response.JSON(http.StatusOK, k8sPermissions)
 		}
+		span.RecordError(err)
 		logger := log.New("resource-permissions-api")
-		logger.Warn("Failed to get resource permissions from k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		if errors.Is(err, ErrRestConfigNotAvailable) {
+			logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		} else {
+			logger.Warn("Failed to get resource permissions from k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		}
 	}
 
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -118,6 +119,7 @@ func ProvideDashboardPermissions(
 	options := resourcepermissions.Options{
 		Resource:          "dashboards",
 		ResourceAttribute: "uid",
+		APIGroup:          dashboardv1.APIGroup,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideDashboardPermissions.ResourceValidator")
 			defer span.End()

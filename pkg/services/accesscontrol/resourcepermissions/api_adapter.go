@@ -2,16 +2,17 @@ package resourcepermissions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/authlib/types"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 
-	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,9 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+var ErrRestConfigNotAvailable = errors.New("k8s rest config provider not available")
+
 func (a *api) getDynamicClient(ctx context.Context) (dynamic.Interface, error) {
 	if a.restConfigProvider == nil {
-		return nil, fmt.Errorf("k8s rest config provider not available")
+		return nil, ErrRestConfigNotAvailable
 	}
 
 	restConfig, err := a.restConfigProvider.GetRestConfig(ctx)
@@ -46,7 +49,7 @@ func (a *api) getResourcePermissionsFromK8s(ctx context.Context, namespace strin
 	resourcePermName := a.buildResourcePermissionName(resourceID)
 
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
-	resourcePerm, err := resourcePermResource.Get(ctx, resourcePermName, metav1.GetOptions{})
+	unstructuredObj, err := resourcePermResource.Get(ctx, resourcePermName, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return getResourcePermissionsResponse{}, nil
@@ -54,52 +57,48 @@ func (a *api) getResourcePermissionsFromK8s(ctx context.Context, namespace strin
 		return nil, fmt.Errorf("failed to get resource permission from k8s: %w", err)
 	}
 
-	return a.convertK8sResourcePermissionToDTO(resourcePerm, namespace)
+	var resourcePerm iamv0.ResourcePermission
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, &resourcePerm); err != nil {
+		return nil, fmt.Errorf("failed to convert to typed resource permission: %w", err)
+	}
+
+	return a.convertK8sResourcePermissionToDTO(&resourcePerm, namespace)
 }
 
-func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *unstructured.Unstructured, namespace string) (getResourcePermissionsResponse, error) {
-	permissions, found, err := unstructured.NestedSlice(resourcePerm.Object, "spec", "permissions")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get permissions from spec: %w", err)
-	}
-	if !found {
+func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePermission, namespace string) (getResourcePermissionsResponse, error) {
+	permissions := resourcePerm.Spec.Permissions
+	if len(permissions) == 0 {
 		return getResourcePermissionsResponse{}, nil
 	}
 
 	namespaceInfo, err := types.ParseNamespace(namespace)
 	if err != nil {
-		log.New("resource-permissions-api").Warn("Failed to parse namespace for orgID", "namespace", namespace, "error", err)
+		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
 	}
 	orgID := namespaceInfo.OrgID
 
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 
-	for _, permRaw := range permissions {
-		permMap, ok := permRaw.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		kind, _, _ := unstructured.NestedString(permMap, "kind")
-		name, _, _ := unstructured.NestedString(permMap, "name")
-		verb, _, _ := unstructured.NestedString(permMap, "verb")
+	for _, perm := range permissions {
+		kind := perm.Kind
+		name := perm.Name
+		verb := perm.Verb
 
 		if name == "" || verb == "" {
 			continue
 		}
 
-		actions, exists := a.service.options.PermissionsToActions[verb]
+		permission := cases.Title(language.Und).String(verb)
+		actions, exists := a.service.options.PermissionsToActions[permission]
 		if !exists {
 			log.New("resource-permissions-api").Warn(
-				"Permission verb not found in PermissionsToActions map",
-				"verb", verb,
+				"Permission not found in PermissionsToActions map",
+				"permission", permission,
 				"resource", a.service.options.Resource,
 				"availablePermissions", fmt.Sprintf("%v", getMapKeys(a.service.options.PermissionsToActions)),
 			)
 			actions = []string{}
 		}
-
-		permission := verb
 
 		permDTO := resourcePermissionDTO{
 			Permission:  permission,
@@ -117,6 +116,7 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *unstructured.Unstr
 				permDTO.UserLogin = userDetails.Login
 				permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
 				permDTO.IsServiceAccount = userDetails.IsServiceAccount
+				permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
 			teamDetails, err := a.service.teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
@@ -128,15 +128,15 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *unstructured.Unstr
 				permDTO.TeamID = teamDetails.ID
 				permDTO.TeamUID = teamDetails.UID
 				permDTO.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, teamDetails.Email, teamDetails.Name)
+				permDTO.RoleName = fmt.Sprintf("managed:teams:%d:permissions", teamDetails.ID)
 			} else {
 				permDTO.TeamUID = name
 				permDTO.Team = name
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
 			permDTO.BuiltInRole = name
+			permDTO.RoleName = fmt.Sprintf("managed:builtins:%s:permissions", name)
 		}
-
-		permDTO.RoleName = fmt.Sprintf("managed:%s:%s:permissions", a.service.options.Resource, name)
 
 		dto = append(dto, permDTO)
 	}
@@ -145,14 +145,10 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *unstructured.Unstr
 }
 
 func (a *api) getAPIGroup() string {
-	switch a.service.options.Resource {
-	case "folders":
-		return folderv1.APIGroup
-	case "dashboards":
-		return dashboardv1.APIGroup
-	default:
-		return fmt.Sprintf("%s.grafana.app", a.service.options.Resource)
+	if a.service.options.APIGroup != "" {
+		return a.service.options.APIGroup
 	}
+	return fmt.Sprintf("%s.grafana.app", a.service.options.Resource)
 }
 
 func getMapKeys(m map[string][]string) []string {
