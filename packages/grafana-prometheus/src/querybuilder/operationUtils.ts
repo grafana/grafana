@@ -1,9 +1,11 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/operationUtils.ts
-import { capitalize } from 'lodash';
+import { capitalize, isString } from 'lodash';
 import pluralize from 'pluralize';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+
+import { isValidLegacyName } from '../utf8_support';
 
 import {
   QueryBuilderLabelFilter,
@@ -246,13 +248,13 @@ export function createAggregationOperationWithParam(
 
 export function getAggregationByRenderer(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${aggregation} by(${model.params.join(', ')}) (${innerExpr})`;
+    return `${aggregation} by(${model.params.map(x => isString(x) && isValidLegacyName(x) ? x : `"${x}"`).join(', ')}) (${innerExpr})`;
   };
 }
 
 function getAggregationWithoutRenderer(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${aggregation} without(${model.params.join(', ')}) (${innerExpr})`;
+    return `${aggregation} without(${model.params.map(x => isString(x) && isValidLegacyName(x) ? x : `"${x}"`).join(', ')}) (${innerExpr})`;
   };
 }
 
