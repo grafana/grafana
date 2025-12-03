@@ -28,6 +28,9 @@ export function addDashboardExportDrawerItem(item: ExportDrawerMenuItem) {
 }
 
 export default function ExportMenu({ dashboard }: { dashboard: DashboardScene }) {
+  const provisioningEnabled = config.featureToggles.provisioning;
+  const isUnmanaged = provisioningEnabled && !dashboard.isManagedRepository();
+
   const onMenuItemClick = (shareView: string) => {
     locationService.partial({ shareView });
   };
@@ -59,8 +62,20 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
       onClick: () => onMenuItemClick(shareDashboardType.image),
     });
 
+    // Add "Export to Repository" option for unmanaged dashboards
+    if (isUnmanaged) {
+      menuItems.push({
+        shareId: 'export-to-repository',
+        testId: 'export-to-repository',
+        icon: 'cloud-upload',
+        label: t('share-dashboard.menu.export-to-repository-title', 'Export to Repository'),
+        renderCondition: true,
+        onClick: () => onMenuItemClick('export-to-repository'),
+      });
+    }
+
     return menuItems.filter((item) => item.renderCondition);
-  }, []);
+  }, [isUnmanaged]);
 
   const onClick = (item: ExportDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({
