@@ -1083,7 +1083,7 @@ describe('ResponseTransformers', () => {
     expect(v1.enable).toBe(v2Spec.enable);
     expect(v1.hide).toBe(v2Spec.hide);
     expect(v1.iconColor).toBe(v2Spec.iconColor);
-    expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : undefined);
+    expect(v1.builtIn).toBe(v2Spec.builtIn !== undefined ? (v2Spec.builtIn ? 1 : 0) : undefined);
     expect(v1.target).toEqual(v2Spec.query.spec);
     expect(v1.filter).toEqual(v2Spec.filter);
   }

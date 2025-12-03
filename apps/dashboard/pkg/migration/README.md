@@ -52,6 +52,7 @@ v0alpha1 (Legacy JSON) → v1beta1 (Migrated JSON) → v2alpha1/v2beta1 (Structu
 - Transforms JSON dashboards to structured dashboard format
 - v2 schema is the stable, typed schema with proper type definitions
 - Handles modern dashboard features and Kubernetes-native storage
+- See [V2 to V1 Layout Conversion](./conversion/v2_to_v1_layout_conversion.md) for details on how V2 layouts are converted back to V1 panel arrays
 
 ## Conversion Matrix
 
@@ -421,4 +422,5 @@ migration.MDashboardConversionFailureTotal
 ## Related Documentation
 
 - [Schema Migration Guide](./schemaversion/README.md) - Complete guide for creating new dashboard schema migrations
+- [V2 to V1 Layout Conversion](./conversion/v2_to_v1_layout_conversion.md) - How V2 layouts (GridLayout, RowsLayout, TabsLayout, AutoGridLayout) are converted to V1 panel arrays
 - [PR #110178 - Dashboard migration: Add missing metrics registration](https://github.com/grafana/grafana/pull/110178)

@@ -15,17 +15,17 @@ This file provides context for Claude Code when working on the Grafana Alerting 
 
 ### Required Reading
 
-1. **Frontend Style Guide**: [../../../../contribute/style-guides/frontend.md](../../../../contribute/style-guides/frontend.md)
+1. **Frontend Style Guide**: [../../../../../contribute/style-guides/frontend.md](../../../../../contribute/style-guides/frontend.md)
    - Naming conventions, component patterns, TypeScript, exports
    - Function declarations for components, callback props with "on" prefix
 
-2. **Testing Guidelines**: [../../../../contribute/style-guides/testing.md](../../../../contribute/style-guides/testing.md)
+2. **Testing Guidelines**: [../../../../../contribute/style-guides/testing.md](../../../../../contribute/style-guides/testing.md)
    - React Testing Library, query priorities, user event setup
 
-3. **Styling Guide**: [../../../../contribute/style-guides/styling.md](../../../../contribute/style-guides/styling.md)
+3. **Styling Guide**: [../../../../../contribute/style-guides/styling.md](../../../../../contribute/style-guides/styling.md)
    - Emotion usage, `useStyles2` hook patterns
 
-4. **Redux Framework**: [../../../../contribute/style-guides/redux.md](../../../../contribute/style-guides/redux.md)
+4. **Redux Framework**: [../../../../../contribute/style-guides/redux.md](../../../../../contribute/style-guides/redux.md)
    - Redux Toolkit patterns, reducer testing
 
 5. **Alerting Testing Guide**: [./TESTING.md](./TESTING.md)
