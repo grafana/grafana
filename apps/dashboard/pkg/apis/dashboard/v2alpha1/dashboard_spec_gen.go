@@ -31,6 +31,8 @@ type DashboardAnnotationQuerySpec struct {
 	Name       string                          `json:"name"`
 	BuiltIn    *bool                           `json:"builtIn,omitempty"`
 	Filter     *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
+	// Mappings define how to convert data frame fields to annotation event fields.
+	Mappings map[string]DashboardAnnotationEventFieldMapping `json:"mappings,omitempty"`
 	// Catch-all field for datasource-specific properties
 	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
@@ -82,6 +84,24 @@ func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 	return &DashboardAnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
 		Ids:     []uint32{},
+	}
+}
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+// +k8s:openapi-gen=true
+type DashboardAnnotationEventFieldMapping struct {
+	// Source type for the field value
+	Source *string `json:"source,omitempty"`
+	// Constant value to use when source is "text"
+	Value *string `json:"value,omitempty"`
+	// Regular expression to apply to the field value
+	Regex *string `json:"regex,omitempty"`
+}
+
+// NewDashboardAnnotationEventFieldMapping creates a new DashboardAnnotationEventFieldMapping object.
+func NewDashboardAnnotationEventFieldMapping() *DashboardAnnotationEventFieldMapping {
+	return &DashboardAnnotationEventFieldMapping{
+		Source: (func(input string) *string { return &input })("field"),
 	}
 }
 
