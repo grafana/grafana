@@ -53,7 +53,7 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
             login_url = urljoin(base_url, "/login")
 
             print(f"Logging in to: {login_url}")
-            page.goto(login_url, wait_until="domcontentloaded", timeout=60000)
+            page.goto(login_url, wait_until="networkidle", timeout=60000)
 
             print(f"Page loaded, current URL: {page.url}")
             print(f"Page title: {page.title()}")
@@ -65,8 +65,9 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
 
             try:
                 # Wait for login form using Grafana's data-testid selectors
+                # Increase timeout since form takes time to render via JavaScript
                 print("Waiting for login form...")
-                page.wait_for_selector('[data-testid="Username input field"]', state="visible", timeout=10000)
+                page.wait_for_selector('[data-testid="Username input field"]', state="visible", timeout=30000)
                 print("Login form detected")
 
                 # Fill credentials
