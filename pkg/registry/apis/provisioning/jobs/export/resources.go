@@ -105,15 +105,10 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 
 // ExportSpecificResources exports a list of specific resources identified by ResourceRef entries.
 // It validates that resources are not folders, are supported, and are unmanaged.
-// Specific resource export only works with folder sync targets, not instance sync targets.
-func ExportSpecificResources(ctx context.Context, repoConfig *provisioning.Repository, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+// Note: The caller must validate that the repository has a folder sync target before calling this function.
+func ExportSpecificResources(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	if len(options.Resources) == 0 {
 		return errors.New("no resources specified for export")
-	}
-
-	// Validate that specific resource export is only used with folder sync targets
-	if repoConfig.Spec.Sync.Target != provisioning.SyncTargetTypeFolder {
-		return fmt.Errorf("specific resource export is only supported for folder sync targets, but repository has target type '%s'", repoConfig.Spec.Sync.Target)
 	}
 
 	progress.SetMessage(ctx, "exporting specific resources")
