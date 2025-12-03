@@ -1,6 +1,6 @@
 import { Page } from 'playwright-core';
 
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect, DashboardPage } from '@grafana/plugin-e2e';
 
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
@@ -12,6 +12,7 @@ import {
   getPanelPosition,
   importTestDashboard,
   goToEmbeddedPanel,
+  switchToAutoGrid,
 } from './utils';
 
 const repeatTitleBase = 'repeat - ';
@@ -42,7 +43,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first().click();
 
@@ -78,7 +79,8 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
+
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
@@ -117,7 +119,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
 
       // select first/original repeat panel to activate edit pane
       await dashboardPage
@@ -271,7 +273,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      await switchToAutoGrid(page);
+      await switchToAutoGrid(page, dashboardPage);
 
       // this moving repeated panel between two normal panels
       await movePanel(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`, 'New panel');
@@ -462,8 +464,3 @@ test.describe(
     });
   }
 );
-
-async function switchToAutoGrid(page: Page) {
-  await page.getByLabel('Expand Panel layout category').click();
-  await page.getByLabel('layout-selection-option-Auto grid').click();
-}
