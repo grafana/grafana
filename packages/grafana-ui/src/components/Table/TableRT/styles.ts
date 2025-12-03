@@ -111,6 +111,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       width: '100%',
       overflow: 'auto',
       display: 'flex',
+      position: 'relative',
       flexDirection: 'column',
     }),
     thead: css({
