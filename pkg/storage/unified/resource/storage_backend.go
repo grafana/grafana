@@ -1235,27 +1235,35 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 	return k.dataStore.GetResourceStats(ctx, nsr.Namespace, minCount)
 }
 
+const lastImportTimeSubsection = "lastimporttime"
+
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		for metadata, err := range k.internalStore.GetAll(ctx) {
+		for key, err := range k.internalStore.GetSubsection(ctx, lastImportTimeSubsection) {
 			if err != nil {
 				yield(ResourceLastImportTime{}, err)
 				return
 			}
 
-			if metadata.LastImportTime.IsZero() {
-				continue
+			data, err := k.internalStore.Get(ctx, key)
+			if err != nil {
+				yield(ResourceLastImportTime{}, err)
+				return
 			}
 
-			// TODO clear LastImportTime from metadata if > lastImportTimeMaxAge?
+			value, err := time.Parse(time.RFC3339, data.Value)
+			if err != nil {
+				yield(ResourceLastImportTime{}, err)
+				return
+			}
 
 			if !yield(ResourceLastImportTime{
 				NamespacedResource: NamespacedResource{
-					Namespace: metadata.Namespace,
-					Group:     metadata.Group,
-					Resource:  metadata.Resource,
+					Namespace: data.Namespace,
+					Group:     data.Group,
+					Resource:  data.Resource,
 				},
-				LastImportTime: metadata.LastImportTime,
+				LastImportTime: value,
 			}, nil) {
 				return
 			}
@@ -1264,27 +1272,14 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 }
 
 func (k *kvStorageBackend) updateLastImportTime(ctx context.Context, key *resourcepb.ResourceKey, now time.Time) error {
-	metadata, err := k.internalStore.Get(ctx, MetadataKey{
-		Namespace: key.Namespace,
-		Group:     key.Group,
-		Resource:  key.Resource,
-	})
-
-	if err != nil && !errors.Is(err, ErrNotFound) {
-		k.log.Error("Error retrieving metadata for namespace %s: %s", key.Namespace, err)
-		return err
+	dataKey := InternalKey{
+		Namespace:  key.Namespace,
+		Group:      key.Group,
+		Resource:   key.Resource,
+		Subsection: lastImportTimeSubsection,
 	}
 
-	if errors.Is(err, ErrNotFound) {
-		metadata = Metadata{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-		}
-	}
-
-	metadata.LastImportTime = now.UTC()
-	return k.internalStore.Save(ctx, metadata)
+	return k.internalStore.Save(ctx, dataKey, now.UTC().Format(time.RFC3339))
 }
 
 func (k *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {

@@ -2,35 +2,39 @@ package resource
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"io"
 	"iter"
-	"time"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 )
 
 const (
-	metadataSection = "unified/metadata"
+	internalSection = "unified/internal"
 )
 
 type internalStore struct {
 	kv KV
 }
 
-type MetadataKey struct {
-	Namespace string
-	Group     string
-	Resource  string
+type InternalKey struct {
+	Namespace  string
+	Group      string
+	Resource   string
+	Subsection string
 }
 
-func (k MetadataKey) String() string {
-	return fmt.Sprintf("%s/%s/%s", k.Group, k.Resource, k.Namespace)
+func (k InternalKey) String() string {
+	return fmt.Sprintf("%s/%s/%s/%s/%s", strings.ToLower(k.Subsection), k.Group, k.Resource, k.Namespace)
 }
 
-func (k MetadataKey) Validate() error {
+func (k InternalKey) Validate() error {
 	if k.Namespace == "" {
 		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
+	}
+	if k.Subsection == "" {
+		return NewValidationError("Subsection", k.Subsection, "Subsection is required")
 	}
 	if err := validation.IsValidGroup(k.Group); err != nil {
 		return NewValidationError("group", k.Group, err[0])
@@ -41,11 +45,17 @@ func (k MetadataKey) Validate() error {
 	return nil
 }
 
-type Metadata struct {
-	Namespace      string    `json:"namespace"`
-	Group          string    `json:"group"`
-	Resource       string    `json:"resource"`
-	LastImportTime time.Time `json:"lastImportTime"`
+func parseInternalKey(key string) (InternalKey, error) {
+	parts := strings.Split(key, "/")
+	if len(parts) != 5 {
+		return InternalKey{}, fmt.Errorf("invalid internal key: %s", key)
+	}
+	return InternalKey{
+		Subsection: parts[0],
+		Group:      parts[1],
+		Resource:   parts[2],
+		Namespace:  parts[3],
+	}, nil
 }
 
 func newInternalStore(kv KV) *internalStore {
@@ -54,67 +64,141 @@ func newInternalStore(kv KV) *internalStore {
 	}
 }
 
-func (d *internalStore) Get(ctx context.Context, key MetadataKey) (Metadata, error) {
+type InternalData struct {
+	Namespace  string
+	Group      string
+	Resource   string
+	Subsection string
+	Value      string
+}
+
+func (d *internalStore) Get(ctx context.Context, key InternalKey) (InternalData, error) {
 	if err := key.Validate(); err != nil {
-		return Metadata{}, fmt.Errorf("invalid metadata key: %w", err)
+		return InternalData{}, fmt.Errorf("invalid internal key: %w", err)
 	}
 
-	return d.get(ctx, key.String())
-}
-
-func (d *internalStore) get(ctx context.Context, key string) (Metadata, error) {
-	reader, err := d.kv.Get(ctx, metadataSection, key)
-	if err != nil {
-		return Metadata{}, err
-	}
+	reader, err := d.kv.Get(ctx, internalSection, key.String())
 	defer func() { _ = reader.Close() }()
-	var metadata Metadata
-	if err = json.NewDecoder(reader).Decode(&metadata); err != nil {
-		return Metadata{}, err
+	if err != nil {
+		return InternalData{}, err
 	}
-	return metadata, nil
+
+	value, err := io.ReadAll(reader)
+	if err != nil {
+		return InternalData{}, err
+	}
+
+	return InternalData{
+		Namespace:  key.Namespace,
+		Group:      key.Group,
+		Resource:   key.Resource,
+		Subsection: key.Subsection,
+		Value:      string(value),
+	}, nil
 }
 
-func (d *internalStore) GetAll(ctx context.Context) iter.Seq2[Metadata, error] {
+func (d *internalStore) BatchGet(ctx context.Context, keys []InternalKey) iter.Seq2[InternalData, error] {
+	return func(yield func(InternalData, error) bool) {
+		for _, key := range keys {
+			if err := key.Validate(); err != nil {
+				yield(InternalData{}, fmt.Errorf("invalid internal key %s: %w", key.String(), err))
+				return
+			}
+		}
+
+		// Process keys in batches. Uses same batch size as datastore.go
+		for i := 0; i < len(keys); i += dataBatchSize {
+			end := i + dataBatchSize
+			if end > len(keys) {
+				end = len(keys)
+			}
+			batch := keys[i:end]
+
+			stringKeys := make([]string, len(batch))
+			for j, key := range batch {
+				stringKeys[j] = key.String()
+			}
+
+			for kv, err := range d.kv.BatchGet(ctx, internalSection, stringKeys) {
+				if err != nil {
+					yield(InternalData{}, err)
+					return
+				}
+
+				key, err := parseInternalKey(kv.Key)
+				if err != nil {
+					yield(InternalData{}, err)
+					return
+				}
+
+				value, err := io.ReadAll(kv.Value)
+				if err != nil {
+					yield(InternalData{}, err)
+					return
+				}
+
+				if !yield(InternalData{
+					Namespace:  key.Namespace,
+					Group:      key.Group,
+					Resource:   key.Resource,
+					Subsection: key.Subsection,
+					Value:      string(value),
+				}, nil) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func (d *internalStore) GetSubsection(ctx context.Context, Subsection string) iter.Seq2[InternalKey, error] {
 	opts := ListOptions{
 		Sort:     SortOrderAsc,
-		StartKey: "",
+		StartKey: Subsection,
 	}
-	return func(yield func(Metadata, error) bool) {
-		for metadataKey, err := range d.kv.Keys(ctx, metadataSection, opts) {
+	return func(yield func(InternalKey, error) bool) {
+		for key, err := range d.kv.Keys(ctx, internalSection, opts) {
 			if err != nil {
-				yield(Metadata{}, err)
+				yield(InternalKey{}, err)
 				return
 			}
 
-			metadata, err := d.get(ctx, metadataKey)
-			if !yield(metadata, err) {
+			internalKey, err := parseInternalKey(key)
+			if err != nil {
+				yield(InternalKey{}, err)
+				return
+			}
+
+			if !yield(internalKey, nil) {
 				return
 			}
 		}
 	}
 }
 
-func (d *internalStore) Save(ctx context.Context, metadata Metadata) error {
-	metadataKey := MetadataKey{
-		Namespace: metadata.Namespace,
-		Group:     metadata.Group,
-		Resource:  metadata.Resource,
+func (d *internalStore) Save(ctx context.Context, key InternalKey, value string) error {
+	if err := key.Validate(); err != nil {
+		return fmt.Errorf("invalid internal key: %w", err)
 	}
 
-	if err := metadataKey.Validate(); err != nil {
-		return fmt.Errorf("invalid metadataKey key: %w", err)
-	}
-
-	writer, err := d.kv.Save(ctx, metadataSection, metadataKey.String())
+	writer, err := d.kv.Save(ctx, internalSection, key.String())
 	if err != nil {
 		return err
 	}
-	encoder := json.NewEncoder(writer)
-	if err := encoder.Encode(metadata); err != nil {
+
+	_, err = io.WriteString(writer, value)
+	if err != nil {
 		_ = writer.Close()
 		return err
 	}
 
 	return writer.Close()
+}
+
+func (d *internalStore) Delete(ctx context.Context, key InternalKey) error {
+	if err := key.Validate(); err != nil {
+		return fmt.Errorf("invalid internal key: %w", err)
+	}
+
+	return d.kv.Delete(ctx, internalSection, key.String())
 }
