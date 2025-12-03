@@ -40,7 +40,7 @@ var (
 type AnnotationAppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg    *setting.Cfg
-	legacy *legacyStorage
+	legacy *restStorage
 }
 
 func RegisterAppInstaller(
@@ -61,7 +61,7 @@ func RegisterAppInstaller(
 			return nil, err
 		}
 		sqlAdapter := NewSQLAdapter(service, cleaner, mapper, cfg)
-		installer.legacy = &legacyStorage{
+		installer.legacy = &restStorage{
 			// store:  sqlAdapter,
 			store:  kvAdapter,
 			mapper: mapper,
@@ -122,44 +122,44 @@ func (a *AnnotationAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 }
 
 var (
-	_ rest.Scoper               = (*legacyStorage)(nil)
-	_ rest.SingularNameProvider = (*legacyStorage)(nil)
-	_ rest.Getter               = (*legacyStorage)(nil)
-	_ rest.Storage              = (*legacyStorage)(nil)
-	_ rest.Creater              = (*legacyStorage)(nil)
-	_ rest.Updater              = (*legacyStorage)(nil)
-	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
+	_ rest.Scoper               = (*restStorage)(nil)
+	_ rest.SingularNameProvider = (*restStorage)(nil)
+	_ rest.Getter               = (*restStorage)(nil)
+	_ rest.Storage              = (*restStorage)(nil)
+	_ rest.Creater              = (*restStorage)(nil)
+	_ rest.Updater              = (*restStorage)(nil)
+	_ rest.GracefulDeleter      = (*restStorage)(nil)
 )
 
-type legacyStorage struct {
+type restStorage struct {
 	store          Store
 	mapper         grafrequest.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
 
-func (s *legacyStorage) New() runtime.Object {
+func (s *restStorage) New() runtime.Object {
 	return annotationV0.AnnotationKind().ZeroValue()
 }
 
-func (s *legacyStorage) Destroy() {}
+func (s *restStorage) Destroy() {}
 
-func (s *legacyStorage) NamespaceScoped() bool {
+func (s *restStorage) NamespaceScoped() bool {
 	return true // namespace == org
 }
 
-func (s *legacyStorage) GetSingularName() string {
+func (s *restStorage) GetSingularName() string {
 	return strings.ToLower(annotationV0.AnnotationKind().Kind())
 }
 
-func (s *legacyStorage) NewList() runtime.Object {
+func (s *restStorage) NewList() runtime.Object {
 	return annotationV0.AnnotationKind().ZeroListValue()
 }
 
-func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (s *restStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *restStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
 
 	opts := ListOptions{To: time.Now().UnixMilli()}
@@ -238,12 +238,12 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	return &annotationV0.AnnotationList{Items: result.Items}, nil
 }
 
-func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *restStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
 	return s.store.Get(ctx, namespace, name)
 }
 
-func (s *legacyStorage) Create(ctx context.Context,
+func (s *restStorage) Create(ctx context.Context,
 	obj runtime.Object,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
@@ -255,7 +255,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	return s.store.Create(ctx, resource)
 }
 
-func (s *legacyStorage) Update(ctx context.Context,
+func (s *restStorage) Update(ctx context.Context,
 	name string,
 	objInfo rest.UpdatedObjectInfo,
 	createValidation rest.ValidateObjectFunc,
@@ -285,12 +285,12 @@ func (s *legacyStorage) Update(ctx context.Context,
 	return nil, false, err
 }
 
-func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (s *restStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
 	err := s.store.Delete(ctx, namespace, name)
 	return nil, false, err
 }
 
-func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+func (s *restStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("DeleteCollection for annotation is not available")
 }
