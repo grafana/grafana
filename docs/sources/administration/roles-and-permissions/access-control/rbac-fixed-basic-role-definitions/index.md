@@ -44,7 +44,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/oncall/user-and-team-management/#available-grafana-oncall-rbac-roles--granted-actions
 ---
 
-# RBAC role definitions
+# Grafana RBAC role definitions
 
 {{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).

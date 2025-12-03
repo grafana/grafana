@@ -16,7 +16,7 @@ weight: 150
 
 # Configure roles and permissions
 
-This guide explains how to configure roles and permissions for Grafana Alerting. You'll learn how to manage access using roles, folder permissions, and contact point permissions.
+This guide explains how to configure roles and permissions for Grafana Alerting for Grafana OSS users. You'll learn how to manage access using roles, folder permissions, and contact point permissions.
 
 A user is any individual who can log in to Grafana. Each user is associated with a role that includes permissions. Permissions determine the tasks a user can perform in the system. For example, the Admin role includes permissions for an administrator to create and delete users.
 
