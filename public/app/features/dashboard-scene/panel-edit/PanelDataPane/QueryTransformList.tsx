@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -62,10 +62,6 @@ export const QueryTransformList = memo(
     const styles = useStyles2(getStyles);
     const [isDragging, setIsDragging] = useState(false);
     const [hovered, setHovered] = useState<string | null>(null);
-
-    useEffect(() => {
-      console.log('hovered changed:', hovered);
-    }, [hovered]);
 
     const onDragStart = () => {
       setIsDragging(true);
