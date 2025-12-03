@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 
-import { DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { DataQuery, DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   SceneComponentProps,
@@ -30,6 +30,7 @@ import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
 import { QueryTransformList, QueryTransformItem } from './QueryTransformList';
+import { SavedQueriesDrawer } from './SavedQueriesDrawer';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId } from './types';
 import { isDataTransformerConfig, queryItemId, transformItemId } from './utils';
@@ -89,6 +90,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const styles = useStyles2(getStyles);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [transformDrawerOpen, setTransformDrawerOpen] = useState(false);
+  const [savedQueriesDrawerOpen, setSavedQueriesDrawerOpen] = useState(false);
 
   const panel = panelRef.resolve();
 
@@ -204,6 +206,49 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       }, 100);
     }
   }, [tabs, panel]);
+
+  const handleAddFromSavedQueries = useCallback(() => {
+    setSavedQueriesDrawerOpen(true);
+  }, []);
+
+  // This is a stub for the saved queries drawer
+  const handleSelectSavedQuery = useCallback(
+    (query: DataQuery) => {
+      if (!queryRunner) {
+        return;
+      }
+
+      const queries = queryRunner.state.queries || [];
+
+      // Get next available refId
+      const existingRefIds = queries.map((q) => q.refId);
+      let nextRefId = 'A';
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+      for (let i = 0; i < alphabet.length; i++) {
+        if (!existingRefIds.includes(alphabet[i])) {
+          nextRefId = alphabet[i];
+          break;
+        }
+      }
+
+      // Create new query with the selected refId
+      const newQuery: DataQuery = {
+        ...query,
+        refId: nextRefId,
+      };
+
+      queryRunner.setState({ queries: [...queries, newQuery] });
+
+      // Select the new query after a short delay
+      setTimeout(() => {
+        setSelectedId(queryItemId(newQuery));
+      }, 100);
+
+      setSavedQueriesDrawerOpen(false);
+    },
+    [queryRunner]
+  );
 
   const handleAddTransform = useCallback(() => {
     setTransformDrawerOpen(true);
@@ -480,6 +525,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             selectedId={effectiveSelectedId}
             onSelect={handleSelect}
             onAddQuery={handleAddQuery}
+            onAddFromSavedQueries={handleAddFromSavedQueries}
             onAddTransform={handleAddTransform}
             onAddExpression={handleAddExpression}
             onDuplicateQuery={handleDuplicateQuery}
@@ -515,6 +561,11 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         onClose={() => setTransformDrawerOpen(false)}
         onTransformationAdd={handleTransformationAdd}
         series={series}
+      />
+      <SavedQueriesDrawer
+        isOpen={savedQueriesDrawerOpen}
+        onClose={() => setSavedQueriesDrawerOpen(false)}
+        onSelectQuery={handleSelectSavedQuery}
       />
     </div>
   );

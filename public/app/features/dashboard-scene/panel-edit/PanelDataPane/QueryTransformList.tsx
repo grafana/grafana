@@ -26,6 +26,7 @@ interface QueryTransformListProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onAddQuery: () => void;
+  onAddFromSavedQueries: () => void;
   onAddTransform: () => void;
   onAddExpression: (type: ExpressionQueryType) => void;
   onDuplicateQuery?: (index: number) => void;
@@ -48,6 +49,7 @@ export const QueryTransformList = memo(
     selectedId,
     onSelect,
     onAddQuery,
+    onAddFromSavedQueries,
     onAddTransform,
     onAddExpression,
     onDuplicateQuery,
@@ -294,6 +296,7 @@ export const QueryTransformList = memo(
 
                     <AddDataItemMenu
                       onAddQuery={onAddQuery}
+                      onAddFromSavedQueries={onAddFromSavedQueries}
                       onAddTransform={onAddTransform}
                       onAddExpression={onAddExpression}
                     />

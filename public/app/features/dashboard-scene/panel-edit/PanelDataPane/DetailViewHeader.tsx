@@ -28,6 +28,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { getQueryRunnerFor } from '../../utils/utils';
 
 import { QueryTransformItem } from './QueryTransformList';
+import { SavedQueriesDrawer } from './SavedQueriesDrawer';
 
 interface DetailViewHeaderProps {
   selectedItem: QueryTransformItem;
@@ -63,6 +64,7 @@ export const DetailViewHeader = ({
 
   const [isEditing, setIsEditing] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isSavedQueriesDrawerOpen, setIsSavedQueriesDrawerOpen] = useState(false);
 
   // Helper to update queries with consistent pattern
   const updateQueries = useCallback(
@@ -265,6 +267,23 @@ export const DetailViewHeader = ({
     onToggleTransformVisibility?.(selectedItem.index);
   }, [selectedItem, onToggleTransformVisibility]);
 
+  // Handler for selecting a query from the library (replaces current query)
+  const onSelectQueryFromLibrary = useCallback(
+    (newQuery: DataQuery) => {
+      if (selectedItem.type !== 'query' || selectedItem.index === undefined) {
+        return;
+      }
+      updateQueries(
+        (queries) =>
+          queries.map((q, idx) =>
+            idx === selectedItem.index ? { ...newQuery, refId: q.refId, datasource: q.datasource } : q
+          ),
+        true
+      );
+    },
+    [selectedItem, updateQueries]
+  );
+
   const refId = 'refId' in selectedItem.data ? selectedItem.data.refId : '';
   const isHidden =
     (selectedItem.type === 'query' || selectedItem.type === 'expression') &&
@@ -342,6 +361,19 @@ export const DetailViewHeader = ({
         {/* Right side: Run Query + Actions Menu for queries/expressions */}
         {(selectedItem.type === 'query' || selectedItem.type === 'expression') && (
           <Stack gap={0.5} alignItems="center">
+            {/* Save Query Button (only for queries, not expressions) */}
+            {selectedItem.type === 'query' && 'refId' in selectedItem.data && (
+              <Button
+                className={styles.monospace}
+                variant="primary"
+                fill="text"
+                size="sm"
+                icon="bookmark"
+                onClick={() => setIsSavedQueriesDrawerOpen(true)}
+              >
+                {t('dashboard-scene.detail-view-header.save-query', 'SAVE')}
+              </Button>
+            )}
             <Button
               className={styles.monospace}
               variant="primary"
@@ -420,6 +452,25 @@ export const DetailViewHeader = ({
           </Stack>
         )}
       </div>
+
+      {/* Saved Queries Drawer */}
+      {selectedItem.type === 'query' && 'refId' in selectedItem.data && (
+        <SavedQueriesDrawer
+          isOpen={isSavedQueriesDrawerOpen}
+          onClose={() => setIsSavedQueriesDrawerOpen(false)}
+          onSelectQuery={onSelectQueryFromLibrary}
+          currentQuery={
+            'datasource' in selectedItem.data
+              ? {
+                  refId: selectedItem.data.refId,
+                  datasource: datasourceSettings
+                    ? { uid: datasourceSettings.uid, type: datasourceSettings.type }
+                    : selectedItem.data.datasource,
+                }
+              : { refId: selectedItem.data.refId }
+          }
+        />
+      )}
     </div>
   );
 };
