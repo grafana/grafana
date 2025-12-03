@@ -174,7 +174,7 @@ func TestInternalStore(t *testing.T) {
 					Resource:   "resource",
 					Subsection: "lastimporttime",
 				},
-				value:      "foo1",
+				value: "foo1",
 			},
 			{
 				key: InternalKey{
@@ -183,7 +183,7 @@ func TestInternalStore(t *testing.T) {
 					Resource:   "resource",
 					Subsection: "lastimporttime",
 				},
-				value:      "foo2",
+				value: "foo2",
 			},
 			{
 				key: InternalKey{
@@ -192,7 +192,7 @@ func TestInternalStore(t *testing.T) {
 					Resource:   "resource",
 					Subsection: "lastimporttime",
 				},
-				value:      "foo3",
+				value: "foo3",
 			},
 			{
 				key: InternalKey{
@@ -201,7 +201,7 @@ func TestInternalStore(t *testing.T) {
 					Resource:   "resource",
 					Subsection: "lastimporttime",
 				},
-				value:      "foo4",
+				value: "foo4",
 			},
 			{
 				key: InternalKey{
@@ -210,7 +210,7 @@ func TestInternalStore(t *testing.T) {
 					Resource:   "resource",
 					Subsection: "lastimporttime",
 				},
-				value:      "foo5",
+				value: "foo5",
 			},
 		}
 
