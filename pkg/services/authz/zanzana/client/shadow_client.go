@@ -41,11 +41,12 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 			return
 		}
 
-		zanzanaCtx, zanzanaCancel := context.WithTimeout(ctx, 30*time.Second)
-		defer zanzanaCancel()
+		zanzanaCtx := context.WithoutCancel(ctx)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, 30*time.Second)
+		defer cancel()
 
 		timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("zanzana"))
-		res, err := c.zanzanaClient.Check(zanzanaCtx, id, req, folder)
+		res, err := c.zanzanaClient.Check(zanzanaCtxTimeout, id, req, folder)
 		if err != nil {
 			c.logger.Error("Failed to run zanzana check", "error", err)
 		}
@@ -84,11 +85,12 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 			return
 		}
 
-		zanzanaCtx, zanzanaCancel := context.WithTimeout(ctx, 30*time.Second)
-		defer zanzanaCancel()
+		zanzanaCtx := context.WithoutCancel(ctx)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, 30*time.Second)
+		defer cancel()
 
 		timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("zanzana"))
-		itemChecker, _, err := c.zanzanaClient.Compile(zanzanaCtx, id, req)
+		itemChecker, _, err := c.zanzanaClient.Compile(zanzanaCtxTimeout, id, req)
 		timer.ObserveDuration()
 		if err != nil {
 			c.logger.Warn("Failed to compile zanzana item checker", "error", err)
