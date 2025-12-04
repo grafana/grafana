@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
+import { DropResult } from '@hello-pangea/dnd';
 
 import { StandardEditorProps, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, ComboboxOption, useTheme2, Divider } from '@grafana/ui';
+import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 
 import { hoverColor } from '../../../../../packages/grafana-ui/src/themes/mixins';
 
 import { MarkerGroup, Markers } from './markerTypes';
-import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
-import { DropResult } from '@hello-pangea/dnd';
 
 export const barMarkersEditor = (builder: PanelOptionsEditorBuilder<Markers>, ctx: StandardEditorContext<Markers>) => {
   let markers: MarkerGroup[] = ctx.options?.markerGroups || [];
@@ -31,15 +31,7 @@ export const barMarkersEditor = (builder: PanelOptionsEditorBuilder<Markers>, ct
     path: '',
     name: 'Editing Marker:',
     editor: MarkerDragDropEditor,
-  });
-
-  builder.addCustomEditor({
-    id: 'marker-divider',
-    name: '',
-    path: '__', //not used
-    editor: () => {
-      return <Divider />;
-    },
+    showIf: (opts) => opts.markerGroups.length > 0,
   });
 
   markers.forEach((_, i: number) => {
@@ -202,18 +194,21 @@ export const removeMarkerEditor = ({ onChange, value, context }: StandardEditorP
   );
 };
 export const MarkerDragDropEditor = ({ value, context, onChange }: StandardEditorProps<Markers>) => {
-
   const markerGroups = value?.markerGroups || [];
 
-  const layers = markerGroups.map((m) => ({ ...(m as any), getName: () => m.opts.label.toString() }));
+  // LayerDragDropList reverses the order of the passed layers. Reverse back to keep natural order.
+  const layers = markerGroups
+    .slice()
+    .reverse()
+    .map((m) => ({ ...(m as any), getName: () => m.opts.label.toString() }));
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) {
       return;
     }
 
-    const srcIdx = markerGroups.length - 1 - result.source.index;
-    const dstIdx = markerGroups.length - 1 - result.destination.index;
+    const srcIdx = result.source.index;
+    const dstIdx = result.destination.index;
 
     if (srcIdx === dstIdx) {
       return;
@@ -228,10 +223,10 @@ export const MarkerDragDropEditor = ({ value, context, onChange }: StandardEdito
   };
 
   const handleSelect = (element: any) => {
-    if(value.select === element.id.toString()) {
+    if (value.select === element.id.toString()) {
       value.select = undefined;
       onChange(value);
-      return
+      return;
     }
     value.select = element.id.toString();
     onChange(value);
@@ -247,7 +242,9 @@ export const MarkerDragDropEditor = ({ value, context, onChange }: StandardEdito
   };
 
   const handleNameChange = (element: any, newName: string) => {
-    const newGroups = markerGroups.map((m) => (m.id === element.id ? { ...m, opts: { ...(m.opts || {}), label: newName } } : m));
+    const newGroups = markerGroups.map((m) =>
+      m.id === element.id ? { ...m, opts: { ...(m.opts || {}), label: newName } } : m
+    );
     value.markerGroups = newGroups;
     onChange(value);
   };
@@ -257,17 +254,15 @@ export const MarkerDragDropEditor = ({ value, context, onChange }: StandardEdito
   };
 
   const getLayerInfo = (m: MarkerGroup) => {
-    
     if (m.dataField) {
       return m.dataField;
+    } else {
+      return '-';
     }
-    else return '-'
   };
 
   const selectionByName = value.select
-    ? markerGroups
-        .filter((m) => m.id.toString() === value.select)
-        .map((m) => m.opts?.label || '')
+    ? markerGroups.filter((m) => m.id.toString() === value.select).map((m) => m.opts?.label || '')
     : [];
 
   return (
@@ -284,6 +279,3 @@ export const MarkerDragDropEditor = ({ value, context, onChange }: StandardEdito
     />
   );
 };
-
-
-

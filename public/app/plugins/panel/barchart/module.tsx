@@ -16,7 +16,7 @@ import { optsWithHideZeros } from '@grafana/ui/internal';
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
-import { addMarkerEditor, barMarkersEditor, removeMarkerEditor } from './BarMarkersEditor';
+import { addMarkerEditor, barMarkersEditor } from './BarMarkersEditor';
 import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
@@ -268,16 +268,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
           parent.onChange('markers' + path, value);
         },
       }),
-    });
-    builder.addCustomEditor({
-      category: markersCategory,
-      path: 'markers',
-      id: 'barchart.markers.remove',
-      name: 'Remove marker',
-      editor: removeMarkerEditor,
-      showIf: (opts) => {
-        return opts.markers.select !== undefined;
-      },
     });
 
     builder.addFieldNamePicker({
