@@ -419,6 +419,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
         text: truncateTitle(extension.title, 25),
         href: extension.path,
         onClick: extension.onClick,
+        iconClassName: extension.icon,
       });
       continue;
     }
@@ -431,6 +432,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
       text: truncateTitle(extension.title, 25),
       href: extension.path,
       onClick: extension.onClick,
+      iconClassName: extension.icon,
     });
   }
 
