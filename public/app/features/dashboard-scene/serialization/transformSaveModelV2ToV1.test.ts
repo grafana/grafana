@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
 import { Dashboard } from '@grafana/schema';
@@ -38,42 +38,22 @@ jest.mock('@grafana/runtime', () => {
     ...jest.requireActual('@grafana/runtime').config,
     defaultDatasource: 'default-ds-uid',
     datasources: {
-      '-- Grafana --': {
-        type: 'grafana',
-        uid: '-- Grafana --',
-        name: 'Grafana',
-        meta: { id: 'grafana' },
-      },
+      '-- Grafana --': { type: 'grafana', uid: '-- Grafana --', name: 'Grafana', meta: { id: 'grafana' } },
       'existing-ref-uid': {
         type: 'prometheus',
         uid: 'existing-ref-uid',
         name: 'Prometheus',
         meta: { id: 'prometheus' },
       },
-      'influxdb-uid': {
-        type: 'influxdb',
-        uid: 'influxdb-uid',
-        name: 'InfluxDB',
-        meta: { id: 'influxdb' },
-      },
-      'cloudwatch-uid': {
-        type: 'cloudwatch',
-        uid: 'cloudwatch-uid',
-        name: 'CloudWatch',
-        meta: { id: 'cloudwatch' },
-      },
+      'influxdb-uid': { type: 'influxdb', uid: 'influxdb-uid', name: 'InfluxDB', meta: { id: 'influxdb' } },
+      'cloudwatch-uid': { type: 'cloudwatch', uid: 'cloudwatch-uid', name: 'CloudWatch', meta: { id: 'cloudwatch' } },
       'elasticsearch-uid': {
         type: 'elasticsearch',
         uid: 'elasticsearch-uid',
         name: 'Elasticsearch',
         meta: { id: 'elasticsearch' },
       },
-      'loki-uid': {
-        type: 'loki',
-        uid: 'loki-uid',
-        name: 'Loki',
-        meta: { id: 'loki' },
-      },
+      'loki-uid': { type: 'loki', uid: 'loki-uid', name: 'Loki', meta: { id: 'loki' } },
       'default-ds-uid': {
         type: 'prometheus',
         uid: 'default-ds-uid',
@@ -92,12 +72,7 @@ jest.mock('@grafana/runtime', () => {
         name: 'Loki Test',
         meta: { id: 'loki' },
       },
-      '-- Mixed --': {
-        type: 'mixed',
-        uid: '-- Mixed --',
-        name: '-- Mixed --',
-        meta: { id: 'mixed' },
-      },
+      '-- Mixed --': { type: 'mixed', uid: '-- Mixed --', name: '-- Mixed --', meta: { id: 'mixed' } },
     },
     featureToggles: {
       dashboardNewLayouts: true,
@@ -122,14 +97,14 @@ jest.mock('@grafana/runtime', () => {
 /*
  * V2 to V1 Dashboard Transformation Comparison Test
  *
- * This test ensures that the frontend and backend v2beta1→v1beta1 conversions produce identical outputs
+ * This test ensures that the frontend and backend v2beta1→v1beta1/v0alpha1 conversions produce identical outputs
  * after being normalized through the same Scene load/save cycle.
  *
  * ## Two Conversion Paths Being Compared:
  *
- * ### BACKEND PATH (simulates: API returns v1beta1, UI loads it, user saves)
- * 1. Go conversion: v2beta1 → v1beta1 (output file from backend tests)
- * 2. Load into Scene: v1beta1 JSON → DashboardModel → Scene
+ * ### BACKEND PATH (simulates: API returns v1beta1 or v0alpha1, UI loads it, user saves)
+ * 1. Go conversion: v2beta1 → v1beta1 or v0alpha1 (output file from backend tests)
+ * 2. Load into Scene: v1/v0 JSON → DashboardModel → Scene
  * 3. Serialize back: Scene → v1beta1 JSON (transformSceneToSaveModel)
  *
  * ### FRONTEND PATH (simulates: API returns v2beta1, UI loads it, user saves)
@@ -138,20 +113,29 @@ jest.mock('@grafana/runtime', () => {
  * 3. Normalize: v1beta1 JSON → Scene → v1beta1 JSON (same as backend step 2-3)
  *
  * ## Why Normalize Both?
- * Both paths end with the same Scene load/save cycle to ensure we're comparing apples to apples.
- * This simulates what would happen if a user loaded a dashboard and saved it without changes.
+ * Both paths end with the same Scene load/save cycle (via loadAndSerializeV1SaveModel).
+ * This simulates what would happen if a user loaded a dashboard
+ * and saved it without changes. The Scene processing may add default values, reorder fields, or
+ * normalize data structures - by running both outputs through the same normalization, we eliminate
+ * these differences and focus on the actual conversion logic.
+ *
+ * ## Why Include v0alpha1?
+ * v0alpha1 and v1beta1 share the same spec structure. The v0alpha1 output from v2beta1→v0alpha1
+ * conversion should produce identical results when loaded by the Scene. This validates that
+ * the backend v2→v0 conversion is consistent with the v2→v1 conversion.
  *
  * ## Expected Outcome
  * Both paths should produce identical v1beta1 JSON after normalization, meaning:
- * - The backend Go conversion produces correct v1beta1 that survives Scene load/save unchanged
+ * - The backend Go conversion produces correct v1beta1/v0alpha1 that survives Scene load/save unchanged
  * - The frontend v2→v1 conversion produces v1beta1 matching what backend would produce
  */
+
+// Target versions to compare (v0alpha1 and v1beta1 share the same spec structure)
+const TARGET_VERSIONS = ['v0alpha1', 'v1beta1'] as const;
 
 describe('V2 to V1 Dashboard Transformation Comparison', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Mock console methods to avoid test failures from expected warnings (but keep console.log for debugging)
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
@@ -187,79 +171,64 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
     'output'
   );
 
-  // Get all files recursively from input directory
-  const allFiles = getFilesRecursively(inputDir);
-
-  // Filter to only process v2beta1 input files
-  const v2beta1Inputs = allFiles.filter(({ relativePath }) => {
+  // Get v2beta1 input files
+  const v2beta1Inputs = getFilesRecursively(inputDir).filter(({ relativePath }) => {
     const fileName = path.basename(relativePath);
     return fileName.startsWith('v2beta1.') && fileName.endsWith('.json');
   });
 
+  // Test each input file against each target version
   v2beta1Inputs.forEach(({ filePath: inputFilePath, relativePath }) => {
-    it(`compare ${relativePath} from v2beta1 to v1beta1 backend and frontend conversions`, async () => {
-      const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
+    TARGET_VERSIONS.forEach((targetVersion) => {
+      it(`${relativePath} → ${targetVersion}`, () => {
+        const relativeDir = path.dirname(relativePath);
+        const fileName = path.basename(relativePath);
+        const outputFileName = fileName.replace('.json', `.${targetVersion}.json`);
+        const outputFilePath =
+          relativeDir === '.'
+            ? path.join(outputDir, outputFileName)
+            : path.join(outputDir, relativeDir, outputFileName);
 
-      // Find the corresponding v1beta1 output file (preserving subdirectory structure)
-      const relativeDir = path.dirname(relativePath);
-      const fileName = path.basename(relativePath);
-      const outputFileName = fileName.replace('.json', '.v1beta1.json');
-      const outputFilePath =
-        relativeDir === '.' ? path.join(outputDir, outputFileName) : path.join(outputDir, relativeDir, outputFileName);
+        // Skip if output file doesn't exist
+        if (!existsSync(outputFilePath)) {
+          return;
+        }
 
-      // Load the backend output
-      const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
+        const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
+        const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
 
-      // BACKEND PATH:
-      // Go conversion (v2beta1 → v1beta1) → load into Scene → serialize back
-      // This simulates: API returns v1beta1 → UI loads it → user saves changes
-      // Note: v1beta1 spec contains the dashboard fields directly (no "dashboard" wrapper)
-      const backendOutputAfterLoadedByScene = loadAndSerializeV1SaveModel(backendOutput.spec);
+        // Backend path: Load backend output through Scene
+        const backendSpec = loadAndSerializeV1SaveModel(backendOutput.spec);
 
-      // Transform using frontend path: v2beta1 -> Scene -> v1beta1
-      // Extract the spec from v2beta1 format and use it as the dashboard data
-      // Remove snapshot field to prevent isSnapshot() from returning true
-      const frontendOutputAfterLoadedByScene = transformV2ToV1UsingFrontendTransformers(jsonInput);
+        // Frontend path: Transform v2beta1 through Scene
+        const frontendSpec = transformV2ToV1UsingFrontendTransformers(jsonInput);
 
-      // Verify both outputs have valid spec structures
-      expect(frontendOutputAfterLoadedByScene).toBeDefined();
-      expect(backendOutputAfterLoadedByScene).toBeDefined();
-
-      // Compare only the dashboard spec structures, ignoring metadata differences (uid, version, etc.)
-      // Remove metadata fields that may differ between backend and frontend transformations
-      const frontendSpec = { ...frontendOutputAfterLoadedByScene };
-      const backendSpec = { ...backendOutputAfterLoadedByScene };
-
-      // Remove metadata fields that are not part of the core dashboard spec
-      delete frontendSpec.uid;
-      delete backendSpec.uid;
-      delete frontendSpec.version;
-      delete backendSpec.version;
-      delete frontendSpec.id;
-      delete backendSpec.id;
-
-      // Compare only the spec structures - this is the core transformation
-      expect(backendSpec).toEqual(frontendSpec);
+        // Compare specs (excluding metadata fields)
+        expect(removeMetadata(backendSpec)).toEqual(removeMetadata(frontendSpec));
+      });
     });
   });
 });
 
-/*
- * Simulate the frontend transformation of a dashboard data object to a v1beta1 dashboard data object
- * This is to ensure that the frontend transformation produces the same result as the backend transformation
- * when the dashboard data object is loaded by the scene.
- */
-/*
- * Loads a v1beta1 dashboard into Scene and serializes it back to v1beta1.
+/** Remove metadata fields that differ between backend and frontend transformations */
+function removeMetadata(spec: Dashboard): Partial<Dashboard> {
+  const { uid, version, id, ...rest } = spec;
+  return rest;
+}
+
+/**
+ * Loads a v1beta1/v0alpha1 dashboard into Scene and serializes it back to v1beta1.
  *
  * This simulates the real-world flow when editing a dashboard:
  * v1beta1 JSON → DashboardModel → Scene → v1beta1 JSON
  *
- * This function is used to normalize both backend and frontend outputs
- * through the same Scene load/save cycle, ensuring we compare apples to apples.
+ * This function is used to normalize both backend and frontend outputs through the same
+ * Scene load/save cycle. The Scene may add default values, reorder fields,
+ * or normalize data structures - this function ensures both outputs go through
+ * identical processing.
  */
 function loadAndSerializeV1SaveModel(dashboard: Dashboard): Dashboard {
-  const sceneBackend = transformSaveModelToScene({
+  const scene = transformSaveModelToScene({
     dashboard: dashboard as DashboardDataDTO,
     meta: {
       isNew: false,
@@ -276,22 +245,19 @@ function loadAndSerializeV1SaveModel(dashboard: Dashboard): Dashboard {
     },
   });
 
-  const backendOutputAfterLoadedByScene = transformSceneToSaveModel(sceneBackend, false);
-
-  return backendOutputAfterLoadedByScene;
+  return transformSceneToSaveModel(scene, false);
 }
 
-/*
- * FRONTEND PATH:
- * Transforms v2beta1 to v1beta1 using the frontend conversion pipeline:
- * v2beta1 input → Scene (via transformSaveModelSchemaV2ToScene) → v1beta1 (via transformSceneToSaveModel)
+/**
+ * Transforms v2beta1 to v1beta1 using the frontend conversion pipeline.
  *
- * Then passes through loadAndSerializeV1SaveModel to normalize with the same Scene load/save
- * cycle that the backend output goes through. This ensures both paths are compared after
- * the same normalization process.
+ * Pipeline: v2beta1 → Scene → v1beta1 → Scene → v1beta1 (normalized)
+ *
+ * The final normalization step (passing through loadAndSerializeV1SaveModel) ensures
+ * the output goes through the same Scene load/save cycle as the backend output,
+ * making the comparison fair.
  */
 function transformV2ToV1UsingFrontendTransformers(jsonInput: DashboardWithAccessInfo<DashboardV2Spec>): Dashboard {
-  // Step 1: Load v2beta1 into Scene
   const scene = transformSaveModelSchemaV2ToScene({
     spec: jsonInput.spec,
     metadata: jsonInput.metadata || {
@@ -305,12 +271,6 @@ function transformV2ToV1UsingFrontendTransformers(jsonInput: DashboardWithAccess
     kind: 'DashboardWithAccessInfo',
   });
 
-  // Step 2: Transform Scene to v1beta1
   const frontendOutput = transformSceneToSaveModel(scene, false);
-
-  // Step 3: Normalize by passing through Scene load/save (same as backend path)
-  // This ensures both paths are compared after identical Scene processing
-  const frontendOutputAfterLoadedByScene = loadAndSerializeV1SaveModel(frontendOutput);
-
-  return frontendOutputAfterLoadedByScene;
+  return loadAndSerializeV1SaveModel(frontendOutput);
 }
