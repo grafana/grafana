@@ -87,6 +87,14 @@ jobs:
           echo "Found target URL: $TARGET_URL"
           echo "TARGET_URL=$TARGET_URL" >> $GITHUB_ENV
 
+      - name: "Get vault secrets (ops) - GitHub App credentials" # reuse ephemeral app for now
+        id: vault-secrets-ops
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            APP_ID=ephemeral-instances-bot:app-id
+            APP_PEM=ephemeral-instances-bot:app-private-key
+
       - name: "Get vault secrets (dev)"
         id: vault-secrets-dev
         uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0
@@ -99,6 +107,13 @@ jobs:
             GRAFANA_USERNAME=usability-review-agent:GRAFANA_USERNAME
             GRAFANA_PASSWORD=usability-review-agent:GRAFANA_PASSWORD
             SLACK_WEBHOOK_URL=usability-review-agent:SLACK_WEBHOOK_URL
+
+      - name: "Generate GitHub App token for private repo access"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ env.APP_ID }}
+          private_key: ${{ env.APP_PEM }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -302,7 +317,7 @@ jobs:
           PYTHON
 
       - name: Run usability review agent
-        uses: ./.github/actions/usability-review-agent
+        uses: grafana/usability-review-agent-github-action@main
         with:
           target_url: ${{ env.TARGET_URL }}
           openai_api_key: ${{ env.OPENAI_API_KEY }}
