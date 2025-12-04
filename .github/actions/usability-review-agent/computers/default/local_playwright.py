@@ -134,7 +134,7 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
                 raise
 
         print(f"Navigating to: {target_url}")
-        page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
+        page.goto(target_url, wait_until="domcontentloaded", timeout=180000)
         print(f"Page loaded, URL: {page.url}")
 
         return browser, page
