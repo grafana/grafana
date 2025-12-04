@@ -18,7 +18,7 @@ export interface Props {
 export const DOCK_MENU_BUTTON_ID = 'dock-menu-button';
 export const MEGA_MENU_HEADER_TOGGLE_ID = 'mega-menu-header-toggle';
 
-export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Props) {
+export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -27,6 +27,7 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
 
   return (
     <div className={styles.header}>
+<<<<<<< Updated upstream
       <Stack alignItems="center" minWidth={0} gap={0.25}>
         <ToolbarButton
           narrow
@@ -36,8 +37,24 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
         >
           <Branding.MenuLogo className={styles.img} />
         </ToolbarButton>
+||||||| Stash base
+      <Stack alignItems="center" minWidth={0} gap={0.5}>
+        <ToolbarButton
+          narrow
+          id={MEGA_MENU_HEADER_TOGGLE_ID}
+          onClick={handleMegaMenu}
+          tooltip={t('navigation.megamenu.close', 'Close menu')}
+        >
+          <Icon name="bars" size="xl" />
+        </ToolbarButton>
+        <Branding.HomeLink homeNav={homeNav} />
+=======
+      <Stack alignItems="center" minWidth={0} gap={1}>
+        <Branding.MenuLogo className={styles.img} />
+>>>>>>> Stashed changes
         <OrganizationSwitcher />
       </Stack>
+      <div className={css({ flexGrow: 1 })} />
       <IconButton
         id={DOCK_MENU_BUTTON_ID}
         className={styles.dockMenuButton}
@@ -51,11 +68,10 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
         variant="secondary"
       />
       <IconButton
-        className={styles.mobileCloseButton}
         tooltip={t('navigation.megamenu.close', 'Close menu')}
         name="times"
         onClick={onClose}
-        size="xl"
+        size="lg"
         variant="secondary"
       />
     </div>
@@ -86,10 +102,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignSelf: 'center',
     height: theme.spacing(3),
     width: theme.spacing(3),
-  }),
-  mobileCloseButton: css({
-    [theme.breakpoints.up('md')]: {
-      display: 'none',
-    },
   }),
 });
