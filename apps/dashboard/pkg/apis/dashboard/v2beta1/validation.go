@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/errors"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/cuevalidator"
@@ -133,11 +132,13 @@ var schemaSource string
 
 func getValidator() *cuevalidator.Validator {
 	getSchemaOnce.Do(func() {
-		cueCtx := cuecontext.New()
-		compiledSchema := cueCtx.CompileString(schemaSource).LookupPath(
+		// Store the schema source string instead of a compiled cue.Value to prevent memory leaks.
+		// Each validation will create a fresh CUE context, allowing the context and its
+		// internal caches to be garbage collected after validation completes.
+		validator = cuevalidator.NewValidatorFromSource(
+			schemaSource,
 			cue.ParsePath("DashboardSpec"),
 		)
-		validator = cuevalidator.NewValidator(compiledSchema)
 	})
 
 	return validator
