@@ -1143,6 +1143,11 @@ export interface FeatureToggles {
   */
   newVizSuggestions?: boolean;
   /**
+  * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
+  * @default false
+  */
+  externalVizSuggestions?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
@@ -1184,6 +1189,11 @@ export interface FeatureToggles {
   * Show transformation quick-start cards in empty transformations state
   */
   transformationsEmptyPlaceholder?: boolean;
+  /**
+  * Run queries through the data source backend
+  * @default false
+  */
+  opentsdbBackendMigration?: boolean;
   /**
   * Enable TTL plugin instance manager
   */
