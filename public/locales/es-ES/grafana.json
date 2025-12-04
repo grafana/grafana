@@ -5085,10 +5085,7 @@
         "copy-or-duplicate": "Copiar o duplicar",
         "delete": "Eliminar",
         "duplicate": "Duplicar",
-        "group-layout": "Diseño del grupo",
-        "group-layout-disabled": "No existen grupos en este nivel",
-        "panel-layout": "Diseño del panel",
-        "panel-layout-disabled": "Selecciona una fila o pestaña para cambiar las opciones de diseño del panel"
+        "layout": "Diseño"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -5184,7 +5181,6 @@
       },
       "only-overrides-button-tooltip": "Mostrar solo anulaciones",
       "placeholder-search-options": "Opciones de búsqueda",
-      "visualization-button-label": "Visualización",
       "visualization-button-tooltip": "Opciones de búsqueda"
     },
     "panel-editor-table-view": {
@@ -5394,6 +5390,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "Cargando e iniciando el dashboard",
       "title-not-found": "Panel con ID {{panelId}} no encontrado"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Variables de plantilla"
@@ -6219,6 +6219,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Buscar...",
       "radio-options": {
         "label": {
@@ -6530,7 +6533,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Cambiar visualización",
-      "tooltip-click-to-change-visualization": "Haz clic para cambiar la visualización"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir panel de consulta",
@@ -6553,7 +6556,7 @@
       "delete-button": "Eliminar",
       "title": "Eliminar"
     },
-    "delete-modal-restore-dashboards-text": "Esta acción marcará el panel de control para su eliminación en 30 días. El administrador de tu organización puede restaurarlo en cualquier momento antes de que transcurran los 30 días.",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "¿Quieres eliminar este panel de control?",
     "general": {
       "auto-refresh-description": "Define los intervalos de actualización automática que deben estar disponibles en la lista de actualización automática. Utiliza el formato «5 s» para los segundos, «1 m» para los minutos, «1 h» para las horas y «1 d» para los días (por ejemplo: «5 s, 10 s, 30 s, 1 m, 5 m, 15 m, 30 m, 1 h, 2 h, 1 d»).",
@@ -7299,6 +7302,14 @@
       "title-failed-sample-query": "Error al cargar la muestra de logs para esta consulta",
       "tooltip": "Mostrar líneas de log que contribuyeron a las métricas visualizadas"
     },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
+    },
     "logs-table-empty-fields": {
       "no-fields": "Ningún campo"
     },
@@ -7326,7 +7337,8 @@
       "title-failed-volume-query": "Error al cargar el volumen de logs para esta consulta",
       "title-no-logs-volume-available": "No hay volumen de logs disponible",
       "title-showing-partial-data": "Mostrando datos parciales",
-      "title-unable-to-show-log-volume": "No se puede mostrar el volumen de logs"
+      "title-unable-to-show-log-volume": "No se puede mostrar el volumen de logs",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No hay información de volumen disponible para las consultas y el intervalo de tiempo actuales."
@@ -11084,11 +11096,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "No se ha encontrado nada que coincida con tu consulta"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Borrar tipos",
@@ -13273,6 +13296,7 @@
     "create-team": {
       "create": "Crear",
       "description-email": "Esto es opcional y se utiliza principalmente para permitir avatares de equipo personalizados",
+      "failed-to-create": "",
       "label-email": "Correo electrónico",
       "label-name": "Nombre",
       "label-role": "Rol"
@@ -13304,6 +13328,7 @@
         "title-edit-team": "Editar equipo",
         "tooltip-edit-team": "Editar equipo"
       },
+      "loading-teams": "",
       "new-team": "Nuevo equipo",
       "placeholder-search-teams": "Buscar equipos"
     },

@@ -5085,10 +5085,7 @@
         "copy-or-duplicate": "Kopieren oder duplizieren",
         "delete": "Löschen",
         "duplicate": "Duplikat",
-        "group-layout": "Gruppenlayout",
-        "group-layout-disabled": "Auf dieser Ebene sind keine Gruppen vorhanden",
-        "panel-layout": "Panel-Layout",
-        "panel-layout-disabled": "Wählen Sie eine Zeile oder Registerkarte, um die Panel-Layout-Optionen zu ändern"
+        "layout": "Layout"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -5184,7 +5181,6 @@
       },
       "only-overrides-button-tooltip": "Nur Überschreibungen anzeigen",
       "placeholder-search-options": "Suchoptionen",
-      "visualization-button-label": "Visualisierung",
       "visualization-button-tooltip": "Suchoptionen"
     },
     "panel-editor-table-view": {
@@ -5394,6 +5390,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "Laden und Initialisieren des Dashboards",
       "title-not-found": "Das Panel mit der ID {{panelId}} wurde nicht gefunden"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Vorlagenvariablen"
@@ -6219,6 +6219,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Suche nach ...",
       "radio-options": {
         "label": {
@@ -6530,7 +6533,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Visualisierung ändern",
-      "tooltip-click-to-change-visualization": "Klicken, um Visualisierung zu ändern"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abfragebereich öffnen",
@@ -6553,7 +6556,7 @@
       "delete-button": "Löschen",
       "title": "Löschen"
     },
-    "delete-modal-restore-dashboards-text": "Diese Aktion markiert das Dashboard zur Löschung in 30 Tagen. Der Administrator Ihrer Organisation kann es jederzeit vor Ablauf der 30 Tage wiederherstellen. ",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "Möchten Sie dieses Dashboard löschen?",
     "general": {
       "auto-refresh-description": "Definieren Sie die Intervalle für die automatischen Aktualisierungen, die in der Liste für die automatische Aktualisierung verfügbar sein sollen. Verwenden Sie das Format „5s“ für Sekunden, „1m“ für Minuten, „1h“ für Stunden und „1d“ für Tage (z. B.: „5s,10s,30s,1m,5m,15m,30m,1h,2h,1d“).",
@@ -7299,6 +7302,14 @@
       "title-failed-sample-query": "Das Logs-Sample für diese Abfrage konnte nicht geladen werden",
       "tooltip": "Zeigen Sie Log-Zeilen an, die an visualisierten Metriken beteiligt waren"
     },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
+    },
     "logs-table-empty-fields": {
       "no-fields": "Keine Felder"
     },
@@ -7326,7 +7337,8 @@
       "title-failed-volume-query": "Das Log-Volumen für diese Abfrage konnte nicht geladen werden",
       "title-no-logs-volume-available": "Kein Logs-Volumen verfügbar",
       "title-showing-partial-data": "Teildaten werden angezeigt",
-      "title-unable-to-show-log-volume": "Log-Volumen kann nicht angezeigt werden"
+      "title-unable-to-show-log-volume": "Log-Volumen kann nicht angezeigt werden",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Für die aktuellen Abfragen und den aktuellen Zeitbereich sind keine Volumeninformationen verfügbar."
@@ -11084,11 +11096,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Es konnte nichts gefunden werden, was Ihrer Abfrage entspricht"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Typen zurücksetzen",
@@ -13273,6 +13296,7 @@
     "create-team": {
       "create": "Erstellen",
       "description-email": "Dies ist optional und wird hauptsächlich genutzt, um individuelle Team-Avatare zu ermöglichen",
+      "failed-to-create": "",
       "label-email": "E-Mail-Adresse",
       "label-name": "Name",
       "label-role": "Rolle"
@@ -13304,6 +13328,7 @@
         "title-edit-team": "Team bearbeiten",
         "tooltip-edit-team": "Team bearbeiten"
       },
+      "loading-teams": "",
       "new-team": "Neues Team",
       "placeholder-search-teams": "Teams suchen"
     },

@@ -219,7 +219,6 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
             readOnly={this.props.disabled}
             onBlur={this.handleBlur}
             onClick={this.props.onClick}
-            // onKeyDown={this.onKeyDown}
             onChange={(change: { value: Value }) => {
               this.onChange(change.value, false);
             }}

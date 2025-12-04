@@ -26,8 +26,8 @@ import (
 var _ appsdkapiserver.GenericAPIServer = (*serverWrapper)(nil)
 
 type serverWrapper struct {
-	ctx context.Context
-	*genericapiserver.GenericAPIServer
+	ctx               context.Context
+	GenericAPIServer  appsdkapiserver.GenericAPIServer
 	installer         appsdkapiserver.AppInstaller
 	restOptionsGetter generic.RESTOptionsGetter
 	storageOpts       *grafanaapiserveroptions.StorageOptions
@@ -143,8 +143,5 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 }
 
 func (s *serverWrapper) RegisteredWebServices() []*restful.WebService {
-	if s.Handler != nil && s.Handler.GoRestfulContainer != nil {
-		return s.Handler.GoRestfulContainer.RegisteredWebServices()
-	}
-	return nil
+	return s.GenericAPIServer.RegisteredWebServices()
 }

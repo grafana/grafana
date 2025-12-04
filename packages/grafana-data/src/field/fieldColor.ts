@@ -1,4 +1,11 @@
 import { interpolateRgbBasis } from 'd3-interpolate';
+import {
+  interpolateViridis,
+  interpolateMagma,
+  interpolatePlasma,
+  interpolateInferno,
+  interpolateCividis,
+} from 'd3-scale-chromatic';
 import stringHash from 'string-hash';
 import tinycolor from 'tinycolor2';
 
@@ -76,6 +83,41 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       },
     }),
     new FieldColorSchemeMode({
+      id: FieldColorModeId.ContinuousViridis,
+      name: 'Viridis',
+      isContinuous: true,
+      isByValue: true,
+      interpolator: interpolateViridis,
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.ContinuousMagma,
+      name: 'Magma',
+      isContinuous: true,
+      isByValue: true,
+      interpolator: interpolateMagma,
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.ContinuousPlasma,
+      name: 'Plasma',
+      isContinuous: true,
+      isByValue: true,
+      interpolator: interpolatePlasma,
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.ContinuousInferno,
+      name: 'Inferno',
+      isContinuous: true,
+      isByValue: true,
+      interpolator: interpolateInferno,
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.ContinuousCividis,
+      name: 'Cividis',
+      isContinuous: true,
+      isByValue: true,
+      interpolator: interpolateCividis,
+    }),
+    new FieldColorSchemeMode({
       id: FieldColorModeId.ContinuousGrYlRd,
       name: 'Green-Yellow-Red',
       isContinuous: true,
@@ -148,15 +190,26 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
   ];
 });
 
-interface FieldColorSchemeModeOptions {
+interface BaseFieldColorSchemeModeOptions {
   id: FieldColorModeId;
   name: string;
   description?: string;
-  getColors: (theme: GrafanaTheme2) => string[];
   isContinuous: boolean;
   isByValue: boolean;
   useSeriesName?: boolean;
 }
+
+interface FieldColorSchemeModeInterpolator extends BaseFieldColorSchemeModeOptions {
+  interpolator: (value: number) => string;
+  getColors?: never;
+}
+
+interface FieldColorSchemeModeGetColors extends BaseFieldColorSchemeModeOptions {
+  getColors: (theme: GrafanaTheme2) => string[];
+  interpolator?: never;
+}
+
+type FieldColorSchemeModeOptions = FieldColorSchemeModeGetColors | FieldColorSchemeModeInterpolator;
 
 export class FieldColorSchemeMode implements FieldColorMode {
   id: FieldColorModeId;
@@ -178,11 +231,15 @@ export class FieldColorSchemeMode implements FieldColorMode {
     this.isContinuous = options.isContinuous;
     this.isByValue = options.isByValue;
     this.useSeriesName = options.useSeriesName;
+    this.interpolator = options.interpolator;
   }
 
   getColors(theme: GrafanaTheme2): string[] {
     if (!this.getNamedColors) {
-      return [];
+      if (!this.interpolator) {
+        return [];
+      }
+      this.getNamedColors = () => new Array(9).fill(0).map((_, i) => this.getInterpolator()(i / 8));
     }
 
     if (this.colorCache && this.colorCacheTheme === theme) {
@@ -231,12 +288,15 @@ export class FieldColorSchemeMode implements FieldColorMode {
 
 /** @beta */
 export function getFieldColorModeForField(field: Field): FieldColorMode {
-  return fieldColorModeRegistry.get(field.config.color?.mode ?? FieldColorModeId.Thresholds);
+  return (
+    fieldColorModeRegistry.getIfExists(field.config.color?.mode) ??
+    fieldColorModeRegistry.get(FieldColorModeId.Thresholds)
+  );
 }
 
 /** @beta */
 export function getFieldColorMode(mode?: FieldColorModeId | string): FieldColorMode {
-  return fieldColorModeRegistry.get(mode ?? FieldColorModeId.Thresholds);
+  return fieldColorModeRegistry.getIfExists(mode) ?? fieldColorModeRegistry.get(FieldColorModeId.Thresholds);
 }
 
 /**

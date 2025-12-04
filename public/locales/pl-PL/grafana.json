@@ -5125,10 +5125,7 @@
         "copy-or-duplicate": "Kopiuj lub duplikuj",
         "delete": "Usuń",
         "duplicate": "Duplikuj",
-        "group-layout": "Układ grupy",
-        "group-layout-disabled": "Brak grup na tym poziomie",
-        "panel-layout": "Układ panelu",
-        "panel-layout-disabled": "Wybierz wiersz lub kartę, aby zmienić opcje układu panelu"
+        "layout": "Układ"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -5226,7 +5223,6 @@
       },
       "only-overrides-button-tooltip": "Pokaż tylko zastąpienia",
       "placeholder-search-options": "Opcje wyszukiwania",
-      "visualization-button-label": "Wizualizacja",
       "visualization-button-tooltip": "Opcje wyszukiwania"
     },
     "panel-editor-table-view": {
@@ -5436,6 +5432,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "Wczytywanie i inicjowanie pulpitu",
       "title-not-found": "Nie znaleziono panelu o identyfikatorze {{panelId}}"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Zmienne szablonu"
@@ -6265,6 +6265,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "Szukaj…",
       "radio-options": {
         "label": {
@@ -6578,7 +6581,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "Zmień wizualizację",
-      "tooltip-click-to-change-visualization": "Kliknij, aby zmienić wizualizację"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Otwórz okienko zapytania",
@@ -6601,7 +6604,7 @@
       "delete-button": "Usuń",
       "title": "Usuń"
     },
-    "delete-modal-restore-dashboards-text": "To działanie spowoduje oznaczenie pulpitu do usunięcia za 30 dni. Administrator organizacji może go przywrócić w dowolnym momencie przed upływem 30 dni.",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "Czy chcesz usunąć ten pulpit?",
     "general": {
       "auto-refresh-description": "Zdefiniuj interwały automatycznego odświeżania, które będą dostępne na liście automatycznego odświeżania. Użyj formatu „5s” dla sekund, „1m” dla minut, „1h” dla godzin i „1d” dla dni (np.: „5s,10s,30s,1m,5m,15m,30m,1h,2h,1d”).",
@@ -7347,6 +7350,14 @@
       "title-failed-sample-query": "Nie udało się załadować próbki logów dla tego zapytania",
       "tooltip": "Pokaż wiersze logów, które przyczyniły się do wizualizacji metryk"
     },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
+    },
     "logs-table-empty-fields": {
       "no-fields": "Brak pól"
     },
@@ -7374,7 +7385,8 @@
       "title-failed-volume-query": "Nie udało się załadować woluminu logów dla tego zapytania",
       "title-no-logs-volume-available": "Brak dostępnego woluminu logów",
       "title-showing-partial-data": "Wyświetlanie częściowych danych",
-      "title-unable-to-show-log-volume": "Nie można wyświetlić woluminu logów"
+      "title-unable-to-show-log-volume": "Nie można wyświetlić woluminu logów",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Brak dostępnych informacji o wolumenie dla bieżących zapytań i zakresu czasu."
@@ -11178,11 +11190,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Nie znaleziono wyników pasujących do Twojego zapytania"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "Wyczyść typy",
@@ -13387,6 +13410,7 @@
     "create-team": {
       "create": "Utwórz",
       "description-email": "Jest to ustawienie opcjonalne i służy przede wszystkim do zezwalania na niestandardowe awatary zespołu",
+      "failed-to-create": "",
       "label-email": "E-mail",
       "label-name": "Nazwa",
       "label-role": "Rola"
@@ -13418,6 +13442,7 @@
         "title-edit-team": "Edytuj zespół",
         "tooltip-edit-team": "Edytuj zespół"
       },
+      "loading-teams": "",
       "new-team": "Nowy zespół",
       "placeholder-search-teams": "Szukaj zespołów"
     },

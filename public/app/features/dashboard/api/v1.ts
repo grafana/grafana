@@ -21,7 +21,7 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { buildSourceLink } from 'app/features/provisioning/utils/sourceLink';
+import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -164,7 +164,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       // Inject source link for repo-managed dashboards
       const sourceLink = await buildSourceLink(annotations);
       if (sourceLink) {
-        result.dashboard.links = [sourceLink, ...(result.dashboard.links || [])];
+        const linksWithoutSource = removeExistingSourceLinks(result.dashboard.links);
+        result.dashboard.links = [sourceLink, ...linksWithoutSource];
       }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {

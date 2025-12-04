@@ -23,8 +23,9 @@ import {
 
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
+import { QueryType, MetricQuery, Filter } from './dataquery.gen';
 import { getMetricType, setMetricType } from './functions';
-import { CloudMonitoringQuery, QueryType, MetricQuery, Filter } from './types/query';
+import { CloudMonitoringQuery } from './types/query';
 import { CloudMonitoringOptions, MetricDescriptor, PostResponse, Aggregation } from './types/types';
 import { CloudMonitoringVariableSupport } from './variables';
 

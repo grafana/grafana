@@ -5065,10 +5065,7 @@
         "copy-or-duplicate": "复制或拷贝",
         "delete": "删除",
         "duplicate": "复制",
-        "group-layout": "组布局",
-        "group-layout-disabled": "此级别上不存在组",
-        "panel-layout": "面板布局",
-        "panel-layout-disabled": "选择一行或选项卡以更改面板布局选项"
+        "layout": "布局"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -5163,7 +5160,6 @@
       },
       "only-overrides-button-tooltip": "仅显示覆盖",
       "placeholder-search-options": "搜索选项",
-      "visualization-button-label": "可视化",
       "visualization-button-tooltip": "搜索选项"
     },
     "panel-editor-table-view": {
@@ -5373,6 +5369,10 @@
     "solo-panel": {
       "loading-initializing-dashboard": "正在加载和初始化数据面板",
       "title-not-found": "未找到 ID 为 {{panelId}} 的面板"
+    },
+    "source-link": {
+      "title": "",
+      "tooltip": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "模板变量"
@@ -6196,6 +6196,9 @@
       }
     },
     "panel-viz-type-picker": {
+      "button": {
+        "close": ""
+      },
       "placeholder-search-for": "搜索...",
       "radio-options": {
         "label": {
@@ -6506,7 +6509,7 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "更改可视化",
-      "tooltip-click-to-change-visualization": "点击可更改可视化"
+      "text": ""
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "打开查询窗格",
@@ -6529,7 +6532,7 @@
       "delete-button": "删除",
       "title": "删除"
     },
-    "delete-modal-restore-dashboards-text": "此操作会将数据面板标记为在 30 天后删除。您的组织管理员可以在 30 天期限内随时还原。",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "您要删除这个数据面板吗？",
     "general": {
       "auto-refresh-description": "定义应显示于自动刷新列表中的自动刷新间隔。使用格式“5s”表示秒，“1m”表示分，“1h”表示小时，“1d”表示天（例如：“5s,10s,30s,1m,5m,15m,30m,1h,2h,1d”）。",
@@ -7275,6 +7278,14 @@
       "title-failed-sample-query": "加载此查询的日志示例失败",
       "tooltip": "显示有助于实现可视化指标的日志行"
     },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
+    },
     "logs-table-empty-fields": {
       "no-fields": "没有字段"
     },
@@ -7302,7 +7313,8 @@
       "title-failed-volume-query": "加载此查询的日志卷失败",
       "title-no-logs-volume-available": "没有可用的日志卷",
       "title-showing-partial-data": "显示部分数据",
-      "title-unable-to-show-log-volume": "无法显示日志卷"
+      "title-unable-to-show-log-volume": "无法显示日志卷",
+      "visible-range-description": ""
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "没有可用于当前查询和时间范围的卷信息。"
@@ -11037,11 +11049,22 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-suggestions": {
+        "message": "",
+        "title": ""
+      },
+      "unknown-viz-type": "",
       "use-this-suggestion": ""
     },
     "viz-type-picker": {
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
     }
+  },
+  "panel-group-by": {
+    "button": "",
+    "loading": "",
+    "no-options": "",
+    "search-placeholder": ""
   },
   "panel-type-filter": {
     "clear-button": "清除类型",
@@ -13216,6 +13239,7 @@
     "create-team": {
       "create": "创建",
       "description-email": "这是可选项，主要用于允许自定义团队头像",
+      "failed-to-create": "",
       "label-email": "电子邮箱",
       "label-name": "名称",
       "label-role": "角色"
@@ -13247,6 +13271,7 @@
         "title-edit-team": "编辑团队",
         "tooltip-edit-team": "编辑团队"
       },
+      "loading-teams": "",
       "new-team": "新建团队",
       "placeholder-search-teams": "搜索团队"
     },

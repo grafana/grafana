@@ -49,7 +49,8 @@ import {
 } from 'app/features/transformers/timeSeriesTable/timeSeriesTableTransformer';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { CloudWatchMetricsQuery, LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
+import { CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/dataquery.gen';
+import { LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {

@@ -531,7 +531,9 @@ describe('Combobox', () => {
       await user.click(input);
 
       await user.type(input, 'fir');
-      await act(async () => jest.advanceTimersByTime(500)); // Custom value while typing
+      await act(async () => {
+        jest.advanceTimersByTime(500); // Custom value while typing
+      });
 
       const customItem = screen.getByRole('option');
 
