@@ -186,13 +186,13 @@ func initResourceTables(mg *migrator.Migrator) string {
 	}))
 
 	mg.AddMigration("Add key_path column to resource_history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
-		Name: "key_path", Type: migrator.DB_NVarchar, Length: 768, Nullable: false, Default: "",
+		Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, Default: "", IsLatin: true,
 	}))
 
 	resource_events_table := migrator.Table{
 		Name: "resource_events",
 		Columns: []*migrator.Column{
-			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 768, Nullable: false, IsPrimaryKey: true},
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
 			{Name: "value", Type: migrator.DB_MediumText, Nullable: false},
 		},
 	}
