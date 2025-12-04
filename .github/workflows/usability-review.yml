@@ -58,31 +58,15 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Get vault secrets (ops) - for GCOM API"
-        id: vault-secrets-ops
-        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0
-        with:
-          repo_secrets: |
-            GCOM_HOST=ephemeral-instances-bot:gcom-host
-            GCOM_TOKEN=ephemeral-instances-bot:gcom-token
-
       - name: "Get vault secrets (dev)"
         id: vault-secrets-dev
         uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0
         with:
           vault_instance: "dev"
           repo_secrets: |
+            GCOM_HOST=usability-review-agent:GCOM_HOST
+            GCOM_TOKEN=usability-review-agent:GCOM_TOKEN
             OPENAI_API_KEY=usability-review-agent:OPENAI_API_KEY
-            # Using pre-created user credentials (see SETUP.md for manual setup steps)
-            # Remove these if stack-users:write token becomes available
-            GRAFANA_USERNAME=usability-review-agent:USERNAME
-            GRAFANA_PASSWORD=usability-review-agent:PASSWORD
-
-      - name: Verify credentials retrieved
-        run: |
-          echo "Username length: ${#GRAFANA_USERNAME}"
-          echo "Password length: ${#GRAFANA_PASSWORD}"
-          echo "Username ends with: ...${GRAFANA_USERNAME: -3}"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -236,8 +220,7 @@ jobs:
           fi
 
       - name: Create test user for playwright
-        # Using ephemeral-instances-bot GCOM token (grafanaUniversity org exception)
-        if: false
+        # Using system realm token with stack-users:write scope
         env:
           GCOM_HOST: ${{ env.GCOM_HOST }}
           GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
