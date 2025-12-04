@@ -287,6 +287,15 @@ describe('grafana-managed rules', () => {
         expect(hasInvalidDataSourceNames).toBe(true);
       });
 
+      it('should include only valid datasource UIDs when some names are invalid', () => {
+        const { backendFilter, hasInvalidDataSourceNames } = getGrafanaFilter(
+          getFilter({ dataSourceNames: ['prometheus', 'non-existent-datasource'] })
+        );
+
+        expect(backendFilter.datasources).toEqual(['datasource-uid-1']);
+        expect(hasInvalidDataSourceNames).toBe(false); // Not all are invalid
+      });
+
       it('should skip dataSourceNames filtering on frontend when backend filtering is enabled', () => {
         const rule = mockGrafanaPromAlertingRule({
           queriedDatasourceUIDs: ['datasource-uid-1'],
