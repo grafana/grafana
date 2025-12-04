@@ -355,7 +355,8 @@ jobs:
               content = f.read()
 
           # Extract table rows (skip header and separator)
-          table_pattern = r'\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|'
+          # New format: | Issue | Severity | Impact | Confidence | Suggestion |
+          table_pattern = r'\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|'
           matches = re.findall(table_pattern, content)
 
           if len(matches) < 3:
@@ -363,19 +364,26 @@ jobs:
               exit(0)
 
           # Skip first 2 matches (header + separator)
-          issue_rows = matches[2:5]  # Get exactly 3 issues
+          issue_rows = matches[2:]  # Get all issues after header
 
           pr_number = os.environ['PR_NUMBER']
 
-          for severity, issue, impact, suggestion in issue_rows:
+          for issue, severity, impact, confidence, suggestion in issue_rows:
               # Clean up whitespace
-              severity = severity.strip()
               issue = issue.strip()
+              severity = severity.strip()
               impact = impact.strip()
+              confidence = confidence.strip()
               suggestion = suggestion.strip()
 
+              # Extract issue title from markdown (bold text before <br />)
+              issue_title_match = re.search(r'\*\*(.+?)\*\*', issue)
+              issue_title = issue_title_match.group(1) if issue_title_match else issue
+
               # Create individual comment
-              comment = f"""### {severity}: {issue}
+              comment = f"""### {severity} {issue_title}
+
+              **Confidence:** {confidence}
 
               **Impact:** {impact}
 
@@ -389,7 +397,7 @@ jobs:
                   ['gh', 'pr', 'comment', pr_number, '--body', comment],
                   check=True
               )
-              print(f"Posted comment for: {issue}")
+              print(f"Posted comment for: {issue_title}")
 
           PYTHON
 
@@ -430,18 +438,24 @@ jobs:
               content = f.read()
 
           # Extract table rows for issues
-          table_pattern = r'\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|'
+          # New format: | Issue | Severity | Impact | Confidence | Suggestion |
+          table_pattern = r'\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|'
           matches = re.findall(table_pattern, content)
 
           # Build issues text
           issues_text = ""
           if len(matches) >= 3:
-              issue_rows = matches[2:5]  # Skip header rows
-              for severity, issue, impact, suggestion in issue_rows:
-                  severity = severity.strip()
+              issue_rows = matches[2:]  # Skip header rows
+              for issue, severity, impact, confidence, suggestion in issue_rows:
                   issue = issue.strip()
+                  severity = severity.strip()
                   suggestion = suggestion.strip()
-                  issues_text += f"• *{severity}*: {issue}\n  → {suggestion}\n"
+
+                  # Extract issue title from markdown
+                  issue_title_match = re.search(r'\*\*(.+?)\*\*', issue)
+                  issue_title = issue_title_match.group(1) if issue_title_match else issue
+
+                  issues_text += f"• *{severity}* {issue_title}\n  → {suggestion}\n"
           else:
               issues_text = "No specific issues found"
 
