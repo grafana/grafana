@@ -167,7 +167,9 @@ function update(
       const shieldStart = gameState.findIndex((row) => row.entry.includes('#'));
       const enemyBelow = enemies.find((otherEnemy) => shieldStart && otherEnemy.y === shieldStart - 1);
 
-      if (enemy.direction === 'r') {
+      if (enemy.health === 0) {
+        enemy.health -= 1;
+      } else if (enemy.direction === 'r') {
         enemy.x = enemy.x + enemySpeed * dt;
         if (enemy.type === enemyTypeUfo) {
           if (enemy.gridX === 74) {
@@ -195,7 +197,9 @@ function update(
       return enemy;
     })
     .map((enemy) => {
-      const missile = userMissiles.find((missile) => missile.gridY === enemy.y && enemy.gridX === missile.x);
+      const missile = userMissiles.find(
+        (missile) => missile.gridY === enemy.y && missile.x >= enemy.gridX && missile.x <= enemy.gridX + 4
+      );
       if (missile && enemy.health > 0) {
         missile.hit = true;
         enemy.health -= 1;
