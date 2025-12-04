@@ -40,7 +40,6 @@ import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
   transformSortVariableToEnum,
-  transformRegexApplyToEnum,
   LEGACY_STRING_VALUE_KEY,
 } from './transformToV2TypesUtils';
 /**
@@ -377,7 +376,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex ?? '',
-          regexApplyTo: transformRegexApplyToEnum(variable.state.regexApplyTo),
+          regexApplyTo: variable.state.regexApplyTo,
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
           multi: variable.state.isMulti || false,

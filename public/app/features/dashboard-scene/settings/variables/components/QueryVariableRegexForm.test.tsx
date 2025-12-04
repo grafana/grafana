@@ -1,6 +1,5 @@
 import { render, fireEvent } from '@testing-library/react';
 
-import { VariableRegexApplyTo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { QueryVariableRegexForm } from './QueryVariableRegexForm';
@@ -17,7 +16,7 @@ describe('QueryVariableRegexForm', () => {
     const { getByTestId, getByRole } = render(
       <QueryVariableRegexForm
         regex=".*test.*"
-        regexApplyTo={VariableRegexApplyTo.value}
+        regexApplyTo="value"
         onRegExChange={onRegExChange}
         onRegexApplyToChange={onRegexApplyToChange}
       />
@@ -41,7 +40,7 @@ describe('QueryVariableRegexForm', () => {
     const { getByRole } = render(
       <QueryVariableRegexForm
         regex=""
-        regexApplyTo={VariableRegexApplyTo.text}
+        regexApplyTo="text"
         onRegExChange={onRegExChange}
         onRegexApplyToChange={onRegexApplyToChange}
       />
@@ -63,7 +62,7 @@ describe('QueryVariableRegexForm', () => {
     const { getByTestId } = render(
       <QueryVariableRegexForm
         regex=".*"
-        regexApplyTo={VariableRegexApplyTo.value}
+        regexApplyTo="value"
         onRegExChange={onRegExChange}
         onRegexApplyToChange={onRegexApplyToChange}
       />
@@ -82,7 +81,7 @@ describe('QueryVariableRegexForm', () => {
     const { getByRole } = render(
       <QueryVariableRegexForm
         regex=""
-        regexApplyTo={VariableRegexApplyTo.value}
+        regexApplyTo="value"
         onRegExChange={onRegExChange}
         onRegexApplyToChange={onRegexApplyToChange}
       />
@@ -92,6 +91,6 @@ describe('QueryVariableRegexForm', () => {
     fireEvent.click(displayTextOption);
 
     expect(onRegexApplyToChange).toHaveBeenCalledTimes(1);
-    expect(onRegexApplyToChange).toHaveBeenCalledWith(VariableRegexApplyTo.text);
+    expect(onRegexApplyToChange).toHaveBeenCalledWith('text');
   });
 });

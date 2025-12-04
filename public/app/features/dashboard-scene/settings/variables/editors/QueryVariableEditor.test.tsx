@@ -10,7 +10,6 @@ import {
   toDataFrame,
   getDefaultTimeRange,
   FieldType,
-  VariableRegexApplyTo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
@@ -74,7 +73,7 @@ describe('QueryVariableEditor', () => {
       },
       query: 'my-query',
       regex: '.*',
-      regexApplyTo: VariableRegexApplyTo.value,
+      regexApplyTo: 'value',
       sort: VariableSort.alphabeticalAsc,
       refresh: VariableRefresh.onDashboardLoad,
       isMulti: true,

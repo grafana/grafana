@@ -249,7 +249,7 @@ lineage: schemas: [{
 
 		// Determine whether regex applies to variable value or display text
 		// Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
-		#VariableRegexApplyTo: "value" | "text" @cuetsy(kind="enum",memberNames="value|text")
+		#VariableRegexApplyTo: "value" | "text" @cuetsy(kind="type")
 
 		// Sort variable options
 		// Accepted values are:
