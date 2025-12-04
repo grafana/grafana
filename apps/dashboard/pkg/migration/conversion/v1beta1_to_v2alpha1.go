@@ -229,6 +229,16 @@ func getBoolField(m map[string]interface{}, key string, defaultValue bool) bool 
 	return defaultValue
 }
 
+func getUnionField[T ~string](m map[string]interface{}, key string) *T {
+	if val, ok := m[key]; ok {
+		if str, ok := val.(string); ok && str != "" {
+			result := T(str)
+			return &result
+		}
+	}
+	return nil
+}
+
 // Helper function to create int64 pointer
 func int64Ptr(i int64) *int64 {
 	return &i
@@ -922,19 +932,6 @@ func transformVariableSortToEnum(sort interface{}) dashv2alpha1.DashboardVariabl
 	}
 }
 
-func transformVariableRegexApplyToToEnum(regexApplyTo string) *dashv2alpha1.DashboardVariableRegexApplyTo {
-	var result dashv2alpha1.DashboardVariableRegexApplyTo
-	switch regexApplyTo {
-	case "text":
-		result = dashv2alpha1.DashboardVariableRegexApplyToText
-	case "value":
-		result = dashv2alpha1.DashboardVariableRegexApplyToValue
-	default:
-		return nil
-	}
-	return &result
-}
-
 func transformVariables(ctx context.Context, dashboard map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) ([]dashv2alpha1.DashboardVariableKind, error) {
 	templating, ok := dashboard["templating"].(map[string]interface{})
 	if !ok {
@@ -1208,7 +1205,7 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Sort:             transformVariableSortToEnum(varMap["sort"]),
 			Regex:            schemaversion.GetStringValue(varMap, "regex"),
-			RegexApplyTo:     transformVariableRegexApplyToToEnum(schemaversion.GetStringValue(varMap, "regexApplyTo")),
+			RegexApplyTo:     getUnionField[dashv2alpha1.DashboardVariableRegexApplyTo](varMap, "regexApplyTo"),
 			Query:            buildDataQueryKindForVariable(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},

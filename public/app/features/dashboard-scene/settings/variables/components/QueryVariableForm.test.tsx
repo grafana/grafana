@@ -11,7 +11,6 @@ import {
   toDataFrame,
   FieldType,
   VariableSupportType,
-  VariableRegexApplyTo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
