@@ -102,6 +102,7 @@ describe('AnnotationSettingsEdit', () => {
     const enableToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.enable);
     const hideToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.hide);
     const iconColorToggle = getByTestId(selectors.components.ColorSwatch.name);
+    const colorByTagsInput = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.colorByTags);
     const panelSelect = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel);
     const deleteAnno = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.delete);
     const apply = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply);
@@ -111,6 +112,7 @@ describe('AnnotationSettingsEdit', () => {
     expect(enableToggle).toBeInTheDocument();
     expect(hideToggle).toBeInTheDocument();
     expect(iconColorToggle).toBeInTheDocument();
+    expect(colorByTagsInput).toBeInTheDocument();
     expect(panelSelect).toBeInTheDocument();
     expect(deleteAnno).toBeInTheDocument();
     expect(apply).toBeInTheDocument();
@@ -165,6 +167,19 @@ describe('AnnotationSettingsEdit', () => {
 
     expect(mockOnUpdate).toHaveBeenCalledTimes(1);
     expect(mockOnUpdate).toHaveBeenCalledWith(annoArg, 1);
+  });
+
+  it('should update annotation colorByTags on change', async () => {
+    const {
+      renderer: { getByTestId },
+      user,
+    } = await setup();
+
+    const colorByTagsInput = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.colorByTags);
+
+    await user.type(colorByTagsInput, 'critical, warning, info');
+
+    expect(mockOnUpdate).toHaveBeenCalled();
   });
 
   it('should set annotation filter', async () => {

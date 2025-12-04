@@ -151,6 +151,7 @@ To add a new annotation query to a dashboard, follow these steps:
 1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox.
 1. If you don't want the annotation query toggle to be displayed in the dashboard, select the **Hidden** checkbox.
 1. Select a color for the event markers.
+1. (Optional) In the **Color by tags** field, enter a comma-separated list of tag names (for example, `critical, warning, info`) to automatically color annotations based on their tags. Annotations with matching tags are colored by that tag value. The order defines priority—if an annotation has multiple matching tags, the first match in the list determines the color. If no tags match, the annotation uses the color selected above.
 1. In the **Show in** drop-down, choose one of the following options:
    - **All panels** - The annotations are displayed on all panels that support annotations.
    - **Selected panels** - The annotations are displayed on all the panels you select.
