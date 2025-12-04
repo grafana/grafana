@@ -5085,10 +5085,7 @@
         "copy-or-duplicate": "Copy or Duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "group-layout": "Group layout",
-        "group-layout-disabled": "No groups exists on this level",
-        "panel-layout": "Panel layout",
-        "panel-layout-disabled": "Select a row or tab to change panel layout options"
+        "layout": "Layout"
       },
       "continue": "Continue",
       "ungroup-nested-text": "This will ungroup all nested groups.",
@@ -7304,6 +7301,14 @@
       },
       "title-failed-sample-query": "Failed to load logs sample for this query",
       "tooltip": "Show log lines that contributed to visualized metrics"
+    },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "Copy link to log line",
+        "copy-to-clipboard": "Copy to Clipboard",
+        "inspect-value": "Inspect value",
+        "view-log-line": "View log line"
+      }
     },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
