@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.25.3
+go 1.25.5
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -30,8 +30,8 @@ require (
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20251022142026-3a174f9686a8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20251111163417-95abcf5c77ba // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba // indirect
 )
 
 require (
@@ -46,7 +46,7 @@ require (
 	github.com/Khan/genqlient v0.8.1 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
@@ -62,7 +62,7 @@ require (
 	go.opentelemetry.io/otel/log v0.12.2 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.12.2 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.38.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
+	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

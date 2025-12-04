@@ -19,6 +19,8 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?: Record<string, AnnotationEventFieldMapping>;
 	// Catch-all field for datasource-specific properties
 	legacyOptions?: Record<string, any>;
 }
@@ -62,6 +64,20 @@ export interface AnnotationPanelFilter {
 export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 	exclude: false,
 	ids: [],
+});
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+export interface AnnotationEventFieldMapping {
+	// Source type for the field value
+	source?: string;
+	// Constant value to use when source is "text"
+	value?: string;
+	// Regular expression to apply to the field value
+	regex?: string;
+}
+
+export const defaultAnnotationEventFieldMapping = (): AnnotationEventFieldMapping => ({
+	source: "field",
 });
 
 // "Off" for no shared crosshair or tooltip (default).
@@ -971,6 +987,8 @@ export interface DashboardLink {
 	includeVars: boolean;
 	// If true, includes current time range in the link as query params
 	keepTime: boolean;
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	placement?: "inControlsMenu";
 }
 
 export const defaultDashboardLink = (): DashboardLink => ({
@@ -983,12 +1001,17 @@ export const defaultDashboardLink = (): DashboardLink => ({
 	targetBlank: false,
 	includeVars: false,
 	keepTime: false,
+	placement: DashboardLinkPlacement,
 });
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 export type DashboardLinkType = "link" | "dashboards";
 
 export const defaultDashboardLinkType = (): DashboardLinkType => ("link");
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+export const DashboardLinkPlacement = "inControlsMenu";
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.

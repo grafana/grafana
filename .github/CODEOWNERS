@@ -750,6 +750,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-api-clients/src/clients/rtkq/dashboard/ @grafana/dashboards-squad
 /packages/grafana-api-clients/src/clients/rtkq/folder/ @grafana/grafana-search-navigate-organise
 /packages/grafana-api-clients/src/clients/rtkq/iam/ @grafana/access-squad @grafana/identity-squad
+/packages/grafana-api-clients/src/clients/rtkq/logsdrilldown/ @grafana/observability-logs
 /packages/grafana-api-clients/src/clients/rtkq/preferences/ @grafana/plugins-platform-frontend
 /packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-git-ui-sync-team
 /packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
@@ -1304,6 +1305,7 @@ embed.go @grafana/grafana-as-code
 /.github/actionlint.yaml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-docker.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/update-schema-types.yml @grafana/plugins-platform-frontend
+/.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

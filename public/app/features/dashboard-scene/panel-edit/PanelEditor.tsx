@@ -31,7 +31,6 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { PanelModelCompatibilityWrapper } from '../utils/PanelModelCompatibilityWrapper';
 import {
   activateSceneObjectAndParentTree,
   getDashboardSceneFor,
@@ -121,8 +120,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       dataObject.subscribeToState(async () => {
         const { data } = dataObject.state;
         if (hasData(data) && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-          const panelModel = new PanelModelCompatibilityWrapper(panel);
-          const suggestions = await getAllSuggestions(data, panelModel);
+          const suggestions = await getAllSuggestions(data);
 
           if (suggestions.length > 0) {
             const defaultFirstSuggestion = suggestions[0];
@@ -259,6 +257,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
           searchQuery: '',
           listMode: OptionFilter.All,
           isVizPickerOpen: isUnconfigured,
+          isNewPanel: this.state.isNewPanel,
         }),
         isInitializing: false,
       });

@@ -1,0 +1,213 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "metadata": {
+    "name": "v0alpha1.templating-dashboard-links-and-variables.v42"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "",
+            "version": "v0",
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "${custom.text}",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "testdata-type-uid"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "7.3.0-pre",
+            "spec": {
+              "options": {
+                "content": "# ${custom.text}\n         ",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 9,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [
+      {
+        "title": "Grafana",
+        "type": "link",
+        "icon": "external link",
+        "tooltip": "",
+        "url": "http://www.grafana.com",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": true,
+        "keepTime": false
+      },
+      {
+        "title": "Link as DropDown",
+        "type": "dashboards",
+        "icon": "external link",
+        "tooltip": "",
+        "tags": [
+          "templating"
+        ],
+        "asDropdown": true,
+        "targetBlank": false,
+        "includeVars": true,
+        "keepTime": false
+      },
+      {
+        "title": "",
+        "type": "dashboards",
+        "icon": "external link",
+        "tooltip": "",
+        "tags": [
+          "demo"
+        ],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": true,
+        "keepTime": false
+      }
+    ],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "gdev",
+      "templating"
+    ],
+    "timeSettings": {
+      "timezone": "",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Templating - Dashboard Links and Variables",
+    "variables": [
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "custom",
+          "query": "p1,p2,p3",
+          "current": {
+            "text": "All",
+            "value": "$__all"
+          },
+          "options": [
+            {
+              "selected": true,
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "selected": false,
+              "text": "p1",
+              "value": "p1"
+            },
+            {
+              "selected": false,
+              "text": "p2",
+              "value": "p2"
+            },
+            {
+              "selected": false,
+              "text": "p3",
+              "value": "p3"
+            }
+          ],
+          "multi": true,
+          "includeAll": true,
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
+      }
+    ]
+  },
+  "status": {}
+}
