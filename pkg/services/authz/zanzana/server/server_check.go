@@ -12,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -149,7 +148,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 		folderRelation = common.SubresourceRelation(relation)
 	)
 
-	if isFolderPermissionBasedResource(resource.GroupResource()) {
+	if folderIdent != "" && isFolderPermissionBasedResource(resource.GroupResource()) {
 		// Check if resource inherits permissions from the folder (like dashboards in a folder)
 		res, err := s.openfgaCheck(ctx, store, subject, relation, folderIdent, contextuals, resourceCtx)
 		if err != nil {
@@ -210,11 +209,10 @@ func (s *Server) openfgaCheck(ctx context.Context, store *storeInfo, subject, re
 	return res, nil
 }
 
-var folderPermissionBasedResources = map[string]bool{
-	// dashboard.grafana.app/dashboards
-	common.FormatGroupResource(dashboardV1.DashboardResourceInfo.GroupResource().Group, dashboardV1.DashboardResourceInfo.GroupResource().Resource, ""): true,
+var folderPermissionBasedResourceExceptions = map[string]bool{
+	// allow all resources to inherit permissions from the folder
 }
 
 func isFolderPermissionBasedResource(resource string) bool {
-	return folderPermissionBasedResources[resource]
+	return !folderPermissionBasedResourceExceptions[resource]
 }
