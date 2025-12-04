@@ -37,6 +37,14 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
+	// If the cluster is serverless, return a healthy result
+	if ds.BuildFlavor == "serverless" {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusOk,
+			Message: "Elasticsearch Serverless data source is healthy.",
+		}, nil
+	}
+
 	// check that ES is healthy
 	healthStatusUrl.Path = path.Join(healthStatusUrl.Path, "_cluster/health")
 	healthStatusUrl.RawQuery = "wait_for_status=yellow"
@@ -66,113 +74,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: "Health check failed: Elasticsearch data source is not healthy. Request timed out",
-		}, nil
-	}
-
-	// If _cluster/health endpoint is not found (e.g., Elasticsearch Serverless), try root endpoint
-	if response.StatusCode == http.StatusGone {
-		logger.Info("Cluster health endpoint not found, trying root endpoint for Elasticsearch Serverless", "statusCode", response.StatusCode)
-
-		// Close the first response body
-		if err := response.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "error", err)
-		}
-
-		// Try the root endpoint
-		rootUrl, err := url.Parse(ds.URL)
-		if err != nil {
-			logger.Error("Failed to parse data source URL for root endpoint", "error", err)
-			return &backend.CheckHealthResult{
-				Status:  backend.HealthStatusError,
-				Message: "Health check failed: Failed to parse data source URL",
-			}, nil
-		}
-
-		// Ensure URL ends with /
-		rootUrlString := rootUrl.String()
-		if rootUrlString[len(rootUrlString)-1:] != "/" {
-			rootUrlString = rootUrlString + "/"
-		}
-
-		rootRequest, err := http.NewRequestWithContext(ctx, http.MethodGet, rootUrlString, nil)
-		if err != nil {
-			logger.Error("Failed to create root endpoint request", "error", err, "url", rootUrlString)
-			return &backend.CheckHealthResult{
-				Status:  backend.HealthStatusError,
-				Message: "Health check failed: Failed to create request",
-			}, nil
-		}
-
-		logger.Debug("Sending healthcheck request to Elasticsearch root endpoint", "url", rootUrlString)
-		response, err = ds.HTTPClient.Do(rootRequest)
-
-		if err != nil {
-			logger.Error("Failed to connect to Elasticsearch root endpoint", "error", err, "url", rootUrlString)
-			return &backend.CheckHealthResult{
-				Status:  backend.HealthStatusError,
-				Message: "Health check failed: Failed to connect to Elasticsearch",
-			}, nil
-		}
-
-		if response.StatusCode == http.StatusRequestTimeout {
-			return &backend.CheckHealthResult{
-				Status:  backend.HealthStatusError,
-				Message: "Health check failed: Elasticsearch data source is not healthy. Request timed out",
-			}, nil
-		}
-
-		if response.StatusCode >= 400 {
-			return &backend.CheckHealthResult{
-				Status:  backend.HealthStatusError,
-				Message: fmt.Sprintf("Health check failed: Elasticsearch data source is not healthy. Status: %s", response.Status),
-			}, nil
-		}
-
-		logger.Info("Response received from Elasticsearch root endpoint", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start))
-
-		// For the root endpoint, we just need a successful response
-		defer func() {
-			if err := response.Body.Close(); err != nil {
-				logger.Warn("Failed to close response body", "error", err)
-			}
-		}()
-
-		// Read and validate that we got a valid JSON response from Elasticsearch
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			logger.Error("Error reading response body bytes from root endpoint", "error", err)
-			return &backend.CheckHealthResult{
-				Status:  backend.HealthStatusUnknown,
-				Message: "Health check failed: Failed to read response",
-			}, nil
-		}
-
-		jsonData := map[string]any{}
-		err = json.Unmarshal(body, &jsonData)
-		if err != nil {
-			truncatedBody := string(body)
-			if len(truncatedBody) > ErrorBodyMaxSize {
-				truncatedBody = truncatedBody[:ErrorBodyMaxSize] + "..."
-			}
-			return &backend.CheckHealthResult{
-				Status:  backend.HealthStatusUnknown,
-				Message: fmt.Sprintf("Health check failed: Failed to parse response from Elasticsearch. Response received: %s", truncatedBody),
-			}, nil
-		}
-
-		// Check if response contains expected Elasticsearch fields (like "version" or "cluster_name")
-		if _, hasVersion := jsonData["version"]; !hasVersion {
-			if _, hasClusterName := jsonData["cluster_name"]; !hasClusterName {
-				return &backend.CheckHealthResult{
-					Status:  backend.HealthStatusError,
-					Message: "Health check failed: Unexpected response from Elasticsearch root endpoint",
-				}, nil
-			}
-		}
-
-		return &backend.CheckHealthResult{
-			Status:  backend.HealthStatusOk,
-			Message: "Elasticsearch data source is healthy.",
 		}, nil
 	}
 
