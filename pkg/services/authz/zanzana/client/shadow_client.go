@@ -14,6 +14,8 @@ import (
 
 var _ authlib.AccessClient = (*ShadowClient)(nil)
 
+const zanzanaTimeout = 30 * time.Second
+
 type ShadowClient struct {
 	logger        log.Logger
 	accessClient  authlib.AccessClient
@@ -42,7 +44,7 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 		}
 
 		zanzanaCtx := context.WithoutCancel(ctx)
-		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, 30*time.Second)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, zanzanaTimeout)
 		defer cancel()
 
 		timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("zanzana"))
@@ -86,7 +88,7 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 		}
 
 		zanzanaCtx := context.WithoutCancel(ctx)
-		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, 30*time.Second)
+		zanzanaCtxTimeout, cancel := context.WithTimeout(zanzanaCtx, zanzanaTimeout)
 		defer cancel()
 
 		timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("zanzana"))
