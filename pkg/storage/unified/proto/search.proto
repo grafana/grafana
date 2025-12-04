@@ -100,8 +100,8 @@ message ResourceSearchRequest {
 
   int64 permission = 12;
 
-  // Fields to query against (if empty, defaults to "title")
-  repeated string query_fields = 13;
+  // Define which fields to query and their boost values
+  repeated QueryField query_fields = 13;
 }
 
 message ResourceSearchResponse {

@@ -217,6 +217,16 @@ message ListOptions {
   repeated Requirement fields = 3;
 }
 
+// Defines the field in the index to query
+// Boost is optional, and allows weighting the field higher in the results
+message QueryField {
+  // The field name in the index to query
+  string name = 1;
+
+  // Boost value for this field
+  float boost = 2;
+}
+
 enum ResourceVersionMatch {
   // Deprecated, use ResourceVersionMatch V2
   DEPRECATED_NotOlderThan = 0;
