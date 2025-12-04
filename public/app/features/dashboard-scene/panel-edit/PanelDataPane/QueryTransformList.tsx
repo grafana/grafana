@@ -527,6 +527,7 @@ export const QueryTransformList = memo(
                             onAddTransform={onAddTransform}
                             onAddExpression={onAddExpression}
                             allowedTypes={['transform']}
+                            index={0}
                             text={t('dashboard-scene.query-transform-list.add', 'Add')}
                           />
                         ))}

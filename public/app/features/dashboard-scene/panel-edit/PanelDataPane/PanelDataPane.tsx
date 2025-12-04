@@ -92,7 +92,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
   public setQueryLibraryMode = (mode: QueryLibraryMode & { index: number | null }) => {
     this.setState({ queryLibraryMode: mode });
-  }
+  };
 
   public getUrlState() {
     return { tab: this.state.tab };
@@ -111,7 +111,6 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     }
   }
 }
-
 
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tabs, selectedQueryTransform, panelRef, transformPickerIndex, queryLibraryMode } = model.useState();
@@ -139,11 +138,14 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   // Auto-select first item if nothing is selected
   const selectedId = useMemo(() => {
+    if (transformPickerIndex != null) {
+      return null;
+    }
     if (selectedQueryTransform === null && allItems.length > 0) {
       return allItems[0].id;
     }
     return selectedQueryTransform;
-  }, [selectedQueryTransform, allItems]);
+  }, [transformPickerIndex, selectedQueryTransform, allItems]);
 
   const selectedItem = useMemo(() => allItems.find((item) => item.id === selectedId), [allItems, selectedId]);
 
@@ -198,10 +200,13 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   );
 
   // Handler for saving a query to the query library (stub)
-  const handleQueryLibrarySave = useCallback((_name: string, _description: string) => {
-    // Stub: In real implementation, this would save to the query library
-    model.setQueryLibraryMode({ active: false, mode: 'browse', index: null });
-  }, [model]);
+  const handleQueryLibrarySave = useCallback(
+    (_name: string, _description: string) => {
+      // Stub: In real implementation, this would save to the query library
+      model.setQueryLibraryMode({ active: false, mode: 'browse', index: null });
+    },
+    [model]
+  );
 
   // Handler to close the query library view
   const handleQueryLibraryClose = useCallback(() => {
@@ -210,13 +215,10 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   // Handler to open query library in a specific mode
   const handleOpenQueryLibrary = useCallback(
-    (mode: QueryLibraryMode["mode"], index?: number) => {
+    (mode: QueryLibraryMode['mode'], index?: number) => {
       let currentQuery: SceneDataQuery | undefined;
 
-      if (
-        mode === 'save' &&
-        (selectedItem?.type === 'query' || selectedItem?.type === 'expression')
-      ) {
+      if (mode === 'save' && (selectedItem?.type === 'query' || selectedItem?.type === 'expression')) {
         currentQuery = selectedItem.data;
       }
 
@@ -321,7 +323,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           onQueryLibrarySave={handleQueryLibrarySave}
           onQueryLibraryClose={handleQueryLibraryClose}
           onOpenQueryLibrary={handleOpenQueryLibrary}
-          />
+        />
       </div>
     </div>
   );

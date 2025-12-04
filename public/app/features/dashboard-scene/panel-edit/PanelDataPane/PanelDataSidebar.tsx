@@ -76,11 +76,14 @@ export function PanelDataSidebarRendered({ model }: SceneComponentProps<PanelDat
 
   // Auto-select first item if nothing is selected
   const selectedId = useMemo(() => {
+    if (transformPickerIndex != null) {
+      return null;
+    }
     if (selectedQueryTransform === null && allItems.length > 0) {
       return allItems[0].id;
     }
     return selectedQueryTransform;
-  }, [selectedQueryTransform, allItems]);
+  }, [transformPickerIndex, selectedQueryTransform, allItems]);
   const selectedItem = useMemo(() => allItems.find((item) => item.id === selectedId), [allItems, selectedId]);
 
   const updateQuerySelectionOnStateChange = useCallback(
@@ -176,13 +179,10 @@ export function PanelDataSidebarRendered({ model }: SceneComponentProps<PanelDat
   );
 
   const handleOpenQueryLibrary = useCallback(
-    (mode: QueryLibraryMode["mode"], index?: number) => {
+    (mode: QueryLibraryMode['mode'], index?: number) => {
       let currentQuery: SceneDataQuery | undefined;
 
-      if (
-        mode === 'save' &&
-        (selectedItem?.type === 'query' || selectedItem?.type === 'expression')
-      ) {
+      if (mode === 'save' && (selectedItem?.type === 'query' || selectedItem?.type === 'expression')) {
         currentQuery = selectedItem.data;
       }
 
@@ -305,7 +305,8 @@ export function PanelDataSidebarRendered({ model }: SceneComponentProps<PanelDat
         selectedId={selectedId}
         onCollapseSidebar={() => model.onCollapseSidebar(true)}
         onSelect={(id) => {
-          model.onChangeSelected(id)
+          model.onChangeSelected(id);
+          model.onTransformPicker(null);
         }}
         onAddQuery={handleAddQuery}
         onAddFromSavedQueries={(index) => handleOpenQueryLibrary('browse', index)}
@@ -346,7 +347,10 @@ export function PanelDataSidebarRendered({ model }: SceneComponentProps<PanelDat
         transformItems={transformItems}
         selectedId={selectedId}
         onCollapseSidebar={() => model.onCollapseSidebar(true)}
-        onSelect={(newSelectedId) => model.onChangeSelected(newSelectedId)}
+        onSelect={(newSelectedId) => {
+          model.onChangeSelected(newSelectedId);
+          model.onTransformPicker(null);
+        }}
         onAddQuery={handleAddQuery}
         onAddFromSavedQueries={(index) => handleOpenQueryLibrary('browse', index)}
         onAddTransform={(index) => {
