@@ -128,7 +128,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
   // Determine what to show in results area
   const dashboards = Array.isArray(response?.dashboards) ? response.dashboards : [];
-  const totalPages = response?.pages || 1;
   const showEmptyState = !loading && (!response?.dashboards || response.dashboards.length === 0);
   const showError = !loading && error;
 
