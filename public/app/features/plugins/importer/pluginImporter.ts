@@ -13,8 +13,10 @@ import {
   throwIfAngular,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
+import { PluginReloadedEvent } from 'app/types/events';
 
 import { isBuiltinPluginPath } from '../built_in_plugins';
 import {
@@ -254,6 +256,9 @@ export async function reloadPlugin(pluginId: string): Promise<void> {
     await loadPlugin(pluginId);
 
     pluginsLogger.logDebug(`Plugin reloaded successfully`, { pluginId });
+
+    // Emit event to notify components that the plugin has been reloaded
+    appEvents.publish(new PluginReloadedEvent({ pluginId }));
   } catch (error) {
     pluginsLogger.logError(error instanceof Error ? error : new Error('Failed to reload plugin'), {
       pluginId,

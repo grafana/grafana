@@ -1,6 +1,6 @@
 // Libraries
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import * as React from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
@@ -25,6 +25,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { PluginReloadedEvent } from 'app/types/events';
 
 import {
   ExtensionRegistriesProvider,
@@ -68,6 +69,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const addedFunctionsRegistry = useAddedFunctionsRegistry();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
+  const [reloadKey, setReloadKey] = useState(0);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
   const { plugin, loading, loadingError, pluginNav } = state;
   const navModel = buildPluginSectionNav(currentUrl, pluginNavSection);
@@ -77,6 +79,20 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   useEffect(() => {
     loadAppPlugin(pluginId, dispatch);
+  }, [pluginId, reloadKey]);
+
+  // Subscribe to plugin reload events
+  useEffect(() => {
+    const subscription = appEvents.subscribe(PluginReloadedEvent, (event) => {
+      if (event.payload.pluginId === pluginId) {
+        // Force reload by incrementing reloadKey
+        setReloadKey((prev) => prev + 1);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [pluginId]);
 
   const onNavChanged = useCallback(
