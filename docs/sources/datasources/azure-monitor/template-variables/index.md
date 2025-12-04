@@ -23,6 +23,7 @@ labels:
 menuTitle: Template variables
 title: Azure Monitor template variables
 weight: 400
+last_reviewed: 2025-12-04
 refs:
   variables:
     - pattern: /docs/grafana/

@@ -22,6 +22,7 @@ labels:
 menuTitle: Azure Monitor
 title: Azure Monitor data source
 weight: 300
+last_reviewed: 2025-12-04
 refs:
   configure-grafana-feature-toggles:
     - pattern: /docs/grafana/

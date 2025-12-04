@@ -23,6 +23,7 @@ labels:
 menuTitle: Query editor
 title: Azure Monitor query editor
 weight: 300
+last_reviewed: 2025-12-04
 refs:
   query-transform-data-query-options:
     - pattern: /docs/grafana/
