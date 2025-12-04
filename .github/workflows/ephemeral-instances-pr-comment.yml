@@ -7,9 +7,6 @@ on:
 
 permissions: {}
 
-env:
-  ENTERPRISE_REF: 20251127_hackathon-2025-12-gracoca
-
 jobs:
   handle-ephemeral-instances:
     if: ${{ github.repository_owner == 'grafana' }}
@@ -56,9 +53,9 @@ jobs:
       - name: Checkout ephemeral instances repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
-          repository: grafana/ephemeral-grafana-instances-github-action
+          repository: grafana/hackathon-2025-12-gracoca-ephemeral-grafana-instances-github-action
           token: ${{ steps.generate_token.outputs.token }}
-          ref: main
+          ref: 20251127_hackathon-2025-12-gracoca
           path: ephemeral
           persist-credentials: false
 
