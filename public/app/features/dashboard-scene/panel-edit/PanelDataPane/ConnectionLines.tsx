@@ -135,7 +135,7 @@ export function ConnectionLines({ connections, isDragging = false, selected, onC
             return null;
           }
           const pointY = cardRect.top + cardRect.height / 2 - containerRect.top;
-          return <circle key={refId} cx={swimlaneX} cy={pointY} r={4} className={styles.point} />;
+          return <circle key={refId} cx={swimlaneX} cy={pointY} className={styles.point} />;
         })}
       </g>
     </svg>
@@ -157,6 +157,10 @@ const getStyles = (theme: GrafanaTheme2, selected?: boolean) => ({
   connectionGroup: css({
     pointerEvents: 'auto',
     cursor: 'pointer',
+    opacity: 0.7,
+    '&:hover': {
+      opacity: 1,
+    },
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       animation: 'fadeIn 0.2s ease-in-out',
       '@keyframes fadeIn': {
@@ -167,15 +171,27 @@ const getStyles = (theme: GrafanaTheme2, selected?: boolean) => ({
           opacity: 1,
         },
       },
+      transition: theme.transitions.create(['opacity']),
     },
   }),
   swimlane: css({
     stroke: selected ? theme.colors.primary.border : theme.colors.text.maxContrast,
-    strokeWidth: 4,
-    opacity: 0.6,
+    strokeWidth: 2,
+    'g:hover &': {
+      strokeWidth: 3,
+    },
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['strokeWidth']),
+    },
   }),
   point: css({
     fill: selected ? theme.colors.primary.border : theme.colors.text.maxContrast,
-    opacity: 0.8,
+    r: 4,
+    'g:hover &': {
+      r: 6,
+    },
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['r']),
+    },
   }),
 });
