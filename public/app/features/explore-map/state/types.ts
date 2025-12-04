@@ -55,6 +55,8 @@ export interface ExploreMapFrame {
   position: PanelPosition;  // Reuse position type
   createdBy?: string;
   remoteVersion?: number;
+  color?: string;           // Frame border color (hex color string)
+  emoji?: string;           // Emoji to display on frame
 }
 
 export interface CanvasViewport {

@@ -1,15 +1,20 @@
-import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useCallback, useState, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { Rnd, RndDragCallback, RndResizeCallback } from 'react-rnd';
+import { useClickAway } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
+
 import { useDispatch, useSelector } from 'app/types/store';
 
 import {
   updateFramePosition,
   updateFrameSize,
   updateFrameTitle,
+  updateFrameColor,
+  updateFrameEmoji,
   setActiveFrameDrag,
   clearActiveFrameDrag,
   associatePanelWithFrame,
@@ -25,6 +30,26 @@ interface ExploreMapFrameProps {
   frame: Frame;
 }
 
+// Predefined color palette for frames
+const FRAME_COLORS = [
+  { name: 'Blue', value: '#6e9fff' },
+  { name: 'Green', value: '#73bf69' },
+  { name: 'Yellow', value: '#fade2a' },
+  { name: 'Orange', value: '#ff9830' },
+  { name: 'Red', value: '#f2495c' },
+  { name: 'Purple', value: '#b877d9' },
+  { name: 'Pink', value: '#fe85b4' },
+  { name: 'Cyan', value: '#5dc4cd' },
+  { name: 'Gray', value: '#9fa7b3' },
+];
+
+// Predefined emoji options for frames
+const FRAME_EMOJIS = [
+  '📦', '📊', '📈', '🎯', '🔥', '⭐', '💡', '🚀',
+  '📝', '🎨', '🔧', '⚙️', '🏆', '🎪', '🌟', '💼',
+  '📌', '🔍', '📱', '💻', '🖥️', '⚡', '🌈', '🎭',
+];
+
 function ExploreMapFrameComponent({ frame }: ExploreMapFrameProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -36,6 +61,14 @@ function ExploreMapFrameComponent({ frame }: ExploreMapFrameProps) {
   const [titleValue, setTitleValue] = useState(frame.title);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const colorButtonRef = useRef<HTMLButtonElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
+  const [colorPickerPosition, setColorPickerPosition] = useState<{ top: number; left: number } | null>(null);
+  const [emojiPickerPosition, setEmojiPickerPosition] = useState<{ top: number; left: number } | null>(null);
 
   // Track current size during resize for visual feedback
   const [currentSize, setCurrentSize] = useState({
@@ -159,7 +192,7 @@ function ExploreMapFrameComponent({ frame }: ExploreMapFrameProps) {
   // Update panel-frame associations based on current frame bounds
   // This should only handle NEW panels entering the frame, not existing associations
   const updatePanelAssociations = useCallback(
-    (frameX: number, frameY: number, frameWidth: number, frameHeight: number, skipExisting: boolean = false) => {
+    (frameX: number, frameY: number, frameWidth: number, frameHeight: number, skipExisting = false) => {
       for (const [panelId, panel] of Object.entries(allPanels)) {
         // Skip panels that are already associated with this frame if skipExisting is true
         // This prevents recalculating offsets for panels that moved with the frame
@@ -367,6 +400,73 @@ function ExploreMapFrameComponent({ frame }: ExploreMapFrameProps) {
     setShowDeleteDialog(false);
   }, []);
 
+  // Close pickers when clicking outside
+  useClickAway(colorPickerRef, () => {
+    setShowColorPicker(false);
+  });
+
+  useClickAway(emojiPickerRef, () => {
+    setShowEmojiPicker(false);
+  });
+
+  const handleColorButtonClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!showColorPicker && colorButtonRef.current) {
+        const rect = colorButtonRef.current.getBoundingClientRect();
+        setColorPickerPosition({
+          top: rect.bottom + 4,
+          left: rect.left,
+        });
+      }
+      setShowColorPicker(!showColorPicker);
+      setShowEmojiPicker(false);
+    },
+    [showColorPicker]
+  );
+
+  const handleColorSelect = useCallback(
+    (color: string) => {
+      dispatch(
+        updateFrameColor({
+          frameId: frame.id,
+          color,
+        })
+      );
+      setShowColorPicker(false);
+    },
+    [dispatch, frame.id]
+  );
+
+  const handleEmojiButtonClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!showEmojiPicker && emojiButtonRef.current) {
+        const rect = emojiButtonRef.current.getBoundingClientRect();
+        setEmojiPickerPosition({
+          top: rect.bottom + 4,
+          left: rect.left,
+        });
+      }
+      setShowEmojiPicker(!showEmojiPicker);
+      setShowColorPicker(false);
+    },
+    [showEmojiPicker]
+  );
+
+  const handleEmojiSelect = useCallback(
+    (emoji: string) => {
+      dispatch(
+        updateFrameEmoji({
+          frameId: frame.id,
+          emoji,
+        })
+      );
+      setShowEmojiPicker(false);
+    },
+    [dispatch, frame.id]
+  );
+
   return (
     <Rnd
       position={{ x: frame.position.x, y: frame.position.y }}
@@ -393,6 +493,7 @@ function ExploreMapFrameComponent({ frame }: ExploreMapFrameProps) {
             height: `${currentSize.height * viewport.zoom}px`,
             transform: `scale(${1 / viewport.zoom})`,
             transformOrigin: 'top left',
+            borderColor: frame.color || undefined,
           }}
         />
         <div
@@ -401,8 +502,20 @@ function ExploreMapFrameComponent({ frame }: ExploreMapFrameProps) {
             top: `${-30 / viewport.zoom}px`,
             transform: `scale(${1 / viewport.zoom})`,
             transformOrigin: 'top left',
+            borderColor: frame.color || undefined,
           }}
         >
+          {/* Emoji button */}
+          <button
+            ref={emojiButtonRef}
+            className={styles.emojiButton}
+            onClick={handleEmojiButtonClick}
+            aria-label="Change emoji"
+          >
+            {frame.emoji || '🔍'}
+          </button>
+
+          {/* Title display/input */}
           {isEditingTitle ? (
             <input
               className={styles.frameTitleInput}
@@ -410,7 +523,6 @@ function ExploreMapFrameComponent({ frame }: ExploreMapFrameProps) {
               onChange={handleTitleChange}
               onBlur={handleTitleBlur}
               onKeyDown={handleTitleKeyDown}
-              autoFocus
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
@@ -418,6 +530,17 @@ function ExploreMapFrameComponent({ frame }: ExploreMapFrameProps) {
               {frame.title}
             </div>
           )}
+
+          {/* Color picker button */}
+          <button
+            ref={colorButtonRef}
+            className={styles.colorButton}
+            onClick={handleColorButtonClick}
+            style={{ backgroundColor: frame.color || '#6e9fff' }}
+            aria-label="Change frame color"
+          />
+
+          {/* Delete button */}
           <IconButton
             name="trash-alt"
             size="sm"
@@ -435,6 +558,53 @@ function ExploreMapFrameComponent({ frame }: ExploreMapFrameProps) {
           panelCount={panelsInFrame.length}
           onClose={handleCloseDeleteDialog}
         />
+      )}
+
+      {/* Render pickers via portal to escape z-index stacking context */}
+      {showEmojiPicker && emojiPickerPosition && ReactDOM.createPortal(
+        <div
+          ref={emojiPickerRef}
+          className={styles.emojiPicker}
+          style={{
+            position: 'fixed',
+            top: `${emojiPickerPosition.top}px`,
+            left: `${emojiPickerPosition.left}px`,
+          }}
+        >
+          {FRAME_EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              className={cx(styles.emojiOption, frame.emoji === emoji && styles.emojiOptionSelected)}
+              onClick={() => handleEmojiSelect(emoji)}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
+
+      {showColorPicker && colorPickerPosition && ReactDOM.createPortal(
+        <div
+          ref={colorPickerRef}
+          className={styles.colorPicker}
+          style={{
+            position: 'fixed',
+            top: `${colorPickerPosition.top}px`,
+            left: `${colorPickerPosition.left}px`,
+          }}
+        >
+          {FRAME_COLORS.map((color) => (
+            <button
+              key={color.value}
+              className={cx(styles.colorOption, frame.color === color.value && styles.colorOptionSelected)}
+              style={{ backgroundColor: color.value }}
+              onClick={() => handleColorSelect(color.value)}
+              title={color.name}
+            />
+          ))}
+        </div>,
+        document.body
       )}
     </Rnd>
   );
@@ -485,6 +655,51 @@ const getStyles = (theme: GrafanaTheme2) => ({
   deleteButton: css({
     cursor: 'pointer',
   }),
+  emojiButton: css({
+    fontSize: '20px',
+    cursor: 'pointer',
+    userSelect: 'none',
+    padding: theme.spacing(0.25, 0.5),
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    backgroundColor: theme.colors.background.primary,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    '&:hover': {
+      backgroundColor: theme.colors.background.secondary,
+    },
+  }),
+  emojiPicker: css({
+    display: 'grid',
+    gridTemplateColumns: 'repeat(8, 1fr)',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(1),
+    backgroundColor: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    zIndex: 10000,
+    minWidth: '240px',
+  }),
+  emojiOption: css({
+    fontSize: '20px',
+    padding: theme.spacing(0.5),
+    border: `1px solid transparent`,
+    borderRadius: theme.shape.radius.default,
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    '&:hover': {
+      backgroundColor: theme.colors.background.secondary,
+    },
+  }),
+  emojiOptionSelected: css({
+    border: `1px solid ${theme.colors.primary.border}`,
+    backgroundColor: theme.colors.action.selected,
+  }),
   frameTitle: css({
     fontSize: theme.typography.body.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
@@ -493,11 +708,47 @@ const getStyles = (theme: GrafanaTheme2) => ({
   frameTitleInput: css({
     fontSize: theme.typography.body.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
-    padding: 0,
+    padding: theme.spacing(0.5),
     border: 'none',
     outline: `2px solid ${theme.colors.primary.border}`,
     backgroundColor: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
     minWidth: '100px',
+  }),
+  colorButton: css({
+    width: '24px',
+    height: '24px',
+    padding: 0,
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    cursor: 'pointer',
+    '&:hover': {
+      opacity: 0.8,
+    },
+  }),
+  colorPicker: css({
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(1),
+    backgroundColor: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    zIndex: 10000,
+  }),
+  colorOption: css({
+    width: '32px',
+    height: '32px',
+    padding: 0,
+    border: `2px solid transparent`,
+    borderRadius: theme.shape.radius.default,
+    cursor: 'pointer',
+    '&:hover': {
+      opacity: 0.8,
+    },
+  }),
+  colorOptionSelected: css({
+    border: `2px solid ${theme.colors.text.primary}`,
   }),
 });

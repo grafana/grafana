@@ -34,6 +34,8 @@ import {
   UpdateFramePositionOperation,
   UpdateFrameSizeOperation,
   UpdateFrameTitleOperation,
+  UpdateFrameColorOperation,
+  UpdateFrameEmojiOperation,
   AssociatePanelWithFrameOperation,
   DisassociatePanelFromFrameOperation,
   AddPostItOperation,
@@ -201,6 +203,8 @@ export class CRDTStateManager {
         zIndex: data.zIndex.get(),
       },
       createdBy: data.createdBy.get(),
+      color: data.color.get(),
+      emoji: data.emoji.get(),
       remoteVersion: data.remoteVersion,
     };
   }
@@ -475,7 +479,9 @@ export class CRDTStateManager {
     frameId: string,
     title: string,
     position: { x: number; y: number; width: number; height: number },
-    createdBy?: string
+    createdBy?: string,
+    color?: string,
+    emoji?: string
   ): AddFrameOperation {
     const timestamp = this.clock.tick();
     return {
@@ -484,7 +490,7 @@ export class CRDTStateManager {
       operationId: uuidv4(),
       timestamp,
       nodeId: this.nodeId,
-      payload: { frameId, title, position, createdBy },
+      payload: { frameId, title, position, createdBy, color, emoji },
     };
   }
 
@@ -576,6 +582,50 @@ export class CRDTStateManager {
       timestamp,
       nodeId: this.nodeId,
       payload: { frameId, title },
+    };
+  }
+
+  /**
+   * Create an update frame color operation
+   */
+  createUpdateFrameColorOperation(
+    frameId: string,
+    color: string | undefined
+  ): UpdateFrameColorOperation | null {
+    if (!this.state.frames.contains(frameId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'update-frame-color',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: { frameId, color },
+    };
+  }
+
+  /**
+   * Create an update frame emoji operation
+   */
+  createUpdateFrameEmojiOperation(
+    frameId: string,
+    emoji: string | undefined
+  ): UpdateFrameEmojiOperation | null {
+    if (!this.state.frames.contains(frameId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'update-frame-emoji',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: { frameId, emoji },
     };
   }
 
@@ -928,6 +978,10 @@ export class CRDTStateManager {
           return this.applyUpdateFrameSize(operation);
         case 'update-frame-title':
           return this.applyUpdateFrameTitle(operation);
+        case 'update-frame-color':
+          return this.applyUpdateFrameColor(operation);
+        case 'update-frame-emoji':
+          return this.applyUpdateFrameEmoji(operation);
         case 'associate-panel-with-frame':
           return this.applyAssociatePanelWithFrame(operation);
         case 'disassociate-panel-from-frame':
@@ -948,12 +1002,15 @@ export class CRDTStateManager {
           return this.applyUpdatePostItColor(operation);
         case 'batch':
           return this.applyBatchOperation(operation);
-        default:
+        default: {
+          // TypeScript exhaustiveness check - this should never happen at runtime
+          const exhaustiveCheck: never = operation;
           return {
             success: false,
             applied: false,
-            error: `Unknown operation type: ${(operation as CRDTOperation).type}`,
+            error: `Unknown operation type: ${(exhaustiveCheck as { type: string }).type}`,
           };
+        }
       }
     } catch (error) {
       return {
@@ -1309,7 +1366,7 @@ export class CRDTStateManager {
   }
 
   private applyAddFrame(operation: AddFrameOperation): OperationResult {
-    const { frameId, title, position, createdBy } = operation.payload;
+    const { frameId, title, position, createdBy, color, emoji } = operation.payload;
 
     // Add to OR-Set with operation ID as tag
     this.state.frames.add(frameId, operation.operationId);
@@ -1328,6 +1385,8 @@ export class CRDTStateManager {
         width: new LWWRegister(position.width, operation.timestamp),
         height: new LWWRegister(position.height, operation.timestamp),
         zIndex: new LWWRegister(zIndex, operation.timestamp),
+        color: new LWWRegister(color, operation.timestamp),
+        emoji: new LWWRegister(emoji, operation.timestamp),
         createdBy: new LWWRegister(createdBy, operation.timestamp),
         remoteVersion: 0,
       });
@@ -1398,6 +1457,32 @@ export class CRDTStateManager {
     if (updated && operation.nodeId !== this.nodeId) {
       frameData.remoteVersion++;
     }
+
+    return { success: true, applied: updated };
+  }
+
+  private applyUpdateFrameColor(operation: UpdateFrameColorOperation): OperationResult {
+    const { frameId, color } = operation.payload;
+    const frameData = this.state.frameData.get(frameId);
+
+    if (!frameData) {
+      return { success: true, applied: false, error: 'Frame not found' };
+    }
+
+    const updated = frameData.color.set(color, operation.timestamp);
+
+    return { success: true, applied: updated };
+  }
+
+  private applyUpdateFrameEmoji(operation: UpdateFrameEmojiOperation): OperationResult {
+    const { frameId, emoji } = operation.payload;
+    const frameData = this.state.frameData.get(frameId);
+
+    if (!frameData) {
+      return { success: true, applied: false, error: 'Frame not found' };
+    }
+
+    const updated = frameData.emoji.set(emoji, operation.timestamp);
 
     return { success: true, applied: updated };
   }
@@ -1542,6 +1627,8 @@ export class CRDTStateManager {
           width: otherFrameData.width.clone(),
           height: otherFrameData.height.clone(),
           zIndex: otherFrameData.zIndex.clone(),
+          color: otherFrameData.color.clone(),
+          emoji: otherFrameData.emoji.clone(),
           createdBy: otherFrameData.createdBy.clone(),
           remoteVersion: otherFrameData.remoteVersion,
         });
@@ -1553,6 +1640,8 @@ export class CRDTStateManager {
         myFrameData.width.merge(otherFrameData.width);
         myFrameData.height.merge(otherFrameData.height);
         myFrameData.zIndex.merge(otherFrameData.zIndex);
+        myFrameData.color.merge(otherFrameData.color);
+        myFrameData.emoji.merge(otherFrameData.emoji);
         myFrameData.createdBy.merge(otherFrameData.createdBy);
       }
     }
@@ -1594,7 +1683,7 @@ export class CRDTStateManager {
       }
     }
 
-    const frameData: Record<string, any> = {};
+    const frameData: CRDTExploreMapStateJSON['frameData'] = {};
     for (const [frameId, data] of this.state.frameData.entries()) {
       if (this.state.frames.contains(frameId)) {
         frameData[frameId] = {
@@ -1605,6 +1694,8 @@ export class CRDTStateManager {
           width: data.width.toJSON(),
           height: data.height.toJSON(),
           zIndex: data.zIndex.toJSON(),
+          color: data.color.toJSON(),
+          emoji: data.emoji.toJSON(),
           createdBy: data.createdBy.toJSON(),
           remoteVersion: data.remoteVersion,
         };
@@ -1715,6 +1806,8 @@ export class CRDTStateManager {
           width: LWWRegister.fromJSON(data.width),
           height: LWWRegister.fromJSON(data.height),
           zIndex: LWWRegister.fromJSON(data.zIndex),
+          color: data.color ? LWWRegister.fromJSON(data.color) : new LWWRegister(undefined, defaultTimestamp),
+          emoji: data.emoji ? LWWRegister.fromJSON(data.emoji) : new LWWRegister(undefined, defaultTimestamp),
           createdBy: data.createdBy ? LWWRegister.fromJSON(data.createdBy) : new LWWRegister(undefined, defaultTimestamp),
           remoteVersion: data.remoteVersion || 0,
         });

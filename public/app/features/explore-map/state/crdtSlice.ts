@@ -767,6 +767,8 @@ const crdtSlice = createSlice({
       position?: { x: number; y: number; width: number; height: number };
       title?: string;
       createdBy?: string;
+      color?: string;
+      emoji?: string;
     }>) => {
       const manager = getCRDTManager(state);
 
@@ -775,12 +777,16 @@ const crdtSlice = createSlice({
       const position = action.payload.position || {
         x: 200, y: 200, width: 800, height: 600
       };
+      const color = action.payload.color || '#6e9fff'; // Default blue color
+      const emoji = action.payload.emoji || '🔍'; // Default magnifying glass emoji
 
       const operation = manager.createAddFrameOperation(
         frameId,
         title,
         position,
-        action.payload.createdBy
+        action.payload.createdBy,
+        color,
+        emoji
       );
 
       manager.applyOperation(operation);
@@ -852,7 +858,7 @@ const crdtSlice = createSlice({
       }
 
       // Create operations for all child panels
-      const panelOps: any[] = [];
+      const panelOps: CRDTOperation[] = [];
       const childPanelIds = manager.getPanelsInFrame(action.payload.frameId);
 
       for (const panelId of childPanelIds) {
@@ -918,6 +924,54 @@ const crdtSlice = createSlice({
       const operation = manager.createUpdateFrameTitleOperation(
         action.payload.frameId,
         action.payload.title
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Update frame color
+     */
+    updateFrameColor: (state, action: PayloadAction<{
+      frameId: string;
+      color: string | undefined;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createUpdateFrameColorOperation(
+        action.payload.frameId,
+        action.payload.color
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Update frame emoji
+     */
+    updateFrameEmoji: (state, action: PayloadAction<{
+      frameId: string;
+      emoji: string | undefined;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createUpdateFrameEmojiOperation(
+        action.payload.frameId,
+        action.payload.emoji
       );
 
       if (!operation) {
@@ -1130,6 +1184,8 @@ export const {
   updateFramePosition,
   updateFrameSize,
   updateFrameTitle,
+  updateFrameColor,
+  updateFrameEmoji,
   associatePanelWithFrame,
   disassociatePanelFromFrame,
   clearPendingOperations,

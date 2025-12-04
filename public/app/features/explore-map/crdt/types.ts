@@ -62,6 +62,8 @@ export interface CRDTFrameData {
   width: LWWRegister<number>;
   height: LWWRegister<number>;
   zIndex: LWWRegister<number>;
+  color: LWWRegister<string | undefined>;
+  emoji: LWWRegister<string | undefined>;
 
   // Creator metadata (username of who created the frame)
   createdBy: LWWRegister<string | undefined>;
@@ -214,6 +216,8 @@ export interface CRDTExploreMapStateJSON {
     width: { value: number; timestamp: HLCTimestamp };
     height: { value: number; timestamp: HLCTimestamp };
     zIndex: { value: number; timestamp: HLCTimestamp };
+    color?: { value: string | undefined; timestamp: HLCTimestamp };
+    emoji?: { value: string | undefined; timestamp: HLCTimestamp };
     createdBy?: { value: string | undefined; timestamp: HLCTimestamp };
     remoteVersion?: number;
   }>;
@@ -242,6 +246,8 @@ export type CRDTOperationType =
   | 'update-frame-position'
   | 'update-frame-size'
   | 'update-frame-title'
+  | 'update-frame-color'
+  | 'update-frame-emoji'
   | 'associate-panel-with-frame'
   | 'disassociate-panel-from-frame'
   | 'add-postit'
@@ -399,6 +405,8 @@ export interface AddFrameOperation extends CRDTOperationBase {
       height: number;
     };
     createdBy?: string;
+    color?: string;
+    emoji?: string;
   };
 }
 
@@ -447,6 +455,28 @@ export interface UpdateFrameTitleOperation extends CRDTOperationBase {
   payload: {
     frameId: string;
     title: string;
+  };
+}
+
+/**
+ * Update frame color operation
+ */
+export interface UpdateFrameColorOperation extends CRDTOperationBase {
+  type: 'update-frame-color';
+  payload: {
+    frameId: string;
+    color: string | undefined;
+  };
+}
+
+/**
+ * Update frame emoji operation
+ */
+export interface UpdateFrameEmojiOperation extends CRDTOperationBase {
+  type: 'update-frame-emoji';
+  payload: {
+    frameId: string;
+    emoji: string | undefined;
   };
 }
 
@@ -592,6 +622,8 @@ export type CRDTOperation =
   | UpdateFramePositionOperation
   | UpdateFrameSizeOperation
   | UpdateFrameTitleOperation
+  | UpdateFrameColorOperation
+  | UpdateFrameEmojiOperation
   | AssociatePanelWithFrameOperation
   | DisassociatePanelFromFrameOperation
   | AddPostItOperation
