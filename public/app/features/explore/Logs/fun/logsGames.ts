@@ -86,7 +86,7 @@ export function useLogsGames() {
 
   useEffect(() => {
     function loop(t: number) {
-      const dt = t - lastTime.current;
+      const dt = Math.min(t - lastTime.current, 50);
       lastTime.current = t;
 
       const { newGameState, newUserMissiles, newEnemies, newScore, newLives } = update(
@@ -133,10 +133,22 @@ export function useLogsGames() {
         console.log('Game resumed');
       }
     }
+    function pause() {
+      pausedRef.current = true;
+      console.log('Game paused');
+    }
+    function resume() {
+      pausedRef.current = false;
+      console.log('Game resumed');
+    }
     document.addEventListener('visibilitychange', handlePause);
+    document.addEventListener("blur", pause);
+    document.addEventListener("focus", resume);
 
     return () => {
-      return document.removeEventListener('visibilitychange', handlePause);
+      document.removeEventListener('visibilitychange', handlePause);
+      document.removeEventListener('blur', pause);
+      document.removeEventListener('focus', resume);
     };
   });
 
