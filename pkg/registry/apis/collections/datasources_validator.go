@@ -18,16 +18,12 @@ func GetDatasourceStacksValidator() builder.APIGroupValidation {
 }
 
 func (v *DatasourceStacksValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	if a.GetKind().Kind != collections.DatasourceStacksResourceInfo.GroupVersionKind().Kind {
-		return nil
-	}
-
 	obj := a.GetObject()
-	if obj == nil {
-		return fmt.Errorf("object is nil (%s %s)", a.GetName(), a.GetKind().GroupVersion().String())
-	}
-
 	operation := a.GetOperation()
+
+	if operation == admission.Connect {
+		return fmt.Errorf("Connect operation is not allowed (%s %s)", a.GetName(), a.GetKind().GroupVersion().String())
+	}
 
 	if operation != admission.Create && operation != admission.Update {
 		return nil
@@ -40,33 +36,28 @@ func (v *DatasourceStacksValidator) Validate(ctx context.Context, a admission.At
 
 	// get the keys from the template
 	template := cast.Spec.Template
-	templateKeys := map[string]bool{}
 
-	// keys must be unique
-	for key := range template {
-		if _, ok := templateKeys[key]; ok {
-			return fmt.Errorf("template keys must be unique. key '%s' already exists (%s %s)", key, a.GetName(), a.GetKind().GroupVersion().String())
-		}
-		templateKeys[key] = true
-	}
-
-	// template names must be unique
 	templateNames := map[string]bool{}
-	for name := range template {
-		if _, ok := templateNames[name]; ok {
-			return fmt.Errorf("template names must be unique. name '%s' already exists (%s %s)", name, a.GetName(), a.GetKind().GroupVersion().String())
+	for _, item := range template {
+		// template items cannot be empty
+		if item.Group == "" || item.Name == "" {
+			return fmt.Errorf("template items cannot be empty (%s %s)", a.GetName(), a.GetKind().GroupVersion().String())
 		}
-		templateNames[name] = true
+		// template names must be unique
+		if _, exists := templateNames[item.Name]; exists {
+			return fmt.Errorf("template item names must be unique. name '%s' already exists (%s %s)", item.Name, a.GetName(), a.GetKind().GroupVersion().String())
+		}
+		templateNames[item.Name] = true
 	}
 
 	// for each mode, check that the keys are in the template
 	modes := cast.Spec.Modes
 
-	// if a key is not in the template, return an error
 	for _, mode := range modes {
 		for key := range mode.Definition {
-			if _, ok := templateKeys[key]; !ok {
-				return fmt.Errorf("key %s is not in the DataSourceStack template. The template keys are %v (%s %s)", key, templateKeys, a.GetName(), a.GetKind().GroupVersion().String())
+			// if a key is not in the template, return an error
+			if _, ok := template[key]; !ok {
+				return fmt.Errorf("key '%s' is not in the DataSourceStack template (%s %s)", key, a.GetName(), a.GetKind().GroupVersion().String())
 			}
 		}
 	}

@@ -33,7 +33,7 @@ var StarsResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
 )
 
 var DatasourceStacksResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
-	"datasourcestacks", "datasourcestack", "DataSourceStacks",
+	"datasourcestacks", "datasourcestack", "DataSourceStack",
 	func() runtime.Object { return &DataSourceStack{} },
 	func() runtime.Object { return &DataSourceStackList{} },
 	utils.TableColumns{

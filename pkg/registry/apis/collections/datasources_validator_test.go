@@ -29,6 +29,71 @@ func TestDataSourceValidator_Validate(t *testing.T) {
 			object:      &collectionsv1alpha1.Stars{},
 			expectError: false,
 		},
+		{
+			name:        "should return error for Connect operation",
+			operation:   admission.Connect,
+			object:      &collectionsv1alpha1.DataSourceStack{},
+			expectError: true,
+		},
+		{
+			name:      "template items cannot be empty",
+			operation: admission.Create,
+			object: &collectionsv1alpha1.DataSourceStack{
+				Spec: collectionsv1alpha1.DataSourceStackSpec{
+					Template: collectionsv1alpha1.DataSourceStackTemplateSpec{
+						"key1": collectionsv1alpha1.DataSourceStackDataSourceStackTemplateItem{},
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "template items cannot be empty (test-datasourcestack collections.grafana.app/v1alpha1)",
+		},
+		{
+			name:      "template item name keys must be unique",
+			operation: admission.Create,
+			object: &collectionsv1alpha1.DataSourceStack{
+				Spec: collectionsv1alpha1.DataSourceStackSpec{
+					Template: collectionsv1alpha1.DataSourceStackTemplateSpec{
+						"key1": collectionsv1alpha1.DataSourceStackDataSourceStackTemplateItem{
+							Name:  "foo",
+							Group: "foo.grafana",
+						},
+						"key2": collectionsv1alpha1.DataSourceStackDataSourceStackTemplateItem{
+							Name:  "foo",
+							Group: "foo.grafana",
+						},
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "template item names must be unique. name 'foo' already exists (test-datasourcestack collections.grafana.app/v1alpha1)",
+		},
+		{
+			name:      "mode keys must exist in the template",
+			operation: admission.Create,
+			object: &collectionsv1alpha1.DataSourceStack{
+				Spec: collectionsv1alpha1.DataSourceStackSpec{
+					Template: collectionsv1alpha1.DataSourceStackTemplateSpec{
+						"key1": collectionsv1alpha1.DataSourceStackDataSourceStackTemplateItem{
+							Name:  "foo",
+							Group: "foo.grafana",
+						},
+					},
+					Modes: []collectionsv1alpha1.DataSourceStackModeSpec{
+						{
+							Name: "prod",
+							Definition: collectionsv1alpha1.DataSourceStackMode{
+								"notintemplate": collectionsv1alpha1.DataSourceStackModeItem{
+									DataSourceRef: "foo",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "key 'notintemplate' is not in the DataSourceStack template (test-datasourcestack collections.grafana.app/v1alpha1)",
+		},
 	}
 
 	for _, tt := range tests {
