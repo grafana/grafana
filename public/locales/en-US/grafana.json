@@ -5839,8 +5839,8 @@
       }
     },
     "ai-mode-card": {
-      "add-nodes-to-context": "Add nodes to context",
       "aria-label": "AI prompt input",
+      "click-nodes-to-add-context": "Click nodes to add context",
       "prompt-placeholder": "Describe what you want to do...",
       "remove-context": "Remove context",
       "submit": "Send message"
@@ -6292,6 +6292,7 @@
       "show-response": "Show response"
     },
     "query-transform-list": {
+      "add": "Add",
       "ai-mode": "AI Mode",
       "close": "Close",
       "header": "Pipeline flow",

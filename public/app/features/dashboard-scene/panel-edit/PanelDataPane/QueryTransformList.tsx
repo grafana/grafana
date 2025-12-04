@@ -385,7 +385,11 @@ export const QueryTransformList = memo(
                                                 item={item.data}
                                                 type={item.type}
                                                 index={item.index}
-                                                isSelected={isAiMode ? selectedContextIds.includes(item.id) : selectedId === item.id}
+                                                isSelected={
+                                                  isAiMode
+                                                    ? selectedContextIds.includes(item.id)
+                                                    : selectedId === item.id
+                                                }
                                                 onClick={() => handleCardClick(item.id)}
                                                 onAddExpression={onAddExpression}
                                                 onAddQuery={onAddQuery}
@@ -483,7 +487,11 @@ export const QueryTransformList = memo(
                                                 item={item.data}
                                                 type={item.type}
                                                 index={item.index}
-                                                isSelected={isAiMode ? selectedContextIds.includes(item.id) : selectedId === item.id}
+                                                isSelected={
+                                                  isAiMode
+                                                    ? selectedContextIds.includes(item.id)
+                                                    : selectedId === item.id
+                                                }
                                                 onClick={() => handleCardClick(item.id)}
                                                 onAddExpression={onAddExpression}
                                                 onAddQuery={onAddQuery}
@@ -644,7 +652,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     aiModeClosing: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        animation: 'slideUp 0.3s ease-out forwards',
+        animation: 'slideUp 0.3s ease-in forwards',
         '@keyframes slideUp': {
           from: {
             opacity: 1,
@@ -668,7 +676,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     contentGradientBorderClosing: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        animation: 'fadeBorderOut 0.3s ease-out forwards',
+        animation: 'fadeBorderOut 0.3s ease-in forwards',
         '@keyframes fadeBorderOut': {
           from: {
             borderTopColor: 'rgba(255, 152, 48, 1)',

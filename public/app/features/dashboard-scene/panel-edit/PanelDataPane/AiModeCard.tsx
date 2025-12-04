@@ -166,7 +166,6 @@ export const AiModeCard = ({ selectedContexts, onRemoveContext, onSubmit, onDemo
                 </span>
                 <button
                   className={styles.badgeRemove}
-                  style={styles.getBadgeColor(context.type)}
                   onClick={() => onRemoveContext(context.id)}
                   aria-label={t('dashboard-scene.ai-mode-card.remove-context', 'Remove context')}
                 >
@@ -197,10 +196,12 @@ export const AiModeCard = ({ selectedContexts, onRemoveContext, onSubmit, onDemo
         <div className={styles.bottomRow}>
           <div className={styles.leftContent}>
             {!hasContext && (
-              <div className={styles.emptyState}>
-                <Icon name="ai-pointer" />
-                {t('dashboard-scene.ai-mode-card.add-nodes-to-context', 'Add nodes to context')}
-              </div>
+              <Stack direction="row" gap={0.5}>
+                <Icon name="ai-pointer" size="lg" />
+                <div className={styles.emptyState}>
+                  {t('dashboard-scene.ai-mode-card.click-nodes-to-add-context', 'Click nodes to add context')}
+                </div>
+              </Stack>
             )}
           </div>
           <IconButton
@@ -271,9 +272,11 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      color: theme.colors.text.secondary,
       opacity: 0.7,
       '&:hover': {
         opacity: 1,
+        color: theme.colors.text.primary,
       },
     }),
     form: css({
@@ -339,7 +342,7 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing(1),
-      padding: `0 ${theme.spacing(1.5)}`,
+      padding: `0 ${theme.spacing(0.5)}`,
     }),
     leftContent: css({
       flex: 1,
@@ -351,7 +354,6 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       alignItems: 'center',
       gap: theme.spacing(0.5),
       fontFamily: theme.typography.fontFamilyMonospace,
-      letterSpacing: '0.05em',
     }),
     submitButton: css({
       flexShrink: 0,
