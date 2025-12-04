@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/quotas
 go 1.25.3
 
 require (
-	github.com/grafana/grafana-app-sdk v0.48.4
+	github.com/grafana/grafana-app-sdk v0.48.5
 	github.com/grafana/grafana-app-sdk/logging v0.48.3
 	k8s.io/apimachinery v0.34.2
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
@@ -90,4 +90,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.1 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
-
