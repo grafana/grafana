@@ -62,6 +62,7 @@ type QueryModel struct {
 	IsCounter            bool                   `json:"isCounter"`
 	CounterMax           string                 `json:"counterMax"`
 	CounterResetValue    string                 `json:"counterResetValue"`
+	ExplicitTags         bool                   `json:"explicitTags"`
 }
 
 func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -236,8 +237,18 @@ func createInitialFrame(val OpenTsdbCommon, length int, refID string) *data.Fram
 		labels[label] = value
 	}
 
+	tagKeys := make([]string, 0, len(val.Tags)+len(val.AggregateTags))
+	for tagKey := range val.Tags {
+		tagKeys = append(tagKeys, tagKey)
+	}
+	tagKeys = append(tagKeys, val.AggregateTags...)
+
 	frame := data.NewFrameOfFieldTypes(val.Metric, length, data.FieldTypeTime, data.FieldTypeFloat64)
-	frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
+	frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+		Custom:      map[string]any{"tagKeys": tagKeys},
+	}
 	frame.RefID = refID
 	timeField := frame.Fields[0]
 	timeField.Name = data.TimeSeriesTimeFieldName
@@ -355,10 +366,19 @@ func (s *Service) buildMetric(query backend.DataQuery) map[string]any {
 	if !model.DisableDownsampling {
 		downsampleInterval := model.DownsampleInterval
 		if downsampleInterval == "" {
-			downsampleInterval = "1m" // default value for blank
+			if ms := query.Interval.Milliseconds(); ms > 0 {
+				downsampleInterval = formatDownsampleInterval(ms)
+			} else {
+				downsampleInterval = "1m"
+			}
+		} else if strings.Contains(downsampleInterval, ".") && strings.HasSuffix(downsampleInterval, "s") {
+			if val, err := strconv.ParseFloat(strings.TrimSuffix(downsampleInterval, "s"), 64); err == nil {
+				downsampleInterval = strconv.FormatInt(int64(val*1000), 10) + "ms"
+			}
 		}
+
 		downsample := downsampleInterval + "-" + model.DownsampleAggregator
-		if model.DownsampleFillPolicy != "none" {
+		if model.DownsampleFillPolicy != "" && model.DownsampleFillPolicy != "none" {
 			metric["downsample"] = downsample + "-" + model.DownsampleFillPolicy
 		} else {
 			metric["downsample"] = downsample
@@ -408,6 +428,10 @@ func (s *Service) buildMetric(query backend.DataQuery) map[string]any {
 		metric["filters"] = model.Filters
 	}
 
+	if model.ExplicitTags {
+		metric["explicitTags"] = true
+	}
+
 	return metric
 }
 
@@ -423,4 +447,27 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 	}
 
 	return instance, nil
+}
+
+func formatDownsampleInterval(ms int64) string {
+	seconds := ms / 1000
+	if seconds < 60 {
+		if seconds < 1 {
+			return strconv.FormatInt(ms, 10) + "ms"
+		}
+		return strconv.FormatInt(seconds, 10) + "s"
+	}
+
+	minutes := seconds / 60
+	if minutes < 60 {
+		return strconv.FormatInt(minutes, 10) + "m"
+	}
+
+	hours := minutes / 60
+	if hours < 24 {
+		return strconv.FormatInt(hours, 10) + "h"
+	}
+
+	days := hours / 24
+	return strconv.FormatInt(days, 10) + "d"
 }
