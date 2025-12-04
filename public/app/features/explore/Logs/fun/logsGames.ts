@@ -56,6 +56,7 @@ type Enemy = {
 };
 const ufo = '[=U=]';
 const enemyTypes = ['<@_@>', '<^_^>', '[-_-]', '<o_o>', ufo];
+const enemyScores = [10, 20, 30, 40, 100];
 const enemyTypeUfo = enemyTypes.indexOf(ufo);
 const explosion1 = 'xX*Xx';
 const explosion2 = '-X*X-';
@@ -175,12 +176,14 @@ function update(
       const shieldStart = gameState.findIndex((row) => row.entry.includes('#'));
       const enemyBelow = enemies.find((otherEnemy) => shieldStart && otherEnemy.y === shieldStart - 1);
 
+      const speed = enemy.type === enemyTypeUfo ? ufoSpeed : enemySpeed;
+
       if (enemy.health <= 3) {
         enemy.health -= 1;
       } else if (enemy.direction === 'r') {
-        enemy.x = enemy.x + enemySpeed * dt;
+        enemy.x = enemy.x + speed * dt;
         if (enemy.type === enemyTypeUfo) {
-          if (enemy.gridX === 74) {
+          if (enemy.gridX >= 74) {
             enemy.direction = 'l';
           }
         } else if (enemy.gridX - enemy.sourceX >= 5) {
@@ -190,9 +193,9 @@ function update(
           }
         }
       } else {
-        enemy.x = enemy.x - enemySpeed * dt;
+        enemy.x = enemy.x - speed * dt;
         if (enemy.type === enemyTypeUfo) {
-          if (enemy.gridX === 0) {
+          if (enemy.gridX <= 0) {
             enemy.direction = 'r';
           }
         } else if (enemy.gridX - enemy.sourceX <= -5) {
