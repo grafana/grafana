@@ -61,7 +61,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   public static Component = AutoGridLayoutRenderer;
 
   public containerRef = createRef<HTMLDivElement>();
-  private _draggedGridItem: AutoGridItem | null = null;
+  private _draggingGridItem: AutoGridItem | null = null;
   private _initialGridItemPosition: {
     pageX: number;
     pageY: number;
@@ -128,34 +128,16 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   }
 
   public onDragStart(sourceGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem, evt: PointerEvent) {
-    // if (!this._canDrag(evt)) {
-    //   return;
-    // }
-    //
-    // if (!(layoutItem instanceof AutoGridItem)) {
-    //   throw new Error('Dragging wrong item');
-    // }
+    if (sourceGrid === this._getLayoutManager() && layoutItem instanceof AutoGridItem) {
+      this._draggingGridItem = layoutItem;
 
-    if (layoutItem instanceof AutoGridItem) {
-      this._draggedGridItem = sourceGrid === this._getLayoutManager() ? layoutItem : layoutItem.clone();
-    } else {
-      this._draggedGridItem = new AutoGridItem({
-        body: layoutItem.getElementBody().clone(),
-      });
-    }
-
-    if (!this.state.children.includes(this._draggedGridItem)) {
-      this.setState({ children: [...this.state.children, this._draggedGridItem] });
-    }
-
-    setTimeout(() => {
-      const { top, left, width, height } = this._draggedGridItem!.getBoundingBox();
+      const { top, left, width, height } = this._draggingGridItem!.getBoundingBox();
       this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
       this._updatePanelSize(width, height);
       this._updatePanelPosition(top, left);
 
-      this.setState({ draggingKey: this._draggedGridItem!.state.key });
-    });
+      this.setState({ draggingKey: this._draggingGridItem!.state.key });
+    }
   }
 
   public onDrag(
@@ -164,6 +146,44 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     layoutItem: DashboardLayoutItem,
     evt: PointerEvent
   ) {
+    const layoutManager = this._getLayoutManager();
+
+    if (targetGrid === layoutManager) {
+      if (this._draggingGridItem) {
+        return;
+      }
+
+      if (sourceGrid === layoutManager) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        this._draggingGridItem = layoutItem as AutoGridItem;
+
+        const { top, left, width, height } = this._draggingGridItem!.getBoundingBox();
+        this._updatePanelSize(width, height);
+        this._updatePanelPosition(top, left);
+
+        if (this.state.draggingKey !== this._draggingGridItem!.state.key) {
+          this.setState({ draggingKey: this._draggingGridItem!.state.key });
+        }
+      } else {
+        if (layoutItem instanceof AutoGridItem) {
+          this._draggingGridItem = layoutItem.clone();
+          this.setState({ children: [...this.state.children, this._draggingGridItem!], draggingKey: this._draggingGridItem!.state.key });
+        } else {
+          this._draggingGridItem = new AutoGridItem({ body: layoutItem.getElementBody().clone() });
+          this.setState({ children: [...this.state.children, this._draggingGridItem!], draggingKey: this._draggingGridItem!.state.key });
+        }
+      }
+    } else {
+      if (!this._draggingGridItem) {
+        return;
+      }
+
+      if (sourceGrid !== layoutManager) {
+        this.setState({ children: this.state.children.filter((child) => child !== this._draggingGridItem!), draggingKey: undefined });
+        this._draggingGridItem = null;
+      }
+    }
+
     this._updatePanelPosition(
       this._initialGridItemPosition!.top + (evt.pageY - this._initialGridItemPosition!.pageY),
       this._initialGridItemPosition!.left + (evt.pageX - this._initialGridItemPosition!.pageX)
@@ -174,7 +194,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       ?.find((element) => {
         const key = element.getAttribute('data-auto-grid-item-drop-target');
 
-        return !!key && key !== this._draggedGridItem!.state.key;
+        return !!key && key !== this._draggingGridItem!.state.key;
       })
       ?.getAttribute('data-auto-grid-item-drop-target');
 
@@ -188,10 +208,10 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     layoutItem: DashboardLayoutItem,
     evt: PointerEvent) {
     if (targetGrid !== this._getLayoutManager()) {
-      this.setState({ children: this.state.children.filter((child) => child !== this._draggedGridItem!) });
+      this.setState({ children: this.state.children.filter((child) => child !== this._draggingGridItem!) });
     }
 
-    this._draggedGridItem = null;
+    this._draggingGridItem = null;
   }
 
   // public onDragStop() {
@@ -211,7 +231,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   // Handle dragging an item from the same grid over another item from the same grid
   private _onDragOverItem(key: string) {
     const children = [...this.state.children];
-    const draggedIdx = children.findIndex((child) => child === this._draggedGridItem);
+    const draggedIdx = children.findIndex((child) => child === this._draggingGridItem);
     const draggedOverIdx = children.findIndex((child) => child.state.key === key);
 
     if (draggedIdx === -1 || draggedOverIdx === -1) {
@@ -219,7 +239,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     }
 
     children.splice(draggedIdx, 1);
-    children.splice(draggedOverIdx, 0, this._draggedGridItem!);
+    children.splice(draggedOverIdx, 0, this._draggingGridItem!);
 
     this.setState({ children });
   }

@@ -391,7 +391,7 @@ export function PanelChrome({
           onPointerDown={onPointerDown}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
-          onPointerUp={onPointerUp}
+          // onPointerUp={onPointerUp}
           onDragStart={(evt) => evt.dataTransfer.setData('text/plain', '')}
         >
           {statusMessage && (

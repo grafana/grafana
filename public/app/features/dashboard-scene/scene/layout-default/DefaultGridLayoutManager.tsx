@@ -572,20 +572,22 @@ export class DefaultGridLayoutManager
   }
 
   public onDragStart(sourceGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem) {
-    if (layoutItem instanceof DashboardGridItem) {
-      this._draggingGridItem = sourceGrid === this ? layoutItem : layoutItem.clone();
+    if (sourceGrid === this) {
+      this._draggingGridItem = layoutItem;
     } else {
-      const width = layoutItem instanceof DashboardGridItem ? layoutItem.state.width : NEW_PANEL_WIDTH;
-      const height = layoutItem instanceof DashboardGridItem ? layoutItem.state.height : NEW_PANEL_HEIGHT;
-
-      this._draggingGridItem = new DashboardGridItem({
-        width: width ?? NEW_PANEL_WIDTH,
-        height: height ?? NEW_PANEL_HEIGHT,
-        body: layoutItem.getElementBody().clone(),
-      });
+      if (layoutItem instanceof DashboardGridItem) {
+        this._draggingGridItem = layoutItem.clone();
+      } else if (layoutItem instanceof AutoGridItem) {
+        this._draggingGridItem = new DashboardGridItem({
+          width: NEW_PANEL_WIDTH,
+          height: NEW_PANEL_HEIGHT,
+          body: layoutItem.state.body.clone(),
+          variableName: layoutItem.state.variableName,
+        });
+      }
     }
 
-    this.state.grid.setPlaceholder(this._draggingGridItem);
+    this.state.grid.setPlaceholder(this._draggingGridItem!);
   }
 
   public onDragStop(sourceGrid: DashboardLayoutGrid, targetGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem) {

@@ -29,8 +29,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   private _activationHandler() {
     return () => {
-      document.body.removeEventListener('pointermove', this._onPointerMove);
-      document.body.removeEventListener('pointerup', this._onPointerUp);
+      window.removeEventListener('pointermove', this._onPointerMove);
+      window.removeEventListener('pointerup', this._onPointerUp);
       document.body.classList.remove('dashboard-draggable-transparent-selection');
     };
   }
@@ -72,6 +72,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   public startDragging(evt: ReactPointerEvent, layoutItem: DashboardLayoutItem, layoutGrid: DashboardLayoutGrid) {
+    console.log('started');
+
     this._pointerDistance.set(evt);
 
     this._isSelectedObject = false;
@@ -79,15 +81,15 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._currentGrid = layoutGrid;
     this._layoutItem = layoutItem;
 
+    window.addEventListener('pointermove', this._onPointerMove);
+    window.addEventListener('pointerup', this._onPointerUp);
+    document.body.classList.add('dashboard-draggable-transparent-selection');
+
     this._grids = this._findAllGrids();
 
     this._grids.forEach((grid) =>
       grid.onDragStart?.(this._sourceGrid!, this._layoutItem!, evt.nativeEvent)
     );
-
-    document.body.addEventListener('pointermove', this._onPointerMove);
-    document.body.addEventListener('pointerup', this._onPointerUp);
-    document.body.classList.add('dashboard-draggable-transparent-selection');
   }
 
   private _onPointerMove(evt: PointerEvent) {
@@ -111,8 +113,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   private _onPointerUp(evt: PointerEvent) {
-    document.body.removeEventListener('pointermove', this._onPointerMove);
-    document.body.removeEventListener('pointerup', this._onPointerUp);
+    console.error('should stop!');
+
+    window.removeEventListener('pointermove', this._onPointerMove);
+    window.removeEventListener('pointerup', this._onPointerUp);
     document.body.classList.remove('dashboard-draggable-transparent-selection');
 
     // Wrapped in setTimeout to ensure that any event handlers are called
