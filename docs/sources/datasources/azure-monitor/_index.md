@@ -89,6 +89,7 @@ The Azure Monitor data source supports visualizing data from four Azure services
 |-------|-------------|
 | [Configure](configure/) | Set up authentication and connect to Azure |
 | [Query editor](query-editor/) | Build queries for Metrics, Logs, Traces, and Resource Graph |
+| [Annotations](annotations/) | Overlay events on dashboards with Log Analytics queries |
 | [Template variables](template-variables/) | Create dynamic dashboards with Azure Monitor variables |
 | [Troubleshoot](troubleshoot/) | Solve common configuration and query errors |
 
