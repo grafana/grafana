@@ -223,6 +223,7 @@ The Azure documentation includes resources to help you learn KQL:
 
 {{< admonition type="note" >}}
 **Time-range:** The time-range used for the query can be modified via the time-range switch:
+
 - Selecting **Query** uses only time-ranges specified within the query.
 - Selecting **Dashboard** uses only the Grafana dashboard time-range.
 - If no time-range is specified in the query, the default Log Analytics time-range applies.

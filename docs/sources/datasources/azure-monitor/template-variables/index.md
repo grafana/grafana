@@ -168,6 +168,7 @@ Once created, you can use template variables in your Azure Monitor queries by re
 ### Metrics query example
 
 In a Metrics query, select your variables in the resource picker fields:
+
 - **Subscription**: `$subscription`
 - **Resource Group**: `$resourceGroup`
 - **Resource Name**: `$resource`
