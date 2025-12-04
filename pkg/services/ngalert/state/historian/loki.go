@@ -286,24 +286,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			continue
 		}
 
-		sanitizedLabels := removePrivateLabels(state.Labels)
-		entry := LokiEntry{
-			SchemaVersion:  1,
-			Previous:       state.PreviousFormatted(),
-			Current:        state.Formatted(),
-			Values:         valuesAsDataBlob(state.State),
-			Condition:      rule.Condition,
-			DashboardUID:   rule.DashboardUID,
-			PanelID:        rule.PanelID,
-			Fingerprint:    labelFingerprint(sanitizedLabels),
-			RuleTitle:      rule.Title,
-			RuleID:         rule.ID,
-			RuleUID:        rule.UID,
-			InstanceLabels: sanitizedLabels,
-		}
-		if state.State.State == eval.Error {
-			entry.Error = state.Error.Error()
-		}
+		entry := StateTransitionToLokiEntry(rule, state)
 
 		jsn, err := json.Marshal(entry)
 		if err != nil {
@@ -322,6 +305,28 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		Stream: labels,
 		Values: samples,
 	}
+}
+
+func StateTransitionToLokiEntry(rule history_model.RuleMeta, state state.StateTransition) LokiEntry {
+	sanitizedLabels := removePrivateLabels(state.Labels)
+	entry := LokiEntry{
+		SchemaVersion:  1,
+		Previous:       state.PreviousFormatted(),
+		Current:        state.Formatted(),
+		Values:         valuesAsDataBlob(state.State),
+		Condition:      rule.Condition,
+		DashboardUID:   rule.DashboardUID,
+		PanelID:        rule.PanelID,
+		Fingerprint:    labelFingerprint(sanitizedLabels),
+		RuleTitle:      rule.Title,
+		RuleID:         rule.ID,
+		RuleUID:        rule.UID,
+		InstanceLabels: sanitizedLabels,
+	}
+	if state.State.State == eval.Error && state.Error != nil {
+		entry.Error = state.Error.Error()
+	}
+	return entry
 }
 
 func (h *RemoteLokiBackend) recordStreams(ctx context.Context, stream lokiclient.Stream, logger log.Logger) error {
