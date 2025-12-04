@@ -37,6 +37,8 @@ interface DetailViewProps {
   onQueryLibrarySave?: (name: string, description: string) => void;
   onQueryLibraryClose?: () => void;
   onOpenQueryLibrary?: (mode: 'browse' | 'save', index?: number) => void;
+  isDebugMode?: boolean;
+  debugPosition?: number;
 }
 
 export const DetailView = memo(
@@ -56,6 +58,8 @@ export const DetailView = memo(
     onQueryLibrarySave,
     onQueryLibraryClose,
     onOpenQueryLibrary,
+    isDebugMode,
+    debugPosition,
   }: DetailViewProps) => {
     const styles = useStyles2(getStyles);
     const queryLibraryRef = useRef<QueryLibraryViewRef>(null);
@@ -147,6 +151,8 @@ export const DetailView = memo(
                 panel={panel}
                 onRemoveTransform={onRemoveTransform}
                 onToggleTransformVisibility={onToggleTransformVisibility}
+                isDebugMode={isDebugMode}
+                debugPosition={debugPosition}
               />
               <ScrollContainer>
                 <Container>
@@ -178,6 +184,8 @@ export const DetailView = memo(
       onOpenQueryLibrary,
       handleSelectQueryFromHeader,
       handleSaveQueryFromHeader,
+      isDebugMode,
+      debugPosition,
     ]);
 
     return <div className={styles.container}>{renderContent()}</div>;

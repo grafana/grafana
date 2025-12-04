@@ -19,6 +19,7 @@ interface QueryTransformCardProps {
   onDuplicate?: () => void;
   onRemove?: () => void;
   onToggleVisibility?: () => void;
+  debugHiddenOverride?: boolean | null;
 }
 
 export const QueryTransformCard = memo(
@@ -29,6 +30,7 @@ export const QueryTransformCard = memo(
     onDuplicate,
     onRemove,
     onToggleVisibility,
+    debugHiddenOverride,
   }: QueryTransformCardProps) => {
     const colors = usePanelDataPaneColors();
     const styles = useStyles2(getStyles, colors);
@@ -45,9 +47,13 @@ export const QueryTransformCard = memo(
       return undefined;
     }, [type, data]);
 
-    const isHidden =
+    // Compute effective visibility: use debug override if present, otherwise use actual state
+    const actualHidden =
       ((type === 'query' || type === 'expression') && 'hide' in data && data.hide) ||
       (type === 'transform' && 'disabled' in data && data.disabled);
+
+    const isHidden =
+      debugHiddenOverride !== null && debugHiddenOverride !== undefined ? debugHiddenOverride : actualHidden;
 
     const typeLabel = useMemo(() => {
       switch (type) {

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { useCallback, useState, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
-import { DataQuery, DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneDataQuery } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -279,9 +279,17 @@ export function PanelDataSidebarRendered({ model }: SceneComponentProps<PanelDat
     [transformations, transformsTab]
   );
 
+  const handleDebugStateChange = useCallback(
+    (isDebugMode: boolean, debugPosition: number) => {
+      model.setDebugState(isDebugMode, debugPosition);
+    },
+    [model]
+  );
+
   // Get data for transformations drawer
-  const sourceData = queryRunner?.useState();
-  const series = sourceData?.data?.series || [];
+  // Note: series data is not currently used in the sidebar but may be needed for future features
+  // const sourceData = queryRunner?.useState();
+  // const series = sourceData?.data?.series || [];
 
   if (sidebarCollapsed) {
     return (
@@ -322,6 +330,7 @@ export function PanelDataSidebarRendered({ model }: SceneComponentProps<PanelDat
         onToggleTransformVisibility={handleToggleTransformVisibility}
         onReorderDataSources={handleReorderDataSources}
         onReorderTransforms={handleReorderTransforms}
+        onDebugStateChange={handleDebugStateChange}
         onAddOrganizeFieldsTransform={() =>
           handleAddTransform(
             { value: 'organize' },

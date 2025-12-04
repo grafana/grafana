@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { HTMLAttributes, memo, useCallback, useMemo, useState } from 'react';
+import { HTMLAttributes, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -11,7 +11,10 @@ import { AddDataItemMenu } from './AddDataItemMenu';
 import { AiModeCard } from './AiModeCard';
 import { ConnectionLines } from './ConnectionLines';
 import { QueryTransformCard } from './QueryTransformCard';
+import { getItemHiddenState, restoreItemStates, syncItemsToDebugState } from './debugModeHelpers';
+import { usePanelDataPaneColors } from './theme';
 import { QueryItem, QueryTransformItem, TransformItem } from './types';
+import { useDebugMode } from './useDebugMode';
 
 const CARD_HEIGHT = 70;
 
@@ -34,6 +37,7 @@ interface QueryTransformListProps {
   onReorderTransforms?: (startIndex: number, endIndex: number) => void;
   onAddOrganizeFieldsTransform?: () => void;
   onCollapseSidebar: () => void;
+  onDebugStateChange?: (isDebugMode: boolean, debugPosition: number) => void;
 }
 
 export const QueryTransformList = memo(
@@ -56,8 +60,11 @@ export const QueryTransformList = memo(
     onReorderTransforms,
     onAddOrganizeFieldsTransform,
     onCollapseSidebar,
+    onDebugStateChange,
   }: QueryTransformListProps) => {
-    const styles = useStyles2(getStyles);
+    const colors = usePanelDataPaneColors();
+    const styles = useStyles2(getStyles, colors);
+
     const [isDragging, setIsDragging] = useState(false);
     const [isAiMode, setIsAiMode] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
@@ -65,6 +72,69 @@ export const QueryTransformList = memo(
     const [hovered, setHovered] = useState<string | null>(null);
     const [viewingConnections, setViewingConnections] = useState<boolean>(false);
     const [collapsed, setCollapsed] = useState({ queries: false, transforms: false });
+
+    // Debug mode via custom hook
+    const {
+      debugPosition,
+      setDebugPosition,
+      dragOffset,
+      handleDebugLineMouseDown,
+      isDebugMode,
+      isDraggingDebugLine,
+      isItemHiddenByDebug,
+      toggleDebugMode,
+    } = useDebugMode(allItems);
+
+    // Store original states for restoration
+    const originalStatesRef = useRef<Map<string, boolean>>(new Map());
+
+    // Capture current states before entering debug mode
+    const saveCurrentStates = useCallback(() => {
+      const states = new Map<string, boolean>();
+      allItems.forEach((item) => {
+        const isHidden = getItemHiddenState(item);
+        states.set(item.id, isHidden);
+      });
+      originalStatesRef.current = states;
+    }, [allItems]);
+
+    // Update actual states to match debug position
+    const syncStatesToDebugPosition = useCallback(() => {
+      syncItemsToDebugState(allItems, isItemHiddenByDebug, onToggleQueryVisibility, onToggleTransformVisibility);
+    }, [allItems, isItemHiddenByDebug, onToggleQueryVisibility, onToggleTransformVisibility]);
+
+    // Revert to original states
+    const restoreOriginalStates = useCallback(() => {
+      restoreItemStates(allItems, originalStatesRef.current, onToggleQueryVisibility, onToggleTransformVisibility);
+      originalStatesRef.current = new Map(); // Clear after restoring
+    }, [allItems, onToggleQueryVisibility, onToggleTransformVisibility]);
+
+    // Handle state management
+    const handleToggleDebug = useCallback(() => {
+      if (!isDebugMode) {
+        // Save then sync
+        saveCurrentStates();
+        toggleDebugMode();
+      } else {
+        // Restore states
+        restoreOriginalStates();
+        toggleDebugMode();
+      }
+    }, [isDebugMode, saveCurrentStates, toggleDebugMode, restoreOriginalStates]);
+
+    // Sync when debug position changes
+    const prevDebugPosition = useRef(debugPosition);
+    useEffect(() => {
+      if (isDebugMode && prevDebugPosition.current !== debugPosition) {
+        syncStatesToDebugPosition();
+      }
+      prevDebugPosition.current = debugPosition;
+    }, [isDebugMode, debugPosition, syncStatesToDebugPosition]);
+
+    // Notify parent of debug state changes
+    useEffect(() => {
+      onDebugStateChange?.(isDebugMode, debugPosition);
+    }, [isDebugMode, debugPosition, onDebugStateChange]);
 
     const onDragStart = () => {
       setIsDragging(true);
@@ -278,14 +348,40 @@ export const QueryTransformList = memo(
                 <span>{t('dashboard-scene.query-transform-list.header', 'Pipeline flow')}</span>
               </Stack>
             </div>
-            <Button size="sm" onClick={handleToggleAiMode} className={styles.aiModeButton}>
-              <Stack direction="row" gap={0.5} alignItems="center">
-                <Icon name={isAiMode ? 'times' : 'ai'} size="sm" />
-                {isAiMode
-                  ? t('dashboard-scene.query-transform-list.close', 'Close')
-                  : t('dashboard-scene.query-transform-list.ai-mode', 'AI Mode')}
-              </Stack>
-            </Button>
+            <Stack direction="row" gap={0.5}>
+              <Button
+                variant="secondary"
+                fill="text"
+                size="sm"
+                onClick={handleToggleDebug}
+                className={cx(styles.debugButton, { [styles.debugButtonActive]: isDebugMode })}
+                tooltip={
+                  isDebugMode
+                    ? t('dashboard-scene.query-transform-list.debug-mode-exit', 'Exit debug mode')
+                    : t('dashboard-scene.query-transform-list.debug-mode-enter', 'Step through your pipeline')
+                }
+              >
+                <Icon name="bug" size="sm" />
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleToggleAiMode}
+                className={cx(isAiMode ? styles.aiModeButtonActive : styles.aiModeButtonInactive)}
+                tooltip={
+                  isAiMode
+                    ? t('dashboard-scene.query-transform-list.ai-mode-exit', 'Exit AI mode')
+                    : t('dashboard-scene.query-transform-list.ai-mode-enter', 'Supercharge your pipeline with AI')
+                }
+              >
+                <Stack direction="row" gap={0.5} alignItems="center">
+                  <Icon name="ai" size="sm" className={isAiMode ? undefined : styles.aiModeIcon} />
+                  <span className={isAiMode ? undefined : styles.aiModeText}>
+                    {t('dashboard-scene.query-transform-list.ai-mode', 'AI')}
+                  </span>
+                </Stack>
+              </Button>
+            </Stack>
           </Stack>
         </div>
         {isAiMode && (
@@ -364,46 +460,95 @@ export const QueryTransformList = memo(
                                   )}
                                 >
                                   <Stack direction="column" gap={2}>
-                                    {filteredDataSourceItems.map((item) => (
-                                      <div key={item.id} className={styles.cardContainer}>
-                                        <Draggable
-                                          isDragDisabled={viewingConnections}
-                                          draggableId={item.id}
-                                          index={item.index}
-                                        >
-                                          {(provided, snapshot) => (
-                                            <div
-                                              ref={provided.innerRef}
-                                              {...provided.draggableProps}
-                                              {...provided.dragHandleProps}
-                                              className={snapshot.isDragging ? styles.dragging : undefined}
+                                    {filteredDataSourceItems.map((item, idx) => {
+                                      const globalIndex = allItems.findIndex((i) => i.id === item.id);
+                                      const isDebugDisabled = isDebugMode && globalIndex >= debugPosition;
+                                      const showDebugLineAfter = isDebugMode && globalIndex === debugPosition - 1;
+
+                                      return (
+                                        <>
+                                          <div
+                                            key={item.id}
+                                            className={cx(styles.cardContainer, {
+                                              [styles.cardDebugDisabled]: isDebugDisabled,
+                                            })}
+                                          >
+                                            <Draggable
+                                              isDragDisabled={viewingConnections || isDebugMode}
+                                              draggableId={item.id}
+                                              index={item.index}
                                             >
-                                              <QueryTransformCard
-                                                item={item}
-                                                isSelected={
-                                                  isAiMode
-                                                    ? selectedContextIds.includes(item.id)
-                                                    : selectedId === item.id
-                                                }
-                                                onClick={() => handleCardClick(item.id)}
-                                                {...getHandlers(item)}
+                                              {(provided, snapshot) => (
+                                                <div
+                                                  ref={provided.innerRef}
+                                                  {...provided.draggableProps}
+                                                  {...provided.dragHandleProps}
+                                                  className={snapshot.isDragging ? styles.dragging : undefined}
+                                                >
+                                                  <QueryTransformCard
+                                                    item={item}
+                                                    isSelected={
+                                                      isAiMode
+                                                        ? selectedContextIds.includes(item.id)
+                                                        : selectedId === item.id
+                                                    }
+                                                    onClick={() => handleCardClick(item.id)}
+                                                    debugHiddenOverride={isItemHiddenByDebug(item.id)}
+                                                    {...getHandlers(item)}
+                                                  />
+                                                </div>
+                                              )}
+                                            </Draggable>
+                                            <div className={styles.addButtonFloating}>
+                                              <AddDataItemMenu
+                                                onAddQuery={onAddQuery}
+                                                onAddTransform={onAddTransform}
+                                                onAddExpression={onAddExpression}
+                                                onAddFromSavedQueries={onAddFromSavedQueries}
+                                                index={item.index}
+                                                allowedTypes={['query', 'expression']}
+                                                show={canAdd && hovered === item.id}
                                               />
                                             </div>
+                                          </div>
+                                          {showDebugLineAfter && (
+                                            <div
+                                              role="slider"
+                                              aria-label={t(
+                                                'dashboard-scene.query-transform-list.debug-position',
+                                                'Debug position'
+                                              )}
+                                              aria-valuemin={1}
+                                              aria-valuemax={allItems.length}
+                                              aria-valuenow={debugPosition}
+                                              tabIndex={0}
+                                              className={cx(styles.debugLine, {
+                                                [styles.debugLineDragging]: isDraggingDebugLine,
+                                              })}
+                                              style={{
+                                                transform: isDraggingDebugLine
+                                                  ? `translateY(${dragOffset}px)`
+                                                  : undefined,
+                                              }}
+                                              onMouseDown={handleDebugLineMouseDown}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'ArrowUp') {
+                                                  e.preventDefault();
+                                                  setDebugPosition(Math.max(1, debugPosition - 1));
+                                                } else if (e.key === 'ArrowDown') {
+                                                  e.preventDefault();
+                                                  setDebugPosition(Math.min(allItems.length, debugPosition + 1));
+                                                }
+                                              }}
+                                            >
+                                              <div className={styles.debugLineHandle}>
+                                                <Icon name="draggabledots" size="sm" />
+                                              </div>
+                                            </div>
                                           )}
-                                        </Draggable>
-                                        <div className={styles.addButtonFloating}>
-                                          <AddDataItemMenu
-                                            onAddQuery={onAddQuery}
-                                            onAddTransform={onAddTransform}
-                                            onAddExpression={onAddExpression}
-                                            onAddFromSavedQueries={onAddFromSavedQueries}
-                                            index={item.index}
-                                            allowedTypes={['query', 'expression']}
-                                            show={canAdd && hovered === item.id}
-                                          />
-                                        </div>
-                                      </div>
-                                    ))}
+                                        </>
+                                      );
+                                    })}
                                     {provided.placeholder}
                                   </Stack>
 
@@ -465,42 +610,97 @@ export const QueryTransformList = memo(
                                   onMouseMove={cardListHoverHandlerFactory(transformItems, 'transformations-last')}
                                 >
                                   <Stack direction="column" gap={2}>
-                                    {transformItems.map((item) => (
-                                      <div key={item.id} className={styles.cardContainer}>
-                                        <Draggable key={item.id} draggableId={item.id} index={item.index}>
-                                          {(provided, snapshot) => (
-                                            <div
-                                              ref={provided.innerRef}
-                                              {...provided.draggableProps}
-                                              {...provided.dragHandleProps}
-                                              className={snapshot.isDragging ? styles.dragging : undefined}
+                                    {transformItems.map((item) => {
+                                      // Find this item's position in the global allItems array
+                                      const globalIndex = allItems.findIndex((i) => i.id === item.id);
+                                      const isDebugDisabled = isDebugMode && globalIndex >= debugPosition;
+                                      const showDebugLineAfter = isDebugMode && globalIndex === debugPosition - 1;
+
+                                      return (
+                                        <>
+                                          <div
+                                            key={item.id}
+                                            className={cx(styles.cardContainer, {
+                                              [styles.cardDebugDisabled]: isDebugDisabled,
+                                            })}
+                                          >
+                                            <Draggable
+                                              key={item.id}
+                                              draggableId={item.id}
+                                              index={item.index}
+                                              isDragDisabled={isDebugMode}
                                             >
-                                              <QueryTransformCard
-                                                item={item}
-                                                isSelected={
-                                                  isAiMode
-                                                    ? selectedContextIds.includes(item.id)
-                                                    : selectedId === item.id
-                                                }
-                                                onClick={() => handleCardClick(item.id)}
-                                                {...getHandlers(item)}
+                                              {(provided, snapshot) => (
+                                                <div
+                                                  ref={provided.innerRef}
+                                                  {...provided.draggableProps}
+                                                  {...provided.dragHandleProps}
+                                                  className={snapshot.isDragging ? styles.dragging : undefined}
+                                                >
+                                                  <QueryTransformCard
+                                                    item={item}
+                                                    isSelected={
+                                                      isAiMode
+                                                        ? selectedContextIds.includes(item.id)
+                                                        : selectedId === item.id
+                                                    }
+                                                    onClick={() => handleCardClick(item.id)}
+                                                    debugHiddenOverride={isItemHiddenByDebug(item.id)}
+                                                    {...getHandlers(item)}
+                                                  />
+                                                </div>
+                                              )}
+                                            </Draggable>
+                                            <div className={styles.addButtonFloating}>
+                                              <AddDataItemMenu
+                                                onAddQuery={onAddQuery}
+                                                onAddTransform={onAddTransform}
+                                                onAddExpression={onAddExpression}
+                                                onAddFromSavedQueries={onAddFromSavedQueries}
+                                                index={item.index}
+                                                allowedTypes={['transform']}
+                                                show={canAdd && hovered === item.id}
                                               />
                                             </div>
+                                          </div>
+                                          {showDebugLineAfter && (
+                                            <div
+                                              role="slider"
+                                              aria-label={t(
+                                                'dashboard-scene.query-transform-list.debug-position',
+                                                'Debug position'
+                                              )}
+                                              aria-valuemin={1}
+                                              aria-valuemax={allItems.length}
+                                              aria-valuenow={debugPosition}
+                                              tabIndex={0}
+                                              className={cx(styles.debugLine, {
+                                                [styles.debugLineDragging]: isDraggingDebugLine,
+                                              })}
+                                              style={{
+                                                transform: isDraggingDebugLine
+                                                  ? `translateY(${dragOffset}px)`
+                                                  : undefined,
+                                              }}
+                                              onMouseDown={handleDebugLineMouseDown}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'ArrowUp') {
+                                                  e.preventDefault();
+                                                  setDebugPosition(Math.max(1, debugPosition - 1));
+                                                } else if (e.key === 'ArrowDown') {
+                                                  e.preventDefault();
+                                                  setDebugPosition(Math.min(allItems.length, debugPosition + 1));
+                                                }
+                                              }}
+                                            >
+                                              <div className={styles.debugLineHandle}>
+                                                <Icon name="draggabledots" size="sm" />
+                                              </div>
+                                            </div>
                                           )}
-                                        </Draggable>
-                                        <div className={styles.addButtonFloating}>
-                                          <AddDataItemMenu
-                                            onAddQuery={onAddQuery}
-                                            onAddTransform={onAddTransform}
-                                            onAddExpression={onAddExpression}
-                                            onAddFromSavedQueries={onAddFromSavedQueries}
-                                            index={item.index}
-                                            allowedTypes={['transform']}
-                                            show={canAdd && hovered === item.id}
-                                          />
-                                        </div>
-                                      </div>
-                                    ))}
+                                        </>
+                                      );
+                                    })}
                                     {provided.placeholder}
                                   </Stack>
                                   <div className={cx(styles.cardContainer, styles.cardContainerLast)}>
@@ -560,7 +760,7 @@ export const QueryTransformList = memo(
 
 QueryTransformList.displayName = 'QueryTransformList';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataPaneColors>) => {
   const headerHeight = 41;
   const footerHeight = 32;
   const barBase = {
@@ -738,20 +938,43 @@ const getStyles = (theme: GrafanaTheme2) => {
     cardContainerLast: css({
       marginTop: theme.spacing(2),
     }),
+    cardDebugDisabled: css({
+      opacity: 0.4,
+      pointerEvents: 'none',
+    }),
     addButtonFloating: css({
       position: 'absolute',
       top: theme.spacing(-2),
       left: theme.spacing(-2.5),
     }),
-    aiModeButton: css({
+    aiModeButtonInactive: css({
+      border: 'none',
+      borderRadius: theme.shape.radius.default,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontWeight: theme.typography.fontWeightMedium,
+      textTransform: 'uppercase',
+      background: 'transparent',
+    }),
+    aiModeIcon: css({
+      color: '#FF9830',
+    }),
+    aiModeText: css({
       background: 'linear-gradient(90deg, #FF9830 0%, #B877D9 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+    }),
+    aiModeButtonActive: css({
+      background: 'linear-gradient(90deg, #FF9830 0%, #B877D9 100%)',
+      WebkitBackgroundClip: 'initial',
+      WebkitTextFillColor: 'initial',
+      backgroundClip: 'initial',
       border: 'none',
       borderRadius: theme.shape.radius.default,
       color: '#ffffff',
       fontWeight: theme.typography.fontWeightMedium,
       fontFamily: theme.typography.fontFamilyMonospace,
       textTransform: 'uppercase',
-      letterSpacing: '0.05em',
       '&:hover': {
         background: 'linear-gradient(90deg, #FFB050 0%, #C88FE5 100%)',
         boxShadow: '0 4px 12px rgba(255, 152, 48, 0.4)',
@@ -759,6 +982,58 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:focus, &:active, &:focus:active': {
         background: 'linear-gradient(90deg, #FF9830 0%, #B877D9 100%)',
         boxShadow: '0 4px 12px rgba(255, 152, 48, 0.4)',
+      },
+    }),
+    debugButton: css({
+      border: 'none',
+      borderRadius: theme.shape.radius.default,
+      fontWeight: theme.typography.fontWeightMedium,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em',
+    }),
+    debugButtonActive: css({
+      '&:focus, &:active, &:focus:active': {
+        background: '#441306',
+      },
+    }),
+    debugLine: css({
+      height: '4px',
+      background: colors.query.accent,
+      cursor: 'ns-resize',
+      position: 'relative',
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+      borderRadius: theme.shape.radius.default,
+      userSelect: 'none',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'height 0.15s ease, transform 0.2s ease',
+      },
+      '&:hover': {
+        height: '6px',
+      },
+    }),
+    debugLineDragging: css({
+      height: '6px',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'height 0.15s ease',
+      },
+    }),
+    debugLineHandle: css({
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      transform: 'translate(-50%, -50%)',
+      background: colors.query.accent,
+      borderRadius: theme.shape.radius.circle,
+      padding: theme.spacing(0.5),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: theme.colors.text.primary,
+      cursor: 'grab',
+      '&:active': {
+        cursor: 'grabbing',
       },
     }),
   };

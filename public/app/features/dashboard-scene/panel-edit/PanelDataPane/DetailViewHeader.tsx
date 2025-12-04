@@ -45,6 +45,8 @@ interface ItemModeProps {
   onRemoveTransform?: (index: number) => void;
   onToggleTransformVisibility?: (index: number) => void;
   onOpenQueryLibrary?: (mode: 'browse' | 'save') => void;
+  isDebugMode?: boolean;
+  debugPosition?: number;
   queryLibraryMode?: never;
   onSelectQuery?: never;
   onClose?: never;
@@ -150,6 +152,8 @@ function ItemHeader({
   onRemoveTransform,
   onToggleTransformVisibility,
   onOpenQueryLibrary,
+  isDebugMode,
+  debugPosition,
 }: ItemModeProps) {
   const theme = useTheme2();
   const config = useMemo(() => ITEM_CONFIG(theme)[selectedItem.type], [theme, selectedItem.type]);
@@ -416,11 +420,26 @@ function ItemHeader({
     }
 
     const allTransformations: DataTransformerConfig[] = transformations;
-    const currentIndex = selectedItem.index;
+
+    // In debug mode, use debugPosition to determine which transformations to apply
+    // debugPosition is relative to all items (queries + transforms)
+    // We need to calculate the transformation index from it
+    let currentIndex = selectedItem.index;
+    if (isDebugMode && debugPosition !== undefined) {
+      // debugPosition is the number of enabled items
+      // To get transformation index: debugPosition - number_of_queries
+      // Number of queries = debugPosition - allTransformations.length (approximately, but we need to get it properly)
+      // Actually, let's get the number of queries from queryRunner
+      const numQueries = queryRunner.state.queries?.length || 0;
+      const maxTransformIndex = Math.max(0, (debugPosition || 0) - numQueries);
+      // Use the minimum of the calculated index and the current selected index
+      // This ensures we don't go beyond what's enabled in debug mode
+      currentIndex = Math.min(selectedItem.index, maxTransformIndex - 1);
+    }
 
     // Get transformations before and including current one
-    const inputTransforms = allTransformations.slice(0, currentIndex);
-    const outputTransforms = allTransformations.slice(currentIndex, currentIndex + 1);
+    const inputTransforms = allTransformations.slice(0, Math.max(0, currentIndex));
+    const outputTransforms = allTransformations.slice(Math.max(0, currentIndex), Math.max(0, currentIndex) + 1);
 
     const ctx: DataTransformContext = {
       interpolate: (v: string) => getTemplateSrv().replace(v),
@@ -442,7 +461,7 @@ function ItemHeader({
       inputSubscription.unsubscribe();
       outputSubscription.unsubscribe();
     };
-  }, [selectedItem, showDebug, panel]);
+  }, [selectedItem, showDebug, panel, isDebugMode, debugPosition]);
 
   return (
     <div className={styles.header}>
@@ -674,6 +693,8 @@ export const DetailViewHeader = (props: DetailViewHeaderProps) => {
       onRemoveTransform={props.onRemoveTransform}
       onToggleTransformVisibility={props.onToggleTransformVisibility}
       onOpenQueryLibrary={props.onOpenQueryLibrary}
+      isDebugMode={props.isDebugMode}
+      debugPosition={props.debugPosition}
     />
   );
 };

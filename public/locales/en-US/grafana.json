@@ -3233,6 +3233,17 @@
       "title-query-result": "Query result"
     }
   },
+  "app": {
+    "features": {
+      "dashboardScene": {
+        "panelEdit": {
+          "panelDataPane": {
+            "expandSidebar": "Expand sidebar"
+          }
+        }
+      }
+    }
+  },
   "app-chrome": {
     "skip-content-button": "Skip to main content",
     "top-bar": {
@@ -5985,16 +5996,22 @@
     },
     "detail-view-header": {
       "actions": "Actions",
+      "debug": "Debug transformation",
+      "debug-transformation": "Debug transformation",
       "disable-transform": "Disable",
       "duplicate-query": "Duplicate",
       "edit-query-name": "Edit query name",
       "enable-transform": "Enable",
       "hide-response": "Hide response",
+      "input-data": "Input data",
+      "output-data": "Output data",
       "remove-query": "Remove",
       "remove-transform": "Remove",
       "run-query": "RUN QUERY",
       "save-query": "SAVE",
-      "show-response": "Show response"
+      "show-documentation": "Show documentation",
+      "show-response": "Show response",
+      "transformation-help": "Transformation help"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -6286,15 +6303,28 @@
       "disable-transform": "Disable transformation",
       "duplicate": "Duplicate query",
       "enable-transform": "Enable transformation",
+      "expression": {
+        "label": "Expression"
+      },
       "hide-response": "Hide response",
+      "query": {
+        "label": "Query"
+      },
       "remove-query": "Remove query",
       "remove-transform": "Remove transformation",
-      "show-response": "Show response"
+      "show-response": "Show response",
+      "transform": {
+        "label": "Transform"
+      }
     },
     "query-transform-list": {
       "add": "Add",
-      "ai-mode": "AI Mode",
-      "close": "Close",
+      "ai-mode": "AI",
+      "ai-mode-enter": "Supercharge your pipeline with AI",
+      "ai-mode-exit": "Exit AI mode",
+      "debug-mode-enter": "Step through your pipeline",
+      "debug-mode-exit": "Exit debug mode",
+      "debug-position": "Debug position",
       "header": "Pipeline flow",
       "nodes": "nodes",
       "queries-expressions": "Queries & Expressions",
@@ -6410,23 +6440,6 @@
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
       "title-validation-failed": "Dashboard title validation failed."
     },
-    "saved-queries-drawer": {
-      "browse-tab": "Browse",
-      "description-label": "Description",
-      "description-placeholder": "Enter description...",
-      "name-label": "Name",
-      "name-placeholder": "Enter query name...",
-      "no-results": "No queries found",
-      "query-preview": "Query Preview",
-      "save-button": "Save Query",
-      "save-success": "Query saved successfully! (stub)",
-      "save-tab": "Save Current",
-      "save-title": "Save Query",
-      "search-placeholder": "Search saved queries...",
-      "stub-notice": "This is a stub implementation. Enable the queryLibrary feature toggle for full functionality.",
-      "title": "Saved Queries",
-      "use-query": "Use"
-    },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",
       "new-alert-rule": "New alert rule",
@@ -6487,6 +6500,13 @@
           "dashboard": "dashboard"
         }
       }
+    },
+    "transformation-picker-view": {
+      "clear-search": "Clear search",
+      "close": "Close",
+      "no-results": "No transformations found",
+      "search-placeholder": "Search for transformation",
+      "title": "Add transformation"
     },
     "transformations-drawer": {
       "search-box-suffix": {
@@ -7430,6 +7450,9 @@
     },
     "pane": {
       "loading-placeholder": "Loading..."
+    },
+    "query-library": {
+      "default-title": "New query"
     },
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Go queryless"
@@ -12412,6 +12435,38 @@
       "query-inspector": "Query inspector",
       "query-tab-help-button-title-open-data-source-help": "Open data source help",
       "title-data-source-help": "Data source help"
+    }
+  },
+  "query-library": {
+    "empty-state": {
+      "message": "Start adding them from Explore or when editing a dashboard",
+      "title": "You haven't saved any queries yet"
+    },
+    "filters": {
+      "search": "Search by..."
+    },
+    "header": {
+      "close": "Close",
+      "delete-all": "Delete all",
+      "more": "More",
+      "save-query": "SAVE",
+      "select-query": "SELECT QUERY",
+      "title": "SAVED QUERIES"
+    },
+    "item": {
+      "new": "New"
+    },
+    "not-found": {
+      "message": "Try adjusting your search or filter criteria",
+      "title": "No results found"
+    },
+    "query-details": {
+      "author": "Author",
+      "datasource": "Datasource",
+      "date-added": "Date added",
+      "description": "Description",
+      "make-query-visible": "Share query with all users",
+      "tags": "Tags"
     }
   },
   "query-operation": {

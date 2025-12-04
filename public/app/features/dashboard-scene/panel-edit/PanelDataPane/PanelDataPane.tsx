@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -39,6 +39,8 @@ export interface PanelDataPaneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   transformPickerIndex?: number | null;
   queryLibraryMode: QueryLibraryMode & { index: number | null };
+  isDebugMode?: boolean;
+  debugPosition?: number;
 }
 
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
@@ -71,6 +73,8 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
         mode: 'browse',
         index: null,
       },
+      isDebugMode: false,
+      debugPosition: 0,
     });
   }
 
@@ -94,6 +98,10 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     this.setState({ queryLibraryMode: mode });
   };
 
+  public setDebugState = (isDebugMode: boolean, debugPosition: number) => {
+    this.setState({ isDebugMode, debugPosition });
+  };
+
   public getUrlState() {
     return { tab: this.state.tab };
   }
@@ -113,7 +121,15 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 }
 
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
-  const { tabs, selectedQueryTransform, panelRef, transformPickerIndex, queryLibraryMode } = model.useState();
+  const {
+    tabs,
+    selectedQueryTransform,
+    panelRef,
+    transformPickerIndex,
+    queryLibraryMode,
+    isDebugMode = false,
+    debugPosition = 0,
+  } = model.useState();
   const styles = useStyles2(getStyles);
 
   // Subscribe to query runner and tab state changes
@@ -323,6 +339,8 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           onQueryLibrarySave={handleQueryLibrarySave}
           onQueryLibraryClose={handleQueryLibraryClose}
           onOpenQueryLibrary={handleOpenQueryLibrary}
+          isDebugMode={isDebugMode}
+          debugPosition={debugPosition}
         />
       </div>
     </div>
