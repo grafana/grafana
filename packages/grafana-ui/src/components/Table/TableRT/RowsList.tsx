@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 import { Cell, Row, TableState, HeaderGroup } from 'react-table';
-import { VariableSizeList } from 'react-window';
+import { List, useListRef } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
 
 import {
@@ -18,7 +18,6 @@ import {
 import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
-import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../../PanelChrome';
 import { TableCell } from '../Cells/TableCell';
 import {
@@ -42,14 +41,10 @@ interface RowsListProps {
   data: DataFrame;
   rows: Row[];
   enableSharedCrosshair: boolean;
-  headerHeight: number;
-  rowHeight: number;
   itemCount: number;
-  pageIndex: number;
   listHeight: number;
   width: number;
   cellHeight?: TableCellHeight;
-  listRef: React.RefObject<VariableSizeList>;
   tableState: TableState;
   tableStyles: TableStyles;
   nestedDataField?: Field;
@@ -70,11 +65,8 @@ export const RowsList = (props: RowsListProps) => {
   const {
     data,
     rows,
-    headerHeight,
     footerPaginationEnabled,
-    rowHeight,
     itemCount,
-    pageIndex,
     tableState,
     prepareRow,
     onCellFilterAdded,
@@ -84,7 +76,6 @@ export const RowsList = (props: RowsListProps) => {
     tableStyles,
     nestedDataField,
     listHeight,
-    listRef,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
     headerGroups,
@@ -95,10 +86,24 @@ export const RowsList = (props: RowsListProps) => {
     setInspectCell,
   } = props;
 
+  const listRef = useListRef(null);
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
   if (initialRowIndex === undefined && rowHighlightIndex !== undefined) {
     setRowHighlightIndex(undefined);
   }
+
+  useEffect(() => {
+    if (rowHighlightIndex !== undefined) {
+      // TODO can we do this without a setTimeout?
+      setTimeout(() => {
+        listRef.current?.scrollToRow({
+          index: rowHighlightIndex,
+          align: 'center',
+          behavior: 'instant',
+        });
+      });
+    }
+  }, [rowHighlightIndex, listRef]);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -234,15 +239,6 @@ export const RowsList = (props: RowsListProps) => {
     };
   }, [data, enableSharedCrosshair, footerPaginationEnabled, onDataHoverEvent, panelContext]);
 
-  let scrollTop: number | undefined = undefined;
-  if (rowHighlightIndex !== undefined) {
-    const firstMatchedRowIndex = rows.findIndex((row) => row.index === rowHighlightIndex);
-
-    if (firstMatchedRowIndex !== -1) {
-      scrollTop = headerHeight + (firstMatchedRowIndex - 1) * rowHeight;
-    }
-  }
-
   const rowIndexForPagination = useCallback(
     (index: number) => {
       return tableState.pageIndex * tableState.pageSize + index;
@@ -316,6 +312,17 @@ export const RowsList = (props: RowsListProps) => {
         );
         style.height = bbox.height;
       }
+
+      // some disgusting code to mutate the style object to convert transform to top
+      // this is all so that hover behaviour is maintained
+      // using transform creates new stacking contexts which means hover states don't overlay correctly
+      const yPos = style.transform?.match(/translateY\((.*)\)/)?.[1];
+
+      style = {
+        ...style,
+        top: yPos,
+        transform: undefined,
+      };
       const { key, ...rowProps } = row.getRowProps({ style, ...additionalProps });
 
       return (
@@ -414,36 +421,17 @@ export const RowsList = (props: RowsListProps) => {
     return tableStyles.rowHeight;
   };
 
-  const handleScroll: UIEventHandler = (event) => {
-    const { scrollTop } = event.currentTarget;
-
-    if (listRef.current !== null) {
-      listRef.current.scrollTo(scrollTop);
-    }
-  };
-
-  // It's a hack for text wrapping.
-  // VariableSizeList component didn't know that we manually set row height.
-  // So we need to reset the list when the rows high changes.
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.resetAfterIndex(0);
-    }
-  }, [rows, listRef]);
-
   return (
-    <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
-      <VariableSizeList
-        key={`${rowHeight}${pageIndex}`}
-        height={listHeight}
-        itemCount={itemCount}
-        itemSize={getItemSize}
-        width={'100%'}
-        ref={listRef}
-        style={{ overflow: undefined }}
-      >
-        {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
-      </VariableSizeList>
-    </CustomScrollbar>
+    <List
+      rowProps={{}}
+      rowHeight={getItemSize}
+      rowCount={itemCount}
+      listRef={listRef}
+      style={{
+        height: listHeight,
+        width,
+      }}
+      rowComponent={({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
+    />
   );
 };

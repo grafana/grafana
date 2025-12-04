@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useId, useMemo, useRef } from 'react';
+import { useCallback, useId, useRef } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { FixedSizeList as List } from 'react-window';
-import InfiniteLoader from 'react-window-infinite-loader';
+import { List, type RowComponentProps } from 'react-window';
+import { useInfiniteLoader } from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -47,31 +47,7 @@ export function NestedFolderList({
   requestLoadMore,
   emptyFolders,
 }: NestedFolderListProps) {
-  const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
-
-  const virtualData = useMemo(
-    (): VirtualData => ({
-      items,
-      focusedItemIndex,
-      foldersAreOpenable,
-      selectedFolder,
-      onFolderExpand,
-      onFolderSelect,
-      idPrefix,
-      emptyFolders,
-    }),
-    [
-      items,
-      focusedItemIndex,
-      foldersAreOpenable,
-      selectedFolder,
-      onFolderExpand,
-      onFolderSelect,
-      idPrefix,
-      emptyFolders,
-    ]
-  );
 
   const handleIsItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -81,36 +57,42 @@ export function NestedFolderList({
   );
 
   const handleLoadMore = useCallback(
-    (startIndex: number, endIndex: number) => {
+    async (startIndex: number, endIndex: number) => {
       const { parentUID } = items[startIndex];
       requestLoadMore(parentUID);
     },
     [requestLoadMore, items]
   );
 
+  const onRowsRendered = useInfiniteLoader({
+    rowCount: items.length,
+    isRowLoaded: handleIsItemLoaded,
+    loadMoreRows: handleLoadMore,
+  });
+
   return (
     <div className={styles.table} role="tree">
       {items.length > 0 ? (
-        <InfiniteLoader
-          ref={infiniteLoaderRef}
-          itemCount={items.length}
-          isItemLoaded={handleIsItemLoaded}
-          loadMoreItems={handleLoadMore}
-        >
-          {({ onItemsRendered, ref }) => (
-            <List
-              ref={ref}
-              height={ROW_HEIGHT * Math.min(6.5, items.length)}
-              width="100%"
-              itemData={virtualData}
-              itemSize={ROW_HEIGHT}
-              itemCount={items.length}
-              onItemsRendered={onItemsRendered}
-            >
-              {Row}
-            </List>
-          )}
-        </InfiniteLoader>
+        <List
+          onRowsRendered={onRowsRendered}
+          rowProps={{
+            items,
+            focusedItemIndex,
+            foldersAreOpenable,
+            selectedFolder,
+            onFolderExpand,
+            onFolderSelect,
+            idPrefix,
+            emptyFolders,
+          }}
+          rowComponent={Row}
+          rowCount={items.length}
+          rowHeight={ROW_HEIGHT}
+          style={{
+            height: ROW_HEIGHT * Math.min(6.5, items.length),
+            width: '100%',
+          }}
+        />
       ) : (
         <div className={styles.emptyMessage}>
           <Trans i18nKey="browse-dashboards.folder-picker.empty-message">No folders found</Trans>
@@ -122,25 +104,20 @@ export function NestedFolderList({
 
 interface VirtualData extends Omit<NestedFolderListProps, 'isItemLoaded' | 'requestLoadMore'> {}
 
-interface RowProps {
-  index: number;
-  style: React.CSSProperties;
-  data: VirtualData;
-}
-
 const SKELETON_WIDTHS = [100, 200, 130, 160, 150];
 
-function Row({ index, style: virtualStyles, data }: RowProps) {
-  const {
-    items,
-    focusedItemIndex,
-    foldersAreOpenable,
-    selectedFolder,
-    onFolderExpand,
-    onFolderSelect,
-    idPrefix,
-    emptyFolders,
-  } = data;
+function Row({
+  index,
+  style: virtualStyles,
+  items,
+  focusedItemIndex,
+  foldersAreOpenable,
+  selectedFolder,
+  onFolderExpand,
+  onFolderSelect,
+  idPrefix,
+  emptyFolders,
+}: RowComponentProps<VirtualData>) {
   const { item, isOpen, level, parentUID } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
@@ -190,7 +167,9 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           Non-folder {{ itemKind }} {{ itemUID }}
         </Trans>
       </span>
-    ) : null;
+    ) : (
+      <></>
+    );
   }
 
   // We don't have a direct value of whether things are coming from user searching but this seems to be a good

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FixedSizeList } from 'react-window';
+import { List } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -65,15 +65,12 @@ export function MetricSelector() {
           className={styles.valueListWrapper}
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.metricList}
         >
-          <FixedSizeList
-            height={Math.min(450, filteredMetrics.length * LIST_ITEM_SIZE)}
-            itemCount={filteredMetrics.length}
-            itemSize={LIST_ITEM_SIZE}
-            itemKey={(i) => filteredMetrics[i].name}
-            width={300}
+          <List
+            rowProps={{}}
+            rowCount={filteredMetrics.length}
+            rowHeight={LIST_ITEM_SIZE}
             className={styles.valueList}
-          >
-            {({ index, style }) => {
+            rowComponent={({ index, style }) => {
               const metric = filteredMetrics[index];
               return (
                 <div style={style}>
@@ -92,7 +89,11 @@ export function MetricSelector() {
                 </div>
               );
             }}
-          </FixedSizeList>
+            style={{
+              height: Math.min(450, filteredMetrics.length * LIST_ITEM_SIZE),
+              width: 300,
+            }}
+          />
         </div>
       </div>
     </div>

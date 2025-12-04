@@ -1473,7 +1473,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.17.8, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.23.9, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.25.0, @babel/runtime@npm:^7.25.6, @babel/runtime@npm:^7.25.7, @babel/runtime@npm:^7.26.10, @babel/runtime@npm:^7.26.7, @babel/runtime@npm:^7.27.0, @babel/runtime@npm:^7.27.6, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.7":
+"@babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.17.8, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.23.9, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.25.0, @babel/runtime@npm:^7.25.6, @babel/runtime@npm:^7.25.7, @babel/runtime@npm:^7.26.10, @babel/runtime@npm:^7.26.7, @babel/runtime@npm:^7.27.0, @babel/runtime@npm:^7.27.6, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.7":
   version: 7.28.4
   resolution: "@babel/runtime@npm:7.28.4"
   checksum: 10/6c9a70452322ea80b3c9b2a412bcf60771819213a67576c8cec41e88a95bb7bf01fc983754cda35dc19603eef52df22203ccbf7777b9d6316932f9fb77c25163
@@ -2654,7 +2654,6 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/react-window": "npm:1.8.8"
     "@types/uuid": "npm:10.0.0"
     jest: "npm:29.7.0"
     lodash: "npm:4.17.21"
@@ -2662,7 +2661,7 @@ __metadata:
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-select: "npm:5.10.2"
-    react-window: "npm:1.8.11"
+    react-window: "npm:2.2.3"
     rxjs: "npm:7.8.2"
     stream-browserify: "npm:3.0.0"
     ts-node: "npm:10.9.2"
@@ -3523,7 +3522,6 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/react-highlight-words": "npm:0.20.0"
-    "@types/react-window": "npm:1.8.8"
     "@types/semver": "npm:7.7.1"
     "@types/uuid": "npm:10.0.0"
     debounce-promise: "npm:3.1.2"
@@ -3543,7 +3541,7 @@ __metadata:
     react-highlight-words: "npm:0.21.0"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
-    react-window: "npm:1.8.11"
+    react-window: "npm:2.2.3"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-esbuild: "npm:6.2.1"
@@ -3826,7 +3824,6 @@ __metadata:
     "@types/react-highlight-words": "npm:0.20.0"
     "@types/react-table": "npm:7.7.20"
     "@types/react-transition-group": "npm:4.4.12"
-    "@types/react-window": "npm:1.8.8"
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
@@ -3886,7 +3883,7 @@ __metadata:
     react-table: "npm:7.8.0"
     react-transition-group: "npm:4.4.5"
     react-use: "npm:17.6.0"
-    react-window: "npm:1.8.11"
+    react-window: "npm:2.2.3"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-copy: "npm:3.5.0"
@@ -10725,25 +10722,6 @@ __metadata:
   dependencies:
     react-virtualized-auto-sizer: "npm:*"
   checksum: 10/faddd1ee92e87e0b621a5be4eb510b010437375b6c85cf72d764f52506c59fad93d79c159aad251677e4e2fb548ad4a7e76c59f5a701a517bcf5552a9929c4af
-  languageName: node
-  linkType: hard
-
-"@types/react-window-infinite-loader@npm:^1":
-  version: 1.0.9
-  resolution: "@types/react-window-infinite-loader@npm:1.0.9"
-  dependencies:
-    "@types/react": "npm:*"
-    "@types/react-window": "npm:*"
-  checksum: 10/9f2c27f24bfa726ceaef6612a4adbda745f3455c877193f68dfa48591274c670a6df4fa6870785cff5f948e289ceb9a247fb7cbf67e3cd555ab16d11866fd63f
-  languageName: node
-  linkType: hard
-
-"@types/react-window@npm:*, @types/react-window@npm:1.8.8":
-  version: 1.8.8
-  resolution: "@types/react-window@npm:1.8.8"
-  dependencies:
-    "@types/react": "npm:*"
-  checksum: 10/79b70b7c33161efb14bf69115792843de8e038594136a8373cfbbcc4066c49fd611dd2d3592a9a81d19d21c075bf14e5e73a64f4d9ad32e45d4d5493f5f53918
   languageName: node
   linkType: hard
 
@@ -19321,8 +19299,6 @@ __metadata:
     "@types/react-table": "npm:7.7.20"
     "@types/react-transition-group": "npm:4.4.12"
     "@types/react-virtualized-auto-sizer": "npm:1.0.8"
-    "@types/react-window": "npm:1.8.8"
-    "@types/react-window-infinite-loader": "npm:^1"
     "@types/redux-mock-store": "npm:1.5.0"
     "@types/semver": "npm:7.7.1"
     "@types/slate": "npm:0.47.11"
@@ -19502,8 +19478,8 @@ __metadata:
     react-use: "npm:17.6.0"
     react-virtual: "npm:2.10.4"
     react-virtualized-auto-sizer: "npm:1.0.26"
-    react-window: "npm:1.8.11"
-    react-window-infinite-loader: "npm:1.0.10"
+    react-window: "npm:2.2.3"
+    react-window-infinite-loader: "npm:2.0.0"
     reduce-reducers: "npm:^1.0.4"
     redux: "npm:5.0.1"
     redux-mock-store: "npm:1.5.5"
@@ -23882,13 +23858,6 @@ __metadata:
   version: 6.0.0
   resolution: "memoize-one@npm:6.0.0"
   checksum: 10/28feaf7e9a870efef1187df110b876ce42deaf86c955f4111d72d23b96e44eed573469316e6ad0d2cc7fa3b1526978215617b126158015f957242c7493babca9
-  languageName: node
-  linkType: hard
-
-"memoize-one@npm:>=3.1.1 <6":
-  version: 5.2.1
-  resolution: "memoize-one@npm:5.2.1"
-  checksum: 10/b7141dc148b5c6fdd51e77ecf0421fd2581681eb8756e0b3dfbd4fe765b5e2b5a6bc90214bb6f19a96b6aed44de17eda3407142a7be9e24ccd0774bbd9874d1b
   languageName: node
   linkType: hard
 
@@ -28955,26 +28924,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-window-infinite-loader@npm:1.0.10":
-  version: 1.0.10
-  resolution: "react-window-infinite-loader@npm:1.0.10"
+"react-window-infinite-loader@npm:2.0.0":
+  version: 2.0.0
+  resolution: "react-window-infinite-loader@npm:2.0.0"
   peerDependencies:
-    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/4f4c097a2948f8da71d13199289d85c89720e41888ea50039d2b8e6d7cf160300e97f66421c53420d8cb95b3ece74940c07ebd23bddd7a705a679d7e2dc2957e
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  checksum: 10/a67ba08dbdb557a46390bf1056ad01d09202fc76492d27818429ac8f9e893792c3476a584fadfc7ae3f2766e1986468658356105000d7b31034287012e7a89dc
   languageName: node
   linkType: hard
 
-"react-window@npm:1.8.11":
-  version: 1.8.11
-  resolution: "react-window@npm:1.8.11"
-  dependencies:
-    "@babel/runtime": "npm:^7.0.0"
-    memoize-one: "npm:>=3.1.1 <6"
+"react-window@npm:2.2.3":
+  version: 2.2.3
+  resolution: "react-window@npm:2.2.3"
   peerDependencies:
-    react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/bdbac2b664c5a799443b97a32b2f60a00cc13cc14ca8a8b1e81e2dc7dd00d8d54f05743113972fe1a641b57ada5d874b59c3cbe7e8a07a88c6713a0fb65d60f6
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  checksum: 10/f676883c6cd16a0f56690b6d9c929a3da8b7d0ccf78dd5247f474b65ead38aae32a328fcd24c95956d1541383b774fca2b6decae65b6991697a90168222de86d
   languageName: node
   linkType: hard
 

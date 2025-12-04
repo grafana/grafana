@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import { useWindowSize } from 'react-use';
-import { VariableSizeList as List } from 'react-window';
+import { List } from 'react-window';
 
 import { DataFrame, Field as DataFrameField } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -59,6 +59,24 @@ const styles = {
 const mobileWidthThreshold = 480;
 const numberOfColumnsBeforeExpandedViewIsDefault = 2;
 
+interface RowProps {
+  isExpandedView: boolean;
+  valueLabels: DataFrameField[];
+  items: instantQueryRawVirtualizedListData[];
+}
+
+function getListItemHeight(itemIndex: number, { isExpandedView, items, valueLabels }: RowProps) {
+  const singleLineHeight = 32;
+  const additionalLineHeight = 22;
+  if (!isExpandedView) {
+    return singleLineHeight;
+  }
+  const item = items[itemIndex];
+
+  // Height of 1.5 lines, plus the number of non-value attributes times the height of additional lines
+  return 1.5 * singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight;
+}
+
 /**
  * The container that provides the virtualized list to the child components
  * @param props
@@ -67,7 +85,6 @@ const numberOfColumnsBeforeExpandedViewIsDefault = 2;
 const RawListContainer = (props: RawListContainerProps) => {
   const { tableResult } = props;
   const dataFrame = cloneDeep(tableResult);
-  const listRef = useRef<List | null>(null);
 
   const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value'));
   const items = getRawPrometheusListItemsFromDataFrame(dataFrame);
@@ -84,11 +101,6 @@ const RawListContainer = (props: RawListContainerProps) => {
     reportInteraction('grafana_explore_prometheus_instant_query_ui_raw_toggle_expand', props);
   };
 
-  useEffect(() => {
-    // After the expanded view has updated, tell the list to re-render
-    listRef.current?.resetAfterIndex(0, true);
-  }, [isExpandedView]);
-
   const calculateInitialHeight = (length: number): number => {
     const maxListHeight = 600;
     const shortListLength = 10;
@@ -96,25 +108,17 @@ const RawListContainer = (props: RawListContainerProps) => {
     if (length < shortListLength) {
       let sum = 0;
       for (let i = 0; i < length; i++) {
-        sum += getListItemHeight(i, true);
+        sum += getListItemHeight(i, {
+          isExpandedView: true,
+          items,
+          valueLabels,
+        });
       }
 
       return Math.min(maxListHeight, sum);
     }
 
     return maxListHeight;
-  };
-
-  const getListItemHeight = (itemIndex: number, isExpandedView: boolean) => {
-    const singleLineHeight = 32;
-    const additionalLineHeight = 22;
-    if (!isExpandedView) {
-      return singleLineHeight;
-    }
-    const item = items[itemIndex];
-
-    // Height of 1.5 lines, plus the number of non-value attributes times the height of additional lines
-    return 1.5 * singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight;
   };
 
   const switchId = `isExpandedView ${useId()}`;
@@ -153,14 +157,19 @@ const RawListContainer = (props: RawListContainerProps) => {
               <ItemLabels valueLabels={valueLabels} expanded={isExpandedView} />
             )}
             <List
-              ref={listRef}
-              itemCount={items.length}
               className={styles.wrapper}
-              itemSize={(index) => getListItemHeight(index, isExpandedView)}
-              height={calculateInitialHeight(items.length)}
-              width="100%"
-            >
-              {({ index, style }) => {
+              style={{
+                height: calculateInitialHeight(items.length),
+                width: '100%',
+              }}
+              rowCount={items.length}
+              rowHeight={getListItemHeight}
+              rowProps={{
+                isExpandedView,
+                valueLabels,
+                items,
+              }}
+              rowComponent={({ index, style }) => {
                 let filteredValueLabels: DataFrameField[] | undefined;
                 if (isExpandedView) {
                   filteredValueLabels = valueLabels.filter((valueLabel) => {
@@ -181,7 +190,7 @@ const RawListContainer = (props: RawListContainerProps) => {
                   </div>
                 );
               }}
-            </List>
+            />
           </>
         }
       </div>

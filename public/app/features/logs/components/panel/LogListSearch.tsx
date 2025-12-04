@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { VariableSizeList } from 'react-window';
+import { type ListImperativeAPI } from 'react-window';
 
 import { escapeRegex, GrafanaTheme2, shallowCompare } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -12,7 +12,7 @@ import { useLogListSearchContext } from './LogListSearchContext';
 import { LogListModel } from './processing';
 
 interface Props {
-  listRef: VariableSizeList | null;
+  listRef: ListImperativeAPI | null;
   logs: LogListModel[];
 }
 
@@ -61,7 +61,10 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     }
     const prev = currentResult > 0 ? currentResult - 1 : matches.length - 1;
     setCurrentResult(prev);
-    listRef?.scrollToItem(logs.indexOf(matches[prev]), 'center');
+    listRef?.scrollToRow({
+      index: logs.indexOf(matches[prev]),
+      align: 'center',
+    });
   }, [currentResult, listRef, logs, matches]);
 
   const nextResult = useCallback(() => {
@@ -70,7 +73,10 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     }
     const next = currentResult < matches.length - 1 ? currentResult + 1 : 0;
     setCurrentResult(next);
-    listRef?.scrollToItem(logs.indexOf(matches[next]), 'center');
+    listRef?.scrollToRow({
+      index: logs.indexOf(matches[next]),
+      align: 'center',
+    });
   }, [currentResult, listRef, logs, matches]);
 
   useEffect(() => {
@@ -80,7 +86,10 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     }
     if (!currentResult) {
       setCurrentResult(0);
-      listRef?.scrollToItem(logs.indexOf(matches[0]), 'center');
+      listRef?.scrollToRow({
+        index: logs.indexOf(matches[0]),
+        align: 'center',
+      });
     }
   }, [currentResult, listRef, logs, matches]);
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
+import { List, type RowComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -162,15 +162,16 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
       {items.length > 0 ? (
         <>
           <List
-            height={height}
-            itemCount={items.length}
-            itemSize={ITEM_HEIGHT}
-            itemData={{ items, values: selectedItems, onCheckedChanged, className: styles.filterListRow }}
-            width="100%"
+            rowComponent={ItemRenderer}
+            rowCount={items.length}
+            rowHeight={ITEM_HEIGHT}
+            rowProps={{ items, values: selectedItems, onCheckedChanged, className: styles.filterListRow }}
+            style={{
+              height,
+              width: '100%',
+            }}
             className={styles.filterList}
-          >
-            {ItemRenderer}
-          </List>
+          />
           <div
             className={styles.filterListRow}
             data-testid={selectors.components.Panels.Visualization.TableNG.Filters.SelectAll}
@@ -193,16 +194,21 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
   );
 };
 
-interface ItemRendererProps extends ListChildComponentProps {
-  data: {
-    onCheckedChanged: (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => void;
-    items: SelectableValue[];
-    values: SelectableValue[];
-    className: string;
-  };
+interface ItemRendererProps {
+  onCheckedChanged: (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => void;
+  items: SelectableValue[];
+  values: SelectableValue[];
+  className: string;
 }
 
-function ItemRenderer({ index, style, data: { onCheckedChanged, items, values, className } }: ItemRendererProps) {
+function ItemRenderer({
+  index,
+  style,
+  onCheckedChanged,
+  items,
+  values,
+  className,
+}: RowComponentProps<ItemRendererProps>) {
   const option = items[index];
   const { value, label } = option;
   const isChecked = values.find((s) => s.value === value) !== undefined;

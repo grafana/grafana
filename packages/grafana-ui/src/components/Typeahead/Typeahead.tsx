@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import { createRef, PureComponent } from 'react';
 import * as React from 'react';
 import ReactDOM from 'react-dom';
-import { FixedSizeList } from 'react-window';
+import { List, type ListImperativeAPI } from 'react-window';
 
 import { GrafanaTheme2, ThemeContext } from '@grafana/data';
 
@@ -36,7 +36,7 @@ export interface State {
 export class Typeahead extends PureComponent<Props, State> {
   static contextType = ThemeContext;
   context!: React.ContextType<typeof ThemeContext>;
-  listRef = createRef<FixedSizeList>();
+  listRef = createRef<ListImperativeAPI>();
 
   state: State = {
     hoveredItem: null,
@@ -81,10 +81,14 @@ export class Typeahead extends PureComponent<Props, State> {
       this.listRef.current
     ) {
       if (this.state.typeaheadIndex === 1) {
-        this.listRef.current.scrollToItem(0); // special case for handling the first group label
+        this.listRef.current.scrollToRow({
+          index: 0,
+        }); // special case for handling the first group label
         return;
       }
-      this.listRef.current.scrollToItem(this.state.typeaheadIndex);
+      this.listRef.current.scrollToRow({
+        index: this.state.typeaheadIndex,
+      });
     }
 
     if (isEqual(prevProps.groupedItems, this.props.groupedItems) === false) {
@@ -167,22 +171,19 @@ export class Typeahead extends PureComponent<Props, State> {
     return (
       <Portal origin={origin} isOpen={isOpen} style={this.menuPosition}>
         <ul role="menu" className={styles.typeahead} data-testid="typeahead">
-          <FixedSizeList
-            ref={this.listRef}
-            itemCount={allItems.length}
-            itemSize={itemHeight}
-            itemKey={(index) => {
-              const item = allItems && allItems[index];
-              const key = item ? `${index}-${item.label}` : `${index}`;
-              return key;
+          <List
+            listRef={this.listRef}
+            rowCount={allItems.length}
+            rowHeight={itemHeight}
+            rowProps={{}}
+            style={{
+              width: listWidth,
+              height: listHeight,
             }}
-            width={listWidth}
-            height={listHeight}
-          >
-            {({ index, style }) => {
+            rowComponent={({ index, style }) => {
               const item = allItems && allItems[index];
               if (!item) {
-                return null;
+                return <></>;
               }
 
               return (
@@ -197,7 +198,7 @@ export class Typeahead extends PureComponent<Props, State> {
                 />
               );
             }}
-          </FixedSizeList>
+          />
         </ul>
 
         {showDocumentation && <TypeaheadInfo height={listHeight} item={documentationItem} />}

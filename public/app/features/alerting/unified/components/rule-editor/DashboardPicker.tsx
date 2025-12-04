@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
-import { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { FixedSizeList } from 'react-window';
+import { List, type ListImperativeAPI, type RowComponentProps } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -104,11 +104,13 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const selectedDashboardIsInPageResult = selectedDashboardIndex >= 0;
 
   const scrollToItem = useCallback(
-    (node: FixedSizeList) => {
+    (list: ListImperativeAPI) => {
       const canScroll = selectedDashboardIndex >= 0;
 
       if (isDefaultSelection && canScroll) {
-        node?.scrollToItem(selectedDashboardIndex, 'smart');
+        list?.scrollToRow({
+          index: selectedDashboardIndex,
+        });
       }
     },
     [isDefaultSelection, selectedDashboardIndex]
@@ -122,7 +124,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     [dashboardFilter]
   );
 
-  const DashboardRow = ({ index, style }: { index: number; style?: CSSProperties }) => {
+  const DashboardRow = ({ index, style }: RowComponentProps) => {
     const dashboard = filteredDashboards[index];
     const isSelected = selectedDashboardUid === dashboard.uid;
     const folderTitle = locationInfo?.[dashboard.location]?.name ?? 'Dashboards';
@@ -143,7 +145,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     );
   };
 
-  const PanelRow = ({ index, style }: { index: number; style: CSSProperties }) => {
+  const PanelRow = ({ index, style }: RowComponentProps) => {
     const panel = filteredPanels[index];
     const panelTitle = panel.title || '<No title>';
     const isSelected = Boolean(panel.id) && selectedPanelId === panel.id;
@@ -258,15 +260,18 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
           {!isDashSearchFetching && (
             <AutoSizer>
               {({ height, width }) => (
-                <FixedSizeList
-                  ref={scrollToItem}
-                  itemSize={50}
-                  height={height}
-                  width={width}
-                  itemCount={filteredDashboards.length}
-                >
-                  {DashboardRow}
-                </FixedSizeList>
+                <List
+                  listRef={scrollToItem}
+                  rowHeight={50}
+                  rowCount={filteredDashboards.length}
+                  rowComponent={DashboardRow}
+                  rowProps={{}}
+                  style={{
+                    height,
+                    maxHeight: height,
+                    width,
+                  }}
+                />
               )}
             </AutoSizer>
           )}
@@ -292,9 +297,17 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
           {selectedDashboardUid && !isDashboardFetching && (
             <AutoSizer>
               {({ width, height }) => (
-                <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
-                  {PanelRow}
-                </FixedSizeList>
+                <List
+                  rowHeight={32}
+                  rowCount={filteredPanels.length}
+                  rowComponent={PanelRow}
+                  rowProps={{}}
+                  style={{
+                    height,
+                    maxHeight: height,
+                    width,
+                  }}
+                />
               )}
             </AutoSizer>
           )}

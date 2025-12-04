@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { memo, CSSProperties } from 'react';
-import * as React from 'react';
+import { type KeyboardEvent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { areEqual, FixedSizeGrid as Grid } from 'react-window';
+import { type CellComponentProps, Grid } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -11,20 +10,14 @@ import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { ResourceItem } from './FolderPickerTab';
 
 interface CellProps {
-  columnIndex: number;
-  rowIndex: number;
-  style: CSSProperties;
-  data: {
-    cards: ResourceItem[];
-    columnCount: number;
-    onChange: (value: string) => void;
-    selected?: string;
-  };
+  cards: ResourceItem[];
+  columnCount: number;
+  onChange: (value: string) => void;
+  selected?: string;
 }
 
-const MemoizedCell = memo(function Cell(props: CellProps) {
-  const { columnIndex, rowIndex, style, data } = props;
-  const { cards, columnCount, onChange, selected } = data;
+function Cell(props: CellComponentProps<CellProps>) {
+  const { columnIndex, rowIndex, style, cards, columnCount, onChange, selected } = props;
   const singleColumnIndex = columnIndex + rowIndex * columnCount;
   const card = cards[singleColumnIndex];
   const styles = useStyles2(getStyles);
@@ -36,7 +29,7 @@ const MemoizedCell = memo(function Cell(props: CellProps) {
           key={card.value}
           className={selected === card.value ? cx(styles.card, styles.selected) : styles.card}
           onClick={() => onChange(card.value)}
-          onKeyDown={(e: React.KeyboardEvent) => {
+          onKeyDown={(e: KeyboardEvent) => {
             if (e.key === 'Enter') {
               onChange(card.value);
             }
@@ -54,7 +47,7 @@ const MemoizedCell = memo(function Cell(props: CellProps) {
       )}
     </div>
   );
-}, areEqual);
+}
 
 interface CardProps {
   onChange: (value: string) => void;
@@ -75,17 +68,20 @@ export const ResourceCards = (props: CardProps) => {
         const rowCount = Math.ceil(cards.length / columnCount);
         return (
           <Grid
-            width={width}
-            height={height}
+            style={{
+              height,
+              maxHeight: height,
+              maxWidth: width,
+              width,
+            }}
             columnCount={columnCount}
             columnWidth={cardWidth}
             rowCount={rowCount}
             rowHeight={cardHeight}
-            itemData={{ cards, columnCount, onChange, selected: value }}
+            cellProps={{ cards, columnCount, onChange, selected: value }}
             className={styles.grid}
-          >
-            {MemoizedCell}
-          </Grid>
+            cellComponent={Cell}
+          />
         );
       }}
     </AutoSizer>

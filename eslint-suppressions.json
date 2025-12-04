@@ -843,9 +843,6 @@
     }
   },
   "packages/grafana-ui/src/components/Table/TableRT/Table.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     }

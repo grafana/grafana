@@ -1,6 +1,6 @@
-import { ReactNode, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState, MouseEvent, type JSX } from 'react';
 import { usePrevious } from 'react-use';
-import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
+import { type RowComponentProps, type ListProps } from 'react-window';
 
 import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -17,8 +17,8 @@ import { LogLineVirtualization } from './virtualization';
 interface ChildrenProps {
   itemCount: number;
   getItemKey: (index: number) => string;
-  onItemsRendered: (props: ListOnItemsRenderedProps) => void;
-  Renderer: (props: ListChildComponentProps) => ReactNode;
+  onItemsRendered: ListProps<{}>['onRowsRendered'];
+  Renderer: (props: RowComponentProps) => JSX.Element;
 }
 
 export interface Props {
@@ -200,7 +200,7 @@ export const InfiniteScroll = ({
   }, [onLoadMore]);
 
   const Renderer = useCallback(
-    ({ index, style }: ListChildComponentProps) => {
+    ({ index, style }: RowComponentProps) => {
       if (!logs[index] && infiniteLoaderState !== 'idle') {
         return (
           <LogLineMessage
@@ -248,12 +248,12 @@ export const InfiniteScroll = ({
     ]
   );
 
-  const onItemsRendered = useCallback(
-    (props: ListOnItemsRenderedProps) => {
+  const onItemsRendered = useCallback<NonNullable<ListProps<{}>['onRowsRendered']>>(
+    (props) => {
       if (!scrollElement) {
         return;
       }
-      if (props.visibleStartIndex === 0) {
+      if (props.startIndex === 0) {
         noScrollRef.current = scrollElement.scrollHeight <= scrollElement.clientHeight;
       }
       if (noScrollRef.current || infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
@@ -261,9 +261,9 @@ export const InfiniteScroll = ({
       }
       const lastLogIndex = logs.length - 1;
       const preScrollIndex = logs.length - 2;
-      if (props.visibleStopIndex >= lastLogIndex) {
+      if (props.stopIndex >= lastLogIndex) {
         setInfiniteLoaderState('pre-scroll-bottom');
-      } else if (props.visibleStartIndex < preScrollIndex) {
+      } else if (props.startIndex < preScrollIndex) {
         setInfiniteLoaderState('idle');
       }
     },
