@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -71,6 +72,9 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 
 func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	zanzanaItemCheckerChan := make(chan authlib.ItemChecker, 1)
+	var zanzanaItemChecker authlib.ItemChecker
+	var once sync.Once
+
 	go func() {
 		if c.zanzanaClient == nil {
 			zanzanaItemCheckerChan <- nil
@@ -93,19 +97,26 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 		return nil, authlib.NoopZookie{}, err
 	}
 
-	zanzanaItemChecker := <-zanzanaItemCheckerChan
-
 	shadowItemChecker := func(name, folder string) bool {
 		rbacRes := rbacItemChecker(name, folder)
-		if zanzanaItemChecker != nil {
-			zanzanaRes := zanzanaItemChecker(name, folder)
-			if zanzanaRes != rbacRes {
-				c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
-				c.logger.Warn("Zanzana compile result does not match", "expected", rbacRes, "actual", zanzanaRes, "name", name, "folder", folder)
-			} else {
-				c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+
+		go func() {
+			// Wait for zanzana result to be ready and then use it to compare against RBAC
+			once.Do(func() {
+				zanzanaItemChecker = <-zanzanaItemCheckerChan
+			})
+
+			if zanzanaItemChecker != nil {
+				zanzanaRes := zanzanaItemChecker(name, folder)
+				if zanzanaRes != rbacRes {
+					c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+					c.logger.Warn("Zanzana compile result does not match", "expected", rbacRes, "actual", zanzanaRes, "name", name, "folder", folder)
+				} else {
+					c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+				}
 			}
-		}
+		}()
+
 		return rbacRes
 	}
 
