@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { IconButton, Stack, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Branding } from '../../Branding/Branding';
@@ -27,31 +27,8 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
 
   return (
     <div className={styles.header}>
-<<<<<<< Updated upstream
-      <Stack alignItems="center" minWidth={0} gap={0.25}>
-        <ToolbarButton
-          narrow
-          id={MEGA_MENU_HEADER_TOGGLE_ID}
-          onClick={handleMegaMenu}
-          tooltip={t('navigation.megamenu.close', 'Close menu')}
-        >
-          <Branding.MenuLogo className={styles.img} />
-        </ToolbarButton>
-||||||| Stash base
-      <Stack alignItems="center" minWidth={0} gap={0.5}>
-        <ToolbarButton
-          narrow
-          id={MEGA_MENU_HEADER_TOGGLE_ID}
-          onClick={handleMegaMenu}
-          tooltip={t('navigation.megamenu.close', 'Close menu')}
-        >
-          <Icon name="bars" size="xl" />
-        </ToolbarButton>
-        <Branding.HomeLink homeNav={homeNav} />
-=======
       <Stack alignItems="center" minWidth={0} gap={1}>
         <Branding.MenuLogo className={styles.img} />
->>>>>>> Stashed changes
         <OrganizationSwitcher />
       </Stack>
       <div className={css({ flexGrow: 1 })} />
