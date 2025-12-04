@@ -35,12 +35,13 @@ func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 
 // FIXME: ProgressRecorder should be initialized in the queue
 type JobResourceResult struct {
-	Name   string
-	Group  string
-	Kind   string
-	Path   string
-	Action repository.FileAction
-	Error  error
+	Name    string
+	Group   string
+	Kind    string
+	Path    string
+	Action  repository.FileAction
+	Error   error
+	Warning error
 }
 
 type jobProgressRecorder struct {
@@ -193,6 +194,10 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error.Error(), result.Path, result.Name, result.Action)
 		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
+	} else if result.Warning != nil {
+		warningMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Warning.Error(), result.Path, result.Name, result.Action)
+		summary.Warnings = append(summary.Warnings, warningMsg)
+		summary.Warning++
 	} else {
 		switch result.Action {
 		case repository.FileActionDeleted:
@@ -266,8 +271,17 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 		jobStatus.Message = err.Error()
 	}
 
-	jobStatus.Summary = r.summary()
+	summaries := r.summary()
+	jobStatus.Summary = summaries
 	jobStatus.Errors = r.errors
+
+	// Extract warnings from summaries
+	warnings := make([]string, 0)
+	for _, summary := range summaries {
+		warnings = append(warnings, summary.Warnings...)
+	}
+	jobStatus.Warnings = warnings
+
 	jobStatus.URLs = r.refURLs
 
 	tooManyErrors := r.maxErrors > 0 && r.errorCount >= r.maxErrors
@@ -283,6 +297,9 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 			jobStatus.Message = "completed with errors"
 			jobStatus.State = provisioning.JobStateWarning
 		}
+	} else if len(jobStatus.Warnings) > 0 {
+		jobStatus.State = provisioning.JobStateWarning
+		jobStatus.Message = "completed with warnings"
 	}
 
 	// Override message if progress have a more explicit message
