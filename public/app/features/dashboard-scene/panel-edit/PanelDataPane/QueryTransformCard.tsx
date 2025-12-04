@@ -133,50 +133,56 @@ export const QueryTransformCard = memo(
             <Icon name={icon} className={styles.headerIcon} />
             <span className={styles.typeLabel}>{typeLabel}</span>
           </div>
-          <Stack gap={0.25}>
+          <div className={styles.headerActions}>
+            <div className={clsx(styles.quickActions, styles.quickActionsClass)}>
+              {(type === 'query' || type === 'expression') && onDuplicate && (
+                <IconButton
+                  name="copy"
+                  size="sm"
+                  variant="secondary"
+                  tooltip={t('dashboard-scene.query-transform-card.duplicate', 'Duplicate query')}
+                  onClick={(e) => handleAction(e, onDuplicate)}
+                  className={styles.actionButton}
+                />
+              )}
+              {onRemove && (
+                <IconButton
+                  name="trash-alt"
+                  size="sm"
+                  variant="secondary"
+                  tooltip={
+                    type === 'query'
+                      ? t('dashboard-scene.query-transform-card.remove-query', 'Remove query')
+                      : t('dashboard-scene.query-transform-card.remove-transform', 'Remove transformation')
+                  }
+                  onClick={(e) => handleAction(e, onRemove)}
+                  className={styles.actionButton}
+                />
+              )}
+            </div>
             {onToggleVisibility && (
-              <IconButton
-                name={isHidden ? 'eye-slash' : 'eye'}
-                size="sm"
-                variant="secondary"
-                tooltip={
-                  isHidden
-                    ? type === 'transform'
-                      ? t('dashboard-scene.query-transform-card.enable-transform', 'Enable transformation')
-                      : t('dashboard-scene.query-transform-card.show-response', 'Show response')
-                    : type === 'transform'
-                      ? t('dashboard-scene.query-transform-card.disable-transform', 'Disable transformation')
-                      : t('dashboard-scene.query-transform-card.hide-response', 'Hide response')
-                }
-                onClick={(e) => handleAction(e, onToggleVisibility)}
-                className={styles.actionButton}
-              />
+              <div
+                className={clsx(styles.eyeIconWrapper, !isHidden && [styles.eyeIconHidden, styles.eyeIconHiddenClass])}
+              >
+                <IconButton
+                  name={isHidden ? 'eye-slash' : 'eye'}
+                  size="sm"
+                  variant="secondary"
+                  tooltip={
+                    isHidden
+                      ? type === 'transform'
+                        ? t('dashboard-scene.query-transform-card.enable-transform', 'Enable transformation')
+                        : t('dashboard-scene.query-transform-card.show-response', 'Show response')
+                      : type === 'transform'
+                        ? t('dashboard-scene.query-transform-card.disable-transform', 'Disable transformation')
+                        : t('dashboard-scene.query-transform-card.hide-response', 'Hide response')
+                  }
+                  onClick={(e) => handleAction(e, onToggleVisibility)}
+                  className={styles.actionButton}
+                />
+              </div>
             )}
-            {(type === 'query' || type === 'expression') && onDuplicate && (
-              <IconButton
-                name="copy"
-                size="sm"
-                variant="secondary"
-                tooltip={t('dashboard-scene.query-transform-card.duplicate', 'Duplicate query')}
-                onClick={(e) => handleAction(e, onDuplicate)}
-                className={styles.actionButton}
-              />
-            )}
-            {onRemove && (
-              <IconButton
-                name="trash-alt"
-                size="sm"
-                variant="secondary"
-                tooltip={
-                  type === 'query'
-                    ? t('dashboard-scene.query-transform-card.remove-query', 'Remove query')
-                    : t('dashboard-scene.query-transform-card.remove-transform', 'Remove transformation')
-                }
-                onClick={(e) => handleAction(e, onRemove)}
-                className={styles.actionButton}
-              />
-            )}
-          </Stack>
+          </div>
         </div>
 
         {/* Content: Name */}
@@ -198,6 +204,7 @@ QueryTransformCard.displayName = 'QueryTransformCard';
 const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataPaneColors>) => {
   const selectedClass = 'card-selected';
   const hiddenClass = 'card-hidden';
+  const hoverOnlyClass = 'hover-only';
 
   return {
     card: css({
@@ -212,6 +219,9 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       maxWidth: 300,
       '&:hover': {
         borderColor: theme.colors.border.strong,
+        [`.${hoverOnlyClass}`]: {
+          opacity: 1,
+        },
       },
       [`&.${selectedClass}`]: {
         borderColor: theme.colors.primary.border,
@@ -271,6 +281,32 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       color: 'inherit',
       textTransform: 'uppercase',
     }),
+    headerActions: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.25),
+    }),
+    quickActions: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.25),
+      opacity: 0,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.2s ease',
+      },
+    }),
+    quickActionsClass: hoverOnlyClass,
+    eyeIconWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    eyeIconHidden: css({
+      opacity: 0,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.2s ease',
+      },
+    }),
+    eyeIconHiddenClass: hoverOnlyClass,
     actionButton: css({
       '&:hover': {
         background: theme.colors.action.hover,
