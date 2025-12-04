@@ -54,7 +54,7 @@ const (
 )
 
 // Compare represents a single comparison in a transaction.
-// Use the constructor functions CompareKeyExists and CompareKeyValue to create comparisons.
+// Use the constructor functions CompareKeyExists, CompareKeyNotExists, and CompareKeyValue to create comparisons.
 type Compare struct {
 	Key    string
 	Target CompareTarget
@@ -63,11 +63,14 @@ type Compare struct {
 	Value  []byte        // Used when Target == CompareValue
 }
 
-// CompareKeyExists creates a comparison that checks if a key exists or not.
-// If exists is true, the comparison succeeds if the key exists.
-// If exists is false, the comparison succeeds if the key does not exist.
-func CompareKeyExists(key string, exists bool) Compare {
-	return Compare{Key: key, Target: CompareExists, Exists: exists}
+// CompareKeyExists creates a comparison that succeeds if the key exists.
+func CompareKeyExists(key string) Compare {
+	return Compare{Key: key, Target: CompareExists, Exists: true}
+}
+
+// CompareKeyNotExists creates a comparison that succeeds if the key does not exist.
+func CompareKeyNotExists(key string) Compare {
+	return Compare{Key: key, Target: CompareExists, Exists: false}
 }
 
 // CompareKeyValue creates a comparison that compares the value of a key.
@@ -482,7 +485,7 @@ func (k *badgerKV) Txn(ctx context.Context, section string, cmps []Compare, succ
 	succeeded := true
 	for _, cmp := range cmps {
 		keyWithSection := section + "/" + cmp.Key
-		_, err := txn.Get([]byte(keyWithSection))
+		item, err := txn.Get([]byte(keyWithSection))
 		keyExists := err == nil
 		if err != nil && !errors.Is(err, badger.ErrKeyNotFound) {
 			return nil, err
@@ -501,10 +504,6 @@ func (k *badgerKV) Txn(ctx context.Context, section string, cmps []Compare, succ
 					succeeded = false
 				}
 			} else {
-				item, err := txn.Get([]byte(keyWithSection))
-				if err != nil {
-					return nil, err
-				}
 				itemValue, err := item.ValueCopy(nil)
 				if err != nil {
 					return nil, err

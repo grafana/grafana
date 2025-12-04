@@ -837,13 +837,16 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 	t.Run("txn compare exists false for non-existent key", func(t *testing.T) {
 		// Key doesn't exist, so exists should be false
 		cmps := []resource.Compare{
-			resource.CompareKeyExists("non-existent-key", false),
+			resource.CompareKeyNotExists("non-existent-key"),
 		}
 		successOps := []resource.TxnOp{
 			{Type: resource.TxnOpPut, Key: "created-key", Value: []byte("created-value")},
 		}
+		failureOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "non-existent-failure-marker", Value: []byte("failure-executed")},
+		}
 
-		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		resp, err := kv.Txn(ctx, section, cmps, successOps, failureOps)
 		require.NoError(t, err)
 		assert.True(t, resp.Succeeded)
 
@@ -855,6 +858,10 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 		assert.Equal(t, "created-value", string(value))
 		err = reader.Close()
 		require.NoError(t, err)
+
+		// Verify failure op was not executed
+		_, err = kv.Get(ctx, section, "non-existent-failure-marker")
+		assert.Error(t, err)
 	})
 
 	t.Run("txn compare exists true for existing key", func(t *testing.T) {
@@ -863,13 +870,16 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Key exists, so exists should be true
 		cmps := []resource.Compare{
-			resource.CompareKeyExists("existing-key", true),
+			resource.CompareKeyExists("existing-key"),
 		}
 		successOps := []resource.TxnOp{
 			{Type: resource.TxnOpPut, Key: "existing-key", Value: []byte("updated-value")},
 		}
+		failureOps := []resource.TxnOp{
+			{Type: resource.TxnOpPut, Key: "existing-failure-marker", Value: []byte("failure-executed")},
+		}
 
-		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		resp, err := kv.Txn(ctx, section, cmps, successOps, failureOps)
 		require.NoError(t, err)
 		assert.True(t, resp.Succeeded)
 
@@ -881,6 +891,10 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 		assert.Equal(t, "updated-value", string(value))
 		err = reader.Close()
 		require.NoError(t, err)
+
+		// Verify failure op was not executed
+		_, err = kv.Get(ctx, section, "existing-failure-marker")
+		assert.Error(t, err)
 	})
 
 	t.Run("txn compare exists fails when key exists but expected not to", func(t *testing.T) {
@@ -889,7 +903,7 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Key exists but we expect it not to
 		cmps := []resource.Compare{
-			resource.CompareKeyExists("exists-fail-key", false),
+			resource.CompareKeyNotExists("exists-fail-key"),
 		}
 		successOps := []resource.TxnOp{
 			{Type: resource.TxnOpPut, Key: "exists-fail-result", Value: []byte("should-not-exist")},
@@ -984,7 +998,7 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 		saveKVHelper(t, kv, ctx, section, "delete-txn-key", strings.NewReader("to-be-deleted"))
 
 		cmps := []resource.Compare{
-			resource.CompareKeyExists("delete-txn-key", true),
+			resource.CompareKeyExists("delete-txn-key"),
 		}
 		successOps := []resource.TxnOp{
 			{Type: resource.TxnOpDelete, Key: "delete-txn-key"},
@@ -1053,7 +1067,7 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 	t.Run("txn too many comparisons", func(t *testing.T) {
 		cmps := make([]resource.Compare, resource.MaxTxnCompares+1)
 		for i := range cmps {
-			cmps[i] = resource.CompareKeyExists(fmt.Sprintf("key-%d", i), false)
+			cmps[i] = resource.CompareKeyNotExists(fmt.Sprintf("key-%d", i))
 		}
 
 		_, err := kv.Txn(ctx, section, cmps, nil, nil)
@@ -1132,7 +1146,7 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 		saveKVHelper(t, kv, ctx, section, "constructor-key", strings.NewReader("constructor-value"))
 
 		cmps := []resource.Compare{
-			resource.CompareKeyExists("constructor-key", true),
+			resource.CompareKeyExists("constructor-key"),
 		}
 		successOps := []resource.TxnOp{
 			resource.TxnPut("constructor-new", []byte("new-value")),
