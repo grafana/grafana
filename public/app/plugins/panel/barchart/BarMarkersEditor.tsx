@@ -29,7 +29,7 @@ export const barMarkersEditor = (builder: PanelOptionsEditorBuilder<Markers>, ct
   builder.addCustomEditor({
     id: 'vdxfe',
     path: '',
-    name: 'Editing Marker:',
+    name: 'Editing marker:',
     editor: MarkerDragDropEditor,
     showIf: (opts) => opts.markerGroups.length > 0,
   });
@@ -38,13 +38,13 @@ export const barMarkersEditor = (builder: PanelOptionsEditorBuilder<Markers>, ct
     
     builder.addFieldNamePicker({
       path: `.markerGroups[${i}].targetField`,
-      name: t('barchart.editor.markers.label', 'Target Field'),
+      name: t('barchart.editor.markers.label', 'Target field'),
       showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
       description: t('barchart.editor.targetfield.descr', 'Picks the field on which the markers will appear'),
     });
     builder.addFieldNamePicker({
       path: `.markerGroups[${i}].dataField`,
-      name: t('barchart.editor.markers.label', 'Data Field'),
+      name: t('barchart.editor.markers.label', 'Data field'),
       showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
       description: t(
         'barchart.editor.datafield.descr',
@@ -103,7 +103,7 @@ export const barMarkersEditor = (builder: PanelOptionsEditorBuilder<Markers>, ct
 
     builder.addSliderInput({
       path: `.markerGroups[${i}].opts.strokeWidth`,
-      name: t('barchart.editor.markers.strokeWidth', 'Stroke Width'),
+      name: t('barchart.editor.markers.strokeWidth', 'Stroke width'),
       showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
       settings: {
         defaultValue: 3,
@@ -128,7 +128,7 @@ export const addMarkerEditor = ({ context, onChange, value }: StandardEditorProp
       dataField: '',
       opts: {
         label: `Marker ${markers.length + 1}`,
-        color: 'rgb(184, 119, 217)',
+        color: 'purple',
         shape: 'cross',
         size: 30,
         opacity: 1,
