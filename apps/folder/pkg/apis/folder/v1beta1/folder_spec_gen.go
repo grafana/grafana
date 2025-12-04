@@ -12,7 +12,3 @@ type FolderSpec struct {
 func NewFolderSpec() *FolderSpec {
 	return &FolderSpec{}
 }
-
-func NewFolderStatus() *FolderStatus {
-	return &FolderStatus{}
-}
