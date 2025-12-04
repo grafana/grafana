@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 
-import { LogGroup } from '../../../types';
+import { LogGroup } from '../../../dataquery.gen';
 import getStyles from '../../styles';
 
 type CrossAccountLogsQueryProps = {
