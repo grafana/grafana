@@ -316,6 +316,10 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     [transformations, transformsTab]
   );
 
+  const handleOpenQueryInspector = useCallback(() => {
+    queriesTab?.onOpenInspector();
+  }, [queriesTab]);
+
   // Get data for transformations drawer
   const sourceData = queryRunner?.useState();
   const series = sourceData?.data?.series || [];
@@ -339,6 +343,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           onQueryLibrarySave={handleQueryLibrarySave}
           onQueryLibraryClose={handleQueryLibraryClose}
           onOpenQueryLibrary={handleOpenQueryLibrary}
+          onOpenQueryInspector={handleOpenQueryInspector}
           isDebugMode={isDebugMode}
           debugPosition={debugPosition}
         />

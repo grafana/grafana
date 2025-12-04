@@ -197,7 +197,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     pageContainerWithControls: css({
       gridTemplateAreas: `
-        "controls controls"
+        "sidebar controls"
         "sidebar panels"`,
       gridTemplateRows: 'auto 1fr',
     }),
@@ -210,6 +210,7 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       maxHeight: '100%',
       overflow: 'auto',
+      paddingTop: theme.spacing(2),
     }),
     expandDataSidebar: css({
       width: theme.spacing(6),

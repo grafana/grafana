@@ -45,6 +45,7 @@ interface ItemModeProps {
   onRemoveTransform?: (index: number) => void;
   onToggleTransformVisibility?: (index: number) => void;
   onOpenQueryLibrary?: (mode: 'browse' | 'save') => void;
+  onOpenQueryInspector?: () => void;
   isDebugMode?: boolean;
   debugPosition?: number;
   queryLibraryMode?: never;
@@ -59,6 +60,7 @@ interface QueryLibraryModeProps {
   onRemoveTransform?: never;
   onToggleTransformVisibility?: never;
   onOpenQueryLibrary?: never;
+  onOpenQueryInspector?: never;
   queryLibraryMode: 'browse' | 'save';
   onSelectQuery?: () => void;
   onSaveQuery?: () => void;
@@ -152,6 +154,7 @@ function ItemHeader({
   onRemoveTransform,
   onToggleTransformVisibility,
   onOpenQueryLibrary,
+  onOpenQueryInspector,
   isDebugMode,
   debugPosition,
 }: ItemModeProps) {
@@ -567,6 +570,11 @@ function ItemHeader({
                     icon="trash-alt"
                     onClick={onRemoveQuery}
                   />
+                  <Menu.Item
+                    label={t('dashboard-scene.detail-view-header.query-inspector', 'Query inspector')}
+                    icon="wrench"
+                    onClick={onOpenQueryInspector}
+                  />
                 </Menu>
               }
             >
@@ -693,6 +701,7 @@ export const DetailViewHeader = (props: DetailViewHeaderProps) => {
       onRemoveTransform={props.onRemoveTransform}
       onToggleTransformVisibility={props.onToggleTransformVisibility}
       onOpenQueryLibrary={props.onOpenQueryLibrary}
+      onOpenQueryInspector={props.onOpenQueryInspector}
       isDebugMode={props.isDebugMode}
       debugPosition={props.debugPosition}
     />
@@ -709,7 +718,7 @@ const getStyles = (theme: GrafanaTheme2, config: { color: string }) => {
       borderLeft: `4px solid ${config.color}`,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.secondary,
-      minHeight: '41px',
+      minHeight: theme.spacing(6),
     }),
     headerContent: css({
       display: 'flex',

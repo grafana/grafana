@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { memo, useCallback, useRef } from 'react';
 
-import { DataFrame, DataQuery, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { VizPanel } from '@grafana/scenes';
+import { SceneDataQuery, VizPanel } from '@grafana/scenes';
 import { Container, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
@@ -18,7 +18,7 @@ import { TabId, QueryTransformItem } from './types';
 export interface QueryLibraryMode {
   active: boolean;
   mode: 'browse' | 'save';
-  currentQuery?: DataQuery;
+  currentQuery?: SceneDataQuery;
 }
 
 interface DetailViewProps {
@@ -33,10 +33,11 @@ interface DetailViewProps {
   transformationData?: DataFrame[];
   onGoToQueries?: () => void;
   queryLibraryMode?: QueryLibraryMode;
-  onQueryLibrarySelect?: (query: DataQuery) => void;
+  onQueryLibrarySelect?: (query: SceneDataQuery) => void;
   onQueryLibrarySave?: (name: string, description: string) => void;
   onQueryLibraryClose?: () => void;
   onOpenQueryLibrary?: (mode: 'browse' | 'save', index?: number) => void;
+  onOpenQueryInspector?: () => void;
   isDebugMode?: boolean;
   debugPosition?: number;
 }
@@ -58,6 +59,7 @@ export const DetailView = memo(
     onQueryLibrarySave,
     onQueryLibraryClose,
     onOpenQueryLibrary,
+    onOpenQueryInspector,
     isDebugMode,
     debugPosition,
   }: DetailViewProps) => {
@@ -119,22 +121,27 @@ export const DetailView = memo(
         );
       }
 
-      if (selectedItem.type === 'query' && 'refId' in selectedItem.data) {
+      if (selectedItem.type === 'query') {
         const query = selectedItem.data;
         return (
           <>
-            <DetailViewHeader selectedItem={selectedItem} panel={panel} onOpenQueryLibrary={onOpenQueryLibrary} />
+            <DetailViewHeader
+              selectedItem={selectedItem}
+              panel={panel}
+              onOpenQueryLibrary={onOpenQueryLibrary}
+              onOpenQueryInspector={onOpenQueryInspector}
+            />
             <ScrollContainer>
               <QueryDetailView panel={panel} query={query} queryIndex={selectedItem.index} />
             </ScrollContainer>
           </>
         );
-      } else if (selectedItem.type === 'expression' && 'refId' in selectedItem.data) {
+      } else if (selectedItem.type === 'expression') {
         const data = selectedItem.data;
         if (isExpressionQuery(data)) {
           return (
             <>
-              <DetailViewHeader selectedItem={selectedItem} panel={panel} />
+              <DetailViewHeader selectedItem={selectedItem} panel={panel} onOpenQueryInspector={onOpenQueryInspector} />
               <ScrollContainer>
                 <ExpressionDetailView panel={panel} expression={data} expressionIndex={selectedItem.index} />
               </ScrollContainer>
@@ -143,7 +150,7 @@ export const DetailView = memo(
         }
       } else {
         const transformsTab = tabs.find((t): t is PanelDataTransformationsTab => t.tabId === TabId.Transformations);
-        if (transformsTab && 'id' in selectedItem.data) {
+        if (transformsTab) {
           return (
             <>
               <DetailViewHeader
@@ -166,24 +173,27 @@ export const DetailView = memo(
 
       return null;
     }, [
-      selectedItem,
-      panel,
-      tabs,
-      styles.emptyState,
-      onRemoveTransform,
-      onToggleTransformVisibility,
       isAddingTransform,
       onAddTransformation,
       onCancelAddTransform,
+      queryLibraryMode?.active,
+      queryLibraryMode?.mode,
+      queryLibraryMode?.currentQuery,
+      onQueryLibraryClose,
+      selectedItem,
       transformationData,
       onGoToQueries,
-      queryLibraryMode,
-      onQueryLibrarySelect,
-      onQueryLibrarySave,
-      onQueryLibraryClose,
-      onOpenQueryLibrary,
       handleSelectQueryFromHeader,
       handleSaveQueryFromHeader,
+      onQueryLibrarySelect,
+      onQueryLibrarySave,
+      styles.emptyState,
+      panel,
+      onOpenQueryLibrary,
+      onOpenQueryInspector,
+      tabs,
+      onRemoveTransform,
+      onToggleTransformVisibility,
       isDebugMode,
       debugPosition,
     ]);

@@ -90,7 +90,7 @@ export function PanelDataTransformationsTabRendered({
       return;
     }
 
-    const queriesTab = parent.state.editorRef.resolve().state.dataPaneTabs.find((tab) => tab.tabId === TabId.Queries);
+    const queriesTab = parent.state.tabs.find((tab) => tab.tabId === TabId.Queries);
     if (!(queriesTab instanceof PanelDataQueriesTab)) {
       return;
     }

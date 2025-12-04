@@ -780,8 +780,6 @@ export const QueryTransformList = memo(
 QueryTransformList.displayName = 'QueryTransformList';
 
 const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataPaneColors>) => {
-  const headerHeight = 41;
-  const footerHeight = 32;
   const barBase = {
     padding: theme.spacing(0.5, 2),
     background: theme.colors.background.secondary,
@@ -804,7 +802,7 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
     }),
     header: css({
       ...barBase,
-      height: headerHeight,
+      height: theme.spacing(6),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
 
       '& > div:first-child': {
@@ -929,7 +927,7 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
     }),
     footer: css({
       ...barBase,
-      height: footerHeight,
+      height: theme.spacing(4),
       borderTop: `1px solid ${theme.colors.border.weak}`,
       gap: theme.spacing(1),
       position: 'relative',
