@@ -112,11 +112,44 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return [...parentPath, node];
   };
 
+  /**
+   * Determines the path to a scope node, preferring defaultPath from scope metadata.
+   * This is the single source of truth for path resolution.
+   * @param scopeId - The scope ID to get the path for
+   * @param scopeNodeId - Optional scope node ID to fall back to if no defaultPath
+   * @returns Promise resolving to array of ScopeNode objects representing the path
+   */
+  private async getPathForScope(scopeId: string, scopeNodeId?: string): Promise<ScopeNode[]> {
+    // 1. Check if scope has defaultPath (preferred method)
+    const scope = this.state.scopes[scopeId];
+    if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 0) {
+      // Batch fetch all nodes in defaultPath
+      return await this.getScopeNodes(scope.spec.defaultPath);
+    }
+
+    // 2. Fall back to calculating path from scopeNodeId
+    if (scopeNodeId) {
+      return await this.getNodePath(scopeNodeId);
+    }
+
+    return [];
+  }
+
   public resolvePathToRoot = async (
     scopeNodeId: string,
-    tree: TreeNode
+    tree: TreeNode,
+    scopeId?: string
   ): Promise<{ path: ScopeNode[]; tree: TreeNode }> => {
-    const nodePath = await this.getNodePath(scopeNodeId);
+    let nodePath: ScopeNode[];
+
+    // Use unified path resolution method
+    if (scopeId) {
+      nodePath = await this.getPathForScope(scopeId, scopeNodeId);
+    } else {
+      // Fall back to node-based path when no scopeId provided
+      nodePath = await this.getNodePath(scopeNodeId);
+    }
+
     const newTree = insertPathNodesIntoTree(tree, nodePath);
 
     this.updateState({ tree: newTree });
@@ -356,16 +389,38 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
 
       const newScopesState = { ...this.state.scopes };
-      for (const scope of fetchedScopes) {
-        newScopesState[scope.metadata.name] = scope;
+
+      // Handle case where API returns non-array
+      if (Array.isArray(fetchedScopes)) {
+        for (const scope of fetchedScopes) {
+          newScopesState[scope.metadata.name] = scope;
+        }
+
+        // Pre-fetch all paths using defaultPath to improve performance
+        // This makes the selector open instantly since all nodes are already cached
+        const allPathNodeIds = new Set<string>();
+        for (const scope of fetchedScopes) {
+          if (scope.spec.defaultPath && scope.spec.defaultPath.length > 0) {
+            scope.spec.defaultPath.forEach((nodeId) => allPathNodeIds.add(nodeId));
+          }
+        }
+
+        // Batch fetch all path nodes at once if any defaultPaths exist
+        if (allPathNodeIds.size > 0) {
+          await this.getScopeNodes(Array.from(allPathNodeIds));
+        }
+
+        const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+
+        // If parentNodeId is provided, use it directly as the parent node
+        // If not provided, try to get the parent from the scope node
+        // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
+        const parentNodeId = scopes[0]?.parentNodeId || scopeNode?.spec.parentName;
+        const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
+
+        this.addRecentScopes(fetchedScopes, parentNode);
       }
 
-      // If not provided, try to get the parent from the scope node
-      // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
-      const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
-      const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
-
-      this.addRecentScopes(fetchedScopes, parentNode, scopes[0]?.scopeNodeId);
       this.updateState({ scopes: newScopesState, loading: false });
     }
   };
@@ -472,6 +527,60 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   /**
+   * Expands tree to show the path to the first selected scope.
+   * This is a helper method that centralizes the expansion logic.
+   * @param tree - The tree to expand
+   * @returns The expanded tree
+   */
+  private async expandToSelectedScope(tree: TreeNode): Promise<TreeNode> {
+    if (!this.state.selectedScopes.length) {
+      return tree;
+    }
+
+    const firstScope = this.state.selectedScopes[0];
+    const scopeId = firstScope.scopeId;
+    const scopeNodeId = firstScope.scopeNodeId || firstScope.parentNodeId;
+
+    if (!scopeId && !scopeNodeId) {
+      return tree;
+    }
+
+    try {
+      // Get the path using our unified method
+      const pathNodes = await this.getPathForScope(scopeId, scopeNodeId);
+
+      if (pathNodes.length === 0) {
+        return tree;
+      }
+
+      // Insert path into tree
+      let newTree = insertPathNodesIntoTree(tree, pathNodes);
+
+      // Get string path for tree operations
+      const stringPath = pathNodes.map((n) => n.metadata.name);
+      stringPath.unshift(''); // Add root
+
+      // Load children of the last node if needed
+      const lastNode = pathNodes[pathNodes.length - 1];
+      const pathToLastNode = stringPath.slice(0, -1);
+      const treeNode = treeNodeAtPath(newTree, pathToLastNode);
+
+      if (treeNode && !treeNode.children) {
+        const { newTree: withChildren } = await this.loadNodeChildren(pathToLastNode, treeNode, '');
+        newTree = withChildren;
+      }
+
+      // Expand the path
+      newTree = expandNodes(newTree, stringPath);
+
+      return newTree;
+    } catch (error) {
+      console.error('Failed to expand to selected scope', error);
+      return tree;
+    }
+  }
+
+  /**
    * Opens the scopes selector drawer and loads the root nodes if they are not loaded yet.
    */
   public open = async () => {
@@ -496,48 +605,13 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     // First close all nodes
-    let newTree = closeNodes(this.state.tree);
+    const closedTree = closeNodes(this.state.tree);
 
-    if (this.state.selectedScopes.length && this.state.selectedScopes[0].scopeNodeId) {
-      let path = getPathOfNode(this.state.selectedScopes[0].scopeNodeId, this.state.nodes);
-
-      // Get node at path, and request it's children if they don't exist yet
-      let nodeAtPath = treeNodeAtPath(newTree, path);
-
-      // In the cases where nodes are not in the tree yet
-      if (!nodeAtPath) {
-        try {
-          const result = await this.resolvePathToRoot(this.state.selectedScopes[0].scopeNodeId, newTree);
-          newTree = result.tree;
-          // Update path to use the resolved path since nodes have been fetched
-          path = result.path.map((n) => n.metadata.name);
-          path.unshift('');
-          nodeAtPath = treeNodeAtPath(newTree, path);
-        } catch (error) {
-          console.error('Failed to resolve path to root', error);
-        }
-      }
-
-      // We have resolved to root, which means the parent node should be available
-      let parentPath = path.slice(0, -1);
-      let parentNodeAtPath = treeNodeAtPath(newTree, parentPath);
-
-      if (parentNodeAtPath && !parentNodeAtPath.childrenLoaded) {
-        // This will update the tree with the children
-        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(parentPath, parentNodeAtPath, '');
-        newTree = newTreeWithChildren;
-      }
-
-      // Expand the nodes to the selected scope - must be done after loading children
-      try {
-        newTree = expandNodes(newTree, parentPath);
-      } catch (error) {
-        console.error('Failed to expand nodes', error);
-      }
-    }
+    // Expand to selected scope if any
+    const expandedTree = await this.expandToSelectedScope(closedTree);
 
     this.resetSelection();
-    this.updateState({ tree: newTree, opened: true });
+    this.updateState({ tree: expandedTree, opened: true });
   };
 
   public closeAndReset = () => {
@@ -580,9 +654,14 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // Get nodes that are not in the cache
     const nodesToFetch = scopeNodeNames.filter((name) => !nodesMap[name]);
 
-    const nodes = await this.apiClient.fetchMultipleScopeNodes(nodesToFetch);
-    for (const node of nodes) {
-      nodesMap[node.metadata.name] = node;
+    if (nodesToFetch.length > 0) {
+      const nodes = await this.apiClient.fetchMultipleScopeNodes(nodesToFetch);
+      // Handle case where API returns undefined or non-array
+      if (Array.isArray(nodes)) {
+        for (const node of nodes) {
+          nodesMap[node.metadata.name] = node;
+        }
+      }
     }
 
     const newNodes = { ...this.state.nodes, ...nodesMap };
