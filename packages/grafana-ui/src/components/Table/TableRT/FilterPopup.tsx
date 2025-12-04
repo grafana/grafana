@@ -44,10 +44,7 @@ export const FilterPopup = ({
   const [matchCase, setMatchCase] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const onCancel = useCallback(() => {
-    console.log('onCancel');
-    onClose();
-  }, [onClose]);
+  const onCancel = useCallback(() => onClose(), [onClose]);
 
   const onFilter = useCallback(
     (event: React.MouseEvent) => {
