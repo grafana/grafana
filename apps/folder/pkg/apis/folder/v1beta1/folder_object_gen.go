@@ -28,7 +28,7 @@ type Folder struct {
 func NewFolder() *Folder {
 	return &Folder{
 		Spec:   *NewFolderSpec(),
-		Status: *NewFolderStatus(),
+		Status: FolderStatus{},
 	}
 }
 
