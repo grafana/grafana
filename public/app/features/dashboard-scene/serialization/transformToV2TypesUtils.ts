@@ -34,6 +34,7 @@ export function transformCursorSynctoEnum(cursorSync?: DashboardCursorSyncV1): D
       return defaultDashboardV2Spec().cursorSync;
   }
 }
+
 export function transformVariableRefreshToEnum(refresh?: VariableRefreshV1): VariableRefresh {
   switch (refresh) {
     case 0:
