@@ -5,8 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
-import { EXPRESSION_ICON_MAP } from 'app/features/expressions/consts';
-import { ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionQueryType, getExpressionIcon } from 'app/features/expressions/types';
 
 interface AddDataItemMenuProps {
   onAddQuery: (index?: number) => void;
@@ -83,12 +82,7 @@ export const AddDataItemMenu = memo(
     }
 
     const expressionSubItems = expressionTypes.map(({ type, label }) => (
-      <Menu.Item
-        key={type}
-        label={label}
-        icon={EXPRESSION_ICON_MAP[type]}
-        onClick={() => onAddExpression(type, index)}
-      />
+      <Menu.Item key={type} label={label} icon={getExpressionIcon(type)} onClick={() => onAddExpression(type, index)} />
     ));
 
     const menu = (

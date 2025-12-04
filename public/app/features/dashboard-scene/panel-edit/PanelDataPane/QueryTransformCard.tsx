@@ -2,74 +2,94 @@ import { css } from '@emotion/css';
 import clsx from 'clsx';
 import { memo, useMemo } from 'react';
 
-import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneDataQuery } from '@grafana/scenes';
 import { Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
-import { ExpressionQueryType } from 'app/features/expressions/types';
+import { isExpressionQuery } from 'app/features/expressions/guards';
+import { getExpressionIcon } from 'app/features/expressions/types';
 
 import { usePanelDataPaneColors } from './theme';
-import { queryItemId, transformItemId } from './utils';
+import { QueryTransformItem } from './types';
 
 interface QueryTransformCardProps {
-  item: SceneDataQuery | DataTransformerConfig;
-  type: 'query' | 'transform' | 'expression';
-  index: number;
+  item: QueryTransformItem;
   isSelected: boolean;
   onClick: () => void;
   onDuplicate?: () => void;
   onRemove?: () => void;
   onToggleVisibility?: () => void;
-  onAddQuery: (index: number) => void;
-  onAddTransform: (index: number) => void;
-  onAddExpression: (type: ExpressionQueryType, index: number) => void;
 }
 
 export const QueryTransformCard = memo(
   ({
-    item,
-    type,
-    index,
+    item: { data, type, id: itemId, index },
     isSelected,
     onClick,
     onDuplicate,
     onRemove,
     onToggleVisibility,
-    onAddQuery,
-    onAddTransform,
-    onAddExpression,
   }: QueryTransformCardProps) => {
     const colors = usePanelDataPaneColors();
     const styles = useStyles2(getStyles, colors);
 
-    const getName = (): string => {
-      if ((type === 'query' || type === 'expression') && 'refId' in item) {
-        return item.refId || `${type === 'expression' ? 'Expression' : 'Query'} ${index + 1}`;
-      } else if ('id' in item) {
-        return item.id.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
-      }
-      return '';
-    };
-
     const datasourceIcon = useMemo(() => {
-      if (type === 'query' && 'datasource' in item && item.datasource) {
+      if (type === 'query' && 'datasource' in data && data.datasource) {
         try {
-          const dsSettings = getDataSourceSrv().getInstanceSettings(item.datasource);
+          const dsSettings = getDataSourceSrv().getInstanceSettings(data.datasource);
           return dsSettings?.meta.info.logos.small;
         } catch {
           return undefined;
         }
       }
       return undefined;
-    }, [type, item]);
+    }, [type, data]);
 
     const isHidden =
-      ((type === 'query' || type === 'expression') && 'hide' in item && item.hide) ||
-      (type === 'transform' && 'disabled' in item && item.disabled);
-    const icon = type === 'query' ? 'database' : type === 'expression' ? 'code' : 'pivot';
-    const typeLabel = type === 'query' ? 'Query' : type === 'expression' ? 'Expression' : 'Transformation';
-    const name = getName();
+      ((type === 'query' || type === 'expression') && 'hide' in data && data.hide) ||
+      (type === 'transform' && 'disabled' in data && data.disabled);
+
+    const typeLabel = useMemo(() => {
+      switch (type) {
+        case 'query':
+          return t('dashboard-scene.query-transform-card.query.label', 'Query');
+        case 'expression':
+          return t('dashboard-scene.query-transform-card.expression.label', 'Expression');
+        case 'transform':
+          return t('dashboard-scene.query-transform-card.transform.label', 'Transform');
+        default:
+          throw new Error('unreachable');
+      }
+    }, [type]);
+
+    const name = useMemo(() => {
+      switch (type) {
+        case 'query':
+        case 'expression': {
+          // FIXME untranslated string
+          return data.refId || `${type === 'expression' ? 'Expression' : 'Query'} ${index + 1}`;
+        }
+        case 'transform':
+          return data.id.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+        default:
+          throw new Error('unreachable');
+      }
+    }, [type, data, index]);
+
+    const icon = useMemo((): IconName => {
+      switch (type) {
+        case 'query':
+          return 'database';
+        case 'expression': {
+          const type = isExpressionQuery(data) ? data.type : undefined;
+          return getExpressionIcon(type);
+        }
+        case 'transform':
+          return 'pivot';
+        default:
+          throw new Error('unreachable');
+      }
+    }, [data, type]);
 
     const handleAction = (e: React.MouseEvent, action: () => void) => {
       e.stopPropagation();
@@ -91,7 +111,7 @@ export const QueryTransformCard = memo(
         onClick={onClick}
         onKeyDown={handleKeyDown}
         data-testid={`${type}-card-${index}`}
-        data-card-id={'refId' in item ? queryItemId(item) : transformItemId(index)}
+        data-card-id={itemId}
       >
         {/* Header with type and action icons */}
         <div

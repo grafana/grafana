@@ -11,8 +11,7 @@ import { DetailViewHeader } from './DetailViewHeader';
 import { ExpressionDetailView } from './ExpressionDetailView';
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
 import { QueryDetailView } from './QueryDetailView';
-import { QueryTransformItem } from './QueryTransformList';
-import { TabId } from './types';
+import { TabId, QueryTransformItem } from './types';
 
 interface DetailViewProps {
   selectedItem: QueryTransformItem | undefined;

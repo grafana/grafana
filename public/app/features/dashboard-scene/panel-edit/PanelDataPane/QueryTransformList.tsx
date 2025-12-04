@@ -2,9 +2,8 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { HTMLAttributes, memo, useCallback, useMemo, useState } from 'react';
 
-import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneDataQuery } from '@grafana/scenes';
 import { Button, Icon, ScrollContainer, Stack, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
@@ -12,20 +11,14 @@ import { AddDataItemMenu } from './AddDataItemMenu';
 import { AiModeCard } from './AiModeCard';
 import { ConnectionLines } from './ConnectionLines';
 import { QueryTransformCard } from './QueryTransformCard';
-
-export interface QueryTransformItem {
-  id: string;
-  type: 'query' | 'transform' | 'expression';
-  data: SceneDataQuery | DataTransformerConfig;
-  index: number;
-}
+import { QueryItem, QueryTransformItem, TransformItem } from './types';
 
 const CARD_HEIGHT = 70;
 
 interface QueryTransformListProps {
   allItems: QueryTransformItem[];
-  dataSourceItems: QueryTransformItem[];
-  transformItems: QueryTransformItem[];
+  dataSourceItems: QueryItem[];
+  transformItems: TransformItem[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onAddQuery: (index?: number) => void;
@@ -104,7 +97,7 @@ export const QueryTransformList = memo(
       const conns: Array<{ from: string; to: string }> = [];
 
       allItems.forEach((item) => {
-        if (item.type === 'expression' && 'expression' in item.data && 'refId' in item.data) {
+        if (item.type === 'expression') {
           const expr = item.data;
 
           if ('expression' in expr && typeof expr.expression === 'string' && 'type' in expr) {
@@ -135,7 +128,7 @@ export const QueryTransformList = memo(
 
     // Filter connections to only show for selected card
     const visibleConnections = useMemo(() => {
-      if (!activeItem || !('refId' in activeItem.data)) {
+      if (activeItem?.type !== 'query' && activeItem?.type !== 'expression') {
         return [];
       }
 
@@ -249,9 +242,7 @@ export const QueryTransformList = memo(
         visibleConnectionsRefIds.add(conn.from);
         visibleConnectionsRefIds.add(conn.to);
       }
-      return dataSourceItems.filter((item) => {
-        return 'refId' in item.data && visibleConnectionsRefIds.has(item.data.refId);
-      });
+      return dataSourceItems.filter((item) => visibleConnectionsRefIds.has(item.data.refId));
     }, [dataSourceItems, viewingConnections, visibleConnections]);
 
     const canAdd = !isDragging && !viewingConnections;
@@ -382,18 +373,13 @@ export const QueryTransformList = memo(
                                               className={snapshot.isDragging ? styles.dragging : undefined}
                                             >
                                               <QueryTransformCard
-                                                item={item.data}
-                                                type={item.type}
-                                                index={item.index}
+                                                item={item}
                                                 isSelected={
                                                   isAiMode
                                                     ? selectedContextIds.includes(item.id)
                                                     : selectedId === item.id
                                                 }
                                                 onClick={() => handleCardClick(item.id)}
-                                                onAddExpression={onAddExpression}
-                                                onAddQuery={onAddQuery}
-                                                onAddTransform={onAddTransform}
                                                 {...getHandlers(item)}
                                               />
                                             </div>
@@ -484,18 +470,13 @@ export const QueryTransformList = memo(
                                               className={snapshot.isDragging ? styles.dragging : undefined}
                                             >
                                               <QueryTransformCard
-                                                item={item.data}
-                                                type={item.type}
-                                                index={item.index}
+                                                item={item}
                                                 isSelected={
                                                   isAiMode
                                                     ? selectedContextIds.includes(item.id)
                                                     : selectedId === item.id
                                                 }
                                                 onClick={() => handleCardClick(item.id)}
-                                                onAddExpression={onAddExpression}
-                                                onAddQuery={onAddQuery}
-                                                onAddTransform={onAddTransform}
                                                 {...getHandlers(item)}
                                               />
                                             </div>

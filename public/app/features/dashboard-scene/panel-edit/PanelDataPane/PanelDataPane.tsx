@@ -27,10 +27,10 @@ import { DetailView } from './DetailView';
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
-import { QueryTransformList, QueryTransformItem } from './QueryTransformList';
+import { QueryTransformList } from './QueryTransformList';
 import { SavedQueriesDrawer } from './SavedQueriesDrawer';
 import { TransformationsDrawer } from './TransformationsDrawer';
-import { PanelDataPaneTab, TabId } from './types';
+import { PanelDataPaneTab, TabId, QueryItem, TransformItem } from './types';
 import { isDataTransformerConfig, queryItemId, transformItemId } from './utils';
 
 export interface PanelDataPaneState extends SceneObjectState {
@@ -147,14 +147,14 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   }, [queryRunner]);
 
   // Build separate lists for queries/expressions and transformations
-  const { dataSourceItems, transformItems, allItems } = useMemo(() => {
-    const dataSourceItems: QueryTransformItem[] = [];
-    const transformItems: QueryTransformItem[] = [];
+  const { queryExpressionItems, transformItems, allItems } = useMemo(() => {
+    const queryExpressionItems: QueryItem[] = [];
+    const transformItems: TransformItem[] = [];
 
     // Add queries and expressions
     for (let i = 0; i < (queries?.length ?? 0); i++) {
       const query = queries![i];
-      dataSourceItems.push({
+      queryExpressionItems.push({
         id: queryItemId(query),
         type: isExpressionQuery(query) ? 'expression' : 'query',
         data: query,
@@ -176,9 +176,9 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     }
 
     return {
-      dataSourceItems,
+      queryExpressionItems,
       transformItems,
-      allItems: [...dataSourceItems, ...transformItems],
+      allItems: [...queryExpressionItems, ...transformItems],
     };
   }, [queries, transformations]);
 
@@ -423,7 +423,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         <div {...primaryProps} className={cx(primaryProps.className, styles.leftPane)}>
           <QueryTransformList
             allItems={allItems}
-            dataSourceItems={dataSourceItems}
+            dataSourceItems={queryExpressionItems}
             transformItems={transformItems}
             selectedId={effectiveSelectedId}
             onSelect={handleSelect}

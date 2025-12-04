@@ -27,8 +27,8 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
-import { QueryTransformItem } from './QueryTransformList';
 import { SavedQueriesDrawer } from './SavedQueriesDrawer';
+import { QueryTransformItem } from './types';
 
 interface DetailViewHeaderProps {
   selectedItem: QueryTransformItem;
