@@ -36,7 +36,7 @@ const playerY = 23;
 const userMissile = '╫';
 const userMissileRegex = new RegExp(userMissile, 'g');
 const missileSpeed = 0.06;
-const enemySpeed = 0.02;
+const enemySpeed = 0.001;
 
 type Missile = {
   x: number;
@@ -52,14 +52,16 @@ type Enemy = {
   body: string;
   health: number;
 };
-const enemyTypes = ['<@_@>', '<^_^>', '[-_-]', '<o_o>', '[=U=]'];
+const ufo = '[=U=]';
+const enemyTypes = ['<@_@>', '<^_^>', '[-_-]', '<o_o>', ufo];
+const enemyTypeUfo = enemyTypes.indexOf(ufo);
 const explosion = 'xX*Xx';
 const enemySprites = [
   [explosion, '<@_@>'],
-  [explosion, ' ^_^ ', '<^_^>',],
-  [explosion, ' -_- ','(-_-)','[-_-]',],
-  [explosion, ' o_o ','co_oↄ','<o_o>','<o_o>',],
-  [explosion, ' =u= ', '(=u=)', '[=u=]', '[=U=]', '[=U=]'],
+  [explosion, ' ^_^ ', '<^_^>'],
+  [explosion, ' -_- ', '(-_-)', '[-_-]'],
+  [explosion, ' o_o ', 'co_oↄ', '<o_o>', '<o_o>'],
+  [explosion, ' =u= ', '(=u=)', ufo, ufo, ufo],
 ];
 
 const shield = '#';
@@ -148,7 +150,7 @@ function update(
         logLevel: LogLevel.unknown,
       });
     });
-    return { newGameState: logs, newUserMissiles: userMissiles, newEnemies: enemies };
+    return { newGameState: logs, newUserMissiles: userMissiles, newEnemies: newEnemies };
   }
 
   let newUserMissiles = userMissiles
@@ -165,18 +167,24 @@ function update(
 
       if (enemy.direction === 'r') {
         enemy.x = enemy.x + enemySpeed * dt;
-        if (Math.floor(enemy.x) - enemy.sourceX >= 5) {
+        if (enemy.type === enemyTypeUfo) {
+          if (Math.floor(enemy.x) === 74) {
+            enemy.direction = 'l';
+          }
+        } else if (Math.floor(enemy.x) - enemy.sourceX >= 5) {
           enemy.direction = 'l';
-          enemy.sourceX = Math.floor(enemy.x);
           if (!enemyBelow) {
             enemy.y += 1;
           }
         }
       } else {
         enemy.x = enemy.x - enemySpeed * dt;
-        if (Math.floor(enemy.x) - enemy.sourceX <= -5) {
+        if (enemy.type === enemyTypeUfo) {
+          if (Math.floor(enemy.x) === 0) {
+            enemy.direction = 'r';
+          }
+        } else if (Math.floor(enemy.x) - enemy.sourceX <= -5) {
           enemy.direction = 'r';
-          enemy.sourceX = Math.floor(enemy.x);
           if (!enemyBelow) {
             enemy.y += 1;
           }
@@ -205,7 +213,7 @@ function update(
       row.entry = handleEnvironmentCollisions(row.entry, newUserMissiles, index);
       newUserMissiles = newUserMissiles.filter((missile) => missile.hit === false);
     } else {
-      row.entry = render(row.entry, enemies, newUserMissiles, index);
+      row.entry = render(row.entry, newEnemies, newUserMissiles, index);
     }
     return createLogRow({
       uid: index.toString(),
@@ -270,7 +278,7 @@ function render(row: string, enemies: Enemy[], userMissiles: Missile[], y: numbe
   }
 
   let newRow = row.split('');
-  
+
   // Render enemies
   for (const enemy of enemies) {
     const sprite = enemySprites[enemy.type][enemy.health];
@@ -279,7 +287,7 @@ function render(row: string, enemies: Enemy[], userMissiles: Missile[], y: numbe
       newRow[startX + i] = sprite[i];
     }
   }
-  
+
   // Render missiles
   for (const missile of userMissiles) {
     newRow[missile.x] = userMissile;
