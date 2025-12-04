@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/setting"
@@ -48,15 +47,10 @@ func TestIntegrationFolderTree(t *testing.T) {
 	}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
-			flags := []string{}
-			if mode >= grafanarest.Mode3 { // make sure modes 0-3 work without it
-				flags = append(flags, featuremgmt.FlagUnifiedStorageSearch)
-			}
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:    true,
 				DisableAnonymous:     true,
 				APIServerStorageType: "unified",
-				EnableFeatureToggles: flags,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: mode,
@@ -65,6 +59,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 						DualWriterMode: mode,
 					},
 				},
+				UnifiedStorageEnableSearch: mode >= grafanarest.Mode3, // make sure modes 0-3 work without search enabled
 			})
 			defer helper.Shutdown()
 

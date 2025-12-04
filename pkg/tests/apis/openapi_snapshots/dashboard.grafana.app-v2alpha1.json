@@ -1275,6 +1275,24 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationEventFieldMapping": {
+        "description": "Annotation event field mapping. Defines how to map a data frame field to an annotation event field.",
+        "type": "object",
+        "properties": {
+          "regex": {
+            "description": "Regular expression to apply to the field value",
+            "type": "string"
+          },
+          "source": {
+            "description": "Source type for the field value",
+            "type": "string"
+          },
+          "value": {
+            "description": "Constant value to use when source is \"text\"",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationPanelFilter": {
         "type": "object",
         "required": [
@@ -1352,6 +1370,18 @@
             "type": "object",
             "additionalProperties": {
               "type": "object"
+            }
+          },
+          "mappings": {
+            "description": "Mappings define how to convert data frame fields to annotation event fields.",
+            "type": "object",
+            "additionalProperties": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationEventFieldMapping"
+                }
+              ]
             }
           },
           "name": {
@@ -1876,6 +1906,10 @@
             "description": "If true, includes current time range in the link as query params",
             "type": "boolean",
             "default": false
+          },
+          "placement": {
+            "description": "Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.",
+            "type": "string"
           },
           "tags": {
             "description": "List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards",
@@ -3100,7 +3134,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind": {
         "type": "object",
         "properties": {
           "AdhocVariableKind": {
@@ -3123,6 +3157,9 @@
           },
           "QueryVariableKind": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKind"
+          },
+          "SwitchVariableKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSwitchVariableKind"
           },
           "TextVariableKind": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTextVariableKind"
@@ -3520,7 +3557,7 @@
             "description": "Configured template variables.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind"
             }
           }
         }
@@ -3584,6 +3621,71 @@
           },
           "String": {
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSwitchVariableKind": {
+        "type": "object",
+        "required": [
+          "kind",
+          "spec"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSwitchVariableSpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSwitchVariableSpec": {
+        "description": "Switch variable specification",
+        "type": "object",
+        "required": [
+          "name",
+          "current",
+          "enabledValue",
+          "disabledValue",
+          "hide",
+          "skipUrlSync"
+        ],
+        "properties": {
+          "current": {
+            "type": "string",
+            "default": ""
+          },
+          "description": {
+            "type": "string"
+          },
+          "disabledValue": {
+            "type": "string",
+            "default": ""
+          },
+          "enabledValue": {
+            "type": "string",
+            "default": ""
+          },
+          "hide": {
+            "type": "string",
+            "default": ""
+          },
+          "label": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "skipUrlSync": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -3762,9 +3864,9 @@
             "default": ""
           },
           "value": {
+            "description": "Value null means -Infinity",
             "type": "number",
-            "format": "double",
-            "default": 0
+            "format": "double"
           }
         }
       },
@@ -3923,6 +4025,10 @@
           "properties"
         ],
         "properties": {
+          "__systemRef": {
+            "description": "Describes config override rules created when interacting with Grafana.",
+            "type": "string"
+          },
           "matcher": {
             "default": {},
             "allOf": [

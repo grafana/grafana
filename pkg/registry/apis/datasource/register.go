@@ -14,13 +14,13 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/promlib/models"
@@ -58,14 +58,9 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
-	// We want to expose just a limited set of plugins
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	explicitPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
-
-	// This requires devmode!
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !explicitPluginList && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis
+	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		return nil, nil
 	}
 
 	var err error
@@ -76,31 +71,14 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
 	}
 
-	ids := []string{
-		"grafana-testdata-datasource",
-		"prometheus",
-		"graphite",
-	}
-
 	for _, pluginJSON := range pluginJSONs {
-		if explicitPluginList && !slices.Contains(ids, pluginJSON.ID) {
-			continue // skip this one
-		}
-
-		if !pluginJSON.Backend {
-			continue // skip frontend only plugins
-		}
-
-		if pluginJSON.Type != plugins.TypeDataSource {
-			continue // skip non-datasource plugins
-		}
-
 		client, ok := pluginClient.(PluginClient)
 		if !ok {
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
 		}
 
-		builder, err = NewDataSourceAPIBuilder(pluginJSON,
+		builder, err = NewDataSourceAPIBuilder(
+			pluginJSON,
 			client,
 			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
@@ -241,6 +219,11 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		legacyStore := &legacyStorage{
 			datasources:  b.datasources,
 			resourceInfo: &ds,
+			dsConfigHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
+				Namespace: "grafana",
+				Name:      "ds_config_handler_requests_duration_seconds",
+				Help:      "Duration of requests handled by datasource configuration handlers",
+			}, []string{"code_path", "handler"}),
 		}
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {
@@ -305,14 +288,17 @@ func getDatasourcePlugins(pluginSources sources.Registry) ([]plugins.JSONData, e
 			return nil, err
 		}
 		for _, p := range res {
-			if p.Primary.JSONData.Type == plugins.TypeDataSource {
-				if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
-					backend.Logger.Info("Found duplicate plugin %s when registering API groups.", p.Primary.JSONData.ID)
-					continue
-				}
-				uniquePlugins[p.Primary.JSONData.ID] = true
-				pluginJSONs = append(pluginJSONs, p.Primary.JSONData)
+			if !p.Primary.JSONData.Backend || p.Primary.JSONData.Type != plugins.TypeDataSource {
+				continue
 			}
+
+			if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
+				backend.Logger.Info("Found duplicate plugin %s when registering API groups.", p.Primary.JSONData.ID)
+				continue
+			}
+
+			uniquePlugins[p.Primary.JSONData.ID] = true
+			pluginJSONs = append(pluginJSONs, p.Primary.JSONData)
 		}
 	}
 	return pluginJSONs, nil

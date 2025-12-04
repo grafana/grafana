@@ -29,8 +29,9 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -38,7 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -65,6 +66,7 @@ func RegisterAPIService(
 	rolesStorage RoleStorageBackend,
 	roleBindingsStorage RoleBindingStorageBackend,
 	externalGroupMappingStorageBackend ExternalGroupMappingStorageBackend,
+	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
 	userService legacyuser.Service,
@@ -75,13 +77,22 @@ func RegisterAPIService(
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 	registerMetrics(reg)
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	enableAuthnMutation := features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation)
+
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                       store,
+		userLegacyStore:             user.NewLegacyStore(store, accessClient, enableAuthnMutation),
+		saLegacyStore:               serviceaccount.NewLegacyStore(store, accessClient, enableAuthnMutation),
+		legacyTeamStore:             team.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation),
+		teamBindingLegacyStore:      teambinding.NewLegacyBindingStore(store, enableAuthnMutation),
+		ssoLegacyStore:              sso.NewLegacyStore(ssoService),
 		coreRolesStorage:            coreRolesStorage,
 		rolesStorage:                rolesStorage,
 		resourcePermissionsStorage:  resourcepermission.ProvideStorageBackend(dbProvider),
 		roleBindingsStorage:         roleBindingsStorage,
 		externalGroupMappingStorage: externalGroupMappingStorageBackend,
+		teamGroupsHandler:           teamGroupsHandlerImpl,
 		sso:                         ssoService,
 		authorizer:                  authorizer,
 		legacyAccessClient:          legacyAccessClient,
@@ -92,10 +103,10 @@ func RegisterAPIService(
 		reg:                         reg,
 		logger:                      log.New("iam.apis"),
 		features:                    features,
-		enableDualWriter:            true,
 		dual:                        dual,
 		unified:                     unified,
-		userSearchClient:            resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, user.NewUserLegacySearchClient(userService), features),
+		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
+			unified, user.NewUserLegacySearchClient(userService), features),
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -111,24 +122,23 @@ func NewAPIService(
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
-	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
-	noopStorage := noopstorage.ProvideStorageBackend()
 	registerMetrics(reg)
 	return &IdentityAccessManagementAPIBuilder{
-		store:                       store,
-		display:                     user.NewLegacyDisplayREST(store),
-		resourcePermissionsStorage:  resourcePermissionsStorage,
-		externalGroupMappingStorage: noopStorage,
-		logger:                      log.New("iam.apis"),
-		features:                    features,
-		zClient:                     zClient,
-		zTickets:                    make(chan bool, MaxConcurrentZanzanaWrites),
-		reg:                         reg,
+		store:                      store,
+		display:                    user.NewLegacyDisplayREST(store),
+		resourcePermissionsStorage: resourcePermissionsStorage,
+		logger:                     log.New("iam.apis"),
+		features:                   features,
+		accessClient:               accessClient,
+		zClient:                    zClient,
+		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
+		reg:                        reg,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				// For now only authorize resourcepermissions resource
 				if a.GetResource() == "resourcepermissions" {
-					return resourceAuthorizer.Authorize(ctx, a)
+					// Authorization is handled at the storage layer
+					return authorizer.DecisionAllow, "", nil
 				}
 
 				user, err := identity.GetRequester(ctx)
@@ -182,8 +192,7 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	enableAuthnMutation := b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation)
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	enableZanzanaSync := b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzZanzanaSync)
 
@@ -196,69 +205,66 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	})
 
 	teamResource := iamv0.TeamResourceInfo
-	teamLegacyStore := team.NewLegacyStore(b.store, b.legacyAccessClient, enableAuthnMutation)
-	storage[teamResource.StoragePath()] = teamLegacyStore
+	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[teamResource.StoragePath()] = teamUniStore
+
+	if b.legacyTeamStore != nil {
+		dw, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
+		if err != nil {
+			return err
+		}
+
+		storage[teamResource.StoragePath()] = dw
+	}
+
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
-
-	if b.enableDualWriter {
-		teamStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-
-		teamDW, err := opts.DualWriteBuilder(teamResource.GroupResource(), teamLegacyStore, teamStore)
-		if err != nil {
-			return err
-		}
-
-		storage[teamResource.StoragePath()] = teamDW
+	if b.teamGroupsHandler != nil {
+		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
 	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	teamBindingLegacyStore := teambinding.NewLegacyBindingStore(b.store, enableAuthnMutation)
-	storage[teamBindingResource.StoragePath()] = teamBindingLegacyStore
+	teamBindingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[teamBindingResource.StoragePath()] = teamBindingUniStore
 
-	if b.enableDualWriter {
-		teamBindingStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)
+	// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for TeamBinding to sync to Zanzana")
+		teamBindingUniStore.AfterCreate = b.AfterTeamBindingCreate
+		teamBindingUniStore.AfterDelete = b.AfterTeamBindingDelete
+		teamBindingUniStore.BeginUpdate = b.BeginTeamBindingUpdate
+	}
+
+	if b.teamBindingLegacyStore != nil {
+		dw, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), b.teamBindingLegacyStore, teamBindingUniStore)
 		if err != nil {
 			return err
 		}
-
-		teamBindingDW, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), teamBindingLegacyStore, teamBindingStore)
-		if err != nil {
-			return err
-		}
-
-		// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
-		if enableZanzanaSync {
-			b.logger.Info("Enabling hooks for TeamBinding to sync to Zanzana")
-			teamBindingStore.AfterCreate = b.AfterTeamBindingCreate
-			teamBindingStore.AfterDelete = b.AfterTeamBindingDelete
-			teamBindingStore.BeginUpdate = b.BeginTeamBindingUpdate
-		}
-
-		storage[teamBindingResource.StoragePath()] = teamBindingDW
+		storage[teamBindingResource.StoragePath()] = dw
 	}
 
 	// User store registration
 	userResource := iamv0.UserResourceInfo
-	legacyStore := user.NewLegacyStore(b.store, b.accessClient, enableAuthnMutation)
-	storage[userResource.StoragePath()] = legacyStore
+	userUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[userResource.StoragePath()] = userUniStore
 
-	if b.enableDualWriter {
-		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
+		userUniStore.AfterCreate = b.AfterUserCreate
+		userUniStore.BeginUpdate = b.BeginUserUpdate
+		userUniStore.AfterDelete = b.AfterUserDelete
+	}
 
-		if enableZanzanaSync {
-			b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
-			store.AfterCreate = b.AfterUserCreate
-			store.BeginUpdate = b.BeginUserUpdate
-			store.AfterDelete = b.AfterUserDelete
-		}
-
-		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
+	if b.userLegacyStore != nil {
+		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), b.userLegacyStore, userUniStore)
 		if err != nil {
 			return err
 		}
@@ -269,50 +275,46 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	// Service Accounts store registration
-	serviceAccountResource := iamv0.ServiceAccountResourceInfo
-	saLegacyStore := serviceaccount.NewLegacyStore(b.store, b.accessClient, enableAuthnMutation)
-	storage[serviceAccountResource.StoragePath()] = saLegacyStore
-
-	if b.enableDualWriter {
-		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, serviceAccountResource, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-
-		dw, err := opts.DualWriteBuilder(serviceAccountResource.GroupResource(), saLegacyStore, store)
-		if err != nil {
-			return err
-		}
-
-		storage[serviceAccountResource.StoragePath()] = dw
-	}
-
-	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
-
-	if b.sso != nil {
-		ssoResource := legacyiamv0.SSOSettingResourceInfo
-		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
-	}
-
-	externalGroupMappingResource := iamv0.ExternalGroupMappingResourceInfo
-	externalGroupMappingLegacyStore, err := NewLocalStore(externalGroupMappingResource, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.externalGroupMappingStorage)
+	saResource := iamv0.ServiceAccountResourceInfo
+	saUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, saResource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
-	storage[externalGroupMappingResource.StoragePath()] = externalGroupMappingLegacyStore
+	storage[saResource.StoragePath()] = saUniStore
 
-	if b.enableDualWriter {
-		externalGroupMappingStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, externalGroupMappingResource, opts.OptsGetter)
+	if b.saLegacyStore != nil {
+		dw, err := opts.DualWriteBuilder(saResource.GroupResource(), b.saLegacyStore, saUniStore)
+		if err != nil {
+			return err
+		}
+		storage[saResource.StoragePath()] = dw
+	}
+
+	storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
+
+	if b.ssoLegacyStore != nil {
+		ssoResource := legacyiamv0.SSOSettingResourceInfo
+		storage[ssoResource.StoragePath()] = b.ssoLegacyStore
+	}
+
+	extGroupMappingResource := iamv0.ExternalGroupMappingResourceInfo
+	extGroupMappingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, extGroupMappingResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[extGroupMappingResource.StoragePath()] = extGroupMappingUniStore
+
+	if b.externalGroupMappingStorage != nil {
+		extGroupMappingLegacyStore, err := NewLocalStore(extGroupMappingResource, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.externalGroupMappingStorage)
 		if err != nil {
 			return err
 		}
 
-		externalGroupMappingDW, err := opts.DualWriteBuilder(externalGroupMappingResource.GroupResource(), externalGroupMappingLegacyStore, externalGroupMappingStore)
+		dw, err := opts.DualWriteBuilder(extGroupMappingResource.GroupResource(), extGroupMappingLegacyStore, extGroupMappingUniStore)
 		if err != nil {
 			return err
 		}
-
-		storage[externalGroupMappingResource.StoragePath()] = externalGroupMappingDW
+		storage[extGroupMappingResource.StoragePath()] = dw
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -346,11 +348,17 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		if err != nil {
 			return err
 		}
+		if enableZanzanaSync {
+			b.logger.Info("Enabling hooks for RoleBinding to sync to Zanzana")
+			roleBindingStore.AfterCreate = b.AfterRoleBindingCreate
+			roleBindingStore.AfterDelete = b.AfterRoleBindingDelete
+			roleBindingStore.BeginUpdate = b.BeginRoleBindingUpdate
+		}
 		storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
-		if err := b.UpdateResourcePermissionsAPIGroup(apiGroupInfo, opts, storage, b.enableDualWriter, enableZanzanaSync); err != nil {
+		if err := b.UpdateResourcePermissionsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
 			return err
 		}
 	}
@@ -363,11 +371,19 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 	apiGroupInfo *genericapiserver.APIGroupInfo,
 	opts builder.APIGroupOptions,
 	storage map[string]rest.Storage,
-	enableDualWriter bool,
 	enableZanzanaSync bool,
 ) error {
-	var store rest.Storage
-	// Create the legacy store first
+	uniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.ResourcePermissionInfo, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[iamv0.ResourcePermissionInfo.StoragePath()] = uniStore
+
+	if b.resourcePermissionsStorage == nil {
+		// No legacy storage configured, nothing more to do
+		return nil
+	}
+
 	legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
 	if err != nil {
 		return err
@@ -383,23 +399,20 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 		legacyStore.AfterDelete = b.AfterResourcePermissionDelete
 	}
 
-	// Set the default store to the legacy store
-	store = legacyStore
-
-	if enableDualWriter {
-		// Create the dual write store (UniStore + LegacyStore)
-		uniStore, err := grafanaregistry.NewRegistryStore(apiGroupInfo.Scheme, iamv0.ResourcePermissionInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-
-		store, err = opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
-		if err != nil {
-			return err
-		}
+	dw, err := opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
+	if err != nil {
+		return err
 	}
 
-	storage[iamv0.ResourcePermissionInfo.StoragePath()] = store
+	// Not ideal, the alternative is to wrap both stores that dualwrite uses
+	regStoreDW, ok := dw.(storewrapper.K8sStorage)
+	if !ok {
+		return fmt.Errorf("expected RegistryStoreDualWrite, got %T", dw)
+	}
+
+	authzWrapper := storewrapper.New(regStoreDW, iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient))
+
+	storage[iamv0.ResourcePermissionInfo.StoragePath()] = authzWrapper
 	return nil
 }
 
@@ -490,6 +503,8 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return teambinding.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+		case *iamv0.ExternalGroupMapping:
+			return externalgroupmapping.ValidateOnCreate(typedObj)
 		}
 		return nil
 	case admission.Update:

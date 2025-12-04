@@ -1,49 +1,47 @@
 package plugins
 
 import (
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	restclient "k8s.io/client-go/rest"
+	"os"
 
-	"github.com/grafana/grafana-app-sdk/app"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/simple"
-	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
+
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
-	_ appsdkapiserver.AppInstaller    = (*PluginsAppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider = (*PluginsAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller    = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider = (*AppInstaller)(nil)
 )
 
-type PluginsAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 }
 
-func RegisterAppInstaller(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-) (*PluginsAppInstaller, error) {
-	installer := &PluginsAppInstaller{}
-	specificConfig := any(nil)
-	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, pluginsapp.New)
-	appConfig := app.Config{
-		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-		ManifestData:   *pluginsappapis.LocalManifest().ManifestData,
-		SpecificConfig: specificConfig,
+func ProvideAppInstaller() (*AppInstaller, error) {
+	grafanaComAPIURL := os.Getenv("GRAFANA_COM_API_URL")
+	if grafanaComAPIURL == "" {
+		grafanaComAPIURL = "https://grafana.com/api/plugins"
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, pluginsappapis.NewGoTypeAssociator())
+
+	coreProvider := meta.NewCoreProvider()
+	cloudProvider := meta.NewCloudProvider(grafanaComAPIURL)
+	metaProviderManager := meta.NewProviderManager(coreProvider, cloudProvider)
+
+	i, err := pluginsapp.ProvideAppInstaller(metaProviderManager)
 	if err != nil {
 		return nil, err
 	}
-	installer.AppInstaller = i
-	return installer, nil
+
+	return &AppInstaller{
+		AppInstaller: i,
+	}, nil
 }
 
 // GetAuthorizer returns the authorizer for the plugins app.
-func (p *PluginsAppInstaller) GetAuthorizer() authorizer.Authorizer {
+func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return pluginsapp.GetAuthorizer()
 }

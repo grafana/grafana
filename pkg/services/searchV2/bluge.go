@@ -513,9 +513,9 @@ func doSearchQuery(
 	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fLocation := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
+	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0) //nolint:staticcheck
 	fDSUIDs := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
-	fExplain := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
+	fExplain := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0) //nolint:staticcheck
 
 	fScore.Name = "score"
 	fUID.Name = "uid"

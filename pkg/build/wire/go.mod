@@ -1,15 +1,15 @@
 module github.com/grafana/grafana/pkg/build/wire
 
-go 1.25.3
+go 1.25.5
 
 require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/subcommands v1.2.0
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
-	golang.org/x/tools v0.38.0
+	golang.org/x/tools v0.39.0
 )
 
 require (
-	golang.org/x/mod v0.29.0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/mod v0.30.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
 )
