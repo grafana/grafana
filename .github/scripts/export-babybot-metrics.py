@@ -10,70 +10,94 @@ import argparse
 from datetime import datetime
 from collections import defaultdict
 
-def get_review_comments():
-    """Get all BabyBot review comments (resolvable ones)"""
+def get_prs_with_usability_review_label():
+    """Get all PRs with the usability-review label"""
     cmd = [
-        'gh', 'api', 'repos/grafana/grafana/pulls/comments',
+        'gh', 'api', 'repos/grafana/grafana/issues',
         '--paginate',
-        '--jq', '''
-        .[] |
-        select(.body | contains("BabyBot 🍼")) |
-        {
-            id: .id,
-            pr_number: (.pull_request_url | split("/") | .[-1]),
-            file: .path,
-            line: .line,
-            created_at: .created_at,
-            updated_at: .updated_at,
-            body: .body,
-            html_url: .html_url,
-            reactions: .reactions,
-            in_reply_to_id: .in_reply_to_id
-        }
-        '''
+        '-f', 'state=all',
+        '-f', 'labels=usability-review',
+        '--jq', '.[] | .number'
     ]
 
     result = subprocess.run(cmd, capture_output=True, text=True)
 
-    comments = []
+    pr_numbers = []
     for line in result.stdout.strip().split('\n'):
         if line:
             try:
-                comments.append(json.loads(line))
-            except json.JSONDecodeError:
+                pr_numbers.append(line.strip())
+            except:
                 continue
+
+    return pr_numbers
+
+def get_review_comments(pr_numbers):
+    """Get all BabyBot review comments (resolvable ones) from specific PRs"""
+    comments = []
+
+    for pr_number in pr_numbers:
+        cmd = [
+            'gh', 'api', f'repos/grafana/grafana/pulls/{pr_number}/comments',
+            '--jq', '''
+            .[] |
+            select(.body | contains("BabyBot 🍼")) |
+            {
+                id: .id,
+                pr_number: (.pull_request_url | split("/") | .[-1]),
+                file: .path,
+                line: .line,
+                created_at: .created_at,
+                updated_at: .updated_at,
+                body: .body,
+                html_url: .html_url,
+                reactions: .reactions,
+                in_reply_to_id: .in_reply_to_id
+            }
+            '''
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                try:
+                    comments.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
 
     return comments
 
-def get_general_comments():
-    """Get BabyBot general comments (fallback ones)"""
-    cmd = [
-        'gh', 'api', 'repos/grafana/grafana/issues/comments',
-        '--paginate',
-        '--jq', '''
-        .[] |
-        select(.body | contains("BabyBot 🍼")) |
-        {
-            id: .id,
-            pr_number: (.html_url | split("/") | .[-3]),
-            created_at: .created_at,
-            updated_at: .updated_at,
-            body: .body,
-            html_url: .html_url,
-            reactions: .reactions
-        }
-        '''
-    ]
-
-    result = subprocess.run(cmd, capture_output=True, text=True)
-
+def get_general_comments(pr_numbers):
+    """Get BabyBot general comments (fallback ones) from specific PRs"""
     comments = []
-    for line in result.stdout.strip().split('\n'):
-        if line:
-            try:
-                comments.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
+
+    for pr_number in pr_numbers:
+        cmd = [
+            'gh', 'api', f'repos/grafana/grafana/issues/{pr_number}/comments',
+            '--jq', '''
+            .[] |
+            select(.body | contains("BabyBot 🍼")) |
+            {
+                id: .id,
+                pr_number: (.html_url | split("/") | .[-3]),
+                created_at: .created_at,
+                updated_at: .updated_at,
+                body: .body,
+                html_url: .html_url,
+                reactions: .reactions
+            }
+            '''
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                try:
+                    comments.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
 
     return comments
 
@@ -268,9 +292,17 @@ def main():
 
     args = parser.parse_args()
 
-    print("🔍 Fetching BabyBot comments from GitHub...")
-    review_comments = get_review_comments()
-    general_comments = get_general_comments()
+    print("🔍 Fetching PRs with 'usability-review' label...")
+    pr_numbers = get_prs_with_usability_review_label()
+    print(f"Found {len(pr_numbers)} PRs with usability-review label")
+
+    if not pr_numbers:
+        print("No PRs found with usability-review label. Exiting.")
+        return
+
+    print("\n🔍 Fetching BabyBot comments from those PRs...")
+    review_comments = get_review_comments(pr_numbers)
+    general_comments = get_general_comments(pr_numbers)
 
     print(f"Found {len(review_comments)} review comments and {len(general_comments)} general comments")
 
