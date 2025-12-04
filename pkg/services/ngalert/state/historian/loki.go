@@ -311,7 +311,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 
 	samples := make([]lokiclient.Sample, 0, len(states))
 	for _, state := range states {
-		if !shouldRecord(state) {
+		if !ShouldRecord(state) {
 			continue
 		}
 
