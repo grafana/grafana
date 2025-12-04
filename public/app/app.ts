@@ -103,6 +103,7 @@ import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
+import { shouldPreloadAppPlugins, loadPluginsMeta } from './features/plugins/plugins';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -253,10 +254,8 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      // Do not pre-load apps if rendererDisableAppPluginsPreload is true and the request comes from the image renderer
-      const skipAppPluginsPreload =
-        config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
-      if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
+      if (shouldPreloadAppPlugins()) {
+        loadPluginsMeta();
         const appPluginsToAwait = getAppPluginsToAwait();
         const appPluginsToPreload = getAppPluginsToPreload();
 

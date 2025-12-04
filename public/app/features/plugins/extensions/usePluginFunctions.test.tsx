@@ -9,6 +9,8 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { getAppPlugins } from '../plugins';
+
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
 import { log } from './logs/log';
@@ -327,8 +329,8 @@ describe('usePluginFunctions()', () => {
       fn: () => 'function1',
     };
 
-    // The `AddedFunctionsRegistry` is validating if the function is registered in the plugin metadata (config.apps).
-    config.apps[pluginId].extensions.addedFunctions = [functionConfig];
+    // The `AddedFunctionsRegistry` is validating if the function is registered in the plugin metadata (getAppPlugins()).
+    getAppPlugins()[pluginId].extensions.addedFunctions = [functionConfig];
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider

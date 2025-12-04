@@ -10,6 +10,8 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { getAppPlugins } from '../plugins';
+
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
 import { log } from './logs/log';
@@ -506,8 +508,8 @@ describe('usePluginComponents()', () => {
       component: () => <div>Component</div>,
     };
 
-    // The `AddedComponentsRegistry` is validating if the link is registered in the plugin metadata (config.apps).
-    config.apps[pluginId].extensions.addedComponents = [componentConfig];
+    // The `AddedComponentsRegistry` is validating if the link is registered in the plugin metadata (getAppPlugins()).
+    getAppPlugins()[pluginId].extensions.addedComponents = [componentConfig];
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider

@@ -1189,4 +1189,9 @@ export interface FeatureToggles {
   * @default false
   */
   rudderstackUpgrade?: boolean;
+  /**
+  * Uses the plugin metas API instead of Grafana bootdata to fetch plugins, requires pluginInstallAPISync, pluginStoreServiceLoading and grafanaAPIServerWithExperimentalAPIs to work
+  * @default false
+  */
+  usePluginsMeta?: boolean;
 }

@@ -9,6 +9,8 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { getAppPlugins } from '../plugins';
+
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
 import { log } from './logs/log';
@@ -264,8 +266,8 @@ describe('usePluginLinks()', () => {
       path: `/a/${pluginId}/2`,
     };
 
-    // The `AddedLinksRegistry` is validating if the link is registered in the plugin metadata (config.apps).
-    config.apps[pluginId].extensions.addedLinks = [linkConfig];
+    // The `AddedLinksRegistry` is validating if the link is registered in the plugin metadata (getAppPlugins()).
+    getAppPlugins()[pluginId].extensions.addedLinks = [linkConfig];
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider

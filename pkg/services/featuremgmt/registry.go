@@ -1963,6 +1963,14 @@ var (
 			RequiresRestart: false,
 			HideFromDocs:    false,
 		},
+		{
+			Name:         "usePluginsMeta",
+			Description:  "Uses the plugin metas API instead of Grafana bootdata to fetch plugins, requires pluginInstallAPISync, pluginStoreServiceLoading and grafanaAPIServerWithExperimentalAPIs to work",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 
