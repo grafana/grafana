@@ -19,6 +19,7 @@ import { LogsVisualisationType } from '../../explore/Logs/Logs';
 import { ControlledLogsTable } from './ControlledLogsTable';
 import { InfiniteScroll } from './InfiniteScroll';
 import { LogRows, Props } from './LogRows';
+import { LogLineMenuCustomItem } from './panel/LogLineMenu';
 import { LogListOptions } from './panel/LogList';
 import { LogListContextProvider, useLogListContext } from './panel/LogListContext';
 import { LogListControls } from './panel/LogListControls';
@@ -27,6 +28,7 @@ import { ScrollToLogsEvent } from './panel/virtualization';
 export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   loading: boolean;
   logsMeta?: LogsMetaItem[];
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
   onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
@@ -69,6 +71,7 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
       prettifyLogMessage,
       onLogOptionsChange,
       wrapLogMessage,
+      logLineMenuCustomItems,
       ...rest
     }: ControlledLogRowsProps,
     ref
@@ -83,6 +86,7 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         logOptionsStorageKey={logOptionsStorageKey}
         logs={deduplicatedRows ?? []}
         logsMeta={logsMeta}
+        logLineMenuCustomItems={logLineMenuCustomItems}
         prettifyJSON={prettifyLogMessage}
         showControls
         showTime={showTime}

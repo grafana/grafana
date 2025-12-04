@@ -82,6 +82,8 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
+import { useTrinoDataSource } from './hooks/useTrinoDataSource';
+import { useTrinoLogMenuItems } from './useTrinoLogMenuItems';
 import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
 interface Props extends Themeable2 {
@@ -219,11 +221,49 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
+  const [enrichedTrinoData, setEnrichedTrinoData] = useState<LogRowModel[] | null>(null);
+
+  const trinoDataSource = useTrinoDataSource();
+  
+  // MOCK: Add adaptive logs sampled label to every 3rd log for testing
+  const mockedLogRows = useMemo(() => {
+    return logRows.map((log, index) => {
+      // Only add the marker to every 3rd log (index % 3 === 0)
+      if (index % 3 === 0) {
+        return {
+          ...log,
+          labels: {
+            ...log.labels,
+            __adaptive_logs_sampled__: 'true',
+          },
+        };
+      }
+      return log;
+    });
+  }, [logRows]);
+
+  const trinoLogMenuItems = useTrinoLogMenuItems({
+    datasourceType: props.datasourceType,
+    trinoDataSource,
+    timeRange: props.range,
+    onEnrichedDataReceived: setEnrichedTrinoData,
+    logRows: props.logRows,
+    logsQueries: props.logsQueries,
+  });
+
+  // Use enriched Trino data if available, otherwise use original logs (with mocked labels)
+  const displayedLogRows = enrichedTrinoData || mockedLogRows;
+  
+  // Deduplicate the displayed rows (whether they're from Trino or original)
+  const { dedupedRows: displayedDedupedRows, dedupCount: displayedDedupCount } = useMemo(
+    () => dedupRows(displayedLogRows, dedupStrategy),
+    [dedupStrategy, displayedLogRows]
+  );
 
   const tableHeight = getLogsTableHeight();
   const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
   const styles = getStyles(theme, setWrapperLineWrapStyles, tableHeight);
-  const hasData = logRows && logRows.length > 0;
+  const hasData = displayedLogRows && displayedLogRows.length > 0;
   const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
   // Get pinned log lines
@@ -680,7 +720,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [getPinnedLogsCount, onOpenContext, onPinLineCallback, outlineItems, pinnedLogs, register, unregister, updateItem]
   );
 
-  const { dedupedRows, dedupCount } = useMemo(() => dedupRows(logRows, dedupStrategy), [dedupStrategy, logRows]);
   const infiniteScrollAvailable = useMemo(
     () => !logsQueries?.some((query) => 'direction' in query && query.direction === LokiQueryDirection.Scan),
     [logsQueries]
@@ -970,10 +1009,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             )}
           <div ref={topLogsRef} />
           <LogsMetaRow
-            logRows={logRows}
+            logRows={displayedLogRows}
             meta={logsMeta || []}
             dedupStrategy={dedupStrategy}
-            dedupCount={dedupCount}
+            dedupCount={displayedDedupCount}
             displayedFields={displayedFields}
             clearDisplayedFields={clearDisplayedFields}
             defaultDisplayedFields={defaultDisplayedFields}
@@ -1016,8 +1055,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
                   range={props.range}
                   pinnedLogs={pinnedLogs}
-                  logRows={logRows}
-                  deduplicatedRows={dedupedRows}
+                  logRows={displayedLogRows}
+                  deduplicatedRows={displayedDedupedRows}
                   dedupStrategy={dedupStrategy}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
@@ -1050,6 +1089,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onLogOptionsChange={onLogOptionsChange}
                   filterLevels={filterLevels}
                   timeRange={props.range}
+                  logLineMenuCustomItems={trinoLogMenuItems}
                 />
               </div>
             )}
@@ -1064,15 +1104,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
                     range={props.range}
                     timeZone={timeZone}
-                    rows={logRows}
+                    rows={displayedLogRows}
                     scrollElement={logsContainerRef.current}
                     sortOrder={logsSortOrder}
                     app={CoreApp.Explore}
                   >
                     <LogRows
                       pinnedLogs={pinnedLogs}
-                      logRows={logRows}
-                      deduplicatedRows={dedupedRows}
+                      logRows={displayedLogRows}
+                      deduplicatedRows={displayedDedupedRows}
                       dedupStrategy={dedupStrategy}
                       onClickFilterLabel={onClickFilterLabel}
                       onClickFilterOutLabel={onClickFilterOutLabel}
@@ -1127,7 +1167,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   loading={loading}
                   loadMore={loadMoreLogs}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
-                  logs={dedupedRows}
+                  logs={displayedDedupedRows}
                   logsMeta={logsMeta}
                   logSupportsContext={showContextToggle}
                   onClickShowField={showField}
@@ -1153,6 +1193,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   timeRange={props.range}
                   timeZone={timeZone}
                   wrapLogMessage={wrapLogMessage}
+                  logLineMenuCustomItems={trinoLogMenuItems}
                 />
               )}
             </div>
