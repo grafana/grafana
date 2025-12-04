@@ -1,16 +1,18 @@
 name: "Ephemeral instances"
 
 on:
-  issue_comment:
-    types: [created]
-  pull_request:
-    types: [closed]
+  push:
+    branches:
+     - 20251127_hackathon-2025-12-gracoca
 
 permissions: {}
 
+env:
+  ENTERPRISE_REF: 20251127_hackathon-2025-12-gracoca
+
 jobs:
   handle-ephemeral-instances:
-    if: ${{ github.repository_owner == 'grafana' && ((github.event.issue.pull_request && startsWith(github.event.comment.body, '/deploy-to-hg')) || github.event.action == 'closed') }}
+    if: ${{ github.repository_owner == 'grafana' }}
     runs-on:
       labels: ubuntu-x64-xlarge
     continue-on-error: true
