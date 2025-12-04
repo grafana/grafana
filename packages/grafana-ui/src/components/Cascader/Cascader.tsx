@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import RCCascader from '@rc-component/cascader';
 import memoize from 'micro-memoize';
+import RCCascader from 'rc-cascader';
 import { PureComponent } from 'react';
 import * as React from 'react';
 
@@ -279,7 +279,7 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
             expandIcon={null}
             open={this.props.alwaysOpen}
             disabled={disabled}
-            popupClassName={styles.dropdown}
+            dropdownClassName={styles.dropdown}
           >
             <div className={disableDivFocus}>
               <Input

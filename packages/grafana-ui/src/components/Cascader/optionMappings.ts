@@ -1,4 +1,4 @@
-import { BaseOptionType as RCCascaderOption, CascaderProps } from '@rc-component/cascader';
+import { BaseOptionType as RCCascaderOption, CascaderProps } from 'rc-cascader';
 
 import { CascaderOption } from './Cascader';
 

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import RCCascader, { FieldNames } from '@rc-component/cascader';
+import RCCascader, { FieldNames } from 'rc-cascader';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -47,7 +47,7 @@ export const ButtonCascader = (props: ButtonCascaderProps) => {
     <RCCascader
       onChange={onChangeCascader(onChange)}
       loadData={onLoadDataCascader(loadData)}
-      popupClassName={cx(cascaderStyles.dropdown, styles.popup)}
+      dropdownClassName={cx(cascaderStyles.dropdown, styles.popup)}
       {...rest}
       expandIcon={null}
     >
