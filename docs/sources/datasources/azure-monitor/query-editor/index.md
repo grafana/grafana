@@ -97,7 +97,7 @@ The Azure Monitor data source's query editor has four modes depending on which A
 
 ## Query Azure Monitor Metrics
 
-Azure Monitor Metrics collects numeric data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference), and you can query them to investigate your resources' health and usage and maximise availability and performance.
+Azure Monitor Metrics collects numeric data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference), and you can query them to investigate your resources' health and usage and maximize availability and performance.
 
 Monitor Metrics use a lightweight format that stores only numeric data in a specific structure and supports near real-time scenarios, making it useful for fast detection of issues.
 In contrast, Azure Monitor Logs can store a variety of data types, each with their own structure.
@@ -168,7 +168,7 @@ For more information on multi-dimensional metrics, refer to the [Azure Monitor d
 
 ## Query Azure Monitor Logs
 
-Azure Monitor Logs collects and organises log and performance data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference), and makes many sources of data available to query together with the [Kusto Query Language (KQL)](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/).
+Azure Monitor Logs collects and organizes log and performance data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference), and makes many sources of data available to query together with the [Kusto Query Language (KQL)](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/).
 
 While Azure Monitor Metrics stores only simplified numerical data, Logs can store different data types, each with their own structure.
 You can also perform complex analysis of Logs data by using KQL.
@@ -241,7 +241,7 @@ Perf
 | order by TimeGenerated asc
 ```
 
-Use time series queries for values that change over time, usually for graph visualisations such as the Time series panel.
+Use time series queries for values that change over time, usually for graph visualizations such as the Time series panel.
 Each query should return at least a datetime column and numeric value column.
 The result must also be sorted in ascending order by the datetime column.
 
