@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -40,8 +41,10 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 			return
 		}
 
+		zanzanaCtx, zanzanaCancel := context.WithTimeout(ctx, 30*time.Second)
+		defer zanzanaCancel()
+
 		timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("zanzana"))
-		zanzanaCtx := context.WithoutCancel(ctx)
 		res, err := c.zanzanaClient.Check(zanzanaCtx, id, req, folder)
 		if err != nil {
 			c.logger.Error("Failed to run zanzana check", "error", err)
@@ -81,8 +84,11 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 			return
 		}
 
+		zanzanaCtx, zanzanaCancel := context.WithTimeout(ctx, 30*time.Second)
+		defer zanzanaCancel()
+
 		timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("zanzana"))
-		itemChecker, _, err := c.zanzanaClient.Compile(ctx, id, req)
+		itemChecker, _, err := c.zanzanaClient.Compile(zanzanaCtx, id, req)
 		timer.ObserveDuration()
 		if err != nil {
 			c.logger.Warn("Failed to compile zanzana item checker", "error", err)
