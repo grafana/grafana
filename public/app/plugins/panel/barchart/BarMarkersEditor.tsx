@@ -35,12 +35,7 @@ export const barMarkersEditor = (builder: PanelOptionsEditorBuilder<Markers>, ct
   });
 
   markers.forEach((_, i: number) => {
-    builder.addTextInput({
-      path: `.markerGroups[${i}].opts.label`,
-      name: t('barchart.editor.markers.label', 'Label'),
-      showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
-      settings: { hover: 'targetField' },
-    });
+    
     builder.addFieldNamePicker({
       path: `.markerGroups[${i}].targetField`,
       name: t('barchart.editor.markers.label', 'Target Field'),
@@ -166,33 +161,6 @@ export const addMarkerEditor = ({ context, onChange, value }: StandardEditorProp
   );
 };
 
-export const removeMarkerEditor = ({ onChange, value, context }: StandardEditorProps<Markers>) => {
-  const theme = useTheme2();
-  let markerGroups = value?.markerGroups || [];
-  const handleRemoveMarker = (id: number) => {
-    markerGroups = markerGroups.filter((marker: MarkerGroup) => marker.id !== id);
-    value.markerGroups = markerGroups;
-    value.select = undefined;
-    onChange(value);
-  };
-  return (
-    <div>
-      <Button
-        fullWidth={true}
-        onClick={() => handleRemoveMarker(Number(value.select))}
-        className={css({
-          backgroundColor: theme.colors.secondary.main,
-          color: theme.colors.text.primary,
-          '&:hover': {
-            backgroundColor: hoverColor(theme.colors.action.hover, theme),
-          },
-        })}
-      >
-        {t('barchart.barmarkers-editor.add-marker', 'Remove marker')}
-      </Button>
-    </div>
-  );
-};
 export const MarkerDragDropEditor = ({ value, context, onChange }: StandardEditorProps<Markers>) => {
   const markerGroups = value?.markerGroups || [];
 
