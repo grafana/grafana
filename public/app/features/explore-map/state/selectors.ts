@@ -37,6 +37,12 @@ const panelCache = new Map<string, { panel: ExploreMapPanel; data: string }>();
 const frameCache = new Map<string, { frame: ExploreMapFrame; data: string }>();
 
 /**
+ * Cache for individual post-it note objects
+ * Key: postItId, Value: { postIt object, serialized postIt data for comparison }
+ */
+const postItCache = new Map<string, { postIt: any; data: string }>();
+
+/**
  * Select all panels as a Record (for compatibility with existing UI)
  *
  * OPTIMIZATION: This selector caches individual panel objects and only creates
@@ -259,12 +265,66 @@ export const selectComments = createSelector(
 
 /**
  * Select all post-it notes as a Record
+ *
+ * OPTIMIZATION: This selector caches individual post-it note objects and only creates
+ * new post-it note objects when the underlying CRDT data for that specific post-it note changes.
+ * This prevents unnecessary re-renders of unchanged post-it notes when another post-it note is modified.
  */
 export const selectPostItNotes = createSelector(
-  [(state: ExploreMapCRDTState) => state],
-  (state) => {
+  [
+    (state: ExploreMapCRDTState) => state.crdtStateJSON,
+    (state: ExploreMapCRDTState) => state.nodeId,
+    (state: ExploreMapCRDTState) => state.uid,
+  ],
+  (crdtStateJSON, nodeId, uid): Record<string, any> => {
+    const state: ExploreMapCRDTState = {
+      uid,
+      crdtStateJSON,
+      nodeId,
+      sessionId: '', // Not needed for post-it note selection
+      pendingOperations: [],
+      local: {
+        viewport: { zoom: 1, panX: 0, panY: 0 },
+        selectedPanelIds: [],
+        cursors: {},
+        cursorMode: 'pointer',
+        isOnline: false,
+        isSyncing: false,
+      },
+    };
     const manager = getCRDTManager(state);
-    return manager.getAllPostItNotesForUI();
+    const postItNotes: Record<string, any> = {};
+    const currentPostItIds = new Set(manager.getPostItNoteIds());
+
+    // Clean up cache for removed post-it notes
+    for (const cachedPostItId of postItCache.keys()) {
+      if (!currentPostItIds.has(cachedPostItId)) {
+        postItCache.delete(cachedPostItId);
+      }
+    }
+
+    // Build post-it notes object, reusing cached objects when data hasn't changed
+    for (const postItId of currentPostItIds) {
+      const postItData = manager.getPostItNoteForUI(postItId);
+      if (!postItData) {
+        continue;
+      }
+
+      // Serialize the post-it note data to detect changes
+      const serializedData = JSON.stringify(postItData);
+      const cached = postItCache.get(postItId);
+
+      // Reuse cached post-it note if data hasn't changed
+      if (cached && cached.data === serializedData) {
+        postItNotes[postItId] = cached.postIt;
+      } else {
+        // Post-it note is new or changed, create new object and cache it
+        postItNotes[postItId] = postItData;
+        postItCache.set(postItId, { postIt: postItData, data: serializedData });
+      }
+    }
+
+    return postItNotes;
   }
 );
 

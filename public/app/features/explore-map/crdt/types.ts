@@ -101,6 +101,11 @@ export interface CRDTPostItNoteData {
 
   // Creator metadata
   createdBy: LWWRegister<string | undefined>;
+
+  // Frame association properties
+  frameId: LWWRegister<string | undefined>;
+  frameOffsetX: LWWRegister<number | undefined>;
+  frameOffsetY: LWWRegister<number | undefined>;
 }
 
 export interface CRDTExploreMapState {
@@ -182,6 +187,9 @@ export interface CRDTExploreMapStateJSON {
     text: { value: string; timestamp: HLCTimestamp };
     color: { value: string; timestamp: HLCTimestamp };
     createdBy?: { value: string | undefined; timestamp: HLCTimestamp };
+    frameId?: { value: string | undefined; timestamp: HLCTimestamp };
+    frameOffsetX?: { value: number | undefined; timestamp: HLCTimestamp };
+    frameOffsetY?: { value: number | undefined; timestamp: HLCTimestamp };
   }>;
   panels: {
     adds: Record<string, string[]>;
@@ -257,6 +265,8 @@ export type CRDTOperationType =
   | 'update-postit-zindex'
   | 'update-postit-text'
   | 'update-postit-color'
+  | 'associate-postit-with-frame'
+  | 'disassociate-postit-from-frame'
   | 'batch';  // For batching multiple operations
 
 /**
@@ -592,6 +602,29 @@ export interface UpdatePostItColorOperation extends CRDTOperationBase {
   };
 }
 
+/**
+ * Associate post-it note with frame operation
+ */
+export interface AssociatePostItWithFrameOperation extends CRDTOperationBase {
+  type: 'associate-postit-with-frame';
+  payload: {
+    postItId: string;
+    frameId: string;
+    offsetX: number;
+    offsetY: number;
+  };
+}
+
+/**
+ * Disassociate post-it note from frame operation
+ */
+export interface DisassociatePostItFromFrameOperation extends CRDTOperationBase {
+  type: 'disassociate-postit-from-frame';
+  payload: {
+    postItId: string;
+  };
+}
+
 
 /**
  * Batch operation (multiple operations in one)
@@ -633,6 +666,8 @@ export type CRDTOperation =
   | UpdatePostItZIndexOperation
   | UpdatePostItTextOperation
   | UpdatePostItColorOperation
+  | AssociatePostItWithFrameOperation
+  | DisassociatePostItFromFrameOperation
   | BatchOperation;
 
 /**

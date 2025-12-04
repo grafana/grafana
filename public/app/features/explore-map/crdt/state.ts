@@ -45,6 +45,8 @@ import {
   UpdatePostItZIndexOperation,
   UpdatePostItTextOperation,
   UpdatePostItColorOperation,
+  AssociatePostItWithFrameOperation,
+  DisassociatePostItFromFrameOperation,
   OperationResult,
   CRDTExploreMapStateJSON,
   CommentData,
@@ -235,6 +237,20 @@ export class CRDTStateManager {
       }
     }
     return panelIds;
+  }
+
+  /**
+   * Helper to get all sticky notes in a frame
+   */
+  getPostItNotesInFrame(frameId: string): string[] {
+    const postItIds: string[] = [];
+    for (const postItId of this.getPostItNoteIds()) {
+      const postIt = this.state.postItNoteData.get(postItId);
+      if (postIt && postIt.frameId.get() === frameId) {
+        postItIds.push(postItId);
+      }
+    }
+    return postItIds;
   }
 
   /**
@@ -873,6 +889,56 @@ export class CRDTStateManager {
   }
 
   /**
+   * Create an associate post-it note with frame operation
+   */
+  createAssociatePostItWithFrameOperation(
+    postItId: string,
+    frameId: string,
+    offsetX: number,
+    offsetY: number
+  ): AssociatePostItWithFrameOperation | null {
+    if (!this.state.postItNotes.contains(postItId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'associate-postit-with-frame',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        postItId,
+        frameId,
+        offsetX,
+        offsetY,
+      },
+    };
+  }
+
+  /**
+   * Create a disassociate post-it note from frame operation
+   */
+  createDisassociatePostItFromFrameOperation(postItId: string): DisassociatePostItFromFrameOperation | null {
+    if (!this.state.postItNotes.contains(postItId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'disassociate-postit-from-frame',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        postItId,
+      },
+    };
+  }
+
+  /**
    * Get all post-it note IDs
    */
   getPostItNoteIds(): string[] {
@@ -910,6 +976,9 @@ export class CRDTStateManager {
       text: data.text.get(),
       color: data.color.get(),
       createdBy: data.createdBy.get(),
+      frameId: data.frameId.get(),
+      frameOffsetX: data.frameOffsetX.get(),
+      frameOffsetY: data.frameOffsetY.get(),
     };
   }
 
@@ -922,6 +991,9 @@ export class CRDTStateManager {
     text: string;
     color: string;
     createdBy?: string;
+    frameId?: string;
+    frameOffsetX?: number;
+    frameOffsetY?: number;
   }> {
     const postItNotes: Record<string, {
       id: string;
@@ -929,6 +1001,9 @@ export class CRDTStateManager {
       text: string;
       color: string;
       createdBy?: string;
+      frameId?: string;
+      frameOffsetX?: number;
+      frameOffsetY?: number;
     }> = {};
     for (const postItId of this.getPostItNoteIds()) {
       const postIt = this.getPostItNoteForUI(postItId);
@@ -1000,6 +1075,10 @@ export class CRDTStateManager {
           return this.applyUpdatePostItText(operation);
         case 'update-postit-color':
           return this.applyUpdatePostItColor(operation);
+        case 'associate-postit-with-frame':
+          return this.applyAssociatePostItWithFrame(operation);
+        case 'disassociate-postit-from-frame':
+          return this.applyDisassociatePostItFromFrame(operation);
         case 'batch':
           return this.applyBatchOperation(operation);
         default: {
@@ -1234,6 +1313,9 @@ export class CRDTStateManager {
         text: new LWWRegister(text || '', operation.timestamp),
         color: new LWWRegister(color || 'purple', operation.timestamp),
         createdBy: new LWWRegister(createdBy, operation.timestamp),
+        frameId: new LWWRegister(undefined, operation.timestamp),
+        frameOffsetX: new LWWRegister(undefined, operation.timestamp),
+        frameOffsetY: new LWWRegister(undefined, operation.timestamp),
       });
     }
 
@@ -1341,6 +1423,45 @@ export class CRDTStateManager {
     return {
       success: true,
       applied: updated,
+    };
+  }
+
+  private applyAssociatePostItWithFrame(operation: AssociatePostItWithFrameOperation): OperationResult {
+    const { postItId, frameId, offsetX, offsetY } = operation.payload;
+
+    const postItData = this.state.postItNoteData.get(postItId);
+
+    if (!postItData) {
+      return { success: true, applied: false, error: 'Post-it note not found' };
+    }
+
+    // Update frame association
+    const frameIdUpdated = postItData.frameId.set(frameId, operation.timestamp);
+    const offsetXUpdated = postItData.frameOffsetX.set(offsetX, operation.timestamp);
+    const offsetYUpdated = postItData.frameOffsetY.set(offsetY, operation.timestamp);
+
+    return {
+      success: true,
+      applied: frameIdUpdated || offsetXUpdated || offsetYUpdated,
+    };
+  }
+
+  private applyDisassociatePostItFromFrame(operation: DisassociatePostItFromFrameOperation): OperationResult {
+    const { postItId } = operation.payload;
+    const postItData = this.state.postItNoteData.get(postItId);
+
+    if (!postItData) {
+      return { success: true, applied: false, error: 'Post-it note not found' };
+    }
+
+    // Clear frame association
+    const frameIdUpdated = postItData.frameId.set(undefined, operation.timestamp);
+    const offsetXUpdated = postItData.frameOffsetX.set(undefined, operation.timestamp);
+    const offsetYUpdated = postItData.frameOffsetY.set(undefined, operation.timestamp);
+
+    return {
+      success: true,
+      applied: frameIdUpdated || offsetXUpdated || offsetYUpdated,
     };
   }
 
@@ -1553,6 +1674,9 @@ export class CRDTStateManager {
           text: otherPostItData.text.clone(),
           color: otherPostItData.color.clone(),
           createdBy: otherPostItData.createdBy.clone(),
+          frameId: otherPostItData.frameId.clone(),
+          frameOffsetX: otherPostItData.frameOffsetX.clone(),
+          frameOffsetY: otherPostItData.frameOffsetY.clone(),
         });
       } else {
         // Merge each LWW register
@@ -1564,6 +1688,9 @@ export class CRDTStateManager {
         myPostItData.text.merge(otherPostItData.text);
         myPostItData.color.merge(otherPostItData.color);
         myPostItData.createdBy.merge(otherPostItData.createdBy);
+        myPostItData.frameId.merge(otherPostItData.frameId);
+        myPostItData.frameOffsetX.merge(otherPostItData.frameOffsetX);
+        myPostItData.frameOffsetY.merge(otherPostItData.frameOffsetY);
       }
     }
 
@@ -1717,6 +1844,9 @@ export class CRDTStateManager {
           text: data.text.toJSON(),
           color: data.color.toJSON(),
           createdBy: data.createdBy.toJSON(),
+          frameId: data.frameId.toJSON(),
+          frameOffsetX: data.frameOffsetX.toJSON(),
+          frameOffsetY: data.frameOffsetY.toJSON(),
         };
       }
     }
@@ -1766,6 +1896,9 @@ export class CRDTStateManager {
           text: LWWRegister.fromJSON(data.text),
           color: LWWRegister.fromJSON(data.color),
           createdBy: data.createdBy ? LWWRegister.fromJSON(data.createdBy) : new LWWRegister(undefined, defaultTimestamp),
+          frameId: (data as any).frameId ? LWWRegister.fromJSON((data as any).frameId) : new LWWRegister(undefined, defaultTimestamp),
+          frameOffsetX: (data as any).frameOffsetX ? LWWRegister.fromJSON((data as any).frameOffsetX) : new LWWRegister(undefined, defaultTimestamp),
+          frameOffsetY: (data as any).frameOffsetY ? LWWRegister.fromJSON((data as any).frameOffsetY) : new LWWRegister(undefined, defaultTimestamp),
         });
       }
     }

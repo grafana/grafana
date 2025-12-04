@@ -716,6 +716,55 @@ const crdtSlice = createSlice({
     },
 
     /**
+     * Associate post-it note with frame
+     */
+    associatePostItWithFrame: (state, action: PayloadAction<{
+      postItId: string;
+      frameId: string;
+      offsetX: number;
+      offsetY: number;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createAssociatePostItWithFrameOperation(
+        action.payload.postItId,
+        action.payload.frameId,
+        action.payload.offsetX,
+        action.payload.offsetY
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Disassociate post-it note from frame
+     */
+    disassociatePostItFromFrame: (state, action: PayloadAction<{
+      postItId: string;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createDisassociatePostItFromFrameOperation(
+        action.payload.postItId
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      state.pendingOperations.push(operation);
+    },
+
+    /**
      * Duplicate a panel
      */
     duplicatePanel: (state, action: PayloadAction<{ panelId: string }>) => {
@@ -878,16 +927,36 @@ const crdtSlice = createSlice({
         }
       }
 
+      // Create operations for all child sticky notes
+      const postItOps: CRDTOperation[] = [];
+      const childPostItIds = manager.getPostItNotesInFrame(action.payload.frameId);
+
+      for (const postItId of childPostItIds) {
+        const postIt = manager.getPostItNoteData(postItId);
+        if (postIt) {
+          const newX = postIt.positionX.get() + deltaX;
+          const newY = postIt.positionY.get() + deltaY;
+
+          const postItOp = manager.createUpdatePostItPositionOperation(postItId, newX, newY);
+          if (postItOp) {
+            postItOps.push(postItOp);
+          }
+        }
+      }
+
       // Apply all operations
       manager.applyOperation(frameOp);
       for (const op of panelOps) {
+        manager.applyOperation(op);
+      }
+      for (const op of postItOps) {
         manager.applyOperation(op);
       }
 
       saveCRDTManager(state, manager);
 
       // Push all operations for broadcast
-      state.pendingOperations.push(frameOp, ...panelOps);
+      state.pendingOperations.push(frameOp, ...panelOps, ...postItOps);
     },
 
     /**
@@ -1294,6 +1363,8 @@ export const {
   bringPostItNoteToFront,
   updatePostItNoteText,
   updatePostItNoteColor,
+  associatePostItWithFrame,
+  disassociatePostItFromFrame,
   duplicatePanel,
   addFrame,
   removeFrame,
