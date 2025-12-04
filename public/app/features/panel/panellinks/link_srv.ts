@@ -14,6 +14,7 @@ import {
   locationUtil,
   ScopedVars,
   textUtil,
+  TypedVariableModel,
   urlUtil,
   VariableOrigin,
   VariableSuggestion,
@@ -79,14 +80,35 @@ const buildLabelPath = (label: string) => {
   return label.includes('.') || label.trim().includes(' ') ? `["${label}"]` : `.${label}`;
 };
 
+const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
+  if ('valuesFormat' in variable && variable.valuesFormat === 'json') {
+    try {
+      return Object.keys(JSON.parse(variable.query)[0]).filter((k) => k !== 'text' && k !== 'value');
+    } catch {
+      return [];
+    }
+  }
+
+  // TODO: QueryVariable support (will also require adjusting some TS types here and there...)
+
+  return [];
+};
+
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...getTemplateSrv()
     .getVariables()
-    .map((variable) => ({
-      value: variable.name,
-      label: variable.name,
-      origin: VariableOrigin.Template,
-    })),
+    .flatMap((variable) => [
+      {
+        value: variable.name,
+        label: variable.name,
+        origin: VariableOrigin.Template,
+      },
+      ...getVariableValueProperties(variable).map((propName) => ({
+        value: `${variable.name}.${propName}`,
+        label: `${variable.name}.${propName}`,
+        origin: VariableOrigin.Template,
+      })),
+    ]),
   {
     value: `${DataLinkBuiltInVars.includeVars}`,
     label: t('panel.get-panel-links-variable-suggestions.label.all-variables', 'All variables'),
