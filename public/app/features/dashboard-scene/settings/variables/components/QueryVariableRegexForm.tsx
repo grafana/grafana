@@ -1,6 +1,6 @@
 import { useMemo, FormEvent } from 'react';
 
-import { VariableRegexApplyTo } from '@grafana/data';
+import { VariableRegexApplyTo, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Stack, TextLink, RadioButtonGroup, Box } from '@grafana/ui';
@@ -14,21 +14,16 @@ interface Props {
   onRegexApplyToChange?: (option: VariableRegexApplyTo) => void;
 }
 
-export function QueryVariableRegexForm({
-  regex,
-  regexApplyTo = VariableRegexApplyTo.value,
-  onRegExChange,
-  onRegexApplyToChange,
-}: Props) {
-  const APPLY_REGEX_TO_OPTIONS = useMemo(
+export function QueryVariableRegexForm({ regex, regexApplyTo, onRegExChange, onRegexApplyToChange }: Props) {
+  const APPLY_REGEX_TO_OPTIONS: Array<SelectableValue<VariableRegexApplyTo>> = useMemo(
     () => [
       {
         label: t('dashboard-scene.query-variable-editor-form.regex-apply-to-options.label.value', 'Variable value'),
-        value: VariableRegexApplyTo.value,
+        value: 'value',
       },
       {
         label: t('dashboard-scene.query-variable-editor-form.regex-apply-to-options.label.text', 'Display text'),
-        value: VariableRegexApplyTo.text,
+        value: 'text',
       },
     ],
     []

@@ -1,7 +1,6 @@
 import {
   VariableHide as VariableHideV1,
   VariableRefresh as VariableRefreshV1,
-  VariableRegexApplyTo as VariableRegexApplyToV1,
   VariableSort as VariableSortV1,
   DashboardCursorSync as DashboardCursorSyncV1,
   FieldColorModeId as FieldColorModeIdV1,
@@ -17,7 +16,6 @@ import {
   VariableHide,
   VariableRefresh,
   VariableSort,
-  VariableRegexApplyTo,
   FieldColorModeId as FieldColorModeIdV2,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
@@ -35,9 +33,6 @@ export function transformCursorSynctoEnum(cursorSync?: DashboardCursorSyncV1): D
     default:
       return defaultDashboardV2Spec().cursorSync;
   }
-}
-export function transformRegexApplyToEnum(regexApplyTo?: VariableRegexApplyToV1): VariableRegexApplyTo {
-  return regexApplyTo ?? 'value';
 }
 export function transformVariableRefreshToEnum(refresh?: VariableRefreshV1): VariableRefresh {
   switch (refresh) {

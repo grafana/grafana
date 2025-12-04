@@ -3,7 +3,6 @@ import {
   VariableHide as VariableHideV1,
   VariableRefresh as VariableRefreshV1,
   VariableSort as VariableSortV1,
-  VariableRegexApplyTo as VariableRegexApplyToV1,
   DashboardCursorSync as DashboardCursorSyncV1,
   MappingType as MappingTypeV1,
   ThresholdsMode as ThresholdsModeV1,
@@ -13,22 +12,10 @@ import {
   VariableHide,
   VariableRefresh,
   VariableSort,
-  VariableRegexApplyTo,
   FieldConfigSource,
   SpecialValueMatch,
   ThresholdsMode,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-
-export function transformRegexApplyToEnumV1(regexApplyTo?: VariableRegexApplyTo): VariableRegexApplyToV1 {
-  switch (regexApplyTo) {
-    case 'value':
-      return VariableRegexApplyToV1.value;
-    case 'text':
-      return VariableRegexApplyToV1.text;
-    default:
-      return VariableRegexApplyToV1.value;
-  }
-}
 
 export function transformVariableRefreshToEnumV1(refresh?: VariableRefresh): VariableRefreshV1 {
   switch (refresh) {

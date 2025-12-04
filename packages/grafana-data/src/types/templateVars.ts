@@ -32,10 +32,7 @@ export enum VariableRefresh {
   onTimeRangeChanged,
 }
 
-export enum VariableRegexApplyTo {
-  value = 'value',
-  text = 'text',
-}
+export type VariableRegexApplyTo = 'value' | 'text';
 
 export enum VariableSort {
   disabled,

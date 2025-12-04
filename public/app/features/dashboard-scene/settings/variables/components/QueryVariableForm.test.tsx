@@ -91,7 +91,7 @@ describe('QueryVariableEditorForm', () => {
     timeRange: getDefaultTimeRange(),
     regex: '.*',
     onRegExChange: mockOnRegExChange,
-    regexApplyTo: VariableRegexApplyTo.value,
+    regexApplyTo: 'value',
     onRegexApplyToChange: mockOnRegexApplyToChange,
     sort: VariableSort.alphabeticalAsc,
     onSortChange: mockOnSortChange,
@@ -234,7 +234,7 @@ describe('QueryVariableEditorForm', () => {
     await userEvent.click(anotherOption);
 
     expect(mockOnRegexApplyToChange).toHaveBeenCalledTimes(1);
-    expect(mockOnRegexApplyToChange).toHaveBeenCalledWith(VariableRegexApplyTo.text);
+    expect(mockOnRegexApplyToChange).toHaveBeenCalledWith('text');
   });
 
   it('should call onSortChange when changing the sort', async () => {
