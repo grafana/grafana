@@ -2000,6 +2000,13 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:         "profilesExemplars",
+			Description:  "Enables profiles exemplars support in profiles drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 

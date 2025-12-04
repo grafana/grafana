@@ -2774,6 +2774,19 @@
     },
     {
       "metadata": {
+        "name": "profilesExemplars",
+        "resourceVersion": "1764840026536",
+        "creationTimestamp": "2025-12-04T09:20:26Z"
+      },
+      "spec": {
+        "description": "Enables profiles exemplars support in profiles drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "prometheusAzureOverrideAudience",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2022-05-30T15:43:32Z",

@@ -1211,4 +1211,8 @@ export interface FeatureToggles {
   * Adds support for Kubernetes alerting historian APIs
   */
   kubernetesAlertingHistorian?: boolean;
+  /**
+  * Enables profiles exemplars support in profiles drilldown
+  */
+  profilesExemplars?: boolean;
 }
