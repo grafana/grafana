@@ -26,7 +26,7 @@ export function ScopesNavigationTreeLink({ subScope, to, title, id, subScopePath
   // Ignore query params
   const isCurrent = isCurrentPath(locPathname, to);
 
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (subScope) {
       e.preventDefault(); // Prevent default Link navigation
 
@@ -40,13 +40,11 @@ export function ScopesNavigationTreeLink({ subScope, to, title, id, subScopePath
       const searchParams = new URLSearchParams(url.search);
       if (!currentNavigationScope && currentScope) {
         searchParams.set('navigation_scope', currentScope);
-        services?.scopesDashboardsService?.setNavigationScope(
+        await services?.scopesDashboardsService?.setNavigationScope(
           currentScope,
           undefined,
           subScopePath && subScopePath.length > 0 ? subScopePath : undefined
         );
-      } else {
-        //services?.scopesDashboardsService?.setNavScopePath(subScopePath);
       }
 
       // Update query params with the new subScope
