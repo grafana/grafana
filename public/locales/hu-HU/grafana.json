@@ -5085,10 +5085,7 @@
         "copy-or-duplicate": "Másolás vagy duplikálás",
         "delete": "Törlés",
         "duplicate": "Duplikálás",
-        "group-layout": "Csoport elrendezése",
-        "group-layout-disabled": "Ezen a szinten nincsenek csoportok",
-        "panel-layout": "Panel elrendezése",
-        "panel-layout-disabled": "Jelöljön ki egy sort vagy lapot a panel elrendezési beállításainak módosításához"
+        "layout": "Elrendezés"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -6559,7 +6556,7 @@
       "delete-button": "Törlés",
       "title": "Törlés"
     },
-    "delete-modal-restore-dashboards-text": "Ez a művelet 30 napon belüli törlésre jelöli meg az irányítópultot. A szervezeti rendszergazda a 30 nap lejárta előtt bármikor visszaállíthatja.",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "Biztosan törli ezt az irányítópultot?",
     "general": {
       "auto-refresh-description": "Határozza meg az automatikus frissítési intervallumokat, amelyeknek elérhetőnek kell lenniük az automatikus frissítési listában. Használja az „5s” formátumot a másodpercekhez, az „1m” formátumot a percekhez, az „1h” formátumot az órákhoz és az „1d” formátumot a napokhoz (pl.: „5s ,10s ,30s ,1m,5m,15m,30m,1h,2h,1d”).",
@@ -7304,6 +7301,14 @@
       },
       "title-failed-sample-query": "A lekérdezés naplómintájának betöltése nem sikerült",
       "tooltip": "A vizualizált metrikákhoz hozzájáruló naplósorok megjelenítése"
+    },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
     },
     "logs-table-empty-fields": {
       "no-fields": "Nincsenek mezők"

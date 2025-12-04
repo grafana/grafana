@@ -5085,10 +5085,7 @@
         "copy-or-duplicate": "Copiar o duplicar",
         "delete": "Eliminar",
         "duplicate": "Duplicar",
-        "group-layout": "Diseño del grupo",
-        "group-layout-disabled": "No existen grupos en este nivel",
-        "panel-layout": "Diseño del panel",
-        "panel-layout-disabled": "Selecciona una fila o pestaña para cambiar las opciones de diseño del panel"
+        "layout": "Diseño"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -6559,7 +6556,7 @@
       "delete-button": "Eliminar",
       "title": "Eliminar"
     },
-    "delete-modal-restore-dashboards-text": "Esta acción marcará el panel de control para su eliminación en 30 días. El administrador de tu organización puede restaurarlo en cualquier momento antes de que transcurran los 30 días.",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "¿Quieres eliminar este panel de control?",
     "general": {
       "auto-refresh-description": "Define los intervalos de actualización automática que deben estar disponibles en la lista de actualización automática. Utiliza el formato «5 s» para los segundos, «1 m» para los minutos, «1 h» para las horas y «1 d» para los días (por ejemplo: «5 s, 10 s, 30 s, 1 m, 5 m, 15 m, 30 m, 1 h, 2 h, 1 d»).",
@@ -7304,6 +7301,14 @@
       },
       "title-failed-sample-query": "Error al cargar la muestra de logs para esta consulta",
       "tooltip": "Mostrar líneas de log que contribuyeron a las métricas visualizadas"
+    },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
     },
     "logs-table-empty-fields": {
       "no-fields": "Ningún campo"

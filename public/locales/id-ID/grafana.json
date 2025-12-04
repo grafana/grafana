@@ -5065,10 +5065,7 @@
         "copy-or-duplicate": "Salin atau Duplikasikan",
         "delete": "Hapus",
         "duplicate": "Duplikasikan",
-        "group-layout": "Tata letak grup",
-        "group-layout-disabled": "Tidak ada grup di level ini",
-        "panel-layout": "Tata letak panel",
-        "panel-layout-disabled": "Pilih baris atau tab untuk mengubah opsi tata letak panel"
+        "layout": "Tata Letak"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -6535,7 +6532,7 @@
       "delete-button": "Hapus",
       "title": "Hapus"
     },
-    "delete-modal-restore-dashboards-text": "Tindakan ini akan menandai dasbor untuk dihapus dalam 30 hari. Administrator organisasi Anda dapat memulihkannya kapan saja sebelum 30 hari kedaluwarsa.",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "Apa Anda ingin menghapus dasbor ini?",
     "general": {
       "auto-refresh-description": "Tentukan interval muat ulang otomatis yang seharusnya tersedia dalam daftar muat ulang otomatis. Gunakan format '5d' untuk detik, '1m' untuk menit, '1j' untuk jam, dan '1h' untuk hari (misalnya: '5d, 10d, 30d, 1m, 5m, 15m, 30m,1j, 2j, 1h').",
@@ -7280,6 +7277,14 @@
       },
       "title-failed-sample-query": "Gagal memuat sampel log untuk kueri ini",
       "tooltip": "Tampilkan baris log yang berkontribusi pada metrik yang divisualisasikan"
+    },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
     },
     "logs-table-empty-fields": {
       "no-fields": "Tidak ada bidang"
