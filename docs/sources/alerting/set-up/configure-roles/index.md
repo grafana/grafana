@@ -28,10 +28,10 @@ Grafana OSS has three roles: Admin, Editor, and Viewer.
 
 The following table describes the access each role provides for Grafana Alerting.
 
-| Role   | Access                                                                                                                                                                    |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Viewer | Read access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences).                    |
-| Editor | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), and provisioning. |
+| Role   | Access                                                                                                                                                                                             |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Viewer | Read access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences).                                             |
+| Editor | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), and provisioning.                          |
 | Admin  | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), and provisioning, as well as assign roles. |
 
 ## Assign roles

@@ -73,32 +73,32 @@ Permissions for managing Grafana-managed alert rules.
 
 Permissions for managing alert rules in external data sources that support alerting.
 
-| Action                        | Applicable scope                       | Description                                                                                          |
-| ----------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `alert.rules.external:read`   | `datasources:*`<br>`datasources:uid:*` | Read alert rules in data sources that support alerting (Prometheus, Mimir, and Loki).               |
-| `alert.rules.external:write`  | `datasources:*`<br>`datasources:uid:*` | Create, update, and delete alert rules in data sources that support alerting (Mimir and Loki).      |
+| Action                       | Applicable scope                       | Description                                                                                    |
+| ---------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `alert.rules.external:read`  | `datasources:*`<br>`datasources:uid:*` | Read alert rules in data sources that support alerting (Prometheus, Mimir, and Loki).          |
+| `alert.rules.external:write` | `datasources:*`<br>`datasources:uid:*` | Create, update, and delete alert rules in data sources that support alerting (Mimir and Loki). |
 
 ### Alert instances and silences
 
 Permissions for managing alert instances and silences in Grafana.
 
-| Action                    | Applicable scope               | Description                                                                       |
-| ------------------------- | ------------------------------ | --------------------------------------------------------------------------------- |
-| `alert.instances:read`    | n/a                            | Read alerts and silences in the current organization.                             |
-| `alert.instances:create`  | n/a                            | Create silences in the current organization.                                      |
-| `alert.instances:write`   | n/a                            | Update and expire silences in the current organization.                           |
-| `alert.silences:read`     | `folders:*`<br>`folders:uid:*` | Read all general silences and rule-specific silences in a folder and its subfolders. |
-| `alert.silences:create`   | `folders:*`<br>`folders:uid:*` | Create rule-specific silences in a folder and its subfolders.                     |
-| `alert.silences:write`    | `folders:*`<br>`folders:uid:*` | Update and expire rule-specific silences in a folder and its subfolders.          |
+| Action                   | Applicable scope               | Description                                                                          |
+| ------------------------ | ------------------------------ | ------------------------------------------------------------------------------------ |
+| `alert.instances:read`   | n/a                            | Read alerts and silences in the current organization.                                |
+| `alert.instances:create` | n/a                            | Create silences in the current organization.                                         |
+| `alert.instances:write`  | n/a                            | Update and expire silences in the current organization.                              |
+| `alert.silences:read`    | `folders:*`<br>`folders:uid:*` | Read all general silences and rule-specific silences in a folder and its subfolders. |
+| `alert.silences:create`  | `folders:*`<br>`folders:uid:*` | Create rule-specific silences in a folder and its subfolders.                        |
+| `alert.silences:write`   | `folders:*`<br>`folders:uid:*` | Update and expire rule-specific silences in a folder and its subfolders.             |
 
 ### External alert instances
 
 Permissions for managing alert instances in external data sources.
 
-| Action                                | Applicable scope                       | Description                                                          |
-| ------------------------------------- | -------------------------------------- | -------------------------------------------------------------------- |
-| `alert.instances.external:read`       | `datasources:*`<br>`datasources:uid:*` | Read alerts and silences in data sources that support alerting.      |
-| `alert.instances.external:write`      | `datasources:*`<br>`datasources:uid:*` | Manage alerts and silences in data sources that support alerting.    |
+| Action                           | Applicable scope                       | Description                                                       |
+| -------------------------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| `alert.instances.external:read`  | `datasources:*`<br>`datasources:uid:*` | Read alerts and silences in data sources that support alerting.   |
+| `alert.instances.external:write` | `datasources:*`<br>`datasources:uid:*` | Manage alerts and silences in data sources that support alerting. |
 
 ### Contact points
 
@@ -120,62 +120,62 @@ Permissions for managing contact points (notification receivers).
 
 Permissions for managing notification policies (routing rules).
 
-| Action                             | Applicable scope | Description                                               |
-| ---------------------------------- | ---------------- | --------------------------------------------------------- |
-| `alert.notifications.routes:read`  | n/a              | Read notification policies.                               |
-| `alert.notifications.routes:write` | n/a              | Create new, update, and delete notification policies.     |
+| Action                             | Applicable scope | Description                                           |
+| ---------------------------------- | ---------------- | ----------------------------------------------------- |
+| `alert.notifications.routes:read`  | n/a              | Read notification policies.                           |
+| `alert.notifications.routes:write` | n/a              | Create new, update, and delete notification policies. |
 
 ### Time intervals
 
 Permissions for managing mute time intervals.
 
-| Action                                      | Applicable scope | Description                                          |
-| ------------------------------------------- | ---------------- | ---------------------------------------------------- |
-| `alert.notifications.time-intervals:read`   | n/a              | Read mute time intervals.                            |
-| `alert.notifications.time-intervals:write`  | n/a              | Create new or update existing mute time intervals.   |
-| `alert.notifications.time-intervals:delete` | n/a              | Delete existing time intervals.                      |
+| Action                                      | Applicable scope | Description                                        |
+| ------------------------------------------- | ---------------- | -------------------------------------------------- |
+| `alert.notifications.time-intervals:read`   | n/a              | Read mute time intervals.                          |
+| `alert.notifications.time-intervals:write`  | n/a              | Create new or update existing mute time intervals. |
+| `alert.notifications.time-intervals:delete` | n/a              | Delete existing time intervals.                    |
 
 ### Templates
 
 Permissions for managing notification templates.
 
-| Action                                   | Applicable scope | Description                                    |
-| ---------------------------------------- | ---------------- | ---------------------------------------------- |
-| `alert.notifications.templates:read`     | n/a              | Read templates.                                |
-| `alert.notifications.templates:write`    | n/a              | Create new or update existing templates.       |
-| `alert.notifications.templates:delete`   | n/a              | Delete existing templates.                     |
+| Action                                 | Applicable scope | Description                              |
+| -------------------------------------- | ---------------- | ---------------------------------------- |
+| `alert.notifications.templates:read`   | n/a              | Read templates.                          |
+| `alert.notifications.templates:write`  | n/a              | Create new or update existing templates. |
+| `alert.notifications.templates:delete` | n/a              | Delete existing templates.               |
 
 ### General notifications
 
 Legacy permissions for managing all notification resources.
 
-| Action                       | Applicable scope | Description                                                                                      |
-| ---------------------------- | ---------------- | ------------------------------------------------------------------------------------------------ |
-| `alert.notifications:read`   | n/a              | Read all templates, contact points, notification policies, and mute timings in the current organization. |
-| `alert.notifications:write`  | n/a              | Manage templates, contact points, notification policies, and mute timings in the current organization.   |
+| Action                      | Applicable scope | Description                                                                                              |
+| --------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------- |
+| `alert.notifications:read`  | n/a              | Read all templates, contact points, notification policies, and mute timings in the current organization. |
+| `alert.notifications:write` | n/a              | Manage templates, contact points, notification policies, and mute timings in the current organization.   |
 
 ### External notifications
 
 Permissions for managing notification resources in external data sources.
 
-| Action                                 | Applicable scope                       | Description                                                                                                   |
-| -------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `alert.notifications.external:read`    | `datasources:*`<br>`datasources:uid:*` | Read templates, contact points, notification policies, and mute timings in data sources that support alerting. |
-| `alert.notifications.external:write`   | `datasources:*`<br>`datasources:uid:*` | Manage templates, contact points, notification policies, and mute timings in data sources that support alerting. |
+| Action                               | Applicable scope                       | Description                                                                                                      |
+| ------------------------------------ | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications.external:read`  | `datasources:*`<br>`datasources:uid:*` | Read templates, contact points, notification policies, and mute timings in data sources that support alerting.   |
+| `alert.notifications.external:write` | `datasources:*`<br>`datasources:uid:*` | Manage templates, contact points, notification policies, and mute timings in data sources that support alerting. |
 
 ### Provisioning
 
 Permissions for managing alerting resources via the provisioning API.
 
-| Action                                      | Applicable scope | Description                                                                                                                                           |
-| ------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alert.provisioning:read`                   | n/a              | Read all Grafana alert rules, notification policies, etc via provisioning API. Permissions to folders and data source are not required.               |
-| `alert.provisioning.secrets:read`           | n/a              | Same as `alert.provisioning:read` plus ability to export resources with decrypted secrets.                                                            |
-| `alert.provisioning:write`                  | n/a              | Update all Grafana alert rules, notification policies, etc via provisioning API. Permissions to folders and data source are not required.             |
-| `alert.rules.provisioning:read`             | n/a              | Read Grafana alert rules via provisioning API. More specific than `alert.provisioning:read`.                                                          |
-| `alert.rules.provisioning:write`            | n/a              | Create, update, and delete Grafana alert rules via provisioning API. More specific than `alert.provisioning:write`.                                   |
-| `alert.notifications.provisioning:read`     | n/a              | Read notification resources (contact points, notification policies, templates, time intervals) via provisioning API. More specific than `alert.provisioning:read`. |
-| `alert.notifications.provisioning:write`    | n/a              | Create, update, and delete notification resources via provisioning API. More specific than `alert.provisioning:write`.                                |
-| `alert.provisioning.provenance:write`       | n/a              | Set provisioning status for alerting resources. Cannot be used alone. Requires user to have permissions to access resources.                          |
+| Action                                   | Applicable scope | Description                                                                                                                                                        |
+| ---------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `alert.provisioning:read`                | n/a              | Read all Grafana alert rules, notification policies, etc via provisioning API. Permissions to folders and data source are not required.                            |
+| `alert.provisioning.secrets:read`        | n/a              | Same as `alert.provisioning:read` plus ability to export resources with decrypted secrets.                                                                         |
+| `alert.provisioning:write`               | n/a              | Update all Grafana alert rules, notification policies, etc via provisioning API. Permissions to folders and data source are not required.                          |
+| `alert.rules.provisioning:read`          | n/a              | Read Grafana alert rules via provisioning API. More specific than `alert.provisioning:read`.                                                                       |
+| `alert.rules.provisioning:write`         | n/a              | Create, update, and delete Grafana alert rules via provisioning API. More specific than `alert.provisioning:write`.                                                |
+| `alert.notifications.provisioning:read`  | n/a              | Read notification resources (contact points, notification policies, templates, time intervals) via provisioning API. More specific than `alert.provisioning:read`. |
+| `alert.notifications.provisioning:write` | n/a              | Create, update, and delete notification resources via provisioning API. More specific than `alert.provisioning:write`.                                             |
+| `alert.provisioning.provenance:write`    | n/a              | Set provisioning status for alerting resources. Cannot be used alone. Requires user to have permissions to access resources.                                       |
 
 To help plan your RBAC rollout strategy, refer to [Plan your RBAC rollout strategy](https://grafana.com/docs/grafana/next/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/).
