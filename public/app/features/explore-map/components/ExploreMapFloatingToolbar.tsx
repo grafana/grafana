@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAssistant, createAssistantContextItem } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,13 +13,14 @@ import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_
 import tempoLogoSvg from 'app/plugins/datasource/tempo/img/tempo_logo.svg';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { addPanel, addFrame, addPostItNote, setCursorMode } from '../state/crdtSlice';
+import { addPanel, addFrame, addPostItNote, pastePanel, setCursorMode } from '../state/crdtSlice';
 import {
   selectPanels,
   selectMapUid,
   selectViewport,
   selectSelectedPanelIds,
   selectCursorMode,
+  selectClipboard,
 } from '../state/selectors';
 
 import { AddPanelAction } from './AssistantComponents';
@@ -28,6 +29,7 @@ export function ExploreMapFloatingToolbar() {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
+  const [hasSystemClipboard, setHasSystemClipboard] = useState(false);
   const currentUsername = contextSrv.user.name || contextSrv.user.login || 'Unknown';
 
   // Get assistant functionality
@@ -39,6 +41,30 @@ export function ExploreMapFloatingToolbar() {
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
   const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
   const cursorMode = useSelector((state) => selectCursorMode(state.exploreMapCRDT));
+  const clipboard = useSelector((state) => selectClipboard(state.exploreMapCRDT));
+
+  // Check system clipboard for panel data when dropdown opens
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const checkClipboard = async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        const data = JSON.parse(text);
+        if (data && typeof data === 'object' && 'mode' in data && 'width' in data && 'height' in data) {
+          setHasSystemClipboard(true);
+        } else {
+          setHasSystemClipboard(false);
+        }
+      } catch {
+        setHasSystemClipboard(false);
+      }
+    };
+
+    checkClipboard();
+  }, [isOpen]);
 
   const handleAddPanel = useCallback(() => {
     dispatch(
@@ -173,6 +199,42 @@ export function ExploreMapFloatingToolbar() {
       })
     );
     setIsOpen(false);
+  }, [dispatch, currentUsername]);
+
+  const handlePaste = useCallback(async () => {
+    try {
+      // Try to read from system clipboard first for cross-canvas support
+      const text = await navigator.clipboard.readText();
+      const clipboardData = JSON.parse(text);
+
+      // Validate clipboard data structure
+      if (clipboardData && typeof clipboardData === 'object' && 'mode' in clipboardData && 'width' in clipboardData && 'height' in clipboardData) {
+        dispatch(
+          pastePanel({
+            viewportSize: {
+              width: window.innerWidth,
+              height: window.innerHeight,
+            },
+            createdBy: currentUsername,
+            clipboardData,
+          })
+        );
+        return;
+      }
+    } catch (err) {
+      // Fall through to use local clipboard
+    }
+
+    // Fallback to local clipboard
+    dispatch(
+      pastePanel({
+        viewportSize: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+        createdBy: currentUsername,
+      })
+    );
   }, [dispatch, currentUsername]);
 
   const handleSetPointerMode = useCallback(() => {
@@ -325,6 +387,12 @@ CRITICAL:
         onClick={handleAddProfilesDrilldownPanel}
       />
       <MenuItem
+        label={t('explore-map.toolbar.paste-panel', 'Paste panel')}
+        icon="document-info"
+        onClick={handlePaste}
+        disabled={!clipboard && !hasSystemClipboard}
+      />
+      <MenuItem
         label={t('explore-map.toolbar.add-sticky', 'Add Sticky note')}
         icon="file-alt"
         onClick={handleAddPostItNote}
@@ -338,8 +406,8 @@ CRITICAL:
         <button
           className={`${styles.cursorModeButton} ${cursorMode === 'pointer' ? styles.cursorModeButtonActive : ''}`}
           onClick={handleSetPointerMode}
-          title="Pointer mode (V)"
-          aria-label="Pointer mode"
+          title={t('explore-map.toolbar.pointer-mode', 'Pointer mode (V)')}
+          aria-label={t('explore-map.toolbar.pointer-mode-aria', 'Pointer mode')}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className={styles.cursorIcon}>
             <path
@@ -351,8 +419,8 @@ CRITICAL:
         <button
           className={`${styles.cursorModeButton} ${cursorMode === 'hand' ? styles.cursorModeButtonActive : ''}`}
           onClick={handleSetHandMode}
-          title="Hand mode (H)"
-          aria-label="Hand mode"
+          title={t('explore-map.toolbar.hand-mode', 'Hand mode (H)')}
+          aria-label={t('explore-map.toolbar.hand-mode-aria', 'Hand mode')}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className={styles.cursorIcon}>
             <path
@@ -442,7 +510,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: 'transparent',
       color: theme.colors.text.secondary,
       cursor: 'pointer',
-      transition: 'all 0.2s ease',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'all 0.2s ease',
+      },
       '&:hover': {
         backgroundColor: theme.colors.action.hover,
         color: theme.colors.text.primary,

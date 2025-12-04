@@ -29,7 +29,6 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const maxWaitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadDone = useRef(false);
   const lastSavedCRDTStateRef = useRef<string | null | undefined>(null);
   const firstChangeTimeRef = useRef<number | null>(null);

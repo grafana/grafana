@@ -5,6 +5,8 @@ import { Rnd, RndDragCallback, RndResizeCallback } from 'react-rnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { splitClose } from '../../explore/state/main';
@@ -12,6 +14,7 @@ import {
   associatePanelWithFrame,
   bringPanelToFront,
   clearActiveDrag,
+  copyPanel,
   disassociatePanelFromFrame,
   duplicatePanel,
   removePanel,
@@ -267,8 +270,7 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
   );
 
   const handleRemove = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
+    () => {
       // Clean up Explore state first
       dispatch(splitClose(panel.exploreId));
       // Then remove panel
@@ -278,15 +280,38 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
   );
 
   const handleDuplicate = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
+    () => {
       dispatch(duplicatePanel({ panelId: panel.id }));
     },
     [dispatch, panel.id]
   );
 
-  const handleInfoClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCopy = useCallback(
+    async () => {
+      dispatch(copyPanel({ panelId: panel.id }));
+
+      // Also copy to system clipboard for cross-canvas support
+      try {
+        const panelData = {
+          mode: panel.mode,
+          width: panel.position.width,
+          height: panel.position.height,
+          exploreState: panel.exploreState,
+          iframeUrl: panel.iframeUrl,
+          createdBy: panel.createdBy,
+        };
+        await navigator.clipboard.writeText(JSON.stringify(panelData));
+        dispatch(notifyApp(createSuccessNotification('Panel copied', 'You can paste it on any canvas from the toolbar')));
+      } catch (err) {
+        // Fallback if clipboard API fails
+        dispatch(notifyApp(createSuccessNotification('Panel copied', 'You can paste it from the toolbar on this canvas')));
+      }
+    },
+    [dispatch, panel.id, panel.mode, panel.position, panel.exploreState, panel.iframeUrl, panel.createdBy]
+  );
+
+  const handleInfoClick = useCallback(() => {
+    // Info click doesn't do anything, just shows the description
   }, []);
 
   // Build tooltip content for panel info
@@ -354,8 +379,13 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
                         description={getInfoTooltipContent()}
                       />
                       <Menu.Item
-                        label={t('explore-map.panel.duplicate', 'Duplicate panel')}
+                        label={t('explore-map.panel.copy', 'Copy panel')}
                         icon="copy"
+                        onClick={handleCopy}
+                      />
+                      <Menu.Item
+                        label={t('explore-map.panel.duplicate', 'Duplicate panel')}
+                        icon="apps"
                         onClick={handleDuplicate}
                       />
                       <Menu.Divider />

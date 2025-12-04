@@ -346,6 +346,13 @@ export const selectSessionId = (state: ExploreMapCRDTState): string => {
 };
 
 /**
+ * Select clipboard state
+ */
+export const selectClipboard = (state: ExploreMapCRDTState) => {
+  return state.local.clipboard;
+};
+
+/**
  * Select panel count
  */
 export const selectPanelCount = createSelector(

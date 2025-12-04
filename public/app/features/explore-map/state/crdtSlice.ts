@@ -54,6 +54,16 @@ export interface ExploreMapCRDTState {
       deltaX: number;
       deltaY: number;
     };
+    clipboard?: {
+      panelData: {
+        mode: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown';
+        width: number;
+        height: number;
+        exploreState?: SerializedExploreState;
+        iframeUrl?: string;
+        createdBy?: string;
+      };
+    };
   };
 }
 
@@ -86,6 +96,7 @@ export function createInitialCRDTState(mapUid?: string): ExploreMapCRDTState {
       isSyncing: false,
       activeDrag: undefined,
       activeFrameDrag: undefined,
+      clipboard: undefined,
     },
   };
 }
@@ -1145,6 +1156,111 @@ const crdtSlice = createSlice({
     },
 
     /**
+     * Copy a panel to clipboard
+     */
+    copyPanel: (state, action: PayloadAction<{ panelId: string }>) => {
+      const manager = getCRDTManager(state);
+      const panel = manager.getPanelForUI(action.payload.panelId);
+
+      if (!panel) {
+        return;
+      }
+
+      // Store panel data in clipboard
+      state.local.clipboard = {
+        panelData: {
+          mode: panel.mode || 'explore',
+          width: panel.position.width,
+          height: panel.position.height,
+          exploreState: panel.exploreState,
+          iframeUrl: panel.iframeUrl,
+          createdBy: panel.createdBy,
+        },
+      };
+    },
+
+    /**
+     * Paste a panel from clipboard
+     * This action can be called with clipboardData for pasting from system clipboard
+     */
+    pastePanel: (state, action: PayloadAction<{
+      viewportSize?: { width: number; height: number };
+      createdBy?: string;
+      clipboardData?: {
+        mode: 'explore' | 'traces-drilldown' | 'metrics-drilldown' | 'profiles-drilldown' | 'logs-drilldown';
+        width: number;
+        height: number;
+        exploreState?: SerializedExploreState;
+        iframeUrl?: string;
+        createdBy?: string;
+      };
+    }>) => {
+      // Use provided clipboard data or fall back to local clipboard
+      const clipboardData = action.payload.clipboardData || state.local.clipboard?.panelData;
+
+      if (!clipboardData) {
+        return;
+      }
+
+      const manager = getCRDTManager(state);
+
+      // Calculate position at viewport center
+      const viewportSize = action.payload.viewportSize || { width: 1920, height: 1080 };
+      const canvasCenterX = (-state.local.viewport.panX + viewportSize.width / 2) / state.local.viewport.zoom;
+      const canvasCenterY = (-state.local.viewport.panY + viewportSize.height / 2) / state.local.viewport.zoom;
+
+      const position = {
+        x: canvasCenterX - clipboardData.width / 2,
+        y: canvasCenterY - clipboardData.height / 2,
+        width: clipboardData.width,
+        height: clipboardData.height,
+      };
+
+      // Create new panel
+      const newPanelId = uuidv4();
+      const newExploreId = generateExploreId();
+
+      const addOperation = manager.createAddPanelOperation(
+        newPanelId,
+        newExploreId,
+        position,
+        clipboardData.mode || 'explore',
+        action.payload.createdBy || clipboardData.createdBy
+      );
+
+      manager.applyOperation(addOperation);
+      state.pendingOperations.push(addOperation);
+
+      // Copy explore state if exists
+      if (clipboardData.exploreState) {
+        const stateOperation = manager.createUpdatePanelExploreStateOperation(
+          newPanelId,
+          clipboardData.exploreState
+        );
+
+        if (stateOperation) {
+          manager.applyOperation(stateOperation);
+          state.pendingOperations.push(stateOperation);
+        }
+      }
+
+      // Copy iframe URL if exists
+      if (clipboardData.iframeUrl) {
+        const urlOperation = manager.createUpdatePanelIframeUrlOperation(
+          newPanelId,
+          clipboardData.iframeUrl
+        );
+
+        if (urlOperation) {
+          manager.applyOperation(urlOperation);
+          state.pendingOperations.push(urlOperation);
+        }
+      }
+
+      saveCRDTManager(state, manager);
+    },
+
+    /**
      * Clear all state (reset)
      */
     clearMap: (state) => {
@@ -1201,6 +1317,8 @@ export const {
   clearActiveDrag,
   setActiveFrameDrag,
   clearActiveFrameDrag,
+  copyPanel,
+  pastePanel,
   clearMap,
 } = crdtSlice.actions;
 
