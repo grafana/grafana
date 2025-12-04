@@ -5085,10 +5085,7 @@
         "copy-or-duplicate": "Kopyala veya Çoğalt",
         "delete": "Sil",
         "duplicate": "Çoğalt",
-        "group-layout": "Grup düzeni",
-        "group-layout-disabled": "Bu seviyede hiçbir grup yok",
-        "panel-layout": "Panel yazı tipi",
-        "panel-layout-disabled": "Panel düzeni seçeneklerini değiştirmek için bir satır veya sekme seçin"
+        "layout": "Düzen"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -6559,7 +6556,7 @@
       "delete-button": "Sil",
       "title": "Sil"
     },
-    "delete-modal-restore-dashboards-text": "Bu işlem, panoyu 30 gün içinde silinmek üzere işaretleyecektir. Kuruluş yöneticiniz, 30 günlük süre dolmadan panoyu istediği zaman geri yükleyebilir.",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "Bu panoyu silmek istiyor musunuz?",
     "general": {
       "auto-refresh-description": "Otomatik yenileme listesinde bulunması gereken otomatik yenileme aralıklarını tanımlayın. Saniyeler için \"5s\", dakikalar için \"1m\", saatler için \"1h\" ve günler için \"1d\" biçimini kullanın (örneğin: \"5s,10s,30s,1m,5m,15m,30m,1h,2h,1d'\").",
@@ -7304,6 +7301,14 @@
       },
       "title-failed-sample-query": "Bu sorgu için günlük kaydı örneği yüklenemedi",
       "tooltip": "Görselleştirilen metriklere katkıda bulunan günlük kayıtlarını göster"
+    },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
     },
     "logs-table-empty-fields": {
       "no-fields": "Alan yok"
