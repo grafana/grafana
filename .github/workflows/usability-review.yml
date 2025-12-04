@@ -13,7 +13,6 @@ permissions:
   id-token: write
 
 env:
-  TARGET_URL: https://ephemeral15111821114646titoli.grafana-dev.net
   OUTPUT_TEXT_PATH: usability-review.txt
   SCREENSHOT_PATH: usability-screenshot.png
 
@@ -52,6 +51,27 @@ jobs:
           else
             echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           fi
+
+      - name: Extract target URL from ephemeral instance comment
+        id: extract-url
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr-number.outputs.number }}
+        run: |
+          # Get all PR comments, newest first
+          COMMENTS=$(gh pr view $PR_NUMBER --json comments --jq '.comments | reverse | .[].body')
+
+          # Find the most recent comment with ephemeral instance URL
+          TARGET_URL=$(echo "$COMMENTS" | grep -oE 'https://ephemeral[0-9]+\.grafana-dev\.net' | head -1)
+
+          if [ -z "$TARGET_URL" ]; then
+            echo "::error::No ephemeral instance URL found in PR comments"
+            echo "::notice::Please deploy an ephemeral instance first by commenting /deploy-to-hg"
+            exit 1
+          fi
+
+          echo "Found target URL: $TARGET_URL"
+          echo "TARGET_URL=$TARGET_URL" >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v4
