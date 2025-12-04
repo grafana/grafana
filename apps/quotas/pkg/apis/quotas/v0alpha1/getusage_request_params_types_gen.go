@@ -3,7 +3,8 @@
 package v0alpha1
 
 type GetUsageRequestParams struct {
-	Message *string `json:"message,omitempty"`
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
 }
 
 // NewGetUsageRequestParams creates a new GetUsageRequestParams object.

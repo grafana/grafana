@@ -61,14 +61,15 @@ func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResp
 	}
 
 	writer.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(writer).Encode(quotasv0alpha1.GetQuotaUsage{
+	return json.NewEncoder(writer).Encode(quotasv0alpha1.GetUsage{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: fmt.Sprintf("%s/%s", quotasv0alpha1.APIGroup, quotasv0alpha1.APIVersion),
+			APIVersion: "quotas.grafana.com/v0alpha1",
+			Kind:       "Quotas",
 		},
-		GetQuotaUsageBody: quotasv0alpha1.GetQuotaUsageBody{
+		GetUsageBody: quotasv0alpha1.GetUsageBody{
 			Namespace: request.ResourceIdentifier.Namespace,
-			Resource:  res,
 			Group:     group,
+			Resource:  res,
 			Usage:     quota.Usage,
 			Limit:     quota.Limit,
 		},
@@ -88,11 +89,7 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: []simple.AppManagedKind{
-			{
-				Kind: quotasv0alpha1.QuotaKind(),
-			},
-		},
+		ManagedKinds: []simple.AppManagedKind{},
 		VersionedCustomRoutes: map[string]simple.AppVersionRouteHandlers{
 			"v0alpha1": {
 				{

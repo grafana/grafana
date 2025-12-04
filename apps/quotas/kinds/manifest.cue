@@ -50,11 +50,15 @@ v0alpha1: {
                 "GET": {
                     response: {
                         namespace: string
-                        message: string
+                        resource: string
+                        group: string
+                        usage: int64
+                        limit: int64
                     }
                     request: {
                         query: {
-                            message?: string
+                            group: string
+                            resource: string
                         }
                     }
                 }
