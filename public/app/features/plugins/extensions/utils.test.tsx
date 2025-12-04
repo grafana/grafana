@@ -1000,8 +1000,7 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  // TODO: Fix tests suites below so they work with new plugins structure
-  describe.skip('getAppPluginConfigs()', () => {
+  describe('getAppPluginConfigs()', () => {
     const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
@@ -1074,13 +1073,13 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe.skip('getAppPluginIdFromExposedComponentId()', () => {
+  describe('getAppPluginIdFromExposedComponentId()', () => {
     test('should return the app plugin id from an extension point id', () => {
       expect(getAppPluginIdFromExposedComponentId('myorg-extensions-app/component/v1')).toBe('myorg-extensions-app');
     });
   });
 
-  describe.skip('getExtensionPointPluginDependencies()', () => {
+  describe('getExtensionPointPluginDependencies()', () => {
     const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
@@ -1294,7 +1293,7 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe.skip('getExposedComponentPluginDependencies()', () => {
+  describe('getExposedComponentPluginDependencies()', () => {
     const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
@@ -1440,7 +1439,7 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe.skip('getAppPluginDependencies()', () => {
+  describe('getAppPluginDependencies()', () => {
     const originalApps = config.apps;
     const genereicAppPluginConfig = {
       path: '',
@@ -1530,7 +1529,7 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe.skip('getExtensionPointPluginMeta()', () => {
+  describe('getExtensionPointPluginMeta()', () => {
     const originalApps = config.apps;
     const mockExtensionPointId = 'test-extension-point';
     const mockApp1: AppPluginConfig = {

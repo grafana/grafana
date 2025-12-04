@@ -4,6 +4,7 @@ import { config } from '@grafana/runtime';
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolvePluginUrlWithCache } from '../loader/pluginInfoCache';
 import { isHostedOnCDN, resolveModulePath } from '../loader/utils';
+import { getAppPlugins } from '../plugins';
 
 import { SandboxEnvironment, SandboxPluginMeta } from './types';
 
@@ -138,7 +139,7 @@ export function getPluginLoadData(pluginId: string): SandboxPluginMeta {
 
   //find it in apps
   //the information inside the apps object is more limited
-  for (const app of Object.values(config.apps)) {
+  for (const app of Object.values(getAppPlugins())) {
     if (app.id === pluginId) {
       return {
         id: pluginId,

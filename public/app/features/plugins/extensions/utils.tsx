@@ -15,12 +15,10 @@ import {
   urlUtil,
   PluginExtensionPoints,
   ExtensionInfo,
-  type PluginMetasSpec,
 } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { getConfig } from 'app/core/config';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import {
   CloseExtensionSidebarEvent,
@@ -30,6 +28,7 @@ import {
 } from 'app/types/events';
 
 import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaApis/RestrictedGrafanaApisProvider';
+import { AppPluginWrapper, getAppPlugins } from '../plugins';
 
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
@@ -607,7 +606,7 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
 export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 
 export const getAppPluginConfigs = (pluginIds: string[] = []) =>
-  Object.values(getConfig().plugins.apps).filter((app) => pluginIds.includes(app.pluginJson.id));
+  Object.values(getAppPlugins()).filter((app) => pluginIds.includes(app.id));
 
 export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string) => {
   return exposedComponentId.split('/')[0];
@@ -617,13 +616,13 @@ export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string)
 // (These plugins are necessary to be loaded to use the extension point.)
 // (The function also returns the plugin ids that the plugins - that extend the extension point - depend on.)
 export const getExtensionPointPluginDependencies = (extensionPointId: string): string[] => {
-  return Object.values(getConfig().plugins.apps)
+  return Object.values(getAppPlugins())
     .filter(
       (app) =>
-        app.pluginJson.extensions?.addedLinks?.some((link) => link.targets.includes(extensionPointId)) ||
-        app.pluginJson.extensions?.addedComponents?.some((component) => component.targets.includes(extensionPointId))
+        app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
+        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId))
     )
-    .map((app) => app.pluginJson.id)
+    .map((app) => app.id)
     .reduce((acc: string[], id: string) => {
       return [...acc, id, ...getAppPluginDependencies(id)];
     }, []);
@@ -646,26 +645,22 @@ export const getExtensionPointPluginMeta = (extensionPointId: string): Extension
   return new Map(
     getExtensionPointPluginDependencies(extensionPointId)
       .map((pluginId) => {
-        const app = getConfig().plugins.apps[pluginId];
+        const app = config.apps[pluginId];
         // if the plugin does not exist or does not expose any components or links to the extension point, return undefined
         if (
           !app ||
-          (!app.pluginJson.extensions?.addedComponents?.some((component) =>
-            component.targets.includes(extensionPointId)
-          ) &&
-            !app.pluginJson.extensions?.addedLinks?.some((link) => link.targets.includes(extensionPointId)))
+          (!app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId)) &&
+            !app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)))
         ) {
           return undefined;
         }
         return [
           pluginId,
           {
-            addedComponents:
-              app.pluginJson.extensions?.addedComponents?.filter((component) =>
-                component.targets.includes(extensionPointId)
-              ) || [],
-            addedLinks:
-              app.pluginJson.extensions?.addedLinks?.filter((link) => link.targets.includes(extensionPointId)) || [],
+            addedComponents: app.extensions.addedComponents.filter((component) =>
+              component.targets.includes(extensionPointId)
+            ),
+            addedLinks: app.extensions.addedLinks.filter((link) => link.targets.includes(extensionPointId)),
           },
         ] as const;
       })
@@ -687,7 +682,9 @@ export const getExposedComponentPluginDependencies = (exposedComponentId: string
 // metadata field. (For example the plugins that expose components that the app depends on.)
 // Heads up! This is a recursive function.
 export const getAppPluginDependencies = (pluginId: string, visited: string[] = []): string[] => {
-  if (!getConfig().plugins.apps[pluginId]) {
+  const apps = getAppPlugins();
+
+  if (!apps[pluginId]) {
     return [];
   }
 
@@ -696,18 +693,17 @@ export const getAppPluginDependencies = (pluginId: string, visited: string[] = [
     return [];
   }
 
-  const pluginIdDependencies =
-    getConfig().plugins.apps[pluginId]?.pluginJson.dependencies?.extensions?.exposedComponents?.map(
-      getAppPluginIdFromExposedComponentId
-    ) || [];
+  const pluginIdDependencies = apps[pluginId].dependencies.extensions.exposedComponents.map(
+    getAppPluginIdFromExposedComponentId
+  );
 
   return (
     pluginIdDependencies
-      ?.reduce((acc, _pluginId) => {
+      .reduce((acc, _pluginId) => {
         return [...acc, ...getAppPluginDependencies(_pluginId, [...visited, pluginId])];
       }, pluginIdDependencies)
       // We don't want the plugin to "depend on itself"
-      .filter((id) => id !== pluginId) || []
+      .filter((id) => id !== pluginId)
   );
 };
 
@@ -718,17 +714,17 @@ export const getAppPluginsToAwait = () => {
     'cloud-home-app',
   ];
 
-  return Object.values(getConfig().plugins.apps).filter((app) => pluginIds.includes(app.pluginJson.id));
+  return Object.values(getAppPlugins()).filter((app) => pluginIds.includes(app.id));
 };
 
 // Returns a list of app plugins that has to be preloaded in parallel with the core Grafana initialization.
 export const getAppPluginsToPreload = () => {
   // The DashboardPanelMenu extension point is using the `getPluginExtensions()` API in scenes at the moment, which means that it cannot yet benefit from dynamic plugin loading.
   const dashboardPanelMenuPluginIds = getExtensionPointPluginDependencies(PluginExtensionPoints.DashboardPanelMenu);
-  const awaitedPluginIds = getAppPluginsToAwait().map((app) => app.pluginJson.id);
-  const isNotAwaited = (app: PluginMetasSpec) => !awaitedPluginIds.includes(app.pluginJson.id);
+  const awaitedPluginIds = getAppPluginsToAwait().map((app) => app.id);
+  const isNotAwaited = (app: AppPluginWrapper) => !awaitedPluginIds.includes(app.id);
 
-  return Object.values(getConfig().plugins.apps).filter((app) => {
-    return isNotAwaited(app) && (app.pluginJson.preload || dashboardPanelMenuPluginIds.includes(app.pluginJson.id));
+  return Object.values(getAppPlugins()).filter((app) => {
+    return isNotAwaited(app) && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
   });
 };
