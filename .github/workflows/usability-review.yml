@@ -23,6 +23,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: React to comment
         if: github.event_name == 'issue_comment'
         uses: actions/github-script@v7
@@ -58,6 +63,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.pr-number.outputs.number }}
         run: |
+          # Extract ephemeral instance URL from PR comments
+          # Looks for the most recent comment containing: https://ephemeral{numbers}.grafana-dev.net
+          #
+          # TODO: Future improvement - auto-trigger deployment if no URL found:
+          #   1. Comment /deploy-to-hg on the PR
+          #   2. Wait ~20 minutes for build to complete
+          #   3. Retry extracting URL
+          #   4. Continue with usability review
+
           # Get all PR comments, newest first
           COMMENTS=$(gh pr view $PR_NUMBER --json comments --jq '.comments | reverse | .[].body')
 
@@ -72,11 +86,6 @@ jobs:
 
           echo "Found target URL: $TARGET_URL"
           echo "TARGET_URL=$TARGET_URL" >> $GITHUB_ENV
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Get vault secrets (dev)"
         id: vault-secrets-dev
