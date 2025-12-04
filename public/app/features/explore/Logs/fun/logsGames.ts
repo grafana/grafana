@@ -77,6 +77,9 @@ export function useLogsGames() {
   const [userMissiles, setUserMisiles] = useState<Missile[]>([]);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [gameEnded, setGameEnded] = useState(false);
+  const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(4);
+  const pausedRef = useRef(false);
 
   const lastTime = useRef(0);
   const frame = useRef<number | null>(null);
@@ -86,11 +89,21 @@ export function useLogsGames() {
       const dt = t - lastTime.current;
       lastTime.current = t;
 
-      const { newGameState, newUserMissiles, newEnemies } = update(dt, gameState, playerX, userMissiles, enemies);
+      const { newGameState, newUserMissiles, newEnemies, newScore, newLives } = update(
+        dt,
+        gameState,
+        playerX,
+        userMissiles,
+        enemies,
+        score,
+        lives
+      );
 
       setGameState(newGameState);
       setUserMisiles(newUserMissiles);
       setEnemies(newEnemies);
+      setScore(newScore);
+      setLives(newLives);
 
       if (newEnemies.length === 0) {
         setGameEnded(true);
@@ -99,7 +112,7 @@ export function useLogsGames() {
       frame.current = requestAnimationFrame(loop);
     }
 
-    if (!gameEnded) {
+    if (!gameEnded && !pausedRef.current) {
       frame.current = requestAnimationFrame(loop);
     }
 
@@ -108,7 +121,24 @@ export function useLogsGames() {
         cancelAnimationFrame(frame.current);
       }
     };
-  }, [enemies, gameEnded, gameState, playerX, userMissiles]);
+  }, [enemies, gameEnded, gameState, lives, playerX, score, userMissiles]);
+
+  useEffect(() => {
+    function handlePause() {
+      if (document.hidden) {
+        pausedRef.current = true;
+        console.log('Game paused');
+      } else {
+        pausedRef.current = false;
+        console.log('Game resumed');
+      }
+    }
+    document.addEventListener('visibilitychange', handlePause);
+
+    return () => {
+      return document.removeEventListener('visibilitychange', handlePause);
+    };
+  });
 
   useEffect(() => {
     function handleKeyPress(e: KeyboardEvent) {
@@ -141,7 +171,9 @@ function update(
   gameState: LogRowModel[] | undefined,
   playerX: number,
   userMissiles: Missile[],
-  enemies: Enemy[]
+  enemies: Enemy[],
+  score: number,
+  lives: number
 ) {
   if (gameState === undefined) {
     const newEnemies: Enemy[] = [];
@@ -160,7 +192,13 @@ function update(
         logLevel: LogLevel.unknown,
       });
     });
-    return { newGameState: logs, newUserMissiles: userMissiles, newEnemies: newEnemies };
+    return {
+      newGameState: logs,
+      newUserMissiles: userMissiles,
+      newEnemies: newEnemies,
+      newScore: score,
+      newLives: lives,
+    };
   }
 
   let newUserMissiles = userMissiles
@@ -214,6 +252,7 @@ function update(
       if (missile && enemy.health > 0) {
         missile.hit = true;
         enemy.health -= 1;
+        score += enemyScores[enemy.type];
       }
       return enemy;
     })
@@ -222,7 +261,9 @@ function update(
   newUserMissiles = newUserMissiles.filter((missile) => missile.hit === false);
 
   const newGameState = gameState.map((row, index) => {
-    if (index <= 2 || index > playerY) {
+    if (index === 0) {
+      row.entry = renderScoreAndLives(score, lives);
+    } else if (index <= 2 || index > playerY) {
       return row;
     } else if (index === playerY) {
       row.entry = player.padStart(playerX, ' ');
@@ -240,7 +281,7 @@ function update(
     });
   });
 
-  return { newGameState, newUserMissiles, newEnemies };
+  return { newGameState, newUserMissiles, newEnemies, newScore: score, newLives: lives };
 }
 
 function newUserMissile(x: number, y: number): Missile {
@@ -318,4 +359,8 @@ function render(row: string, enemies: Enemy[], userMissiles: Missile[], y: numbe
   }
 
   return newRow;
+}
+
+function renderScoreAndLives(score: number, lives: number) {
+  return `Score: ${score.toString().padStart(6)}                              Lives: ${new Array(lives).fill('♥').join('')}`;
 }
