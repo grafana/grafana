@@ -43,8 +43,6 @@ For general documentation on querying data sources in Grafana, refer to [Query a
 
 The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, the Azure Resource Graph, and Application Insights Traces. Each source has its own specialized query editor.
 
-For details, see the [query editor documentation](query-editor/).
-
 ## Choose a query editing mode
 
 The Azure Monitor data source's query editor has four modes depending on which Azure service you want to query:

@@ -74,7 +74,7 @@ This topic explains configuring and querying specific to the Azure Monitor data 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
 Only users with the organization administrator role can add data sources.
 
-Once you've added the Azure Monitor data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+Once you've added the Azure Monitor data source, you can [configure it](configure/) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 The Azure Monitor data source supports visualizing data from four Azure services:
 

@@ -1,9 +1,6 @@
 ---
 aliases:
-  - ../data-sources/azure-monitor/
-  - ../features/datasources/azuremonitor/
-  - azuremonitor/
-  - azuremonitor/deprecated-application-insights/
+  - ../../data-sources/azure-monitor/configure/
 description: Guide for configuring the Azure Monitor data source in Grafana.
 keywords:
   - grafana
@@ -455,7 +452,18 @@ If the test fails, verify:
 You can define and configure the Azure Monitor data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
-See the YAML examples in each [authentication method section](#configure-authentication) above.
+### Provisioning quick reference
+
+| Authentication method | `azureAuthType` value | Required fields |
+|-----------------------|-----------------------|-----------------|
+| App Registration | `clientsecret` | `tenantId`, `clientId`, `clientSecret` |
+| Managed Identity | `msi` | None (uses VM identity) |
+| Workload Identity | `workloadidentity` | None (uses pod identity) |
+| Current User | `currentuser` | `oauthPassThru: true`, `disableGrafanaCache: true` |
+
+All methods support the optional `subscriptionId` field to set a default subscription.
+
+For complete YAML examples, see the [authentication method sections](#configure-authentication) above.
 
 ## Configure with Terraform
 
