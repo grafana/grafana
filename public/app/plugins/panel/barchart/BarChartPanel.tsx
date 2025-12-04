@@ -92,9 +92,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   const totalSeries = Math.max(0, (info.series[0]?.fields.length ?? 0) - 1);
 
   const preparedMarkers = useMemo(
-    () =>
-      prepMarkers(vizSeries[0]?.fields ?? [], markerData ?? [], options.markers.markerGroups ?? [], stacking, theme),
-    [markerData, options.markers.markerGroups, stacking, vizSeries, theme]
+    () => prepMarkers(vizSeries[0]?.fields ?? [], markerData ?? [], options.markers.markerGroups ?? [], stacking),
+    [markerData, options.markers.markerGroups, stacking, vizSeries]
   );
 
   let { builder, prepData } = useMemo(

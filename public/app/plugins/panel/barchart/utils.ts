@@ -35,6 +35,7 @@ import {
   StackingMode,
   UPlotConfigBuilder,
   measureText,
+  useTheme2,
 } from '@grafana/ui';
 import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
 
@@ -604,10 +605,10 @@ export function prepMarkers(
   vizFields: Field[],
   markerFields: Field[],
   markers: MarkerGroup[],
-  stacking: StackingMode,
-  theme: GrafanaTheme2
+  stacking: StackingMode
 ): PreparedMarker[] {
   let prepMarkerList: PreparedMarker[] = [];
+  const theme = useTheme2();
 
   for (const m of markers ?? []) {
     const i = markerFields.findIndex((f) => f.name === m.dataField);

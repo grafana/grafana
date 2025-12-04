@@ -3,7 +3,7 @@ import { DropResult } from '@hello-pangea/dnd';
 
 import { StandardEditorProps, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, ComboboxOption, useTheme2, Divider } from '@grafana/ui';
+import { Button, ComboboxOption, useTheme2 } from '@grafana/ui';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 
 import { hoverColor } from '../../../../../packages/grafana-ui/src/themes/mixins';

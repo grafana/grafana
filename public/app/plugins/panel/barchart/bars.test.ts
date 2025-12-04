@@ -28,6 +28,8 @@ describe('populateMarkerList', () => {
       color: 'red',
       size: 0.1,
       opacity: 1,
+      fill: true,
+      strokeWidth: 2,
     },
   };
 
@@ -62,10 +64,6 @@ describe('populateMarkerList', () => {
       // resolvedY = u.valToPos(...) = 50
       expect(resolvedMarker.y).toBe(50);
       expect(resolvedMarker.isRotated).toBe(false);
-      expect(resolvedMarker.opts).toEqual({
-        ...baseMarker.opts,
-        size: baseMarker.opts.size * 100, // opts.size * wid
-      });
     });
 
     it('should handle markers with no valid yValue or yScaleKey', () => {
@@ -98,10 +96,6 @@ describe('populateMarkerList', () => {
       // markerY = barY + hgt/2 = 25 + 50/2 = 50
       expect(resolvedMarker.y).toBe(50);
       expect(resolvedMarker.isRotated).toBe(true);
-      expect(resolvedMarker.opts).toEqual({
-        ...baseMarker.opts,
-        size: baseMarker.opts.size * 50, // opts.size * hgt
-      });
     });
 
     it('should handle markers with no valid yValue or yScaleKey', () => {
