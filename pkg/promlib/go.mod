@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4
-	github.com/grafana/grafana-plugin-sdk-go v0.284.0
+	github.com/grafana/grafana-plugin-sdk-go v0.284.1-0.20251203221144-c256270a1ce8
 	github.com/grafana/grafana/apps/scope v0.0.0-20251007093103-792853df9134
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.23.2
@@ -28,7 +28,6 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
@@ -37,7 +36,7 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.22.1 // indirect
-	github.com/go-openapi/jsonreference v0.21.2 // indirect
+	github.com/go-openapi/jsonreference v0.21.3 // indirect
 	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/go-openapi/swag/jsonname v0.25.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
