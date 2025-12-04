@@ -4,7 +4,7 @@ import { ComponentProps, memo, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Icon, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType, getExpressionIcon } from 'app/features/expressions/types';
 
 interface AddDataItemMenuProps {
@@ -99,6 +99,12 @@ export const AddDataItemMenu = memo(
             label={t('dashboard-scene.add-data-item-menu.add-from-saved-queries', 'From saved queries')}
             icon="bookmark"
             onClick={() => onAddFromSavedQueries(index)}
+            component={() => (
+              <span className={styles.badge}>
+                <Icon name="gf-query-library" />
+              </span>
+            )}
+            className={styles.queryLibraryMenuItem}
           />
         )}
         {allowedTypes.includes('transform') && (
@@ -131,6 +137,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   textButton: css({
     paddingLeft: 0,
     fontFamily: theme.typography.fontFamilyMonospace,
+  }),
+  queryLibraryMenuItem: css({
+    flexDirection: 'row',
+    alignItems: 'center',
+  }),
+  badge: css({
+    display: 'flex',
+    alignItems: 'center',
   }),
 });
 

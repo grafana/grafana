@@ -262,7 +262,13 @@ export const QueryLibraryView = forwardRef<QueryLibraryViewRef, QueryLibraryView
   // Render query list item
   const renderQueryItem = (query: (typeof STUB_SAVED_QUERIES)[0], index: number) => (
     <Fragment key={query.uid}>
-      <label className={cx(styles.queryItem, mode === 'browse' && selectedQueryIndex === index && styles.selected)}>
+      <label
+        className={cx(
+          styles.queryItem,
+          mode === 'browse' && selectedQueryIndex === index && styles.selected,
+          mode === 'save' && styles.disabled
+        )}
+      >
         <input
           type="radio"
           name="query-library-list"
@@ -489,6 +495,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.action.selected,
     '&:hover': {
       backgroundColor: theme.colors.action.selected,
+    },
+  }),
+  disabled: css({
+    opacity: 0.5,
+    cursor: 'default',
+    '&:hover': {
+      backgroundColor: 'transparent',
     },
   }),
   radioInput: css({
