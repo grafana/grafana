@@ -1339,10 +1339,7 @@
           "legacyOptions": {
             "description": "Catch-all field for datasource-specific properties",
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "mappings": {
             "description": "Mappings define how to convert data frame fields to annotation event fields.",

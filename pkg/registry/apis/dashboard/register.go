@@ -772,6 +772,27 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 				maps.Copy(defs, oapi)
 			}
 		}
+
+		// Fix legacyOptions schema for v2alpha1 and v2beta1 to allow any value type
+		// The generated schema incorrectly restricts values to objects, but map[string]interface{} can hold any type
+		// This fix must be applied here so structured-merge-diff uses the correct schema
+		// For some reason this issue occurs with both the kubernetes-generated openAPI sourced from go, _and_ the OpenAPI from the AppManifest
+		// TODO: @IfSentient this should really be addressed in the app-sdk's generation, or work out what about this particular CUE value is broken
+		for _, defKey := range []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardAnnotationQuerySpec",
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationQuerySpec",
+		} {
+			if def, ok := defs[defKey]; ok {
+				if legacyOptions, ok := def.Schema.Properties["legacyOptions"]; ok {
+					// Fix: Use additionalProperties: true to allow any value type (string, number, boolean, array, object, etc.)
+					// instead of restricting to objects only. This must match map[string]interface{} semantics.
+					legacyOptions.AdditionalProperties = &spec.SchemaOrBool{Allows: true}
+					def.Schema.Properties["legacyOptions"] = legacyOptions
+					defs[defKey] = def
+				}
+			}
+		}
+
 		return defs
 	}
 }
