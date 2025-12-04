@@ -344,6 +344,7 @@ jobs:
           import os
           import subprocess
           import re
+          import json
 
           # Read the AI output
           output_path = os.environ['OUTPUT_TEXT_PATH']
@@ -368,7 +369,25 @@ jobs:
 
           pr_number = os.environ['PR_NUMBER']
 
-          for issue, severity, impact, confidence, suggestion in issue_rows:
+          # Get changed files in the PR to attach comments to
+          pr_files_result = subprocess.run(
+              ['gh', 'pr', 'view', pr_number, '--json', 'files'],
+              capture_output=True,
+              text=True,
+              check=True
+          )
+          pr_data = json.loads(pr_files_result.stdout)
+          changed_files = [f['path'] for f in pr_data.get('files', [])]
+
+          # Prefer frontend files for UI issues
+          frontend_files = [f for f in changed_files if any(ext in f for ext in ['.tsx', '.ts', '.jsx', '.js', '.vue', '.css', '.scss'])]
+          target_files = frontend_files if frontend_files else changed_files
+
+          if not target_files:
+              print("No changed files found, posting as general comments instead")
+              target_files = [None] * len(issue_rows)
+
+          for idx, (issue, severity, impact, confidence, suggestion) in enumerate(issue_rows):
               # Clean up whitespace
               issue = issue.strip()
               severity = severity.strip()
@@ -390,14 +409,36 @@ jobs:
               **Suggestion:** {suggestion}
 
               ---
-              _Posted by Usability Review Agent_"""
+              _Posted by BabyBot 🍼 - Usability Review Agent_"""
 
-              # Post comment
-              subprocess.run(
-                  ['gh', 'pr', 'comment', pr_number, '--body', comment],
-                  check=True
-              )
-              print(f"Posted comment for: {issue_title}")
+              # Try to post as review comment (resolvable) on a changed file
+              target_file = target_files[idx % len(target_files)] if target_files[0] is not None else None
+
+              if target_file:
+                  # Post as review comment on the file (resolvable!)
+                  try:
+                      # Create a review comment on line 1 of the file
+                      subprocess.run(
+                          ['gh', 'pr', 'review', pr_number, '--comment', '--body', comment, '--file', target_file, '--line', '1'],
+                          check=True,
+                          capture_output=True
+                      )
+                      print(f"Posted resolvable comment for: {issue_title} (on {target_file})")
+                  except subprocess.CalledProcessError as e:
+                      # Fallback to general comment if review comment fails
+                      print(f"Failed to post review comment, falling back to general comment: {e}")
+                      subprocess.run(
+                          ['gh', 'pr', 'comment', pr_number, '--body', comment],
+                          check=True
+                      )
+                      print(f"Posted general comment for: {issue_title}")
+              else:
+                  # Post as general comment
+                  subprocess.run(
+                      ['gh', 'pr', 'comment', pr_number, '--body', comment],
+                      check=True
+                  )
+                  print(f"Posted general comment for: {issue_title}")
 
           PYTHON
 

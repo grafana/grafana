@@ -1,0 +1,127 @@
+name: BabyBot Weekly Metrics Report
+
+on:
+  schedule:
+    - cron: '0 9 * * MON'  # Every Monday at 9am UTC
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  export-metrics:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Export BabyBot metrics
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python .github/scripts/export-babybot-metrics.py --format both --output babybot-metrics-$(date +%Y-%m-%d)
+
+      - name: Upload metrics artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: babybot-metrics-${{ github.run_number }}
+          path: |
+            babybot-metrics-*.csv
+            babybot-metrics-*.json
+          retention-days: 90
+
+      - name: Generate summary
+        id: summary
+        run: |
+          METRICS_FILE=$(ls babybot-metrics-*.json | head -1)
+
+          TOTAL=$(jq -r '.total_comments' $METRICS_FILE)
+          RESOLVABLE=$(jq -r '.resolvable_comments' $METRICS_FILE)
+          CRITICAL=$(jq -r '.by_severity.Critical // 0' $METRICS_FILE)
+          MAJOR=$(jq -r '.by_severity.Major // 0' $METRICS_FILE)
+          MINOR=$(jq -r '.by_severity.Minor // 0' $METRICS_FILE)
+          PRS=$(jq -r '.by_pr | length' $METRICS_FILE)
+
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "resolvable=$RESOLVABLE" >> $GITHUB_OUTPUT
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
+          echo "minor=$MINOR" >> $GITHUB_OUTPUT
+          echo "prs=$PRS" >> $GITHUB_OUTPUT
+
+      - name: Post summary to Slack
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          TOTAL: ${{ steps.summary.outputs.total }}
+          RESOLVABLE: ${{ steps.summary.outputs.resolvable }}
+          CRITICAL: ${{ steps.summary.outputs.critical }}
+          MAJOR: ${{ steps.summary.outputs.major }}
+          MINOR: ${{ steps.summary.outputs.minor }}
+          PRS: ${{ steps.summary.outputs.prs }}
+        run: |
+          curl -X POST $SLACK_WEBHOOK_URL \
+            -H 'Content-type: application/json' \
+            -d "{
+              \"channel\": \"#hackathon15-agentic-usability-review\",
+              \"username\": \"BabyBot Metrics\",
+              \"icon_emoji\": \":bar_chart:\",
+              \"blocks\": [
+                {
+                  \"type\": \"header\",
+                  \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"📊 BabyBot Weekly Metrics Report\"
+                  }
+                },
+                {
+                  \"type\": \"section\",
+                  \"text\": {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*Total Comments:* $TOTAL\\n*Resolvable:* $RESOLVABLE\\n*PRs Reviewed:* $PRS\"
+                  }
+                },
+                {
+                  \"type\": \"section\",
+                  \"text\": {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*By Severity*\\n• ‼️ Critical: $CRITICAL\\n• ⚠️ Major: $MAJOR\\n• 🟢 Minor: $MINOR\"
+                  }
+                },
+                {
+                  \"type\": \"actions\",
+                  \"elements\": [
+                    {
+                      \"type\": \"button\",
+                      \"text\": {
+                        \"type\": \"plain_text\",
+                        \"text\": \"Download Full Report\"
+                      },
+                      \"url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+                    }
+                  ]
+                }
+              ]
+            }"
+
+      - name: Create summary comment (optional - for visibility)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "## 📊 BabyBot Metrics Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Comments:** ${{ steps.summary.outputs.total }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Resolvable Comments:** ${{ steps.summary.outputs.resolvable }}" >> $GITHUB_STEP_SUMMARY
+          echo "**PRs Reviewed:** ${{ steps.summary.outputs.prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### By Severity" >> $GITHUB_STEP_SUMMARY
+          echo "- ‼️ Critical: ${{ steps.summary.outputs.critical }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚠️ Major: ${{ steps.summary.outputs.major }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🟢 Minor: ${{ steps.summary.outputs.minor }}" >> $GITHUB_STEP_SUMMARY
