@@ -64,7 +64,7 @@ jobs:
           PR_NUMBER: ${{ steps.pr-number.outputs.number }}
         run: |
           # Extract ephemeral instance URL from PR comments
-          # Looks for the most recent comment containing: https://ephemeral{numbers}.grafana-dev.net
+          # Looks for the most recent comment containing: https://ephemeral{alphanumeric}.grafana-dev.net
           #
           # TODO: Future improvement - auto-trigger deployment if no URL found:
           #   1. Comment /deploy-to-hg on the PR
@@ -75,8 +75,8 @@ jobs:
           # Get all PR comments, newest first
           COMMENTS=$(gh pr view $PR_NUMBER --json comments --jq '.comments | reverse | .[].body')
 
-          # Find the most recent comment with ephemeral instance URL
-          TARGET_URL=$(echo "$COMMENTS" | grep -oE 'https://ephemeral[0-9]+\.grafana-dev\.net' | head -1)
+          # Find the most recent comment with ephemeral instance URL (alphanumeric subdomain)
+          TARGET_URL=$(echo "$COMMENTS" | grep -oE 'https://ephemeral[a-zA-Z0-9]+\.grafana-dev\.net' | head -1)
 
           if [ -z "$TARGET_URL" ]; then
             echo "::error::No ephemeral instance URL found in PR comments"
