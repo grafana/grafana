@@ -503,11 +503,12 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 	var currentID int64
 	var orgID int64
 	var uid, name, interval string
+	var createdAt, updatedAt int64
 	var itemType, itemValue sql.NullString
 
 	count := 0
 	for rows.Next() {
-		err = rows.Scan(&currentID, &orgID, &uid, &name, &interval, &itemType, &itemValue)
+		err = rows.Scan(&currentID, &orgID, &uid, &name, &interval, &createdAt, &updatedAt, &itemType, &itemValue)
 		if err != nil {
 			return nil, err
 		}
@@ -516,11 +517,13 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 		pl, exists := playlists[currentID]
 		if !exists {
 			pl = &playlistData{
-				id:       currentID,
-				uid:      uid,
-				name:     name,
-				interval: interval,
-				items:    []playlistv0.PlaylistItem{},
+				id:        currentID,
+				uid:       uid,
+				name:      name,
+				interval:  interval,
+				items:     []playlistv0.PlaylistItem{},
+				createdAt: createdAt,
+				updatedAt: updatedAt,
 			}
 			playlists[currentID] = pl
 		}
@@ -546,14 +549,25 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 				Kind:       "Playlist",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      pl.uid,
-				Namespace: opts.Namespace,
+				Name:              pl.uid,
+				Namespace:         opts.Namespace,
+				CreationTimestamp: metav1.NewTime(time.UnixMilli(pl.createdAt)),
 			},
 			Spec: playlistv0.PlaylistSpec{
 				Title:    pl.name,
 				Interval: pl.interval,
 				Items:    pl.items,
 			},
+		}
+
+		// Set updated timestamp if different from created
+		if pl.updatedAt != pl.createdAt {
+			meta, err := utils.MetaAccessor(playlist)
+			if err != nil {
+				return nil, err
+			}
+			updatedTime := time.UnixMilli(pl.updatedAt)
+			meta.SetUpdatedTimestamp(&updatedTime)
 		}
 
 		body, err := json.Marshal(playlist)
