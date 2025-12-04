@@ -133,9 +133,18 @@ class LocalPlaywrightBrowser(BasePlaywrightComputer):
                 print(f"Error screenshot saved as {error_screenshot_path}")
                 raise
 
+        # Set up console and error logging
+        page.on("console", lambda msg: print(f"Console [{msg.type}]: {msg.text}"))
+        page.on("pageerror", lambda err: print(f"Page error: {err}"))
+
         print(f"Navigating to: {target_url}")
-        page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
+        page.goto(target_url, wait_until="domcontentloaded", timeout=180000)
         print(f"Page loaded, URL: {page.url}")
+
+        # Wait a bit for Grafana to initialize
+        print("Waiting for Grafana to initialize...")
+        page.wait_for_timeout(10000)  # Wait 10 seconds for app to settle
+        print(f"Final URL after waiting: {page.url}")
 
         return browser, page
 
