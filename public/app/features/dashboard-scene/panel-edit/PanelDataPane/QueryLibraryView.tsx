@@ -60,6 +60,45 @@ const STUB_SAVED_QUERIES: Array<{
     },
   },
   {
+    uid: '7',
+    title: '5xx Error Rate',
+    description: 'Returns the rate of 5xx HTTP errors',
+    queryText: 'sum by(code) (rate(prometheus_http_requests_total{ code=~"5.." }[5m]))',
+    datasourceName: 'Prometheus',
+    datasourceType: 'prometheus',
+    datasourceUid: 'prometheus',
+    user: { uid: 'admin', displayName: 'Admin' },
+    createdAtTimestamp: Date.now() - 604800000,
+    tags: ['errors', 'http'],
+    isVisible: true,
+    query: {
+      refId: 'B',
+      datasource: { type: 'prometheus', uid: 'prometheus' },
+    },
+  },
+  {
+    uid: '8',
+    title: '95th Percentile Latency',
+    description: 'Returns the 95th percentile latency for HTTP requests',
+    queryText: `histogram_quantile(
+  0.95,
+  sum by(le)(
+    rate(prometheus_http_request_duration_seconds_bucket[5m])
+  )
+)`,
+    datasourceName: 'Prometheus',
+    datasourceType: 'prometheus',
+    datasourceUid: 'prometheus',
+    user: { uid: 'admin', displayName: 'Admin' },
+    createdAtTimestamp: Date.now() - 691200000,
+    tags: ['latency', 'http'],
+    isVisible: false,
+    query: {
+      refId: 'C',
+      datasource: { type: 'prometheus', uid: 'prometheus' },
+    },
+  },
+  {
     uid: '2',
     title: 'History quantile on rate',
     description: 'Returns memory usage metrics',
