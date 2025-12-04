@@ -849,6 +849,25 @@ func (alertRule *AlertRule) Type() RuleType {
 	return RuleTypeAlerting
 }
 
+// GetRecordingRuleEvaluationOffset returns the evaluation offset for a recording rule
+// derived from the source query's RelativeTimeRange.To.
+func (alertRule *AlertRule) GetRecordingRuleEvaluationOffset() time.Duration {
+	if alertRule.Record == nil {
+		return 0
+	}
+
+	for _, query := range alertRule.Data {
+		if query.RefID == alertRule.Record.From {
+			if isExpr, _ := query.IsExpression(); isExpr {
+				return 0
+			}
+			return time.Duration(query.RelativeTimeRange.To)
+		}
+	}
+
+	return 0
+}
+
 // Copy creates and returns a deep copy of the AlertRule instance, duplicating all fields and nested data structures.
 func (alertRule *AlertRule) Copy() *AlertRule {
 	if alertRule == nil {

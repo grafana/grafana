@@ -18,6 +18,7 @@ import (
 	"go.yaml.in/yaml/v3"
 	"golang.org/x/exp/maps"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
@@ -1445,6 +1446,110 @@ func TestWithoutPrivateLabels(t *testing.T) {
 
 			require.Equal(t, tt.expected, result)
 			require.Equal(t, inputCopy, tt.input, "input map should not be modified")
+		})
+	}
+}
+
+func TestAlertRule_GetRecordingRuleEvaluationOffset(t *testing.T) {
+	tests := []struct {
+		name     string
+		rule     *AlertRule
+		expected time.Duration
+	}{
+		{
+			name: "recording rule with offset",
+			rule: &AlertRule{
+				Record: &Record{
+					From:                "A",
+					Metric:              "test_metric",
+					TargetDatasourceUID: "prometheus-uid",
+				},
+				Data: []AlertQuery{
+					{
+						RefID:         "A",
+						DatasourceUID: "prometheus-uid",
+						RelativeTimeRange: RelativeTimeRange{
+							From: Duration(10 * time.Minute),
+							To:   Duration(5 * time.Minute),
+						},
+					},
+				},
+			},
+			expected: 5 * time.Minute,
+		},
+		{
+			name: "recording rule without offset",
+			rule: &AlertRule{
+				Record: &Record{
+					From:                "A",
+					Metric:              "test_metric",
+					TargetDatasourceUID: "prometheus-uid",
+				},
+				Data: []AlertQuery{
+					{
+						RefID:         "A",
+						DatasourceUID: "prometheus-uid",
+						RelativeTimeRange: RelativeTimeRange{
+							From: Duration(10 * time.Minute),
+							To:   Duration(0),
+						},
+					},
+				},
+			},
+			expected: 0,
+		},
+		{
+			name: "recording rule with expression source",
+			rule: &AlertRule{
+				Record: &Record{
+					From:                "B",
+					Metric:              "test_metric",
+					TargetDatasourceUID: "prometheus-uid",
+				},
+				Data: []AlertQuery{
+					{
+						RefID:         "A",
+						DatasourceUID: "prometheus-uid",
+						RelativeTimeRange: RelativeTimeRange{
+							From: Duration(10 * time.Minute),
+							To:   Duration(5 * time.Minute),
+						},
+					},
+					{
+						RefID:         "B",
+						DatasourceUID: expr.DatasourceUID,
+						RelativeTimeRange: RelativeTimeRange{
+							From: Duration(10 * time.Minute),
+							To:   Duration(5 * time.Minute),
+						},
+					},
+				},
+			},
+			expected: 0,
+		},
+		{
+			name: "not a recording rule",
+			rule: &AlertRule{
+				Record: nil,
+				Data: []AlertQuery{
+					{
+						RefID:         "A",
+						DatasourceUID: "prometheus-uid",
+						RelativeTimeRange: RelativeTimeRange{
+							From: Duration(10 * time.Minute),
+							To:   Duration(5 * time.Minute),
+						},
+					},
+				},
+			},
+			expected: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.rule.GetRecordingRuleEvaluationOffset()
+			require.Equal(t, tt.expected, got)
 		})
 	}
 }
