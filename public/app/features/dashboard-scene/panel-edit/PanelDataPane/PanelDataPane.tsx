@@ -100,6 +100,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     open: false,
     index: null,
   });
+  const [isAddingTransform, setIsAddingTransform] = useState(false);
 
   const panel = panelRef.resolve();
 
@@ -197,6 +198,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   const handleSelect = useCallback((id: string) => {
     setSelectedId(id);
+    setIsAddingTransform(false);
   }, []);
 
   const updateQuerySelectionOnStateChange = useCallback(
@@ -235,6 +237,16 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     },
     [queriesTab, updateQuerySelectionOnStateChange, queries]
   );
+
+  const handleGoToQueries = useCallback(() => {
+    // Close the transformation picker
+    setIsAddingTransform(false);
+    // Add a SQL expression
+    if (queriesTab) {
+      updateQuerySelectionOnStateChange(queries?.length ?? 0);
+      queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
+    }
+  }, [queriesTab, updateQuerySelectionOnStateChange, queries]);
 
   const handleDuplicateQuery = useCallback(
     (index: number) => {
@@ -343,6 +355,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
           setSelectedId(!!newTransform ? transformItemId(selectedIndex) : null);
           setTransformDrawerState({ open: false, index: null });
+          setIsAddingTransform(false);
           unsub.unsubscribe();
         });
 
@@ -429,7 +442,10 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             onSelect={handleSelect}
             onAddQuery={handleAddQuery}
             onAddFromSavedQueries={(index) => setSavedQueriesDrawerState({ open: true, index: index ?? null })}
-            onAddTransform={(index) => setTransformDrawerState({ open: true, index: index ?? null })}
+            onAddTransform={(index) => {
+              setIsAddingTransform(true);
+              setSelectedId(null);
+            }}
             onAddExpression={handleAddExpression}
             onDuplicateQuery={handleDuplicateQuery}
             onRemoveQuery={handleRemoveQuery}
@@ -470,6 +486,11 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             tabs={tabs}
             onRemoveTransform={handleRemoveTransform}
             onToggleTransformVisibility={handleToggleTransformVisibility}
+            isAddingTransform={isAddingTransform}
+            onAddTransformation={handleAddTransform}
+            onCancelAddTransform={() => setIsAddingTransform(false)}
+            transformationData={series}
+            onGoToQueries={handleGoToQueries}
           />
         </div>
       </div>

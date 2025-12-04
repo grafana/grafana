@@ -1,29 +1,38 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { mergeMap } from 'rxjs/operators';
 
 import {
   CoreApp,
+  DataFrame,
   DataQuery,
   DataSourceInstanceSettings,
+  DataTransformerConfig,
+  DataTransformContext,
   GrafanaTheme2,
   standardTransformersRegistry,
+  transformDataFrame,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { t, Trans } from '@grafana/i18n';
+import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import {
   Button,
+  Drawer,
   Dropdown,
   FieldValidationMessage,
   Icon,
   IconButton,
   Input,
+  JSONFormatter,
   Menu,
   Stack,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { FALLBACK_DOCS_LINK } from 'app/features/transformers/docs/constants';
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
@@ -65,6 +74,10 @@ export const DetailViewHeader = ({
   const [isEditing, setIsEditing] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSavedQueriesDrawerOpen, setIsSavedQueriesDrawerOpen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
+  const [transformInput, setTransformInput] = useState<DataFrame[]>([]);
+  const [transformOutput, setTransformOutput] = useState<DataFrame[]>([]);
 
   // Helper to update queries with consistent pattern
   const updateQueries = useCallback(
@@ -293,15 +306,77 @@ export const DetailViewHeader = ({
   const isTransformDisabled =
     selectedItem.type === 'transform' && 'disabled' in selectedItem.data && selectedItem.data.disabled;
 
-  // Get transformation display name
-  const transformationName = useMemo(() => {
+  // Get transformation display name and transformer info
+  const transformerInfo = useMemo(() => {
     if (selectedItem.type === 'transform' && 'id' in selectedItem.data) {
       const transformId = selectedItem.data.id;
       const transformer = standardTransformersRegistry.get(transformId);
-      return transformer?.name || transformId;
+      return transformer;
     }
-    return '';
+    return undefined;
   }, [selectedItem]);
+
+  const transformationName = transformerInfo?.name || '';
+
+  // Calculate transformation input/output for debug mode
+  useEffect(() => {
+    if (selectedItem.type !== 'transform' || !showDebug || !('disabled' in selectedItem.data)) {
+      return;
+    }
+
+    // Get the query runner for source data
+    const queryRunner = getQueryRunnerFor(panel);
+    if (!queryRunner) {
+      return;
+    }
+
+    // Get the source data (before any transformations)
+    const sourceData = queryRunner.state.data;
+    if (!sourceData?.series || sourceData.series.length === 0) {
+      setTransformInput([]);
+      setTransformOutput([]);
+      return;
+    }
+
+    // Get all transformations from the panel's data transformer
+    const $data = panel.state.$data;
+    if (!$data || !('state' in $data) || !('transformations' in $data.state)) {
+      return;
+    }
+
+    const transformations = $data.state.transformations;
+    if (!Array.isArray(transformations)) {
+      return;
+    }
+
+    const allTransformations: DataTransformerConfig[] = transformations;
+    const currentIndex = selectedItem.index;
+
+    // Get transformations before and including current one
+    const inputTransforms = allTransformations.slice(0, currentIndex);
+    const outputTransforms = allTransformations.slice(currentIndex, currentIndex + 1);
+
+    const ctx: DataTransformContext = {
+      interpolate: (v: string) => getTemplateSrv().replace(v),
+    };
+
+    // Input: Apply all transformations before this one to the source data
+    const inputSubscription = transformDataFrame(inputTransforms, sourceData.series, ctx).subscribe((frames) => {
+      setTransformInput(frames);
+    });
+
+    // Output: Apply input transforms, then apply the current transform to get the output
+    const outputSubscription = transformDataFrame(inputTransforms, sourceData.series, ctx)
+      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
+      .subscribe((frames) => {
+        setTransformOutput(frames);
+      });
+
+    return () => {
+      inputSubscription.unsubscribe();
+      outputSubscription.unsubscribe();
+    };
+  }, [selectedItem, showDebug, panel]);
 
   return (
     <div className={styles.header}>
@@ -422,6 +497,18 @@ export const DetailViewHeader = ({
         {/* Right side: Actions Menu for transformations */}
         {selectedItem.type === 'transform' && (
           <Stack gap={0.5} alignItems="center">
+            <IconButton
+              name="question-circle"
+              variant="secondary"
+              tooltip={t('dashboard-scene.detail-view-header.show-documentation', 'Show documentation')}
+              onClick={() => setShowHelp(true)}
+            />
+            <IconButton
+              name="bug"
+              variant="secondary"
+              tooltip={t('dashboard-scene.detail-view-header.debug', 'Debug transformation')}
+              onClick={() => setShowDebug(!showDebug)}
+            />
             <Dropdown
               overlay={
                 <Menu>
@@ -471,6 +558,51 @@ export const DetailViewHeader = ({
           }
         />
       )}
+
+      {/* Transformation Help Drawer */}
+      {selectedItem.type === 'transform' && transformerInfo && showHelp && (
+        <Drawer
+          title={transformerInfo.name}
+          subtitle={t('dashboard-scene.detail-view-header.transformation-help', 'Transformation help')}
+          onClose={() => setShowHelp(false)}
+        >
+          <OperationRowHelp
+            markdown={transformerInfo.help || FALLBACK_DOCS_LINK}
+            styleOverrides={{ borderTop: '2px solid' }}
+          />
+        </Drawer>
+      )}
+
+      {/* Transformation Debug Drawer */}
+      {selectedItem.type === 'transform' && showDebug && (
+        <Drawer
+          title={t('dashboard-scene.detail-view-header.debug-transformation', 'Debug transformation')}
+          subtitle={transformationName}
+          onClose={() => setShowDebug(false)}
+        >
+          <div className={styles.debugWrapper}>
+            <div className={styles.debug}>
+              <div className={styles.debugTitle}>
+                <Trans i18nKey="dashboard-scene.detail-view-header.input-data">Input data</Trans>
+              </div>
+              <div className={styles.debugJson}>
+                <JSONFormatter json={transformInput} />
+              </div>
+            </div>
+            <div className={styles.debugSeparator}>
+              <Icon name="arrow-right" />
+            </div>
+            <div className={styles.debug}>
+              <div className={styles.debugTitle}>
+                <Trans i18nKey="dashboard-scene.detail-view-header.output-data">Output data</Trans>
+              </div>
+              <div className={styles.debugJson}>
+                <JSONFormatter json={transformOutput} />
+              </div>
+            </div>
+          </div>
+        </Drawer>
+      )}
     </div>
   );
 };
@@ -493,6 +625,7 @@ const getStyles = (theme: GrafanaTheme2, config: { color: string }) => {
       alignItems: 'center',
       gap: theme.spacing(2),
       height: '100%',
+      paddingLeft: theme.spacing(1),
     }),
     icon: css({
       color: theme.colors.text.secondary,
@@ -547,6 +680,47 @@ const getStyles = (theme: GrafanaTheme2, config: { color: string }) => {
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.primary,
       fontSize: theme.typography.body.fontSize,
+    }),
+    debugWrapper: css({
+      display: 'flex',
+      flexDirection: 'row',
+    }),
+    debugSeparator: css({
+      width: '48px',
+      minHeight: '300px',
+      display: 'flex',
+      alignItems: 'center',
+      alignSelf: 'stretch',
+      justifyContent: 'center',
+      margin: `0 ${theme.spacing(0.5)}`,
+      color: theme.colors.primary.text,
+    }),
+    debugTitle: css({
+      padding: `${theme.spacing(1)} ${theme.spacing(0.25)}`,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.primary,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      flexGrow: 0,
+      flexShrink: 1,
+    }),
+    debug: css({
+      marginTop: theme.spacing(1),
+      padding: `0 ${theme.spacing(1, 1, 1)}`,
+      border: `1px solid ${theme.colors.border.weak}`,
+      background: `${theme.isLight ? theme.v1.palette.white : theme.v1.palette.gray05}`,
+      borderRadius: theme.shape.radius.default,
+      width: '100%',
+      minHeight: '300px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignSelf: 'stretch',
+    }),
+    debugJson: css({
+      flexGrow: 1,
+      height: '100%',
+      overflow: 'hidden',
+      padding: theme.spacing(0.5),
     }),
   };
 };

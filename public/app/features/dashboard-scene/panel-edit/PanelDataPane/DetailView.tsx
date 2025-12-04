@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Container, ScrollContainer, useStyles2 } from '@grafana/ui';
@@ -11,6 +11,7 @@ import { DetailViewHeader } from './DetailViewHeader';
 import { ExpressionDetailView } from './ExpressionDetailView';
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
 import { QueryDetailView } from './QueryDetailView';
+import { TransformationPickerView } from './TransformationPickerView';
 import { TabId, QueryTransformItem } from './types';
 
 interface DetailViewProps {
@@ -19,13 +20,41 @@ interface DetailViewProps {
   tabs: Array<{ tabId: TabId }>;
   onRemoveTransform?: (index: number) => void;
   onToggleTransformVisibility?: (index: number) => void;
+  isAddingTransform?: boolean;
+  onAddTransformation?: (selectedItem: SelectableValue<string>, customOptions?: Record<string, unknown>) => void;
+  onCancelAddTransform?: () => void;
+  transformationData?: DataFrame[];
+  onGoToQueries?: () => void;
 }
 
 export const DetailView = memo(
-  ({ selectedItem, panel, tabs, onRemoveTransform, onToggleTransformVisibility }: DetailViewProps) => {
+  ({
+    selectedItem,
+    panel,
+    tabs,
+    onRemoveTransform,
+    onToggleTransformVisibility,
+    isAddingTransform,
+    onAddTransformation,
+    onCancelAddTransform,
+    transformationData,
+    onGoToQueries,
+  }: DetailViewProps) => {
     const styles = useStyles2(getStyles);
 
     const renderContent = useCallback(() => {
+      // Show transformation picker when in add mode
+      if (isAddingTransform && onAddTransformation && onCancelAddTransform) {
+        return (
+          <TransformationPickerView
+            data={transformationData || []}
+            onAddTransformation={onAddTransformation}
+            onCancel={onCancelAddTransform}
+            onGoToQueries={onGoToQueries}
+          />
+        );
+      }
+
       if (!selectedItem) {
         return (
           <div className={styles.emptyState}>
@@ -82,7 +111,19 @@ export const DetailView = memo(
       }
 
       return null;
-    }, [selectedItem, panel, tabs, styles.emptyState, onRemoveTransform, onToggleTransformVisibility]);
+    }, [
+      selectedItem,
+      panel,
+      tabs,
+      styles.emptyState,
+      onRemoveTransform,
+      onToggleTransformVisibility,
+      isAddingTransform,
+      onAddTransformation,
+      onCancelAddTransform,
+      transformationData,
+      onGoToQueries,
+    ]);
 
     return <div className={styles.container}>{renderContent()}</div>;
   }
