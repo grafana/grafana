@@ -181,6 +181,8 @@ import (
 //go:generate mockery --name InterfaceName --structname MockImplementationName --inpackage --filename my_implementation_mock.go
 ```
 
+The current `go:generate` command format used in this repository is only compatible with mockery v2.
+
 ## Globals
 
 As a general rule of thumb, avoid using global variables, since they make the code difficult to maintain and reason

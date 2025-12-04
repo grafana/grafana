@@ -3,23 +3,21 @@ package collections
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/datasources/service/client"
 	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/client-go/kubernetes"
 )
 
 var _ builder.APIGroupValidation = (*DatasourceStacksValidator)(nil)
 
 type DatasourceStacksValidator struct {
-	restConfigProvider apiserver.RestConfigProvider
+	dsClient client.DataSourceConnectionClient
 }
 
-func GetDatasourceStacksValidator(restConfigProvider apiserver.RestConfigProvider) builder.APIGroupValidation {
-	return &DatasourceStacksValidator{restConfigProvider: restConfigProvider}
+func GetDatasourceStacksValidator(dsClient client.DataSourceConnectionClient) builder.APIGroupValidation {
+	return &DatasourceStacksValidator{dsClient: dsClient}
 }
 
 func (v *DatasourceStacksValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -66,13 +64,9 @@ func (v *DatasourceStacksValidator) Validate(ctx context.Context, a admission.At
 			}
 
 			exists, err := v.checkDatasourceExists(ctx, template[key].Group, item.DataSourceRef)
-			if err != nil {
-				return fmt.Errorf("error fetching: datasource '%s' does not exist (%s %s): %w", item.DataSourceRef, a.GetName(), a.GetKind().GroupVersion().String(), err)
+			if err != nil || !exists {
+				return fmt.Errorf("datasource '%s' in group '%s' does not exist (%s %s): %w", item.DataSourceRef, template[key].Group, a.GetName(), a.GetKind().GroupVersion().String(), err)
 			}
-			if !exists {
-				return fmt.Errorf("datasource '%s' does not exist (%s %s)", item.DataSourceRef, a.GetName(), a.GetKind().GroupVersion().String())
-			}
-
 		}
 	}
 
@@ -80,33 +74,15 @@ func (v *DatasourceStacksValidator) Validate(ctx context.Context, a admission.At
 }
 
 func (v *DatasourceStacksValidator) checkDatasourceExists(ctx context.Context, group, name string) (bool, error) {
-	cfg, err := v.restConfigProvider.GetRestConfig(ctx)
+	dsConn, err := v.dsClient.Get(ctx, group, "", name)
 	if err != nil {
 		return false, err
 	}
 
-	client, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		return false, err
-	}
-
-	result := client.RESTClient().Get().
-		Prefix("apis", group, "v0alpha1").
-		Namespace("default").
-		Resource("datasources").
-		Name(name).
-		Do(ctx)
-
-	if err = result.Error(); err != nil {
-		return false, err
-	}
-
-	var statusCode int
-
-	result = result.StatusCode(&statusCode)
-	if statusCode == http.StatusNotFound {
+	if dsConn == nil {
 		return false, nil
 	}
 
 	return true, nil
+
 }

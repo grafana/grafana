@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	datasourcesClient "github.com/grafana/grafana/pkg/services/datasources/service/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -51,6 +52,7 @@ func RegisterAPIService(
 	stars star.Service,
 	users user.Service,
 	apiregistration builder.APIRegistrar,
+	dsConnClientFactory datasourcesClient.DataSourceConnectionClientFactory,
 	restConfigProvider apiserver.RestConfigProvider,
 ) *APIBuilder {
 	// Requires development settings and clearly experimental
@@ -59,9 +61,11 @@ func RegisterAPIService(
 		return nil
 	}
 
+	dsConnClient := dsConnClientFactory(restConfigProvider)
+
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		datasourceStacksValidator: GetDatasourceStacksValidator(restConfigProvider),
+		datasourceStacksValidator: GetDatasourceStacksValidator(dsConnClient),
 		authorizer: &utils.AuthorizeFromName{
 			Resource: map[string][]utils.ResourceOwner{
 				"stars":       {utils.UserResourceOwner},

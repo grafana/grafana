@@ -5,23 +5,29 @@ import (
 	"testing"
 
 	collectionsv1alpha1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
+	queryv0alpha1 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
+	datasourcesclient "github.com/grafana/grafana/pkg/services/datasources/service/client"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 )
 
 func TestDataSourceValidator_Validate(t *testing.T) {
-	validator := &collections.DatasourceStacksValidator{}
 	ctx := context.Background()
 
 	tests := []struct {
-		name        string
-		operation   admission.Operation
-		object      runtime.Object
-		expectError bool
-		errorMsg    string
+		name                string
+		operation           admission.Operation
+		object              runtime.Object
+		needMockDSClient    bool // only set to true if you expect to make a call to the datasource client
+		dsClientReturnValue *queryv0alpha1.DataSourceConnection
+		dsClientReturnError error
+		expectError         bool
+		errorMsg            string
 	}{
 		{
 			name:        "should return no error for invalid kind",
@@ -94,6 +100,61 @@ func TestDataSourceValidator_Validate(t *testing.T) {
 			expectError: true,
 			errorMsg:    "key 'notintemplate' is not in the DataSourceStack template (test-datasourcestack collections.grafana.app/v1alpha1)",
 		},
+		{
+			name:      "error if data source does not exist",
+			operation: admission.Create,
+			object: &collectionsv1alpha1.DataSourceStack{
+				Spec: collectionsv1alpha1.DataSourceStackSpec{
+					Template: collectionsv1alpha1.DataSourceStackTemplateSpec{
+						"key1": collectionsv1alpha1.DataSourceStackDataSourceStackTemplateItem{
+							Name:  "foo",
+							Group: "foo.grafana",
+						},
+					},
+					Modes: []collectionsv1alpha1.DataSourceStackModeSpec{
+						{
+							Name: "prod",
+							Definition: collectionsv1alpha1.DataSourceStackMode{
+								"key1": collectionsv1alpha1.DataSourceStackModeItem{
+									DataSourceRef: "ref",
+								},
+							},
+						},
+					},
+				},
+			},
+			needMockDSClient:    true,
+			dsClientReturnValue: nil, // no result - this is the default anyway
+			expectError:         true,
+			errorMsg:            "datasource 'ref' in group 'foo.grafana' does not exist (test-datasourcestack collections.grafana.app/v1alpha1)",
+		},
+		{
+			name:      "valid request",
+			operation: admission.Create,
+			object: &collectionsv1alpha1.DataSourceStack{
+				Spec: collectionsv1alpha1.DataSourceStackSpec{
+					Template: collectionsv1alpha1.DataSourceStackTemplateSpec{
+						"key1": collectionsv1alpha1.DataSourceStackDataSourceStackTemplateItem{
+							Name:  "foo",
+							Group: "foo.grafana",
+						},
+					},
+					Modes: []collectionsv1alpha1.DataSourceStackModeSpec{
+						{
+							Name: "prod",
+							Definition: collectionsv1alpha1.DataSourceStackMode{
+								"key1": collectionsv1alpha1.DataSourceStackModeItem{
+									DataSourceRef: "ref",
+								},
+							},
+						},
+					},
+				},
+			},
+			needMockDSClient:    true,
+			dsClientReturnValue: &queryv0alpha1.DataSourceConnection{}, // returning any non-nil value will pass validation
+			expectError:         false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -105,6 +166,13 @@ func TestDataSourceValidator_Validate(t *testing.T) {
 				Kind:      schema.GroupVersionKind{Group: "collections.grafana.app", Version: "v1alpha1", Kind: "DataSourceStack"},
 			}
 
+			var client *datasourcesclient.MockDataSourceConnectionClient
+			if tt.needMockDSClient {
+				client = datasourcesclient.NewMockDataSourceConnectionClient(t)
+				client.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.dsClientReturnValue, tt.dsClientReturnError)
+			}
+
+			validator := collections.GetDatasourceStacksValidator(client)
 			err := validator.Validate(ctx, attrs, nil)
 
 			if tt.expectError {
