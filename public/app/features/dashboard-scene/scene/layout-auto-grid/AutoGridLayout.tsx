@@ -88,7 +88,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       this._resetPanelPositionAndSize();
       document.body.removeEventListener('pointermove', this._onDrag);
       document.body.removeEventListener('pointerup', this._onDragEnd);
-      document.body.classList.remove('dashboard-draggable-transparent-selection');
     };
   }
 

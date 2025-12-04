@@ -15,6 +15,8 @@ import {
   SceneGridItemLike,
   useSceneObjectState,
   SceneObject,
+  SceneGridLayoutDragStartEvent,
+  SceneGridPlaceholderItem
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { useStyles2 } from '@grafana/ui';
@@ -48,6 +50,7 @@ import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-sh
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { getIsLazy } from '../layouts-shared/utils';
 import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
+import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -127,7 +130,8 @@ export class DefaultGridLayoutManager
         this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel }}) => {
           const gridItem = panel.parent;
           if (gridItem instanceof DashboardGridItem) {
-            getLayoutOrchestratorFor(this)?.startDraggingSync(evt, gridItem, this.state.grid);
+            this.state.grid.setPlaceholderSize(gridItem.state.width ?? NEW_PANEL_WIDTH, gridItem.state.height ?? NEW_PANEL_HEIGHT);
+            getLayoutOrchestratorFor(this)?.startDraggingSync(evt, gridItem, this);
           }
         })
       )
@@ -560,6 +564,36 @@ export class DefaultGridLayoutManager
     }
 
     this.state.grid.setState({ children: [...this.state.grid.state.children, gridItem] });
+  }
+
+  public setIsDropTarget(flag: boolean, sourceGrid: DashboardLayoutGrid) {
+    const newState = {
+      isDragging: flag,
+      isOutsideDragging: sourceGrid !== this,
+    };
+
+    if (newState.isDragging !== this.state.grid.state.isDragging || newState.isOutsideDragging !== this.state.grid.state.isOutsideDragging) {
+      this.state.grid.setState(newState);
+    }
+  }
+
+  public stopOrchestratorSync(sourceGrid: DashboardLayoutGrid, targetGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem) {
+    console.log('stop orchestrator sync');
+
+    const isSourceGrid = sourceGrid === this;
+    const isTargetGrid = targetGrid === this;
+
+    if (!isSourceGrid && !isTargetGrid) {
+      return;
+    }
+
+    if (isSourceGrid && !isTargetGrid) {
+      this.state.grid.setState({ children: this.state.grid.state.children.filter((child) => child !== layoutItem) });
+    } else if (!isSourceGrid && isTargetGrid) {
+      // From outside drag
+    } else {
+      // Inside drag
+    }
   }
 
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {

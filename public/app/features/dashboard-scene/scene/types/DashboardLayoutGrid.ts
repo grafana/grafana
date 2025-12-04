@@ -1,5 +1,6 @@
 import { SceneGridItemLike } from '@grafana/scenes';
 
+import { DashboardLayoutItem } from './DashboardLayoutItem';
 import { DashboardLayoutManager } from './DashboardLayoutManager';
 
 export interface DashboardLayoutGrid extends DashboardLayoutManager {
@@ -12,10 +13,18 @@ export interface DashboardLayoutGrid extends DashboardLayoutManager {
    */
   addGridItem(gridItem: SceneGridItemLike): void;
 
+  /**
+   * Start the synchronization of the orchestrator with the grid drag
+   */
   startOrchestratorSync?(): void;
-  draggedItemOutside?(gridItem: SceneGridItemLike): void;
-  draggedItemInside?(gridItem: SceneGridItemLike): void;
-  setIsDropTarget?(flag: boolean): void;
+
+  stopOrchestratorSync?(sourceGrid: DashboardLayoutGrid, targetGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem): void;
+
+  /**
+   * Toggle the grid as the current drop target
+   * Useful for toggling between inner drag and outer drag
+   */
+  setIsDropTarget?(flag: boolean, sourceGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem): void;
 }
 
 export function isDashboardLayoutGrid(obj: DashboardLayoutManager): obj is DashboardLayoutGrid {

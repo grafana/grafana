@@ -346,6 +346,8 @@ export function PanelChrome({
       onMouseMove={onMouseMove}
       onMouseEnter={onMouseEnter}
       ref={ref}
+      draggable={true}
+      unselectable="on"
     >
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
@@ -390,8 +392,6 @@ export function PanelChrome({
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
           onPointerUp={onPointerUp}
-          draggable={true}
-          unselectable="on"
           onDragStart={(evt) => evt.dataTransfer.setData('text/plain', '')}
         >
           {statusMessage && (
