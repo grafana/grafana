@@ -62,12 +62,10 @@ export function useExploreStateReceiver(options: UseExploreStateReceiverOptions)
       return;
     }
 
-    console.log('[ExploreReceiver] Received new explore state for panel', panelId, exploreState);
     lastAppliedStateRef.current = exploreStateStr;
 
     // Apply queries if they've changed
     if (exploreState.queries && JSON.stringify(exploreState.queries) !== JSON.stringify(explorePane.queries)) {
-      console.log('[ExploreReceiver] Applying queries', exploreState.queries);
       dispatch(setQueriesAction({
         exploreId,
         queries: exploreState.queries,
@@ -76,7 +74,6 @@ export function useExploreStateReceiver(options: UseExploreStateReceiverOptions)
 
     // Apply datasource if it's changed
     if (exploreState.datasourceUid && exploreState.datasourceUid !== explorePane.datasourceInstance?.uid) {
-      console.log('[ExploreReceiver] Changing datasource to', exploreState.datasourceUid);
       dispatch(changeDatasource({
         exploreId,
         datasource: exploreState.datasourceUid,
@@ -85,7 +82,6 @@ export function useExploreStateReceiver(options: UseExploreStateReceiverOptions)
 
     // Apply time range if it's changed
     if (exploreState.range && JSON.stringify(exploreState.range) !== JSON.stringify(explorePane.range)) {
-      console.log('[ExploreReceiver] Updating time range', exploreState.range);
       // If range.raw exists, use it (for properly structured TimeRange objects)
       // Otherwise, treat the range itself as a RawTimeRange (for backward compatibility)
       const rawRange = (exploreState.range as any).raw || exploreState.range;

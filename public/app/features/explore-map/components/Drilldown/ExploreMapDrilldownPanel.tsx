@@ -98,7 +98,6 @@ export function ExploreMapDrilldownPanel({
       }
     } catch (e) {
       // If URL parsing fails, use the original URL
-      console.warn('Failed to parse URL for kiosk mode:', e);
     }
     
     // On initial mount, set the URL immediately (only once)
@@ -182,7 +181,6 @@ export function ExploreMapDrilldownPanel({
             }
           } catch (e) {
             // If URL parsing fails, use the original URL
-            console.warn('Failed to parse URL for kiosk mode:', e);
           }
           
           lastSavedUrl = urlToSave;
@@ -204,8 +202,6 @@ export function ExploreMapDrilldownPanel({
               lastLocalUrlRef.current = undefined;
             }
           }, 2000);
-        } else if (!currentUrl) {
-          console.log('No URL detected');
         }
       } catch (e) {
         console.error('Cannot read iframe URL:', e);

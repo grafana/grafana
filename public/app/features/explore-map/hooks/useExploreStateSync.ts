@@ -57,7 +57,6 @@ export function useExploreStateSync(options: UseExploreStateSyncOptions) {
       return;
     }
 
-    console.log('[ExploreSync] Explore state changed for panel', panelId, currentState);
     previousStateRef.current = currentStateStr;
 
     // Clear any pending sync
@@ -67,7 +66,6 @@ export function useExploreStateSync(options: UseExploreStateSyncOptions) {
 
     // Debounce the sync operation
     syncTimeoutRef.current = setTimeout(() => {
-      console.log('[ExploreSync] Dispatching savePanelExploreState for panel', panelId);
       dispatch(savePanelExploreState({
         panelId,
         exploreState: currentState,

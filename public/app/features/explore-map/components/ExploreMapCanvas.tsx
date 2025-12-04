@@ -219,15 +219,11 @@ export function ExploreMapCanvas() {
         return;
       }
 
-      console.log('Selection end:', selectionRect);
-
       // Calculate selection rectangle bounds
       const minX = Math.min(selectionRect.startX, selectionRect.currentX);
       const maxX = Math.max(selectionRect.startX, selectionRect.currentX);
       const minY = Math.min(selectionRect.startY, selectionRect.currentY);
       const maxY = Math.max(selectionRect.startY, selectionRect.currentY);
-
-      console.log('Selection bounds:', { minX, maxX, minY, maxY });
 
       // Find panels that intersect with selection rectangle
       const selectedPanelIds = Object.values(panels).filter((panel) => {
@@ -237,21 +233,16 @@ export function ExploreMapCanvas() {
         const panelBottom = panel.position.y + panel.position.height;
 
         const intersects = !(panelRight < minX || panelLeft > maxX || panelBottom < minY || panelTop > maxY);
-        console.log('Panel', panel.id, 'bounds:', { panelLeft, panelRight, panelTop, panelBottom }, 'intersects:', intersects);
 
         return intersects;
       }).map((panel) => panel.id);
-
-      console.log('Selected panel IDs:', selectedPanelIds);
 
       // Check if Cmd/Ctrl is held for additive selection
       const isAdditive = e.metaKey || e.ctrlKey;
 
       if (selectedPanelIds.length > 0) {
         // Select all panels at once
-        console.log('Dispatching selectMultiplePanels with:', { panelIds: selectedPanelIds, addToSelection: isAdditive });
         dispatch(selectMultiplePanelsCRDT({ panelIds: selectedPanelIds, addToSelection: isAdditive }));
-        console.log('After dispatch');
         justCompletedSelectionRef.current = true;
       } else if (!isAdditive) {
         // Clear selection if no panels selected and not holding modifier

@@ -175,28 +175,11 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
             panel.position.height
           );
 
-          // eslint-disable-next-line no-console
-          console.log('[Frame Association] Panel drag ended:', {
-            panelId: panel.id,
-            currentFrameId: panel.frameId,
-            intersectingFrameId,
-            panelPos: { x: data.x, y: data.y },
-            willAssociate: intersectingFrameId && intersectingFrameId !== panel.frameId,
-            willDisassociate: !intersectingFrameId && panel.frameId,
-          });
-
           if (intersectingFrameId && intersectingFrameId !== panel.frameId) {
             // Panel moved into a frame
             const frame = frames[intersectingFrameId];
             const offsetX = data.x - frame.position.x;
             const offsetY = data.y - frame.position.y;
-
-            // eslint-disable-next-line no-console
-            console.log('[Frame Association] Associating panel with frame:', {
-              panelId: panel.id,
-              frameId: intersectingFrameId,
-              offset: { offsetX, offsetY },
-            });
 
             dispatch(
               associatePanelWithFrame({
@@ -208,12 +191,6 @@ function ExploreMapPanelContainerComponent({ panel }: ExploreMapPanelContainerPr
             );
           } else if (!intersectingFrameId && panel.frameId) {
             // Panel moved out of frame
-            // eslint-disable-next-line no-console
-            console.log('[Frame Association] Disassociating panel from frame:', {
-              panelId: panel.id,
-              frameId: panel.frameId,
-            });
-
             dispatch(
               disassociatePanelFromFrame({
                 panelId: panel.id,

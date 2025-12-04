@@ -80,15 +80,11 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
         // Load from API
         try {
           setLoading(true);
-          // eslint-disable-next-line no-console
-          console.log('[Frame Persistence] Loading from API:', { uid });
           const mapData = await exploreMapApi.getExploreMap(uid);
 
           // Handle empty or missing data (new maps)
           let parsed: ExploreMapState;
           if (!mapData.data || mapData.data.trim() === '') {
-            // eslint-disable-next-line no-console
-            console.log('[Frame Persistence] Empty map data, initializing with defaults');
             // Initialize with default empty state for new maps
             parsed = {
               ...initialExploreMapState,
@@ -100,18 +96,6 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
             // Use title from DB column, not from JSON data
             parsed.uid = mapData.uid;
             parsed.title = mapData.title;
-            // eslint-disable-next-line no-console
-            console.log('[Frame Persistence] Loaded map data:', {
-              uid: parsed.uid,
-              title: parsed.title,
-              panelCount: Object.keys(parsed.panels || {}).length,
-              frameCount: Object.keys(parsed.frames || {}).length,
-              frameIds: Object.keys(parsed.frames || {}),
-              frames: parsed.frames,
-              hasCrdtState: !!parsed.crdtState,
-              crdtFrames: parsed.crdtState?.frames,
-              crdtFrameData: parsed.crdtState?.frameData,
-            });
           }
 
           // Load into legacy state (for backward compatibility)
@@ -120,13 +104,9 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
           // Initialize CRDT state from loaded data
           // If CRDT state is available, use it directly. Otherwise, initialize from legacy panels.
           if (parsed.crdtState) {
-            // eslint-disable-next-line no-console
-            console.log('[Frame Persistence] Loading CRDT state');
             // Load the saved CRDT state which includes proper OR-Set metadata
             dispatch(loadCRDTState({ crdtState: parsed.crdtState }));
           } else {
-            // eslint-disable-next-line no-console
-            console.log('[Frame Persistence] No CRDT state found, initializing from legacy state');
             // Fallback to legacy initialization for backward compatibility
             dispatch(initializeFromLegacyState({
               uid: parsed.uid,
@@ -196,28 +176,16 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
     const mapTitle = selectMapTitle(crdtState);
     const viewport = selectViewport(crdtState);
 
-    // eslint-disable-next-line no-console
-    console.log('[Frame Persistence] Current state:', {
-      panelCount: Object.keys(panels || {}).length,
-      frameCount: Object.keys(frames || {}).length,
-      frameIds: Object.keys(frames || {}),
-      frames: frames,
-    });
-
     // Don't persist an empty canvas; this avoids removing a previously saved
     // non-empty canvas when the in-memory state is still at its initial value.
     // Allow saving if there are either panels or frames
     if (Object.keys(panels || {}).length === 0 && Object.keys(frames || {}).length === 0) {
-      // eslint-disable-next-line no-console
-      console.log('[Frame Persistence] Skipping save - empty canvas');
       return;
     }
 
     // Check if CRDT state has actually changed (ignore local UI state like selection)
     const currentCRDTStateStr = crdtState.crdtStateJSON;
     if (currentCRDTStateStr === lastSavedCRDTStateRef.current) {
-      // eslint-disable-next-line no-console
-      console.log('[Frame Persistence] Skipping save - no CRDT state changes');
       // No changes to persist
       return;
     }
@@ -245,17 +213,6 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
         // Store the raw CRDT state for proper sync across sessions
         crdtState: crdtState.crdtStateJSON ? JSON.parse(crdtState.crdtStateJSON) : undefined,
       };
-
-      // eslint-disable-next-line no-console
-      console.log('[Frame Persistence] Preparing to save:', {
-        uid,
-        panelCount: Object.keys(panels || {}).length,
-        frameCount: Object.keys(frames || {}).length,
-        frameIds: Object.keys(frames || {}),
-        hasCrdtState: !!enrichedState.crdtState,
-        crdtFramesInState: enrichedState.crdtState?.frames,
-        crdtFrameDataInState: enrichedState.crdtState?.frameData,
-      });
 
       if (uid) {
         // Save to API with debounce

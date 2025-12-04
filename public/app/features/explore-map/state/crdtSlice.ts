@@ -128,20 +128,11 @@ const crdtSlice = createSlice({
      * Load CRDT state from server
      */
     loadState: (state, action: PayloadAction<{ crdtState: CRDTExploreMapStateJSON }>) => {
-      // eslint-disable-next-line no-console
-      console.log('[Frame CRDT] Loading state from JSON:', {
-        hasFrames: !!action.payload.crdtState.frames,
-        hasFrameData: !!action.payload.crdtState.frameData,
-        frames: action.payload.crdtState.frames,
-        frameData: action.payload.crdtState.frameData,
-      });
       const manager = CRDTStateManager.fromJSON(action.payload.crdtState, state.nodeId);
       saveCRDTManager(state, manager);
       // Restore uid from the loaded CRDT state
       const crdtState = manager.getState();
       state.uid = crdtState.uid;
-      // eslint-disable-next-line no-console
-      console.log('[Frame CRDT] State loaded, frame IDs:', manager.getFrameIds());
     },
 
     /**
