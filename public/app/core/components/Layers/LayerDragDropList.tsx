@@ -152,8 +152,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   sel: css({
     border: `1px solid ${theme.colors.primary.border}`,
+    background: theme.colors.background.primary,
+    boxShadow: `inset 0 0 0 2px ${theme.colors.primary.border}33`,
     '&:hover': {
       border: `1px solid ${theme.colors.primary.border}`,
+      background: theme.colors.background.primary,
     },
   }),
   dragIcon: css({
