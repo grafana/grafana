@@ -1,4 +1,4 @@
-import { VariableRefresh, VariableRegexApplyTo } from '@grafana/data';
+import { VariableRefresh } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,

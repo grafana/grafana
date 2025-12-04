@@ -376,7 +376,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex ?? '',
-          regexApplyTo: variable.state.regexApplyTo,
+          regexApplyTo: variable.state.regexApplyTo ?? 'value',
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
           multi: variable.state.isMulti || false,

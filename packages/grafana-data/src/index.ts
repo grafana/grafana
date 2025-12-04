@@ -521,7 +521,7 @@ export {
   VariableRefresh,
   VariableSort,
   VariableHide,
-  VariableRegexApplyTo,
+  type VariableRegexApplyTo,
   type VariableType,
   type VariableModel,
   type TypedVariableModel,
