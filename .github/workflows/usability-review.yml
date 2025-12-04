@@ -377,19 +377,19 @@ jobs:
               # Create individual comment
               comment = f"""### {severity}: {issue}
 
-          **Impact:** {impact}
+              **Impact:** {impact}
 
-          **Suggestion:** {suggestion}
+              **Suggestion:** {suggestion}
 
-          ---
-          _Posted by Usability Review Agent_"""
+              ---
+              _Posted by Usability Review Agent_"""
 
-                        # Post comment
-                        subprocess.run(
-                            ['gh', 'pr', 'comment', pr_number, '--body', comment],
-                            check=True
-                        )
-                        print(f"Posted comment for: {issue}")
+              # Post comment
+              subprocess.run(
+                  ['gh', 'pr', 'comment', pr_number, '--body', comment],
+                  check=True
+              )
+              print(f"Posted comment for: {issue}")
 
           PYTHON
 
