@@ -186,6 +186,46 @@ func (s *nbodySim) simulate(dt float64) {
 	subDt := dt / float64(steps)
 
 	for step := 0; step < steps; step++ {
+		// Calculate and apply gravitational forces between all pairs
+		// G scaled for pixel world: smaller masses, pixel distances
+		const G = 5000.0 // Gravitational constant scaled for our pixel world
+		
+		for i := 0; i < len(s.state.circles); i++ {
+			for j := i + 1; j < len(s.state.circles); j++ {
+				c1 := &s.state.circles[i]
+				c2 := &s.state.circles[j]
+
+				// Calculate distance between centers
+				dx := c2.x - c1.x
+				dy := c2.y - c1.y
+				distSq := dx*dx + dy*dy
+				
+				// Avoid division by zero and extremely strong forces at close range
+				const minDist = 10.0 // Minimum distance to prevent extreme forces
+				if distSq < minDist*minDist {
+					distSq = minDist * minDist
+				}
+
+				dist := math.Sqrt(distSq)
+
+				// Calculate gravitational force magnitude: F = G * m1 * m2 / r^2
+				force := G * c1.mass * c2.mass / distSq
+
+				// Calculate force components (normalized direction * force)
+				fx := (dx / dist) * force
+				fy := (dy / dist) * force
+
+				// Apply acceleration to both particles (F = ma -> a = F/m)
+				// c1 is attracted to c2 (positive direction)
+				c1.vx += (fx / c1.mass) * subDt
+				c1.vy += (fy / c1.mass) * subDt
+
+				// c2 is attracted to c1 (negative direction, by Newton's 3rd law)
+				c2.vx -= (fx / c2.mass) * subDt
+				c2.vy -= (fy / c2.mass) * subDt
+			}
+		}
+
 		// Update positions
 		for i := range s.state.circles {
 			s.state.circles[i].x += s.state.circles[i].vx * subDt
