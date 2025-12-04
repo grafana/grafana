@@ -1,6 +1,8 @@
+/* eslint-disable import/order */
 import { css } from '@emotion/css';
 import { createSelector } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useMeasure } from 'react-use';
 
 import {
   CoreApp,
@@ -8,24 +10,34 @@ import {
   DataQuery,
   DataSourceInstanceSettings,
   EventBus,
+  FieldType,
+  InterpolateFunction,
+  RawTimeRange,
   SelectableValue,
+  TimeRange,
+  TimeZone,
+  toDataFrame,
   getDataSourceRef,
   getNextRefId,
   GrafanaTheme2,
   SplitOpen,
+  Field,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { LegendDisplayMode, VizLegendOptions } from '@grafana/schema';
 import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
 import { AdHocFilterItem, useStyles2, PanelContainer } from '@grafana/ui';
+import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { SqlExpr } from 'app/features/expressions/components/SqlExpressions/SqlExpr';
 import { ExpressionDatasourceUID, ExpressionQueryType, SqlExpressionQuery } from 'app/features/expressions/types';
 
 import { MIXED_DATASOURCE_NAME } from '../../plugins/datasource/mixed/MixedDataSource';
 import { Block, ExploreItemState } from '../../types/explore';
-import { useDispatch, useSelector } from '../../types/store';
+import { useDispatch, useSelector, type StoreState } from '../../types/store';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getDatasourceSrv } from '../plugins/datasource_srv';
+import { getTimeZone } from '../profile/state/selectors';
 import { QueryEditorRow } from '../query/components/QueryEditorRow';
 
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
@@ -33,6 +45,7 @@ import { RenderResults } from './RenderResults';
 import { changeDatasource } from './state/datasource';
 import { changeQueries, runQueries, updateExpressionBlockAction, updateTextBlock } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
+import { AxisProps } from '@grafana/ui/internal';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -66,6 +79,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       overflow: 'hidden',
     }),
+    expressionChart: css({
+      marginTop: theme.spacing(2),
+    }),
   };
 };
 
@@ -77,6 +93,9 @@ FROM
 LIMIT
   10`;
 }
+
+const selectTimeZone = (state: StoreState) => getTimeZone(state.user);
+const BROWSER_TIME_ZONE: TimeZone = 'browser';
 
 type Props = {
   exploreId: string;
@@ -138,6 +157,7 @@ export function Blocks(props: Props) {
   const graphResult = useSelector(getGraphResults);
   const queries = useSelector(getQueries);
   const queryResponse = useSelector(getQueryResponse);
+  const timeZone = useSelector(selectTimeZone);
   const dispatch = useDispatch();
   const eventBridge = useSelector(getEventBridge);
   const queryLibraryRef = useSelector(getQueryLibraryRef);
@@ -379,15 +399,22 @@ export function Blocks(props: Props) {
 
     if (block.type === 'expression') {
       const title = t('explore.blocks.expression-block.title', 'Expression block');
-      const icon = 'magic';
       return (
-        <ContentOutlineItem title={title} icon={icon} key={`expression-${index}`} panelId={`expression-${index}`}>
+        <ContentOutlineItem
+          title={title}
+          icon={'brackets-curly'}
+          key={`expression-${index}`}
+          panelId={`expression-${index}`}
+        >
           <PanelContainer className={styles.queryContainer}>
             <ExpressionBlockEditor
               expression={block.expression}
               onChange={(expr) => handleExpressionBlockChange(index, expr)}
               queries={queries}
               className={styles.expressionBlockWrapper}
+              chartClassName={styles.expressionChart}
+              timeRange={queryResponse?.timeRange ?? getTimeSrv().timeRange()}
+              timeZone={timeZone}
             />
           </PanelContainer>
         </ContentOutlineItem>
@@ -437,11 +464,17 @@ function ExpressionBlockEditor({
   onChange,
   queries,
   className,
+  chartClassName,
+  timeRange,
+  timeZone,
 }: {
   expression?: string;
   onChange: (expression: string) => void;
   queries: DataQuery[];
   className: string;
+  chartClassName: string;
+  timeRange: TimeRange;
+  timeZone?: TimeZone;
 }) {
   const refIds = useMemo<Array<SelectableValue<string>>>(
     () =>
@@ -473,11 +506,110 @@ function ExpressionBlockEditor({
     [onChange]
   );
 
+  const [containerRef, { width }] = useMeasure<HTMLDivElement>();
+  const previewSeries = useMemo(() => createRandomWalkSeries(timeRange), [timeRange]);
+
   return (
-    <div className={className}>
+    <div className={className} ref={containerRef}>
       <SqlExpr refIds={refIds} query={sqlQuery} queries={queries} onChange={handleChange} onRunQuery={() => {}} />
+      <div className={chartClassName}>
+        <ExpressionPreviewChart
+          width={width}
+          frame={previewSeries.frame}
+          timeRange={previewSeries.timeRange}
+          structureRev={previewSeries.structureRev}
+          timeZone={timeZone}
+        />
+      </div>
     </div>
   );
+}
+
+function ExpressionPreviewChart({
+  width,
+  frame,
+  timeRange,
+  structureRev,
+  timeZone,
+}: {
+  width: number;
+  frame: DataFrame;
+  timeRange: TimeRange;
+  structureRev: number;
+  timeZone?: TimeZone;
+}) {
+  const chartHeight = 180;
+  const legendOptions = useMemo<VizLegendOptions>(
+    () => ({
+      showLegend: false,
+      placement: 'bottom',
+      displayMode: LegendDisplayMode.List,
+      calcs: [],
+    }),
+    []
+  );
+  const replaceVariables = useCallback<InterpolateFunction>((value = '') => value, []);
+
+  if (!width) {
+    return null;
+  }
+
+  return (
+    <TimeSeries
+      frames={[frame]}
+      structureRev={structureRev}
+      timeRange={timeRange}
+      timeZone={timeZone ?? BROWSER_TIME_ZONE}
+      width={width}
+      height={chartHeight}
+      legend={legendOptions}
+      options={{}}
+      replaceVariables={replaceVariables}
+      tweakAxis={(opts: AxisProps, forField: Field) => ({
+        ...opts,
+        show: false,
+      })}
+    />
+  );
+}
+
+function createRandomWalkSeries(timeRange: TimeRange) {
+  const from = timeRange.from.valueOf();
+  const to = timeRange.to.valueOf();
+  const durationMs = to - from;
+  const maxPoints = 500;
+  const intervalMs = Math.floor(durationMs / maxPoints);
+  const times: number[] = [];
+  const values: number[] = [];
+  let walker = Math.random() * 100;
+  let timePointer = from;
+
+  while (times.length < maxPoints && timePointer <= to) {
+    const direction = Math.random() > 0.5 ? 1 : -1;
+    const nextValue = walker + Math.random() * 10 * direction;
+
+    times.push(timePointer);
+    values.push(nextValue);
+
+    walker = nextValue;
+    timePointer += intervalMs;
+  }
+
+  const frame = toDataFrame({
+    name: t('explore.blocks.expression-block.preview-series-name', 'Expression preview'),
+    fields: [
+      { name: 'Time', type: FieldType.time, values: times },
+      { name: 'Value', type: FieldType.number, values },
+    ],
+  });
+
+  const raw: RawTimeRange = timeRange.raw ?? { from: timeRange.from, to: timeRange.to };
+
+  return {
+    frame,
+    timeRange: { ...timeRange, raw },
+    structureRev: Date.now(),
+  };
 }
 
 const getDataSourceSettings = (
