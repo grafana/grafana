@@ -1,4 +1,5 @@
 import { Unsubscribable } from 'rxjs';
+
 import { Scope, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -8,7 +9,6 @@ import {
   SceneObjectBase,
   SceneObjectState,
   getQueriesForVariables,
-  ScopesVariable,
 } from '@grafana/scenes';
 
 import { DashboardScene } from './DashboardScene';
@@ -137,7 +137,6 @@ export class RecommendedDrilldownsBehavior extends SceneObjectBase<RecommendedDr
     }
 
     if (this._groupByVar && recommendedDrilldowns.groupByKeys) {
-      // same same
       this._groupByVar.setRecommendedGrouping(recommendedDrilldowns.groupByKeys);
     }
   }
