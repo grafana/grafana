@@ -9,10 +9,10 @@ SELECT
     pi.type as item_type,
     pi.value as item_value
 FROM
-    { {.Ident.PlaylistTable } } as p
-    LEFT OUTER JOIN { {.Ident.PlaylistItemTable } } as pi ON p.id = pi.playlist_id
+    {{ .Ident .PlaylistTable }} as p
+    LEFT OUTER JOIN {{ .Ident .PlaylistItemTable }} as pi ON p.id = pi.playlist_id
 WHERE
-    p.org_id = { {.Arg.Query.OrgID } }
+    p.org_id = {{ .Arg .Query.OrgID }}
 ORDER BY
     p.id ASC,
-    pi.{ {.Ident "order" } } ASC
+    pi.{{ .Ident "order" }} ASC
