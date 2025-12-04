@@ -678,7 +678,7 @@ export class CRDTStateManager {
         postItId,
         position,
         text: text || '',
-        color: color || 'purple',
+        color: color || 'blue',
         createdBy,
       },
     };

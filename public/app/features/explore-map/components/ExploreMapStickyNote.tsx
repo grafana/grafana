@@ -45,7 +45,7 @@ export function ExploreMapStickyNote({ postIt, zoom }: ExploreMapStickyNoteProps
   const [editText, setEditText] = useState(postIt.text);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
 
-  const colorInfo = STICKY_NOTE_COLORS.find((c) => c.name === postIt.color) || STICKY_NOTE_COLORS.find((c) => c.name === 'purple') || STICKY_NOTE_COLORS[0];
+  const colorInfo = STICKY_NOTE_COLORS.find((c) => c.name === postIt.color) || STICKY_NOTE_COLORS.find((c) => c.name === 'blue') || STICKY_NOTE_COLORS[0];
 
   const handleDragStart: RndDragCallback = useCallback(
     (_e, data) => {
