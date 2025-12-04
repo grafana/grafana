@@ -542,6 +542,176 @@ const crdtSlice = createSlice({
     },
 
     /**
+     * Add a sticky note
+     */
+    addPostItNote: (state, action: PayloadAction<{
+      viewportSize?: { width: number; height: number };
+      position?: { x: number; y: number; width: number; height: number };
+      text?: string;
+      color?: string;
+      createdBy?: string;
+    }>) => {
+      const manager = getCRDTManager(state);
+
+      // Calculate position
+      const viewportSize = action.payload.viewportSize || { width: 1920, height: 1080 };
+      const canvasCenterX = (-state.local.viewport.panX + viewportSize.width / 2) / state.local.viewport.zoom;
+      const canvasCenterY = (-state.local.viewport.panY + viewportSize.height / 2) / state.local.viewport.zoom;
+
+      const defaultWidth = 200;
+      const defaultHeight = 200;
+      const postItCount = manager.getPostItNoteIds().length;
+      const offset = postItCount * 30;
+
+      const position = action.payload.position || {
+        x: canvasCenterX - defaultWidth / 2 + offset,
+        y: canvasCenterY - defaultHeight / 2 + offset,
+        width: defaultWidth,
+        height: defaultHeight,
+      };
+
+      // Create operation
+      const postItId = uuidv4();
+      const operation = manager.createAddPostItOperation(
+        postItId,
+        position,
+        action.payload.text,
+        action.payload.color,
+        action.payload.createdBy
+      );
+
+      // Apply locally
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      // Add to pending operations for broadcast
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Remove a sticky note
+     */
+    removePostItNote: (state, action: PayloadAction<{ postItId: string }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createRemovePostItOperation(action.payload.postItId);
+      if (!operation) {
+        return; // Sticky note doesn't exist
+      }
+
+      // Apply locally
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+
+      // Add to pending operations
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Update sticky note position
+     */
+    updatePostItNotePosition: (
+      state,
+      action: PayloadAction<{ postItId: string; x: number; y: number }>
+    ) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createUpdatePostItPositionOperation(
+        action.payload.postItId,
+        action.payload.x,
+        action.payload.y
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Update sticky note size
+     */
+    updatePostItNoteSize: (
+      state,
+      action: PayloadAction<{ postItId: string; width: number; height: number }>
+    ) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createUpdatePostItSizeOperation(
+        action.payload.postItId,
+        action.payload.width,
+        action.payload.height
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Bring sticky note to front
+     */
+    bringPostItNoteToFront: (state, action: PayloadAction<{ postItId: string }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createUpdatePostItZIndexOperation(action.payload.postItId);
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Update sticky note text
+     */
+    updatePostItNoteText: (state, action: PayloadAction<{ postItId: string; text: string }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createUpdatePostItTextOperation(
+        action.payload.postItId,
+        action.payload.text
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+      state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Update sticky note color
+     */
+    updatePostItNoteColor: (state, action: PayloadAction<{ postItId: string; color: string }>) => {
+      const manager = getCRDTManager(state);
+
+      const operation = manager.createUpdatePostItColorOperation(
+        action.payload.postItId,
+        action.payload.color
+      );
+
+      if (!operation) {
+        return;
+      }
+
+      manager.applyOperation(operation);
+      saveCRDTManager(state, manager);
+      state.pendingOperations.push(operation);
+    },
+
+    /**
      * Duplicate a panel
      */
     duplicatePanel: (state, action: PayloadAction<{ panelId: string }>) => {
@@ -947,6 +1117,13 @@ export const {
   updateMapTitle,
   addComment,
   removeComment,
+  addPostItNote,
+  removePostItNote,
+  updatePostItNotePosition,
+  updatePostItNoteSize,
+  bringPostItNoteToFront,
+  updatePostItNoteText,
+  updatePostItNoteColor,
   duplicatePanel,
   addFrame,
   removeFrame,

@@ -256,6 +256,17 @@ export const selectComments = createSelector(
 );
 
 /**
+ * Select all post-it notes as a Record
+ */
+export const selectPostItNotes = createSelector(
+  [(state: ExploreMapCRDTState) => state],
+  (state) => {
+    const manager = getCRDTManager(state);
+    return manager.getAllPostItNotesForUI();
+  }
+);
+
+/**
  * Select map UID
  */
 export const selectMapUid = (state: ExploreMapCRDTState): string | undefined => {

@@ -13,8 +13,10 @@ import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_
 import tempoLogoSvg from 'app/plugins/datasource/tempo/img/tempo_logo.svg';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { addPanel, addFrame } from '../state/crdtSlice';
+import { addPanel, addFrame, addPostItNote } from '../state/crdtSlice';
 import { selectPanels, selectMapUid, selectViewport, selectSelectedPanelIds } from '../state/selectors';
+import { selectPanels, selectMapUid } from '../state/selectors';
+
 import { AddPanelAction } from './AssistantComponents';
 
 export function ExploreMapFloatingToolbar() {
@@ -155,6 +157,19 @@ export function ExploreMapFloatingToolbar() {
       })
     );
   }, [dispatch, currentUsername, selectedPanelIds, panels, viewport]);
+  
+  const handleAddPostItNote = useCallback(() => {
+    dispatch(
+      addPostItNote({
+        viewportSize: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+        createdBy: currentUsername,
+      })
+    );
+    setIsOpen(false);
+  }, [dispatch, currentUsername]);
 
   // Build context for assistant
   const canvasContext = useMemo(() => {
@@ -284,6 +299,11 @@ CRITICAL:
         logoSrc={pyroscopeIconSvg}
         logoAlt="Pyroscope"
         onClick={handleAddProfilesDrilldownPanel}
+      />
+      <MenuItem
+        label={t('explore-map.toolbar.add-sticky', 'Add Sticky note')}
+        icon="file-alt"
+        onClick={handleAddPostItNote}
       />
     </Menu>
   );

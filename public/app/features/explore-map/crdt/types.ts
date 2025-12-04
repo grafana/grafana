@@ -79,6 +79,28 @@ export interface CommentData {
   timestamp: number; // Unix timestamp in milliseconds
 }
 
+/**
+ * CRDT state for a single post-it note
+ */
+export interface CRDTPostItNoteData {
+  // Stable identifier
+  id: string;
+
+  // CRDT-replicated position properties
+  positionX: LWWRegister<number>;
+  positionY: LWWRegister<number>;
+  width: LWWRegister<number>;
+  height: LWWRegister<number>;
+  zIndex: LWWRegister<number>;
+
+  // CRDT-replicated content
+  text: LWWRegister<string>;
+  color: LWWRegister<string>; // Color theme (e.g., 'yellow', 'pink', 'blue', 'green')
+
+  // Creator metadata
+  createdBy: LWWRegister<string | undefined>;
+}
+
 export interface CRDTExploreMapState {
   // Map metadata
   uid?: string;
@@ -89,6 +111,12 @@ export interface CRDTExploreMapState {
 
   // Comment data (text, username, timestamp)
   commentData: Map<string, CommentData>;
+
+  // Post-it note collection (OR-Set for add/remove operations)
+  postItNotes: ORSet<string>;  // Set of post-it note IDs
+
+  // Post-it note data (position, size, content, color)
+  postItNoteData: Map<string, CRDTPostItNoteData>;
 
   // Panel collection (OR-Set for add/remove operations)
   panels: ORSet<string>;  // Set of panel IDs
@@ -138,6 +166,21 @@ export interface CRDTExploreMapStateJSON {
     removes: string[];
   };
   commentData?: Record<string, CommentData>;
+  postItNotes?: {
+    adds: Record<string, string[]>;
+    removes: string[];
+  };
+  postItNoteData?: Record<string, {
+    id: string;
+    positionX: { value: number; timestamp: HLCTimestamp };
+    positionY: { value: number; timestamp: HLCTimestamp };
+    width: { value: number; timestamp: HLCTimestamp };
+    height: { value: number; timestamp: HLCTimestamp };
+    zIndex: { value: number; timestamp: HLCTimestamp };
+    text: { value: string; timestamp: HLCTimestamp };
+    color: { value: string; timestamp: HLCTimestamp };
+    createdBy?: { value: string | undefined; timestamp: HLCTimestamp };
+  }>;
   panels: {
     adds: Record<string, string[]>;
     removes: string[];
@@ -201,6 +244,13 @@ export type CRDTOperationType =
   | 'update-frame-title'
   | 'associate-panel-with-frame'
   | 'disassociate-panel-from-frame'
+  | 'add-postit'
+  | 'remove-postit'
+  | 'update-postit-position'
+  | 'update-postit-size'
+  | 'update-postit-zindex'
+  | 'update-postit-text'
+  | 'update-postit-color'
   | 'batch';  // For batching multiple operations
 
 /**
@@ -423,6 +473,96 @@ export interface DisassociatePanelFromFrameOperation extends CRDTOperationBase {
   };
 }
 
+
+
+/**
+ * Add post-it note operation
+ */
+export interface AddPostItOperation extends CRDTOperationBase {
+  type: 'add-postit';
+  payload: {
+    postItId: string;
+    position: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+    text?: string;
+    color?: string;
+    createdBy?: string;
+  };
+}
+
+/**
+ * Remove post-it note operation
+ */
+export interface RemovePostItOperation extends CRDTOperationBase {
+  type: 'remove-postit';
+  payload: {
+    postItId: string;
+    observedTags: string[];  // Tags from OR-Set
+  };
+}
+
+/**
+ * Update post-it note position operation
+ */
+export interface UpdatePostItPositionOperation extends CRDTOperationBase {
+  type: 'update-postit-position';
+  payload: {
+    postItId: string;
+    x: number;
+    y: number;
+  };
+}
+
+/**
+ * Update post-it note size operation
+ */
+export interface UpdatePostItSizeOperation extends CRDTOperationBase {
+  type: 'update-postit-size';
+  payload: {
+    postItId: string;
+    width: number;
+    height: number;
+  };
+}
+
+/**
+ * Update post-it note z-index operation
+ */
+export interface UpdatePostItZIndexOperation extends CRDTOperationBase {
+  type: 'update-postit-zindex';
+  payload: {
+    postItId: string;
+    zIndex: number;
+  };
+}
+
+/**
+ * Update post-it note text operation
+ */
+export interface UpdatePostItTextOperation extends CRDTOperationBase {
+  type: 'update-postit-text';
+  payload: {
+    postItId: string;
+    text: string;
+  };
+}
+
+/**
+ * Update post-it note color operation
+ */
+export interface UpdatePostItColorOperation extends CRDTOperationBase {
+  type: 'update-postit-color';
+  payload: {
+    postItId: string;
+    color: string;
+  };
+}
+
+
 /**
  * Batch operation (multiple operations in one)
  */
@@ -454,6 +594,13 @@ export type CRDTOperation =
   | UpdateFrameTitleOperation
   | AssociatePanelWithFrameOperation
   | DisassociatePanelFromFrameOperation
+  | AddPostItOperation
+  | RemovePostItOperation
+  | UpdatePostItPositionOperation
+  | UpdatePostItSizeOperation
+  | UpdatePostItZIndexOperation
+  | UpdatePostItTextOperation
+  | UpdatePostItColorOperation
   | BatchOperation;
 
 /**

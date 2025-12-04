@@ -10,12 +10,13 @@ import { useTransformContext } from '../context/TransformContext';
 import { useCursorSync } from '../hooks/useCursorSync';
 import { useCursorViewportTracking } from '../hooks/useCursorViewportTracking';
 import { selectPanel as selectPanelCRDT, updateViewport as updateViewportCRDT, selectMultiplePanels as selectMultiplePanelsCRDT } from '../state/crdtSlice';
-import { selectPanels, selectFrames, selectViewport, selectCursors, selectSelectedPanelIds, selectMapUid } from '../state/selectors';
+import { selectPanels, selectFrames, selectViewport, selectCursors, selectSelectedPanelIds, selectMapUid, selectPostItNotes } from '../state/selectors';
 
 import { EdgeCursorIndicator } from './EdgeCursorIndicator';
 import { ExploreMapComment } from './ExploreMapComment';
 import { ExploreMapFrame } from './ExploreMapFrame';
 import { ExploreMapPanelContainer } from './ExploreMapPanelContainer';
+import { ExploreMapStickyNote } from './ExploreMapStickyNote';
 import { UserCursor } from './UserCursor';
 
 interface SelectionRect {
@@ -38,6 +39,7 @@ export function ExploreMapCanvas() {
 
   const panels = useSelector((state) => selectPanels(state.exploreMapCRDT));
   const frames = useSelector((state) => selectFrames(state.exploreMapCRDT));
+  const postItNotes = useSelector((state) => selectPostItNotes(state.exploreMapCRDT));
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
   const cursors = useSelector((state) => selectCursors(state.exploreMapCRDT));
   const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
@@ -337,6 +339,9 @@ export function ExploreMapCanvas() {
               .map((info) => (
                 <UserCursor key={info.cursor.sessionId} cursor={info.cursor} zoom={viewport.zoom} />
               ))}
+            {Object.values(postItNotes).map((postIt) => (
+              <ExploreMapStickyNote key={postIt.id} postIt={postIt} zoom={viewport.zoom} />
+            ))}
             {selectionRect && (
               <div
                 className={styles.selectionRect}

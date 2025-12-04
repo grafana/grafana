@@ -17,6 +17,7 @@ import {
   CRDTExploreMapState,
   CRDTPanelData,
   CRDTFrameData,
+  CRDTPostItNoteData,
   CRDTOperation,
   AddPanelOperation,
   RemovePanelOperation,
@@ -35,6 +36,13 @@ import {
   UpdateFrameTitleOperation,
   AssociatePanelWithFrameOperation,
   DisassociatePanelFromFrameOperation,
+  AddPostItOperation,
+  RemovePostItOperation,
+  UpdatePostItPositionOperation,
+  UpdatePostItSizeOperation,
+  UpdatePostItZIndexOperation,
+  UpdatePostItTextOperation,
+  UpdatePostItColorOperation,
   OperationResult,
   CRDTExploreMapStateJSON,
   CommentData,
@@ -62,6 +70,8 @@ export class CRDTStateManager {
       title: createLWWRegister('Untitled Map', this.nodeId),
       comments: new ORSet<string>(),
       commentData: new Map(),
+      postItNotes: new ORSet<string>(),
+      postItNoteData: new Map(),
       panels: new ORSet<string>(),
       panelData: new Map(),
       frames: new ORSet<string>(),
@@ -648,6 +658,238 @@ export class CRDTStateManager {
   }
 
   /**
+   * Create an add post-it note operation
+   */
+  createAddPostItOperation(
+    postItId: string,
+    position: { x: number; y: number; width: number; height: number },
+    text?: string,
+    color?: string,
+    createdBy?: string
+  ): AddPostItOperation {
+    const timestamp = this.clock.tick();
+    return {
+      type: 'add-postit',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        postItId,
+        position,
+        text: text || '',
+        color: color || 'purple',
+        createdBy,
+      },
+    };
+  }
+
+  /**
+   * Create a remove post-it note operation
+   */
+  createRemovePostItOperation(postItId: string): RemovePostItOperation | null {
+    if (!this.state.postItNotes.contains(postItId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    const observedTags = this.state.postItNotes.getTags(postItId);
+
+    return {
+      type: 'remove-postit',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        postItId,
+        observedTags,
+      },
+    };
+  }
+
+  /**
+   * Create an update post-it note position operation
+   */
+  createUpdatePostItPositionOperation(postItId: string, x: number, y: number): UpdatePostItPositionOperation | null {
+    if (!this.state.postItNotes.contains(postItId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'update-postit-position',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        postItId,
+        x,
+        y,
+      },
+    };
+  }
+
+  /**
+   * Create an update post-it note size operation
+   */
+  createUpdatePostItSizeOperation(postItId: string, width: number, height: number): UpdatePostItSizeOperation | null {
+    if (!this.state.postItNotes.contains(postItId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'update-postit-size',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        postItId,
+        width,
+        height,
+      },
+    };
+  }
+
+  /**
+   * Create an update post-it note z-index operation
+   */
+  createUpdatePostItZIndexOperation(postItId: string): UpdatePostItZIndexOperation | null {
+    if (!this.state.postItNotes.contains(postItId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    const zIndex = this.state.zIndexCounter.next(this.nodeId);
+
+    return {
+      type: 'update-postit-zindex',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        postItId,
+        zIndex,
+      },
+    };
+  }
+
+  /**
+   * Create an update post-it note text operation
+   */
+  createUpdatePostItTextOperation(postItId: string, text: string): UpdatePostItTextOperation | null {
+    if (!this.state.postItNotes.contains(postItId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'update-postit-text',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        postItId,
+        text,
+      },
+    };
+  }
+
+  /**
+   * Create an update post-it note color operation
+   */
+  createUpdatePostItColorOperation(postItId: string, color: string): UpdatePostItColorOperation | null {
+    if (!this.state.postItNotes.contains(postItId)) {
+      return null;
+    }
+
+    const timestamp = this.clock.tick();
+    return {
+      type: 'update-postit-color',
+      mapUid: this.mapUid,
+      operationId: uuidv4(),
+      timestamp,
+      nodeId: this.nodeId,
+      payload: {
+        postItId,
+        color,
+      },
+    };
+  }
+
+  /**
+   * Get all post-it note IDs
+   */
+  getPostItNoteIds(): string[] {
+    return this.state.postItNotes.values();
+  }
+
+  /**
+   * Get post-it note data by ID
+   */
+  getPostItNoteData(postItId: string): CRDTPostItNoteData | undefined {
+    if (!this.state.postItNotes.contains(postItId)) {
+      return undefined;
+    }
+    return this.state.postItNoteData.get(postItId);
+  }
+
+  /**
+   * Get a plain object representation of a post-it note for UI rendering
+   */
+  getPostItNoteForUI(postItId: string) {
+    const data = this.getPostItNoteData(postItId);
+    if (!data) {
+      return undefined;
+    }
+
+    return {
+      id: data.id,
+      position: {
+        x: data.positionX.get(),
+        y: data.positionY.get(),
+        width: data.width.get(),
+        height: data.height.get(),
+        zIndex: data.zIndex.get(),
+      },
+      text: data.text.get(),
+      color: data.color.get(),
+      createdBy: data.createdBy.get(),
+    };
+  }
+
+  /**
+   * Get all post-it notes for UI rendering
+   */
+  getAllPostItNotesForUI(): Record<string, {
+    id: string;
+    position: { x: number; y: number; width: number; height: number; zIndex: number };
+    text: string;
+    color: string;
+    createdBy?: string;
+  }> {
+    const postItNotes: Record<string, {
+      id: string;
+      position: { x: number; y: number; width: number; height: number; zIndex: number };
+      text: string;
+      color: string;
+      createdBy?: string;
+    }> = {};
+    for (const postItId of this.getPostItNoteIds()) {
+      const postIt = this.getPostItNoteForUI(postItId);
+      if (postIt) {
+        postItNotes[postItId] = postIt;
+      }
+    }
+    return postItNotes;
+  }
+
+  /**
    * Apply a CRDT operation to the state
    */
   applyOperation(operation: CRDTOperation): OperationResult {
@@ -690,6 +932,20 @@ export class CRDTStateManager {
           return this.applyAssociatePanelWithFrame(operation);
         case 'disassociate-panel-from-frame':
           return this.applyDisassociatePanelFromFrame(operation);
+        case 'add-postit':
+          return this.applyAddPostIt(operation);
+        case 'remove-postit':
+          return this.applyRemovePostIt(operation);
+        case 'update-postit-position':
+          return this.applyUpdatePostItPosition(operation);
+        case 'update-postit-size':
+          return this.applyUpdatePostItSize(operation);
+        case 'update-postit-zindex':
+          return this.applyUpdatePostItZIndex(operation);
+        case 'update-postit-text':
+          return this.applyUpdatePostItText(operation);
+        case 'update-postit-color':
+          return this.applyUpdatePostItColor(operation);
         case 'batch':
           return this.applyBatchOperation(operation);
         default:
@@ -901,6 +1157,136 @@ export class CRDTStateManager {
     };
   }
 
+  private applyAddPostIt(operation: AddPostItOperation): OperationResult {
+    const { postItId, position, text, color, createdBy } = operation.payload;
+
+    // Add to OR-Set with operation ID as tag
+    this.state.postItNotes.add(postItId, operation.operationId);
+
+    // Initialize post-it note data if it doesn't exist
+    if (!this.state.postItNoteData.has(postItId)) {
+      const zIndex = this.state.zIndexCounter.next(operation.nodeId);
+
+      this.state.postItNoteData.set(postItId, {
+        id: postItId,
+        positionX: new LWWRegister(position.x, operation.timestamp),
+        positionY: new LWWRegister(position.y, operation.timestamp),
+        width: new LWWRegister(position.width, operation.timestamp),
+        height: new LWWRegister(position.height, operation.timestamp),
+        zIndex: new LWWRegister(zIndex, operation.timestamp),
+        text: new LWWRegister(text || '', operation.timestamp),
+        color: new LWWRegister(color || 'purple', operation.timestamp),
+        createdBy: new LWWRegister(createdBy, operation.timestamp),
+      });
+    }
+
+    return { success: true, applied: true };
+  }
+
+  private applyRemovePostIt(operation: RemovePostItOperation): OperationResult {
+    const { postItId, observedTags } = operation.payload;
+
+    // Check if post-it note exists before removing
+    const existed = this.state.postItNotes.contains(postItId);
+
+    // Remove from OR-Set
+    this.state.postItNotes.remove(postItId, observedTags);
+
+    // Remove post-it note data if it existed
+    if (existed) {
+      this.state.postItNoteData.delete(postItId);
+    }
+
+    return {
+      success: true,
+      applied: existed,
+    };
+  }
+
+  private applyUpdatePostItPosition(operation: UpdatePostItPositionOperation): OperationResult {
+    const { postItId, x, y } = operation.payload;
+    const postItData = this.state.postItNoteData.get(postItId);
+
+    if (!postItData) {
+      return { success: true, applied: false, error: 'Post-it note not found' };
+    }
+
+    const xUpdated = postItData.positionX.set(x, operation.timestamp);
+    const yUpdated = postItData.positionY.set(y, operation.timestamp);
+    const updated = xUpdated || yUpdated;
+
+    return {
+      success: true,
+      applied: updated,
+    };
+  }
+
+  private applyUpdatePostItSize(operation: UpdatePostItSizeOperation): OperationResult {
+    const { postItId, width, height } = operation.payload;
+    const postItData = this.state.postItNoteData.get(postItId);
+
+    if (!postItData) {
+      return { success: true, applied: false, error: 'Post-it note not found' };
+    }
+
+    const widthUpdated = postItData.width.set(width, operation.timestamp);
+    const heightUpdated = postItData.height.set(height, operation.timestamp);
+    const updated = widthUpdated || heightUpdated;
+
+    return {
+      success: true,
+      applied: updated,
+    };
+  }
+
+  private applyUpdatePostItZIndex(operation: UpdatePostItZIndexOperation): OperationResult {
+    const { postItId, zIndex } = operation.payload;
+    const postItData = this.state.postItNoteData.get(postItId);
+
+    if (!postItData) {
+      return { success: true, applied: false, error: 'Post-it note not found' };
+    }
+
+    const updated = postItData.zIndex.set(zIndex, operation.timestamp);
+
+    return {
+      success: true,
+      applied: updated,
+    };
+  }
+
+  private applyUpdatePostItText(operation: UpdatePostItTextOperation): OperationResult {
+    const { postItId, text } = operation.payload;
+    const postItData = this.state.postItNoteData.get(postItId);
+
+    if (!postItData) {
+      return { success: true, applied: false, error: 'Post-it note not found' };
+    }
+
+    const updated = postItData.text.set(text, operation.timestamp);
+
+    return {
+      success: true,
+      applied: updated,
+    };
+  }
+
+  private applyUpdatePostItColor(operation: UpdatePostItColorOperation): OperationResult {
+    const { postItId, color } = operation.payload;
+    const postItData = this.state.postItNoteData.get(postItId);
+
+    if (!postItData) {
+      return { success: true, applied: false, error: 'Post-it note not found' };
+    }
+
+    const updated = postItData.color.set(color, operation.timestamp);
+
+    return {
+      success: true,
+      applied: updated,
+    };
+  }
+
   private applyBatchOperation(operation: BatchOperation): OperationResult {
     let anyApplied = false;
     const errors: string[] = [];
@@ -1063,6 +1449,39 @@ export class CRDTStateManager {
       }
     }
 
+    // Merge post-it notes OR-Set
+    this.state.postItNotes.merge(other.postItNotes);
+
+    // Merge post-it note data
+    for (const [postItId, otherPostItData] of other.postItNoteData.entries()) {
+      const myPostItData = this.state.postItNoteData.get(postItId);
+
+      if (!myPostItData) {
+        // Post-it note doesn't exist locally - copy it
+        this.state.postItNoteData.set(postItId, {
+          id: otherPostItData.id,
+          positionX: otherPostItData.positionX.clone(),
+          positionY: otherPostItData.positionY.clone(),
+          width: otherPostItData.width.clone(),
+          height: otherPostItData.height.clone(),
+          zIndex: otherPostItData.zIndex.clone(),
+          text: otherPostItData.text.clone(),
+          color: otherPostItData.color.clone(),
+          createdBy: otherPostItData.createdBy.clone(),
+        });
+      } else {
+        // Merge each LWW register
+        myPostItData.positionX.merge(otherPostItData.positionX);
+        myPostItData.positionY.merge(otherPostItData.positionY);
+        myPostItData.width.merge(otherPostItData.width);
+        myPostItData.height.merge(otherPostItData.height);
+        myPostItData.zIndex.merge(otherPostItData.zIndex);
+        myPostItData.text.merge(otherPostItData.text);
+        myPostItData.color.merge(otherPostItData.color);
+        myPostItData.createdBy.merge(otherPostItData.createdBy);
+      }
+    }
+
     // Merge panel OR-Set
     this.state.panels.merge(other.panels);
 
@@ -1192,11 +1611,30 @@ export class CRDTStateManager {
       }
     }
 
+    const postItNoteData: CRDTExploreMapStateJSON['postItNoteData'] = {};
+    for (const [postItId, data] of this.state.postItNoteData.entries()) {
+      if (this.state.postItNotes.contains(postItId)) {
+        postItNoteData[postItId] = {
+          id: data.id,
+          positionX: data.positionX.toJSON(),
+          positionY: data.positionY.toJSON(),
+          width: data.width.toJSON(),
+          height: data.height.toJSON(),
+          zIndex: data.zIndex.toJSON(),
+          text: data.text.toJSON(),
+          color: data.color.toJSON(),
+          createdBy: data.createdBy.toJSON(),
+        };
+      }
+    }
+
     return {
       uid: this.state.uid,
       title: this.state.title.toJSON(),
       comments: this.state.comments.toJSON(),
       commentData,
+      postItNotes: this.state.postItNotes.toJSON(),
+      postItNoteData,
       panels: this.state.panels.toJSON(),
       panelData,
       frames: this.state.frames.toJSON(),
@@ -1218,6 +1656,24 @@ export class CRDTStateManager {
     if (json.commentData) {
       for (const [commentId, data] of Object.entries(json.commentData)) {
         manager.state.commentData.set(commentId, data);
+      }
+    }
+    manager.state.postItNotes = json.postItNotes ? ORSet.fromJSON(json.postItNotes) : new ORSet<string>();
+    manager.state.postItNoteData = new Map();
+    if (json.postItNoteData) {
+      for (const [postItId, data] of Object.entries(json.postItNoteData)) {
+        const defaultTimestamp = data.positionX?.timestamp || { nodeId: manager.nodeId, counter: 0, wallClock: Date.now() };
+        manager.state.postItNoteData.set(postItId, {
+          id: data.id,
+          positionX: LWWRegister.fromJSON(data.positionX),
+          positionY: LWWRegister.fromJSON(data.positionY),
+          width: LWWRegister.fromJSON(data.width),
+          height: LWWRegister.fromJSON(data.height),
+          zIndex: LWWRegister.fromJSON(data.zIndex),
+          text: LWWRegister.fromJSON(data.text),
+          color: LWWRegister.fromJSON(data.color),
+          createdBy: data.createdBy ? LWWRegister.fromJSON(data.createdBy) : new LWWRegister(undefined, defaultTimestamp),
+        });
       }
     }
     manager.state.panels = ORSet.fromJSON(json.panels);
