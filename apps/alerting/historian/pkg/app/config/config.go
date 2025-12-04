@@ -67,6 +67,9 @@ func (v urlVar) Type() string {
 
 func addLokiFlags(l *lokiclient.LokiConfig, prefix string, flags *pflag.FlagSet) {
 	flags.Var(urlVar{&l.ReadPathURL}, prefix+".read-url", "URL to Loki instance for performing queries")
+	flags.StringVar(&l.BasicAuthUser, prefix+".user", "", "Basic auth Username to authenticate to the Loki instance")
+	flags.StringVar(&l.BasicAuthPassword, prefix+".password", "", "Basic auth password to authenticate to the Loki instance")
+	flags.StringVar(&l.TenantID, prefix+".tenant-id", "", "Value to use for X-Scope-OrgID")
 	flags.DurationVar(&l.MaxQueryLength, prefix+".max-query-length", lokiDefaultMaxQueryLength, "Maximum allowed time range for queries")
 	flags.IntVar(&l.MaxQuerySize, prefix+".max-query-size", lokiDefaultMaxQuerySize, "Maximum allowed size of a query string passed to Loki")
 }

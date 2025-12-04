@@ -47,15 +47,23 @@ func TestRuntimeConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "with loki read url",
-			args: []string{"--alerting.historian.notification.loki.read-url=http://localhost:3100"},
+			name: "with loki options",
+			args: []string{
+				"--alerting.historian.notification.loki.read-url=http://localhost:3100",
+				"--alerting.historian.notification.loki.user=foo",
+				"--alerting.historian.notification.loki.password=bar",
+				"--alerting.historian.notification.loki.tenant-id=baz",
+			},
 			expected: RuntimeConfig{
 				Notification: NotificationConfig{
 					Enabled: false,
 					Loki: lokiclient.LokiConfig{
-						ReadPathURL:    lokiURL,
-						MaxQueryLength: 721 * time.Hour,
-						MaxQuerySize:   65536,
+						ReadPathURL:       lokiURL,
+						BasicAuthUser:     "foo",
+						BasicAuthPassword: "bar",
+						TenantID:          "baz",
+						MaxQueryLength:    721 * time.Hour,
+						MaxQuerySize:      65536,
 					},
 				},
 			},
