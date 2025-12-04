@@ -237,6 +237,7 @@ jobs:
 
       - name: Create test user for playwright
         # Using ephemeral-instances-bot GCOM token (grafanaUniversity org exception)
+        if: false
         env:
           GCOM_HOST: ${{ env.GCOM_HOST }}
           GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
