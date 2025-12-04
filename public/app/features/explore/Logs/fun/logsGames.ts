@@ -41,10 +41,12 @@ const enemySpeed = 0.001;
 type Missile = {
   x: number;
   y: number;
+  get gridY(): number;
   hit: boolean;
 };
 type Enemy = {
   x: number;
+  get gridX(): number;
   sourceX: number;
   direction: 'l' | 'r';
   y: number;
@@ -168,10 +170,10 @@ function update(
       if (enemy.direction === 'r') {
         enemy.x = enemy.x + enemySpeed * dt;
         if (enemy.type === enemyTypeUfo) {
-          if (Math.floor(enemy.x) === 74) {
+          if (enemy.gridX === 74) {
             enemy.direction = 'l';
           }
-        } else if (Math.floor(enemy.x) - enemy.sourceX >= 5) {
+        } else if (enemy.gridX - enemy.sourceX >= 5) {
           enemy.direction = 'l';
           if (!enemyBelow) {
             enemy.y += 1;
@@ -180,10 +182,10 @@ function update(
       } else {
         enemy.x = enemy.x - enemySpeed * dt;
         if (enemy.type === enemyTypeUfo) {
-          if (Math.floor(enemy.x) === 0) {
+          if (enemy.gridX === 0) {
             enemy.direction = 'r';
           }
-        } else if (Math.floor(enemy.x) - enemy.sourceX <= -5) {
+        } else if (enemy.gridX - enemy.sourceX <= -5) {
           enemy.direction = 'r';
           if (!enemyBelow) {
             enemy.y += 1;
@@ -193,9 +195,7 @@ function update(
       return enemy;
     })
     .map((enemy) => {
-      const missile = userMissiles.find(
-        (missile) => Math.ceil(missile.y) === Math.floor(enemy.y) && Math.round(enemy.x) === missile.x
-      );
+      const missile = userMissiles.find((missile) => missile.gridY === enemy.y && enemy.gridX === missile.x);
       if (missile && enemy.health > 0) {
         missile.hit = true;
         enemy.health -= 1;
@@ -207,7 +207,9 @@ function update(
   newUserMissiles = newUserMissiles.filter((missile) => missile.hit === false);
 
   const newGameState = gameState.map((row, index) => {
-    if (index === playerY) {
+    if (index <= 2 || index > playerY) {
+      return row;
+    } else if (index === playerY) {
       row.entry = player.padStart(playerX, ' ');
     } else if (row.entry.includes(shield)) {
       row.entry = handleEnvironmentCollisions(row.entry, newUserMissiles, index);
@@ -230,6 +232,9 @@ function newUserMissile(x: number, y: number): Missile {
   return {
     x: x - 2,
     y,
+    get gridY() {
+      return Math.ceil(this.y);
+    },
     hit: false,
   };
 }
@@ -241,6 +246,9 @@ function createEnemies(row: string, y: number) {
     if (index >= 0) {
       const enemy: Enemy = {
         x: index,
+        get gridX() {
+          return Math.floor(this.x);
+        },
         sourceX: index,
         direction: 'r',
         y,
@@ -258,7 +266,7 @@ function createEnemies(row: string, y: number) {
 }
 
 function handleEnvironmentCollisions(row: string, userMissiles: Missile[], y: number) {
-  const missiles = userMissiles.filter((missile) => Math.ceil(missile.y) === y);
+  const missiles = userMissiles.filter((missile) => missile.gridY === y);
   missiles.forEach((missile) => {
     if (row.charAt(missile.x) === shield) {
       row = row.substring(0, missile.x) + ' ' + row.substring(missile.x + 1);
@@ -271,27 +279,28 @@ function handleEnvironmentCollisions(row: string, userMissiles: Missile[], y: nu
 function render(row: string, enemies: Enemy[], userMissiles: Missile[], y: number) {
   row = row.replace(userMissileRegex, ' ');
   enemies = enemies.filter((enemy) => enemy.y === y);
-  userMissiles = userMissiles.filter((missile) => Math.ceil(missile.y) === y);
+  userMissiles = userMissiles.filter((missile) => missile.gridY === y);
 
   if (!enemies.length && !userMissiles.length) {
-    return row;
+    return '';
   }
 
-  let newRow = row.split('');
+  let newRow = '';
 
-  // Render enemies
-  for (const enemy of enemies) {
-    const sprite = enemySprites[enemy.type][enemy.health];
-    const startX = Math.round(enemy.x);
-    for (let i = 0; i < sprite.length && startX + i < 80; i++) {
-      newRow[startX + i] = sprite[i];
+  for (let i = 0; i < 80; ) {
+    const enemy = enemies.find((enemy) => enemy.gridX === i);
+    const missile = userMissiles.find((missile) => missile.x === i);
+    if (enemy) {
+      newRow += enemySprites[enemy.type][enemy.health];
+      i += 5;
+    } else if (missile) {
+      newRow += userMissile;
+      i++;
+    } else {
+      newRow += ' ';
+      i++;
     }
   }
 
-  // Render missiles
-  for (const missile of userMissiles) {
-    newRow[missile.x] = userMissile;
-  }
-
-  return newRow.join('');
+  return newRow;
 }
