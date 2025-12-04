@@ -6,13 +6,12 @@ package v1beta1
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"time"
 )
 
 // +k8s:openapi-gen=true
@@ -29,7 +28,7 @@ type Folder struct {
 func NewFolder() *Folder {
 	return &Folder{
 		Spec:   *NewFolderSpec(),
-		Status: FolderStatus{},
+		Status: *NewFolderStatus(),
 	}
 }
 
