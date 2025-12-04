@@ -262,12 +262,12 @@ export const QueryLibraryView = forwardRef<QueryLibraryViewRef, QueryLibraryView
   // Render query list item
   const renderQueryItem = (query: (typeof STUB_SAVED_QUERIES)[0], index: number) => (
     <Fragment key={query.uid}>
-      <label className={cx(styles.queryItem, selectedQueryIndex === index && styles.selected)}>
+      <label className={cx(styles.queryItem, mode === 'browse' && selectedQueryIndex === index && styles.selected)}>
         <input
           type="radio"
           name="query-library-list"
           className={styles.radioInput}
-          checked={selectedQueryIndex === index}
+          checked={mode === 'browse' && selectedQueryIndex === index}
           onChange={() => setSelectedQueryIndex(index)}
           disabled={mode === 'save'}
         />
@@ -311,14 +311,12 @@ export const QueryLibraryView = forwardRef<QueryLibraryViewRef, QueryLibraryView
             <Stack gap={1} alignItems="center">
               <DatasourceIcon datasourceType={datasourceType} className={styles.datasourceIconLarge} />
               <Box flex={1}>
-                <Field label={t('query-library.query-details.title', 'Title')} noMargin>
-                  <Input
-                    id="query-title"
-                    value={mode === 'save' ? formTitle : query?.title || ''}
-                    onChange={(e) => mode === 'save' && setFormTitle(e.currentTarget.value)}
-                    readOnly={mode !== 'save'}
-                  />
-                </Field>
+                <Input
+                  id="query-title"
+                  value={mode === 'save' ? formTitle : query?.title || ''}
+                  onChange={(e) => mode === 'save' && setFormTitle(e.currentTarget.value)}
+                  readOnly={mode !== 'save'}
+                />
               </Box>
             </Stack>
           </Box>
@@ -410,7 +408,7 @@ export const QueryLibraryView = forwardRef<QueryLibraryViewRef, QueryLibraryView
           {/* Left column - Query list with search */}
           <Box display="flex" flex={1} minWidth={0} direction="column">
             {/* Search field */}
-            <Box padding={1} paddingBottom={0}>
+            <Box padding={2}>
               <Input
                 prefix={<Icon name="search" />}
                 placeholder={t('query-library.filters.search', 'Search by...')}
@@ -456,9 +454,9 @@ export const QueryLibraryView = forwardRef<QueryLibraryViewRef, QueryLibraryView
                 direction="column"
                 display="flex"
                 flex={1}
-                paddingBottom={0}
+                paddingBottom={2}
                 paddingLeft={2}
-                paddingRight={1}
+                paddingRight={2}
                 paddingTop={2}
               >
                 {renderDetailsForm()}
@@ -475,7 +473,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   queryItem: css({
     display: 'block',
     width: '100%',
-    padding: theme.spacing(1.5, 1.5, 1.5, 1),
+    padding: theme.spacing(2),
     position: 'relative',
     cursor: 'pointer',
     [theme.transitions.handleMotion('no-preference')]: {

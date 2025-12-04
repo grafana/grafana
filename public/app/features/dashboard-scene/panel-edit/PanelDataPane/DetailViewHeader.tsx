@@ -157,7 +157,6 @@ function ItemHeader({
 
   const [isEditing, setIsEditing] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [isSavedQueriesDrawerOpen, setIsSavedQueriesDrawerOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [transformInput, setTransformInput] = useState<DataFrame[]>([]);
