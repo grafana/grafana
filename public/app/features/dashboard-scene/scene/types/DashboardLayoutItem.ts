@@ -19,6 +19,11 @@ export interface DashboardLayoutItem extends SceneObject {
    * Change inner body / viz panel
    */
   setElementBody(body: VizPanel): void;
+
+  /**
+   * Access inner body / viz panel
+   */
+  getElementBody(): VizPanel;
 }
 
 export function isDashboardLayoutItem(obj: SceneObject): obj is DashboardLayoutItem {

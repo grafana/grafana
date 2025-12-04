@@ -1,11 +1,14 @@
 import { createRef, CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
-import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel, SceneGridItemLike } from '@grafana/scenes';
+import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutOrchestratorFor } from '../../utils/utils';
+import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
+import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
 import { AutoGridItem } from './AutoGridItem';
+import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 import { AutoGridLayoutRenderer } from './AutoGridLayoutRenderer';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
@@ -75,20 +78,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       children: state.children ?? [],
       ...state,
     });
-
-    this._onDragStart = this._onDragStart.bind(this);
-    this._onDragEnd = this._onDragEnd.bind(this);
-    this._onDrag = this._onDrag.bind(this);
-
-    this.addActivationHandler(() => this._activationHandler());
-  }
-
-  private _activationHandler() {
-    return () => {
-      this._resetPanelPositionAndSize();
-      document.body.removeEventListener('pointermove', this._onDrag);
-      document.body.removeEventListener('pointerup', this._onDragEnd);
-    };
   }
 
   public isDraggable(): boolean {
@@ -112,78 +101,72 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       onDragStart: (evt: ReactPointerEvent, panel: VizPanel) => {
         const gridItem = panel.parent;
         if (gridItem instanceof AutoGridItem) {
-          this._onDragStart(evt, gridItem);
+          getLayoutOrchestratorFor(this)?.startDragging(evt, gridItem, this._getLayoutManager());
         }
       },
     };
   }
 
-  private _canDrag(evt: ReactPointerEvent): boolean {
-    if (!this.isDraggable()) {
-      return false;
+  // private _canDrag(evt: PointerEvent): boolean {
+  //   if (!this.isDraggable()) {
+  //     return false;
+  //   }
+  //
+  //   if (!(evt.target instanceof Element)) {
+  //     return false;
+  //   }
+  //
+  //   return !!evt.target.closest(`.${this.getDragClass()}`) && !evt.target.closest(`.${this.getDragClassCancel()}`);
+  // }
+
+  private _getLayoutManager(): AutoGridLayoutManager {
+    if (!(this.parent instanceof AutoGridLayoutManager)) {
+      throw new Error('Parent of AutoGridLayout must be AutoGridLayoutManager');
     }
 
-    if (!(evt.target instanceof Element)) {
-      return false;
-    }
-
-    return !!evt.target.closest(`.${this.getDragClass()}`) && !evt.target.closest(`.${this.getDragClassCancel()}`);
+    return this.parent;
   }
 
-  // Start inside dragging
-  private _onDragStart(evt: ReactPointerEvent, gridItem: SceneGridItemLike) {
-    if (!this._canDrag(evt)) {
-      return;
+  public onDragStart(sourceGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem, evt: PointerEvent) {
+    // if (!this._canDrag(evt)) {
+    //   return;
+    // }
+    //
+    // if (!(layoutItem instanceof AutoGridItem)) {
+    //   throw new Error('Dragging wrong item');
+    // }
+
+    if (layoutItem instanceof AutoGridItem) {
+      this._draggedGridItem = sourceGrid === this._getLayoutManager() ? layoutItem : layoutItem.clone();
+    } else {
+      this._draggedGridItem = new AutoGridItem({
+        body: layoutItem.getElementBody().clone(),
+      });
     }
 
-    // evt.preventDefault();
-    // evt.stopPropagation();
-
-    if (!(gridItem instanceof AutoGridItem)) {
-      throw new Error('Dragging wrong item');
+    if (!this.state.children.includes(this._draggedGridItem)) {
+      this.setState({ children: [...this.state.children, this._draggedGridItem] });
     }
 
-    this._draggedGridItem = gridItem;
+    setTimeout(() => {
+      const { top, left, width, height } = this._draggedGridItem!.getBoundingBox();
+      this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
+      this._updatePanelSize(width, height);
+      this._updatePanelPosition(top, left);
 
-    const { top, left, width, height } = this._draggedGridItem.getBoundingBox();
-    this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
-    this._updatePanelSize(width, height);
-    this._updatePanelPosition(top, left);
-
-    this.setState({ draggingKey: this._draggedGridItem.state.key });
-
-    document.body.addEventListener('pointermove', this._onDrag);
-    document.body.addEventListener('pointerup', this._onDragEnd);
-    document.body.classList.add('dashboard-draggable-transparent-selection');
-
-    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, this._draggedGridItem, this);
+      this.setState({ draggingKey: this._draggedGridItem!.state.key });
+    });
   }
 
-  // Stop inside dragging
-  private _onDragEnd() {
-    window.getSelection()?.removeAllRanges();
-
-    this._draggedGridItem = null;
-    this._initialGridItemPosition = null;
-    this._resetPanelPositionAndSize();
-
-    this.setState({ draggingKey: undefined });
-
-    document.body.removeEventListener('pointermove', this._onDrag);
-    document.body.removeEventListener('pointerup', this._onDragEnd);
-    document.body.classList.remove('dashboard-draggable-transparent-selection');
-  }
-
-  // Handle inside drag moves
-  private _onDrag(evt: PointerEvent) {
-    if (!this._draggedGridItem || !this._initialGridItemPosition) {
-      this._onDragEnd();
-      return;
-    }
-
+  public onDrag(
+    sourceGrid: DashboardLayoutGrid,
+    targetGrid: DashboardLayoutGrid,
+    layoutItem: DashboardLayoutItem,
+    evt: PointerEvent
+  ) {
     this._updatePanelPosition(
-      this._initialGridItemPosition.top + (evt.pageY - this._initialGridItemPosition.pageY),
-      this._initialGridItemPosition.left + (evt.pageX - this._initialGridItemPosition.pageX)
+      this._initialGridItemPosition!.top + (evt.pageY - this._initialGridItemPosition!.pageY),
+      this._initialGridItemPosition!.left + (evt.pageX - this._initialGridItemPosition!.pageX)
     );
 
     const dropTargetGridItemKey = document
@@ -199,6 +182,31 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       this._onDragOverItem(dropTargetGridItemKey);
     }
   }
+
+  public onDragStop(sourceGrid: DashboardLayoutGrid,
+    targetGrid: DashboardLayoutGrid,
+    layoutItem: DashboardLayoutItem,
+    evt: PointerEvent) {
+    if (targetGrid !== this._getLayoutManager()) {
+      this.setState({ children: this.state.children.filter((child) => child !== this._draggedGridItem!) });
+    }
+
+    this._draggedGridItem = null;
+  }
+
+  // public onDragStop() {
+  //   window.getSelection()?.removeAllRanges();
+  //
+  //   this._draggedGridItem = null;
+  //   this._initialGridItemPosition = null;
+  //   this._resetPanelPositionAndSize();
+  //
+  //   this.setState({ draggingKey: undefined });
+  //
+  //   document.body.removeEventListener('pointermove', this._onDrag);
+  //   document.body.removeEventListener('pointerup', this._onDragEnd);
+  //   document.body.classList.remove('dashboard-draggable-transparent-selection');
+  // }
 
   // Handle dragging an item from the same grid over another item from the same grid
   private _onDragOverItem(key: string) {
@@ -226,18 +234,18 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     this._setContainerStyle(DRAGGED_ITEM_HEIGHT, `${Math.floor(height)}px`);
   }
 
-  private _resetPanelPositionAndSize() {
-    this._removeContainerStyle(DRAGGED_ITEM_TOP);
-    this._removeContainerStyle(DRAGGED_ITEM_LEFT);
-    this._removeContainerStyle(DRAGGED_ITEM_WIDTH);
-    this._removeContainerStyle(DRAGGED_ITEM_HEIGHT);
-  }
+  // private _resetPanelPositionAndSize() {
+  //   this._removeContainerStyle(DRAGGED_ITEM_TOP);
+  //   this._removeContainerStyle(DRAGGED_ITEM_LEFT);
+  //   this._removeContainerStyle(DRAGGED_ITEM_WIDTH);
+  //   this._removeContainerStyle(DRAGGED_ITEM_HEIGHT);
+  // }
 
   private _setContainerStyle(name: string, value: string) {
     this.containerRef.current?.style.setProperty(name, value);
   }
 
-  private _removeContainerStyle(name: string) {
-    this.containerRef.current?.style.removeProperty(name);
-  }
+  // private _removeContainerStyle(name: string) {
+  //   this.containerRef.current?.style.removeProperty(name);
+  // }
 }

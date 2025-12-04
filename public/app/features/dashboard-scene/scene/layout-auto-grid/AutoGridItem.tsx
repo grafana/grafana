@@ -74,6 +74,10 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     this.setState({ body });
   }
 
+  public getElementBody(): VizPanel {
+    return this.state.body;
+  }
+
   public performRepeat() {
     if (!this.state.variableName || sceneGraph.hasVariableDependencyInLoadingState(this)) {
       return;

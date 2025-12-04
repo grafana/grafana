@@ -16,15 +16,25 @@ export interface DashboardLayoutGrid extends DashboardLayoutManager {
   /**
    * Start the synchronization of the orchestrator with the grid drag
    */
-  startOrchestratorSync?(): void;
+  onDragStart?(sourceGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem, evt: PointerEvent): void;
 
-  stopOrchestratorSync?(sourceGrid: DashboardLayoutGrid, targetGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem): void;
+  onDragStop?(
+    sourceGrid: DashboardLayoutGrid,
+    targetGrid: DashboardLayoutGrid,
+    layoutItem: DashboardLayoutItem,
+    evt: PointerEvent
+  ): void;
 
   /**
    * Toggle the grid as the current drop target
    * Useful for toggling between inner drag and outer drag
    */
-  setIsDropTarget?(flag: boolean, sourceGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem): void;
+  onDrag?(
+    sourceGrid: DashboardLayoutGrid,
+    targetGrid: DashboardLayoutGrid,
+    layoutItem: DashboardLayoutItem,
+    evt: PointerEvent
+  ): void;
 }
 
 export function isDashboardLayoutGrid(obj: DashboardLayoutManager): obj is DashboardLayoutGrid {

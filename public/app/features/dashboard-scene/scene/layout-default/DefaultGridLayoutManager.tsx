@@ -16,7 +16,7 @@ import {
   useSceneObjectState,
   SceneObject,
   SceneGridLayoutDragStartEvent,
-  SceneGridPlaceholderItem
+  SceneGridPlaceholderItem,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { useStyles2 } from '@grafana/ui';
@@ -90,6 +90,8 @@ export class DefaultGridLayoutManager
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
 
+  private _draggingGridItem: DashboardLayoutItem | undefined;
+
   public constructor(state: DefaultGridLayoutManagerState) {
     super(state);
 
@@ -127,14 +129,13 @@ export class DefaultGridLayoutManager
   private _activationHandler() {
     if (config.featureToggles.dashboardNewLayouts) {
       this._subs.add(
-        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel }}) => {
+        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
           const gridItem = panel.parent;
           if (gridItem instanceof DashboardGridItem) {
-            this.state.grid.setPlaceholderSize(gridItem.state.width ?? NEW_PANEL_WIDTH, gridItem.state.height ?? NEW_PANEL_HEIGHT);
-            getLayoutOrchestratorFor(this)?.startDraggingSync(evt, gridItem, this);
+            getLayoutOrchestratorFor(this)?.startDragging(evt, gridItem, this);
           }
         })
-      )
+      );
     }
 
     this._subs.add(
@@ -367,7 +368,11 @@ export class DefaultGridLayoutManager
     const panels: VizPanel[] = [];
 
     this.state.grid.forEachChild((child) => {
-      if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow) && !(child instanceof SceneGridPlaceholderItem)) {
+      if (
+        !(child instanceof DashboardGridItem) &&
+        !(child instanceof SceneGridRow) &&
+        !(child instanceof SceneGridPlaceholderItem)
+      ) {
         throw new Error('Child is not a DashboardGridItem or SceneGridRow, invalid scene');
       }
 
@@ -566,34 +571,33 @@ export class DefaultGridLayoutManager
     this.state.grid.setState({ children: [...this.state.grid.state.children, gridItem] });
   }
 
-  public setIsDropTarget(flag: boolean, sourceGrid: DashboardLayoutGrid) {
-    const newState = {
-      isDragging: flag,
-      isOutsideDragging: sourceGrid !== this,
-    };
+  public onDragStart(sourceGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem) {
+    if (layoutItem instanceof DashboardGridItem) {
+      this._draggingGridItem = sourceGrid === this ? layoutItem : layoutItem.clone();
+    } else {
+      const width = layoutItem instanceof DashboardGridItem ? layoutItem.state.width : NEW_PANEL_WIDTH;
+      const height = layoutItem instanceof DashboardGridItem ? layoutItem.state.height : NEW_PANEL_HEIGHT;
 
-    if (newState.isDragging !== this.state.grid.state.isDragging || newState.isOutsideDragging !== this.state.grid.state.isOutsideDragging) {
-      this.state.grid.setState(newState);
+      this._draggingGridItem = new DashboardGridItem({
+        width: width ?? NEW_PANEL_WIDTH,
+        height: height ?? NEW_PANEL_HEIGHT,
+        body: layoutItem.getElementBody().clone(),
+      });
     }
+
+    this.state.grid.setPlaceholder(this._draggingGridItem);
   }
 
-  public stopOrchestratorSync(sourceGrid: DashboardLayoutGrid, targetGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem) {
-    console.log('stop orchestrator sync');
-
-    const isSourceGrid = sourceGrid === this;
-    const isTargetGrid = targetGrid === this;
-
-    if (!isSourceGrid && !isTargetGrid) {
-      return;
-    }
-
-    if (isSourceGrid && !isTargetGrid) {
+  public onDragStop(sourceGrid: DashboardLayoutGrid, targetGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem) {
+    if (sourceGrid !== this && targetGrid === this) {
+      const panel = layoutItem.getElementBody();
+      panel.clearParent();
+      this._draggingGridItem?.setElementBody(panel);
+    } else if (sourceGrid === this && targetGrid !== this) {
       this.state.grid.setState({ children: this.state.grid.state.children.filter((child) => child !== layoutItem) });
-    } else if (!isSourceGrid && isTargetGrid) {
-      // From outside drag
-    } else {
-      // Inside drag
     }
+
+    this._draggingGridItem = undefined;
   }
 
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
@@ -690,7 +694,10 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   }
 
   return (
-    <div className={cx(styles.container, isEditing && styles.containerEditing)} data-grid-manager-key={model.state.key!}>
+    <div
+      className={cx(styles.container, isEditing && styles.containerEditing)}
+      data-grid-manager-key={model.state.key!}
+    >
       {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
       {showCanvasActions && (
         <div className={styles.actionsWrapper}>

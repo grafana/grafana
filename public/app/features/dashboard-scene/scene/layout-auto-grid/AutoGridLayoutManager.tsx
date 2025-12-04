@@ -24,6 +24,7 @@ import {
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
+import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -360,8 +361,26 @@ export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManager
     this.state.layout.setState({ children: [...this.state.layout.state.children, gridItem] });
   }
 
-  public startOrchestratorSync() {
+  public onDragStart(sourceGrid: DashboardLayoutGrid, layoutItem: DashboardLayoutItem, evt: PointerEvent) {
+    this.state.layout.onDragStart(sourceGrid, layoutItem, evt);
+  }
 
+  public onDrag(
+    sourceGrid: DashboardLayoutGrid,
+    targetGrid: DashboardLayoutGrid,
+    layoutItem: DashboardLayoutItem,
+    evt: PointerEvent,
+  ) {
+    this.state.layout.onDrag(sourceGrid, targetGrid, layoutItem, evt);
+  }
+
+  public onDragStop(
+    sourceGrid: DashboardLayoutGrid,
+    targetGrid: DashboardLayoutGrid,
+    layoutItem: DashboardLayoutItem,
+    evt: PointerEvent,
+  ) {
+    // this.state.
   }
 }
 

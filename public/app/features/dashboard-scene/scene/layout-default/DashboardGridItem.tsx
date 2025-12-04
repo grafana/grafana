@@ -117,6 +117,10 @@ export class DashboardGridItem
     this.setState({ body });
   }
 
+  public getElementBody(): VizPanel {
+    return this.state.body;
+  }
+
   public handleEditChange() {
     this._prevRepeatValues = undefined;
 
