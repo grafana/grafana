@@ -3616,12 +3616,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@link:/Users/bogdan/Workspace/Grafana/scenes/packages/scenes::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@grafana/scenes@link:/Users/bogdan/Workspace/Grafana/scenes/packages/scenes::locator=grafana%40workspace%3A."
-  languageName: node
-  linkType: soft
-
 "@grafana/scenes@npm:6.38.0":
   version: 6.38.0
   resolution: "@grafana/scenes@npm:6.38.0"
@@ -3671,6 +3665,32 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
   checksum: 10/c4b2b3113da0ea9b5745b4d560e73ad8877934138cb2862ed0fecf0954a36dc7aee2b15e12b802e0884ff8f56756935acc545019753f99a2900ba19a620a4e96
+  languageName: node
+  linkType: hard
+
+"@grafana/scenes@npm:^6.46.0":
+  version: 6.48.0
+  resolution: "@grafana/scenes@npm:6.48.0"
+  dependencies:
+    "@floating-ui/react": "npm:^0.26.16"
+    "@leeoniya/ufuzzy": "npm:^1.0.16"
+    "@tanstack/react-virtual": "npm:^3.9.0"
+    i18next-parser: "npm:9.3.0"
+    react-grid-layout: "npm:1.3.4"
+    react-use: "npm:17.5.0"
+    react-virtualized-auto-sizer: "npm:1.0.24"
+    uuid: "npm:^9.0.0"
+  peerDependencies:
+    "@grafana/data": ">=10.4"
+    "@grafana/e2e-selectors": ">=10.4"
+    "@grafana/i18n": "*"
+    "@grafana/runtime": ">=10.4"
+    "@grafana/schema": ">=10.4"
+    "@grafana/ui": ">=10.4"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+    react-router-dom: ^6.28.0
+  checksum: 10/28cd64ea3c4faf87173ea71ffc136a7a525c33ec2e263ab2a98df718e3968ed7b7a12ecf0f309400af78e3c3269ae6048da8113412645a361a3e4925f9a2a810
   languageName: node
   linkType: hard
 
@@ -18891,7 +18911,7 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.11.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "link:/Users/bogdan/Workspace/Grafana/scenes/packages/scenes"
+    "@grafana/scenes": "npm:^6.46.0"
     "@grafana/scenes-react": "npm:^6.46.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
