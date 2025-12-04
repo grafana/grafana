@@ -341,49 +341,6 @@ export function PanelDataSidebarRendered({ model }: SceneComponentProps<PanelDat
           )
         }
       />
-      <QueryTransformList
-        allItems={allItems}
-        dataSourceItems={queryExpressionItems}
-        transformItems={transformItems}
-        selectedId={selectedId}
-        onCollapseSidebar={() => model.onCollapseSidebar(true)}
-        onSelect={(newSelectedId) => {
-          model.onChangeSelected(newSelectedId);
-          model.onTransformPicker(null);
-        }}
-        onAddQuery={handleAddQuery}
-        onAddFromSavedQueries={(index) => handleOpenQueryLibrary('browse', index)}
-        onAddTransform={(index) => {
-          model.onTransformPicker(index);
-          model.onChangeSelected(null);
-        }}
-        onAddExpression={handleAddExpression}
-        onDuplicateQuery={handleDuplicateQuery}
-        onRemoveQuery={handleRemoveQuery}
-        onToggleQueryVisibility={handleToggleQueryVisibility}
-        onRemoveTransform={handleRemoveTransform}
-        onToggleTransformVisibility={handleToggleTransformVisibility}
-        onReorderDataSources={handleReorderDataSources}
-        onReorderTransforms={handleReorderTransforms}
-        onAddOrganizeFieldsTransform={() =>
-          handleAddTransform(
-            { value: 'organize' },
-            {
-              excludeByName: {},
-              indexByName: {},
-              renameByName: {},
-              includeByName: {},
-              orderByMode: 'auto',
-              orderBy: [
-                {
-                  type: 'name',
-                  desc: false,
-                },
-              ],
-            }
-          )
-        }
-      />
     </div>
   );
 }
