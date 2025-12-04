@@ -68,24 +68,53 @@ refs:
 
 # Azure Monitor data source
 
-Grafana ships with built-in support for Azure Monitor, the Azure service to maximize the availability and performance of applications and services in the Azure Cloud.
+The Azure Monitor data source plugin allows you to query and visualize data from Azure Monitor, the Azure service to maximize the availability and performance of applications and services in the Azure Cloud. This is a core Grafana plugin that ships with Grafana and requires no additional installation.
 
-The Azure Monitor data source supports visualizing data from four Azure services:
+## Supported Azure services
 
-- **Azure Monitor Metrics:** Collect numeric data from resources in your Azure account.
-- **Azure Monitor Logs:** Collect log and performance data from your Azure account, and query using the Kusto Query Language (KQL).
-- **Azure Resource Graph:** Query your Azure resources across subscriptions.
-- **Azure Monitor Application Insights:** Collect trace logging data and other application performance metrics.
+The Azure Monitor data source supports the following Azure services:
 
-## Documentation
+| Service | Description |
+|---------|-------------|
+| **Azure Monitor Metrics** | Collect numeric data from resources in your Azure account. Supports dimensions, aggregations, and time grain configuration. |
+| **Azure Monitor Logs** | Collect log and performance data from your Azure account using the Kusto Query Language (KQL). |
+| **Azure Resource Graph** | Query your Azure resources across subscriptions using KQL. Useful for inventory, compliance, and resource management. |
+| **Application Insights Traces** | Collect distributed trace data and correlate requests across your application components. |
+
+## Get started
+
+The following documents will help you get started with the Azure Monitor data source:
 
 | Topic | Description |
 |-------|-------------|
-| [Configure](configure/) | Set up authentication and connect to Azure |
-| [Query editor](query-editor/) | Build queries for Metrics, Logs, Traces, and Resource Graph |
-| [Annotations](annotations/) | Overlay events on dashboards with Log Analytics queries |
+| [Configure the Azure Monitor data source](configure/) | Set up authentication and connect to Azure |
+| [Azure Monitor query editor](query-editor/) | Create and edit queries for Metrics, Logs, Traces, and Resource Graph |
 | [Template variables](template-variables/) | Create dynamic dashboards with Azure Monitor variables |
 | [Troubleshoot](troubleshoot/) | Solve common configuration and query errors |
+
+## Additional features
+
+Once you have configured the Azure Monitor data source, you can:
+
+- Add [Annotations](annotations/) to overlay Azure log events on your graphs.
+- Configure and use [Template variables](template-variables/) for dynamic dashboards.
+- Add [Transformations](ref:build-dashboards) to manipulate query results.
+- Set up alerting and recording rules using Metrics and Logs queries.
+- Use [Explore](ref:explore) to investigate your Azure data without building a dashboard.
+
+## Pre-built dashboards
+
+The Azure Monitor plugin includes the following pre-built dashboards:
+
+- **Azure Monitor Overview** - Displays key metrics across your Azure subscriptions and resources.
+- **Azure Storage Account** - Shows storage account metrics including availability, latency, and transactions.
+
+To import a pre-built dashboard:
+
+1. Go to **Connections** > **Data sources**.
+1. Select your Azure Monitor data source.
+1. Click the **Dashboards** tab.
+1. Click **Import** next to the dashboard you want to use.
 
 ## Application Insights and Insights Analytics (removed)
 
