@@ -9,7 +9,7 @@ import (
 
 func TestApiKeyValidation(t *testing.T) {
 	result := KeyGenResult{
-		ClientSecret: "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
+		ClientSecret: "glsa_iNValIdinValiDinvalidinvalidinva_lidinVal",
 		HashedKey:    "26cd2524985150529dc5f32109f544860512b999766e11bc8f3d5711bf0ba6e7020099f9f21538b5df94d577782f7431dd27",
 	}
 
