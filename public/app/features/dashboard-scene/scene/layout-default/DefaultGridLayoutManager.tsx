@@ -16,7 +16,6 @@ import {
   useSceneObjectState,
   SceneObject,
   SceneGridLayoutDragStartEvent,
-  SceneGridPlaceholderItem,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { useStyles2 } from '@grafana/ui';
@@ -370,8 +369,7 @@ export class DefaultGridLayoutManager
     this.state.grid.forEachChild((child) => {
       if (
         !(child instanceof DashboardGridItem) &&
-        !(child instanceof SceneGridRow) &&
-        !(child instanceof SceneGridPlaceholderItem)
+        !(child instanceof SceneGridRow)
       ) {
         throw new Error('Child is not a DashboardGridItem or SceneGridRow, invalid scene');
       }
