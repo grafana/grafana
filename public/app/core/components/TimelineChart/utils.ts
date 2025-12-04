@@ -476,6 +476,15 @@ export function prepareTimelineFields(
     return { warn: t('timeline.missing-field.all', 'No graphable fields') };
   }
 
+  // Check if all non-time fields are hidden from visualization
+  const hasVisibleFields = frames.some((frame) =>
+    frame.fields.some((field) => field.type !== FieldType.time && !field.config.custom?.hideFrom?.viz)
+  );
+
+  if (!hasVisibleFields) {
+    return { warn: '' }; // Return empty warn to show default "No data" message
+  }
+
   return { frames };
 }
 
