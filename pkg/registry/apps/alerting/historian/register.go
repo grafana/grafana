@@ -26,7 +26,6 @@ func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
 ) (*AlertingHistorianAppInstaller, error) {
-	installer := &AlertingHistorianAppInstaller{}
 	appSpecificConfig := historianAppConfig.RuntimeConfig{}
 
 	// If we're provided an AlertNG, then call back into that for things we need.
@@ -42,6 +41,12 @@ func RegisterAppInstaller(
 		}
 		appSpecificConfig.GetAlertStateHistoryHandler = handlers.GetAlertStateHistoryHandler
 	}
+
+	return NewAppInstaller(appSpecificConfig)
+}
+
+func NewAppInstaller(appSpecificConfig historianAppConfig.RuntimeConfig) (*AlertingHistorianAppInstaller, error) {
+	installer := &AlertingHistorianAppInstaller{}
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), appSpecificConfig, historianApp.New)
 
