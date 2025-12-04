@@ -7,6 +7,7 @@ import {
   PanelPlugin,
   VizOrientation,
 } from '@grafana/data';
+import { NestedValueAccess } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
@@ -15,7 +16,7 @@ import { optsWithHideZeros } from '@grafana/ui/internal';
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
-import { BarMarkersEditor } from './BarMarkersEditor';
+import { addMarkerEditor, barMarkersEditor } from './BarMarkersEditor';
 import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
@@ -249,10 +250,24 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
 
     builder.addCustomEditor({
       category: markersCategory,
-      id: 'markerGroups',
-      path: 'markerGroups',
-      name: 'Add Markers',
-      editor: BarMarkersEditor,
+      path: 'markers',
+      id: 'barchart.markers.add',
+      name: 'Add marker',
+      editor: addMarkerEditor,
+    });
+
+    builder.addNestedOptions({
+      category: markersCategory,
+      path: 'markers',
+      build: barMarkersEditor,
+      values: (parent: NestedValueAccess) => ({
+        getValue: (path: string) => {
+          return parent.getValue('markers' + path);
+        },
+        onChange: (path: string, value: any) => {
+          parent.onChange('markers' + path, value);
+        },
+      }),
     });
 
     builder.addFieldNamePicker({

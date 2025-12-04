@@ -47,9 +47,10 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     fullHighlight,
     xField,
     colorByField,
-    markerGroups: markers,
+    markers,
   } = options;
 
+  const { markerGroups } = markers;
   // size-dependent, calculated opts that should cause viz re-config
   let { orientation, xTickLabelMaxLength = 0 } = options;
 
@@ -69,7 +70,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
         // auto max length clamps to half viz height, subracts 3 chars for ... ellipsis
         Math.floor(height / 2 / Math.sin(Math.abs(xTickLabelRotation * toRads)) / charWidth - 3);
 
-  const { barData, markerData } = useMemo(() => seperateMarkerSeries(data, markers), [data, markers]);
+  const { barData, markerData } = useMemo(() => seperateMarkerSeries(data, markerGroups), [data, markerGroups]);
 
   // TODO: config data links
   const info = useMemo(
@@ -91,8 +92,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   const totalSeries = Math.max(0, (info.series[0]?.fields.length ?? 0) - 1);
 
   const preparedMarkers = useMemo(
-    () => prepMarkers(vizSeries[0].fields ?? [], markerData ?? [], options.markerGroups ?? [], stacking),
-    [markerData, options.markerGroups, stacking, vizSeries]
+    () => prepMarkers(vizSeries[0]?.fields ?? [], markerData ?? [], options.markers.markerGroups ?? [], stacking),
+    [markerData, options.markers.markerGroups, stacking, vizSeries]
   );
 
   let { builder, prepData } = useMemo(

@@ -14,26 +14,16 @@ export function drawBarMarkers(markers: MarkerDrawingArgs[]) {
     ctx.save();
 
     for (const marker of markers) {
-      if (!marker.opts) {
-        continue;
-      }
-      const { size, shape, color } = marker.opts;
-      const x = marker.x;
-      const y = marker.y;
-      const isRotated = marker.isRotated;
-
-      if (typeof x !== 'number' || typeof y !== 'number') {
-        continue;
-      }
+      const { size, shape, fill, color, strokeWidth } = marker.opts;
+      const { x, y, isRotated } = marker;
 
       ctx.beginPath();
 
       ctx.globalAlpha = marker.opts.opacity;
-      const isSmall = size < 15;
       switch (shape) {
         case 'line': {
           ctx.strokeStyle = color;
-          ctx.lineWidth = size / 32 + 2;
+          ctx.lineWidth = strokeWidth;
           if (isRotated) {
             ctx.moveTo(x, y - size / 2);
             ctx.lineTo(x, y + size / 2);
@@ -46,14 +36,14 @@ export function drawBarMarkers(markers: MarkerDrawingArgs[]) {
         }
         case 'circle': {
           const radius = size / 2;
-          ctx.arc(x, y, Math.max(0, radius - (isSmall ? size / 16 : 0)), 0, 2 * Math.PI);
+          ctx.arc(x, y, Math.max(0, radius), 0, 2 * Math.PI);
 
-          if (isSmall) {
+          if (fill) {
             ctx.fillStyle = color;
             ctx.fill();
           } else {
             ctx.strokeStyle = color;
-            ctx.lineWidth = size / 8;
+            ctx.lineWidth = strokeWidth;
             ctx.stroke();
           }
           break;
@@ -70,19 +60,19 @@ export function drawBarMarkers(markers: MarkerDrawingArgs[]) {
           }
           ctx.closePath();
 
-          if (isSmall) {
+          if (fill) {
             ctx.fillStyle = color;
             ctx.fill();
           } else {
             ctx.strokeStyle = color;
-            ctx.lineWidth = size / 8;
+            ctx.lineWidth = strokeWidth;
             ctx.stroke();
           }
           break;
         }
         case 'cross': {
           ctx.strokeStyle = color;
-          ctx.lineWidth = size / 12 + 2;
+          ctx.lineWidth = strokeWidth;
           ctx.moveTo(x - size / 2, y - size / 2);
           ctx.lineTo(x + size / 2, y + size / 2);
           ctx.moveTo(x + size / 2, y - size / 2);

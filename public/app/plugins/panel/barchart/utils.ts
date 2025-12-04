@@ -35,6 +35,7 @@ import {
   StackingMode,
   UPlotConfigBuilder,
   measureText,
+  useTheme2,
 } from '@grafana/ui';
 import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
 
@@ -607,6 +608,7 @@ export function prepMarkers(
   stacking: StackingMode
 ): PreparedMarker[] {
   let prepMarkerList: PreparedMarker[] = [];
+  const theme = useTheme2();
 
   for (const m of markers ?? []) {
     const i = markerFields.findIndex((f) => f.name === m.dataField);
@@ -616,6 +618,12 @@ export function prepMarkers(
     }
 
     const fi = markerFields[i];
+
+    let fieldColor = theme.visualization.getColorByName(m.opts.color);
+    //Color override
+    if (fi.config.custom?.color) {
+      fieldColor = theme.visualization.getColorByName(fi.config.custom.color);
+    }
 
     const targetIdx = vizFields.findIndex((f) => f.name === m.targetField);
 
@@ -627,7 +635,7 @@ export function prepMarkers(
             yValue: fi.values[j],
             seriesIdx: targetIdx,
             yScaleKey: fi.config.unit || FIXED_UNIT,
-            opts: m.opts,
+            opts: { ...m.opts, color: fieldColor },
           };
 
           prepMarkerList.push(pm);
@@ -645,7 +653,7 @@ export function prepMarkers(
             yValue: yTotal + fi.values[j],
             seriesIdx: targetIdx,
             yScaleKey: fi.config.unit || FIXED_UNIT,
-            opts: m.opts,
+            opts: { ...m.opts, color: fieldColor },
           };
 
           prepMarkerList.push(pm);
@@ -671,7 +679,7 @@ export function prepMarkers(
             yValue: val === 0 ? 0 : val / yTotal,
             seriesIdx: targetIdx,
             yScaleKey: fi.config.unit || FIXED_UNIT,
-            opts: m.opts,
+            opts: { ...m.opts, color: fieldColor },
           };
 
           prepMarkerList.push(pm);
@@ -693,48 +701,15 @@ export function seperateMarkerSeries(
     return { barData, markerData };
   }
   for (const m of markers ?? []) {
-    const i = barData.series[0].fields.findIndex((f) => f.name === m.dataField);
+    const i = barData.series[0]?.fields?.findIndex((f) => f.name === m.dataField);
 
     if (i === -1) {
       continue;
     }
 
-    const fi = barData.series[0].fields.splice(i, 1)[0];
-
-    fi.config.color = { ...(fi.config.color ?? {}), mode: FieldColorModeId.Fixed, fixedColor: m.opts.color };
+    const fi = barData.series[0]?.fields?.splice(i, 1)[0];
 
     markerData.push(fi);
   }
   return { barData, markerData };
-}
-
-export function mergeLegendData(info: BarSeries, markerData: Field[], markers: MarkerGroup[]) {
-  const legendData: BarSeries = { ...info };
-  legendData.series = info.series.map((s: any) => ({ ...s }));
-
-  const markerFields: Field[] = [];
-  if (!markers) {
-    return legendData;
-  }
-  for (const m of markers) {
-    const fi = markerData.find((f) => f.name === m.dataField);
-    if (fi) {
-      const f = { ...fi };
-      f.config = {
-        ...(f.config ?? {}),
-        color: { ...(f.config?.color ?? {}), mode: FieldColorModeId.Fixed, fixedColor: m.opts.color },
-      };
-      markerFields.push(f);
-    }
-  }
-
-  legendData.series[0].fields = [...(info.series[0]?.fields ?? []), ...markerFields];
-
-  // Only modify legendData.color when an original color field exists so required Field properties remain
-  if (info.color) {
-    const baseColors = Array.isArray(info.color.values) ? [...info.color.values] : [];
-    markerFields.forEach((f: any) => baseColors.push(f?.config?.color ?? null));
-    legendData.color = { ...(info.color as Field), values: baseColors };
-  }
-  return legendData;
 }

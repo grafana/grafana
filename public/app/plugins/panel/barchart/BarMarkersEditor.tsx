@@ -1,33 +1,123 @@
 import { css } from '@emotion/css';
+import { DropResult } from '@hello-pangea/dnd';
 
-import { StandardEditorProps } from '@grafana/data';
+import { StandardEditorProps, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  Button,
-  Field,
-  InlineField,
-  Input,
-  Label,
-  Combobox,
-  ComboboxOption,
-  useTheme2,
-  Slider,
-  ColorPicker,
-} from '@grafana/ui';
+import { Button, ComboboxOption, useTheme2 } from '@grafana/ui';
+import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 
 import { hoverColor } from '../../../../../packages/grafana-ui/src/themes/mixins';
 
-import { BarMarkerOpts, MarkerGroup } from './markerTypes';
+import { MarkerGroup, Markers } from './markerTypes';
 
-export const BarMarkersEditor = ({ context, onChange, value }: StandardEditorProps<MarkerGroup[]>) => {
+export const barMarkersEditor = (builder: PanelOptionsEditorBuilder<Markers>, ctx: StandardEditorContext<Markers>) => {
+  let markers: MarkerGroup[] = ctx.options?.markerGroups || [];
+
+  const shapeOptions: Array<ComboboxOption<string>> = [
+    { label: 'Circle', value: 'circle' },
+    { label: 'Cross', value: 'cross' },
+    { label: 'Line', value: 'line' },
+    { label: 'Star', value: 'star' },
+  ];
+
+  let markerSlct: Array<ComboboxOption<string>> = [];
+
+  markers.forEach((marker: MarkerGroup, i) => {
+    markerSlct.push({ label: marker.opts.label, value: marker.id.toString() });
+  });
+
+  builder.addCustomEditor({
+    id: 'vdxfe',
+    path: '',
+    name: 'Editing marker:',
+    editor: MarkerDragDropEditor,
+    showIf: (opts) => opts.markerGroups.length > 0,
+  });
+
+  markers.forEach((_, i: number) => {
+    
+    builder.addFieldNamePicker({
+      path: `.markerGroups[${i}].targetField`,
+      name: t('barchart.editor.markers.label', 'Target field'),
+      showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
+      description: t('barchart.editor.targetfield.descr', 'Picks the field on which the markers will appear'),
+    });
+    builder.addFieldNamePicker({
+      path: `.markerGroups[${i}].dataField`,
+      name: t('barchart.editor.markers.label', 'Data field'),
+      showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
+      description: t(
+        'barchart.editor.datafield.descr',
+        "Marker positions use the data field's y-values, the data field is removed while in use."
+      ),
+    });
+
+    builder.addColorPicker({
+      path: `.markerGroups[${i}].opts.color`,
+      name: t('barchart.editor.markers.color', 'Color'),
+      showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
+    });
+    builder.addRadio({
+      path: `.markerGroups[${i}].opts.shape`,
+      name: t('barchart.editor.markers.shape', 'Shape'),
+      showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
+      settings: {
+        options: shapeOptions,
+        fullwidth: true,
+      },
+    });
+    builder.addSliderInput({
+      path: `.markerGroups[${i}].opts.size`,
+      name: t('barchart.editor.markers.size', 'Size'),
+      showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
+      settings: {
+        min: 0,
+        max: 100,
+        step: 1,
+        defaultValue: 0.1,
+      },
+    });
+    builder.addSliderInput({
+      path: `.markerGroups[${i}].opts.opacity`,
+      name: t('barchart.editor.markers.opacity', 'Opacity'),
+      showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
+      settings: {
+        min: 0,
+        max: 1,
+        step: 0.01,
+        defaultValue: 0.5,
+      },
+    });
+
+    builder.addBooleanSwitch({
+      path: `.markerGroups[${i}].opts.fill`,
+      name: t('barchart.editor.markers.fill', 'Fill'),
+      showIf: (opts) =>
+        opts.select === opts.markerGroups[i].id.toString() &&
+        opts.markerGroups[i].opts.shape !== 'line' &&
+        opts.markerGroups[i].opts.shape !== 'cross',
+      settings: {
+        defaultValue: true,
+      },
+    });
+
+    builder.addSliderInput({
+      path: `.markerGroups[${i}].opts.strokeWidth`,
+      name: t('barchart.editor.markers.strokeWidth', 'Stroke width'),
+      showIf: (opts) => opts.select === opts.markerGroups[i].id.toString(),
+      settings: {
+        defaultValue: 3,
+        min: 1,
+        max: 10,
+      },
+    });
+  });
+};
+
+export const addMarkerEditor = ({ context, onChange, value }: StandardEditorProps<Markers>) => {
   const theme = useTheme2();
 
-  let markers = value || [];
-
-  const handleRemoveMarker = (id: number) => {
-    markers = markers.filter((marker: MarkerGroup) => marker.id !== id);
-    onChange(markers);
-  };
+  let markers = value.markerGroups || [];
 
   const handleAddMarker = () => {
     let newId = Math.max(...markers.map((m) => m.id), 0) + 1;
@@ -38,52 +128,19 @@ export const BarMarkersEditor = ({ context, onChange, value }: StandardEditorPro
       dataField: '',
       opts: {
         label: `Marker ${markers.length + 1}`,
-        color: 'rgb(184, 119, 217)',
-        shape: 'line',
-        size: 1,
-        opacity: 0.7,
+        color: 'purple',
+        shape: 'cross',
+        size: 30,
+        opacity: 1,
+        fill: false,
+        strokeWidth: 3,
       },
     };
     markers = [...markers, newMarker];
-
-    onChange(markers);
+    value.markerGroups = markers;
+    value.select = newId.toString();
+    onChange(value);
   };
-
-  const fields = context?.data[0]?.fields ?? [];
-  const xAxis = context?.options?.xField;
-  let xFieldIdx = 0;
-  if (xAxis) {
-    xFieldIdx = fields.findIndex((f) => f.name === xAxis);
-  }
-  let yFieldOptions: Array<ComboboxOption<string | number>> = [];
-  for (let i = 0; i < fields.length; i++) {
-    if (i === xFieldIdx) {
-      continue;
-    }
-    if (fields) {
-      yFieldOptions.push({ label: fields[i].name ?? `Field ${i}`, value: fields[i].name ?? i });
-    }
-  }
-
-  // Update a field in marker.opts
-  const handleOptsSettingChange = (id: number, field: keyof BarMarkerOpts, newValue: string | number | undefined) => {
-    markers = markers.map((marker: MarkerGroup) =>
-      marker.id === id ? { ...marker, opts: { ...marker.opts, [field]: newValue } } : marker
-    );
-    onChange(markers);
-  };
-
-  const handleSettingChange = (id: number, field: keyof MarkerGroup, newValue: string | number | undefined) => {
-    markers = markers.map((marker: MarkerGroup) => (marker.id === id ? { ...marker, [field]: newValue } : marker));
-    onChange(markers);
-  };
-
-  const shapeOptions: Array<ComboboxOption<string>> = [
-    { label: 'Circle', value: 'circle' },
-    { label: 'Cross', value: 'cross' },
-    { label: 'Line', value: 'line' },
-    { label: 'Star', value: 'star' },
-  ];
 
   return (
     <div>
@@ -98,120 +155,91 @@ export const BarMarkersEditor = ({ context, onChange, value }: StandardEditorPro
           },
         })}
       >
-        {t('barchart.barmarkers-editor.add-marker', '+ Add marker')}
+        {t('barchart.barmarkers-editor.add-marker', 'Add marker +')}
       </Button>
-
-      {markers.map((marker: MarkerGroup) => (
-        <div
-          key={marker.id}
-          style={{
-            marginTop: '16px',
-            border: '1px solid ' + theme.colors.border.medium,
-            padding: '16px',
-            borderRadius: '4px',
-            position: 'relative',
-            display: 'no-flex',
-            alignContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '16px',
-            alignItems: 'center',
-            minWidth: '0',
-            minHeight: '300px',
-          }}
-        >
-          <div style={{ minWidth: '120px', padding: '5px' }}>
-            <InlineField label={t('barchart.barmarkers-editor.marker-title', 'Title')}>
-              <div style={{ maxWidth: '160px' }}>
-                <Input
-                  value={marker.opts.label ?? `Marker ${marker.id}`}
-                  onChange={(e) => handleOptsSettingChange(marker.id, 'label', (e.target as HTMLInputElement).value)}
-                  placeholder={t('barchart.barmarkers-editor.marker-title-placeholder', `Marker ${marker.id}`)}
-                />
-              </div>
-            </InlineField>
-          </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            className={css({
-              position: 'absolute',
-              top: '25px',
-              right: '10px',
-              padding: '8px',
-              backgroundColor: theme.colors.background.primary,
-              '&:hover': {
-                backgroundColor: theme.colors.secondary.main,
-              },
-            })}
-            onClick={() => handleRemoveMarker(marker.id)}
-          >
-            {t('barchart.barmarkers-editor.remove-marker', 'X')}
-          </Button>
-
-          <div style={{ minWidth: '120px', padding: '5px' }}>
-            <Field label={t('barchart.barmarkers-editor.y-axis', 'Target Field')}>
-              <Combobox
-                options={yFieldOptions}
-                value={marker.targetField ?? ''}
-                onChange={(v) => handleSettingChange(marker.id, 'targetField', v.value ?? '')}
-                placeholder={t('barchart.barmarkers-editor.y-axis-placeholder', 'Select Y-Axis value')}
-              />
-            </Field>
-          </div>
-          <div style={{ minWidth: '120px', padding: '5px' }}>
-            <Field label={t('barchart.barmarkers-editor.y-axis', 'Data Input')}>
-              <Combobox
-                options={yFieldOptions}
-                value={marker.dataField ?? ''}
-                onChange={(v) => handleSettingChange(marker.id, 'dataField', v.value ?? '')}
-                placeholder={t('barchart.barmarkers-editor.y-axis-placeholder', 'Select Y-Axis value')}
-              />
-            </Field>
-          </div>
-          <div style={{ minWidth: '120px', padding: '5px', paddingBottom: '10px' }}>
-            <Label>{t('barchart.barmarkers-editor.color', 'Color')}</Label>
-            <ColorPicker
-              color={marker.opts.color || 'rgb(184, 119, 217)'}
-              onChange={(color: string) => handleOptsSettingChange(marker.id, 'color', color)}
-            />
-          </div>
-          <div style={{ minWidth: '120px', padding: '5px' }}>
-            <Field label={t('barchart.barmarkers-editor.shape', 'Shape')}>
-              <Combobox
-                options={shapeOptions}
-                value={marker.opts.shape ?? 'line'}
-                onChange={(v) => handleOptsSettingChange(marker.id, 'shape', v.value!)}
-              />
-            </Field>
-          </div>
-          <div>
-            <Field label={t('barchart.barmarkers-editor.width', 'Size')}>
-              <Slider
-                included
-                min={0.01}
-                max={2}
-                step={0.01}
-                value={marker.opts.size ?? 1}
-                onChange={(v) => handleOptsSettingChange(marker.id, 'size', v)}
-                marks={{ 0.01: '0.01', 2: '2' }}
-              />
-            </Field>
-          </div>
-          <div>
-            <Field label={t('barchart.barmarkers-editor.width', 'Opacity')}>
-              <Slider
-                included
-                min={0}
-                max={1}
-                step={0.01}
-                value={marker.opts.opacity ?? 1}
-                onChange={(v) => handleOptsSettingChange(marker.id, 'opacity', typeof v === 'number' ? v : v[0])}
-                marks={{ 0: '0', 1: '1' }}
-              />
-            </Field>
-          </div>
-        </div>
-      ))}
     </div>
+  );
+};
+
+export const MarkerDragDropEditor = ({ value, context, onChange }: StandardEditorProps<Markers>) => {
+  const markerGroups = value?.markerGroups || [];
+
+  // LayerDragDropList reverses the order of the passed layers. Reverse back to keep natural order.
+  const layers = markerGroups
+    .slice()
+    .reverse()
+    .map((m) => ({ ...(m as any), getName: () => m.opts.label.toString() }));
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const srcIdx = result.source.index;
+    const dstIdx = result.destination.index;
+
+    if (srcIdx === dstIdx) {
+      return;
+    }
+
+    const newGroups = [...markerGroups];
+    const [moved] = newGroups.splice(srcIdx, 1);
+    newGroups.splice(dstIdx, 0, moved);
+
+    value.markerGroups = newGroups;
+    onChange(value);
+  };
+
+  const handleSelect = (element: any) => {
+    if (value.select === element.id.toString()) {
+      value.select = undefined;
+      onChange(value);
+      return;
+    }
+    value.select = element.id.toString();
+    onChange(value);
+  };
+
+  const handleDelete = (element: any) => {
+    const newGroups = markerGroups.filter((m) => m.id !== element.id);
+    value.markerGroups = newGroups;
+    if (value.select === element.id.toString()) {
+      value.select = undefined;
+    }
+    onChange(value);
+  };
+
+  const handleNameChange = (element: any, newName: string) => {
+    const newGroups = markerGroups.map((m) =>
+      m.id === element.id ? { ...m, opts: { ...(m.opts || {}), label: newName } } : m
+    );
+    value.markerGroups = newGroups;
+    onChange(value);
+  };
+
+  const verifyName = (nameToCheck: string) => {
+    return !markerGroups.some((m) => m.opts?.label === nameToCheck);
+  };
+
+  const getLayerInfo = (m: MarkerGroup) => {
+    return m.dataField || '-'
+  };
+
+  const selectionByName = value.select
+    ? markerGroups.filter((m) => m.id.toString() === value.select).map((m) => m.opts?.label || '')
+    : [];
+
+  return (
+    <LayerDragDropList
+      layers={layers}
+      getLayerInfo={getLayerInfo}
+      onDragEnd={handleDragEnd}
+      onSelect={handleSelect}
+      onDelete={handleDelete}
+      showActions={() => true}
+      selection={selectionByName}
+      onNameChange={handleNameChange}
+      verifyLayerNameUniqueness={verifyName}
+    />
   );
 };
