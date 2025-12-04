@@ -202,7 +202,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
 
 		// Only check public dashboards if service is available
-		if !util.IsInterfaceNil(r.publicDashboardService) != nil {
+		if !util.IsInterfaceNil(r.publicDashboardService) {
 			pubDash, err := r.publicDashboardService.FindByDashboardUid(ctx, user.GetOrgID(), name)
 			if err == nil && pubDash != nil {
 				access.IsPublic = true
