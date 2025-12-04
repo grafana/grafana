@@ -1657,23 +1657,25 @@ export class CRDTStateManager {
     const panelData: CRDTExploreMapStateJSON['panelData'] = {};
 
     for (const [panelId, data] of this.state.panelData.entries()) {
-      panelData[panelId] = {
-        id: data.id,
-        exploreId: data.exploreId,
-        positionX: data.positionX.toJSON(),
-        positionY: data.positionY.toJSON(),
-        width: data.width.toJSON(),
-        height: data.height.toJSON(),
-        zIndex: data.zIndex.toJSON(),
-        exploreState: data.exploreState.toJSON(),
-        mode: data.mode.toJSON(),
-        iframeUrl: data.iframeUrl.toJSON(),
-        createdBy: data.createdBy.toJSON(),
-        frameId: data.frameId.toJSON(),
-        frameOffsetX: data.frameOffsetX.toJSON(),
-        frameOffsetY: data.frameOffsetY.toJSON(),
-        remoteVersion: data.remoteVersion,
-      };
+      if (this.state.panels.contains(panelId)) {
+        panelData[panelId] = {
+          id: data.id,
+          exploreId: data.exploreId,
+          positionX: data.positionX.toJSON(),
+          positionY: data.positionY.toJSON(),
+          width: data.width.toJSON(),
+          height: data.height.toJSON(),
+          zIndex: data.zIndex.toJSON(),
+          exploreState: data.exploreState.toJSON(),
+          mode: data.mode.toJSON(),
+          iframeUrl: data.iframeUrl.toJSON(),
+          createdBy: data.createdBy.toJSON(),
+          frameId: data.frameId.toJSON(),
+          frameOffsetX: data.frameOffsetX.toJSON(),
+          frameOffsetY: data.frameOffsetY.toJSON(),
+          remoteVersion: data.remoteVersion,
+        };
+      }
     }
 
     const commentData: Record<string, CommentData> = {};

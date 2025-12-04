@@ -13,6 +13,7 @@ import { ExploreMapState, initialExploreMapState, SerializedExploreState } from 
 
 const STORAGE_KEY = 'grafana.exploreMap.state';
 const AUTO_SAVE_DELAY_MS = 2000;
+const MAX_SAVE_DELAY_MS = 5000; // Maximum time to wait before forcing a save
 
 interface UseMapPersistenceOptions {
   uid?: string; // If provided, load from and save to API. If not, use localStorage (legacy mode)
@@ -28,8 +29,10 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const maxWaitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadDone = useRef(false);
   const lastSavedCRDTStateRef = useRef<string | null | undefined>(null);
+  const firstChangeTimeRef = useRef<number | null>(null);
 
   // Helper to enrich state with Explore pane data
   const enrichStateWithExploreData = useCallback(
@@ -73,7 +76,6 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
     if (initialLoadDone.current) {
       return;
     }
-    initialLoadDone.current = true;
 
     const loadState = async () => {
       if (uid) {
@@ -106,6 +108,8 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
           if (parsed.crdtState) {
             // Load the saved CRDT state which includes proper OR-Set metadata
             dispatch(loadCRDTState({ crdtState: parsed.crdtState }));
+            // Store the loaded state as the last saved state to prevent immediate re-save
+            lastSavedCRDTStateRef.current = JSON.stringify(parsed.crdtState);
           } else {
             // Fallback to legacy initialization for backward compatibility
             dispatch(initializeFromLegacyState({
@@ -128,6 +132,8 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
           }, 2000);
         } finally {
           setLoading(false);
+          // Mark initial load as done AFTER loading completes
+          initialLoadDone.current = true;
         }
       } else {
         // Load from localStorage (legacy mode)
@@ -144,6 +150,8 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
             if (parsed.crdtState) {
               // Load the saved CRDT state which includes proper OR-Set metadata
               dispatch(loadCRDTState({ crdtState: parsed.crdtState }));
+              // Store the loaded state as the last saved state to prevent immediate re-save
+              lastSavedCRDTStateRef.current = JSON.stringify(parsed.crdtState);
             } else {
               // Fallback to legacy initialization for backward compatibility
               dispatch(initializeFromLegacyState({
@@ -157,6 +165,8 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
         } catch (error) {
           console.error('Failed to load canvas state from storage:', error);
         }
+        // Mark initial load as done immediately for localStorage (no async delay)
+        initialLoadDone.current = true;
       }
     };
 
@@ -190,10 +200,21 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
       return;
     }
 
-    // Clear any pending save
+    // Track when the first change happened for max-wait enforcement
+    const now = Date.now();
+    if (firstChangeTimeRef.current === null) {
+      firstChangeTimeRef.current = now;
+    }
+
+    // Clear any pending save timeout before scheduling a new one
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
     }
+
+    // Check if we've exceeded the maximum wait time
+    const timeSinceFirstChange = now - (firstChangeTimeRef.current || now);
+    const shouldForceImmediateSave = timeSinceFirstChange >= MAX_SAVE_DELAY_MS;
 
     const saveState = async () => {
       // CRDT panels already contain exploreState from savePanelExploreState actions
@@ -214,45 +235,51 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
         crdtState: crdtState.crdtStateJSON ? JSON.parse(crdtState.crdtStateJSON) : undefined,
       };
 
+      const performSave = async () => {
+        try {
+          setSaving(true);
+          const titleToSave = mapTitle || 'Untitled Map';
+          const dataToSave = enrichedState;
+          await exploreMapApi.updateExploreMap(uid!, {
+            title: titleToSave,
+            data: dataToSave,
+          });
+          setLastSaved(new Date());
+          // Update last saved state ref to prevent duplicate saves
+          lastSavedCRDTStateRef.current = currentCRDTStateStr;
+          // Reset the first change timer after successful save
+          firstChangeTimeRef.current = null;
+        } catch (error) {
+          console.error('Failed to save atlas:', error);
+          dispatch(notifyApp(createErrorNotification('Failed to save atlas', 'Changes may not be persisted')));
+        } finally {
+          setSaving(false);
+        }
+      };
+
       if (uid) {
         // Save to API with debounce
-        saveTimeoutRef.current = setTimeout(async () => {
-          try {
-            setSaving(true);
-            const titleToSave = mapTitle || 'Untitled Map';
-            const dataToSave = enrichedState;
-            await exploreMapApi.updateExploreMap(uid, {
-              title: titleToSave,
-              data: dataToSave,
-            });
-            setLastSaved(new Date());
-            // Update last saved state ref to prevent duplicate saves
-            lastSavedCRDTStateRef.current = currentCRDTStateStr;
-          } catch (error) {
-            dispatch(notifyApp(createErrorNotification('Failed to save atlas', 'Changes may not be persisted')));
-          } finally {
-            setSaving(false);
-          }
-        }, AUTO_SAVE_DELAY_MS);
+        if (shouldForceImmediateSave) {
+          // Force immediate save if max wait time exceeded
+          performSave();
+        } else {
+          saveTimeoutRef.current = setTimeout(performSave, AUTO_SAVE_DELAY_MS);
+        }
       } else {
         // Save to localStorage immediately (legacy mode)
         try {
           store.set(STORAGE_KEY, JSON.stringify(enrichedState));
           // Update last saved state ref to prevent duplicate saves
           lastSavedCRDTStateRef.current = currentCRDTStateStr;
+          // Reset the first change timer after successful save
+          firstChangeTimeRef.current = null;
         } catch (error) {
+          console.error('Failed to save to localStorage:', error);
         }
       }
     };
 
     saveState();
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
   }, [crdtState, dispatch, loading, uid]);
 
   const exportCanvas = useCallback(() => {
