@@ -34,8 +34,11 @@ describe('SqlDatasource - Variable Interpolation', () => {
   describe('Case 1: Multi-value enabled, single value selected', () => {
     it('should escape single quotes in string value', () => {
       const variable = makeVariable('id1', 'name1', { multi: true });
-      expect(ds.interpolateVariable('value1', variable)).toEqual('value1');
-      expect(ds.interpolateVariable("O'Brien", variable)).toEqual("O''Brien");
+      // When we apply the general fix for all SQL data sources these should be uncommented
+      // expect(ds.interpolateVariable('value1', variable)).toEqual('value1');
+      // expect(ds.interpolateVariable("O'Brien", variable)).toEqual("O''Brien");
+      expect(ds.interpolateVariable('value1', variable)).toEqual(`'value1'`);
+      expect(ds.interpolateVariable("O'Brien", variable)).toEqual(`'O''Brien'`);
     });
 
     it('should handle numeric value', () => {
@@ -66,8 +69,11 @@ describe('SqlDatasource - Variable Interpolation', () => {
   describe('Case 3: Include all enabled, single value selected', () => {
     it('should escape single quotes in string value', () => {
       const variable = makeVariable('id1', 'name1', { includeAll: true });
-      expect(ds.interpolateVariable('value1', variable)).toEqual('value1');
-      expect(ds.interpolateVariable("O'Brien", variable)).toEqual("O''Brien");
+      // When we apply the general fix for all SQL data sources these should be uncommented
+      // expect(ds.interpolateVariable('value1', variable)).toEqual('value1');
+      // expect(ds.interpolateVariable("O'Brien", variable)).toEqual("O''Brien");
+      expect(ds.interpolateVariable('value1', variable)).toEqual(`'value1'`);
+      expect(ds.interpolateVariable("O'Brien", variable)).toEqual(`'O''Brien'`);
     });
 
     it('should handle numeric value', () => {
@@ -109,8 +115,11 @@ describe('SqlDatasource - Variable Interpolation', () => {
   describe('Case 6: Both include all and multi-value enabled, single value selected', () => {
     it('should escape single quotes in string value', () => {
       const variable = makeVariable('id1', 'name1', { multi: true, includeAll: true });
-      expect(ds.interpolateVariable('value1', variable)).toEqual('value1');
-      expect(ds.interpolateVariable("O'Brien", variable)).toEqual("O''Brien");
+      // When we apply the general fix for all SQL data sources these should be uncommented
+      // expect(ds.interpolateVariable('value1', variable)).toEqual('value1');
+      // expect(ds.interpolateVariable("O'Brien", variable)).toEqual("O''Brien");
+      expect(ds.interpolateVariable('value1', variable)).toEqual(`'value1'`);
+      expect(ds.interpolateVariable("O'Brien", variable)).toEqual(`'O''Brien'`);
     });
 
     it('should handle numeric value', () => {
