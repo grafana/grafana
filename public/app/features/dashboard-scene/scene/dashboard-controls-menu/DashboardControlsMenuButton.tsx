@@ -19,13 +19,13 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
   const dashboardControlsCount = variables.length + links.length + annotations.length;
   const hasDashboardControls = dashboardControlsCount > 0;
 
-  if (!uid || !hasDashboardControls) {
+  if (!hasDashboardControls) {
     return null;
   }
 
   return (
     <Dropdown
-      placement="bottom-end"
+      placement="bottom-start"
       overlay={
         <DashboardControlsMenu variables={variables} links={links} annotations={annotations} dashboardUID={uid} />
       }

@@ -28,7 +28,7 @@ import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
-import { hasDashboardControls } from './dashboard-controls-menu/utils';
+import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
@@ -147,10 +147,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = window.location.search.includes('scene-debugger');
+  const hasDashboardControls = useHasDashboardControls(dashboard);
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
-
     return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
   }
 
@@ -179,7 +179,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}
-      {!hideDashboardControls && hasDashboardControls(dashboard) && <DashboardControlsButton dashboard={dashboard} />}
+      {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>

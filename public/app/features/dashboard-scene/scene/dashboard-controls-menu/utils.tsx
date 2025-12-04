@@ -49,6 +49,12 @@ export function useDashboardControls(dashboard: DashboardScene) {
   };
 }
 
+export function useHasDashboardControls(dashboard: DashboardScene) {
+  const { variables, links, annotations } = useDashboardControls(dashboard);
+
+  return variables.length > 0 || links.length > 0 || annotations.length > 0;
+}
+
 export function hasDashboardControls(dashboard: DashboardScene) {
   const { variables, links, annotations } = getDashboardControls(dashboard);
 

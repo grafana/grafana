@@ -13,7 +13,7 @@ interface DashboardControlsMenuProps {
   variables: SceneVariable[];
   links: DashboardLink[];
   annotations: SceneDataLayerProvider[];
-  dashboardUID: string;
+  dashboardUID?: string;
 }
 
 export function DashboardControlsMenu({ variables, links, annotations, dashboardUID }: DashboardControlsMenuProps) {
@@ -53,7 +53,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
         ))}
 
       {/* Links */}
-      {links.length > 0 && (
+      {links.length > 0 && dashboardUID && (
         <>
           {(variables.length > 0 || annotations.length > 0) && <MenuDivider />}
           {links.map((link, index) => (
