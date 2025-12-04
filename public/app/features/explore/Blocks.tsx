@@ -8,6 +8,7 @@ import {
   DataQuery,
   DataSourceInstanceSettings,
   EventBus,
+  SelectableValue,
   getDataSourceRef,
   getNextRefId,
   GrafanaTheme2,
@@ -17,6 +18,8 @@ import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
 import { AdHocFilterItem, useStyles2, PanelContainer } from '@grafana/ui';
+import { SqlExpr } from 'app/features/expressions/components/SqlExpressions/SqlExpr';
+import { ExpressionDatasourceUID, ExpressionQueryType, SqlExpressionQuery } from 'app/features/expressions/types';
 
 import { MIXED_DATASOURCE_NAME } from '../../plugins/datasource/mixed/MixedDataSource';
 import { Block, ExploreItemState } from '../../types/explore';
@@ -28,7 +31,7 @@ import { QueryEditorRow } from '../query/components/QueryEditorRow';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { RenderResults } from './RenderResults';
 import { changeDatasource } from './state/datasource';
-import { changeQueries, runQueries, updateTextBlock } from './state/query';
+import { changeQueries, runQueries, updateExpressionBlockAction, updateTextBlock } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -58,8 +61,22 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.text.secondary,
       },
     }),
+    expressionBlockWrapper: css({
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
+    }),
   };
 };
+
+function buildDefaultSqlExpression(refId?: string) {
+  return `SELECT
+  *
+FROM
+  ${refId ?? 'metrics'}
+LIMIT
+  10`;
+}
 
 type Props = {
   exploreId: string;
@@ -255,6 +272,13 @@ export function Blocks(props: Props) {
     [dispatch, exploreId]
   );
 
+  const handleExpressionBlockChange = useCallback(
+    (index: number, expression: string) => {
+      dispatch(updateExpressionBlockAction({ exploreId, index, expression }));
+    },
+    [dispatch, exploreId]
+  );
+
   return blocks.map((block, index) => {
     if (block.type === 'query') {
       const query = queries.find((query) => query.refId === block.queryRef);
@@ -334,7 +358,8 @@ export function Blocks(props: Props) {
 
     if (block.type === 'text') {
       const icon = 'paragraph';
-      const firstWord = block.text.trim().split(/\s+/)[0] ?? '';
+      const textValue = block.text ?? '';
+      const firstWord = textValue.trim().split(/\s+/)[0] ?? '';
       const title = firstWord
         ? t('explore.blocks.text-block.title', 'Text "{{word}}"', { word: firstWord })
         : t('explore.blocks.text-block.empty', 'Text block');
@@ -342,7 +367,7 @@ export function Blocks(props: Props) {
         <ContentOutlineItem title={title} icon={icon} key={`${block.type}-${index}`} panelId={`${block.type}-${index}`}>
           <PanelContainer className={styles.queryContainer}>
             <TextBlockEditor
-              value={block.text}
+              value={textValue}
               onChange={(value) => handleTextBlockChange(index, value)}
               placeholder={t('explore.blocks.text-block.placeholder', 'Enter text')}
               className={styles.textBlockArea}
@@ -358,7 +383,12 @@ export function Blocks(props: Props) {
       return (
         <ContentOutlineItem title={title} icon={icon} key={`expression-${index}`} panelId={`expression-${index}`}>
           <PanelContainer className={styles.queryContainer}>
-            {t('explore.blocks.expression-block.placeholder', 'Expression blocks are coming soon.')}
+            <ExpressionBlockEditor
+              expression={block.expression}
+              onChange={(expr) => handleExpressionBlockChange(index, expr)}
+              queries={queries}
+              className={styles.expressionBlockWrapper}
+            />
           </PanelContainer>
         </ContentOutlineItem>
       );
@@ -399,6 +429,54 @@ function TextBlockEditor({
       onChange={(event) => onChange(event.currentTarget.value)}
       placeholder={placeholder}
     />
+  );
+}
+
+function ExpressionBlockEditor({
+  expression,
+  onChange,
+  queries,
+  className,
+}: {
+  expression?: string;
+  onChange: (expression: string) => void;
+  queries: DataQuery[];
+  className: string;
+}) {
+  const refIds = useMemo<Array<SelectableValue<string>>>(
+    () =>
+      queries.length
+        ? queries.filter((q) => Boolean(q.refId)).map((q) => ({ value: q.refId!, label: q.refId! }))
+        : [{ value: 'A', label: t('explore.blocks.expression-block.sample-ref', 'Query A') }],
+    [queries]
+  );
+
+  const defaultExpression = useMemo(() => {
+    const firstRef = queries.find((q) => Boolean(q.refId))?.refId;
+    return buildDefaultSqlExpression(firstRef);
+  }, [queries]);
+
+  const sqlQuery = useMemo<SqlExpressionQuery>(
+    () => ({
+      refId: 'EXPR',
+      type: ExpressionQueryType.sql,
+      expression: expression && expression.length ? expression : defaultExpression,
+      datasource: { uid: ExpressionDatasourceUID, type: ExpressionDatasourceUID },
+    }),
+    [expression, defaultExpression]
+  );
+
+  const handleChange = useCallback(
+    (next: SqlExpressionQuery) => {
+      onChange(next.expression ?? '');
+    },
+    [onChange]
+  );
+
+  return (
+    <div className={className}>
+      <SqlExpr refIds={refIds} query={sqlQuery} queries={queries} onChange={handleChange} onRunQuery={() => {}} />
+    </div>
   );
 }
 

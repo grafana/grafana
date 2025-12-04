@@ -112,6 +112,13 @@ export interface UpdateTextBlockPayload {
 }
 export const updateTextBlockAction = createAction<UpdateTextBlockPayload>('explore/updateTextBlock');
 
+export interface UpdateExpressionBlockPayload {
+  exploreId: string;
+  index: number;
+  expression: string;
+}
+export const updateExpressionBlockAction = createAction<UpdateExpressionBlockPayload>('explore/updateExpressionBlock');
+
 /**
  * Query change handler for the query row with the given index.
  * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
@@ -303,6 +310,7 @@ export function updateTextBlock(exploreId: string, index: number, text: string):
     dispatch(updateTextBlockAction({ exploreId, index, text }));
   };
 }
+
 /**
  * Cancel running queries
  */
@@ -1108,6 +1116,23 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     const nextBlocks = [...blocks];
     nextBlocks[index] = { ...blocks[index], text };
+
+    return {
+      ...state,
+      blocks: nextBlocks,
+    };
+  }
+
+  if (updateExpressionBlockAction.match(action)) {
+    const { index, expression } = action.payload;
+    const blocks = ensureBlocks(state);
+    const target = blocks[index];
+    if (!target || target.type !== 'expression') {
+      return state;
+    }
+
+    const nextBlocks = [...blocks];
+    nextBlocks[index] = { ...target, expression };
 
     return {
       ...state,
