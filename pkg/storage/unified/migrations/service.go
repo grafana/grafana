@@ -85,7 +85,7 @@ func RegisterMigrations(
 		logger.Warn("Failed to register migrator metrics", "error", err)
 	}
 
-	if err := ValidateRegisteredResources(); err != nil {
+	if err := validateRegisteredResources(); err != nil {
 		return err
 	}
 
@@ -106,8 +106,8 @@ func RegisterMigrations(
 }
 
 func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
-	foldersDef := GetResourceDefinition("folder.grafana.app", "folders")
-	dashboardsDef := GetResourceDefinition("dashboard.grafana.app", "dashboards")
+	foldersDef := getResourceDefinition("folder.grafana.app", "folders")
+	dashboardsDef := getResourceDefinition("dashboard.grafana.app", "dashboards")
 	driverName := mg.Dialect.DriverName()
 
 	folderCountValidator := NewCountValidator(
@@ -138,7 +138,7 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator
 }
 
 func registerPlaylistMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
-	playlistsDef := GetResourceDefinition("playlist.grafana.app", "playlists")
+	playlistsDef := getResourceDefinition("playlist.grafana.app", "playlists")
 	driverName := mg.Dialect.DriverName()
 
 	playlistCountValidator := NewCountValidator(

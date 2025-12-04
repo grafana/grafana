@@ -5,6 +5,7 @@ import (
 
 	v1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	playlists "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -13,47 +14,29 @@ import (
 
 type ResourceDefinition struct {
 	GroupResource schema.GroupResource
-	KeyGroup      string
-	KeyResource   string
 	MigratorFunc  string // Name of the method: "MigrateFolders", "MigrateDashboards", etc.
 }
 
 var registeredResources = []ResourceDefinition{
 	{
-		GroupResource: schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"},
-		KeyGroup:      folders.GROUP,
-		KeyResource:   folders.RESOURCE,
+		GroupResource: schema.GroupResource{Group: folders.GROUP, Resource: folders.RESOURCE},
 		MigratorFunc:  "MigrateFolders",
 	},
 	{
-		GroupResource: schema.GroupResource{Group: "dashboard.grafana.app", Resource: "librarypanels"},
-		KeyGroup:      v1beta1.GROUP,
-		KeyResource:   v1beta1.LIBRARY_PANEL_RESOURCE,
+		GroupResource: schema.GroupResource{Group: v1beta1.GROUP, Resource: v1beta1.LIBRARY_PANEL_RESOURCE},
 		MigratorFunc:  "MigrateLibraryPanels",
 	},
 	{
-		GroupResource: schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
-		KeyGroup:      v1beta1.GROUP,
-		KeyResource:   v1beta1.DASHBOARD_RESOURCE,
+		GroupResource: schema.GroupResource{Group: v1beta1.GROUP, Resource: v1beta1.DASHBOARD_RESOURCE},
 		MigratorFunc:  "MigrateDashboards",
 	},
 	{
-		GroupResource: schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"},
-		KeyGroup:      "playlist.grafana.app", // no constant defined
-		KeyResource:   "playlists",            // no constant defined
+		GroupResource: schema.GroupResource{Group: playlists.APIGroup, Resource: "playlists"},
 		MigratorFunc:  "MigratePlaylists",
 	},
 }
 
-func GetResources() []schema.GroupResource {
-	result := make([]schema.GroupResource, len(registeredResources))
-	for i, r := range registeredResources {
-		result[i] = r.GroupResource
-	}
-	return result
-}
-
-func GetResourceDefinition(group, resource string) *ResourceDefinition {
+func getResourceDefinition(group, resource string) *ResourceDefinition {
 	for i := range registeredResources {
 		r := &registeredResources[i]
 		if r.GroupResource.Group == group && r.GroupResource.Resource == resource {
@@ -63,20 +46,20 @@ func GetResourceDefinition(group, resource string) *ResourceDefinition {
 	return nil
 }
 
-func BuildResourceKey(group, resource, namespace string) *resourcepb.ResourceKey {
-	def := GetResourceDefinition(group, resource)
+func buildResourceKey(group, resource, namespace string) *resourcepb.ResourceKey {
+	def := getResourceDefinition(group, resource)
 	if def == nil {
 		return nil
 	}
 	return &resourcepb.ResourceKey{
 		Namespace: namespace,
-		Group:     def.KeyGroup,
-		Resource:  def.KeyResource,
+		Group:     def.GroupResource.Group,
+		Resource:  def.GroupResource.Resource,
 	}
 }
 
-func GetMigratorFunc(accessor legacy.MigrationDashboardAccessor, group, resource string) migratorFunc {
-	def := GetResourceDefinition(group, resource)
+func getMigratorFunc(accessor legacy.MigrationDashboardAccessor, group, resource string) migratorFunc {
+	def := getResourceDefinition(group, resource)
 	if def == nil {
 		return nil
 	}
@@ -95,10 +78,10 @@ func GetMigratorFunc(accessor legacy.MigrationDashboardAccessor, group, resource
 	}
 }
 
-func ValidateRegisteredResources() error {
+func validateRegisteredResources() error {
 	registeredMap := make(map[string]bool)
-	for _, gr := range GetResources() {
-		key := fmt.Sprintf("%s.%s", gr.Resource, gr.Group)
+	for _, gr := range registeredResources {
+		key := fmt.Sprintf("%s.%s", gr.GroupResource.Resource, gr.GroupResource.Group)
 		registeredMap[key] = true
 	}
 

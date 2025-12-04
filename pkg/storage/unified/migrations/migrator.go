@@ -39,7 +39,7 @@ func buildCollectionSettings(opts legacy.MigrateOptions) resource.BulkSettings {
 		SkipValidation:    true,
 	}
 	for _, res := range opts.Resources {
-		key := BuildResourceKey(res.Group, res.Resource, opts.Namespace)
+		key := buildResourceKey(res.Group, res.Resource, opts.Namespace)
 		if key != nil {
 			settings.Collection = append(settings.Collection, key)
 		}
@@ -129,7 +129,7 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 
 	migratorFuncs := []migratorFunc{}
 	for _, res := range opts.Resources {
-		fn := GetMigratorFunc(m.MigrationDashboardAccessor, res.Group, res.Resource)
+		fn := getMigratorFunc(m.MigrationDashboardAccessor, res.Group, res.Resource)
 		if fn == nil {
 			return nil, fmt.Errorf("unsupported resource: %s/%s", res.Group, res.Resource)
 		}

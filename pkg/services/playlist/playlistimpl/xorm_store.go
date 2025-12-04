@@ -15,7 +15,7 @@ type sqlStore struct {
 	db db.DB
 }
 
-const MAX_PLAYLISTS = 100000
+const MAX_PLAYLISTS = 1000
 
 var _ store = &sqlStore{}
 
