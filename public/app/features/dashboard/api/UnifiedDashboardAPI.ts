@@ -1,3 +1,4 @@
+import { UrlQueryMap } from '@grafana/data';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { isResource } from 'app/features/apiserver/guards';
@@ -6,6 +7,7 @@ import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
+import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
 import {
   failedFromVersion,
@@ -29,12 +31,15 @@ export class UnifiedDashboardAPI
   }
 
   // Get operation depends on the dashboard format to use one of the two clients
-  async getDashboardDTO(uid: string) {
+  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     try {
-      return await this.v1Client.getDashboardDTO(uid);
+      return await this.v1Client.getDashboardDTO(uid, params);
     } catch (error) {
       if (error instanceof DashboardVersionError && isV2StoredVersion(error.data.storedVersion)) {
-        return await this.v2Client.getDashboardDTO(uid);
+        // If v1 API failed due to v2 dashboard, try loading as v2 and converting to v1 on frontend
+        // This allows frontend conversion to be tested even when scenes are enabled
+        const v2Dash = await this.v2Client.getDashboardDTO(uid);
+        return ResponseTransformers.ensureV1Response(v2Dash);
       }
       throw error;
     }
