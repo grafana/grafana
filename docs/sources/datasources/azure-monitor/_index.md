@@ -3,7 +3,6 @@ aliases:
   - ../data-sources/azure-monitor/
   - ../features/datasources/azuremonitor/
   - azuremonitor/
-  - azuremonitor/deprecated-application-insights/
 description: Guide for using Azure Monitor in Grafana
 keywords:
   - grafana
@@ -68,7 +67,21 @@ refs:
 
 # Azure Monitor data source
 
-The Azure Monitor data source plugin allows you to query and visualize data from Azure Monitor, the Azure service to maximize the availability and performance of applications and services in the Azure Cloud. This is a core Grafana plugin that ships with Grafana and requires no additional installation.
+The Azure Monitor data source plugin allows you to query and visualize data from Azure Monitor, the Azure service to maximize the availability and performance of applications and services in the Azure Cloud. 
+
+## Requirements
+
+- An Azure subscription
+- Credentials with at least the `Reader` role on the resources you want to monitor
+- For Logs queries: access to a Log Analytics workspace or Application Insights resource
+
+## Supported Azure clouds
+
+The Azure Monitor data source supports the following Azure cloud environments:
+
+- **Azure** - Azure public cloud (default)
+- **Azure US Government** - Azure Government cloud
+- **Azure China** - Azure China cloud operated by 21Vianet
 
 ## Supported Azure services
 
@@ -85,12 +98,10 @@ The Azure Monitor data source supports the following Azure services:
 
 The following documents will help you get started with the Azure Monitor data source:
 
-| Topic | Description |
-|-------|-------------|
-| [Configure the Azure Monitor data source](configure/) | Set up authentication and connect to Azure |
-| [Azure Monitor query editor](query-editor/) | Create and edit queries for Metrics, Logs, Traces, and Resource Graph |
-| [Template variables](template-variables/) | Create dynamic dashboards with Azure Monitor variables |
-| [Troubleshoot](troubleshoot/) | Solve common configuration and query errors |
+- [Configure the Azure Monitor data source](configure/) - Set up authentication and connect to Azure
+- [Azure Monitor query editor](query-editor/) - Create and edit queries for Metrics, Logs, Traces, and Resource Graph
+- [Template variables](template-variables/) - Create dynamic dashboards with Azure Monitor variables
+- [Troubleshoot](troubleshoot/) - Solve common configuration and query errors
 
 ## Additional features
 
@@ -116,10 +127,8 @@ To import a pre-built dashboard:
 1. Click the **Dashboards** tab.
 1. Click **Import** next to the dashboard you want to use.
 
-## Application Insights and Insights Analytics (removed)
+## Related resources
 
-Until Grafana v8.0, you could query the same Azure Application Insights data using Application Insights and Insights Analytics.
-
-These queries were deprecated in Grafana v7.5. In Grafana v8.0, Application Insights and Insights Analytics were made read-only in favor of querying this data through Metrics and Logs. These query methods were completely removed in Grafana v9.0.
-
-If you're upgrading from a Grafana version prior to v9.0 and relied on Application Insights and Analytics queries, refer to the [Grafana v9.0 documentation](/docs/grafana/v9.0/datasources/azuremonitor/deprecated-application-insights/) for help migrating these queries to Metrics and Logs queries.
+- [Azure Monitor documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/)
+- [Kusto Query Language (KQL) reference](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/)
+- [Grafana community forum](https://community.grafana.com/)
