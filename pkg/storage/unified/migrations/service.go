@@ -95,13 +95,8 @@ func RegisterMigrations(
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
-	migrationLocking := sec.Key("migration_locking").MustBool(true)
-	if mg.Dialect.DriverName() == sqlstoremigrator.SQLite {
-		// disable migration locking for SQLite to avoid "database is locked" errors in the bulk operations
-		migrationLocking = false
-	}
 	if err := mg.RunMigrations(ctx,
-		migrationLocking,
+		sec.Key("migration_locking").MustBool(true),
 		sec.Key("locking_attempt_timeout_sec").MustInt()); err != nil {
 		return fmt.Errorf("unified storage data migration failed: %w", err)
 	}

@@ -140,7 +140,8 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 }
 
 func (a *dashboardSqlAccess) executeQuery(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query string, args ...any) (*sql.Rows, error) {
-	// Use transaction if available in context. This allows us to run migrations in a transaction which is needed for SQLite
+	// Use transaction if available in context.
+	// This allows us to run migrations in a transaction which is specifically required for SQLite.
 	if tx := resource.TransactionFromContext(ctx); tx != nil {
 		return tx.QueryContext(ctx, query, args...)
 	}
