@@ -696,9 +696,16 @@ export class ElementState implements LayerElement {
   }
 
   updateData(ctx: DimensionContext) {
+    const previousData = this.data;
+
     if (this.item.prepareData) {
       this.data = this.item.prepareData(ctx, this.options);
-      this.revId++; // rerender
+
+      // Only increment revId if data actually changed (not just position)
+      // This prevents flickering when only position updates
+      if (JSON.stringify(this.data) !== JSON.stringify(previousData)) {
+        this.revId++;
+      }
     }
 
     // Update placement values from dimension context
@@ -726,6 +733,9 @@ export class ElementState implements LayerElement {
         this.cachedBottom = ctx.getPosition(placement.bottom).value();
       }
     }
+
+    // Apply updated positions without forcing a remount
+    this.applyLayoutStylesToDiv();
 
     const scene = this.getScene();
     const frames = scene?.data?.series;
