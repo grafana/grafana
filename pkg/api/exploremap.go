@@ -12,7 +12,7 @@ import (
 )
 
 func (hs *HTTPServer) registerExploreMapAPI(apiRoute routing.RouteRegister, exploreMapService exploremap.Service) {
-	apiRoute.Group("/explore-maps", func(exploreMapRoute routing.RouteRegister) {
+	apiRoute.Group("/atlas", func(exploreMapRoute routing.RouteRegister) {
 		exploreMapRoute.Get("/", routing.Wrap(hs.listExploreMaps))
 		exploreMapRoute.Post("/", routing.Wrap(hs.createExploreMap))
 		exploreMapRoute.Get("/:uid", routing.Wrap(hs.getExploreMap))
@@ -88,9 +88,9 @@ type CreateExploreMapResponse struct {
 	Body *exploremap.ExploreMap `json:"body"`
 }
 
-// swagger:route GET /explore-maps explore-maps listExploreMaps
+// swagger:route GET /atlas explore-maps listExploreMaps
 //
-// Get explore maps.
+// Get atlas maps.
 //
 // Responses:
 // 200: listExploreMapsResponse
@@ -107,15 +107,15 @@ func (hs *HTTPServer) listExploreMaps(c *contextmodel.ReqContext) response.Respo
 
 	maps, err := hs.exploreMapService.List(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get explore maps", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get atlas maps", err)
 	}
 
 	return response.JSON(http.StatusOK, maps)
 }
 
-// swagger:route GET /explore-maps/{uid} explore-maps getExploreMap
+// swagger:route GET /atlas/{uid} explore-maps getExploreMap
 //
-// Get explore map.
+// Get atlas map.
 //
 // Responses:
 // 200: getExploreMapResponse
@@ -133,17 +133,17 @@ func (hs *HTTPServer) getExploreMap(c *contextmodel.ReqContext) response.Respons
 	m, err := hs.exploreMapService.Get(c.Req.Context(), query)
 	if err != nil {
 		if errors.Is(err, exploremap.ErrExploreMapNotFound) {
-			return response.Error(http.StatusNotFound, "Explore map not found", err)
+			return response.Error(http.StatusNotFound, "Atlas map not found", err)
 		}
-		return response.Error(http.StatusInternalServerError, "Failed to get explore map", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get atlas map", err)
 	}
 
 	return response.JSON(http.StatusOK, m)
 }
 
-// swagger:route POST /explore-maps explore-maps createExploreMap
+// swagger:route POST /atlas explore-maps createExploreMap
 //
-// Create explore map.
+// Create atlas map.
 //
 // Responses:
 // 200: createExploreMapResponse
@@ -161,15 +161,15 @@ func (hs *HTTPServer) createExploreMap(c *contextmodel.ReqContext) response.Resp
 
 	m, err := hs.exploreMapService.Create(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to create explore map", err)
+		return response.Error(http.StatusInternalServerError, "Failed to create atlas map", err)
 	}
 
 	return response.JSON(http.StatusOK, m)
 }
 
-// swagger:route PUT /explore-maps/{uid} explore-maps updateExploreMap
+// swagger:route PUT /atlas/{uid} explore-maps updateExploreMap
 //
-// Update explore map.
+// Update atlas map.
 //
 // Responses:
 // 200: updateExploreMapResponse
@@ -191,17 +191,17 @@ func (hs *HTTPServer) updateExploreMap(c *contextmodel.ReqContext) response.Resp
 	m, err := hs.exploreMapService.Update(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, exploremap.ErrExploreMapNotFound) {
-			return response.Error(http.StatusNotFound, "Explore map not found", err)
+			return response.Error(http.StatusNotFound, "Atlas map not found", err)
 		}
-		return response.Error(http.StatusInternalServerError, "Failed to update explore map", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update atlas map", err)
 	}
 
 	return response.JSON(http.StatusOK, m)
 }
 
-// swagger:route DELETE /explore-maps/{uid} explore-maps deleteExploreMap
+// swagger:route DELETE /atlas/{uid} explore-maps deleteExploreMap
 //
-// Delete explore map.
+// Delete atlas map.
 //
 // Responses:
 // 200: okResponse
@@ -219,10 +219,10 @@ func (hs *HTTPServer) deleteExploreMap(c *contextmodel.ReqContext) response.Resp
 	err := hs.exploreMapService.Delete(c.Req.Context(), cmd)
 	if err != nil {
 		if errors.Is(err, exploremap.ErrExploreMapNotFound) {
-			return response.Error(http.StatusNotFound, "Explore map not found", err)
+			return response.Error(http.StatusNotFound, "Atlas map not found", err)
 		}
-		return response.Error(http.StatusInternalServerError, "Failed to delete explore map", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete atlas map", err)
 	}
 
-	return response.JSON(http.StatusOK, map[string]string{"message": "Explore map deleted"})
+	return response.JSON(http.StatusOK, map[string]string{"message": "Atlas map deleted"})
 }

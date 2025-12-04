@@ -49,8 +49,8 @@ export default function ExploreMapListPage(props: GrafanaRouteComponentProps) {
       const result = await exploreMapApi.listExploreMaps(100);
       setMaps(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load explore maps');
-      console.error('Failed to load explore maps:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load atlas maps');
+      console.error('Failed to load atlas maps:', err);
     } finally {
       setLoading(false);
     }
@@ -60,14 +60,14 @@ export default function ExploreMapListPage(props: GrafanaRouteComponentProps) {
     try {
       setCreatingNew(true);
       const newMap = await exploreMapApi.createExploreMap({
-        title: 'New Explore Map',
+        title: 'New Atlas',
         data: initialExploreMapState,
       });
       // Navigate to the new map
-      window.location.href = `/explore-maps/${newMap.uid}`;
+      window.location.href = `/atlas/${newMap.uid}`;
     } catch (err) {
-      console.error('Failed to create explore map:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create explore map');
+      console.error('Failed to create atlas:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create atlas');
       setCreatingNew(false);
     }
   };
@@ -78,8 +78,8 @@ export default function ExploreMapListPage(props: GrafanaRouteComponentProps) {
       setDeleteConfirmUid(null);
       loadMaps();
     } catch (err) {
-      console.error('Failed to delete explore map:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete explore map');
+      console.error('Failed to delete atlas:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete atlas');
     }
   };
 
@@ -114,12 +114,12 @@ export default function ExploreMapListPage(props: GrafanaRouteComponentProps) {
     <ErrorBoundaryAlert>
       <div className={styles.pageWrapper}>
         <h1 className="sr-only">
-          <Trans i18nKey="nav.explore-maps.title">Explore Maps</Trans>
+          <Trans i18nKey="nav.explore-maps.title">Atlas</Trans>
         </h1>
 
         <div className={styles.header}>
           <div className={styles.headerContent}>
-            <h2 className={styles.pageTitle}>Explore Maps</h2>
+            <h2 className={styles.pageTitle}>Atlas</h2>
             <p className={styles.pageDescription}>
               Create and manage collaborative exploration canvases with multiple panels
             </p>
@@ -149,7 +149,7 @@ export default function ExploreMapListPage(props: GrafanaRouteComponentProps) {
         </div>
 
         {loading ? (
-          <LoadingPlaceholder text="Loading explore maps..." />
+          <LoadingPlaceholder text="Loading atlas maps..." />
         ) : filteredMaps.length === 0 ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyStateContent}>
@@ -160,9 +160,9 @@ export default function ExploreMapListPage(props: GrafanaRouteComponentProps) {
                 </>
               ) : (
                 <>
-                  <p className={styles.emptyStateTitle}>No explore maps yet</p>
+                  <p className={styles.emptyStateTitle}>No atlas maps yet</p>
                   <p className={styles.emptyStateText}>
-                    Create your first explore map to get started with collaborative exploration
+                    Create your first atlas to get started with collaborative exploration
                   </p>
                   <Button icon="plus" onClick={handleCreateNew} disabled={creatingNew}>
                     Create your first map
@@ -182,7 +182,7 @@ export default function ExploreMapListPage(props: GrafanaRouteComponentProps) {
         {deleteConfirmUid && mapToDelete && (
           <ConfirmModal
             isOpen={true}
-            title="Delete explore map"
+            title="Delete atlas"
             body={
               <>
                 Are you sure you want to delete <strong>{mapToDelete.title}</strong>? This action cannot be
@@ -228,7 +228,7 @@ function MapCard({ map, onDelete, formatDate }: MapCardProps) {
         <Button
           variant="primary"
           size="sm"
-          onClick={() => (window.location.href = `/explore-maps/${map.uid}`)}
+          onClick={() => (window.location.href = `/atlas/${map.uid}`)}
         >
           Open
         </Button>

@@ -44,7 +44,7 @@ export interface ExploreMapCreateResponse {
 }
 
 export class ExploreMapApi {
-  private baseUrl = '/api/explore-maps';
+  private baseUrl = '/api/atlas';
 
   async listExploreMaps(limit?: number): Promise<ExploreMapListItem[]> {
     const params = limit ? { limit } : {};

@@ -171,7 +171,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/explore-maps',
+      path: '/atlas',
       pageClass: 'page-explore-maps',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(() =>
@@ -181,7 +181,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/explore-maps/:uid',
+      path: '/atlas/:uid',
       pageClass: 'page-explore-map',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(() =>

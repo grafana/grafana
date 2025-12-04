@@ -28,7 +28,7 @@ providePageContext(/.*/, [
       AddPanelAction,
     },
     namespace: 'exploreMap',
-    prompt: `You have access to an interactive component that helps users add panels to the explore map canvas with pre-configured datasources and queries.
+    prompt: `You have access to an interactive component that helps users add panels to the Atlas canvas with pre-configured datasources and queries.
 
 Component name: exploreMap_AddPanelAction
 
@@ -108,7 +108,7 @@ export default function ExploreMapPage(props: GrafanaRouteComponentProps<{ uid?:
     return (
       <div className={styles.loadingWrapper}>
         <p>
-          <Trans i18nKey="explore-map.page.loading">Loading explore map...</Trans>
+          <Trans i18nKey="explore-map.page.loading">Loading atlas...</Trans>
         </p>
       </div>
     );
@@ -120,7 +120,7 @@ export default function ExploreMapPage(props: GrafanaRouteComponentProps<{ uid?:
         <div className={styles.pageWrapper}>
           <DebugAssistantContext />
           <h1 className="sr-only">
-            <Trans i18nKey="nav.explore-map.title">Explore Map</Trans>
+            <Trans i18nKey="nav.explore-map.title">Atlas</Trans>
           </h1>
           <ExploreMapToolbar uid={uid} />
           <ExploreMapCanvas />

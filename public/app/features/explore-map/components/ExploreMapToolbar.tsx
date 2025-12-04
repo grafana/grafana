@@ -140,7 +140,7 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
               icon="arrow-left"
               variant="secondary"
               size="sm"
-              onClick={() => (window.location.href = '/explore-maps')}
+              onClick={() => (window.location.href = '/atlas')}
               tooltip="Back to maps list"
               fill="text"
             />

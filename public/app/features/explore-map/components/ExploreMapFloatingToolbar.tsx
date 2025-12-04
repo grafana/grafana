@@ -242,7 +242,7 @@ CRITICAL:
   const assistantInstructions = useMemo(() => {
     return createAssistantContextItem('structured', {
       hidden: true,
-      title: t('explore-map.assistant.capabilities-title', 'Explore Map Capabilities'),
+      title: t('explore-map.assistant.capabilities-title', 'Atlas Capabilities'),
       data: {
         capabilities: [
           t(

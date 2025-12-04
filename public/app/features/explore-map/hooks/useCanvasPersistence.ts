@@ -139,12 +139,12 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
           console.error('Failed to load map from API:', error);
           dispatch(
             notifyApp(
-              createErrorNotification('Failed to load explore map', 'The map may not exist or you may not have access')
+              createErrorNotification('Failed to load atlas', 'The map may not exist or you may not have access')
             )
           );
           // Redirect to list page after a delay
           setTimeout(() => {
-            window.location.href = '/explore-maps';
+            window.location.href = '/atlas';
           }, 2000);
         } finally {
           setLoading(false);
@@ -272,7 +272,7 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
             // Update last saved state ref to prevent duplicate saves
             lastSavedCRDTStateRef.current = currentCRDTStateStr;
           } catch (error) {
-            dispatch(notifyApp(createErrorNotification('Failed to save explore map', 'Changes may not be persisted')));
+            dispatch(notifyApp(createErrorNotification('Failed to save atlas', 'Changes may not be persisted')));
           } finally {
             setSaving(false);
           }
