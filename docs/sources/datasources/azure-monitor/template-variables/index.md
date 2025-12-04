@@ -197,7 +197,7 @@ You can enable **Multi-value** selection for **Resource Groups** and **Resource 
 When a multi-value variable is used as a parameter in another variable query (for example, to retrieve metric names), only the first selected value is used. Ensure the first resource group and resource name combination is valid.
 {{< /admonition >}}
 
-## Troubleshooting
+## Troubleshoot template variables
 
 If you encounter issues with template variables, try the following solutions.
 

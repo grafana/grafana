@@ -15,8 +15,8 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Troubleshooting
-title: Troubleshoot Azure Monitor
+menuTitle: Troubleshoot
+title: Troubleshoot Azure Monitor data source issues
 weight: 500
 refs:
   configure-azure-monitor:
@@ -36,9 +36,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
 ---
 
-# Troubleshoot Azure Monitor
+# Troubleshoot Azure Monitor data source issues
 
-This document provides solutions to common issues you might encounter when configuring or using the Azure Monitor data source.
+This document provides solutions to common issues you may encounter when configuring or using the Azure Monitor data source.
 
 ## Configuration and authentication errors
 
@@ -274,6 +274,8 @@ For detailed troubleshooting of template variables, refer to the [template varia
 
 ## Connection and network errors
 
+These errors indicate problems with network connectivity between Grafana and Azure services.
+
 ### "Connection refused" or timeout errors
 
 **Symptoms:**
@@ -301,7 +303,7 @@ For detailed troubleshooting of template variables, refer to the [template varia
 2. Verify corporate proxy isn't intercepting HTTPS traffic.
 3. Check that required CA certificates are installed on the Grafana server.
 
-## Getting help
+## Get help
 
 If you've tried the solutions above and still encounter issues:
 

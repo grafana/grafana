@@ -43,7 +43,7 @@ For general documentation on querying data sources in Grafana, refer to [Query a
 
 The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, the Azure Resource Graph, and Application Insights Traces. Each source has its own specialized query editor.
 
-## Choose a query editing mode
+## Choose a query editor mode
 
 The Azure Monitor data source's query editor has four modes depending on which Azure service you want to query:
 
@@ -120,7 +120,7 @@ For example:
 | `{{ dimensionname }}`          | _(Legacy for backward compatibility)_ Replaced with the name of the first dimension.                   |
 | `{{ dimensionvalue }}`         | _(Legacy for backward compatibility)_ Replaced with the value of the first dimension.                  |
 
-### Filter using dimensions
+### Filter with dimensions
 
 Some metrics also have dimensions, which associate additional metadata.
 Dimensions are represented as key-value pairs assigned to each value of a metric.
@@ -382,7 +382,7 @@ Selecting the trace format will filter events with the `trace` type.
 
 You can also augment queries by using [template variables](../template-variables/).
 
-## Working with large Azure resource data sets
+## Work with large Azure resource data sets
 
 If a request exceeds the [maximum allowed value of records](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/work-with-data#paging-results), the result is paginated and only the first page of results are returned.
 You can use filters to reduce the amount of records returned under that value.

@@ -157,7 +157,7 @@ Use an Azure AD app registration (service principal) to authenticate. This metho
 | **Client secret** | The secret key for the app registration. Keep this secure and rotate periodically. |
 | **Default Subscription** | Click **Load Subscriptions** to populate available subscriptions, then select your default. |
 
-#### App Registration YAML provisioning
+#### Provision App Registration with YAML
 
 ```yaml
 apiVersion: 1
@@ -221,7 +221,7 @@ Refer to [Grafana Azure configuration](ref:configure-grafana-azure) for more det
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity-2.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor data source configured with Managed Identity" >}}
 
-#### Managed Identity YAML provisioning
+#### Provision Managed Identity with YAML
 
 ```yaml
 apiVersion: 1
@@ -277,7 +277,7 @@ Refer to [Grafana Azure configuration](ref:configure-grafana-azure) and the [Azu
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-workload-identity.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor data source configured with Workload Identity" >}}
 
-#### Workload Identity YAML provisioning
+#### Provision Workload Identity with YAML
 
 ```yaml
 apiVersion: 1
@@ -375,7 +375,7 @@ Query and resource caching is disabled by default for data sources using Current
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-current-user.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor data source configured with Current User authentication" >}}
 
-#### Current User YAML provisioning
+#### Provision Current User with YAML
 
 {{< admonition type="note" >}}
 The `oauthPassThru` property is required for Current User authentication. The `disableGrafanaCache` property prevents returning cached responses for resources users don't have access to.
@@ -397,6 +397,8 @@ datasources:
 ```
 
 ## Additional configuration options
+
+These settings apply to all authentication methods.
 
 ### General settings
 
@@ -452,7 +454,7 @@ If the test fails, verify:
 You can define and configure the Azure Monitor data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
-### Provisioning quick reference
+### Provision quick reference
 
 | Authentication method | `azureAuthType` value | Required fields |
 |-----------------------|-----------------------|-----------------|
