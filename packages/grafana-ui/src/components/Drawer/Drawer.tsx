@@ -107,7 +107,7 @@ export function Drawer({
       open={true}
       onClose={onClose}
       placement="right"
-      getContainer={'.main-view'}
+      getContainer={'main'}
       className={styles.drawerContent}
       rootClassName={styles.drawer}
       classNames={{
@@ -264,7 +264,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     drawer: css({
-      top: 0,
+      // Override rc-drawer's default position: fixed to position: absolute
+      // so it positions relative to its container (.page-panes) instead of viewport
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      position: 'absolute !important' as 'absolute',
 
       '.rc-drawer-content-wrapper': {
         boxShadow: theme.shadows.z3,
@@ -306,6 +309,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: 'transparent !important',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       position: 'fixed !important' as 'fixed',
+      zIndex: theme.zIndex.modal - 1, // Below drawer (modal = 1060) and sidebar (modal = 1060)
 
       '&:before': {
         backgroundColor: `${theme.components.overlay.background} !important`,
@@ -313,8 +317,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         content: '""',
         left: 0,
         position: 'fixed',
+        // Start below the top nav bar
+        top: '40px',
         right: 0,
-        top: 0,
       },
     }),
     maskMotion: css({
@@ -372,6 +377,7 @@ function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
   return css({
     label: `drawer-content-wrapper-${size}`,
     overflow: 'unset !important',
+    zIndex: theme.zIndex.modal, // Ensure drawer wrapper is above mask
 
     [theme.breakpoints.down('md')]: {
       width: `calc(100% - ${theme.spacing(2)}) !important`,
