@@ -26,7 +26,7 @@ const map = `Score: 000000                              Lives: ♥♥♥♥
                                                                                 
                                                                                 
                                                                       
-/A\\
+                                       /A\\
 ================================================================================`;
 
 const player = '/A\\';
@@ -36,8 +36,8 @@ const playerY = 23;
 const userMissile = '╫';
 const userMissileRegex = new RegExp(userMissile, 'g');
 const missileSpeed = 0.06;
-const enemySpeed = 0.001;
-const ufoSpeed = 0.0095;
+const enemySpeed = 0.0000001;
+const ufoSpeed = 0.0000095;
 
 type Missile = {
   x: number;
@@ -144,8 +144,8 @@ export function useLogsGames() {
       console.log('Game resumed');
     }
     document.addEventListener('visibilitychange', handlePause);
-    document.addEventListener("blur", pause);
-    document.addEventListener("focus", resume);
+    document.addEventListener('blur', pause);
+    document.addEventListener('focus', resume);
 
     return () => {
       document.removeEventListener('visibilitychange', handlePause);
@@ -274,26 +274,40 @@ function update(
 
   newUserMissiles = newUserMissiles.filter((missile) => missile.hit === false);
 
+  let hasChanges = false;
+
   const newGameState = gameState.map((row, index) => {
+    let entry = row.entry;
     if (index === 0) {
-      row.entry = renderScoreAndLives(score, lives);
+      entry = renderScoreAndLives(score, lives);
     } else if (index <= 2 || index > playerY) {
       return row;
     } else if (index === playerY) {
-      row.entry = player.padStart(playerX, ' ');
+      entry = player.padStart(playerX, ' ');
     } else if (row.entry.includes(shield)) {
-      row.entry = handleEnvironmentCollisions(row.entry, newUserMissiles, index);
+      entry = handleEnvironmentCollisions(row.entry, newUserMissiles, index);
       newUserMissiles = newUserMissiles.filter((missile) => missile.hit === false);
     } else {
-      row.entry = render(row.entry, newEnemies, newUserMissiles, index);
+      entry = render(row.entry, newEnemies, newUserMissiles, index);
     }
+
+    if (entry !== row.entry) {
+      hasChanges = true;
+    } else {
+      return row;
+    }
+
     return createLogRow({
       uid: index.toString(),
-      entry: row.entry.padEnd(80),
+      entry: entry,
       timeEpochMs: 0,
       logLevel: LogLevel.unknown,
     });
   });
+
+  if (!hasChanges) {
+    return { newGameState: gameState, newUserMissiles, newEnemies, newScore: score, newLives: lives };
+  }
 
   return { newGameState, newUserMissiles, newEnemies, newScore: score, newLives: lives };
 }
@@ -376,5 +390,5 @@ function render(row: string, enemies: Enemy[], userMissiles: Missile[], y: numbe
 }
 
 function renderScoreAndLives(score: number, lives: number) {
-  return `Score: ${score.toString().padStart(6)}                              Lives: ${new Array(lives).fill('♥').join('')}`;
+  return `Score: ${score.toString().padStart(6, '0')}                              Lives: ${new Array(lives).fill('♥').join('')}`;
 }
