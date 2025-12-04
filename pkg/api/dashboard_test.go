@@ -867,7 +867,6 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 			assert.Equal(t, false, dash.Meta.Provisioned)
 		}, mockSQLStore)
 	})
-
 }
 
 func TestDashboardVersionsAPIEndpoint(t *testing.T) {
