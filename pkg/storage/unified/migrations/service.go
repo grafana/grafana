@@ -85,6 +85,10 @@ func RegisterMigrations(
 		logger.Warn("Failed to register migrator metrics", "error", err)
 	}
 
+	if err := ValidateRegisteredResources(); err != nil {
+		return err
+	}
+
 	// Register resource migrations
 	registerDashboardAndFolderMigration(mg, migrator, client)
 	registerPlaylistMigration(mg, migrator, client)
@@ -107,13 +111,13 @@ func RegisterMigrations(
 }
 
 func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
-	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
-	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	foldersDef := GetResourceDefinition("folder.grafana.app", "folders")
+	dashboardsDef := GetResourceDefinition("dashboard.grafana.app", "dashboards")
 	driverName := mg.Dialect.DriverName()
 
 	folderCountValidator := NewCountValidator(
 		client,
-		folders,
+		foldersDef.GroupResource,
 		"dashboard",
 		"org_id = ? and is_folder = true",
 		driverName,
@@ -121,17 +125,17 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator
 
 	dashboardCountValidator := NewCountValidator(
 		client,
-		dashboards,
+		dashboardsDef.GroupResource,
 		"dashboard",
 		"org_id = ? and is_folder = false",
 		driverName,
 	)
 
-	folderTreeValidator := NewFolderTreeValidator(client, folders, driverName)
+	folderTreeValidator := NewFolderTreeValidator(client, foldersDef.GroupResource, driverName)
 
 	dashboardsAndFolders := NewResourceMigration(
 		migrator,
-		[]schema.GroupResource{folders, dashboards},
+		[]schema.GroupResource{foldersDef.GroupResource, dashboardsDef.GroupResource},
 		"folders-dashboards",
 		[]Validator{folderCountValidator, dashboardCountValidator, folderTreeValidator},
 	)
@@ -139,12 +143,12 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator
 }
 
 func registerPlaylistMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
-	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+	playlistsDef := GetResourceDefinition("playlist.grafana.app", "playlists")
 	driverName := mg.Dialect.DriverName()
 
 	playlistCountValidator := NewCountValidator(
 		client,
-		playlists,
+		playlistsDef.GroupResource,
 		"playlist",
 		"org_id = ?",
 		driverName,
@@ -152,7 +156,7 @@ func registerPlaylistMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMi
 
 	playlistsMigration := NewResourceMigration(
 		migrator,
-		[]schema.GroupResource{playlists},
+		[]schema.GroupResource{playlistsDef.GroupResource},
 		"playlists",
 		[]Validator{playlistCountValidator},
 	)

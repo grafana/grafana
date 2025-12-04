@@ -8,8 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
-// nolint:unused
-var migratedUnifiedResources = []string{
+var MigratedUnifiedResources = []string{
 	"playlists.playlist.grafana.app",
 	"folders.folder.grafana.app",
 	"dashboards.dashboard.grafana.app",
@@ -116,7 +115,7 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 		section.Key("enable_search").SetValue("true")
 		cfg.EnableSearch = true
 	}
-	for _, resource := range migratedUnifiedResources {
+	for _, resource := range MigratedUnifiedResources {
 		cfg.Logger.Info("Enforcing mode 5 for resource in unified storage", "resource", resource)
 		if oldCfg, ok := cfg.UnifiedStorage[resource]; ok {
 			cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", oldCfg)
