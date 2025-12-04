@@ -7,6 +7,8 @@
 
 import { createSelector } from '@reduxjs/toolkit';
 
+import { dateTime } from '@grafana/data';
+
 import { CRDTStateManager } from '../crdt/state';
 
 import { ExploreMapCRDTState } from './crdtSlice';
@@ -69,6 +71,7 @@ export const selectPanels = createSelector(
         cursorMode: 'pointer',
         isOnline: false,
         isSyncing: false,
+        globalTimeRange: { from: dateTime().subtract(1, 'hour'), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
       },
     };
     const manager = getCRDTManager(state);
@@ -161,6 +164,7 @@ export const selectFrames = createSelector(
         cursorMode: 'pointer',
         isOnline: false,
         isSyncing: false,
+        globalTimeRange: { from: dateTime().subtract(1, 'hour'), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
       },
     };
     const manager = getCRDTManager(state);
@@ -290,6 +294,7 @@ export const selectPostItNotes = createSelector(
         cursorMode: 'pointer',
         isOnline: false,
         isSyncing: false,
+        globalTimeRange: { from: dateTime().subtract(1, 'hour'), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
       },
     };
     const manager = getCRDTManager(state);

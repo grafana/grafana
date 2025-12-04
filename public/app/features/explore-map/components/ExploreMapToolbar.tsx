@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, ButtonGroup, ConfirmModal, Input, ToolbarButton, UsersIndicator, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, ConfirmModal, Dropdown, Input, Menu, ToolbarButton, UsersIndicator, useStyles2, TimeRangePicker } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { useTransformContext } from '../context/TransformContext';
 import { useCanvasPersistence } from '../hooks/useCanvasPersistence';
-import { updateMapTitle } from '../state/crdtSlice';
+import { updateMapTitle, updateGlobalTimeRange, updateAllPanelsTimeRange } from '../state/crdtSlice';
 import { selectPanelCount, selectViewport, selectMapTitle, selectActiveUsers } from '../state/selectors';
 
 interface ExploreMapToolbarProps {
@@ -25,10 +25,14 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
   const [titleValue, setTitleValue] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
 
+  // Time range state - read from Redux
+  const [timeZone] = useState<TimeZone>('browser');
+
   const panelCount = useSelector((state) => selectPanelCount(state.exploreMapCRDT));
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
   const mapTitle = useSelector((state) => selectMapTitle(state.exploreMapCRDT));
   const activeUsers = useSelector((state) => selectActiveUsers(state.exploreMapCRDT));
+  const timeRange = useSelector((state) => state.exploreMapCRDT.local.globalTimeRange);
 
   useEffect(() => {
     if (mapTitle) {
@@ -52,7 +56,7 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
     // dispatch(resetCanvas());
     console.warn('Reset canvas not yet implemented for CRDT state');
     setShowResetConfirm(false);
-  }, [dispatch]);
+  }, []);
 
   const handleZoomIn = useCallback(() => {
     if (transformRef?.current) {
@@ -115,17 +119,25 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
     [handleTitleBlur, mapTitle]
   );
 
+  const handleTimeRangeChange = useCallback((newTimeRange: TimeRange) => {
+    dispatch(updateGlobalTimeRange({ timeRange: newTimeRange }));
+  }, [dispatch]);
+
+  const handleApplyTimeRangeToAll = useCallback(() => {
+    dispatch(updateAllPanelsTimeRange({ timeRange }));
+  }, [dispatch, timeRange]);
+
   const getSaveStatus = () => {
     if (!uid) {
       return null; // No status in localStorage mode
     }
     if (saving) {
-      return <span className={styles.saveStatus}>Saving...</span>;
+      return <span className={styles.saveStatus}>{t('explore-map.toolbar.saving', 'Saving...')}</span>;
     }
     if (lastSaved) {
       const secondsAgo = Math.floor((Date.now() - lastSaved.getTime()) / 1000);
       if (secondsAgo < 5) {
-        return <span className={styles.saveStatus}>Saved</span>;
+        return <span className={styles.saveStatus}>{t('explore-map.toolbar.saved', 'Saved')}</span>;
       }
     }
     return null;
@@ -141,7 +153,7 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
               variant="secondary"
               size="sm"
               onClick={() => (window.location.href = '/atlas')}
-              tooltip="Back to maps list"
+              tooltip={t('explore-map.toolbar.back', 'Back to maps list')}
               fill="text"
             />
           )}
@@ -156,8 +168,19 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
                 className={styles.titleInput}
               />
             ) : (
-              <div className={styles.titleDisplay} onClick={handleTitleClick}>
-                <h2 className={styles.title}>{mapTitle || 'Untitled Map'}</h2>
+              <div
+                className={styles.titleDisplay}
+                onClick={handleTitleClick}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleTitleClick();
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <h2 className={styles.title}>{mapTitle || t('explore-map.toolbar.untitled', 'Untitled Map')}</h2>
                 <span className="fa fa-pencil" />
               </div>
             )
@@ -191,24 +214,53 @@ export function ExploreMapToolbar({ uid }: ExploreMapToolbarProps) {
               <UsersIndicator users={activeUsers} limit={5} />
             </div>
           )}
-          <ButtonGroup>
-            <ToolbarButton
-              icon="save"
-              onClick={handleExport}
-              tooltip={t('explore-map.toolbar.export', 'Export canvas')}
-            />
-            <ToolbarButton
-              icon="upload"
-              onClick={handleImport}
-              tooltip={t('explore-map.toolbar.import', 'Import canvas')}
-            />
-            <ToolbarButton
-              icon="trash-alt"
-              onClick={handleResetCanvas}
-              tooltip={t('explore-map.toolbar.clear', 'Clear all panels')}
-              variant="destructive"
-            />
-          </ButtonGroup>
+          <div className={styles.timePickerContainer}>
+            <div className={styles.timePickerWrapper}>
+              <TimeRangePicker
+                value={timeRange}
+                onChange={handleTimeRangeChange}
+                onChangeTimeZone={() => {}}
+                timeZone={timeZone}
+                onMoveBackward={() => {}}
+                onMoveForward={() => {}}
+                onZoom={() => {}}
+                hideText={false}
+              />
+            </div>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleApplyTimeRangeToAll}
+              tooltip={t('explore-map.toolbar.apply-time-to-all', 'Apply this time range to all panels')}
+            >
+              {t('explore-map.toolbar.apply-to-all', 'Apply')}
+            </Button>
+          </div>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item
+                  label={t('explore-map.toolbar.export', 'Export canvas')}
+                  icon="save"
+                  onClick={handleExport}
+                />
+                <Menu.Item
+                  label={t('explore-map.toolbar.import', 'Import canvas')}
+                  icon="upload"
+                  onClick={handleImport}
+                />
+                <Menu.Divider />
+                <Menu.Item
+                  label={t('explore-map.toolbar.clear', 'Clear all panels')}
+                  icon="trash-alt"
+                  onClick={handleResetCanvas}
+                  destructive
+                />
+              </Menu>
+            }
+          >
+            <ToolbarButton icon="ellipsis-v" tooltip={t('explore-map.toolbar.more-actions', 'More actions')} />
+          </Dropdown>
         </div>
       </div>
 
@@ -256,7 +308,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0.5, 1),
       cursor: 'pointer',
       borderRadius: theme.shape.radius.default,
-      transition: 'background-color 0.2s',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'background-color 0.2s',
+      },
       '&:hover': {
         backgroundColor: theme.colors.background.primary,
         '& .fa-pencil': {
@@ -286,6 +340,23 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       marginRight: theme.spacing(2),
+    }),
+    timePickerContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+    }),
+    timePickerWrapper: css({
+      // Hide the backward, forward, and zoom buttons
+      '& > div > button:first-child': {
+        display: 'none', // Hide backward button
+      },
+      '& > div > button:nth-last-child(2)': {
+        display: 'none', // Hide forward button
+      },
+      '& > div > button:last-child': {
+        display: 'none', // Hide zoom button
+      },
     }),
   };
 };

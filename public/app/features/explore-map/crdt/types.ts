@@ -354,6 +354,7 @@ export interface UpdatePanelExploreStateOperation extends CRDTOperationBase {
   payload: {
     panelId: string;
     exploreState: SerializedExploreState | undefined;
+    forceReload?: boolean; // Force panel reload even for local operations
   };
 }
 
@@ -365,6 +366,7 @@ export interface UpdatePanelIframeUrlOperation extends CRDTOperationBase {
   payload: {
     panelId: string;
     iframeUrl: string | undefined;
+    forceReload?: boolean; // Force panel reload even for local operations
   };
 }
 

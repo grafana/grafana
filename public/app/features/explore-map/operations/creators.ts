@@ -152,6 +152,7 @@ export function createUpdatePanelExploreStateOperation(
   payload: {
     panelId: string;
     exploreState: SerializedExploreState | undefined;
+    forceReload?: boolean,
   }
 ): UpdatePanelExploreStateOperation {
   return {

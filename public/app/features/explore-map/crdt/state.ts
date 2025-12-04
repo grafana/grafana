@@ -389,7 +389,8 @@ export class CRDTStateManager {
    */
   createUpdatePanelExploreStateOperation(
     panelId: string,
-    exploreState: SerializedExploreState | undefined
+    exploreState: SerializedExploreState | undefined,
+    forceReload?: boolean,
   ): UpdatePanelExploreStateOperation | null {
     if (!this.state.panels.contains(panelId)) {
       return null;
@@ -405,6 +406,7 @@ export class CRDTStateManager {
       payload: {
         panelId,
         exploreState,
+        forceReload,
       },
     };
   }
@@ -414,7 +416,8 @@ export class CRDTStateManager {
    */
   createUpdatePanelIframeUrlOperation(
     panelId: string,
-    iframeUrl: string | undefined
+    iframeUrl: string | undefined,
+    forceReload?: boolean
   ): UpdatePanelIframeUrlOperation | null {
     if (!this.state.panels.contains(panelId)) {
       return null;
@@ -430,6 +433,7 @@ export class CRDTStateManager {
       payload: {
         panelId,
         iframeUrl,
+        forceReload,
       },
     };
   }
@@ -1207,7 +1211,7 @@ export class CRDTStateManager {
   }
 
   private applyUpdatePanelExploreState(operation: UpdatePanelExploreStateOperation): OperationResult {
-    const { panelId, exploreState } = operation.payload;
+    const { panelId, exploreState, forceReload } = operation.payload;
     const panelData = this.state.panelData.get(panelId);
 
     if (!panelData) {
@@ -1216,8 +1220,8 @@ export class CRDTStateManager {
 
     const updated = panelData.exploreState.set(exploreState, operation.timestamp);
 
-    // Increment remoteVersion only for remote operations
-    if (updated && operation.nodeId !== this.nodeId) {
+    // Increment remoteVersion for remote operations or when forceReload is true
+    if (updated && (operation.nodeId !== this.nodeId || forceReload)) {
       panelData.remoteVersion++;
     }
 
@@ -1228,7 +1232,7 @@ export class CRDTStateManager {
   }
 
   private applyUpdatePanelIframeUrl(operation: UpdatePanelIframeUrlOperation): OperationResult {
-    const { panelId, iframeUrl } = operation.payload;
+    const { panelId, iframeUrl, forceReload } = operation.payload;
     const panelData = this.state.panelData.get(panelId);
 
     if (!panelData) {
@@ -1237,8 +1241,8 @@ export class CRDTStateManager {
 
     const updated = panelData.iframeUrl.set(iframeUrl, operation.timestamp);
 
-    // Increment remoteVersion only for remote operations
-    if (updated && operation.nodeId !== this.nodeId) {
+    // Increment remoteVersion for remote operations or when forceReload is true
+    if (updated && (operation.nodeId !== this.nodeId || forceReload)) {
       panelData.remoteVersion++;
     }
 

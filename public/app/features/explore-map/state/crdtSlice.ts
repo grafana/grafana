@@ -8,7 +8,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
-import { TimeRange } from '@grafana/data';
+import { TimeRange, dateTime } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { generateExploreId } from 'app/core/utils/explore';
 
@@ -44,6 +44,7 @@ export interface ExploreMapCRDTState {
     cursorMode: 'pointer' | 'hand';
     isOnline: boolean;
     isSyncing: boolean;
+    globalTimeRange: TimeRange;
     activeDrag?: {
       draggedPanelId: string;
       deltaX: number;
@@ -94,6 +95,11 @@ export function createInitialCRDTState(mapUid?: string): ExploreMapCRDTState {
       cursorMode: 'pointer',
       isOnline: false,
       isSyncing: false,
+      globalTimeRange: {
+        from: dateTime().subtract(1, 'hour'),
+        to: dateTime(),
+        raw: { from: 'now-1h', to: 'now' },
+      },
       activeDrag: undefined,
       activeFrameDrag: undefined,
       clipboard: undefined,
@@ -277,8 +283,8 @@ const crdtSlice = createSlice({
       const panelId = uuidv4();
       const exploreId = generateExploreId();
 
-      // Build initial explore state with default time range
-      // Always set a default time range (last 1 hour) to ensure panels work correctly
+      // Build initial explore state with the global time range
+      // Use the global time range from state so new panels inherit the current time range
       // Note: We store strings instead of DateTime objects because they serialize properly through CRDT.
       // The receiver (useExploreStateReceiver) will extract the raw values and pass them to updateTime.
 
@@ -294,15 +300,9 @@ const crdtSlice = createSlice({
           ] as unknown as DataQuery[])
         : [];
 
-      // Create a time range that will serialize properly through CRDT.
-      // We use strings for from/to instead of DateTime objects, which the receiver handles correctly.
-      // Type assertion is necessary here because we're intentionally using strings for serialization.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const timeRange = {
-        from: 'now-1h',
-        to: 'now',
-        raw: { from: 'now-1h', to: 'now' },
-      } as unknown as TimeRange;
+      // Use the global time range from state
+      // We pass the entire timeRange object to preserve both the DateTime objects and raw values
+      const timeRange = state.local.globalTimeRange;
 
       const initialExploreState: SerializedExploreState = {
         queries,
@@ -713,6 +713,112 @@ const crdtSlice = createSlice({
       manager.applyOperation(operation);
       saveCRDTManager(state, manager);
       state.pendingOperations.push(operation);
+    },
+
+    /**
+     * Update the global time range
+     */
+    updateGlobalTimeRange: (state, action: PayloadAction<{ timeRange: TimeRange }>) => {
+      state.local.globalTimeRange = action.payload.timeRange;
+    },
+
+    /**
+     * Update time range for all panels
+     */
+    updateAllPanelsTimeRange: (state, action: PayloadAction<{ timeRange: TimeRange }>) => {
+      // Update the global time range
+      state.local.globalTimeRange = action.payload.timeRange;
+
+      const manager = getCRDTManager(state);
+      const panelIds = manager.getPanelIds();
+      const operations: CRDTOperation[] = [];
+
+      // Helper function to update time range in URL parameters
+      const updateUrlTimeRange = (url: string, timeRange: TimeRange): string => {
+        try {
+          const urlObj = new URL(url);
+
+          // Convert time range to appropriate format
+          // If raw values are strings (relative time like "now-1h"), use them directly
+          // If raw values are Moment objects (absolute time), convert to Unix timestamps in milliseconds
+          let fromValue: string;
+          let toValue: string;
+
+          if (typeof timeRange.raw.from === 'string') {
+            fromValue = timeRange.raw.from;
+          } else {
+            // Absolute time - convert to Unix timestamp in milliseconds
+            fromValue = timeRange.from.valueOf().toString();
+          }
+
+          if (typeof timeRange.raw.to === 'string') {
+            toValue = timeRange.raw.to;
+          } else {
+            // Absolute time - convert to Unix timestamp in milliseconds
+            toValue = timeRange.to.valueOf().toString();
+          }
+
+          // Update all from/to parameters (including from-2, from-3, to-2, to-3, etc.)
+          urlObj.searchParams.forEach((value, key) => {
+            if (key.startsWith('from')) {
+              urlObj.searchParams.set(key, fromValue);
+            } else if (key.startsWith('to')) {
+              urlObj.searchParams.set(key, toValue);
+            }
+          });
+
+          return urlObj.toString();
+        } catch (e) {
+          console.warn('[updateAllPanelsTimeRange] Failed to parse URL:', url, e);
+          return url;
+        }
+      };
+
+      for (const panelId of panelIds) {
+        const panel = manager.getPanelForUI(panelId);
+
+        if (panel) {
+          // For explore panels, update the explore state
+          if (panel.mode === 'explore' && panel.exploreState) {
+            // Pass the timeRange object directly to preserve relative times
+            const updatedExploreState = {
+              ...panel.exploreState,
+              range: action.payload.timeRange,
+            };
+
+            // Pass forceReload: true to ensure panels reload even for local operations
+            const operation = manager.createUpdatePanelExploreStateOperation(panelId, updatedExploreState, true);
+            if (operation) {
+              operations.push(operation);
+            }
+          }
+          // For drilldown panels (iframe-based), update the iframe URL
+          else if (panel.iframeUrl && (
+            panel.mode === 'traces-drilldown' ||
+            panel.mode === 'metrics-drilldown' ||
+            panel.mode === 'profiles-drilldown' ||
+            panel.mode === 'logs-drilldown'
+          )) {
+            const updatedUrl = updateUrlTimeRange(panel.iframeUrl, action.payload.timeRange);
+
+            // Pass forceReload: true to ensure iframe panels reload even when URL is the same
+            const operation = manager.createUpdatePanelIframeUrlOperation(panelId, updatedUrl, true);
+            if (operation) {
+              operations.push(operation);
+            }
+          }
+        }
+      }
+
+      // Apply all operations
+      for (const operation of operations) {
+        manager.applyOperation(operation);
+      }
+
+      saveCRDTManager(state, manager);
+
+      // Push all operations for broadcast
+      state.pendingOperations.push(...operations);
     },
 
     /**
@@ -1365,6 +1471,8 @@ export const {
   updatePostItNoteColor,
   associatePostItWithFrame,
   disassociatePostItFromFrame,
+  updateGlobalTimeRange,
+  updateAllPanelsTimeRange,
   duplicatePanel,
   addFrame,
   removeFrame,
