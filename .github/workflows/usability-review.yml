@@ -67,6 +67,7 @@ jobs:
             GCOM_HOST=usability-review-agent:GCOM_HOST
             GCOM_TOKEN=usability-review-agent:GCOM_TOKEN
             OPENAI_API_KEY=usability-review-agent:OPENAI_API_KEY
+            SLACK_WEBHOOK_URL=usability-review-agent:SLACK_WEBHOOK_URL
 
       - name: Set up Python
         uses: actions/setup-python@v5
