@@ -9,15 +9,40 @@ Navigate to the target URL and explore the interface. Focus on:
 
 Provide your findings in the following format:
 
-## Summary
-A brief overview (2-3 sentences) of the overall usability of the feature/workflow you tested.
+### Oops! I found [N] usability issues in your PR
+
+[Provide a breakdown by severity with confidence, for example:]
+- 🔴 **1 critical** with high confidence
+- 🟡 **2 major** (low – medium confidence)
+- 🟢 **1 minor** with medium confidence
+
+[Adjust the counts and confidence levels based on what you actually found]
 
 ## Usability Issues Found
-Present exactly 3 issues in a markdown table with the following columns:
 
-| Severity | Issue | Impact | Suggestion |
-|----------|-------|--------|------------|
-| Critical/Major/Minor | Clear description of the problem | How this affects users | Potential improvement |
+Present each issue in a markdown table with the following columns:
+
+| Issue | Severity | Impact | Confidence | Suggestion |
+|---------|-------------|-----------|------------------|-----------------|
+| **[Issue Title]**<br />[Clear description of the problem] | ‼️ Critical / ⚠️ Major / 🟢 Minor | How this affects users | Low / Medium / High | Potential improvement |
+
+**Important formatting rules:**
+- Use exactly these severity emojis: ‼️ for Critical, ⚠️ for Major, 🟢 for Minor
+- Issue column should have a bold title on first line, then description on new line with `<br />`
+- Confidence must be one of: Low, Medium, or High
+- Each row is a separate issue
+
+<details>
+<summary>📄 <strong>Full Agent Output</strong></summary>
 
 ## Testing Process
 Numbered list of steps you took during the review, including which pages/features you interacted with.
+
+## Detailed Analysis
+Provide a detailed analysis of each issue including:
+- What you observed
+- Why it's a problem
+- User scenarios affected
+- Technical considerations
+
+</details>
