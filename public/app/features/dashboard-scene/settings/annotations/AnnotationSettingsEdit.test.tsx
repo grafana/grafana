@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react';
+import { act, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
@@ -88,6 +88,22 @@ describe('AnnotationSettingsEdit', () => {
     };
   }
 
+  // For testing combobox
+  beforeAll(() => {
+    const mockGetBoundingClientRect = jest.fn(() => ({
+      width: 120,
+      height: 120,
+      top: 0,
+      left: 0,
+      bottom: 0,
+      right: 0,
+    }));
+
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: mockGetBoundingClientRect,
+    });
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -100,7 +116,9 @@ describe('AnnotationSettingsEdit', () => {
     const nameInput = getByTestId(selectors.pages.Dashboard.Settings.Annotations.Settings.name);
     const dataSourceSelect = getByTestId(selectors.components.DataSourcePicker.container);
     const enableToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.enable);
-    const hideToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.hide);
+    const annotationControlsDisplaySelect = getByTestId(
+      selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.annotationControlsDisplay
+    );
     const iconColorToggle = getByTestId(selectors.components.ColorSwatch.name);
     const panelSelect = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel);
     const deleteAnno = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.delete);
@@ -109,7 +127,7 @@ describe('AnnotationSettingsEdit', () => {
     expect(nameInput).toBeInTheDocument();
     expect(dataSourceSelect).toBeInTheDocument();
     expect(enableToggle).toBeInTheDocument();
-    expect(hideToggle).toBeInTheDocument();
+    expect(annotationControlsDisplaySelect).toBeInTheDocument();
     expect(iconColorToggle).toBeInTheDocument();
     expect(panelSelect).toBeInTheDocument();
     expect(deleteAnno).toBeInTheDocument();
@@ -142,26 +160,6 @@ describe('AnnotationSettingsEdit', () => {
     const enableToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.enable);
 
     await user.click(enableToggle);
-
-    expect(mockOnUpdate).toHaveBeenCalledTimes(1);
-    expect(mockOnUpdate).toHaveBeenCalledWith(annoArg, 1);
-  });
-
-  it('should toggle annotation hide on change', async () => {
-    const {
-      renderer: { getByTestId },
-      user,
-      anno,
-    } = await setup();
-
-    const annoArg = {
-      ...anno,
-      hide: !anno.hide,
-    };
-
-    const hideToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.hide);
-
-    await user.click(hideToggle);
 
     expect(mockOnUpdate).toHaveBeenCalledTimes(1);
     expect(mockOnUpdate).toHaveBeenCalledWith(annoArg, 1);
@@ -206,5 +204,105 @@ describe('AnnotationSettingsEdit', () => {
     await user.click(goBack);
 
     expect(mockGoBackToList).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render the annotation controls display combobox', async () => {
+    const {
+      renderer: { getByTestId },
+    } = await setup();
+
+    const field = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.annotationControlsDisplay);
+    const combobox = within(field).getByRole('combobox');
+    expect(combobox).toBeInTheDocument();
+    expect(combobox).toHaveValue('Above dashboard');
+  });
+
+  it('should set placement to undefined when selecting "Above dashboard" instead of  "Controls menu"', async () => {
+    const annotationQuery: AnnotationQuery = {
+      name: 'test',
+      datasource: defaultDatasource,
+      enable: true,
+      hide: false,
+      iconColor: 'blue',
+      placement: 'inControlsMenu',
+    };
+
+    const props = {
+      annotation: annotationQuery,
+      onUpdate: mockOnUpdate,
+      editIndex: 1,
+      panels: [],
+      onBackToList: mockGoBackToList,
+      onDelete: mockOnDelete,
+    };
+
+    const {
+      user,
+      renderer: { getByTestId, findByText },
+    } = {
+      user: userEvent.setup(),
+      renderer: await act(async () => render(<AnnotationSettingsEdit {...props} />)),
+    };
+
+    const field = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.annotationControlsDisplay);
+    const combobox = within(field).getByRole('combobox');
+    await user.click(combobox);
+
+    const aboveDashboardOption = await findByText('Above dashboard');
+    await user.click(aboveDashboardOption);
+
+    expect(mockOnUpdate).toHaveBeenCalledTimes(1);
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      {
+        ...annotationQuery,
+        placement: undefined,
+      },
+      1
+    );
+  });
+
+  it('should set `hide: true` and `placement: undefined` when selecting "Hidden"', async () => {
+    const annotationQuery: AnnotationQuery = {
+      name: 'test',
+      datasource: defaultDatasource,
+      enable: true,
+      hide: false,
+      iconColor: 'blue',
+      placement: 'inControlsMenu',
+    };
+
+    const props = {
+      annotation: annotationQuery,
+      onUpdate: mockOnUpdate,
+      editIndex: 1,
+      panels: [],
+      onBackToList: mockGoBackToList,
+      onDelete: mockOnDelete,
+    };
+
+    const {
+      user,
+      renderer: { getByTestId, findByText },
+    } = {
+      user: userEvent.setup(),
+      renderer: await act(async () => render(<AnnotationSettingsEdit {...props} />)),
+    };
+
+    const field = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.annotationControlsDisplay);
+    const combobox = within(field).getByRole('combobox');
+    await user.click(combobox);
+
+    const hiddenOption = await findByText('Hidden');
+    await user.click(hiddenOption);
+
+    expect(mockOnUpdate).toHaveBeenCalledTimes(1);
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      {
+        ...annotationQuery,
+        hide: true,
+        placement: undefined,
+      },
+      1
+    );
   });
 });
