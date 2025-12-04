@@ -82,6 +82,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
+import { useLogsGames } from './fun/logsGames';
 import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getExploreBaseUrl } from './utils/url';
 
@@ -686,8 +687,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     },
     [getPinnedLogsCount, onOpenContext, onPinLineCallback, outlineItems, pinnedLogs, register, unregister, updateItem]
   );
-
-  const { dedupedRows, dedupCount } = useMemo(() => dedupRows(logRows, dedupStrategy), [dedupStrategy, logRows]);
+  const gameLogs = useLogsGames();
+  const { dedupedRows, dedupCount } = useMemo(() => gameLogs ? { dedupedRows: gameLogs, dedupCount: 0 } : dedupRows(logRows, dedupStrategy), [dedupStrategy, gameLogs, logRows]);
   const infiniteScrollAvailable = useMemo(
     () => !logsQueries?.some((query) => 'direction' in query && query.direction === LokiQueryDirection.Scan),
     [logsQueries]
