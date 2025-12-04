@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
