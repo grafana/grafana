@@ -59,15 +59,10 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping")
 		return nil
-	} else {
-		metrics.MUnifiedStorageMigrationStatus.Set(2)
-		logger.Info("Data migrations not yet enforced, skipping")
 	}
-
-	// TODO: Re-enable once migrations are ready
-	// TODO: add guarantee that this only runs once
-	// return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client)
-	return nil
+	logger.Info("Running migrations for unified storage")
+	metrics.MUnifiedStorageMigrationStatus.Set(3)
+	return RegisterMigrations(p.migrator, p.cfg, p.sqlStore, p.client)
 }
 
 func RegisterMigrations(
