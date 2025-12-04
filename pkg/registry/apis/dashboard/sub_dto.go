@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type dtoBuilder = func(dashboard runtime.Object, access *dashboard.DashboardAccess) (runtime.Object, error)
@@ -201,7 +202,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
 
 		// Only check public dashboards if service is available
-		if r.publicDashboardService != nil {
+		if !util.IsInterfaceNil(r.publicDashboardService) != nil {
 			pubDash, err := r.publicDashboardService.FindByDashboardUid(ctx, user.GetOrgID(), name)
 			if err == nil && pubDash != nil {
 				access.IsPublic = true
