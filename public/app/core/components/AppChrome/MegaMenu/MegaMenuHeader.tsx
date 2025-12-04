@@ -34,7 +34,6 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
       <div className={css({ flexGrow: 1 })} />
       <IconButton
         id={DOCK_MENU_BUTTON_ID}
-        className={styles.dockMenuButton}
         tooltip={
           state.megaMenuDocked
             ? t('navigation.megamenu.undock', 'Undock menu')
@@ -58,20 +57,13 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
 MegaMenuHeader.displayName = 'MegaMenuHeader';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  dockMenuButton: css({
-    display: 'none',
-
-    [theme.breakpoints.up('xl')]: {
-      display: 'inline-flex',
-    },
-  }),
   header: css({
     alignItems: 'center',
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     display: 'flex',
     gap: theme.spacing(1),
     justifyContent: 'space-between',
-    padding: theme.spacing(0, 1, 0, 0.75),
+    padding: theme.spacing(0, 1, 0, 1),
     height: getChromeHeaderLevelHeight(),
     flexShrink: 0,
   }),
