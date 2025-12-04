@@ -16,6 +16,7 @@ import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
+import { getPortalContainer } from '../Portal/Portal';
 
 import { CustomInput } from './CustomInput';
 import { DropdownIndicator } from './DropdownIndicator';
@@ -257,7 +258,7 @@ export function SelectBase<T, Rest = {}>({
     menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
     menuPosition,
     menuShouldBlockScroll: true,
-    menuPortalTarget: menuShouldPortal && typeof document !== 'undefined' ? document.body : undefined,
+    menuPortalTarget: menuShouldPortal && getPortalContainer(),
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,
