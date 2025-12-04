@@ -295,6 +295,13 @@ export const selectCursors = (state: ExploreMapCRDTState) => {
 };
 
 /**
+ * Select cursor mode
+ */
+export const selectCursorMode = (state: ExploreMapCRDTState) => {
+  return state.local.cursorMode;
+};
+
+/**
  * Select online status
  */
 export const selectIsOnline = (state: ExploreMapCRDTState): boolean => {

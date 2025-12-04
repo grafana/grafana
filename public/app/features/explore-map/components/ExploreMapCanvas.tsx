@@ -10,7 +10,7 @@ import { useTransformContext } from '../context/TransformContext';
 import { useCursorSync } from '../hooks/useCursorSync';
 import { useCursorViewportTracking } from '../hooks/useCursorViewportTracking';
 import { selectPanel as selectPanelCRDT, updateViewport as updateViewportCRDT, selectMultiplePanels as selectMultiplePanelsCRDT } from '../state/crdtSlice';
-import { selectPanels, selectFrames, selectViewport, selectCursors, selectSelectedPanelIds, selectMapUid, selectPostItNotes } from '../state/selectors';
+import { selectPanels, selectFrames, selectViewport, selectCursors, selectSelectedPanelIds, selectMapUid, selectPostItNotes, selectCursorMode } from '../state/selectors';
 
 import { EdgeCursorIndicator } from './EdgeCursorIndicator';
 import { ExploreMapComment } from './ExploreMapComment';
@@ -46,6 +46,7 @@ export function ExploreMapCanvas() {
   const cursors = useSelector((state) => selectCursors(state.exploreMapCRDT));
   const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
   const mapUid = useSelector((state) => selectMapUid(state.exploreMapCRDT));
+  const cursorMode = useSelector((state) => selectCursorMode(state.exploreMapCRDT));
 
   // Initialize cursor sync
   const { updatePosition, updatePositionImmediate } = useCursorSync({
@@ -131,6 +132,11 @@ export function ExploreMapCanvas() {
 
   const handleCanvasMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
+      // Don't allow selection in hand mode (panning mode)
+      if (cursorMode === 'hand') {
+        return;
+      }
+
       // Only start selection if clicking directly on canvas (not on panels)
       if (e.target !== e.currentTarget) {
         return;
@@ -166,7 +172,7 @@ export function ExploreMapCanvas() {
       });
       setIsSelecting(true);
     },
-    [contextTransformRef, viewport]
+    [contextTransformRef, viewport, cursorMode]
   );
 
   const handleCanvasMouseMove = useCallback(
@@ -325,7 +331,7 @@ export function ExploreMapCanvas() {
         panning={{
           disabled: false,
           excluded: ['panel-drag-handle', 'react-rnd'],
-          allowLeftClickPan: false,
+          allowLeftClickPan: cursorMode === 'hand',
           allowRightClickPan: false,
           allowMiddleClickPan: true,
         }}
@@ -333,7 +339,10 @@ export function ExploreMapCanvas() {
         doubleClick={{ disabled: true }}
         wheel={{ step: 0.1 }}
       >
-        <TransformComponent wrapperClass={styles.transformWrapper} contentClass={styles.transformContent}>
+        <TransformComponent
+          wrapperClass={`${styles.transformWrapper} ${cursorMode === 'hand' ? styles.handCursor : styles.pointerCursor}`}
+          contentClass={styles.transformContent}
+        >
           <div
             ref={canvasRef}
             className={styles.canvas}
@@ -403,6 +412,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     transformWrapper: css({
       width: '100%',
       height: '100%',
+    }),
+    pointerCursor: css({
+      cursor: 'default',
+    }),
+    handCursor: css({
       cursor: 'grab',
       '&:active': {
         cursor: 'grabbing',

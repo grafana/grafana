@@ -41,6 +41,7 @@ export interface ExploreMapCRDTState {
     viewport: CanvasViewport;
     selectedPanelIds: string[];
     cursors: Record<string, UserCursor>;
+    cursorMode: 'pointer' | 'hand';
     isOnline: boolean;
     isSyncing: boolean;
     activeDrag?: {
@@ -80,6 +81,7 @@ export function createInitialCRDTState(mapUid?: string): ExploreMapCRDTState {
       viewport: initialViewport,
       selectedPanelIds: [],
       cursors: {},
+      cursorMode: 'pointer',
       isOnline: false,
       isSyncing: false,
       activeDrag: undefined,
@@ -1103,6 +1105,13 @@ const crdtSlice = createSlice({
     },
 
     /**
+     * Set cursor mode (pointer or hand)
+     */
+    setCursorMode: (state, action: PayloadAction<{ mode: 'pointer' | 'hand' }>) => {
+      state.local.cursorMode = action.payload.mode;
+    },
+
+    /**
      * Set online status
      */
     setOnlineStatus: (state, action: PayloadAction<{ isOnline: boolean }>) => {
@@ -1194,6 +1203,7 @@ export const {
   selectMultiplePanels,
   updateCursor,
   removeCursor,
+  setCursorMode,
   setOnlineStatus,
   setSyncingStatus,
   setActiveDrag,

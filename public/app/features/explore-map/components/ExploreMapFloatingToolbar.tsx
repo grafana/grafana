@@ -13,9 +13,8 @@ import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_
 import tempoLogoSvg from 'app/plugins/datasource/tempo/img/tempo_logo.svg';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { addPanel, addFrame, addPostItNote } from '../state/crdtSlice';
-import { selectPanels, selectMapUid, selectViewport, selectSelectedPanelIds } from '../state/selectors';
-import { selectPanels, selectMapUid } from '../state/selectors';
+import { addPanel, addFrame, addPostItNote, setCursorMode } from '../state/crdtSlice';
+import { selectPanels, selectMapUid, selectViewport, selectSelectedPanelIds, selectCursorMode } from '../state/selectors';
 
 import { AddPanelAction } from './AssistantComponents';
 
@@ -33,6 +32,7 @@ export function ExploreMapFloatingToolbar() {
   const mapUid = useSelector((state) => selectMapUid(state.exploreMapCRDT));
   const viewport = useSelector((state) => selectViewport(state.exploreMapCRDT));
   const selectedPanelIds = useSelector((state) => selectSelectedPanelIds(state.exploreMapCRDT));
+  const cursorMode = useSelector((state) => selectCursorMode(state.exploreMapCRDT));
 
   const handleAddPanel = useCallback(() => {
     dispatch(
@@ -170,6 +170,14 @@ export function ExploreMapFloatingToolbar() {
     );
     setIsOpen(false);
   }, [dispatch, currentUsername]);
+
+  const handleSetPointerMode = useCallback(() => {
+    dispatch(setCursorMode({ mode: 'pointer' }));
+  }, [dispatch]);
+
+  const handleSetHandMode = useCallback(() => {
+    dispatch(setCursorMode({ mode: 'hand' }));
+  }, [dispatch]);
 
   // Build context for assistant
   const canvasContext = useMemo(() => {
@@ -310,6 +318,38 @@ CRITICAL:
 
   return (
     <div className={styles.floatingToolbar}>
+      <div className={styles.cursorModeGroup}>
+        <button
+          className={`${styles.cursorModeButton} ${cursorMode === 'pointer' ? styles.cursorModeButtonActive : ''}`}
+          onClick={handleSetPointerMode}
+          title="Pointer mode (V)"
+          aria-label="Pointer mode"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className={styles.cursorIcon}>
+            <path
+              d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z"
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+        <button
+          className={`${styles.cursorModeButton} ${cursorMode === 'hand' ? styles.cursorModeButtonActive : ''}`}
+          onClick={handleSetHandMode}
+          title="Hand mode (H)"
+          aria-label="Hand mode"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className={styles.cursorIcon}>
+            <path
+              d="M11.5 8.5V4a1.5 1.5 0 0 0-3 0v6.5m3-2V5a1.5 1.5 0 0 1 3 0v5m0-2.5V5a1.5 1.5 0 0 1 3 0v7m0-2.5V7a1.5 1.5 0 0 1 3 0v8.5c0 2.5-2 4.5-4.5 4.5h-2.5C11 20 9 18.5 9 16v-3.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+      <div className={styles.toolbarDivider} />
       <ButtonGroup>
         <Button icon="plus" onClick={handleAddPanel} variant="primary">
           <Trans i18nKey="explore-map.toolbar.add-panel">Add panel</Trans>
@@ -367,6 +407,45 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
       zIndex: 1000,
+    }),
+    cursorModeGroup: css({
+      display: 'flex',
+      gap: '2px',
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      padding: '2px',
+    }),
+    cursorModeButton: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '40px',
+      height: '40px',
+      border: 'none',
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: 'transparent',
+      color: theme.colors.text.secondary,
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      '&:hover': {
+        backgroundColor: theme.colors.action.hover,
+        color: theme.colors.text.primary,
+      },
+    }),
+    cursorModeButtonActive: css({
+      backgroundColor: theme.colors.background.primary,
+      color: theme.colors.text.primary,
+      boxShadow: theme.shadows.z1,
+    }),
+    cursorIcon: css({
+      width: '20px',
+      height: '20px',
+    }),
+    toolbarDivider: css({
+      width: '1px',
+      height: '32px',
+      backgroundColor: theme.colors.border.weak,
+      margin: `0 ${theme.spacing(1)}`,
     }),
   };
 };

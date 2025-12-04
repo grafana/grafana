@@ -76,6 +76,8 @@ export interface UserCursor {
   selectedPanelIds: string[];
 }
 
+export type CursorMode = 'pointer' | 'hand';
+
 export interface ExploreMapState {
   uid?: string;
   title?: string;
@@ -85,6 +87,7 @@ export interface ExploreMapState {
   selectedPanelIds: string[];
   nextZIndex: number;
   cursors: Record<string, UserCursor>;
+  cursorMode: CursorMode;
   crdtState?: any; // Raw CRDT state JSON for proper sync
 }
 
@@ -105,4 +108,5 @@ export const initialExploreMapState: ExploreMapState = {
   selectedPanelIds: [],
   nextZIndex: 1,
   cursors: {},
+  cursorMode: 'pointer',
 };
