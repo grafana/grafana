@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 var (
@@ -89,45 +91,54 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 
 	start := time.Now()
 
-	tsField := data.NewField("Time", nil, make([]time.Time, length))
-	valueFields := make(map[data.Fingerprint]*data.Field)
+	var builder *historian.QueryResultBuilder
+	ruleMeta := history_model.RuleMeta{
+		ID:           rule.ID,
+		OrgID:        rule.OrgID,
+		UID:          rule.UID,
+		Title:        rule.Title,
+		Group:        rule.RuleGroup,
+		NamespaceUID: rule.NamespaceUID,
+		// DashboardUID: "",
+		// PanelID:      0,
+		Condition: rule.Condition,
+	}
+	lables := map[string]string{
+		historian.OrgIDLabel:     fmt.Sprint(ruleMeta.OrgID),
+		historian.GroupLabel:     fmt.Sprint(ruleMeta.Group),
+		historian.FolderUIDLabel: fmt.Sprint(rule.NamespaceUID),
+	}
+	labelsBytes, err := json.Marshal(lables)
+	if err != nil {
+		return nil, err
+	}
 
 	err = evaluator.Eval(ruleCtx, from, time.Duration(rule.IntervalSeconds)*time.Second, length, func(idx int, currentTime time.Time, results eval.Results) error {
 		if idx >= length {
 			logger.Info("Unexpected evaluation. Skipping", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluationTime", currentTime, "evaluationIndex", idx, "expectedEvaluations", length)
 			return nil
 		}
+		if builder == nil {
+			builder = historian.NewQueryResultBuilder(length * len(results))
+		}
 		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil, nil)
-		tsField.Set(idx, currentTime)
 		for _, s := range states {
-			field, ok := valueFields[s.CacheID]
-			if !ok {
-				field = data.NewField("", s.Labels, make([]*string, length))
-				valueFields[s.CacheID] = field
-			}
-			if s.State.State != eval.NoData { // set nil if NoData
-				value := s.State.State.String()
-				if s.StateReason != "" {
-					value += " (" + s.StateReason + ")"
-				}
-				field.Set(idx, &value)
-				continue
+			entry := historian.StateTransitionToLokiEntry(ruleMeta, s)
+			err := builder.AddRow(currentTime, entry, labelsBytes)
+			if err != nil {
+				return err
 			}
 		}
 		return nil
 	})
-	fields := make([]*data.Field, 0, len(valueFields)+1)
-	fields = append(fields, tsField)
-	for _, f := range valueFields {
-		fields = append(fields, f)
-	}
-	result := data.NewFrame("Testing results", fields...)
-
 	if err != nil {
 		return nil, err
 	}
+	if builder == nil {
+		return nil, errors.New("no results were produced")
+	}
 	logger.Info("Rule testing finished successfully", "duration", time.Since(start))
-	return result, nil
+	return builder.ToFrame(), nil
 }
 
 func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user identity.Requester, condition models.Condition, reader eval.AlertingResultsReader) (backtestingEvaluator, error) {
