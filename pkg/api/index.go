@@ -224,22 +224,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.Settings.FeatureToggles = map[string]bool{}
 	}
 
-	// Use value populated by your loader (pkg/setting/feature_toggles.go). If not wired,
-	// you can temporarily hardcode here for testing or read env.
 	data.Settings.FeatureToggles["default_sidebar_docked"] = setting.FeatureToggleConfig.DefaultSidebarDocked
-
-	// Example temporary hardcode for quick verification:
-	// data.Settings.FeatureToggles["default_sidebar_docked"] = false
-
-	// Instrumentation: log the runtime value so you can see where it's coming from
-	if c != nil {
-		c.Logger.Info("feature toggle value", "default_sidebar_docked", setting.FeatureToggleConfig.DefaultSidebarDocked)
-	} else if hs != nil && hs.log != nil {
-		hs.log.Info("feature toggle value", "default_sidebar_docked", setting.FeatureToggleConfig.DefaultSidebarDocked)
-	} else {
-		// quick-and-dirty fallback (will print to stdout)
-		fmt.Printf("feature toggle default_sidebar_docked=%v\n", setting.FeatureToggleConfig.DefaultSidebarDocked)
-	}
 
 	data.NavTree.Sort()
 
