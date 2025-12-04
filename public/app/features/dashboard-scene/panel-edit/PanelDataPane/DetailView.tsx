@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataQuery, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Container, ScrollContainer, useStyles2 } from '@grafana/ui';
@@ -11,8 +11,15 @@ import { DetailViewHeader } from './DetailViewHeader';
 import { ExpressionDetailView } from './ExpressionDetailView';
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
 import { QueryDetailView } from './QueryDetailView';
+import { QueryLibraryView, QueryLibraryViewRef } from './QueryLibraryView';
 import { QueryTransformItem } from './QueryTransformList';
 import { TabId } from './types';
+
+export interface QueryLibraryMode {
+  active: boolean;
+  mode: 'browse' | 'save';
+  currentQuery?: DataQuery;
+}
 
 interface DetailViewProps {
   selectedItem: QueryTransformItem | undefined;
@@ -20,13 +27,60 @@ interface DetailViewProps {
   tabs: Array<{ tabId: TabId }>;
   onRemoveTransform?: (index: number) => void;
   onToggleTransformVisibility?: (index: number) => void;
+  queryLibraryMode?: QueryLibraryMode;
+  onQueryLibrarySelect?: (query: DataQuery) => void;
+  onQueryLibrarySave?: (name: string, description: string) => void;
+  onQueryLibraryClose?: () => void;
+  onOpenQueryLibrary?: (mode: 'browse' | 'save', index?: number) => void;
 }
 
 export const DetailView = memo(
-  ({ selectedItem, panel, tabs, onRemoveTransform, onToggleTransformVisibility }: DetailViewProps) => {
+  ({
+    selectedItem,
+    panel,
+    tabs,
+    onRemoveTransform,
+    onToggleTransformVisibility,
+    queryLibraryMode,
+    onQueryLibrarySelect,
+    onQueryLibrarySave,
+    onQueryLibraryClose,
+    onOpenQueryLibrary,
+  }: DetailViewProps) => {
     const styles = useStyles2(getStyles);
+    const queryLibraryRef = useRef<QueryLibraryViewRef>(null);
+
+    const handleSelectQueryFromHeader = useCallback(() => {
+      queryLibraryRef.current?.selectCurrentQuery();
+    }, []);
+
+    const handleSaveQueryFromHeader = useCallback(() => {
+      queryLibraryRef.current?.saveQuery();
+    }, []);
 
     const renderContent = useCallback(() => {
+      // Show QueryLibraryView when in query library mode
+      if (queryLibraryMode?.active && onQueryLibraryClose) {
+        return (
+          <>
+            <DetailViewHeader
+              queryLibraryMode={queryLibraryMode.mode}
+              onSelectQuery={queryLibraryMode.mode === 'browse' ? handleSelectQueryFromHeader : undefined}
+              onSaveQuery={queryLibraryMode.mode === 'save' ? handleSaveQueryFromHeader : undefined}
+              onClose={onQueryLibraryClose}
+            />
+            <QueryLibraryView
+              ref={queryLibraryRef}
+              mode={queryLibraryMode.mode}
+              currentQuery={queryLibraryMode.currentQuery}
+              onSelectQuery={onQueryLibrarySelect}
+              onSaveQuery={onQueryLibrarySave}
+              onClose={onQueryLibraryClose}
+            />
+          </>
+        );
+      }
+
       if (!selectedItem) {
         return (
           <div className={styles.emptyState}>
@@ -43,7 +97,7 @@ export const DetailView = memo(
         const query = selectedItem.data;
         return (
           <>
-            <DetailViewHeader selectedItem={selectedItem} panel={panel} />
+            <DetailViewHeader selectedItem={selectedItem} panel={panel} onOpenQueryLibrary={onOpenQueryLibrary} />
             <ScrollContainer>
               <QueryDetailView panel={panel} query={query} queryIndex={selectedItem.index} />
             </ScrollContainer>
@@ -83,7 +137,21 @@ export const DetailView = memo(
       }
 
       return null;
-    }, [selectedItem, panel, tabs, styles.emptyState, onRemoveTransform, onToggleTransformVisibility]);
+    }, [
+      selectedItem,
+      panel,
+      tabs,
+      styles.emptyState,
+      onRemoveTransform,
+      onToggleTransformVisibility,
+      queryLibraryMode,
+      onQueryLibrarySelect,
+      onQueryLibrarySave,
+      onQueryLibraryClose,
+      onOpenQueryLibrary,
+      handleSelectQueryFromHeader,
+      handleSaveQueryFromHeader,
+    ]);
 
     return <div className={styles.container}>{renderContent()}</div>;
   }

@@ -23,12 +23,11 @@ import { isExpressionQuery } from '../../../expressions/guards';
 import { ExpressionQueryType } from '../../../expressions/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 
-import { DetailView } from './DetailView';
+import { DetailView, QueryLibraryMode } from './DetailView';
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
 import { QueryTransformList, QueryTransformItem } from './QueryTransformList';
-import { SavedQueriesDrawer } from './SavedQueriesDrawer';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId } from './types';
 import { isDataTransformerConfig, queryItemId, transformItemId } from './utils';
@@ -92,8 +91,9 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tabs, panelRef } = model.useState();
   const styles = useStyles2(getStyles);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [savedQueriesDrawerState, setSavedQueriesDrawerState] = useState<DrawerState>({
-    open: false,
+  const [queryLibraryMode, setQueryLibraryMode] = useState<QueryLibraryMode & { index: number | null }>({
+    active: false,
+    mode: 'browse',
     index: null,
   });
   const [transformDrawerState, setTransformDrawerState] = useState<DrawerState>({
@@ -291,14 +291,14 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     [queryRunner, queries]
   );
 
-  // This is a stub for the saved queries drawer
-  const handleSelectSavedQuery = useCallback(
+  // Handler for selecting a query from the query library
+  const handleQueryLibrarySelect = useCallback(
     (query: DataQuery) => {
       if (!queryRunner || !queriesTab) {
         return;
       }
 
-      const selectedIndex = savedQueriesDrawerState.index ?? queries?.length ?? 0;
+      const selectedIndex = queryLibraryMode.index ?? queries?.length ?? 0;
 
       // Get next available refId
       let nextRefId = 'A';
@@ -319,9 +319,43 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       updateQuerySelectionOnStateChange(selectedIndex);
       queriesTab.onAddQuery(newQuery);
 
-      setSavedQueriesDrawerState({ open: false, index: null });
+      setQueryLibraryMode({ active: false, mode: 'browse', index: null });
     },
-    [queryRunner, savedQueriesDrawerState.index, queries, updateQuerySelectionOnStateChange, queriesTab]
+    [queryRunner, queryLibraryMode.index, queries, updateQuerySelectionOnStateChange, queriesTab]
+  );
+
+  // Handler for saving a query to the query library (stub)
+  const handleQueryLibrarySave = useCallback((_name: string, _description: string) => {
+    // Stub: In real implementation, this would save to the query library
+    setQueryLibraryMode({ active: false, mode: 'browse', index: null });
+  }, []);
+
+  // Handler to close the query library view
+  const handleQueryLibraryClose = useCallback(() => {
+    setQueryLibraryMode({ active: false, mode: 'browse', index: null });
+  }, []);
+
+  // Handler to open query library in a specific mode
+  const handleOpenQueryLibrary = useCallback(
+    (mode: 'browse' | 'save', index?: number) => {
+      let currentQuery: DataQuery | undefined;
+      if (
+        mode === 'save' &&
+        selectedItem &&
+        (selectedItem.type === 'query' || selectedItem.type === 'expression') &&
+        'refId' in selectedItem.data
+      ) {
+        currentQuery = selectedItem.data;
+      }
+
+      setQueryLibraryMode({
+        active: true,
+        mode,
+        currentQuery,
+        index: index ?? null,
+      });
+    },
+    [selectedItem]
   );
 
   /** TRANSFORMS **/
@@ -428,7 +462,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             selectedId={effectiveSelectedId}
             onSelect={handleSelect}
             onAddQuery={handleAddQuery}
-            onAddFromSavedQueries={(index) => setSavedQueriesDrawerState({ open: true, index: index ?? null })}
+            onAddFromSavedQueries={(index) => handleOpenQueryLibrary('browse', index)}
             onAddTransform={(index) => setTransformDrawerState({ open: true, index: index ?? null })}
             onAddExpression={handleAddExpression}
             onDuplicateQuery={handleDuplicateQuery}
@@ -470,6 +504,11 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             tabs={tabs}
             onRemoveTransform={handleRemoveTransform}
             onToggleTransformVisibility={handleToggleTransformVisibility}
+            queryLibraryMode={queryLibraryMode}
+            onQueryLibrarySelect={handleQueryLibrarySelect}
+            onQueryLibrarySave={handleQueryLibrarySave}
+            onQueryLibraryClose={handleQueryLibraryClose}
+            onOpenQueryLibrary={handleOpenQueryLibrary}
           />
         </div>
       </div>
@@ -478,11 +517,6 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         onClose={() => setTransformDrawerState({ open: false, index: null })}
         onTransformationAdd={handleAddTransform}
         series={series}
-      />
-      <SavedQueriesDrawer
-        isOpen={savedQueriesDrawerState.open}
-        onClose={() => setSavedQueriesDrawerState({ open: false, index: null })}
-        onSelectQuery={handleSelectSavedQuery}
       />
     </div>
   );

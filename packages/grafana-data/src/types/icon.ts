@@ -160,6 +160,7 @@ export const availableIconsIndex = {
   'gf-show-context': true,
   'gf-pin': true,
   'gf-prometheus': true,
+  'gf-query-library': true,
   'gf-traces': true,
   globe: true,
   grafana: true,

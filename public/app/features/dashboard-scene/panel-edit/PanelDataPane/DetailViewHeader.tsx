@@ -28,14 +28,33 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { getQueryRunnerFor } from '../../utils/utils';
 
 import { QueryTransformItem } from './QueryTransformList';
-import { SavedQueriesDrawer } from './SavedQueriesDrawer';
 
-interface DetailViewHeaderProps {
+// Props for regular item mode
+interface ItemModeProps {
   selectedItem: QueryTransformItem;
   panel: VizPanel;
   onRemoveTransform?: (index: number) => void;
   onToggleTransformVisibility?: (index: number) => void;
+  onOpenQueryLibrary?: (mode: 'browse' | 'save') => void;
+  queryLibraryMode?: never;
+  onSelectQuery?: never;
+  onClose?: never;
 }
+
+// Props for query library mode
+interface QueryLibraryModeProps {
+  selectedItem?: never;
+  panel?: never;
+  onRemoveTransform?: never;
+  onToggleTransformVisibility?: never;
+  onOpenQueryLibrary?: never;
+  queryLibraryMode: 'browse' | 'save';
+  onSelectQuery?: () => void;
+  onSaveQuery?: () => void;
+  onClose: () => void;
+}
+
+type DetailViewHeaderProps = ItemModeProps | QueryLibraryModeProps;
 
 const ITEM_CONFIG = (theme: GrafanaTheme2) => ({
   query: {
@@ -50,21 +69,85 @@ const ITEM_CONFIG = (theme: GrafanaTheme2) => ({
     color: theme.visualization.getColorByName('orange'),
     icon: 'process' as const,
   },
+  queryLibrary: {
+    color: theme.visualization.getColorByName('green'),
+    icon: 'bookmark' as const,
+  },
 });
 
-export const DetailViewHeader = ({
+// Separate component for query library header to avoid conditional hooks
+function QueryLibraryHeader({
+  mode,
+  onSelectQuery,
+  onSaveQuery,
+  onClose,
+}: {
+  mode: 'browse' | 'save';
+  onSelectQuery?: () => void;
+  onSaveQuery?: () => void;
+  onClose: () => void;
+}) {
+  const theme = useTheme2();
+  const config = useMemo(() => ITEM_CONFIG(theme).queryLibrary, [theme]);
+  const styles = useStyles2(getStyles, config);
+
+  return (
+    <div className={styles.header}>
+      <div className={styles.headerContent}>
+        <Stack gap={1} alignItems="center" grow={1} minWidth={0}>
+          <Icon name="gf-query-library" />
+          <span className={styles.transformName}>{t('query-library.header.title', 'SAVED QUERIES')}</span>
+        </Stack>
+        <Stack gap={0.5} alignItems="center">
+          {mode === 'browse' && onSelectQuery && (
+            <Button className={styles.monospace} variant="primary" fill="text" size="sm" onClick={onSelectQuery}>
+              {t('query-library.header.select-query', 'SELECT QUERY')}
+            </Button>
+          )}
+          {mode === 'save' && onSaveQuery && (
+            <Button className={styles.monospace} variant="primary" fill="text" size="sm" onClick={onSaveQuery}>
+              {t('query-library.header.save-query', 'SAVE')}
+            </Button>
+          )}
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item
+                  label={t('query-library.header.delete-all', 'Delete all')}
+                  icon="trash-alt"
+                  onClick={() => {}}
+                />
+              </Menu>
+            }
+          >
+            <IconButton name="ellipsis-v" variant="secondary" tooltip={t('query-library.header.more', 'More')} />
+          </Dropdown>
+          <IconButton
+            name="times"
+            variant="secondary"
+            onClick={onClose}
+            tooltip={t('query-library.header.close', 'Close')}
+          />
+        </Stack>
+      </div>
+    </div>
+  );
+}
+
+// Separate component for item header to keep hooks unconditional
+function ItemHeader({
   selectedItem,
   panel,
   onRemoveTransform,
   onToggleTransformVisibility,
-}: DetailViewHeaderProps) => {
+  onOpenQueryLibrary,
+}: ItemModeProps) {
   const theme = useTheme2();
   const config = useMemo(() => ITEM_CONFIG(theme)[selectedItem.type], [theme, selectedItem.type]);
   const styles = useStyles2(getStyles, config);
 
   const [isEditing, setIsEditing] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [isSavedQueriesDrawerOpen, setIsSavedQueriesDrawerOpen] = useState(false);
 
   // Helper to update queries with consistent pattern
   const updateQueries = useCallback(
@@ -267,23 +350,6 @@ export const DetailViewHeader = ({
     onToggleTransformVisibility?.(selectedItem.index);
   }, [selectedItem, onToggleTransformVisibility]);
 
-  // Handler for selecting a query from the library (replaces current query)
-  const onSelectQueryFromLibrary = useCallback(
-    (newQuery: DataQuery) => {
-      if (selectedItem.type !== 'query' || selectedItem.index === undefined) {
-        return;
-      }
-      updateQueries(
-        (queries) =>
-          queries.map((q, idx) =>
-            idx === selectedItem.index ? { ...newQuery, refId: q.refId, datasource: q.datasource } : q
-          ),
-        true
-      );
-    },
-    [selectedItem, updateQueries]
-  );
-
   const refId = 'refId' in selectedItem.data ? selectedItem.data.refId : '';
   const isHidden =
     (selectedItem.type === 'query' || selectedItem.type === 'expression') &&
@@ -362,14 +428,14 @@ export const DetailViewHeader = ({
         {(selectedItem.type === 'query' || selectedItem.type === 'expression') && (
           <Stack gap={0.5} alignItems="center">
             {/* Save Query Button (only for queries, not expressions) */}
-            {selectedItem.type === 'query' && 'refId' in selectedItem.data && (
+            {selectedItem.type === 'query' && 'refId' in selectedItem.data && onOpenQueryLibrary && (
               <Button
                 className={styles.monospace}
                 variant="primary"
                 fill="text"
                 size="sm"
                 icon="bookmark"
-                onClick={() => setIsSavedQueriesDrawerOpen(true)}
+                onClick={() => onOpenQueryLibrary('save')}
               >
                 {t('dashboard-scene.detail-view-header.save-query', 'SAVE')}
               </Button>
@@ -452,26 +518,31 @@ export const DetailViewHeader = ({
           </Stack>
         )}
       </div>
-
-      {/* Saved Queries Drawer */}
-      {selectedItem.type === 'query' && 'refId' in selectedItem.data && (
-        <SavedQueriesDrawer
-          isOpen={isSavedQueriesDrawerOpen}
-          onClose={() => setIsSavedQueriesDrawerOpen(false)}
-          onSelectQuery={onSelectQueryFromLibrary}
-          currentQuery={
-            'datasource' in selectedItem.data
-              ? {
-                  refId: selectedItem.data.refId,
-                  datasource: datasourceSettings
-                    ? { uid: datasourceSettings.uid, type: datasourceSettings.type }
-                    : selectedItem.data.datasource,
-                }
-              : { refId: selectedItem.data.refId }
-          }
-        />
-      )}
     </div>
+  );
+}
+
+// Main component that delegates to the appropriate sub-component
+export const DetailViewHeader = (props: DetailViewHeaderProps) => {
+  if (props.queryLibraryMode) {
+    return (
+      <QueryLibraryHeader
+        mode={props.queryLibraryMode}
+        onSelectQuery={props.onSelectQuery}
+        onSaveQuery={props.onSaveQuery}
+        onClose={props.onClose}
+      />
+    );
+  }
+
+  return (
+    <ItemHeader
+      selectedItem={props.selectedItem}
+      panel={props.panel}
+      onRemoveTransform={props.onRemoveTransform}
+      onToggleTransformVisibility={props.onToggleTransformVisibility}
+      onOpenQueryLibrary={props.onOpenQueryLibrary}
+    />
   );
 };
 
@@ -546,7 +617,9 @@ const getStyles = (theme: GrafanaTheme2, config: { color: string }) => {
     transformName: css({
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.primary,
-      fontSize: theme.typography.body.fontSize,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      letterSpacing: '0.05em',
     }),
   };
 };
