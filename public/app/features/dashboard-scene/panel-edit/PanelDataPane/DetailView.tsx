@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, useCallback, useRef } from 'react';
 
-import { DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, DataQuery, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Container, ScrollContainer, useStyles2 } from '@grafana/ui';
@@ -12,8 +12,8 @@ import { ExpressionDetailView } from './ExpressionDetailView';
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
 import { QueryDetailView } from './QueryDetailView';
 import { QueryLibraryView, QueryLibraryViewRef } from './QueryLibraryView';
-import { QueryTransformItem } from './QueryTransformList';
-import { TabId } from './types';
+import { TransformationPickerView } from './TransformationPickerView';
+import { TabId, QueryTransformItem } from './types';
 
 export interface QueryLibraryMode {
   active: boolean;
@@ -27,6 +27,11 @@ interface DetailViewProps {
   tabs: Array<{ tabId: TabId }>;
   onRemoveTransform?: (index: number) => void;
   onToggleTransformVisibility?: (index: number) => void;
+  isAddingTransform?: boolean;
+  onAddTransformation?: (selectedItem: SelectableValue<string>, customOptions?: Record<string, unknown>) => void;
+  onCancelAddTransform?: () => void;
+  transformationData?: DataFrame[];
+  onGoToQueries?: () => void;
   queryLibraryMode?: QueryLibraryMode;
   onQueryLibrarySelect?: (query: DataQuery) => void;
   onQueryLibrarySave?: (name: string, description: string) => void;
@@ -41,6 +46,11 @@ export const DetailView = memo(
     tabs,
     onRemoveTransform,
     onToggleTransformVisibility,
+    isAddingTransform,
+    onAddTransformation,
+    onCancelAddTransform,
+    transformationData,
+    onGoToQueries,
     queryLibraryMode,
     onQueryLibrarySelect,
     onQueryLibrarySave,
@@ -59,6 +69,18 @@ export const DetailView = memo(
     }, []);
 
     const renderContent = useCallback(() => {
+      // Show transformation picker when in add mode
+      if (isAddingTransform && onAddTransformation && onCancelAddTransform) {
+        return (
+          <TransformationPickerView
+            data={transformationData || []}
+            onAddTransformation={onAddTransformation}
+            onCancel={onCancelAddTransform}
+            onGoToQueries={onGoToQueries}
+          />
+        );
+      }
+
       // Show QueryLibraryView when in query library mode
       if (queryLibraryMode?.active && onQueryLibraryClose) {
         return (
@@ -144,6 +166,11 @@ export const DetailView = memo(
       styles.emptyState,
       onRemoveTransform,
       onToggleTransformVisibility,
+      isAddingTransform,
+      onAddTransformation,
+      onCancelAddTransform,
+      transformationData,
+      onGoToQueries,
       queryLibraryMode,
       onQueryLibrarySelect,
       onQueryLibrarySave,

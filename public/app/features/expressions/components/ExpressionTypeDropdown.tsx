@@ -5,7 +5,7 @@ import { FeatureState, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Dropdown, FeatureBadge, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 
-import { EXPRESSION_ICON_MAP } from '../consts';
+import { getExpressionIcon } from '../types';
 
 interface ExpressionTypeDropdownProps {
   children: ReactElement;
@@ -28,7 +28,7 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect }) =>
       component={() => (
         <div className={styles.expressionTypeItem} role="menuitem">
           <div className={styles.expressionTypeItemContent} data-testid={`expression-type-${value}`}>
-            <Icon className={styles.icon} name={EXPRESSION_ICON_MAP[value!]} aria-hidden="true" />
+            <Icon className={styles.icon} name={getExpressionIcon(value!)} aria-hidden="true" />
             {label}
             {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.preview} />}
           </div>

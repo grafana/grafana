@@ -27,9 +27,9 @@ import { DetailView, QueryLibraryMode } from './DetailView';
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
-import { QueryTransformList, QueryTransformItem } from './QueryTransformList';
+import { QueryTransformList } from './QueryTransformList';
 import { TransformationsDrawer } from './TransformationsDrawer';
-import { PanelDataPaneTab, TabId } from './types';
+import { PanelDataPaneTab, TabId, QueryItem, TransformItem } from './types';
 import { isDataTransformerConfig, queryItemId, transformItemId } from './utils';
 
 export interface PanelDataPaneState extends SceneObjectState {
@@ -100,6 +100,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     open: false,
     index: null,
   });
+  const [isAddingTransform, setIsAddingTransform] = useState(false);
 
   const panel = panelRef.resolve();
 
@@ -147,14 +148,14 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   }, [queryRunner]);
 
   // Build separate lists for queries/expressions and transformations
-  const { dataSourceItems, transformItems, allItems } = useMemo(() => {
-    const dataSourceItems: QueryTransformItem[] = [];
-    const transformItems: QueryTransformItem[] = [];
+  const { queryExpressionItems, transformItems, allItems } = useMemo(() => {
+    const queryExpressionItems: QueryItem[] = [];
+    const transformItems: TransformItem[] = [];
 
     // Add queries and expressions
     for (let i = 0; i < (queries?.length ?? 0); i++) {
       const query = queries![i];
-      dataSourceItems.push({
+      queryExpressionItems.push({
         id: queryItemId(query),
         type: isExpressionQuery(query) ? 'expression' : 'query',
         data: query,
@@ -176,9 +177,9 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     }
 
     return {
-      dataSourceItems,
+      queryExpressionItems,
       transformItems,
-      allItems: [...dataSourceItems, ...transformItems],
+      allItems: [...queryExpressionItems, ...transformItems],
     };
   }, [queries, transformations]);
 
@@ -197,6 +198,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   const handleSelect = useCallback((id: string) => {
     setSelectedId(id);
+    setIsAddingTransform(false);
   }, []);
 
   const updateQuerySelectionOnStateChange = useCallback(
@@ -235,6 +237,16 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     },
     [queriesTab, updateQuerySelectionOnStateChange, queries]
   );
+
+  const handleGoToQueries = useCallback(() => {
+    // Close the transformation picker
+    setIsAddingTransform(false);
+    // Add a SQL expression
+    if (queriesTab) {
+      updateQuerySelectionOnStateChange(queries?.length ?? 0);
+      queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
+    }
+  }, [queriesTab, updateQuerySelectionOnStateChange, queries]);
 
   const handleDuplicateQuery = useCallback(
     (index: number) => {
@@ -377,6 +389,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
           setSelectedId(!!newTransform ? transformItemId(selectedIndex) : null);
           setTransformDrawerState({ open: false, index: null });
+          setIsAddingTransform(false);
           unsub.unsubscribe();
         });
 
@@ -457,13 +470,16 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
         <div {...primaryProps} className={cx(primaryProps.className, styles.leftPane)}>
           <QueryTransformList
             allItems={allItems}
-            dataSourceItems={dataSourceItems}
+            dataSourceItems={queryExpressionItems}
             transformItems={transformItems}
             selectedId={effectiveSelectedId}
             onSelect={handleSelect}
             onAddQuery={handleAddQuery}
             onAddFromSavedQueries={(index) => handleOpenQueryLibrary('browse', index)}
-            onAddTransform={(index) => setTransformDrawerState({ open: true, index: index ?? null })}
+            onAddTransform={(index) => {
+              setIsAddingTransform(true);
+              setSelectedId(null);
+            }}
             onAddExpression={handleAddExpression}
             onDuplicateQuery={handleDuplicateQuery}
             onRemoveQuery={handleRemoveQuery}
@@ -504,6 +520,11 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
             tabs={tabs}
             onRemoveTransform={handleRemoveTransform}
             onToggleTransformVisibility={handleToggleTransformVisibility}
+            isAddingTransform={isAddingTransform}
+            onAddTransformation={handleAddTransform}
+            onCancelAddTransform={() => setIsAddingTransform(false)}
+            transformationData={series}
+            onGoToQueries={handleGoToQueries}
             queryLibraryMode={queryLibraryMode}
             onQueryLibrarySelect={handleQueryLibrarySelect}
             onQueryLibrarySave={handleQueryLibrarySave}

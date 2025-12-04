@@ -1,4 +1,5 @@
-import { SceneObject } from '@grafana/scenes';
+import { DataTransformerConfig } from '@grafana/data';
+import { SceneDataQuery, SceneObject } from '@grafana/scenes';
 
 export enum TabId {
   Queries = 'queries',
@@ -16,3 +17,20 @@ export interface PanelDataPaneTab extends SceneObject {
   getTabLabel(): string;
   tabId: TabId;
 }
+
+interface QueryTransformItemBase {
+  id: string;
+  index: number;
+}
+
+export interface QueryItem extends QueryTransformItemBase {
+  type: 'query' | 'expression';
+  data: SceneDataQuery;
+}
+
+export interface TransformItem extends QueryTransformItemBase {
+  type: 'transform';
+  data: DataTransformerConfig;
+}
+
+export type QueryTransformItem = QueryItem | TransformItem;

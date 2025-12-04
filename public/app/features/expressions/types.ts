@@ -1,4 +1,4 @@
-import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
+import { DataQuery, IconName, ReducerID, SelectableValue } from '@grafana/data';
 import { config } from 'app/core/config';
 
 import { EvalFunction } from '../alerting/state/alertDef';
@@ -17,6 +17,7 @@ export enum ExpressionQueryType {
   sql = 'sql',
 }
 
+// FIXME: should be translated
 export const getExpressionLabel = (type: ExpressionQueryType) => {
   switch (type) {
     case ExpressionQueryType.math:
@@ -32,6 +33,19 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
     case ExpressionQueryType.sql:
       return 'SQL';
   }
+};
+
+export const EXPRESSION_ICON_MAP = {
+  [ExpressionQueryType.math]: 'calculator-alt',
+  [ExpressionQueryType.reduce]: 'compress-arrows',
+  [ExpressionQueryType.resample]: 'sync',
+  [ExpressionQueryType.classic]: 'cog',
+  [ExpressionQueryType.threshold]: 'sliders-v-alt',
+  [ExpressionQueryType.sql]: 'database',
+} as const satisfies Record<ExpressionQueryType, string>;
+
+export const getExpressionIcon = (type?: ExpressionQueryType): IconName => {
+  return type && type in EXPRESSION_ICON_MAP ? EXPRESSION_ICON_MAP[type] : 'calculator-alt';
 };
 
 export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
