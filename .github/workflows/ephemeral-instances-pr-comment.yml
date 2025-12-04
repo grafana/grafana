@@ -33,6 +33,8 @@ jobs:
             GCOM_TOKEN=ephemeral-instances-bot:gcom-token
             REGISTRY=ephemeral-instances-bot:registry
             GCP_SA_ACCOUNT_KEY_BASE64=ephemeral-instances-bot:sa-key
+          # Secrets placed in the ci/common/<path> path in Vault
+          common_secrets: |
             DOCKERHUB_USERNAME=dockerhub:username
             DOCKERHUB_PASSWORD=dockerhub:password
 
