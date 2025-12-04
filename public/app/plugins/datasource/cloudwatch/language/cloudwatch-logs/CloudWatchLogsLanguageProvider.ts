@@ -5,8 +5,9 @@ import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data'
 import { BackendDataSourceResponse, FetchResponse, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
+import { LogGroup } from '../../dataquery.gen';
 import { CloudWatchDatasource } from '../../datasource';
-import { CloudWatchQuery, LogGroup } from '../../types';
+import { CloudWatchQuery } from '../../types';
 import { fetchLogGroupFields } from '../utils';
 
 import syntax, {
