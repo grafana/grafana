@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -80,23 +79,10 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 
-	tracingConfig, err := tracing.ProvideTracingConfig(cfg)
-	if err != nil {
-		return err
-	}
-
-	tracer, err := tracing.ProvideService(tracingConfig)
-	if err != nil {
-		return err
-	}
-
-	playlistService := playlistimpl.ProvideService(sqlStore, tracer)
-
 	dashboardAccess := legacy.ProvideMigratorDashboardAccessor(
 		legacysql.NewDatabaseProvider(sqlStore),
 		provisioning,
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
-		playlistService,
 	)
 
 	if c.Bool("non-interactive") {

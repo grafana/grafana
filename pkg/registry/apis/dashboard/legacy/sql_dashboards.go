@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
-	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -92,7 +91,6 @@ type dashboardSqlAccess struct {
 
 	accessControl   accesscontrol.AccessControl
 	libraryPanelSvc librarypanels.Service // only used for save dashboard
-	playlistSvc     playlistsvc.Service   // only used for playlist migration
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -106,7 +104,6 @@ func ProvideMigratorDashboardAccessor(
 	sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
-	playlistSvc playlistsvc.Service,
 ) MigrationDashboardAccessor {
 	return &dashboardSqlAccess{
 		sql:                    sql,
@@ -115,7 +112,6 @@ func ProvideMigratorDashboardAccessor(
 		provisioning:           provisioning,
 		dashboardPermissionSvc: nil, // not needed for migration
 		libraryPanelSvc:        nil, // not needed for migration
-		playlistSvc:            playlistSvc,
 		accessControl:          accessControl,
 	}
 }
@@ -125,7 +121,6 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
 	libraryPanelSvc librarypanels.Service,
-	playlistSvc playlistsvc.Service,
 	sorter sort.Service,
 	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
@@ -140,12 +135,19 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 		dashboardSearchClient:  *dashboardSearchClient,
 		dashboardPermissionSvc: dashboardPermissionSvc,
 		libraryPanelSvc:        libraryPanelSvc,
-		playlistSvc:            playlistSvc,
 		accessControl:          accessControl,
 	}
 }
 
-func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*rowsWrapper, error) {
+func (a *dashboardSqlAccess) executeQuery(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query string, args ...any) (*sql.Rows, error) {
+	// Use transaction if available in context. This allows us to run migrations in a transaction which is needed for SQLite
+	if tx := resource.TransactionFromContext(ctx); tx != nil {
+		return tx.QueryContext(ctx, query, args...)
+	}
+	return helper.DB.GetSqlxSession().Query(ctx, query, args...)
+}
+
+func (a *dashboardSqlAccess) getRows(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*rowsWrapper, error) {
 	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.getRows")
 	defer span.End()
 
@@ -157,7 +159,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		// }
 	}
 
-	req := newQueryReq(sql, query)
+	req := newQueryReq(helper, query)
 
 	tmpl := sqlQueryDashboards
 	if query.UseHistoryTable() && query.GetTrash {
@@ -174,7 +176,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 	//	 fmt.Printf("DASHBOARD QUERY: %s [%+v] // %+v\n", pretty, req.GetArgs(), query)
 	// }
 
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := a.executeQuery(ctx, helper, q, req.GetArgs()...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()
@@ -475,36 +477,82 @@ func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int
 // MigratePlaylists handles the playlist migration logic
 func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
 	opts.Progress(-1, "migrating playlists...")
-	playlists, err := a.playlistSvc.List(ctx, orgId)
+	rows, err := a.ListPlaylists(ctx, orgId)
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
+	}
 	if err != nil {
 		return nil, err
 	}
-	for i, pl := range playlists {
-		// Convert PlaylistDTO to v0alpha1.Playlist
+
+	// Group playlist items by playlist ID
+	type playlistData struct {
+		id        int64
+		uid       string
+		name      string
+		interval  string
+		items     []playlistv0.PlaylistItem
+		createdAt int64
+		updatedAt int64
+	}
+
+	playlists := make(map[int64]*playlistData)
+	var currentID int64
+	var orgID int64
+	var uid, name, interval string
+	var itemType, itemValue sql.NullString
+
+	count := 0
+	for rows.Next() {
+		err = rows.Scan(&currentID, &orgID, &uid, &name, &interval, &itemType, &itemValue)
+		if err != nil {
+			return nil, err
+		}
+
+		// Get or create playlist entry
+		pl, exists := playlists[currentID]
+		if !exists {
+			pl = &playlistData{
+				id:       currentID,
+				uid:      uid,
+				name:     name,
+				interval: interval,
+				items:    []playlistv0.PlaylistItem{},
+			}
+			playlists[currentID] = pl
+		}
+
+		// Add item if it exists (LEFT JOIN can return NULL for playlists without items)
+		if itemType.Valid && itemValue.Valid {
+			pl.items = append(pl.items, playlistv0.PlaylistItem{
+				Type:  playlistv0.PlaylistItemType(itemType.String),
+				Value: itemValue.String,
+			})
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Convert to K8s objects and send to stream
+	for _, pl := range playlists {
 		playlist := &playlistv0.Playlist{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: playlistv0.GroupVersion.String(),
 				Kind:       "Playlist",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:              pl.Uid,
-				Namespace:         opts.Namespace,
-				CreationTimestamp: metav1.NewTime(time.Unix(pl.CreatedAt, 0)),
-				ResourceVersion:   strconv.FormatInt(pl.UpdatedAt, 10),
+				Name:      pl.uid,
+				Namespace: opts.Namespace,
 			},
 			Spec: playlistv0.PlaylistSpec{
-				Title:    pl.Name,
-				Interval: pl.Interval,
-				Items:    make([]playlistv0.PlaylistItem, len(pl.Items)),
+				Title:    pl.name,
+				Interval: pl.interval,
+				Items:    pl.items,
 			},
-		}
-
-		// Convert items
-		for j, item := range pl.Items {
-			playlist.Spec.Items[j] = playlistv0.PlaylistItem{
-				Type:  playlistv0.PlaylistItemType(item.Type),
-				Value: item.Value,
-			}
 		}
 
 		body, err := json.Marshal(playlist)
@@ -517,13 +565,14 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 				Namespace: opts.Namespace,
 				Group:     "playlist.grafana.app",
 				Resource:  "playlists",
-				Name:      pl.Uid,
+				Name:      pl.uid,
 			},
 			Value:  body,
 			Action: resourcepb.BulkRequest_ADDED,
 		}
 
-		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", i, pl.Name, len(req.Value)))
+		opts.Progress(count, fmt.Sprintf("%s (%d)", pl.name, len(req.Value)))
+		count++
 
 		err = stream.Send(req)
 		if err != nil {
@@ -975,20 +1024,19 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		return nil, err
 	}
 
-	sqlx, err := a.sql(ctx)
+	helper, err := a.sql(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req := newLibraryQueryReq(sqlx, &query)
+	req := newLibraryQueryReq(helper, &query)
 	rawQuery, err := sqltemplate.Execute(sqlQueryPanels, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPanels.Name(), err)
 	}
-	q := rawQuery
 
 	res := &dashboardV0.LibraryPanelList{}
-	rows, err := sqlx.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := a.executeQuery(ctx, helper, rawQuery, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -1031,7 +1079,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		}
 	}
 	if query.UID == "" {
-		rv, err := sqlx.GetResourceVersion(ctx, "library_element", "updated")
+		rv, err := helper.GetResourceVersion(ctx, "library_element", "updated")
 		if err == nil {
 			res.ResourceVersion = strconv.FormatInt(rv*1000, 10) // convert to microseconds
 		}
@@ -1109,4 +1157,30 @@ func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
 
 func (b *dashboardSqlAccess) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
 	return nil, fmt.Errorf("not implemented")
+}
+
+func (a *dashboardSqlAccess) ListPlaylists(ctx context.Context, orgID int64) (*sql.Rows, error) {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.ListPlaylists")
+	defer span.End()
+
+	helper, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newPlaylistQueryReq(helper, &PlaylistQuery{
+		OrgID: orgID,
+	})
+
+	rawQuery, err := sqltemplate.Execute(sqlQueryPlaylists, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPlaylists.Name(), err)
+	}
+
+	rows, err := a.executeQuery(ctx, helper, rawQuery, req.GetArgs()...)
+	if err != nil && rows != nil {
+		_ = rows.Close()
+		return nil, err
+	}
+	return rows, err
 }
