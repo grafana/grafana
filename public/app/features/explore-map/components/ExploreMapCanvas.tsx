@@ -17,6 +17,7 @@ import { ExploreMapComment } from './ExploreMapComment';
 import { ExploreMapFrame } from './ExploreMapFrame';
 import { ExploreMapPanelContainer } from './ExploreMapPanelContainer';
 import { ExploreMapStickyNote } from './ExploreMapStickyNote';
+import { Minimap } from './Minimap';
 import { UserCursor } from './UserCursor';
 
 interface SelectionRect {
@@ -36,6 +37,7 @@ export function ExploreMapCanvas() {
   const [isSelecting, setIsSelecting] = useState(false);
   const justCompletedSelectionRef = useRef(false);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const transformWrapperRef = useRef<HTMLDivElement>(null);
 
   const panels = useSelector((state) => selectPanels(state.exploreMapCRDT));
   const frames = useSelector((state) => selectFrames(state.exploreMapCRDT));
@@ -61,27 +63,47 @@ export function ExploreMapCanvas() {
   });
 
   // Track container size for viewport calculations
+  // Since the canvas is 50000px and all parent containers are expanding to fit it,
+  // we need to find the actual viewport-constrained container
   useEffect(() => {
-    if (!containerRef.current) {
-      return;
-    }
-
     const updateSize = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setContainerSize({ width: rect.width, height: rect.height });
+      // Walk up the DOM to find the first element that has a constrained height
+      let element = containerRef.current?.parentElement;
+      let width = 0;
+      let height = 0;
+
+      while (element) {
+        const computedStyle = window.getComputedStyle(element);
+        const elementHeight = element.clientHeight;
+        const elementWidth = element.clientWidth;
+
+        // Look for an element with a constrained height (not 50000px)
+        if (elementHeight < 50000 && elementHeight > 0) {
+          width = elementWidth;
+          height = elementHeight;
+          break;
+        }
+
+        element = element.parentElement;
+      }
+
+      if (width > 0 && height > 0) {
+        setContainerSize({ width, height });
       }
     };
 
-    // Initial size
-    updateSize();
+    // Delay initial size update to ensure DOM is mounted
+    const timeoutId = setTimeout(updateSize, 100);
 
     // Update on resize
-    const resizeObserver = new ResizeObserver(updateSize);
-    resizeObserver.observe(containerRef.current);
+    const handleResize = () => {
+      updateSize();
+    };
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      resizeObserver.disconnect();
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
@@ -163,13 +185,13 @@ export function ExploreMapCanvas() {
 
       // The canvas element is inside TransformComponent which applies CSS transform: scale() and translate()
       // The bounding rect already reflects the transform, so screenX/screenY are in the zoomed coordinate space
-      // We need to convert back to the original 10000x10000 canvas coordinate space
+      // We need to convert back to the original 50000x50000 canvas coordinate space
       const scale = contextTransformRef?.current?.state?.scale ?? viewport.zoom;
 
       // Since getBoundingClientRect() gives us the rect AFTER transform,
       // we just need to divide by scale to get canvas coordinates
-      const canvasX = Math.max(0, Math.min(10000, screenX / scale));
-      const canvasY = Math.max(0, Math.min(10000, screenY / scale));
+      const canvasX = Math.max(0, Math.min(50000, screenX / scale));
+      const canvasY = Math.max(0, Math.min(50000, screenY / scale));
 
       // Update cursor position for all sessions (using actual canvas coordinates, clamped to bounds)
       // Include currently selected panel IDs for collaborative selection visualization
@@ -363,6 +385,7 @@ export function ExploreMapCanvas() {
           <EdgeCursorIndicator key={info.cursor.sessionId} cursorInfo={info} />
         ))}
       <ExploreMapComment />
+      <Minimap containerWidth={containerSize.width} containerHeight={containerSize.height} />
     </div>
   );
 }
@@ -374,6 +397,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 1,
       overflow: 'hidden',
       backgroundColor: theme.colors.background.canvas,
+      height: '100%', // Ensure it doesn't expand beyond flex allocation
+      minHeight: 0, // Allow flex shrinking
     }),
     transformWrapper: css({
       width: '100%',
@@ -389,8 +414,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     canvas: css({
       position: 'relative',
-      width: '10000px',
-      height: '10000px',
+      width: '50000px',
+      height: '50000px',
       '--grid-color': theme.colors.border.weak,
       backgroundImage: `
         radial-gradient(circle, var(--grid-color) 1.5px, transparent 1.5px)

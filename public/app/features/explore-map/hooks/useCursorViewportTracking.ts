@@ -30,7 +30,7 @@ interface UseCursorViewportTrackingOptions {
   containerHeight: number;
 }
 
-const CANVAS_SIZE = 10000;
+const CANVAS_SIZE = 50000;
 const EDGE_INDICATOR_MARGIN = 20; // Pixels from edge
 
 /**
