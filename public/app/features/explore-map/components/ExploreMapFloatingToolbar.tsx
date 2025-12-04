@@ -14,7 +14,13 @@ import tempoLogoSvg from 'app/plugins/datasource/tempo/img/tempo_logo.svg';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { addPanel, addFrame, addPostItNote, setCursorMode } from '../state/crdtSlice';
-import { selectPanels, selectMapUid, selectViewport, selectSelectedPanelIds, selectCursorMode } from '../state/selectors';
+import {
+  selectPanels,
+  selectMapUid,
+  selectViewport,
+  selectSelectedPanelIds,
+  selectCursorMode,
+} from '../state/selectors';
 
 import { AddPanelAction } from './AssistantComponents';
 
@@ -105,9 +111,7 @@ export function ExploreMapFloatingToolbar() {
 
   const handleAddFrame = useCallback(() => {
     // Get selected panels that are not already in a frame
-    const selectedUnframedPanels = selectedPanelIds
-      .map((id) => panels[id])
-      .filter((panel) => panel && !panel.frameId);
+    const selectedUnframedPanels = selectedPanelIds.map((id) => panels[id]).filter((panel) => panel && !panel.frameId);
 
     let position: { x: number; y: number; width: number; height: number };
 
@@ -157,7 +161,7 @@ export function ExploreMapFloatingToolbar() {
       })
     );
   }, [dispatch, currentUsername, selectedPanelIds, panels, viewport]);
-  
+
   const handleAddPostItNote = useCallback(() => {
     dispatch(
       addPostItNote({
@@ -241,11 +245,23 @@ CRITICAL:
       title: t('explore-map.assistant.capabilities-title', 'Explore Map Capabilities'),
       data: {
         capabilities: [
-          t('explore-map.assistant.capability-add-panels', 'You can help users add new panels to the canvas using the exploreMap_AddPanelAction component'),
-          t('explore-map.assistant.capability-analyze', 'Analyze the current panels and suggest additional panels that would complement the existing ones'),
-          t('explore-map.assistant.capability-gaps', 'Identify gaps in observability coverage (missing logs, traces, metrics, or profiles)'),
+          t(
+            'explore-map.assistant.capability-add-panels',
+            'You can help users add new panels to the canvas using the exploreMap_AddPanelAction component'
+          ),
+          t(
+            'explore-map.assistant.capability-analyze',
+            'Analyze the current panels and suggest additional panels that would complement the existing ones'
+          ),
+          t(
+            'explore-map.assistant.capability-gaps',
+            'Identify gaps in observability coverage (missing logs, traces, metrics, or profiles)'
+          ),
           t('explore-map.assistant.capability-layouts', 'Suggest panel layouts or organization strategies'),
-          t('explore-map.assistant.capability-relationships', 'Help users understand relationships between panels based on their queries and datasources'),
+          t(
+            'explore-map.assistant.capability-relationships',
+            'Help users understand relationships between panels based on their queries and datasources'
+          ),
         ],
         instructions: t(
           'explore-map.assistant.instructions',
