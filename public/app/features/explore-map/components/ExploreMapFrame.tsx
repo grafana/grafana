@@ -499,6 +499,7 @@ function ExploreMapFrameComponent({ frame }: ExploreMapFrameProps) {
         <div
           className={styles.frameHeader + ' frame-drag-handle'}
           style={{
+            width: `${currentSize.width * viewport.zoom}px`,
             top: `${-30 / viewport.zoom}px`,
             transform: `scale(${1 / viewport.zoom})`,
             transformOrigin: 'top left',
@@ -641,6 +642,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     top: '-30px',
     left: '0',
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
+    minWidth: 0,
     padding: theme.spacing(0.5, 1),
     backgroundColor: theme.colors.background.secondary,
     border: `1px solid ${theme.colors.border.strong}`,
@@ -703,7 +708,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   frameTitle: css({
     fontSize: theme.typography.body.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
-    minWidth: '100px',
+    flex: '1 1 auto',
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   }),
   frameTitleInput: css({
     fontSize: theme.typography.body.fontSize,
@@ -713,7 +722,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     outline: `2px solid ${theme.colors.primary.border}`,
     backgroundColor: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
-    minWidth: '100px',
+    flex: '1 1 auto',
+    minWidth: 0,
   }),
   colorButton: css({
     width: '24px',
