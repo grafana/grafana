@@ -123,6 +123,9 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 		}
 		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil, nil)
 		for _, s := range states {
+			if !historian.ShouldRecord(s) {
+				continue
+			}
 			entry := historian.StateTransitionToLokiEntry(ruleMeta, s)
 			err := builder.AddRow(currentTime, entry, labelsBytes)
 			if err != nil {
