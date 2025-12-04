@@ -5065,10 +5065,7 @@
         "copy-or-duplicate": "複製或重複",
         "delete": "刪除",
         "duplicate": "重複",
-        "group-layout": "群組版面配置",
-        "group-layout-disabled": "此層級上不存在群組",
-        "panel-layout": "面板版面配置",
-        "panel-layout-disabled": "選擇一列或分頁以變更面板版面配置選項"
+        "layout": "版面配置"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -6535,7 +6532,7 @@
       "delete-button": "刪除",
       "title": "刪除"
     },
-    "delete-modal-restore-dashboards-text": "此動作會標記儀表板，以便在 30 天後刪除。您的組織管理員可以在 30 天到期之前隨時還原。",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "您要刪除此儀表板嗎？",
     "general": {
       "auto-refresh-description": "定義自動重新整理清單中應該可用的自動重新整理間隔。使用格式「5s」表示秒，「1m」表示分鐘，「1h」表示小時，「1d」表示天（例如：「5s、10s、30s、1m、5m、15m、30m、1h、2h、1d」）。",
@@ -7280,6 +7277,14 @@
       },
       "title-failed-sample-query": "無法載入此查詢的紀錄樣本",
       "tooltip": "顯示對可視化指標有貢獻的紀錄行"
+    },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
     },
     "logs-table-empty-fields": {
       "no-fields": "沒有欄位"

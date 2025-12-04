@@ -8,6 +8,7 @@ import {
   EventBusSrv,
   ExploreLogsPanelState,
   LogLevel,
+  LogRowModel,
   LogsMetaItem,
   LogsSortOrder,
   SplitOpen,
@@ -41,6 +42,10 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   datasourceType?: string;
   width?: number;
   logsTableFrames?: DataFrame[];
+  displayedFields?: string[];
+  exploreId?: string;
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 export type LogRowsComponentProps = Omit<

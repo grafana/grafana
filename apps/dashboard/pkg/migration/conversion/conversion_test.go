@@ -605,6 +605,44 @@ func TestConversionMetrics(t *testing.T) {
 			expectedSourceSchema: "v2alpha1",
 			expectedTargetSchema: "v2beta1",
 		},
+		{
+			name: "successful v2alpha1 to v0 conversion",
+			source: &dashv2alpha1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{UID: "test-uid-4"},
+				Spec: dashv2alpha1.DashboardSpec{
+					Title:       "test dashboard",
+					Elements:    map[string]dashv2alpha1.DashboardElement{},
+					Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{},
+					Links:       []dashv2alpha1.DashboardDashboardLink{},
+				},
+			},
+			target:               &dashv0.Dashboard{},
+			expectAPISuccess:     true,
+			expectMetricsSuccess: true,
+			expectedSourceAPI:    dashv2alpha1.APIVERSION,
+			expectedTargetAPI:    dashv0.APIVERSION,
+			expectedSourceSchema: "v2alpha1",
+			expectedTargetSchema: "42", // V2→V0 results in latest schema version
+		},
+		{
+			name: "successful v2beta1 to v0 conversion",
+			source: &dashv2beta1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{UID: "test-uid-5"},
+				Spec: dashv2beta1.DashboardSpec{
+					Title:       "test dashboard",
+					Elements:    map[string]dashv2beta1.DashboardElement{},
+					Annotations: []dashv2beta1.DashboardAnnotationQueryKind{},
+					Links:       []dashv2beta1.DashboardDashboardLink{},
+				},
+			},
+			target:               &dashv0.Dashboard{},
+			expectAPISuccess:     true,
+			expectMetricsSuccess: true,
+			expectedSourceAPI:    dashv2beta1.APIVERSION,
+			expectedTargetAPI:    dashv0.APIVERSION,
+			expectedSourceSchema: "v2beta1",
+			expectedTargetSchema: "42", // V2→V0 results in latest schema version
+		},
 	}
 
 	for _, tt := range tests {
