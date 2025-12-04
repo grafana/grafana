@@ -36,8 +36,6 @@ const playerY = 23;
 const userMissile = '╫';
 const userMissileRegex = new RegExp(userMissile, 'g');
 const missileSpeed = 0.06;
-const enemySpeed = 0.001;
-const ufoSpeed = 0.0095;
 
 type Missile = {
   x: number;
@@ -172,11 +170,12 @@ function update(
     })
     .filter((missile) => missile.y >= 2);
 
+  const lowestEnemyY = enemies.reduce((max, enemy) => Math.max(max, enemy.y), 0);
+  const shieldStart = gameState.findIndex((row) => row.entry.includes('#'));
+  const formationCanMoveDown = shieldStart === -1 || lowestEnemyY + 1 < shieldStart;
+
   const newEnemies = enemies
     .map((enemy) => {
-      const shieldStart = gameState.findIndex((row) => row.entry.includes('#'));
-      const enemyBelow = enemies.find((otherEnemy) => shieldStart && otherEnemy.y === shieldStart - 1);
-
       const speed = enemy.type === enemyTypeUfo ? ufoSpeed : enemySpeed;
 
       if (enemy.health <= 3) {
@@ -189,7 +188,7 @@ function update(
           }
         } else if (enemy.gridX - enemy.sourceX >= 5) {
           enemy.direction = 'l';
-          if (!enemyBelow) {
+          if (formationCanMoveDown) {
             enemy.y += 1;
           }
         }
@@ -201,7 +200,7 @@ function update(
           }
         } else if (enemy.gridX - enemy.sourceX <= -5) {
           enemy.direction = 'r';
-          if (!enemyBelow) {
+          if (formationCanMoveDown) {
             enemy.y += 1;
           }
         }
