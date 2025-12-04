@@ -27,9 +27,9 @@ export const barMarkersEditor = (builder: PanelOptionsEditorBuilder<Markers>, ct
   });
 
   builder.addCustomEditor({
-    id: 'vdxfe',
+    id: 'barchart.markers.DragDropEditor',
     path: '',
-    name: 'Editing marker:',
+    name: t('barchart.editor.markers.DragDropEditing', 'Markers'),
     editor: MarkerDragDropEditor,
     showIf: (opts) => opts.markerGroups.length > 0,
   });
