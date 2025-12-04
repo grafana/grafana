@@ -2,8 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Grafana dashboards as resources",
-    "title": "dashboard.grafana.app/v2alpha1",
-    "version": "12.4.0-pre"
+    "title": "dashboard.grafana.app/v2alpha1"
   },
   "paths": {
     "/apis/dashboard.grafana.app/v2alpha1/": {
