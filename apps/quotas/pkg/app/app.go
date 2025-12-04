@@ -34,7 +34,7 @@ func NewQuotasHandler(cfg *QuotasAppConfig) *QuotasHandler {
 	}
 }
 
-// GetQuota handles requests for the GET /something resource route
+// GetQuota handles requests for the GET /usage resource route
 func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 	if !request.URL.Query().Has("group") {
 		// TODO its returning a 500 instead of 400 bad request
@@ -77,7 +77,11 @@ func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResp
 }
 
 func New(cfg app.Config) (app.App, error) {
-	handler := NewQuotasHandler(cfg.SpecificConfig.(*QuotasAppConfig))
+	appConfig, ok := cfg.SpecificConfig.(*QuotasAppConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected QuotasAppConfig but got %T", cfg.SpecificConfig)
+	}
+	handler := NewQuotasHandler(appConfig)
 
 	simpleConfig := simple.AppConfig{
 		Name:       "quotas",

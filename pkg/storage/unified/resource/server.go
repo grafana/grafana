@@ -1470,7 +1470,7 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
 	if s.overridesService == nil {
 		return &resourcepb.QuotaUsageResponse{Error: &resourcepb.ErrorResult{
-			Message: "quota manager not configured",
+			Message: "overrides service not configured on resource server",
 			Code:    http.StatusNotImplemented,
 		}}, nil
 	}
