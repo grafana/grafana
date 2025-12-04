@@ -27,7 +27,10 @@ export interface UseDebugModeResult {
   isItemHiddenByDebug: (itemId: string) => boolean | null;
 }
 
-export function useDebugMode(allItems: QueryTransformItem[]): UseDebugModeResult {
+export function useDebugMode(
+  allItems: QueryTransformItem[],
+  onPositionChange?: (newPosition: number) => void
+): UseDebugModeResult {
   const [isDebugMode, setIsDebugMode] = useState(false);
   const [debugPosition, setDebugPosition] = useState(allItems.length);
   const [isDraggingDebugLine, setIsDraggingDebugLine] = useState(false);
@@ -96,7 +99,10 @@ export function useDebugMode(allItems: QueryTransformItem[]): UseDebugModeResult
 
     setDebugPosition(newPosition);
     setDragOffset(0);
-  }, [dragOffset, dragStartPosition, allItems.length]);
+
+    // Notify parent of position change so it can select the appropriate card
+    onPositionChange?.(newPosition);
+  }, [dragOffset, dragStartPosition, allItems.length, onPositionChange]);
 
   // Add global mouse event listeners for dragging
   useEffect(() => {

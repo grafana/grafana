@@ -74,6 +74,17 @@ export const QueryTransformList = memo(
     const [collapsed, setCollapsed] = useState({ queries: false, transforms: false });
 
     // Debug mode via custom hook
+    const handleDebugPositionChange = useCallback(
+      (newPosition: number) => {
+        // Select the card directly above the debug line (last enabled card)
+        const cardToSelect = allItems[newPosition - 1];
+        if (cardToSelect) {
+          onSelect(cardToSelect.id);
+        }
+      },
+      [allItems, onSelect]
+    );
+
     const {
       debugPosition,
       setDebugPosition,
@@ -83,7 +94,7 @@ export const QueryTransformList = memo(
       isDraggingDebugLine,
       isItemHiddenByDebug,
       toggleDebugMode,
-    } = useDebugMode(allItems);
+    } = useDebugMode(allItems, handleDebugPositionChange);
 
     // Store original states for restoration
     const originalStatesRef = useRef<Map<string, boolean>>(new Map());
@@ -534,10 +545,14 @@ export const QueryTransformList = memo(
                                               onKeyDown={(e) => {
                                                 if (e.key === 'ArrowUp') {
                                                   e.preventDefault();
-                                                  setDebugPosition(Math.max(1, debugPosition - 1));
+                                                  const newPos = Math.max(1, debugPosition - 1);
+                                                  setDebugPosition(newPos);
+                                                  handleDebugPositionChange(newPos);
                                                 } else if (e.key === 'ArrowDown') {
                                                   e.preventDefault();
-                                                  setDebugPosition(Math.min(allItems.length, debugPosition + 1));
+                                                  const newPos = Math.min(allItems.length, debugPosition + 1);
+                                                  setDebugPosition(newPos);
+                                                  handleDebugPositionChange(newPos);
                                                 }
                                               }}
                                             >
@@ -686,10 +701,14 @@ export const QueryTransformList = memo(
                                               onKeyDown={(e) => {
                                                 if (e.key === 'ArrowUp') {
                                                   e.preventDefault();
-                                                  setDebugPosition(Math.max(1, debugPosition - 1));
+                                                  const newPos = Math.max(1, debugPosition - 1);
+                                                  setDebugPosition(newPos);
+                                                  handleDebugPositionChange(newPos);
                                                 } else if (e.key === 'ArrowDown') {
                                                   e.preventDefault();
-                                                  setDebugPosition(Math.min(allItems.length, debugPosition + 1));
+                                                  const newPos = Math.min(allItems.length, debugPosition + 1);
+                                                  setDebugPosition(newPos);
+                                                  handleDebugPositionChange(newPos);
                                                 }
                                               }}
                                             >
