@@ -18080,7 +18080,7 @@
         },
         "key": {
           "type": "string",
-          "example": "glsa_iNValIdinValiDinvalidinvalidinva_lidinVal"
+          "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697"
         },
         "name": {
           "type": "string",

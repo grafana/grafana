@@ -7612,7 +7612,7 @@
             "type": "integer"
           },
           "key": {
-            "example": "glsa_iNValIdinValiDinvalidinvalidinva_lidinVal",
+            "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697",
             "type": "string"
           },
           "name": {
