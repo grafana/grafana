@@ -5,7 +5,6 @@ import { Rnd, RndDragCallback, RndResizeCallback } from 'react-rnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, TextArea, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useDispatch } from 'app/types/store';
 
 import {

@@ -241,6 +241,7 @@ export function useCanvasPersistence(options: UseMapPersistenceOptions = {}) {
         selectedPanelIds: [],
         nextZIndex: 1,
         cursors: {},
+        cursorMode: 'pointer',
         // Store the raw CRDT state for proper sync across sessions
         crdtState: crdtState.crdtStateJSON ? JSON.parse(crdtState.crdtStateJSON) : undefined,
       };

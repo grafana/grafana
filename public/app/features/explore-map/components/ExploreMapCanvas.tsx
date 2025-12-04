@@ -37,7 +37,6 @@ export function ExploreMapCanvas() {
   const [isSelecting, setIsSelecting] = useState(false);
   const justCompletedSelectionRef = useRef(false);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const transformWrapperRef = useRef<HTMLDivElement>(null);
 
   const panels = useSelector((state) => selectPanels(state.exploreMapCRDT));
   const frames = useSelector((state) => selectFrames(state.exploreMapCRDT));
@@ -74,7 +73,6 @@ export function ExploreMapCanvas() {
       let height = 0;
 
       while (element) {
-        const computedStyle = window.getComputedStyle(element);
         const elementHeight = element.clientHeight;
         const elementWidth = element.clientWidth;
 
