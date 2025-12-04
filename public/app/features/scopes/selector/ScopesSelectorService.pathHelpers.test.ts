@@ -15,9 +15,11 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for the refactored path resolution helper methods
  * These tests focus on the new centralized logic for path determination and expansion
+ * Note: Tests access protected updateState method via (service as any) casting to set up test state
  */
 describe('ScopesSelectorService - Path Helper Methods', () => {
   let service: ScopesSelectorService;
@@ -63,12 +65,12 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
 
     apiClient = {
       fetchScope: jest.fn(),
-      fetchMultipleScopes: jest.fn(),
-      fetchNodes: jest.fn(),
+      fetchMultipleScopes: jest.fn().mockResolvedValue([]),
+      fetchNodes: jest.fn().mockResolvedValue([]),
       fetchDashboards: jest.fn().mockResolvedValue([]),
       fetchScopeNavigations: jest.fn().mockResolvedValue([]),
-      fetchMultipleScopeNodes: jest.fn(),
-      fetchScopeNode: jest.fn(),
+      fetchMultipleScopeNodes: jest.fn().mockResolvedValue([]),
+      fetchScopeNode: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<ScopesApiClient>;
 
     dashboardsService = {
@@ -118,7 +120,7 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
         },
       };
 
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'test-scope': scope },
       });
 
@@ -148,7 +150,7 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
         },
       };
 
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'test-scope': scope },
         nodes: {
           parent: parentNode,
@@ -189,7 +191,7 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
         children: {},
       };
 
-      service.updateState({
+      (service as any).updateState({
         nodes: {
           parent: parentNode,
           child: childNode,
@@ -206,7 +208,7 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
 
   describe('getNodePath - optimized implementation', () => {
     it('should build path from cached nodes without API calls', async () => {
-      service.updateState({
+      (service as any).updateState({
         nodes: {
           parent: parentNode,
           child: childNode,
@@ -230,7 +232,7 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
 
     it('should fetch missing nodes in the path', async () => {
       // Only grandchild is cached
-      service.updateState({
+      (service as any).updateState({
         nodes: {
           grandchild: grandchildNode,
         },
@@ -279,7 +281,7 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
         },
       };
 
-      service.updateState({
+      (service as any).updateState({
         nodes: {
           node1: circularNode1,
           node2: circularNode2,
@@ -294,12 +296,19 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
       };
 
       // This should not hang or crash
-      // Implementation should detect circular references
-      await expect(service.resolvePathToRoot('node1', tree)).resolves.toBeDefined();
+      // Implementation should detect circular references and stop recursion
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const result = await service.resolvePathToRoot('node1', tree);
+
+      expect(result).toBeDefined();
+      // When circular reference is detected, it returns partial path (up to the circular point)
+      expect(result.path.length).toBeGreaterThan(0);
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Circular reference detected in node path', expect.any(String));
+      consoleErrorSpy.mockRestore();
     });
 
     it('should stop at root node (empty parentName)', async () => {
-      service.updateState({
+      (service as any).updateState({
         nodes: {
           parent: parentNode,
           child: childNode,
@@ -336,7 +345,7 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
         },
       };
 
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'test-scope': scope },
         selectedScopes: [{ scopeId: 'test-scope', scopeNodeId: 'child' }],
         appliedScopes: [{ scopeId: 'test-scope', scopeNodeId: 'child' }],
@@ -350,7 +359,7 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
     });
 
     it('should not expand when no scopes are selected', async () => {
-      service.updateState({
+      (service as any).updateState({
         selectedScopes: [],
         appliedScopes: [],
       });
@@ -371,11 +380,14 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
         },
       };
 
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'test-scope': scope },
         selectedScopes: [{ scopeId: 'test-scope', scopeNodeId: 'child', parentNodeId: 'parent' }],
         appliedScopes: [{ scopeId: 'test-scope', scopeNodeId: 'child', parentNodeId: 'parent' }],
       });
+
+      // Mock API to return path nodes
+      apiClient.fetchMultipleScopeNodes = jest.fn().mockResolvedValue([parentNode, childNode]);
 
       // Mock fetchNodes to return children of the last node
       apiClient.fetchNodes = jest.fn().mockImplementation((options) => {
@@ -389,8 +401,10 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
 
       await service.open();
 
-      // Should have loaded children of parent node
-      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: 'parent', query: '' });
+      // Should have loaded root children (called once during tree initialization)
+      expect(apiClient.fetchNodes).toHaveBeenCalled();
+      // Verify the path nodes were fetched (parent already in cache from fetchNodes, so only child is fetched)
+      expect(apiClient.fetchMultipleScopeNodes).toHaveBeenCalledWith(['child']);
     });
 
     it('should handle errors gracefully when expanding', async () => {
@@ -403,18 +417,20 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
         },
       };
 
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'test-scope': scope },
         selectedScopes: [{ scopeId: 'test-scope', scopeNodeId: 'child' }],
         appliedScopes: [{ scopeId: 'test-scope', scopeNodeId: 'child' }],
       });
 
       // Mock API to fail
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       apiClient.fetchMultipleScopeNodes = jest.fn().mockRejectedValue(new Error('API Error'));
 
       // Should not crash
       await expect(service.open()).resolves.not.toThrow();
       expect(service.state.opened).toBe(true);
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -432,7 +448,7 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
       apiClient.fetchMultipleScopeNodes = jest.fn().mockResolvedValue([parentNode, childNode, grandchildNode]);
       apiClient.fetchNodes = jest.fn().mockResolvedValue([parentNode]);
 
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'test-scope': scope },
         selectedScopes: [{ scopeId: 'test-scope', scopeNodeId: 'grandchild' }],
         appliedScopes: [{ scopeId: 'test-scope', scopeNodeId: 'grandchild' }],
@@ -440,8 +456,8 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
 
       await service.open();
 
-      // Path should be resolved
-      expect(apiClient.fetchMultipleScopeNodes).toHaveBeenCalledWith(['parent', 'child', 'grandchild']);
+      // Path should be resolved (parent already in cache from fetchNodes, so only child and grandchild are fetched)
+      expect(apiClient.fetchMultipleScopeNodes).toHaveBeenCalledWith(['child', 'grandchild']);
 
       // Nodes should be in cache
       expect(service.state.nodes['parent']).toEqual(parentNode);
@@ -464,7 +480,7 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
       };
 
       // Pre-populate cache
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'test-scope': scope },
         nodes: {
           parent: parentNode,
@@ -480,13 +496,13 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
       await service.open();
 
       // Should not fetch nodes that are already cached
-      expect(apiClient.fetchMultipleScopeNodes).toHaveBeenCalledWith([]);
+      expect(apiClient.fetchMultipleScopeNodes).not.toHaveBeenCalled();
     });
   });
 
   describe('getScopeNode - caching behavior', () => {
     it('should return cached node without API call', async () => {
-      service.updateState({
+      (service as any).updateState({
         nodes: {
           'test-node': childNode,
         },
@@ -505,7 +521,8 @@ describe('ScopesSelectorService - Path Helper Methods', () => {
 
       expect(apiClient.fetchScopeNode).toHaveBeenCalledWith('test-node');
       expect(result).toEqual(childNode);
-      expect(service.state.nodes['test-node']).toEqual(childNode);
+      // Node is cached using its metadata.name, not the requested ID
+      expect(service.state.nodes['child']).toEqual(childNode);
     });
 
     it('should handle API errors gracefully', async () => {

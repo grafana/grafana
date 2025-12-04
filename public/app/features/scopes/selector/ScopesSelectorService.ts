@@ -101,13 +101,26 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  private getNodePath = async (scopeNodeId: string): Promise<ScopeNode[]> => {
+  private getNodePath = async (scopeNodeId: string, visited: Set<string> = new Set()): Promise<ScopeNode[]> => {
+    // Protect against circular references
+    if (visited.has(scopeNodeId)) {
+      console.error('Circular reference detected in node path', scopeNodeId);
+      return [];
+    }
+
     const node = await this.getScopeNode(scopeNodeId);
     if (!node) {
       return [];
     }
+
+    // Add current node to visited set
+    const newVisited = new Set(visited);
+    newVisited.add(scopeNodeId);
+
     const parentPath =
-      node.spec.parentName && node.spec.parentName !== '' ? await this.getNodePath(node.spec.parentName) : [];
+      node.spec.parentName && node.spec.parentName !== ''
+        ? await this.getNodePath(node.spec.parentName, newVisited)
+        : [];
 
     return [...parentPath, node];
   };
@@ -561,7 +574,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       stringPath.unshift(''); // Add root
 
       // Load children of the last node if needed
-      const lastNode = pathNodes[pathNodes.length - 1];
       const pathToLastNode = stringPath.slice(0, -1);
       const treeNode = treeNodeAtPath(newTree, pathToLastNode);
 

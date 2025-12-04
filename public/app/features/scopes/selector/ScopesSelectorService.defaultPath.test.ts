@@ -15,6 +15,8 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Note: Tests access protected updateState method via (service as any) casting to set up test state
 describe('ScopesSelectorService - defaultPath functionality', () => {
   let service: ScopesSelectorService;
   let apiClient: jest.Mocked<ScopesApiClient>;
@@ -141,7 +143,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
   describe('getScopeNodes', () => {
     it('should return cached nodes when available', async () => {
       // Pre-populate cache
-      service.updateState({
+      (service as any).updateState({
         nodes: {
           'region-us-west': regionNode,
           'country-usa': countryNode,
@@ -156,7 +158,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
 
     it('should fetch only non-cached nodes', async () => {
       // Pre-populate cache with one node
-      service.updateState({
+      (service as any).updateState({
         nodes: {
           'region-us-west': regionNode,
         },
@@ -214,7 +216,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
 
     it('should use defaultPath when scope has it defined', async () => {
       // Pre-populate scope cache
-      service.updateState({
+      (service as any).updateState({
         scopes: {
           'scope-sea-1': scopeWithDefaultPath,
         },
@@ -241,7 +243,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
 
     it('should fall back to recursive path walking when no scopeId provided', async () => {
       // Setup nodes in cache for recursive walking
-      service.updateState({
+      (service as any).updateState({
         nodes: {
           'datacenter-sea-1': datacenterNode,
           'city-seattle': cityNode,
@@ -263,7 +265,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
     });
 
     it('should fall back when scope has no defaultPath', async () => {
-      service.updateState({
+      (service as any).updateState({
         scopes: {
           'scope-no-path': scopeWithoutDefaultPath,
         },
@@ -288,7 +290,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
     });
 
     it('should insert path nodes into tree', async () => {
-      service.updateState({
+      (service as any).updateState({
         scopes: {
           'scope-sea-1': scopeWithDefaultPath,
         },
@@ -423,7 +425,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
 
     it('should expand to defaultPath when opening selector with applied scope', async () => {
       // Apply a scope with defaultPath
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'scope-sea-1': scopeWithDefaultPath },
         appliedScopes: [{ scopeId: 'scope-sea-1', scopeNodeId: 'datacenter-sea-1' }],
         selectedScopes: [{ scopeId: 'scope-sea-1', scopeNodeId: 'datacenter-sea-1' }],
@@ -444,7 +446,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
 
     it('should fall back to parentNodeId when scope has no defaultPath', async () => {
       // Pre-populate nodes for fallback behavior
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'scope-no-path': scopeWithoutDefaultPath },
         nodes: {
           'datacenter-sea-1': datacenterNode,
@@ -463,7 +465,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
     });
 
     it('should handle opening selector when scope is not yet loaded', async () => {
-      service.updateState({
+      (service as any).updateState({
         appliedScopes: [{ scopeId: 'scope-sea-1' }],
         selectedScopes: [{ scopeId: 'scope-sea-1' }],
       });
@@ -477,7 +479,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
 
   describe('performance improvements', () => {
     it('should make only 1 API call for deep hierarchy with defaultPath', async () => {
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'scope-sea-1': scopeWithDefaultPath },
       });
 
@@ -530,7 +532,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
 
   describe('edge cases and error handling', () => {
     it('should handle defaultPath with missing nodes gracefully', async () => {
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'scope-sea-1': scopeWithDefaultPath },
       });
 
@@ -551,7 +553,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
     });
 
     it('should handle API errors during batch fetch', async () => {
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'scope-sea-1': scopeWithDefaultPath },
       });
 
@@ -594,7 +596,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
         },
       };
 
-      service.updateState({
+      (service as any).updateState({
         scopes: { 'scope-root': scopeWithRootOnly },
       });
 
@@ -615,7 +617,7 @@ describe('ScopesSelectorService - defaultPath functionality', () => {
 
   describe('backwards compatibility', () => {
     it('should work with existing code that does not provide scopeId to resolvePathToRoot', async () => {
-      service.updateState({
+      (service as any).updateState({
         nodes: {
           'datacenter-sea-1': datacenterNode,
           'city-seattle': cityNode,
