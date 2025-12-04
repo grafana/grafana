@@ -2,7 +2,6 @@ package cuevalidator
 
 import (
 	"sync"
-	"sync/atomic"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
@@ -33,7 +32,7 @@ type Validator struct {
 	mu              sync.Mutex
 	ctx             *cue.Context
 	compiledSchema  cue.Value
-	validationCount atomic.Uint64
+	validationCount int
 }
 
 // NewValidatorFromSource creates a new validator from a schema source string and path.
@@ -50,25 +49,20 @@ func NewValidatorFromSource(schemaSource string, schemaPath cue.Path) *Validator
 }
 
 func (v *Validator) Validate(data []byte) error {
-	count := v.validationCount.Add(1)
+	v.mu.Lock()
+	defer v.mu.Unlock()
+
+	// Increment validation count
+	v.validationCount++
 
 	// If we've reached the maximum number of validations, recreate the context
-	if count >= maxValidations {
-		v.mu.Lock()
-		// Double-check after acquiring lock (another goroutine might have already recreated)
-		if v.validationCount.Load() >= maxValidations {
-			// Recreate context to allow GC to reclaim cached values
-			v.ctx = cuecontext.New()
-			v.compiledSchema = v.ctx.CompileString(v.schemaSource).LookupPath(v.schemaPath)
-			v.validationCount.Store(0)
-		}
-		v.mu.Unlock()
+	if v.validationCount >= maxValidations {
+		// Recreate context to allow GC to reclaim cached values
+		v.ctx = cuecontext.New()
+		v.compiledSchema = v.ctx.CompileString(v.schemaSource).LookupPath(v.schemaPath)
+		v.validationCount = 0
 	}
 
-	// Acquire lock to safely read the compiled schema
-	v.mu.Lock()
-	schema := v.compiledSchema
-	v.mu.Unlock()
-
-	return cuejson.Validate(data, schema)
+	// Validate using the current compiled schema
+	return cuejson.Validate(data, v.compiledSchema)
 }
