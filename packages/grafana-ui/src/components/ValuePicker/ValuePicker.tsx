@@ -30,6 +30,10 @@ export interface ValuePickerProps<T> {
   isFullWidth?: boolean;
   /** Control where the menu is rendered */
   menuPlacement?: 'auto' | 'bottom' | 'top';
+  /**
+   * Setting to false will prevent the menu from portalling to the body.
+   */
+  menuShouldPortal?: boolean;
   /** Which ButtonFill to use */
   fill?: ButtonFill;
 
@@ -55,6 +59,7 @@ export function ValuePicker<T>({
   menuPlacement,
   fill,
   buttonCss,
+  menuShouldPortal,
 }: ValuePickerProps<T>) {
   const [isPicking, setIsPicking] = useState(false);
   const theme = useTheme2();
@@ -90,6 +95,7 @@ export function ValuePicker<T>({
               onChange(value);
             }}
             menuPlacement={menuPlacement}
+            menuShouldPortal={menuShouldPortal}
           />
         </span>
       )}

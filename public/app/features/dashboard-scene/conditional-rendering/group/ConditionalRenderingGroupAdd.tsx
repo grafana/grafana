@@ -45,6 +45,9 @@ export const ConditionalRenderingGroupAdd = ({ objectType, hasVariables, onAdd }
       label={t('dashboard.conditional-rendering.conditions.group.add.button', 'Add rule')}
       options={options}
       onChange={(option) => onAdd(option)}
+      // if menuShouldPortal is not set to false, selecting a menu option would close the edit sidebar
+      // this is because ValuesPicker uses Select, which does not uses a portal that Sidebar can retrieve by calling getPortalContainer()
+      menuShouldPortal={false}
     />
   );
 };
