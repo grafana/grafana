@@ -19,7 +19,6 @@ func TestGetQuota(t *testing.T) {
 		handler := NewQuotasHandler(&QuotasAppConfig{
 			ResourceClient: clientMock,
 		})
-		//url, err := url.Parse("http://localhost:3000/apis/quotas.grafana.app/v0alpha1/namespaces/stacks-1/usage?group=dashboard.grafana.app&resource=dashboards")
 		url, err := url.Parse("http://localhost:3000/apis/quotas.grafana.app/v0alpha1/namespaces/stacks-1/usage?group=dashboard.grafana.app")
 		require.NoError(t, err)
 		req := &app.CustomRouteRequest{
