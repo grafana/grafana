@@ -26,20 +26,27 @@ func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
 ) (*AlertingHistorianAppInstaller, error) {
-	if ng.IsDisabled() {
-		log.New("app-registry").Info("Skipping Kubernetes Alerting Historian apiserver (historian.alerting.grafana.app): Unified Alerting is disabled")
-		return nil, nil
+	appSpecificConfig := historianAppConfig.RuntimeConfig{}
+
+	// If we're provided an AlertNG, then call back into that for things we need.
+	// This is a temporary whilst building out the app; we should not depend on it.
+	if ng != nil {
+		if ng.IsDisabled() {
+			log.New("app-registry").Info("Skipping Kubernetes Alerting Historian apiserver (historian.alerting.grafana.app): Unified Alerting is disabled")
+			return nil, nil
+		}
+
+		handlers := &handlers{
+			historian: ng.Api.Historian,
+		}
+		appSpecificConfig.GetAlertStateHistoryHandler = handlers.GetAlertStateHistoryHandler
 	}
 
+	return NewAppInstaller(appSpecificConfig)
+}
+
+func NewAppInstaller(appSpecificConfig historianAppConfig.RuntimeConfig) (*AlertingHistorianAppInstaller, error) {
 	installer := &AlertingHistorianAppInstaller{}
-
-	handlers := &handlers{
-		historian: ng.Api.Historian,
-	}
-
-	appSpecificConfig := historianAppConfig.RuntimeConfig{
-		GetAlertStateHistoryHandler: handlers.GetAlertStateHistoryHandler,
-	}
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), appSpecificConfig, historianApp.New)
 
