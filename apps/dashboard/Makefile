@@ -4,7 +4,7 @@ include ../sdk.mk
 generate: do-generate post-generate-cleanup ## Run Grafana App SDK code generation
 
 .PHONY: do-generate
-do-generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
+do-generate: #install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 	@$(APP_SDK_BIN) generate \
 		--source=./kinds/ \
 		--gogenpath=./pkg/apis \
@@ -12,7 +12,6 @@ do-generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generati
 		--grouping=group \
 		--defencoding=none \
 		--genoperatorstate=false \
-		--noschemasinmanifest \
 		--useoldmanifestkinds
 
 .PHONY: post-generate-cleanup

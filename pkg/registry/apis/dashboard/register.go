@@ -24,6 +24,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	manifestdata "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -752,6 +753,25 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 		maps.Copy(defs, dashv1.GetOpenAPIDefinitions(ref))
 		maps.Copy(defs, dashv2alpha1.GetOpenAPIDefinitions(ref))
 		maps.Copy(defs, dashv2beta1.GetOpenAPIDefinitions(ref))
+		md := manifestdata.LocalManifest().ManifestData
+		for _, version := range md.Versions {
+			if version.Name[1] == '0' || version.Name[1] == '1' {
+				continue
+			}
+			for _, kind := range version.Kinds {
+				pkgPrefix := fmt.Sprintf("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/%s", version.Name)
+				oapi, err := kind.Schema.AsKubeOpenAPI(schema.GroupVersionKind{
+					Group:   md.Group,
+					Version: version.Name,
+					Kind:    kind.Kind,
+				}, ref, pkgPrefix)
+				if err != nil {
+					logging.DefaultLogger.Error("unable to generate openAPI for kind %s: %w", kind.Kind, err)
+					continue
+				}
+				maps.Copy(defs, oapi)
+			}
+		}
 		return defs
 	}
 }
