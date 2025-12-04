@@ -9,6 +9,7 @@ import {
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorReduceExpression,
+  BuilderQueryEditorReduceParameterTypes,
 } from '../../dataquery.gen';
 
 import { aggregateOptions, inputFieldSize } from './utils';
@@ -65,8 +66,16 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
   };
 
   const handleAggregateChange = (funcName?: string) => {
+    const functionParameterType =
+      aggregateOptions.find((option) => option.value === (funcName || ''))?.parameterType ||
+      BuilderQueryEditorReduceParameterTypes.Generic;
+
     updateAggregate({
-      reduce: { name: funcName || '', type: BuilderQueryEditorPropertyType.Function },
+      reduce: {
+        name: funcName || '',
+        type: BuilderQueryEditorPropertyType.Function,
+        parameterType: functionParameterType,
+      },
     });
   };
 
