@@ -48,6 +48,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+  transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
   configure-grafana-azure:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
@@ -68,12 +73,6 @@ refs:
 # Azure Monitor data source
 
 The Azure Monitor data source plugin allows you to query and visualize data from Azure Monitor, the Azure service to maximize the availability and performance of applications and services in the Azure Cloud. 
-
-## Requirements
-
-- An Azure subscription
-- Credentials with at least the `Reader` role on the resources you want to monitor
-- For Logs queries: access to a Log Analytics workspace or Application Insights resource
 
 ## Supported Azure clouds
 
@@ -109,7 +108,7 @@ Once you have configured the Azure Monitor data source, you can:
 
 - Add [Annotations](annotations/) to overlay Azure log events on your graphs.
 - Configure and use [Template variables](template-variables/) for dynamic dashboards.
-- Add [Transformations](ref:build-dashboards) to manipulate query results.
+- Add [Transformations](ref:transform-data) to manipulate query results.
 - Set up alerting and recording rules using Metrics and Logs queries.
 - Use [Explore](ref:explore) to investigate your Azure data without building a dashboard.
 
