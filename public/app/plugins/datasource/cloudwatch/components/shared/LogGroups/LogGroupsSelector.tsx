@@ -15,8 +15,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+import { LogGroup } from '../../../dataquery.gen';
 import { DescribeLogGroupsRequest, ResourceResponse, LogGroupResponse } from '../../../resources/types';
-import { LogGroup } from '../../../types';
 import getStyles from '../../styles';
 import { Account, ALL_ACCOUNTS_OPTION } from '../Account';
 

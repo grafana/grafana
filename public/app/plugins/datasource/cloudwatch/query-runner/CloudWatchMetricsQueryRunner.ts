@@ -17,9 +17,10 @@ import {
 import { TemplateSrv, getAppEvents } from '@grafana/runtime';
 
 import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
+import { CloudWatchMetricsQuery } from '../dataquery.gen';
 import memoizedDebounce from '../memoizedDebounce';
 import { migrateMetricQuery } from '../migrations/metricQueryMigrations';
-import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery } from '../types';
+import { CloudWatchJsonData, CloudWatchQuery } from '../types';
 import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
