@@ -83,6 +83,14 @@ The Azure Monitor data source supports visualizing data from four Azure services
 - **Azure Resource Graph:** Query your Azure resources across subscriptions.
 - **Azure Monitor Application Insights:** Collect trace logging data and other application performance metrics.
 
+## Documentation
+
+| Topic | Description |
+|-------|-------------|
+| [Configure](configure/) | Set up authentication and connect to Azure |
+| [Query editor](query-editor/) | Build queries for Metrics, Logs, Traces, and Resource Graph |
+| [Template variables](template-variables/) | Create dynamic dashboards with Azure Monitor variables |
+| [Troubleshooting](troubleshooting/) | Solve common configuration and query errors |
 
 ## Application Insights and Insights Analytics (removed)
 
