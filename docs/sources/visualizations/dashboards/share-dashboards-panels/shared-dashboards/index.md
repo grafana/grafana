@@ -250,6 +250,7 @@ guaranteed because plugin developers can override this functionality. The follow
 - Graphite
 - Google Sheets
 - Tempo
+- Zabbix
 
 ### Unconfirmed
 
