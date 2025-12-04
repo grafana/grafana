@@ -57,13 +57,16 @@ type Enemy = {
 const ufo = '[=U=]';
 const enemyTypes = ['<@_@>', '<^_^>', '[-_-]', '<o_o>', ufo];
 const enemyTypeUfo = enemyTypes.indexOf(ufo);
-const explosion = 'xX*Xx';
+const explosion1 = 'xX*Xx';
+const explosion2 = '-X*X-';
+const explosion3 = '--*--';
+const explosion4 = '  *  ';
 const enemySprites = [
-  [explosion, '<@_@>'],
-  [explosion, ' ^_^ ', '<^_^>'],
-  [explosion, ' -_- ', '(-_-)', '[-_-]'],
-  [explosion, ' o_o ', 'co_oↄ', '<o_o>', '<o_o>'],
-  [explosion, ' =u= ', '(=u=)', ufo, ufo, ufo],
+  [explosion4, explosion3, explosion2, explosion1, '<@_@>'],
+  [explosion4, explosion3, explosion2, explosion1, ' ^_^ ', '<^_^>'],
+  [explosion4, explosion3, explosion2, explosion1, ' -_- ', '(-_-)', '[-_-]'],
+  [explosion4, explosion3, explosion2, explosion1, ' o_o ', 'co_oↄ', '<o_o>', '<o_o>'],
+  [explosion4, explosion3, explosion2, explosion1, ' =u= ', '(=u=)', ufo, ufo, ufo],
 ];
 
 const shield = '#';
@@ -73,7 +76,7 @@ export function useLogsGames() {
   const [playerX, setPlayerX] = useState(initialPlayerX);
   const [userMissiles, setUserMisiles] = useState<Missile[]>([]);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
-  const pendingUpdates = useRef(true);
+  const [gameEnded, setGameEnded] = useState(false);
 
   const lastTime = useRef(0);
   const frame = useRef<number | null>(null);
@@ -89,17 +92,23 @@ export function useLogsGames() {
       setUserMisiles(newUserMissiles);
       setEnemies(newEnemies);
 
+      if (newEnemies.length === 0) {
+        setGameEnded(true);
+      }
+
       frame.current = requestAnimationFrame(loop);
     }
 
-    frame.current = requestAnimationFrame(loop);
+    if (!gameEnded) {
+      frame.current = requestAnimationFrame(loop);
+    }
 
     return () => {
       if (frame.current) {
         cancelAnimationFrame(frame.current);
       }
     };
-  }, [enemies, gameState, playerX, userMissiles]);
+  }, [enemies, gameEnded, gameState, playerX, userMissiles]);
 
   useEffect(() => {
     function handleKeyPress(e: KeyboardEvent) {
@@ -109,7 +118,6 @@ export function useLogsGames() {
 
       e.preventDefault();
       e.stopPropagation();
-      pendingUpdates.current = true;
 
       if (e.code === 'ArrowLeft') {
         setPlayerX(Math.max(playerX - 1, 0));
@@ -167,7 +175,7 @@ function update(
       const shieldStart = gameState.findIndex((row) => row.entry.includes('#'));
       const enemyBelow = enemies.find((otherEnemy) => shieldStart && otherEnemy.y === shieldStart - 1);
 
-      if (enemy.health === 0) {
+      if (enemy.health <= 3) {
         enemy.health -= 1;
       } else if (enemy.direction === 'r') {
         enemy.x = enemy.x + enemySpeed * dt;
@@ -258,7 +266,7 @@ function createEnemies(row: string, y: number) {
         y,
         type: i,
         body: enemyTypes[i],
-        health: i + 1,
+        health: i + 4,
       };
       enemies.push(enemy);
       row = row.replace(enemyTypes[i], '     ');
