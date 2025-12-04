@@ -151,6 +151,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 const stopPropagation = (event: React.MouseEvent) => {
-  console.log('stop prop', event);
   event.stopPropagation();
 };
