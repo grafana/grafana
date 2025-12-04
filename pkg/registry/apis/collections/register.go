@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -50,6 +51,7 @@ func RegisterAPIService(
 	stars star.Service,
 	users user.Service,
 	apiregistration builder.APIRegistrar,
+	restConfigProvider apiserver.RestConfigProvider,
 ) *APIBuilder {
 	// Requires development settings and clearly experimental
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -59,7 +61,7 @@ func RegisterAPIService(
 
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		datasourceStacksValidator: GetDatasourceStacksValidator(),
+		datasourceStacksValidator: GetDatasourceStacksValidator(restConfigProvider),
 		authorizer: &utils.AuthorizeFromName{
 			Resource: map[string][]utils.ResourceOwner{
 				"stars":       {utils.UserResourceOwner},
