@@ -4,18 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 var (
-	ErrUnauthenticated = fmt.Errorf("unauthenticated")
-	ErrUnauthorized    = fmt.Errorf("unauthorized")
-	ErrUnexpectedType  = fmt.Errorf("unexpected object type")
+	ErrUnauthenticated = errors.NewUnauthorized("unauthenticated")
+	ErrUnauthorized    = errors.NewUnauthorized("unauthorized")
+	ErrUnexpectedType  = errors.NewBadRequest("unexpected object type")
 )
 
 // ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
