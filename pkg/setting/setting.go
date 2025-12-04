@@ -1019,6 +1019,10 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	// apply command line overrides
 	cfg.applyCommandLineProperties(commandLineProps, parsedFile)
 
+	// --- ADD THIS LINE TO LOAD FEATURE TOGGLES FROM THE FINAL PARSED INI ---
+	loadFeatureToggles(parsedFile)
+	//
+
 	// evaluate config values containing environment variables
 	err = expandConfig(parsedFile)
 	if err != nil {
