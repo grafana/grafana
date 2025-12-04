@@ -165,13 +165,21 @@ function update(
 
       if (enemy.direction === 'r') {
         enemy.x = enemy.x + enemySpeed * dt;
-        if (Math.floor(enemy.x) - enemy.sourceX === 5 && !enemyBelow) {
-          enemy.y += 1;
+        if (Math.floor(enemy.x) - enemy.sourceX >= 5) {
+          enemy.direction = 'l';
+          enemy.sourceX = Math.floor(enemy.x);
+          if (!enemyBelow) {
+            enemy.y += 1;
+          }
         }
       } else {
         enemy.x = enemy.x - enemySpeed * dt;
-        if (Math.floor(enemy.x) - enemy.sourceX === -5 && !enemyBelow) {
-          enemy.y += 1;
+        if (Math.floor(enemy.x) - enemy.sourceX <= -5) {
+          enemy.direction = 'r';
+          enemy.sourceX = Math.floor(enemy.x);
+          if (!enemyBelow) {
+            enemy.y += 1;
+          }
         }
       }
       return enemy;
@@ -261,14 +269,21 @@ function render(row: string, enemies: Enemy[], userMissiles: Missile[], y: numbe
     return row;
   }
 
-  let newRow = '';
-  for (let i = 0; i <= 80; i++) {
-    const enemy = enemies.find((enemy) => Math.round(enemy.x) === i);
-    if (enemy) {
-      newRow += enemySprites[enemy.type][enemy.health];
-      i+= 4;
+  let newRow = row.split('');
+  
+  // Render enemies
+  for (const enemy of enemies) {
+    const sprite = enemySprites[enemy.type][enemy.health];
+    const startX = Math.round(enemy.x);
+    for (let i = 0; i < sprite.length && startX + i < 80; i++) {
+      newRow[startX + i] = sprite[i];
     }
   }
+  
+  // Render missiles
+  for (const missile of userMissiles) {
+    newRow[missile.x] = userMissile;
+  }
 
-  return newRow;
+  return newRow.join('');
 }
