@@ -13,6 +13,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
+import { PanelDataSidebarRendered } from './PanelDataPane/PanelDataSidebar';
 import { PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
@@ -111,6 +112,11 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
           <controls.Component model={controls} />
         </div>
       )}
+      {dataPane && (
+        <div className={styles.sidebar}>
+          <PanelDataSidebarRendered model={dataPane} />
+        </div>
+      )}
       <div {...containerProps}>
         <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
           <VizWrapper panel={panel} tableView={tableView} />
@@ -181,8 +187,8 @@ function getStyles(theme: GrafanaTheme2) {
     pageContainer: css({
       display: 'grid',
       gridTemplateAreas: `
-        "panels"`,
-      gridTemplateColumns: `1fr`,
+        "sidebar panels"`,
+      gridTemplateColumns: `auto 1fr`,
       gridTemplateRows: '1fr',
       height: '100%',
       [scrollReflowMediaQuery]: {
@@ -191,13 +197,23 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     pageContainerWithControls: css({
       gridTemplateAreas: `
-        "controls"
-        "panels"`,
+        "controls controls"
+        "sidebar panels"`,
       gridTemplateRows: 'auto 1fr',
     }),
     container: css({
       gridArea: 'panels',
       height: '100%',
+    }),
+    sidebar: css({
+      gridArea: 'sidebar',
+      height: '100%',
+      maxHeight: '100%',
+      overflow: 'auto',
+    }),
+    expandDataSidebar: css({
+      width: theme.spacing(6),
+      padding: theme.spacing(1),
     }),
     canvasContent: css({
       label: 'canvas-content',

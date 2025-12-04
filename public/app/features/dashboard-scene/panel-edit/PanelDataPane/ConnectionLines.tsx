@@ -108,7 +108,7 @@ export function ConnectionLines({ connections, isDragging = false, selected, onC
     refIds.add(to);
   });
 
-  const swimlaneX = containerRect.width - 40; // Adjusted for increased right padding (64px)
+  const swimlaneX = containerRect.width - 24; // Adjusted for increased right padding (48px)
 
   const cardPositions: number[] = [];
   refIds.forEach((refId) => {

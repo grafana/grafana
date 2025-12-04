@@ -195,6 +195,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
+      borderTopLeftRadius: theme.shape.radius.md,
+      borderTopRightRadius: theme.shape.radius.md,
+      overflow: 'hidden',
     }),
     emptyState: css({
       display: 'flex',

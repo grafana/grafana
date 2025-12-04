@@ -33,6 +33,7 @@ interface QueryTransformListProps {
   onReorderDataSources?: (startIndex: number, endIndex: number) => void;
   onReorderTransforms?: (startIndex: number, endIndex: number) => void;
   onAddOrganizeFieldsTransform?: () => void;
+  onCollapseSidebar: () => void;
 }
 
 export const QueryTransformList = memo(
@@ -54,6 +55,7 @@ export const QueryTransformList = memo(
     onReorderDataSources,
     onReorderTransforms,
     onAddOrganizeFieldsTransform,
+    onCollapseSidebar,
   }: QueryTransformListProps) => {
     const styles = useStyles2(getStyles);
     const [isDragging, setIsDragging] = useState(false);
@@ -269,9 +271,13 @@ export const QueryTransformList = memo(
       <div className={styles.container} onMouseLeave={() => setHovered(null)}>
         <div className={styles.header}>
           <Stack justifyContent="space-between" alignItems="center" gap={2}>
-            <span className={styles.headerTitle}>
-              {t('dashboard-scene.query-transform-list.header', 'Pipeline flow')}
-            </span>
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+            <div className={styles.headerTitle} onClick={onCollapseSidebar}>
+              <Stack direction="row" alignItems="center" gap={1}>
+                <Icon name="angle-down" />
+                <span>{t('dashboard-scene.query-transform-list.header', 'Pipeline flow')}</span>
+              </Stack>
+            </div>
             <Button size="sm" onClick={handleToggleAiMode} className={styles.aiModeButton}>
               <Stack direction="row" gap={0.5} alignItems="center">
                 <Icon name={isAiMode ? 'times' : 'ai'} size="sm" />
@@ -572,8 +578,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       width: '100%',
       maxWidth: '100%',
-      overflow: 'hidden',
+      overflow: 'auto',
       border: `1px solid ${theme.colors.border.weak}`,
+      borderLeft: 'none',
     }),
     header: css({
       ...barBase,
@@ -588,6 +595,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontFamily: theme.typography.fontFamilyMonospace,
       textTransform: 'uppercase',
       color: theme.colors.text.primary,
+      cursor: 'pointer',
     }),
     sectionLabel: css({
       cursor: 'pointer',
@@ -647,7 +655,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     content: css({
-      padding: theme.spacing(2, 8, 2, 2),
+      padding: theme.spacing(2, 6, 2, 2),
       position: 'relative',
     }),
     contentGradientBorder: css({
