@@ -222,11 +222,7 @@ export const MarkerDragDropEditor = ({ value, context, onChange }: StandardEdito
   };
 
   const getLayerInfo = (m: MarkerGroup) => {
-    if (m.dataField) {
-      return m.dataField;
-    } else {
-      return '-';
-    }
+    return m.dataField || '-'
   };
 
   const selectionByName = value.select
