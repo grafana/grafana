@@ -38,10 +38,13 @@ export class PanelPerformanceMetrics extends SceneObjectBase<PanelPerformanceMet
     const aggregator = getDashboardAnalyticsAggregator();
     const panelIdStr = String(panelId);
 
-    // Subscribe to metrics updates - callback will be called with initial metrics if available
+    // Subscribe to metrics updates - defer initial callback to avoid setState during render
     this._subs.add(
       aggregator.subscribeToPanelMetrics(panelIdStr, (updatedMetrics) => {
-        this.setState({ metrics: updatedMetrics });
+        // Defer state update to avoid React warning about updating during render
+        setTimeout(() => {
+          this.setState({ metrics: updatedMetrics });
+        }, 0);
       })
     );
   };
@@ -68,17 +71,21 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
   const panel = model.getPanel();
   const styles = useStyles2(getStyles);
   const { metrics } = model.useState();
-  const [fakeQueryTime, setFakeQueryTime] = useState(0);
   const [isProfilingEnabled, setIsProfilingEnabled] = useState(isPanelProfilingEnabled());
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<number | null>(null);
+  const profilingStateRef = useRef(isProfilingEnabled);
+
+  // Update ref when state changes
+  useEffect(() => {
+    profilingStateRef.current = isProfilingEnabled;
+  }, [isProfilingEnabled]);
 
   // Watch for profiling state changes (when toggled via hotkey)
   useEffect(() => {
     // Poll for profiling state changes - this allows the component to react when profiling is toggled
     const checkProfilingState = () => {
       const currentState = isPanelProfilingEnabled();
-      if (currentState !== isProfilingEnabled) {
+      // Compare against ref to avoid stale closure
+      if (currentState !== profilingStateRef.current) {
         setIsProfilingEnabled(currentState);
       }
     };
@@ -88,7 +95,7 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
     const interval = setInterval(checkProfilingState, 100);
 
     return () => clearInterval(interval);
-  }, [isProfilingEnabled]);
+  }, []); // Empty dependency array - polling should run once and persist
 
   // Get last operation times (most recent operation in each array)
   const lastQueryTime =
@@ -104,44 +111,7 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
       ? metrics.transformationOperations[metrics.transformationOperations.length - 1].duration
       : 0;
 
-  // Manage fake timer for query time
-  useEffect(() => {
-    // If we have a real query time, stop the fake timer
-    if (lastQueryTime > 0) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      setFakeQueryTime(0);
-      startTimeRef.current = null;
-      return;
-    }
-
-    // If no query operations yet, start the fake timer
-    if (metrics && metrics.queryOperations.length === 0) {
-      // Start timer if not already running
-      if (!intervalRef.current) {
-        startTimeRef.current = Date.now();
-        intervalRef.current = setInterval(() => {
-          if (startTimeRef.current) {
-            setFakeQueryTime(Date.now() - startTimeRef.current);
-          }
-        }, 166); // Update every 166ms for smooth counting
-      }
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [lastQueryTime, metrics]);
-
-  // Use fake query time if real one is 0
-  const displayQueryTime = lastQueryTime > 0 ? lastQueryTime : fakeQueryTime;
-  const lastTotalTime = displayQueryTime + lastRenderTime + lastTransformTime;
+  const lastTotalTime = lastQueryTime + lastRenderTime + lastTransformTime;
 
   // Don't render if panel is not available
   if (!panel) {
@@ -169,7 +139,7 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
 
   const tooltipContent = (
     <div>
-      {renderMetricRow('Query', displayQueryTime)}
+      {renderMetricRow('Query', lastQueryTime)}
       {hasTransformations && renderMetricRow('Transform', lastTransformTime)}
       {renderMetricRow('Render', lastRenderTime)}
       <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
@@ -184,14 +154,14 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
   // Otherwise, only show non-zero metrics
   const metricsText = isProfilingEnabled
     ? [
-        `Q:${formatDuration(displayQueryTime)}`,
+        `Q:${formatDuration(lastQueryTime)}`,
         hasTransformations && `T:${formatDuration(lastTransformTime)}`,
         `R:${formatDuration(lastRenderTime)}`,
       ]
         .filter(Boolean)
         .join(' ')
     : [
-        displayQueryTime > 0 && `Q:${formatDuration(displayQueryTime)}`,
+        lastQueryTime > 0 && `Q:${formatDuration(lastQueryTime)}`,
         lastTransformTime > 0 && `T:${formatDuration(lastTransformTime)}`,
         lastRenderTime > 0 && `R:${formatDuration(lastRenderTime)}`,
       ]
