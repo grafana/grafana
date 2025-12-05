@@ -264,7 +264,7 @@ func BuildOptsStaticS390X(distro Distribution, experiments []string, tags []stri
 	}
 }
 
-// BuildOptsStaticS390X builds Grafana statically for the s390x arch
+// BuildOptsStaticRiscv64 builds Grafana statically for the riscv64 arch
 func BuildOptsStaticRiscv64(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
 	var (
 		os, _ = OSAndArch(distro)
@@ -276,6 +276,22 @@ func BuildOptsStaticRiscv64(distro Distribution, experiments []string, tags []st
 		ExperimentalFlags: experiments,
 		OS:                os,
 		Arch:              "riscv64",
+		CGOEnabled:        true,
+	}
+}
+
+// BuildOptsStaticWindows builds Grafana statically for Windows on amd64
+func BuildOptsStaticWindows(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
+	var (
+		os, _ = OSAndArch(distro)
+	)
+
+	return &GoBuildOpts{
+		CC:                "/toolchain/x86_64-w64-mingw32-cross/bin/x86_64-w64-mingw32-gcc",
+		CXX:               "/toolchain/x86_64-w64-mingw32-cross/bin/x86_64-w64-mingw32-cpp",
+		ExperimentalFlags: experiments,
+		OS:                os,
+		Arch:              "amd64",
 		CGOEnabled:        true,
 	}
 }
@@ -364,7 +380,7 @@ var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
 
 	// Non-Linux distros can have whatever they want in CC and CXX; it'll get overridden
 	// but it's probably not best to rely on that.
-	DistWindowsAMD64: ViceroyBuildOpts,
+	DistWindowsAMD64: BuildOptsStaticWindows,
 	DistWindowsARM64: StdZigBuildOpts,
 	DistDarwinAMD64:  ViceroyBuildOpts,
 	DistDarwinARM64:  ViceroyBuildOpts,
