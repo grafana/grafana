@@ -35,11 +35,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
   );
 
   return (
-    <div
-      className={cx(styles.wrapper, {
-        [styles.wrapperActive]: isActive,
-      })}
-    >
+    <div className={cx(styles.wrapper, isActive && styles.wrapperActive)}>
       <LinkComponent
         data-testid={selectors.components.NavMenu.item}
         className={styles.container}
@@ -75,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     justifyContent: 'space-between',
     width: '100%',
     height: '100%',
-    paddingLeft: theme.spacing(1),
+    paddingLeft: theme.spacing(0.5),
     '.pin-icon': {
       visibility: 'hidden',
     },
