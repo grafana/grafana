@@ -983,7 +983,7 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 		now := time.Now()
 		threshold := now.Add(-b.lastImportTimeMaxAge)
 
-		b.log.Debug("Deleting old last import times", "threshold", threshold)
+		b.log.Debug("Deleting last import times older or equal than threshold", "threshold", threshold, "maxAge", b.lastImportTimeMaxAge)
 
 		res, err := dbutil.Exec(ctx, b.db, sqlResourceLastImportTimeDelete, &sqlResourceLastImportTimeDeleteRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
