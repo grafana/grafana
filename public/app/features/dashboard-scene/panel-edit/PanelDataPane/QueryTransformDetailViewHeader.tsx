@@ -32,10 +32,12 @@ import {
 } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { getExpressionIcon } from 'app/features/expressions/types';
 import { FALLBACK_DOCS_LINK } from 'app/features/transformers/docs/constants';
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
+import { usePanelDataPaneColors } from './theme';
 import { QueryTransformItem } from './types';
 
 // Props for regular item mode
@@ -69,21 +71,26 @@ interface QueryLibraryModeProps {
 
 type QueryTransformDetailViewHeaderProps = ItemModeProps | QueryLibraryModeProps;
 
-const ITEM_CONFIG = (theme: GrafanaTheme2) => ({
+const ITEM_CONFIG = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataPaneColors>) => ({
   query: {
-    color: theme.colors.primary.main,
+    color: colors.query.accent,
     icon: 'database' as const,
   },
   expression: {
-    color: theme.visualization.getColorByName('purple'),
-    icon: 'calculator-alt' as const,
+    color: colors.expression.accent,
+    icon: (item: QueryTransformItem) => {
+      if (item.type === 'expression') {
+        return getExpressionIcon(item.data.type);
+      }
+      return 'calculator-alt';
+    },
   },
   transform: {
-    color: theme.visualization.getColorByName('orange'),
-    icon: 'process' as const,
+    color: colors.transform.accent,
+    icon: 'pivot' as const,
   },
   queryLibrary: {
-    color: theme.visualization.getColorByName('green'),
+    color: colors.query.accent,
     icon: 'bookmark' as const,
   },
 });
@@ -101,7 +108,8 @@ function QueryLibraryHeader({
   onClose: () => void;
 }) {
   const theme = useTheme2();
-  const config = useMemo(() => ITEM_CONFIG(theme).queryLibrary, [theme]);
+  const colors = usePanelDataPaneColors();
+  const config = useMemo(() => ITEM_CONFIG(theme, colors).queryLibrary, [theme, colors]);
   const styles = useStyles2(getStyles, config);
 
   return (
@@ -159,7 +167,8 @@ function ItemHeader({
   debugPosition,
 }: ItemModeProps) {
   const theme = useTheme2();
-  const config = useMemo(() => ITEM_CONFIG(theme)[selectedItem.type], [theme, selectedItem.type]);
+  const colors = usePanelDataPaneColors();
+  const config = useMemo(() => ITEM_CONFIG(theme, colors)[selectedItem.type], [theme, selectedItem.type, colors]);
   const styles = useStyles2(getStyles, config);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -471,7 +480,10 @@ function ItemHeader({
       <div className={styles.headerContent}>
         {/* Left side: Icon, Datasource, Name */}
         <Stack gap={1} alignItems="center" grow={1} minWidth={0}>
-          <Icon name={config.icon} className={styles.icon} />
+          <Icon
+            name={typeof config.icon === 'function' ? config.icon(selectedItem) : config.icon}
+            className={styles.icon}
+          />
 
           {/* Datasource picker for queries */}
           {selectedItem.type === 'query' && datasourceSettings && (
