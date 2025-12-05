@@ -233,6 +233,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     onEnrichedDataReceived: setEnrichedTrinoData,
     logRows: props.logRows,
     logsQueries: props.logsQueries,
+    exploreId: exploreId,
   });
 
   const displayedLogRows = enrichedTrinoData || logRows;

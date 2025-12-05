@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { from, lastValueFrom } from 'rxjs';
 
 import {
@@ -9,6 +9,7 @@ import {
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   FieldType,
+  LoadingState,
   LogLevel,
   LogRowModel,
   TimeRange,
@@ -18,6 +19,9 @@ import { config, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
 import { LogListModel } from 'app/features/logs/components/panel/processing';
 import { checkLogsSampled } from 'app/features/logs/utils';
+import { useDispatch } from 'app/types/store';
+
+import { changeLoadingStateAction } from '../state/query';
 
 interface UseTrinoLogMenuItemsProps {
   datasourceType?: string;
@@ -26,6 +30,7 @@ interface UseTrinoLogMenuItemsProps {
   onEnrichedDataReceived?: (data: LogRowModel[] | null) => void;
   logRows?: LogRowModel[];
   logsQueries?: DataQuery[];
+  exploreId: string;
 }
 
 interface LokiQuery extends DataQuery {
@@ -220,7 +225,11 @@ export function useTrinoLogMenuItems({
   onEnrichedDataReceived,
   logRows,
   logsQueries,
+  exploreId,
 }: UseTrinoLogMenuItemsProps): LogLineMenuCustomItem[] {
+  const dispatch = useDispatch();
+  const isQueryingRef = useRef(false);
+
   useEffect(() => {
     onEnrichedDataReceived?.(null);
   }, [logRows, onEnrichedDataReceived]);
@@ -241,7 +250,19 @@ export function useTrinoLogMenuItems({
       onClick: async (log: LogListModel) => {
         const appEvents = getAppEvents();
         
+        if (isQueryingRef.current) {
+          appEvents.publish({
+            type: AppEvents.alertWarning.name,
+            payload: [
+              t('explore.logs.trino.already-running', 'A Trino query is already running'),
+            ],
+          });
+          return;
+        }
+
         try {
+          isQueryingRef.current = true;
+          dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
           onEnrichedDataReceived?.(null);
           const datasource = await getDataSourceSrv().get(trinoDataSource.uid);
           const fromTime = timeRange.from.toISOString().replace('T', ' ').replace('Z', ' UTC');
@@ -336,6 +357,9 @@ export function useTrinoLogMenuItems({
               errorMessage,
             ],
           });
+        } finally {
+          isQueryingRef.current = false;
+          dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
         }
       },
     };
@@ -344,6 +368,6 @@ export function useTrinoLogMenuItems({
       { divider: true },
       trinoMenuItem,
     ];
-  }, [datasourceType, trinoDataSource, timeRange, onEnrichedDataReceived, logsQueries]);
+  }, [datasourceType, trinoDataSource, timeRange, onEnrichedDataReceived, logsQueries, exploreId, dispatch]);
 }
 
