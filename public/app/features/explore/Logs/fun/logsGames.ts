@@ -30,6 +30,85 @@ const splash = `
 Keyboard arrows: move - Space: attack - N: new game
 Press any key to start`;
 
+const nextLevelSplash = `
+ ▄▄                                      ▄▄▄▄                
+ ██                                      ▀▀██                
+ ██         ▄████▄   ██▄  ▄██   ▄████▄     ██                
+ ██        ██▄▄▄▄██   ██  ██   ██▄▄▄▄██    ██                
+ ██        ██▀▀▀▀▀▀   ▀█▄▄█▀   ██▀▀▀▀▀▀    ██                
+ ██▄▄▄▄▄▄  ▀██▄▄▄▄█    ████    ▀██▄▄▄▄█    ██▄▄▄             
+ ▀▀▀▀▀▀▀▀    ▀▀▀▀▀      ▀▀       ▀▀▀▀▀      ▀▀▀▀             
+
+ Press any key to start`;
+
+const numbers = [
+  `
+   ▄▄▄    
+  █▀██    
+    ██    
+    ██    
+    ██    
+ ▄▄▄██▄▄▄ 
+ ▀▀▀▀▀▀▀▀ 
+         `,
+  `
+  ▄▄▄▄▄   
+ █▀▀▀▀██▄ 
+       ██ 
+     ▄█▀  
+   ▄█▀    
+ ▄██▄▄▄▄▄ 
+ ▀▀▀▀▀▀▀▀ 
+          `,
+  `
+  ▄▄▄▄▄   
+ █▀▀▀▀██▄ 
+      ▄██ 
+   █████  
+      ▀██ 
+ █▄▄▄▄██▀ 
+  ▀▀▀▀▀   
+         `,
+  `
+      ▄▄▄  
+    ▄███  
+   █▀ ██  
+ ▄█▀  ██  
+ ████████ 
+      ██  
+      ▀▀  
+         `,
+  `
+ ▄▄▄▄▄▄▄  
+ ██▀▀▀▀▀  
+ ██▄▄▄▄   
+ █▀▀▀▀██▄ 
+       ██ 
+ █▄▄▄▄██▀ 
+  ▀▀▀▀▀   `,
+  `
+   ▄▄▄▄   
+  ██▀▀▀█  
+ ██ ▄▄▄   
+ ███▀▀██▄ 
+ ██    ██ 
+ ▀██▄▄██▀ 
+   ▀▀▀▀   
+         `,
+];
+
+const gameOver = `
+                                                         
+ ▄▄▄▄▄▄▄                                                 
+███▀▀▀▀▀                                                 
+███        ▀▀█▄ ███▄███▄ ▄█▀█▄   ▄███▄ ██ ██ ▄█▀█▄ ████▄ 
+███  ███▀ ▄█▀██ ██ ██ ██ ██▄█▀   ██ ██ ██▄██ ██▄█▀ ██ ▀▀ 
+▀██████▀  ▀█▄██ ██ ██ ██ ▀█▄▄▄   ▀███▀  ▀█▀  ▀█▄▄▄ ██    
+                                                         
+                                                         
+Press N to try again
+`;
+
 const map = `Score: 000000                              Lives: ♥♥♥♥
 ================================================================================
                                                                                 
@@ -64,9 +143,14 @@ const userMissileSprite = '╫';
 const userMissileRegex = new RegExp(userMissileSprite, 'g');
 const enemyMissileSprite = '¦';
 const enemyMissileRegex = new RegExp(enemyMissileSprite, 'g');
-const missileSpeed = 0.06;
-const enemyMissileSpeed = 0.01;
-const enemySpeed = 0.001;
+
+const initialMissileSpeed = 0.06;
+const initialEnemyMissileSpeed = 0.01;
+const initialEnemySpeed = 0.001;
+
+const missileSpeed = initialMissileSpeed;
+const enemyMissileSpeed = initialEnemyMissileSpeed;
+const enemySpeed = initialEnemySpeed;
 const ufoSpeed = 0.0095;
 
 type Missile = {
@@ -85,6 +169,7 @@ type Enemy = {
   body: string;
   health: number;
 };
+type GameStatus = 'new-game' | 'paused' | 'playing' | 'ended' | 'next-level';
 const ufo = '[=U=]';
 const enemyTypes = ['<@_@>', '<^_^>', '[-_-]', '<o_o>', ufo];
 const enemyScores = [10, 20, 30, 40, 100];
@@ -109,24 +194,27 @@ export function useLogsGames() {
   const [userMissiles, setUserMisiles] = useState<Missile[]>([]);
   const [enemyMissiles, setEnemyMissiles] = useState<Missile[]>([]);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
-  const [gameEnded, setGameEnded] = useState(false);
+  const [gameStatus, setGameStatus] = useState<GameStatus>('new-game');
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(4);
-  const newGameRef = useRef(true);
-  const pausedRef = useRef(true);
   const prevLives = usePrevious(lives);
   const effectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevScore = usePrevious(score);
   const prevEnemies = usePrevious(enemies);
+  const levelRef = useRef(1);
 
   const lastTime = useRef(0);
   const frame = useRef<number | null>(null);
 
   useEffect(() => {
-    if (newGameRef.current) {
+    if (gameStatus === 'new-game') {
       setGameState(getSplashScreen(splash));
+    } else if (gameStatus === 'next-level') {
+      setGameState(getLevelScreen(levelRef.current));
+    } else if (gameStatus === 'ended') {
+      setGameState(getSplashScreen(gameOver));
     }
-  }, [gameState]);
+  }, [gameStatus]);
 
   useEffect(() => {
     function loop(t: number) {
@@ -152,14 +240,14 @@ export function useLogsGames() {
       setLives(newLives);
 
       if (newEnemies.length === 0 || lives === 0) {
-        setGameEnded(true);
+        setGameStatus('ended');
         updateBestScore(score);
       }
 
       frame.current = requestAnimationFrame(loop);
     }
 
-    if (!gameEnded && !pausedRef.current) {
+    if (gameStatus === 'playing') {
       frame.current = requestAnimationFrame(loop);
     }
 
@@ -168,48 +256,50 @@ export function useLogsGames() {
         cancelAnimationFrame(frame.current);
       }
     };
-  }, [enemies, enemyMissiles, gameEnded, gameState, lives, playerX, score, userMissiles]);
+  }, [enemies, enemyMissiles, gameState, gameStatus, lives, playerX, score, userMissiles]);
 
   useEffect(() => {
     function handlePause() {
       if (document.hidden) {
-        pausedRef.current = true;
+        setGameStatus('paused');
         console.log('Game paused');
-      } else {
-        pausedRef.current = false;
-        console.log('Game resumed');
       }
     }
     function pause() {
-      pausedRef.current = true;
+      setGameStatus('paused');
       console.log('Game paused');
-    }
-    function resume() {
-      pausedRef.current = false;
-      console.log('Game resumed');
     }
     document.addEventListener('visibilitychange', handlePause);
     document.addEventListener('blur', pause);
-    document.addEventListener('focus', resume);
 
     return () => {
       document.removeEventListener('visibilitychange', handlePause);
       document.removeEventListener('blur', pause);
-      document.removeEventListener('focus', resume);
     };
   });
 
   useEffect(() => {
     function handleKeyPress(e: KeyboardEvent) {
-      if (newGameRef.current) {
-        newGameRef.current = false;
-        pausedRef.current = false;
+      if (gameStatus === 'new-game') {
+        setGameStatus('next-level');
+        return;
+      }
+      if (gameStatus === 'paused') {
+        setGameStatus(gameState === undefined ? 'new-game' : 'playing');
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      } else if (gameStatus === 'next-level') {
         setGameState(undefined);
+        setGameStatus('playing');
+        e.preventDefault();
+        e.stopPropagation();
         return;
       } else if (e.code === 'KeyN') {
-        newGameRef.current = true;
-        pausedRef.current = true;
+        setGameStatus('new-game');
         setGameState(undefined);
+        setScore(0);
+        setLives(4);
       }
 
       if (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight' && e.code !== 'Space' && e.code !== 'KeyN') {
@@ -231,7 +321,7 @@ export function useLogsGames() {
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [playerX, userMissiles]);
+  }, [gameState, gameStatus, playerX, userMissiles]);
 
   useEffect(() => {
     if (prevLives && prevLives > lives) {
@@ -277,6 +367,15 @@ function getSplashScreen(splash: string) {
       logLevel: LogLevel.unknown,
     });
   });
+}
+
+function getLevelScreen(level: number) {
+  let screen = nextLevelSplash.split('\n');
+  let number = numbers[level - 1].split('\n');
+
+  return getSplashScreen(
+    screen.map((line, index) => line + (number[index] !== undefined ? number[index] : '')).join('\n')
+  );
 }
 
 function update(
@@ -329,7 +428,9 @@ function update(
       return missile;
     })
     .filter((missile) => {
-      if (missile.gridY === playerY && missile.x >= playerX - 2 && missile.x <= playerX) {
+      const playerStart = Math.max(0, playerX - 3);
+      const playerEnd = Math.max(2, playerX - 1);
+      if (missile.gridY === playerY && missile.x >= playerStart && missile.x <= playerEnd) {
         missile.hit = true;
         lives--;
         return false;
@@ -341,7 +442,6 @@ function update(
   const shieldStart = gameState.findIndex((row) => row.entry.includes('#'));
   const formationCanMoveDown = shieldStart === -1 || lowestEnemyY + 1 < shieldStart;
 
-  // Calculate the actual formation boundaries (excluding UFOs from formation)
   const formationEnemies = enemies.filter((e) => e.type !== enemyTypeUfo && e.health > 3);
   const rightmostEnemy = formationEnemies.reduce((max, enemy) => Math.max(max, enemy.gridX), 0);
   const leftmostEnemy = formationEnemies.reduce(
@@ -370,7 +470,6 @@ function update(
             enemy.direction = 'l';
           }
         } else if (rightmostEnemy + 4 >= 79) {
-          // +4 accounts for enemy sprite width, 79 is right boundary
           enemy.direction = 'l';
           if (formationCanMoveDown) {
             enemy.y += 1;
