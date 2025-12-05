@@ -3,7 +3,7 @@ import { pick } from 'lodash';
 import { useMemo, useState } from 'react';
 import { shallowEqual } from 'react-redux';
 
-import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { RawTimeRange, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
@@ -25,7 +25,6 @@ import {
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
@@ -37,7 +36,6 @@ import { LiveTailButton } from './LiveTailButton';
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
-import { changeDatasource } from './state/datasource';
 import { changeCorrelationHelperData } from './state/explorePane';
 import {
   splitClose,
@@ -110,10 +108,6 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
-  const showSmallDataSourcePicker = useSelector(
-    (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
-  );
-
   const panes = useSelector(selectPanesEntries);
   const storedSavedQueries = useSelector((state: StoreState) => state.explore.savedQueries);
   const savedQueries = useMemo(() => {
@@ -137,41 +131,6 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const refreshPickerLabel = loading
     ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')
     : t('explore.toolbar.refresh-picker-run', 'Run query');
-
-  const onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
-    if (!isCorrelationsEditorMode) {
-      dispatch(changeDatasource({ exploreId, datasource: dsSettings.uid, options: { importQueries: true } }));
-    } else {
-      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
-        // prompt will handle datasource change if needed
-        dispatch(
-          changeCorrelationEditorDetails({
-            isExiting: true,
-            postConfirmAction: {
-              exploreId: exploreId,
-              action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
-              changeDatasourceUid: dsSettings.uid,
-              isActionLeft: isLeftPane,
-            },
-          })
-        );
-      } else {
-        // if the left pane is changing, clear helper data for right pane
-        if (isLeftPane) {
-          panes.forEach((pane) => {
-            dispatch(
-              changeCorrelationHelperData({
-                exploreId: pane[0],
-                correlationEditorHelperData: undefined,
-              })
-            );
-          });
-        }
-
-        dispatch(changeDatasource({ exploreId, datasource: dsSettings.uid, options: { importQueries: true } }));
-      }
-    }
-  };
 
   const onRunQuery = (loading = false) => {
     if (loading) {
@@ -311,14 +270,6 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           >
             <Trans i18nKey="explore.explore-toolbar.outline">Outline</Trans>
           </ToolbarButton>,
-          <DataSourcePicker
-            key={`${exploreId}-ds-picker`}
-            mixed={!isCorrelationsEditorMode}
-            onChange={onChangeDatasource}
-            current={datasourceInstance?.getRef()}
-            hideTextValue={showSmallDataSourcePicker}
-            width={showSmallDataSourcePicker ? 8 : undefined}
-          />,
           <ToolbarExtensionPoint
             key="toolbar-extension-point"
             exploreId={exploreId}
