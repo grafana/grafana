@@ -4,8 +4,8 @@ import React, { memo } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { reportInteraction, ScopesContextValue } from '@grafana/runtime';
-import { Icon, Stack, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { ScopesContextValue } from '@grafana/runtime';
+import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -15,7 +15,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 import { useSelector } from 'app/types/store';
 
-import { Branding } from '../../Branding/Branding';
+import { HomeLink } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
@@ -65,10 +65,6 @@ export const SingleTopBar = memo(function SingleTopBar({
   const isLargeScreen = useMediaQueryMinWidth('lg');
   const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
 
-  const onHomeClicked = () => {
-    reportInteraction('grafana_home_clicked', { url: homeNav?.url });
-  };
-
   return (
     <>
       <div className={styles.layout}>
@@ -85,19 +81,7 @@ export const SingleTopBar = memo(function SingleTopBar({
               </Stack>
             </ToolbarButton>
           )}
-          {!menuDockedAndOpen && (
-            <Tooltip placement="bottom" content={homeNav?.text || 'Home'}>
-              <a
-                onClick={onHomeClicked}
-                data-testid={Components.Breadcrumbs.breadcrumb('Home')}
-                className={styles.homeLink}
-                title={homeNav?.text || 'Home'}
-                href={homeNav?.url}
-              >
-                <Branding.LoginLogo />
-              </a>
-            </Tooltip>
-          )}
+          {!menuDockedAndOpen && <HomeLink homeNav={homeNav} />}
           {topLevelScopes ? <ScopesSelector /> : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
           {!showToolbarLevel && breadcrumbActions}

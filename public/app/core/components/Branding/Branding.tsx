@@ -58,7 +58,7 @@ export function HomeLink({ homeNav }: { homeNav?: NavModelItem }) {
   const styles = useStyles2(homeLinkStyles);
 
   const onHomeClicked = () => {
-    reportInteraction('grafana_home_clicked', { url: homeNav?.url });
+    reportInteraction('grafana_home_clicked');
   };
 
   return (

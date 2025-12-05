@@ -10,7 +10,6 @@ import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitch
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
 export interface Props {
-  handleMegaMenu: () => void;
   handleDockedMenu: () => void;
   onClose: () => void;
 }
