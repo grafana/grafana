@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Icon, PanelChrome, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -128,7 +129,6 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
   const renderMetricRow = (label: string, current: number) => {
     return (
       <div>
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <strong>{label}:</strong> {formatDuration(current)}
       </div>
     );
@@ -139,12 +139,13 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
 
   const tooltipContent = (
     <div>
-      {renderMetricRow('Query', lastQueryTime)}
-      {hasTransformations && renderMetricRow('Transform', lastTransformTime)}
-      {renderMetricRow('Render', lastRenderTime)}
+      {renderMetricRow(t('dashboard-scene.panel-performance-metrics.query', 'Query'), lastQueryTime)}
+      {hasTransformations &&
+        renderMetricRow(t('dashboard-scene.panel-performance-metrics.transform', 'Transform'), lastTransformTime)}
+      {renderMetricRow(t('dashboard-scene.panel-performance-metrics.render', 'Render'), lastRenderTime)}
       <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-        <strong>Total:</strong> {formatDuration(lastTotalTime)}
+        <strong>{t('dashboard-scene.panel-performance-metrics.total-time', 'Total time')}:</strong>{' '}
+        {formatDuration(lastTotalTime)}
       </div>
     </div>
   );

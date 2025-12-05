@@ -6231,6 +6231,12 @@
         }
       }
     },
+    "panel-performance-metrics": {
+      "query": "Query",
+      "render": "Render",
+      "total-time": "Total time",
+      "transform": "Transform"
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Back"
@@ -9397,6 +9403,7 @@
       "toggle-panel-edit": "Toggle panel edit view",
       "toggle-panel-fullscreen": "Toggle panel fullscreen view",
       "toggle-panel-legend": "Toggle panel legend",
+      "toggle-performance-metrics": "Toggle performance metrics",
       "zoom-in-time-range": "Zoom in time range",
       "zoom-out-time-range": "Zoom out time range"
     },

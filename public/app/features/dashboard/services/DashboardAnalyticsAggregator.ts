@@ -63,6 +63,12 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
     this.panelMetrics.clear();
     this.dashboardUID = uid;
     this.dashboardTitle = title;
+    // Recreate the Subject for the new dashboard (since this is a singleton, we need a fresh Subject)
+    // Complete the old Subject first to clean up any remaining subscriptions
+    if (!this.panelMetricsSubject.closed) {
+      this.panelMetricsSubject.complete();
+    }
+    this.panelMetricsSubject = new Subject<{ panelId: string; metrics: PanelAnalyticsMetrics }>();
   }
 
   public destroy() {
@@ -70,8 +76,8 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
     this.panelMetrics.clear();
     this.dashboardUID = '';
     this.dashboardTitle = '';
-    // Complete the subject to clean up subscriptions
-    this.panelMetricsSubject.complete();
+    // Note: We don't complete the Subject here since this is a singleton that will be reused.
+    // The Subject will be recreated in initialize() for the next dashboard.
   }
 
   /**
@@ -138,7 +144,7 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
   // Panel-level events
   onPanelOperationStart = (data: performanceUtils.PanelPerformanceData): void => {
     // Start events don't need aggregation, just ensure panel exists
-    this.ensurePanelExists(data.panelKey, data.panelId, data.pluginId, data.pluginVersion);
+    this.ensurePanelExists(data.panelKey, String(data.panelId), data.pluginId, data.pluginVersion);
   };
 
   onPanelOperationComplete = (data: performanceUtils.PanelPerformanceData): void => {
@@ -194,7 +200,7 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
         break;
     }
 
-    this.panelMetricsSubject.next({ panelId: data.panelId, metrics: panel });
+    this.panelMetricsSubject.next({ panelId: String(data.panelId), metrics: panel });
   };
 
   // Query-level events
