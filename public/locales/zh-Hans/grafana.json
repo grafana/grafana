@@ -5802,14 +5802,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "回到列表",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "删除",
       "description-color-annotation-event-markers": "用于注释事件标记的颜色",
       "description-enabled-annotation-query-issued-every-dashboard": "启用后，每次数据面板刷新时都会发出注释查询",
-      "description-hidden": "可在数据面板顶部打开或关闭注释查询。选中此选项后，此切换开关将被隐藏。",
+      "label-annotation-controls-display": "",
       "label-color": "颜色",
       "label-data-source": "数据源",
       "label-enabled": "已启用",
-      "label-hidden": "隐藏",
       "label-name": "名称",
       "label-show-in": "显示于",
       "placeholder-choose-panels": "选择面板",
@@ -5865,6 +5877,7 @@
       "label-open-link-in-new-tab": "在新选项卡中打开链接",
       "label-options": "选项",
       "label-show-as-dropdown": "显示为下拉",
+      "label-show-in-controls-menu": "",
       "label-title": "标题",
       "label-tooltip": "工具提示",
       "label-type": "类型",
@@ -6424,6 +6437,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "变量编辑器表单",
       "back-to-list": "回到列表",
@@ -6738,8 +6770,8 @@
       "test": "测试"
     },
     "cloud-info-box": {
-      "body-alert": "您也可以省去这些步骤，通过<6>永久免费的 Grafana Cloud 计划</6>，从 Grafana Labs 获取完全托管、可扩展和托管式数据源 {{mainDS}}（和 {{extraDS}}）。",
-      "title-alert": "在下方配置您的 {{mainDS}} 数据源"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "删除数据面板",
