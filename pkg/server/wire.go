@@ -88,6 +88,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	datasourcesclient "github.com/grafana/grafana/pkg/services/datasources/service/client"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
@@ -476,6 +477,7 @@ var wireBasicSet = wire.NewSet(
 	appregistry.WireSet,
 	// Dashboard Kubernetes helpers
 	dashboardclient.ProvideK8sClientWithFallback,
+	datasourcesclient.ProvideDataSourceConnectionClientFactory,
 )
 
 var wireSet = wire.NewSet(

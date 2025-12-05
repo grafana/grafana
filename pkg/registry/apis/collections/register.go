@@ -1,11 +1,13 @@
 package collections
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -14,13 +16,16 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	datasourcesClient "github.com/grafana/grafana/pkg/services/datasources/service/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -29,13 +34,15 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder  = (*APIBuilder)(nil)
-	_ builder.APIGroupMutation = (*APIBuilder)(nil)
+	_ builder.APIGroupBuilder    = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation   = (*APIBuilder)(nil)
+	_ builder.APIGroupValidation = (*APIBuilder)(nil)
 )
 
 type APIBuilder struct {
-	authorizer  authorizer.Authorizer
-	legacyStars *legacy.DashboardStarsStorage
+	authorizer                authorizer.Authorizer
+	legacyStars               *legacy.DashboardStarsStorage
+	datasourceStacksValidator builder.APIGroupValidation
 }
 
 func RegisterAPIService(
@@ -45,6 +52,8 @@ func RegisterAPIService(
 	stars star.Service,
 	users user.Service,
 	apiregistration builder.APIRegistrar,
+	dsConnClientFactory datasourcesClient.DataSourceConnectionClientFactory,
+	restConfigProvider apiserver.RestConfigProvider,
 ) *APIBuilder {
 	// Requires development settings and clearly experimental
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -52,11 +61,15 @@ func RegisterAPIService(
 		return nil
 	}
 
+	dsConnClient := dsConnClientFactory(restConfigProvider)
+
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
+		datasourceStacksValidator: GetDatasourceStacksValidator(dsConnClient),
 		authorizer: &utils.AuthorizeFromName{
 			Resource: map[string][]utils.ResourceOwner{
-				"stars": {utils.UserResourceOwner},
+				"stars":       {utils.UserResourceOwner},
+				"datasources": {utils.UserResourceOwner},
 			},
 		},
 	}
@@ -94,28 +107,60 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage := map[string]rest.Storage{}
 
 	// Configure Stars Dual writer
-	resource := collections.StarsResourceInfo
+	starsResource := collections.StarsResourceInfo
 	var stars grafanarest.Storage
-	stars, err := grafanaregistry.NewRegistryStore(opts.Scheme, resource, opts.OptsGetter)
+	stars, err := grafanaregistry.NewRegistryStore(opts.Scheme, starsResource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
 	stars = &starStorage{Storage: stars} // wrap List so we only return one value
 	if b.legacyStars != nil && opts.DualWriteBuilder != nil {
-		stars, err = opts.DualWriteBuilder(resource.GroupResource(), b.legacyStars, stars)
+		stars, err = opts.DualWriteBuilder(starsResource.GroupResource(), b.legacyStars, stars)
 		if err != nil {
 			return err
 		}
 	}
-	storage[resource.StoragePath()] = stars
-	storage[resource.StoragePath("update")] = &starsREST{store: stars}
+	storage[starsResource.StoragePath()] = stars
+	storage[starsResource.StoragePath("update")] = &starsREST{store: stars}
+
+	// no need for dual writer for a kind that does not exist in the legacy database
+	resourceInfo := collections.DatasourceStacksResourceInfo
+	datasourcesStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
+	storage[resourceInfo.StoragePath()] = datasourcesStorage
 
 	apiGroupInfo.VersionedResourcesStorageMap[collections.APIVersion] = storage
 	return nil
 }
 
+func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	if a.GetKind().Group == collections.DatasourceStacksResourceInfo.GroupResource().Group {
+		return b.datasourceStacksValidator.Validate(ctx, a, o)
+	}
+	return nil
+}
+
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b.authorizer
+
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			if attr.GetResource() == "stars" {
+				return b.authorizer.Authorize(ctx, attr)
+			}
+
+			// datasources auth branch starts
+			if !attr.IsResourceRequest() {
+				return authorizer.DecisionNoOpinion, "", nil
+			}
+			// require a user
+			_, err = identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
+
+			// TODO make the auth more restrictive
+			return authorizer.DecisionAllow, "", nil
+
+		})
 }
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

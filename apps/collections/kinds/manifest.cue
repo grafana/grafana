@@ -6,12 +6,13 @@ manifest: {
 	versions: {
 		"v1alpha1": {
 			codegen: {
-				ts: {enabled: false}
+				ts: {enabled: true}
 				go: {enabled: true}
 			}
 			kinds: [
 				starsV1alpha1,
+				datasourcestacksV1alpha1
 			]
-		}
+		},
 	}
 }
