@@ -13,7 +13,16 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 		assert.NoError(t, err)
 
-		s, err := cfg.Raw.NewSection("unified_storage.playlists.playlist.grafana.app")
+		// Validate that migrated resources are enforced to mode 5
+		for _, migratedResource := range MigratedUnifiedResources {
+			sectionName := "unified_storage." + migratedResource
+			section, err := cfg.Raw.NewSection(sectionName)
+			assert.NoError(t, err)
+			_, err = section.NewKey("dualWriterMode", "0") // will be changed to 5 in setUnifiedStorageConfig
+			assert.NoError(t, err)
+		}
+
+		s, err := cfg.Raw.NewSection("unified_storage.resource.not_migrated.grafana.app")
 		assert.NoError(t, err)
 
 		_, err = s.NewKey("dualWriterMode", "2")
@@ -37,7 +46,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		cfg.setUnifiedStorageConfig()
 
-		value, exists := cfg.UnifiedStorage["playlists.playlist.grafana.app"]
+		value, exists := cfg.UnifiedStorage["resource.not_migrated.grafana.app"]
 
 		assert.Equal(t, exists, true)
 		assert.Equal(t, value, UnifiedStorageConfig{
@@ -46,6 +55,15 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			DataSyncerRecordsLimit:               1001,
 			DataSyncerInterval:                   time.Minute * 10,
 		})
+
+		for _, migratedResource := range MigratedUnifiedResources {
+			value, exists := cfg.UnifiedStorage[migratedResource]
+			assert.Equal(t, exists, true)
+			assert.Equal(t, value, UnifiedStorageConfig{
+				DualWriterMode:                      5,
+				DualWriterMigrationDataSyncDisabled: true,
+			})
+		}
 
 		// Test that index settings are correctly parsed
 		assert.Equal(t, 5, cfg.IndexMinCount)
