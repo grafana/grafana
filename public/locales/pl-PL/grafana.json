@@ -5868,14 +5868,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Powrót do listy",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Usuń",
       "description-color-annotation-event-markers": "Kolor używany dla znaczników zdarzeń związanych z adnotacją",
       "description-enabled-annotation-query-issued-every-dashboard": "Po włączeniu zapytanie dotyczące adnotacji jest wysyłane przy każdym odświeżeniu pulpitu",
-      "description-hidden": "Zapytania dotyczące adnotacji można włączyć lub wyłączyć u góry pulpitu. Po zaznaczeniu tej opcji przełącznik zostanie ukryty.",
+      "label-annotation-controls-display": "",
       "label-color": "Kolor",
       "label-data-source": "Źródło danych",
       "label-enabled": "Włączone",
-      "label-hidden": "Ukryte",
       "label-name": "Imię",
       "label-show-in": "Pokaż w",
       "placeholder-choose-panels": "Wybierz panele",
@@ -5931,6 +5943,7 @@
       "label-open-link-in-new-tab": "Otwórz link w nowej karcie",
       "label-options": "Opcje",
       "label-show-as-dropdown": "Pokaż jako listę rozwijaną",
+      "label-show-in-controls-menu": "",
       "label-title": "Tytuł",
       "label-tooltip": "Podpowiedź",
       "label-type": "Typ",
@@ -6496,6 +6509,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formularz edytora zmiennych",
       "back-to-list": "Powrót do listy",
@@ -6810,8 +6842,8 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "Możesz ułatwić sobie życie i wybrać {{mainDS}} (oraz {{extraDS}}) jako w pełni zarządzane, skalowalne źródła danych hostowane przez Grafana Labs w ramach <6>planu Grafana Cloud, który będzie zawsze bezpłatny</6>.",
-      "title-alert": "Skonfiguruj źródło danych {{mainDS}} poniżej"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Usuń pulpit",
