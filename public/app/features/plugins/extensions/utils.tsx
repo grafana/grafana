@@ -683,7 +683,8 @@ export const getExposedComponentPluginDependencies = (exposedComponentId: string
 // metadata field. (For example the plugins that expose components that the app depends on.)
 // Heads up! This is a recursive function.
 export const getAppPluginDependencies = (pluginId: string, visited: string[] = []): string[] => {
-  if (!getAppPluginMeta(pluginId)) {
+  const app = getAppPluginMeta(pluginId);
+  if (!app) {
     return [];
   }
 
@@ -692,9 +693,7 @@ export const getAppPluginDependencies = (pluginId: string, visited: string[] = [
     return [];
   }
 
-  const pluginIdDependencies = getAppPluginMeta(pluginId).dependencies.extensions.exposedComponents.map(
-    getAppPluginIdFromExposedComponentId
-  );
+  const pluginIdDependencies = app.dependencies.extensions.exposedComponents.map(getAppPluginIdFromExposedComponentId);
 
   return (
     pluginIdDependencies

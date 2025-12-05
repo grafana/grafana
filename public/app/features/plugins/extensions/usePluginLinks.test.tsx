@@ -269,8 +269,10 @@ describe('usePluginLinks()', () => {
     };
 
     // The `AddedLinksRegistry` is validating if the link is registered in the plugin metadata (config.apps).
-    const plugin = getAppPluginMeta(pluginId);
-    const config = { ...plugin, extensions: { ...plugin.extensions, addedLinks: [linkConfig] } };
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const config = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [linkConfig] } };
     setAppPluginMetas({ [pluginId]: config });
 
     wrapper = ({ children }: { children: React.ReactNode }) => (

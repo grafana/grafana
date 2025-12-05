@@ -422,8 +422,10 @@ describe('ExposedComponentsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const plugin = getAppPluginMeta(pluginId);
-    const config = { ...plugin, extensions: { ...plugin.extensions, exposedComponents: [] } };
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const config = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [] } };
     setAppPluginMetas({ [pluginId]: config });
 
     registry.register({
@@ -473,8 +475,10 @@ describe('ExposedComponentsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const plugin = getAppPluginMeta(pluginId);
-    const config = { ...plugin, extensions: { ...plugin.extensions, exposedComponents: [] } };
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const config = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [] } };
     setAppPluginMetas({ [pluginId]: config });
 
     registry.register({
@@ -500,8 +504,10 @@ describe('ExposedComponentsRegistry', () => {
       component: () => React.createElement('div', null, 'Hello World1'),
     };
 
-    const plugin = getAppPluginMeta(pluginId);
-    const config = { ...plugin, extensions: { ...plugin.extensions, exposedComponents: [componentConfig] } };
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const config = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [componentConfig] } };
     setAppPluginMetas({ [pluginId]: config });
 
     registry.register({

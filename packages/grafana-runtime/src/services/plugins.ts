@@ -23,8 +23,13 @@ export function getAppPluginMetas(): AppPluginMetas {
   return cloneDeep(apps);
 }
 
-export function getAppPluginMeta(id: string): AppPluginConfig {
-  return getAppPluginMetas()[id];
+export function getAppPluginMeta(id: string): AppPluginConfig | undefined {
+  if (!apps[id]) {
+    console.error(`Plugin meta missing for plugin with id: ${id}`);
+    return undefined;
+  }
+
+  return cloneDeep(apps[id]);
 }
 
 export function setAppPluginMetas(override: AppPluginMetas) {
