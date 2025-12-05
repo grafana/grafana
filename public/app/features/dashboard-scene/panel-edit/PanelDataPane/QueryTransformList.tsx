@@ -441,7 +441,7 @@ export const QueryTransformList = memo(
                   )}
                   data-testid="query-transform-list-content"
                 >
-                  <Stack direction="column" gap={3}>
+                  <Stack direction="column" gap={2}>
                     {/* Data Sources Section (Queries + Expressions) */}
                     <Stack direction="column" gap={2}>
                       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}

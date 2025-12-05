@@ -135,7 +135,7 @@ export const AddDataItemMenu = memo(
 
 const getStyles = (theme: GrafanaTheme2) => ({
   textButton: css({
-    paddingLeft: 0,
+    paddingLeft: theme.spacing(1),
     fontFamily: theme.typography.fontFamilyMonospace,
   }),
   queryLibraryMenuItem: css({

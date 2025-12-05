@@ -313,7 +313,7 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       },
     }),
     content: css({
-      padding: theme.spacing(1.5),
+      padding: theme.spacing(0.75) + ' ' + theme.spacing(1),
     }),
     datasourceIcon: css({
       width: '16px',
