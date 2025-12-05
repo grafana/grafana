@@ -88,7 +88,6 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
   const [sidebarState, setSidebarState] = useState<SidebarState>({ size: SidebarSize.Mini, collapsed: false });
-  const [containerRef, { height: containerHeight }] = useMeasure<HTMLDivElement>();
   const [vizRef, { height: vizHeight }] = useMeasure<HTMLDivElement>();
 
   const styles = useStyles2(getStyles, sidebarState);
@@ -100,12 +99,12 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
     const grid = [];
 
     if (controls) {
-      rows.push('auto');
+      rows.push('32px');
       grid.push(['controls', 'controls']);
     }
 
     grid.push(['viz', 'viz']);
-    rows.push('1fr');
+    rows.push(`${vizHeight}px`);
 
     if (dataPane) {
       // rows.push(`${(containerHeight - vizHeight) + 40}px`);
@@ -120,19 +119,19 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 
     return {
       gridTemplateAreas: '\n' + grid.map((row) => `"${row.join(' ')}"`).join('\n'),
-      // gridTemplateRows: rows.map((r) => r).join(' '),
+      gridTemplateRows: rows.map((r) => r).join(' '),
     };
-  }, [controls, dataPane, sidebarState.size]);
+  }, [controls, dataPane, sidebarState.size, vizHeight]);
 
   return (
-    <div ref={containerRef} className={styles.pageContainer} style={gridStyles}>
+    <div className={styles.pageContainer} style={gridStyles}>
       {controls && (
         <div className={styles.controlsWrapper}>
           <controls.Component model={controls} />
         </div>
       )}
 
-      <div ref={vizRef} className={cx(styles.viz, isScrollingLayout && styles.fixedSizeViz)}>
+      <div ref={vizRef} style={{ height: 550 }} className={cx(styles.viz, isScrollingLayout && styles.fixedSizeViz)}>
         {tableView ? <tableView.Component model={tableView} /> : <panel.Component model={panel} />}
       </div>
 
@@ -216,7 +215,6 @@ function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
       display: 'grid',
       gap: theme.spacing(2),
       gridTemplateColumns: `auto 1fr`,
-      gridTemplateRows: `auto 0.7fr 0.3fr`,
       height: '100%',
       minHeight: '100%',
       maxHeight: '100%',
@@ -239,6 +237,7 @@ function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
       gridArea: 'viz',
       overflow: 'auto',
       resize: 'vertical',
+      height: '100%',
       minHeight: 200,
       maxHeight: 700, // FIXME: needs a dynamic height
       ...(sidebarState.size === SidebarSize.Mini && {
