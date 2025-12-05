@@ -369,6 +369,10 @@ export function useLogsGames() {
 
   useEffect(() => {
     function handleKeyPress(e: KeyboardEvent) {
+      if (e.code === 'Space') {
+        e.preventDefault();
+      }
+
       if (gameStatus === 'new-game') {
         setGameStatus('next-level');
         return;
