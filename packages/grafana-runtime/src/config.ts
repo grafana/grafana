@@ -93,6 +93,7 @@ export class GrafanaBootConfig {
   appSubUrl = '';
   namespace = 'default';
   windowTitlePrefix = 'Grafana - ';
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   buildInfo: BuildInfo = {
     version: '1.0',
     commit: '1',
@@ -142,6 +143,7 @@ export class GrafanaBootConfig {
   featureToggles: FeatureToggles = {};
   anonymousEnabled = false;
   anonymousDeviceLimit?: number;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';
@@ -234,6 +236,7 @@ export class GrafanaBootConfig {
     maxIdleConns: 100,
     connMaxLifetime: 14400,
   };
+  trino?: string;
   defaultDatasourceManageAlertsUiToggle = true;
   defaultAllowRecordingRulesTargetAlertsUiToggle = true;
   tokenExpirationDayLimit?: number;
@@ -298,6 +301,7 @@ export class GrafanaBootConfig {
 function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
   const featureToggles = config.featureToggles;
   const localStorageKey = 'grafana.featureToggles';
+  // eslint-disable-next-line no-restricted-syntax
   const localStorageValue = window.localStorage.getItem(localStorageKey);
   if (localStorageValue) {
     const features = localStorageValue.split(',');
@@ -325,6 +329,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
 
@@ -353,7 +358,9 @@ if (!bootData) {
       dark: '',
       light: '',
     },
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     settings: {} as GrafanaConfig,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     user: {} as CurrentUserDTO,
     navTree: [],
   };

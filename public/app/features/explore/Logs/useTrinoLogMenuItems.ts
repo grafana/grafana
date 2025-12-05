@@ -14,7 +14,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
+import { config, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
 import { LogListModel } from 'app/features/logs/components/panel/processing';
 import { checkLogsSampled } from 'app/features/logs/utils';
@@ -69,16 +69,36 @@ function parseLokiLabels(queries?: DataQuery[]): string[] {
         // loki operator to sql condition
         if (operator === '=') {
           // equal
-          conditions.push(`element_at(resource_attributes, '${label}') = '${value}'`);
+          conditions.push(`lower(element_at(resource_attributes, '${label}')) = lower('${value}')`);
         } else if (operator === '!=') {
           // not equal
-          conditions.push(`element_at(resource_attributes, '${label}') != '${value}'`);
+          conditions.push(`lower(element_at(resource_attributes, '${label}')) != lower('${value}')`);
         } else if (operator === '=~') {
           // regex
-          conditions.push(`regexp_like(element_at(resource_attributes, '${label}'), '${value}')`);
+          conditions.push(`regexp_like(lower(element_at(resource_attributes, '${label}')), lower('${value}'))`);
         } else if (operator === '!=~') {
           // negative regex
-          conditions.push(`NOT regexp_like(element_at(resource_attributes, '${label}'), '${value}')`);
+          conditions.push(`NOT regexp_like(lower(element_at(resource_attributes, '${label}')), lower('${value}'))`);
+        }
+      }
+    }
+  }
+
+  const lineFilters = expr.match(/(\|=|\|~|!=|!~)\s*"([^"]*)"/g);
+  if (lineFilters) {
+    for (const filter of lineFilters) {
+      const match = filter.match(/(\|=|\|~|!=|!~)\s*"([^"]*)"/);
+      if (match) {
+        const [, operator, value] = match;
+        
+        if (operator === '|=') {
+          conditions.push(`log LIKE '%${value}%'`);
+        } else if (operator === '!=') {
+          conditions.push(`log NOT LIKE '%${value}%'`);
+        } else if (operator === '|~') {
+          conditions.push(`regexp_like(log, '${value}')`);
+        } else if (operator === '!~') {
+          conditions.push(`NOT regexp_like(log, '${value}')`);
         }
       }
     }
@@ -220,7 +240,10 @@ export function useTrinoLogMenuItems({
   }, [logRows, onEnrichedDataReceived]);
   
   return useMemo(() => {
-    if (datasourceType !== 'loki' || !trinoDataSource) {
+    // Check if Trino is configured
+    const tableName = config.trino;
+    
+    if (!tableName || datasourceType !== 'loki' || !trinoDataSource) {
       return [];
     }
 
@@ -256,7 +279,7 @@ export function useTrinoLogMenuItems({
               SELECT
                 timestamp, log
               FROM
-                iceberg.hackathon15_loki_archive."logs-archive"
+                ${tableName}
               WHERE ${whereClause}
               LIMIT 1000
             `,
