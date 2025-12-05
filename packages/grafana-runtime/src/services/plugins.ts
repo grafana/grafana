@@ -25,6 +25,9 @@ export function getAppPluginMetas(): AppPluginMetas {
 
 export function getAppPluginMeta(id: string): AppPluginConfig | undefined {
   if (!apps[id]) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error(`Plugin meta not found for plugin with id:${id}`);
+    }
     return undefined;
   }
 
