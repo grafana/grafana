@@ -371,24 +371,6 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZHandlerRedirect) {
-		// Get team UID from team service
-		teamDetails, err := a.service.teamService.GetTeamByID(c.Req.Context(), &team.GetTeamByIDQuery{
-			ID:           teamID,
-			OrgID:        c.GetOrgID(),
-			SignedInUser: c.SignedInUser,
-		})
-		if err == nil {
-			err = a.setTeamPermissionToK8s(c.Req.Context(), c.Namespace, resourceID, teamDetails.UID, cmd.Permission)
-			if err == nil {
-				return permissionSetResponse(cmd)
-			}
-			logger := log.New("resource-permissions-api")
-			logger.Warn("Failed to set team permission in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
-		}
-	}
-
 	_, err = a.service.SetTeamPermission(c.Req.Context(), c.GetOrgID(), teamID, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)

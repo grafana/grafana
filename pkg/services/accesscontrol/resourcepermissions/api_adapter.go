@@ -256,10 +256,6 @@ func (a *api) setUserPermissionToK8s(ctx context.Context, namespace string, reso
 	return a.setSinglePermissionToK8s(ctx, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindUser), userDetails.UID, permission)
 }
 
-func (a *api) setTeamPermissionToK8s(ctx context.Context, namespace string, resourceID string, teamUID string, permission string) error {
-	return a.setSinglePermissionToK8s(ctx, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindTeam), teamUID, permission)
-}
-
 func (a *api) setBuiltInRolePermissionToK8s(ctx context.Context, namespace string, resourceID string, builtInRole string, permission string) error {
 	return a.setSinglePermissionToK8s(ctx, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindBasicRole), builtInRole, permission)
 }
