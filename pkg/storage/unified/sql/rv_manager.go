@@ -311,8 +311,8 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 		span.AddEvent("resource_versions_updated")
 
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
-			SQLTemplate: sqltemplate.New(m.dialect),
-			GUIDToRV:    guidToRV,
+			SQLTemplate:       sqltemplate.New(m.dialect),
+			GUIDToRV:          guidToRV,
 			GUIDToSnowflakeRV: guidToSnowflakeRV,
 		}); err != nil {
 			span.AddEvent("resource_history_update_rv_failed", trace.WithAttributes(
