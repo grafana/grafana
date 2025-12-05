@@ -1,7 +1,7 @@
-import { ComboboxOption } from './types';
+import { ComboboxStringOption } from './types';
 
-let fakeApiOptions: Array<ComboboxOption<string>>;
-export async function fakeSearchAPI(urlString: string): Promise<Array<ComboboxOption<string>>> {
+let fakeApiOptions: Array<ComboboxStringOption<string>>;
+export async function fakeSearchAPI(urlString: string): Promise<Array<ComboboxStringOption<string>>> {
   const searchParams = new URL(urlString).searchParams;
 
   const errorOnQuery = searchParams.get('errorOnQuery')?.toLowerCase();
@@ -26,19 +26,19 @@ export async function fakeSearchAPI(urlString: string): Promise<Array<ComboboxOp
 
   const delay = searchQuery.length % 2 === 0 ? 200 : 1000;
 
-  return new Promise<Array<ComboboxOption<string>>>((resolve) => {
+  return new Promise<Array<ComboboxStringOption<string>>>((resolve) => {
     setTimeout(() => resolve(filteredOptions), delay);
   });
 }
 
-export async function generateOptions(amount: number): Promise<ComboboxOption[]> {
+export async function generateOptions(amount: number): Promise<ComboboxStringOption[]> {
   return Array.from({ length: amount }, (_, index) => ({
     label: 'Option ' + index,
     value: index.toString(),
   }));
 }
 
-export async function generateGroupingOptions(amount: number): Promise<ComboboxOption[]> {
+export async function generateGroupingOptions(amount: number): Promise<ComboboxStringOption[]> {
   return Array.from({ length: amount }, (_, index) => ({
     label: 'Option ' + index,
     value: index.toString(),
