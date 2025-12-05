@@ -524,8 +524,16 @@ function update(
     .map((enemy) => {
       const speed = enemy.type === enemyTypeUfo ? ufoSpeed : enemySpeed;
 
+      const canAttack = enemy.type === enemyTypeUfo || 
+        !enemies.some((otherEnemy) => 
+          otherEnemy !== enemy && 
+          otherEnemy.y > enemy.y && 
+          otherEnemy.health > 3 &&
+          Math.abs(otherEnemy.gridX - enemy.gridX) < 5
+        );
+
       if (
-        (enemy.y === lowestEnemyY || enemy.type === enemyTypeUfo) &&
+        canAttack &&
         Math.random() > 0.92 &&
         enemyMissiles.length <= 1
       ) {
