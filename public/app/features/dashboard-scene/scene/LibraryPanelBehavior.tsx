@@ -13,6 +13,7 @@ import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
+import { PanelPerformanceMetrics } from './PanelPerformanceMetrics';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 
@@ -64,6 +65,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       })
     );
     titleItems.push(new PanelNotices());
+    titleItems.push(new PanelPerformanceMetrics());
 
     let title;
     if (config.featureToggles.preferLibraryPanelTitle) {

@@ -62,8 +62,9 @@ export function getDashboardSceneProfilerWithMetadata(uid: string, title: string
 // Function to enable panel profiling for a specific dashboard
 export function enablePanelProfilingForDashboard(dashboard: SceneObject, uid: string) {
   // Check if panel profiling should be enabled for this dashboard
+  // HACK always on
   const shouldEnablePanelProfiling =
-    config.dashboardPerformanceMetrics.findIndex((configUid) => configUid === '*' || configUid === uid) !== -1;
+    config.dashboardPerformanceMetrics.findIndex((configUid) => configUid === '*' || configUid === uid) !== -1 || true; // HACK always on
 
   if (shouldEnablePanelProfiling) {
     const profiler = getDashboardSceneProfiler();

@@ -23,6 +23,8 @@ import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { PanelNotices } from '../scene/PanelNotices';
+import { PanelPerformanceMetrics } from '../scene/PanelPerformanceMetrics';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
@@ -274,7 +276,11 @@ export function getDefaultVizPanel(): VizPanel {
     title: newPanelTitle,
     pluginId: defaultPluginId,
     seriesLimit: config.panelSeriesLimit,
-    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    titleItems: [
+      new VizPanelLinks({ menu: new VizPanelLinksMenu({}) }),
+      new PanelNotices(),
+      new PanelPerformanceMetrics(),
+    ],
     hoverHeaderOffset: 0,
     $behaviors: [],
     subHeader: new VizPanelSubHeader({
