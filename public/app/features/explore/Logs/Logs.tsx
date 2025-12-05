@@ -224,23 +224,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [enrichedTrinoData, setEnrichedTrinoData] = useState<LogRowModel[] | null>(null);
 
   const trinoDataSource = useTrinoDataSource();
-  
-  // MOCK: Add adaptive logs sampled label to every 3rd log for testing
-  const mockedLogRows = useMemo(() => {
-    return logRows.map((log, index) => {
-      // Only add the marker to every 3rd log (index % 3 === 0)
-      if (index % 3 === 0) {
-        return {
-          ...log,
-          labels: {
-            ...log.labels,
-            __adaptive_logs_sampled__: 'true',
-          },
-        };
-      }
-      return log;
-    });
-  }, [logRows]);
 
   const trinoLogMenuItems = useTrinoLogMenuItems({
     datasourceType: props.datasourceType,
@@ -251,8 +234,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     logsQueries: props.logsQueries,
   });
 
-  // Use enriched Trino data if available, otherwise use original logs (with mocked labels)
-  const displayedLogRows = enrichedTrinoData || mockedLogRows;
+  const displayedLogRows = enrichedTrinoData || logRows;
   
   // Deduplicate the displayed rows (whether they're from Trino or original)
   const { dedupedRows: displayedDedupedRows, dedupCount: displayedDedupCount } = useMemo(

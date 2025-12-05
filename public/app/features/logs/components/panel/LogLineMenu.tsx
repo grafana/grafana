@@ -118,7 +118,6 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
             return <Menu.Divider key={i} />;
           }
           if (isItem(item)) {
-            // Check if shouldShow is defined and if so, only render if it returns true
             if (item.shouldShow && !item.shouldShow(log)) {
               return null;
             }
