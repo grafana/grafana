@@ -54,6 +54,12 @@ export interface CorrelationEditorDetailsUpdate extends Partial<CorrelationEdito
 /**
  * Global Explore state
  */
+export interface SavedExploration {
+  title: string;
+  url: string;
+  timestamp: number;
+}
+
 export interface ExploreState {
   /**
    * True if time interval for panels are synced. Only possible with split mode.
@@ -61,6 +67,11 @@ export interface ExploreState {
   syncedTimes: boolean;
 
   panes: Record<string, ExploreItemState | undefined>;
+
+  /**
+   * Saved Explore views captured from the toolbar.
+   */
+  savedQueries: SavedExploration[];
 
   /**
    * History of all queries
