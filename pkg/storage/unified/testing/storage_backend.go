@@ -1918,7 +1918,13 @@ func runTestIntegrationBackendKeyPathGeneration(t *testing.T, backend resource.S
 
 // verifyKeyPath is a helper function to verify key_path generation
 func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resourcepb.ResourceKey, action string, resourceVersion int64, expectedFolder string) {
-	rows, err := db.QueryContext(ctx, "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = ? AND name = ? AND resource_version = ?", key.Namespace, key.Name, resourceVersion)
+	var query string
+	if db.DriverName() == "postgres" {
+		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = $1 AND name = $2 AND resource_version = $3"
+	} else {
+		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = ? AND name = ? AND resource_version = ?"
+	}
+	rows, err := db.QueryContext(ctx,query, key.Namespace, key.Name, resourceVersion)
 	require.NoError(t, err)
 
 	require.True(t, rows.Next())
