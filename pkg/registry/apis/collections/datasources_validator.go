@@ -63,7 +63,7 @@ func (v *DatasourceStacksValidator) Validate(ctx context.Context, a admission.At
 				return fmt.Errorf("key '%s' is not in the DataSourceStack template (%s %s)", key, a.GetName(), a.GetKind().GroupVersion().String())
 			}
 
-			exists, err := v.checkDatasourceExists(ctx, template[key].Group, item.DataSourceRef)
+			exists, err := v.checkDatasourceExists(ctx, item.DataSourceRef)
 			if err != nil || !exists {
 				return fmt.Errorf("datasource '%s' in group '%s' does not exist (%s %s): %w", item.DataSourceRef, template[key].Group, a.GetName(), a.GetKind().GroupVersion().String(), err)
 			}
@@ -73,8 +73,8 @@ func (v *DatasourceStacksValidator) Validate(ctx context.Context, a admission.At
 	return nil
 }
 
-func (v *DatasourceStacksValidator) checkDatasourceExists(ctx context.Context, group, name string) (bool, error) {
-	dsConn, err := v.dsClient.Get(ctx, group, "", name)
+func (v *DatasourceStacksValidator) checkDatasourceExists(ctx context.Context, name string) (bool, error) {
+	dsConn, err := v.dsClient.GetByUID(ctx, name)
 	if err != nil {
 		return false, err
 	}

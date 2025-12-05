@@ -28,7 +28,7 @@ var (
 // Get all datasource connections -- this will be backed by search or duplicated resource in unified storage
 type DataSourceConnectionProvider interface {
 	// Get gets a specific datasource (that the user in context can see)
-	// The name is {group}:{name}, see /pkg/apis/query/v0alpha1/connection.go#L34
+	// The name is the legacy datasource UID.
 	GetConnection(ctx context.Context, namespace string, name string) (*queryV0.DataSourceConnection, error)
 
 	// List lists all data sources the user in context can see
@@ -137,7 +137,7 @@ func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string
 
 	v = &queryV0.DataSourceConnection{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              queryV0.DataSourceConnectionName(gv.Group, ds.UID),
+			Name:              ds.UID,
 			Namespace:         ns,
 			CreationTimestamp: metav1.NewTime(ds.Created),
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),

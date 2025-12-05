@@ -22,29 +22,29 @@ func (_m *MockDataSourceConnectionClient) EXPECT() *MockDataSourceConnectionClie
 	return &MockDataSourceConnectionClient_Expecter{mock: &_m.Mock}
 }
 
-// Get provides a mock function with given fields: ctx, group, version, name
-func (_m *MockDataSourceConnectionClient) Get(ctx context.Context, group string, version string, name string) (*v0alpha1.DataSourceConnection, error) {
-	ret := _m.Called(ctx, group, version, name)
+// GetByUID provides a mock function with given fields: ctx, uid
+func (_m *MockDataSourceConnectionClient) GetByUID(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
+	ret := _m.Called(ctx, uid)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Get")
+		panic("no return value specified for GetByUID")
 	}
 
 	var r0 *v0alpha1.DataSourceConnection
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*v0alpha1.DataSourceConnection, error)); ok {
-		return rf(ctx, group, version, name)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v0alpha1.DataSourceConnection, error)); ok {
+		return rf(ctx, uid)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *v0alpha1.DataSourceConnection); ok {
-		r0 = rf(ctx, group, version, name)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v0alpha1.DataSourceConnection); ok {
+		r0 = rf(ctx, uid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*v0alpha1.DataSourceConnection)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, group, version, name)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, uid)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -52,33 +52,31 @@ func (_m *MockDataSourceConnectionClient) Get(ctx context.Context, group string,
 	return r0, r1
 }
 
-// MockDataSourceConnectionClient_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
-type MockDataSourceConnectionClient_Get_Call struct {
+// MockDataSourceConnectionClient_GetByUID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByUID'
+type MockDataSourceConnectionClient_GetByUID_Call struct {
 	*mock.Call
 }
 
-// Get is a helper method to define mock.On call
+// GetByUID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - group string
-//   - version string
-//   - name string
-func (_e *MockDataSourceConnectionClient_Expecter) Get(ctx interface{}, group interface{}, version interface{}, name interface{}) *MockDataSourceConnectionClient_Get_Call {
-	return &MockDataSourceConnectionClient_Get_Call{Call: _e.mock.On("Get", ctx, group, version, name)}
+//   - uid string
+func (_e *MockDataSourceConnectionClient_Expecter) GetByUID(ctx interface{}, uid interface{}) *MockDataSourceConnectionClient_GetByUID_Call {
+	return &MockDataSourceConnectionClient_GetByUID_Call{Call: _e.mock.On("GetByUID", ctx, uid)}
 }
 
-func (_c *MockDataSourceConnectionClient_Get_Call) Run(run func(ctx context.Context, group string, version string, name string)) *MockDataSourceConnectionClient_Get_Call {
+func (_c *MockDataSourceConnectionClient_GetByUID_Call) Run(run func(ctx context.Context, uid string)) *MockDataSourceConnectionClient_GetByUID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *MockDataSourceConnectionClient_Get_Call) Return(_a0 *v0alpha1.DataSourceConnection, _a1 error) *MockDataSourceConnectionClient_Get_Call {
+func (_c *MockDataSourceConnectionClient_GetByUID_Call) Return(_a0 *v0alpha1.DataSourceConnection, _a1 error) *MockDataSourceConnectionClient_GetByUID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockDataSourceConnectionClient_Get_Call) RunAndReturn(run func(context.Context, string, string, string) (*v0alpha1.DataSourceConnection, error)) *MockDataSourceConnectionClient_Get_Call {
+func (_c *MockDataSourceConnectionClient_GetByUID_Call) RunAndReturn(run func(context.Context, string) (*v0alpha1.DataSourceConnection, error)) *MockDataSourceConnectionClient_GetByUID_Call {
 	_c.Call.Return(run)
 	return _c
 }

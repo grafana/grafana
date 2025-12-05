@@ -169,7 +169,7 @@ func TestDataSourceValidator_Validate(t *testing.T) {
 			var client *datasourcesclient.MockDataSourceConnectionClient
 			if tt.needMockDSClient {
 				client = datasourcesclient.NewMockDataSourceConnectionClient(t)
-				client.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.dsClientReturnValue, tt.dsClientReturnError)
+				client.On("GetByUID", mock.Anything, mock.Anything).Return(tt.dsClientReturnValue, tt.dsClientReturnError)
 			}
 
 			validator := collections.GetDatasourceStacksValidator(client)
