@@ -182,14 +182,26 @@ jobs:
           print(f"PR Summary: {pr_summary}")
           PY
 
+      - name: Fetch prompt from external repo
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          # Fetch prompt from private repo using GitHub API
+          gh api \
+            -H "Accept: application/vnd.github.raw" \
+            /repos/grafana/usability-review-agent-github-action/contents/prompts/single/reviewer.md \
+            > base_prompt.txt
+
+          echo "Fetched prompt from external repo"
+
       - name: Build dynamic prompt
         id: build-prompt
         run: |
           # Read the PR summary
           PR_SUMMARY=$(cat pr_summary.txt)
 
-          # Read base prompt template from action
-          BASE_PROMPT=$(cat .github/actions/usability-review-agent/prompt.txt)
+          # Read base prompt template from external repo
+          BASE_PROMPT=$(cat base_prompt.txt)
 
           # Build dynamic prompt with PR context
           cat > dynamic_prompt.txt <<EOF
