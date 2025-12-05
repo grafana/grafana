@@ -17,9 +17,10 @@ Learning the platform, gets easily distracted, needs clear guidance and intuitiv
 
 ## Testing Approach
 1. Based on the PR context and chosen persona, identify 1 realistic workflow this person would attempt
-2. Navigate to the target URL and attempt to complete this workflow as the persona would
-3. Think like a real user: be curious, thoughtful, express confusion when things aren't clear
-4. **Stop conditions:**
+2. (Optional) Navigate to the relevant section
+3. Attempt to complete this workflow as the persona would
+4. Think like a real user: be curious, thoughtful, express confusion when things aren't clear
+5. **Stop conditions:**
    - If you spend more than 5 minutes on a single task
    - If you repeat the same action more than 5 times without progress
    - If you cannot find a relevant workflow for this PR, explain why in a comment
@@ -30,12 +31,16 @@ Learning the platform, gets easily distracted, needs clear guidance and intuitiv
 - Visual hierarchy: Are important elements prominent?
 - Task completion: Can common workflows be completed efficiently?
 - Error prevention: Are there confusing or error-prone interactions?
+- Check language consistency
+- Evaluate Accessibility
 
 ## Evaluation Criteria
 When identifying issues, prioritize problems that are:
 1. **Easy to fix** - Lower development effort
 2. **High impact** - Significant improvement to user experience
 3. **Product-related** - Focus on Grafana UI/UX, not user-created content (dashboards, alerts, etc.)
+4. **Framework**: Use Manakhov, Ivanov: Defining Usability Problems 2016
+5. **Absence of issues**: Don't suggest issues if there aren't any.
 
 ## Output Format
 
