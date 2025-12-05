@@ -12,8 +12,7 @@ do-generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generati
 		--grouping=group \
 		--defencoding=none \
 		--genoperatorstate=false \
-		--noschemasinmanifest \
-		--useoldmanifestkinds
+		--noschemasinmanifest 
 
 .PHONY: post-generate-cleanup
 post-generate-cleanup: ## Clean up the generated code
