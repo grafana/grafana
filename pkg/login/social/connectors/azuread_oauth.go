@@ -312,10 +312,10 @@ func (s *AzureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error
 func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, error) {
 	// Validate required fields for Managed Identity authentication
 	if s.info.ManagedIdentityClientID == "" {
-		return "", fmt.Errorf("ManagedIdentityClientID is required for Managed Identity or Workoload Identity authentication")
+		return "", fmt.Errorf("ManagedIdentityClientID is required for Managed Identity or Workload Identity authentication")
 	}
 	if s.info.FederatedCredentialAudience == "" {
-		return "", fmt.Errorf("FederatedCredentialAudience is required for Managed Identity or Workoload Identity authentication")
+		return "", fmt.Errorf("FederatedCredentialAudience is required for Managed Identity or Workload Identity authentication")
 	}
 
 	// Prepare Managed Identity Credential
