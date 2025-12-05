@@ -69,16 +69,16 @@ function parseLokiLabels(queries?: DataQuery[]): string[] {
         // loki operator to sql condition
         if (operator === '=') {
           // equal
-          conditions.push(`lower(element_at(resource_attributes, '${label}')) = lower('${value}')`);
+          conditions.push(`element_at(resource_attributes, '${label}') = '${value}'`);
         } else if (operator === '!=') {
           // not equal
-          conditions.push(`lower(element_at(resource_attributes, '${label}')) != lower('${value}')`);
+          conditions.push(`element_at(resource_attributes, '${label}') != '${value}'`);
         } else if (operator === '=~') {
           // regex
-          conditions.push(`regexp_like(lower(element_at(resource_attributes, '${label}')), lower('${value}'))`);
+          conditions.push(`regexp_like(element_at(resource_attributes, '${label}'), '${value}')`);
         } else if (operator === '!=~') {
           // negative regex
-          conditions.push(`NOT regexp_like(lower(element_at(resource_attributes, '${label}')), lower('${value}'))`);
+          conditions.push(`NOT regexp_like(element_at(resource_attributes, '${label}'), '${value}')`);
         }
       }
     }
@@ -159,17 +159,6 @@ function parseLogfmt(logContent: string): Record<string, string> {
   return fields;
 }
 
-function extractMessage(fields: Record<string, string>): string {
-  const messageFields = ['message', 'msg', 'log', 'body', 'text'];
-  for (const field of messageFields) {
-    if (fields[field]) {
-      return fields[field];
-    }
-  }
-
-  return '';
-}
-
 function convertDataFrameToLogRows(frame: DataFrame): LogRowModel[] {
   const rows: LogRowModel[] = [];
 
@@ -195,9 +184,6 @@ function convertDataFrameToLogRows(frame: DataFrame): LogRowModel[] {
     }
     
     const timeEpochNs = `${timeEpochMs}000000`;
-    
-    const message = extractMessage(parsedFields);
-    const entry = message || rawLogContent;
 
     const row: LogRowModel = {
       entryFieldIndex: 0,
@@ -213,8 +199,8 @@ function convertDataFrameToLogRows(frame: DataFrame): LogRowModel[] {
       hasAnsi: false,
       hasUnescapedContent: false,
       searchWords: [],
-      entry,
-      raw: entry,
+      entry: rawLogContent,
+      raw: rawLogContent,
       labels: { source: 'trino', ...parsedFields },
       uid: `trino_${i}`,
       datasourceType: 'trino',
