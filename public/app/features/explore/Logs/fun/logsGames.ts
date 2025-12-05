@@ -124,7 +124,7 @@ export function useLogsGames() {
 
   useEffect(() => {
     if (newGameRef.current) {
-      setGameState(getSplashScreen());
+      setGameState(getSplashScreen(splash));
     }
   }, [gameState]);
 
@@ -268,7 +268,7 @@ export function useLogsGames() {
   return gameState;
 }
 
-function getSplashScreen() {
+function getSplashScreen(splash: string) {
   return splash.split('\n').map((row, index) => {
     return createLogRow({
       uid: index.toString(),
