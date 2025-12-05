@@ -86,7 +86,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
 	l := logging.DefaultLogger.With("logger", "sql-resource-server")
-	l.Debug("initializing unifie storge sql backend", "lastImportTimeMaxAge", opts.LastImportTimeMaxAge)
+	l.Debug("initializing unified storage sql backend", "lastImportTimeMaxAge", opts.LastImportTimeMaxAge)
 	return &backend{
 		isHA:                    opts.IsHA,
 		done:                    ctx.Done(),
