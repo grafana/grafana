@@ -1,7 +1,7 @@
 import { pick } from 'lodash';
 
 import { llm } from '@grafana/llm';
-import { config } from '@grafana/runtime';
+import { getAppPluginMeta } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -70,7 +70,7 @@ let llmHealthCheck: Promise<boolean> | undefined;
  * @returns true if the LLM plugin is enabled.
  */
 export async function isLLMPluginEnabled(): Promise<boolean> {
-  if (!config.apps['grafana-llm-app']) {
+  if (!getAppPluginMeta('grafana-llm-app')) {
     return false;
   }
 

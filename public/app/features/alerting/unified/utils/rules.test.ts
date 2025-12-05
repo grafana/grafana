@@ -1,5 +1,5 @@
 import { PluginLoadingStrategy } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import {
@@ -42,7 +42,7 @@ describe('getRuleOrigin', () => {
   });
 
   it('returns pluginId when origin label matches expected format and plugin is installed', () => {
-    config.apps = {
+    setAppPluginMetas({
       installed_plugin: {
         id: 'installed_plugin',
         version: '',
@@ -65,7 +65,7 @@ describe('getRuleOrigin', () => {
           },
         },
       },
-    };
+    });
     const rule = mockPromAlertingRule({
       labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/installed_plugin' },
     });

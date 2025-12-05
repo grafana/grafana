@@ -44,6 +44,7 @@ import {
 } from '@grafana/runtime';
 import {
   initOpenFeature,
+  initPluginMetas,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
   setPanelDataErrorView,
@@ -175,6 +176,13 @@ export class GrafanaApp {
       await initEchoSrv();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
+
+      try {
+        startMeasure('frontend_app_init_plugins');
+        await initPluginMetas();
+      } finally {
+        stopMeasure('frontend_app_init_plugins');
+      }
 
       setLocale(config.regionalFormat);
       setWeekStart(contextSrv.user.weekStart);

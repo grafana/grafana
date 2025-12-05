@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getAppPluginMeta } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -28,7 +28,8 @@ export function AdvisorRedirectNotice() {
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const [showNotice, setShowNotice] = useState(false);
 
-  const canUseAdvisor = hasAdminRights && config.featureToggles.grafanaAdvisor && !!config.apps['grafana-advisor-app'];
+  const canUseAdvisor =
+    hasAdminRights && config.featureToggles.grafanaAdvisor && !!getAppPluginMeta('grafana-advisor-app');
 
   useEffect(() => {
     if (canUseAdvisor) {

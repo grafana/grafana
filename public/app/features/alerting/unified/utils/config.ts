@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getAppPluginMetas } from '@grafana/runtime';
 
 import { SupportedPlugin } from '../types/pluginBridges';
 
@@ -30,7 +30,7 @@ export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery?: str
 }
 
 export function getIsIrmPluginPresent() {
-  return SupportedPlugin.Irm in config.apps;
+  return SupportedPlugin.Irm in getAppPluginMetas();
 }
 
 export function getIrmIfPresentOrIncidentPluginId() {

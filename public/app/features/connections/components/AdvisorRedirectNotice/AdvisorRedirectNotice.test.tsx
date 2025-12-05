@@ -3,12 +3,14 @@ import userEvent from '@testing-library/user-event';
 
 import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { AdvisorRedirectNotice } from './AdvisorRedirectNotice';
 
 const originalFeatureToggleValue = config.featureToggles.grafanaAdvisor;
 jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
   UserStorage: jest.fn().mockImplementation(() => ({
     getItem: jest.fn().mockResolvedValue('true'),
     setItem: jest.fn().mockResolvedValue(undefined),
@@ -24,27 +26,29 @@ describe('AdvisorRedirectNotice', () => {
   afterEach(() => {
     jest.clearAllMocks();
     config.featureToggles.grafanaAdvisor = originalFeatureToggleValue;
-    config.apps['grafana-advisor-app'] = {
-      id: 'grafana-advisor-app',
-      path: '/a/grafana-advisor-app',
-      version: '1.0.0',
-      preload: false,
-      angular: { detected: false, hideDeprecation: false },
-      loadingStrategy: PluginLoadingStrategy.fetch,
-      dependencies: {
-        grafanaDependency: '*',
-        grafanaVersion: '*',
-        plugins: [],
-        extensions: { exposedComponents: [] },
+    setAppPluginMetas({
+      'grafana-advisor-app': {
+        id: 'grafana-advisor-app',
+        path: '/a/grafana-advisor-app',
+        version: '1.0.0',
+        preload: false,
+        angular: { detected: false, hideDeprecation: false },
+        loadingStrategy: PluginLoadingStrategy.fetch,
+        dependencies: {
+          grafanaDependency: '*',
+          grafanaVersion: '*',
+          plugins: [],
+          extensions: { exposedComponents: [] },
+        },
+        extensions: {
+          addedLinks: [],
+          addedComponents: [],
+          exposedComponents: [],
+          extensionPoints: [],
+          addedFunctions: [],
+        },
       },
-      extensions: {
-        addedLinks: [],
-        addedComponents: [],
-        exposedComponents: [],
-        extensionPoints: [],
-        addedFunctions: [],
-      },
-    };
+    });
   });
 
   it('should not render when user is not admin', async () => {
@@ -60,7 +64,7 @@ describe('AdvisorRedirectNotice', () => {
   });
 
   it('should not render when app is not installed', async () => {
-    delete config.apps['grafana-advisor-app'];
+    setAppPluginMetas({});
     render(<AdvisorRedirectNotice />);
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });

@@ -2,7 +2,8 @@ import { act, render, renderHook, screen, waitFor } from '@testing-library/react
 import type { JSX } from 'react';
 
 import { PluginContextProvider, PluginLoadingStrategy, PluginMeta, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getAppPluginMetas } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
@@ -51,7 +52,7 @@ describe('usePluginComponent()', () => {
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
   let pluginMeta: PluginMeta;
-  const originalApps = config.apps;
+  const originalApps = getAppPluginMetas();
   const pluginId = 'myorg-extensions-app';
   const exposedComponentId = `${pluginId}/exposed-component/v1`;
   const exposedComponentConfig = {
@@ -135,9 +136,7 @@ describe('usePluginComponent()', () => {
       },
     };
 
-    config.apps = {
-      [pluginId]: appPluginConfig,
-    };
+    setAppPluginMetas({ [pluginId]: appPluginConfig });
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
@@ -145,7 +144,7 @@ describe('usePluginComponent()', () => {
   });
 
   afterEach(() => {
-    config.apps = originalApps;
+    setAppPluginMetas(originalApps);
   });
 
   it('should return null if there are no component exposed for the id', () => {

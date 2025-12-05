@@ -1,6 +1,7 @@
 import { type DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
 
-import { config } from '@grafana/runtime';
+import { getAppPluginMetas } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
@@ -214,7 +215,9 @@ export function setGrafanaPromRules(groups: GrafanaPromRuleGroupDTO[]) {
 
 /** Make a given plugin ID respond with a 404, as if it isn't installed at all */
 export const removePlugin = (pluginId: string) => {
-  delete config.apps[pluginId];
+  const apps = getAppPluginMetas();
+  delete apps[pluginId];
+  setAppPluginMetas(apps);
   server.use(getPluginMissingHandler(pluginId));
 };
 

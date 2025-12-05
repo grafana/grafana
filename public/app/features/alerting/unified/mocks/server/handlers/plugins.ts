@@ -1,7 +1,8 @@
 import { HttpResponse, http } from 'msw';
 
 import { PluginLoadingStrategy, PluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { getAppPluginMetas } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { plugins } from 'app/features/alerting/unified/testSetup/plugins';
 
 const PLUGIN_NOT_FOUND_RESPONSE = { message: 'Plugin not found, no installed plugin with that id' };
@@ -12,28 +13,32 @@ const PLUGIN_NOT_FOUND_RESPONSE = { message: 'Plugin not found, no installed plu
  */
 export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
   plugins.forEach(({ id, baseUrl, info, angular }) => {
-    config.apps[id] = {
-      id,
-      path: baseUrl,
-      preload: true,
-      version: info.version,
-      angular: angular ?? { detected: false, hideDeprecation: false },
-      loadingStrategy: PluginLoadingStrategy.script,
-      extensions: {
-        addedLinks: [],
-        addedComponents: [],
-        extensionPoints: [],
-        exposedComponents: [],
-        addedFunctions: [],
-      },
-      dependencies: {
-        grafanaVersion: '',
-        plugins: [],
+    const apps = getAppPluginMetas();
+    setAppPluginMetas({
+      ...apps,
+      [id]: {
+        id,
+        path: baseUrl,
+        preload: true,
+        version: info.version,
+        angular: angular ?? { detected: false, hideDeprecation: false },
+        loadingStrategy: PluginLoadingStrategy.script,
         extensions: {
+          addedLinks: [],
+          addedComponents: [],
+          extensionPoints: [],
           exposedComponents: [],
+          addedFunctions: [],
+        },
+        dependencies: {
+          grafanaVersion: '',
+          plugins: [],
+          extensions: {
+            exposedComponents: [],
+          },
         },
       },
-    };
+    });
   });
 
   return http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params: { pluginId } }) => {
