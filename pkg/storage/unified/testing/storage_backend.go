@@ -25,8 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // Test names for the storage backend test suite
@@ -1944,7 +1944,7 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 	require.Contains(t, keyPath, fmt.Sprintf("~%s~", action))
 
 	// Verify snowflake calculation
-	expectedSnowflake := (((resourceVersion/1000) - 1288834974657) << 22) + (resourceVersion % 1000)
+	expectedSnowflake := (((resourceVersion / 1000) - 1288834974657) << 22) + (resourceVersion % 1000)
 	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake))
 
 	// Verify folder if specified

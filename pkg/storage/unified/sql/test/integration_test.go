@@ -233,4 +233,3 @@ func resourceKey(name string) *resourcepb.ResourceKey {
 		Name:      name,
 	}
 }
-
