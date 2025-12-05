@@ -415,6 +415,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesUnifiedStorageQuotas",
+			Description:     "Adds support for Kubernetes unified storage quotas",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:            "kubernetesLogsDrilldown",
 			Description:     "Adds support for Kubernetes logs drilldown",
 			Stage:           FeatureStageExperimental,
