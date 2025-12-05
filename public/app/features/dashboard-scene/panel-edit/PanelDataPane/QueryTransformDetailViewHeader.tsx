@@ -67,7 +67,7 @@ interface QueryLibraryModeProps {
   onClose: () => void;
 }
 
-type DetailViewHeaderProps = ItemModeProps | QueryLibraryModeProps;
+type QueryTransformDetailViewHeaderProps = ItemModeProps | QueryLibraryModeProps;
 
 const ITEM_CONFIG = (theme: GrafanaTheme2) => ({
   query: {
@@ -682,7 +682,7 @@ function ItemHeader({
 }
 
 // Main component that delegates to the appropriate sub-component
-export const DetailViewHeader = (props: DetailViewHeaderProps) => {
+export const QueryTransformDetailViewHeader = (props: QueryTransformDetailViewHeaderProps) => {
   if (props.queryLibraryMode) {
     return (
       <QueryLibraryHeader

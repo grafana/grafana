@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -13,18 +13,35 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 import { ExpressionQueryType } from '../../../expressions/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 
-import { QueryLibraryMode } from './DetailView';
 import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
+import { QueryLibraryMode } from './QueryTransformDetailView';
 import { QueryTransformList } from './QueryTransformList';
 import { useQueryTransformItems } from './hooks';
 import { TabId } from './types';
 import { isDataTransformerConfig, queryItemId, transformItemId } from './utils';
 
-export function PanelDataSidebarRendered({ model }: SceneComponentProps<PanelDataPane>) {
-  const { panelRef, tabs, selectedQueryTransform, sidebarCollapsed, transformPickerIndex } = model.useState();
-  const styles = useStyles2(getStyles, sidebarCollapsed);
+export enum SidebarSize {
+  Mini = 'mini',
+  Full = 'full',
+}
+
+export interface SidebarState {
+  size: SidebarSize;
+  collapsed: boolean;
+}
+
+export function PanelDataSidebar({
+  model,
+  sidebarState,
+  setSidebarState,
+}: SceneComponentProps<PanelDataPane> & {
+  sidebarState: SidebarState;
+  setSidebarState: Dispatch<SetStateAction<SidebarState>>;
+}) {
+  const { panelRef, tabs, selectedQueryTransform, transformPickerIndex } = model.useState();
+  const styles = useStyles2(getStyles, sidebarState);
 
   const panel = panelRef.resolve();
 
@@ -291,13 +308,13 @@ export function PanelDataSidebarRendered({ model }: SceneComponentProps<PanelDat
   // const sourceData = queryRunner?.useState();
   // const series = sourceData?.data?.series || [];
 
-  if (sidebarCollapsed) {
+  if (sidebarState.collapsed) {
     return (
       <div className={styles.sidebarPane}>
         <Button
           icon="angle-right"
           variant="secondary"
-          onClick={() => model.onCollapseSidebar(false)}
+          onClick={() => setSidebarState((prevState) => ({ ...prevState, collapsed: true }))}
           tooltip={t('app.features.dashboardScene.panelEdit.panelDataPane.expandSidebar', 'Expand sidebar')}
         />
       </div>
@@ -311,7 +328,9 @@ export function PanelDataSidebarRendered({ model }: SceneComponentProps<PanelDat
         dataSourceItems={queryExpressionItems}
         transformItems={transformItems}
         selectedId={selectedId}
-        onCollapseSidebar={() => model.onCollapseSidebar(true)}
+        sidebarSize={sidebarState.size}
+        onResizeSidebar={(size: SidebarSize) => setSidebarState((prevState) => ({ ...prevState, size }))}
+        onCollapseSidebar={() => setSidebarState((prevState) => ({ ...prevState, collapsed: true }))}
         onSelect={(id) => {
           model.onChangeSelected(id);
           model.onTransformPicker(null);
@@ -368,17 +387,24 @@ export function shouldShowAlertingTab(pluginId: string) {
   return isGraph || isTimeseries;
 }
 
-function getStyles(theme: GrafanaTheme2, collapsed: boolean) {
+function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
   return {
     sidebarPane: css({
       overflow: 'hidden',
       height: '100%',
-      width: collapsed ? 49 : 300,
-      padding: collapsed ? theme.spacing(1) : 'unset',
+      width: sidebarState.collapsed ? 49 : '100%',
+      padding: sidebarState.collapsed ? theme.spacing(1) : 'unset',
       borderTopRightRadius: theme.shape.radius.md,
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderBottom: 'none',
       background: theme.colors.background.primary,
+      ...(sidebarState.size === SidebarSize.Mini
+        ? {
+            borderTopLeftRadius: theme.shape.radius.md,
+          }
+        : {
+            borderLeft: 'none',
+          }),
     }),
   };
 }
