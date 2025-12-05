@@ -4105,11 +4105,6 @@
       "count": 10
     }
   },
-  "public/app/plugins/datasource/opentsdb/components/AnnotationEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "public/app/plugins/datasource/opentsdb/components/OpenTsdbDetails.tsx": {
     "no-restricted-syntax": {
       "count": 3
