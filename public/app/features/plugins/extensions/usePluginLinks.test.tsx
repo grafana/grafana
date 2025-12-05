@@ -304,14 +304,12 @@ describe('usePluginLinks()', () => {
       });
     });
 
-    // Initially should be loading
+    // With the new implementation, links should appear incrementally as configure() resolves
+    // Initially, the link may not be visible yet (depending on timing)
     rerender();
-    expect(result.current.isLoading).toBe(true);
-    expect(result.current.links.length).toBe(0);
 
-    // Wait for async configure to complete
+    // Wait for async configure to complete - link should appear
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
       expect(result.current.links.length).toBe(1);
     });
 
@@ -326,6 +324,108 @@ describe('usePluginLinks()', () => {
     );
     expect(result.current.links[0].icon).toBe('cloud');
     expect(result.current.links[0].category).toBe('async-updated-category');
+  });
+
+  it('should return static links immediately and update incrementally as async configure() functions resolve', async () => {
+    const context = { foo: 'bar' };
+    let { result, rerender } = renderHook(() => usePluginLinks({ extensionPointId, context }), { wrapper });
+
+    // Add a mix of static link and async configure link
+    act(() => {
+      registries.addedLinksRegistry.register({
+        pluginId,
+        configs: [
+          {
+            targets: extensionPointId,
+            title: 'Static Link',
+            description: 'Static Description',
+            path: `/a/${pluginId}/static`,
+            // No configure function - should appear immediately
+          },
+          {
+            targets: extensionPointId,
+            title: 'Async Link',
+            description: 'Async Description',
+            path: `/a/${pluginId}/async`,
+            // @ts-ignore
+            configure: async (context: { foo: 'bar' }) => {
+              await new Promise((resolve) => setTimeout(resolve, 50));
+              return {
+                title: 'Updated Async Title',
+              };
+            },
+          },
+        ],
+      });
+    });
+
+    rerender();
+
+    // Static link should appear immediately
+    await waitFor(() => {
+      expect(result.current.links.length).toBeGreaterThanOrEqual(1);
+      const staticLink = result.current.links.find((link) => link.title === 'Static Link');
+      expect(staticLink).toBeDefined();
+    });
+
+    // Wait for async configure to complete
+    await waitFor(
+      () => {
+        expect(result.current.links.length).toBe(2);
+        const asyncLink = result.current.links.find((link) => link.title === 'Updated Async Title');
+        expect(asyncLink).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
+  });
+
+  it('should handle buggy async configure() functions that never resolve without blocking', async () => {
+    const context = { foo: 'bar' };
+    let { result, rerender } = renderHook(() => usePluginLinks({ extensionPointId, context }), { wrapper });
+
+    // Add a static link and a buggy async configure link that never resolves
+    act(() => {
+      registries.addedLinksRegistry.register({
+        pluginId,
+        configs: [
+          {
+            targets: extensionPointId,
+            title: 'Static Link',
+            description: 'Static Description',
+            path: `/a/${pluginId}/static`,
+          },
+          {
+            targets: extensionPointId,
+            title: 'Buggy Async Link',
+            description: 'Buggy Description',
+            path: `/a/${pluginId}/buggy`,
+            // @ts-ignore
+            configure: async () => {
+              // This promise never resolves - simulating a buggy implementation
+              return new Promise(() => {
+                // Never resolves
+              });
+            },
+          },
+        ],
+      });
+    });
+
+    rerender();
+
+    // Static link should appear immediately, even though buggy async configure never resolves
+    await waitFor(() => {
+      expect(result.current.links.length).toBe(1);
+      expect(result.current.links[0].title).toBe('Static Link');
+    });
+
+    // Wait a bit to ensure buggy async configure doesn't cause issues
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Static link should still be there, buggy link should not appear
+    rerender();
+    expect(result.current.links.length).toBe(1);
+    expect(result.current.links[0].title).toBe('Static Link');
   });
 
   it('should not validate the extension point meta-info in production mode', () => {
