@@ -41,7 +41,6 @@ export const ImportDashboardFormV2 = ({
   useEffect(() => {
     if (isSubmitted && (errors.dashboard?.title || errors.k8s?.name)) {
       const formValues = getValues();
-      console.log(formValues);
       onSubmit({
         ...formValues,
         dashboard: {
@@ -51,6 +50,7 @@ export const ImportDashboardFormV2 = ({
       });
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
+
   return (
     <Stack direction="column" gap={2}>
       <Field
