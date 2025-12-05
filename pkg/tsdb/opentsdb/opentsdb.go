@@ -241,6 +241,7 @@ func createInitialFrame(val OpenTsdbCommon, length int, refID string) *data.Fram
 	for tagKey := range val.Tags {
 		tagKeys = append(tagKeys, tagKey)
 	}
+	sort.Strings(tagKeys)
 	tagKeys = append(tagKeys, val.AggregateTags...)
 
 	frame := data.NewFrameOfFieldTypes(val.Metric, length, data.FieldTypeTime, data.FieldTypeFloat64)
