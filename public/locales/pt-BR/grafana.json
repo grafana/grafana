@@ -5824,14 +5824,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Voltar para a lista",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Excluir",
       "description-color-annotation-event-markers": "Cor que será usada para os marcadores de evento de anotação",
       "description-enabled-annotation-query-issued-every-dashboard": "Quando ativada, a consulta de anotação é emitida a cada atualização do painel",
-      "description-hidden": "As consultas de anotação podem ser ativadas ou desativadas na parte superior do painel. Com esta opção marcada, este botão de alternância ficará oculto.",
+      "label-annotation-controls-display": "",
       "label-color": "Cor",
       "label-data-source": "Fonte de dados",
       "label-enabled": "Ativado",
-      "label-hidden": "Oculto",
       "label-name": "Nome",
       "label-show-in": "Exibir em",
       "placeholder-choose-panels": "Escolher painéis",
@@ -5887,6 +5899,7 @@
       "label-open-link-in-new-tab": "Abrir link em nova aba",
       "label-options": "Opções",
       "label-show-as-dropdown": "Exibir como menu suspenso",
+      "label-show-in-controls-menu": "",
       "label-title": "Título",
       "label-tooltip": "Dica de uso",
       "label-type": "Tipo",
@@ -6448,6 +6461,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulário do editor de variáveis",
       "back-to-list": "Voltar para a lista",
@@ -6762,8 +6794,8 @@
       "test": "Teste"
     },
     "cloud-info-box": {
-      "body-alert": "Ou evite essa tarefa e obtenha {{mainDS}} (e {{extraDS}}) como fontes de dados totalmente gerenciadas, escaláveis e hospedadas da Grafana Labs com o <6>plano gratuito vitalício da Grafana Cloud</6>.",
-      "title-alert": "Configure sua fonte de {{mainDS}} dados abaixo"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Excluir painel de controle",
