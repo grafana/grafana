@@ -216,7 +216,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
             ref={(editor) => {
               this.editor = editor;
             }}
-            aria-label={ariaLabel ?? t('grafana-ui.components.queryField.ariaLabel', 'Query input field')}
+            aria-label={ariaLabel ?? t('grafana-ui.query-field.aria-label', 'Query input field')}
             schema={SCHEMA}
             autoCorrect={false}
             readOnly={this.props.disabled}
