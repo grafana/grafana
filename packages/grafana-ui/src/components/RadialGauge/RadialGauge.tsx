@@ -135,7 +135,7 @@ export function RadialGauge(props: RadialGaugeProps) {
       displayProcessor,
     });
 
-    if (spotlight) {
+    if (spotlight && theme.isDark) {
       defs.push(
         <SpotlightGradient
           key={spotlightGradientId}
