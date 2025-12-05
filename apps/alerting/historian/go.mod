@@ -5,11 +5,12 @@ go 1.25.5
 require (
 	github.com/grafana/grafana-app-sdk v0.48.5
 	github.com/go-kit/log v0.2.1
-	github.com/grafana/alerting v0.0.0-20251202151018-58fa500f3232
+	github.com/grafana/alerting v0.0.0-20251204145817-de8c2bbf9eba
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4
-	github.com/grafana/grafana-app-sdk v0.48.4
+	github.com/grafana/grafana-app-sdk v0.48.5
 	github.com/grafana/grafana-app-sdk/logging v0.48.3
 	github.com/prometheus/client_golang v1.23.2
+	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
@@ -114,7 +115,6 @@ require (
 	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
-	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect

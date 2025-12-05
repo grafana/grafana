@@ -5802,14 +5802,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "返回清單",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "刪除",
       "description-color-annotation-event-markers": "用於註解事件標記的顏色",
       "description-enabled-annotation-query-issued-every-dashboard": "啟用後，每次儀表板重新整理時都會發出註解查詢",
-      "description-hidden": "可以在儀表板頂部開啟或關閉註解查詢。選擇此選項後，此切換選項將被隱藏。",
+      "label-annotation-controls-display": "",
       "label-color": "顏色",
       "label-data-source": "資料來源",
       "label-enabled": "已啟用",
-      "label-hidden": "隱藏",
       "label-name": "名稱（名字）",
       "label-show-in": "顯示在",
       "placeholder-choose-panels": "選擇面板",
@@ -5865,6 +5877,7 @@
       "label-open-link-in-new-tab": "用新分頁開啟連結",
       "label-options": "選項",
       "label-show-as-dropdown": "顯示為下拉式",
+      "label-show-in-controls-menu": "",
       "label-title": "標題",
       "label-tooltip": "提示",
       "label-type": "類型",
@@ -6424,6 +6437,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "變數編輯器表單",
       "back-to-list": "返回清單",
@@ -6738,8 +6770,8 @@
       "test": "測試"
     },
     "cloud-info-box": {
-      "body-alert": "或者，跳過這個步驟，並透過<6>永久免費的 Grafana Cloud 方案</6>，從 Grafana Labs 取得完全受控、可擴展及託管的資料來源 {{mainDS}}（和 {{extraDS}}）。",
-      "title-alert": "在下方設定您的 {{mainDS}} 資料來源"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "刪除儀表板",
