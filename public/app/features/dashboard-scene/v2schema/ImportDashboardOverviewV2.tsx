@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 import { locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import {
