@@ -67,10 +67,9 @@ func ProvideServiceAccountPermissions(
 			"Edit":  ServiceAccountEditActions,
 			"Admin": ServiceAccountAdminActions,
 		},
-		ReaderRoleName:     "Permission reader",
-		WriterRoleName:     "Permission writer",
-		RoleGroup:          "Service accounts",
-		RestConfigProvider: restConfigProvider,
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
+		RoleGroup:      "Service accounts",
 	}
 
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
