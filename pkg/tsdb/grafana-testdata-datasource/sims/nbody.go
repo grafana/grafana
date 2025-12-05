@@ -71,7 +71,7 @@ func (s *nbodySim) initialize() {
 	// Generate random circles
 	for i := 0; i < s.cfg.N; i++ {
 		// Random radius between 5 and 30 pixels
-		radius := 2.0 + s.random.Float64()*15.0
+		radius := 5.0 + s.random.Float64()*30.0
 
 		// Random position ensuring the circle is within bounds
 		x := radius + s.random.Float64()*(s.cfg.Width-2*radius)
@@ -101,7 +101,7 @@ func (s *nbodySim) NewFrame(size int) *data.Frame {
 	// Time field - create with length=size for pre-allocated storage
 	frame.Fields = append(frame.Fields, data.NewField("time", nil, make([]time.Time, size)))
 
-	// For each circle, add position, bounding box, size, and velocity fields with pre-allocated storage
+	// For each circle, add position, bounding box, size, velocity, and rotation fields with pre-allocated storage
 	for i := 0; i < s.cfg.N; i++ {
 		frame.Fields = append(frame.Fields,
 			data.NewField(fmt.Sprintf("circle_%d_x", i), nil, make([]float64, size)),
@@ -120,6 +120,9 @@ func (s *nbodySim) NewFrame(size int) *data.Frame {
 		)
 		frame.Fields = append(frame.Fields,
 			data.NewField(fmt.Sprintf("circle_%d_velocity", i), nil, make([]float64, size)),
+		)
+		frame.Fields = append(frame.Fields,
+			data.NewField(fmt.Sprintf("circle_%d_rotation", i), nil, make([]float64, size)),
 		)
 	}
 
@@ -156,6 +159,14 @@ func (s *nbodySim) GetValues(t time.Time) map[string]any {
 		// Calculate velocity magnitude: sqrt(vx^2 + vy^2)
 		velocity := math.Sqrt(c.vx*c.vx + c.vy*c.vy)
 		
+		// Calculate rotation angle from velocity vector (in degrees, 0-360)
+		// atan2(vy, vx) gives angle in radians, convert to degrees
+		rotation := math.Atan2(c.vy, c.vx) * 180.0 / math.Pi
+		// Normalize to 0-360 range
+		if rotation < 0 {
+			rotation += 360.0
+		}
+		
 		// Center position
 		result[fmt.Sprintf("circle_%d_x", i)] = c.x
 		result[fmt.Sprintf("circle_%d_y", i)] = c.y
@@ -164,9 +175,10 @@ func (s *nbodySim) GetValues(t time.Time) map[string]any {
 		result[fmt.Sprintf("circle_%d_left", i)] = c.x - c.radius
 		result[fmt.Sprintf("circle_%d_top", i)] = c.y - c.radius
 		
-		// Size and velocity
+		// Size, velocity, and rotation
 		result[fmt.Sprintf("circle_%d_diameter", i)] = c.radius * 2.0
 		result[fmt.Sprintf("circle_%d_velocity", i)] = velocity
+		result[fmt.Sprintf("circle_%d_rotation", i)] = rotation
 	}
 
 	return result
