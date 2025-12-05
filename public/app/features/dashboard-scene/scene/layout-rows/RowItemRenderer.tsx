@@ -13,6 +13,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 
 import { RowItem } from './RowItem';
 
@@ -83,7 +84,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             dragProvided.innerRef(ref);
             model.containerRef.current = ref;
           }}
-          data-dashboard-drop-target-key={model.state.key}
+          data-dashboard-drop-target-key={isDashboardLayoutGrid(layout) ? model.state.key : undefined}
           className={cx(
             styles.wrapper,
             !isCollapsed && styles.wrapperNotCollapsed,

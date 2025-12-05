@@ -12,11 +12,11 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 // getDefaultDatasourceType gets the default datasource type using the datasource provider
@@ -58,7 +58,7 @@ func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemavers
 // datasource: { type: "datasource" } with no UID, it should resolve to uid: "grafana".
 func resolveGrafanaDatasourceUID(dsType, dsUID string) string {
 	if dsType == "datasource" && dsUID == "" {
-		return grafanads.DatasourceUID
+		return dashboard.GrafanaDatasourceUID
 	}
 	return dsUID
 }

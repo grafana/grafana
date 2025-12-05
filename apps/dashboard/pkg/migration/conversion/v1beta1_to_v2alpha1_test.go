@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
-	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 // TestV1beta1ToV2alpha1 tests conversion from v1beta1 to v2alpha1 with various datasource scenarios
@@ -77,7 +77,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 
 				// Verify datasource UID is resolved to "grafana"
 				assert.NotNil(t, query.Spec.Datasource.Uid)
-				assert.Equal(t, grafanads.DatasourceUID, *query.Spec.Datasource.Uid, "type: 'datasource' with no UID should resolve to uid: 'grafana'")
+				assert.Equal(t, dashboard.GrafanaDatasourceUID, *query.Spec.Datasource.Uid, "type: 'datasource' with no UID should resolve to uid: 'grafana'")
 
 				// Verify query kind matches datasource type
 				assert.Equal(t, "datasource", query.Spec.Query.Kind)
