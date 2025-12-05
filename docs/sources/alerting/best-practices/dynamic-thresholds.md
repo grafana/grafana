@@ -12,7 +12,7 @@ labels:
     - oss
 menuTitle: Examples of dynamic thresholds
 title: Example of dynamic thresholds per dimension
-weight: 1103
+weight: 1105
 refs:
   testdata-data-source:
     - pattern: /docs/grafana/

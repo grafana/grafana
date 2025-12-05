@@ -1103,8 +1103,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -1129,14 +1128,6 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderStatus"
               }
             ]
           }
@@ -1328,10 +1319,6 @@
             "default": ""
           }
         }
-      },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderStatus": {
-        "description": "Empty stub",
-        "type": "object"
       },
       "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.ResourceStats": {
         "type": "object",

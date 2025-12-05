@@ -11,8 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -23,20 +26,22 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/resourcepermissions")
 
 type api struct {
-	cfg         *setting.Cfg
-	ac          accesscontrol.AccessControl
-	router      routing.RouteRegister
-	service     *Service
-	permissions []string
+	cfg                *setting.Cfg
+	ac                 accesscontrol.AccessControl
+	router             routing.RouteRegister
+	service            *Service
+	permissions        []string
+	features           featuremgmt.FeatureToggles
+	restConfigProvider apiserver.RestConfigProvider
 }
 
-func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service) *api {
+func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, features featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) *api {
 	permissions := make([]string, 0, len(manager.permissions))
 	// reverse the permissions order for display
 	for i := len(manager.permissions) - 1; i >= 0; i-- {
 		permissions = append(permissions, manager.permissions[i])
 	}
-	return &api{cfg, ac, router, manager, permissions}
+	return &api{cfg, ac, router, manager, permissions, features, restConfigProvider}
 }
 
 func (a *api) registerEndpoints() {
@@ -175,6 +180,22 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	c.Req = c.Req.WithContext(ctx)
 
 	resourceID := web.Params(c.Req)[":resourceID"]
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZHandlerRedirect) &&
+		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+		k8sPermissions, err := a.getResourcePermissionsFromK8s(c.Req.Context(), c.Namespace, resourceID)
+		if err == nil {
+			return response.JSON(http.StatusOK, k8sPermissions)
+		}
+		span.RecordError(err)
+		logger := log.New("resource-permissions-api")
+		if errors.Is(err, ErrRestConfigNotAvailable) {
+			logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		} else {
+			logger.Warn("Failed to get resource permissions from k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		}
+	}
 
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {

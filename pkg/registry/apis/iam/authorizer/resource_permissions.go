@@ -53,7 +53,10 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 			return err
 		}
 		if !res.Allowed {
-			return storewrapper.ErrUnauthorized
+			return fmt.Errorf(
+				"user cannot set permissions on resource %s/%s/%s: %w",
+				target.ApiGroup, target.Resource, target.Name, storewrapper.ErrUnauthorized,
+			)
 		}
 		return nil
 	default:
@@ -85,7 +88,10 @@ func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj run
 			return err
 		}
 		if !res.Allowed {
-			return storewrapper.ErrUnauthorized
+			return fmt.Errorf(
+				"user cannot set permissions on resource %s/%s/%s: %w",
+				target.ApiGroup, target.Resource, target.Name, storewrapper.ErrUnauthorized,
+			)
 		}
 		return nil
 	default:

@@ -5,9 +5,10 @@ import { cloneDeep, defaultsDeep } from 'lodash';
 import { CoreApp } from '@grafana/data';
 import { QueryEditorMode } from '@grafana/plugin-ui';
 
+import { LokiQueryType } from '../dataquery.gen';
 import { createLokiDatasource } from '../mocks/datasource';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from '../querybuilder/components/LokiQueryBuilderExplained';
-import { LokiQuery, LokiQueryType } from '../types';
+import { LokiQuery } from '../types';
 
 import { LokiQueryEditor } from './LokiQueryEditor';
 import { LokiQueryEditorProps } from './types';

@@ -6,10 +6,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -327,4 +331,85 @@ func (b *batchRunner) RollbackRequested() bool {
 		return true
 	}
 	return false
+}
+
+type bulkRV struct {
+	max     int64
+	counter int64
+}
+
+// Used when executing a bulk import so that we can generate snowflake RVs in the past
+func newBulkRV() *bulkRV {
+	t := snowflakeFromTime(time.Now())
+	return &bulkRV{
+		max:     t,
+		counter: 0,
+	}
+}
+
+func (x *bulkRV) next(obj metav1.Object) int64 {
+	ts := snowflakeFromTime(obj.GetCreationTimestamp().Time)
+	anno := obj.GetAnnotations()
+	if anno != nil {
+		v := anno[utils.AnnoKeyUpdatedTimestamp]
+		t, err := time.Parse(time.RFC3339, v)
+		if err == nil {
+			ts = snowflakeFromTime(t)
+		}
+	}
+	if ts > x.max || ts < 0 {
+		ts = x.max
+	}
+
+	x.counter++
+	return ts + x.counter
+}
+
+type BulkLock struct {
+	running map[string]bool
+	mu      sync.Mutex
+}
+
+func NewBulkLock() *BulkLock {
+	return &BulkLock{
+		running: make(map[string]bool),
+	}
+}
+
+func (x *BulkLock) Start(keys []*resourcepb.ResourceKey) error {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+
+	// First verify that it is not already running
+	ids := make([]string, len(keys))
+	for i, k := range keys {
+		id := NSGR(k)
+		if x.running[id] {
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code:    http.StatusPreconditionFailed,
+				Message: "bulk export is already running",
+			}}
+		}
+		ids[i] = id
+	}
+
+	// Then add the keys to the lock
+	for _, k := range ids {
+		x.running[k] = true
+	}
+	return nil
+}
+
+func (x *BulkLock) Finish(keys []*resourcepb.ResourceKey) {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	for _, k := range keys {
+		delete(x.running, NSGR(k))
+	}
+}
+
+func (x *BulkLock) Active() bool {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	return len(x.running) > 0
 }

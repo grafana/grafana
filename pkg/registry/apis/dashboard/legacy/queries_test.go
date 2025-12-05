@@ -29,6 +29,12 @@ func TestDashboardQueries(t *testing.T) {
 		return &v
 	}
 
+	getPlaylistQuery := func(q *PlaylistQuery) sqltemplate.SQLTemplate {
+		v := newPlaylistQueryReq(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -115,6 +121,14 @@ func TestDashboardQueries(t *testing.T) {
 					Data: getLibraryQuery(&LibraryPanelQuery{
 						OrgID: 1,
 						UID:   "xyz",
+					}),
+				},
+			},
+			sqlQueryPlaylists: {
+				{
+					Name: "list",
+					Data: getPlaylistQuery(&PlaylistQuery{
+						OrgID: 1,
 					}),
 				},
 			},

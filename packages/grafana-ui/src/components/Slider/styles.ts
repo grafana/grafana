@@ -3,7 +3,7 @@ import { css as cssCore } from '@emotion/react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import 'rc-slider/assets/index.css';
+import '@rc-component/slider/assets/index.css';
 
 export const getStyles = (theme: GrafanaTheme2, isHorizontal: boolean, hasMarks = false) => {
   const { spacing } = theme;

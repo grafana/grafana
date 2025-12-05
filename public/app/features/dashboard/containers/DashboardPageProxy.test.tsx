@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
@@ -120,10 +120,8 @@ describe('DashboardPageProxy', () => {
 
     it('home dashboard', async () => {
       getDashboardScenePageStateManager().setDashboardCache(HOME_DASHBOARD_CACHE_KEY, dashMock);
-      act(() => {
-        setup({
-          route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-        });
+      setup({
+        route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
       });
 
       await waitFor(() => {
@@ -134,11 +132,9 @@ describe('DashboardPageProxy', () => {
     it('uid dashboard', async () => {
       getDashboardScenePageStateManager().setDashboardCache('abc-def', dashMock);
 
-      act(() => {
-        setup({
-          route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-          uid: 'abc-def',
-        });
+      setup({
+        route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
+        uid: 'abc-def',
       });
 
       await waitFor(() => {
@@ -156,11 +152,9 @@ describe('DashboardPageProxy', () => {
     describe('when user can edit a dashboard ', () => {
       it('should not render DashboardScenePage if route is Home', async () => {
         getDashboardScenePageStateManager().setDashboardCache(HOME_DASHBOARD_CACHE_KEY, homeMockEditable);
-        act(() => {
-          setup({
-            route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-            uid: '',
-          });
+        setup({
+          route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
+          uid: '',
         });
 
         await waitFor(() => {
@@ -170,11 +164,9 @@ describe('DashboardPageProxy', () => {
 
       it('should not render DashboardScenePage if route is Normal and has uid', async () => {
         getDashboardScenePageStateManager().setDashboardCache('abc-def', dashMockEditable);
-        act(() => {
-          setup({
-            route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-            uid: 'abc-def',
-          });
+        setup({
+          route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
+          uid: 'abc-def',
         });
         await waitFor(() => {
           expect(screen.queryAllByTestId('dashboard-scene-page')).toHaveLength(0);
@@ -185,11 +177,9 @@ describe('DashboardPageProxy', () => {
     describe('when user can only view a dashboard ', () => {
       it('should render DashboardScenePage if route is Home', async () => {
         getDashboardScenePageStateManager().setDashboardCache(HOME_DASHBOARD_CACHE_KEY, homeMock);
-        act(() => {
-          setup({
-            route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-            uid: '',
-          });
+        setup({
+          route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
+          uid: '',
         });
 
         await waitFor(() => {
@@ -199,11 +189,9 @@ describe('DashboardPageProxy', () => {
 
       it('should render DashboardScenePage if route is Normal and has uid', async () => {
         getDashboardScenePageStateManager().setDashboardCache('uid', dashMock);
-        act(() => {
-          setup({
-            route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-            uid: 'uid',
-          });
+        setup({
+          route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
+          uid: 'uid',
         });
         await waitFor(() => {
           expect(screen.queryAllByTestId('dashboard-scene-page')).toHaveLength(1);
@@ -212,11 +200,9 @@ describe('DashboardPageProxy', () => {
 
       it('should render not DashboardScenePage if dashboard UID does not match route UID', async () => {
         getDashboardScenePageStateManager().setDashboardCache('uid', dashMock);
-        act(() => {
-          setup({
-            route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-            uid: 'wrongUID',
-          });
+        setup({
+          route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
+          uid: 'wrongUID',
         });
         await waitFor(() => {
           expect(screen.queryAllByTestId('dashboard-scene-page')).toHaveLength(0);

@@ -1215,4 +1215,9 @@ export interface FeatureToggles {
   * Adds support for Kubernetes alerting historian APIs
   */
   kubernetesAlertingHistorian?: boolean;
+  /**
+  * Enables plugins decoupling from bootdata
+  * @default false
+  */
+  useMTPlugins?: boolean;
 }

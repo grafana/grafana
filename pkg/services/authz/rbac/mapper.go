@@ -297,6 +297,10 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
+		"plugins.grafana.app": {
+			"plugins":     newResourceTranslation("plugins.plugins", "uid", false, nil),
+			"pluginsmeta": newResourceTranslation("plugins.pluginsmeta", "uid", false, nil),
+		},
 	})
 
 	return mapper

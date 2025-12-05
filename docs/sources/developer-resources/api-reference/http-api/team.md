@@ -53,7 +53,7 @@ See note in the [introduction](#team-api) for an explanation.
 GET /api/teams/search?perpage=10&page=1&query=mytestteam HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
 ```
 
 **Example Response**:
@@ -119,7 +119,7 @@ See note in the [introduction](#team-api) for an explanation.
 GET /api/teams/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
 ```
 
 **Example Response**:
@@ -165,7 +165,7 @@ See note in the [introduction](#team-api) for an explanation.
 POST /api/teams HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
 
 {
   "name": "MyTestTeam",
@@ -209,7 +209,7 @@ See note in the [introduction](#team-api) for an explanation.
 PUT /api/teams/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
 
 {
   "name": "MyTestTeam",
@@ -252,7 +252,7 @@ See note in the [introduction](#team-api) for an explanation.
 DELETE /api/teams/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
 ```
 
 **Example Response**:
@@ -289,7 +289,7 @@ See note in the [introduction](#team-api) for an explanation.
 GET /api/teams/1/members HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
 ```
 
 **Example Response**:
@@ -342,7 +342,7 @@ See note in the [introduction](#team-api) for an explanation.
 POST /api/teams/1/members HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
 
 {
   "userId": 2
@@ -384,7 +384,7 @@ See note in the [introduction](#team-api) for an explanation.
 DELETE /api/teams/2/members/3 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
 ```
 
 **Example Response**:
@@ -424,7 +424,7 @@ See note in the [introduction](#team-api) for an explanation.
 PUT /api/teams/1/members HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
 
 {
   "members": ["user1@email.com", "user2@email.com"]

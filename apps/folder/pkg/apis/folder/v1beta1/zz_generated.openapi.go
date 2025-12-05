@@ -104,18 +104,12 @@ func schema_pkg_apis_folder_v1beta1_Folder(ref common.ReferenceCallback) common.
 							Ref:         ref("github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec"),
 						},
 					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderStatus"),
-						},
-					},
 				},
-				Required: []string{"metadata", "spec", "status"},
+				Required: []string{"metadata", "spec"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec", "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

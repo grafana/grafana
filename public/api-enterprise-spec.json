@@ -5905,7 +5905,7 @@
         },
         "key": {
           "type": "string",
-          "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a"
+          "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697"
         },
         "name": {
           "type": "string",

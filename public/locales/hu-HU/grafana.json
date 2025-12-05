@@ -5824,14 +5824,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Vissza a listához",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Törlés",
       "description-color-annotation-event-markers": "A jegyzetesemény-jelölőkhöz használandó szín",
       "description-enabled-annotation-query-issued-every-dashboard": "Ha engedélyezve van, a jegyzetlekérdezés az irányítópult minden frissítésekor megjelenik",
-      "description-hidden": "A jegyzetlekérdezések be- és kikapcsolhatók az irányítópult tetején. Ha ez a lehetőség be van jelölve, ez a kapcsoló el lesz rejtve.",
+      "label-annotation-controls-display": "",
       "label-color": "Szín",
       "label-data-source": "Adatforrás",
       "label-enabled": "Engedélyezve",
-      "label-hidden": "Rejtett",
       "label-name": "Név",
       "label-show-in": "Megjelenítés itt:",
       "placeholder-choose-panels": "Válassza ki a paneleket",
@@ -5887,6 +5899,7 @@
       "label-open-link-in-new-tab": "Hivatkozás megnyitása új lapon",
       "label-options": "Beállítások",
       "label-show-as-dropdown": "Megjelenítés legördülő menüként",
+      "label-show-in-controls-menu": "",
       "label-title": "Cím",
       "label-tooltip": "Elemleírás",
       "label-type": "Típus",
@@ -6448,6 +6461,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Változószerkesztő űrlap",
       "back-to-list": "Vissza a listához",
@@ -6762,8 +6794,8 @@
       "test": "Teszt"
     },
     "cloud-info-box": {
-      "body-alert": "Vagy hagyja ki a próbálkozást, és szerezze be a(z) {{mainDS}} adatforrást (és {{extraDS}}) a Grafana Labs teljes körűen felügyelt, skálázható és hosztolt adatforrásait az <6>örökre ingyenes Grafana Cloud-előfizetéssel</6>.",
-      "title-alert": "Konfigurálja {{mainDS}} adatforrását alább"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Irányítópult törlése",

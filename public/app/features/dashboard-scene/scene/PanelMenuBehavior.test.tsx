@@ -202,6 +202,47 @@ describe('panelMenuBehavior', () => {
       );
     });
 
+    it('should show icons for link extensions (if they provide it)', async () => {
+      getPluginExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident when pressing this amazing menu item',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            icon: 'external-link-alt',
+          },
+        ],
+      });
+
+      const { menu, panel } = await buildTestScene({});
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.length).toBe(7);
+
+      const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
+
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Declare incident when...',
+            href: '/a/grafana-basic-app/declare-incident',
+            iconClassName: 'external-link-alt',
+          }),
+        ])
+      );
+    });
+
     it('should pass onClick from plugin extension link to menu item', async () => {
       const expectedOnClick = jest.fn();
 

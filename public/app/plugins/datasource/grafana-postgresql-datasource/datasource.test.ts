@@ -714,7 +714,7 @@ describe('PostgreSQLDatasource', () => {
       it('should return a quoted value', () => {
         const { ds, variable } = setupTestContext({});
         variable.multi = true;
-        expect(ds.interpolateVariable('abc', variable)).toEqual("'abc'");
+        expect(ds.interpolateVariable('abc', variable)).toEqual('abc');
       });
     });
 
@@ -722,8 +722,8 @@ describe('PostgreSQLDatasource', () => {
       it('should return a quoted value', () => {
         const { ds, variable } = setupTestContext({});
         variable.multi = true;
-        expect(ds.interpolateVariable("a'bc", variable)).toEqual("'a''bc'");
-        expect(ds.interpolateVariable("a'b'c", variable)).toEqual("'a''b''c'");
+        expect(ds.interpolateVariable("a'bc", variable)).toEqual("a''bc");
+        expect(ds.interpolateVariable("a'b'c", variable)).toEqual("a''b''c");
       });
     });
 
@@ -731,7 +731,7 @@ describe('PostgreSQLDatasource', () => {
       it('should return a quoted value', () => {
         const { ds, variable } = setupTestContext({});
         variable.includeAll = true;
-        expect(ds.interpolateVariable('abc', variable)).toEqual("'abc'");
+        expect(ds.interpolateVariable('abc', variable)).toEqual('abc');
       });
     });
   });

@@ -9,7 +9,8 @@ INSERT INTO "resource_history"
         "previous_resource_version",
         "generation",
         "value",
-        "action"
+        "action",
+        "key_path"
     )
     VALUES (
         '',
@@ -21,6 +22,7 @@ INSERT INTO "resource_history"
         1234,
         789,
         '[]',
-        'UNKNOWN'
+        'UNKNOWN',
+        ''
     )
 ;

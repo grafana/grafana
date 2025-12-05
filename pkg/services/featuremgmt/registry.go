@@ -2007,6 +2007,14 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:         "useMTPlugins",
+			Description:  "Enables plugins decoupling from bootdata",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
 	}
 )
 

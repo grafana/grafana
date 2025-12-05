@@ -50,24 +50,7 @@ func (s *Server) mutateOrgRoles(ctx context.Context, store *storeInfo, operation
 		return nil
 	}
 
-	writeReq := &openfgav1.WriteRequest{
-		StoreId:              store.ID,
-		AuthorizationModelId: store.ModelID,
-	}
-	if len(writeTuples) > 0 {
-		writeReq.Writes = &openfgav1.WriteRequestWrites{
-			TupleKeys:   writeTuples,
-			OnDuplicate: "ignore",
-		}
-	}
-	if len(deleteTuples) > 0 {
-		writeReq.Deletes = &openfgav1.WriteRequestDeletes{
-			TupleKeys: deleteTuples,
-			OnMissing: "ignore",
-		}
-	}
-
-	_, err := s.openfga.Write(ctx, writeReq)
+	err := s.writeTuples(ctx, store, writeTuples, deleteTuples)
 	if err != nil {
 		s.logger.Error("failed to write user org role tuples", "error", err)
 		return err

@@ -223,6 +223,8 @@ func NewBuilderQueryEditorPropertyExpression() *BuilderQueryEditorPropertyExpres
 type BuilderQueryEditorProperty struct {
 	Type BuilderQueryEditorPropertyType `json:"type"`
 	Name string                         `json:"name"`
+	// Optional parameter type for function properties
+	ParameterType *BuilderQueryEditorReduceParameterTypes `json:"parameterType,omitempty"`
 }
 
 // NewBuilderQueryEditorProperty creates a new BuilderQueryEditorProperty object.
@@ -240,6 +242,13 @@ const (
 	BuilderQueryEditorPropertyTypeTimeSpan BuilderQueryEditorPropertyType = "time_span"
 	BuilderQueryEditorPropertyTypeFunction BuilderQueryEditorPropertyType = "function"
 	BuilderQueryEditorPropertyTypeInterval BuilderQueryEditorPropertyType = "interval"
+)
+
+type BuilderQueryEditorReduceParameterTypes string
+
+const (
+	BuilderQueryEditorReduceParameterTypesGeneric BuilderQueryEditorReduceParameterTypes = "generic"
+	BuilderQueryEditorReduceParameterTypesNumeric BuilderQueryEditorReduceParameterTypes = "numeric"
 )
 
 type BuilderQueryEditorExpressionType string

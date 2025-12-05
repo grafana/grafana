@@ -24,7 +24,7 @@ import { TooltipPlacement } from '../Tooltip/types';
 export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
   root?: HTMLElement;
   /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
   offset?: [number, number];

@@ -23,6 +23,7 @@ interface Props {
   setSearchFilter: (value: string) => void;
   operator: SelectableValue<string>;
   setOperator: (item: SelectableValue<string>) => void;
+  referenceElement: HTMLElement;
 }
 
 const ITEM_HEIGHT = 28;
@@ -81,6 +82,7 @@ export const FilterList = ({
   setSearchFilter,
   operator,
   setOperator,
+  referenceElement,
 }: Props) => {
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
@@ -186,6 +188,7 @@ export const FilterList = ({
       {showOperators && (
         <Stack direction="row" gap={0}>
           <ButtonSelect
+            root={referenceElement}
             variant="canvas"
             options={OPERATORS}
             onChange={setOperator}
