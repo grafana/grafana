@@ -141,7 +141,8 @@ const gameOver = `
 ███  ███▀ ▄█▀██ ██ ██ ██ ██▄█▀   ██ ██ ██▄██ ██▄█▀ ██ ▀▀ 
 ▀██████▀  ▀█▄██ ██ ██ ██ ▀█▄▄▄   ▀███▀  ▀█▀  ▀█▄▄▄ ██    
                                                          
-                                                         
+                      Score: {score}
+
 Press N to try again
 `;
 
@@ -248,9 +249,9 @@ export function useLogsGames() {
     } else if (gameStatus === 'next-level') {
       setGameState(getLevelScreen(levelRef.current));
     } else if (gameStatus === 'ended') {
-      setGameState(getSplashScreen(gameOver));
+      setGameState(getGameOverScreen(score));
     }
-  }, [gameStatus]);
+  }, [gameStatus, score]);
 
   const newGame = useCallback(() => {
     missileSpeed = initialMissileSpeed;
@@ -448,6 +449,10 @@ function getLevelScreen(level: number) {
   );
 }
 
+function getGameOverScreen(score: number) {
+  return getSplashScreen(gameOver.replace('{score}', score.toString()));
+}
+
 function update(
   dt: number,
   gameState: LogRowModel[] | undefined,
@@ -524,19 +529,17 @@ function update(
     .map((enemy) => {
       const speed = enemy.type === enemyTypeUfo ? ufoSpeed : enemySpeed;
 
-      const canAttack = enemy.type === enemyTypeUfo || 
-        !enemies.some((otherEnemy) => 
-          otherEnemy !== enemy && 
-          otherEnemy.y > enemy.y && 
-          otherEnemy.health > 3 &&
-          Math.abs(otherEnemy.gridX - enemy.gridX) < 5
+      const canAttack =
+        enemy.type === enemyTypeUfo ||
+        !enemies.some(
+          (otherEnemy) =>
+            otherEnemy !== enemy &&
+            otherEnemy.y > enemy.y &&
+            otherEnemy.health > 3 &&
+            Math.abs(otherEnemy.gridX - enemy.gridX) < 5
         );
 
-      if (
-        canAttack &&
-        Math.random() > 0.92 &&
-        enemyMissiles.length <= 1
-      ) {
+      if (canAttack && Math.random() > 0.92 && enemyMissiles.length <= 1) {
         newEnemyMissiles.push(newEnemyMissile(enemy.gridX, enemy.y));
       }
 
