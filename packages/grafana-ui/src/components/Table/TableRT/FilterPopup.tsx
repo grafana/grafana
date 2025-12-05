@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -42,8 +42,9 @@ export const FilterPopup = ({
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
+  const onCancel = useCallback(() => onClose(), [onClose]);
 
   const onFilter = useCallback(
     (event: React.MouseEvent) => {
@@ -70,7 +71,7 @@ export const FilterPopup = ({
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-      <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
+      <div ref={ref} className={cx(styles.filterContainer)} onClick={stopPropagation}>
         <Stack direction="column" gap={3}>
           <Stack direction="column" gap={0.5}>
             <Stack justifyContent="space-between" alignItems="center">
@@ -87,17 +88,20 @@ export const FilterPopup = ({
               />
             </Stack>
             <div className={cx(styles.listDivider)} />
-            <FilterList
-              onChange={setValues}
-              values={values}
-              options={options}
-              caseSensitive={matchCase}
-              showOperators={true}
-              searchFilter={searchFilter}
-              setSearchFilter={setSearchFilter}
-              operator={operator}
-              setOperator={setOperator}
-            />
+            {ref.current && (
+              <FilterList
+                referenceElement={ref.current}
+                onChange={setValues}
+                values={values}
+                options={options}
+                caseSensitive={matchCase}
+                showOperators={true}
+                searchFilter={searchFilter}
+                setSearchFilter={setSearchFilter}
+                operator={operator}
+                setOperator={setOperator}
+              />
+            )}
           </Stack>
           <Stack gap={3}>
             <Stack>

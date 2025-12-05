@@ -1385,6 +1385,20 @@
     },
     {
       "metadata": {
+        "name": "externalVizSuggestions",
+        "resourceVersion": "1763498528748",
+        "creationTimestamp": "2025-11-18T20:42:08Z"
+      },
+      "spec": {
+        "description": "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2023-05-10T13:37:04Z",
@@ -2483,6 +2497,20 @@
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "opentsdbBackendMigration",
+        "resourceVersion": "1763456634837",
+        "creationTimestamp": "2025-11-18T09:03:54Z"
+      },
+      "spec": {
+        "description": "Run queries through the data source backend",
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "requiresRestart": true,
+        "expression": "false"
       }
     },
     {

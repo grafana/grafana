@@ -85,7 +85,8 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			false,
+			//nolint:staticcheck // not yet migrated to OpenFeature
+			features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
 		)
 		if err != nil {
 			return nil, err

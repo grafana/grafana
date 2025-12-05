@@ -410,6 +410,22 @@ func (a *AlertRuleMutators) WithDashboardAndPanel(dashboardUID *string, panelID 
 	}
 }
 
+// WithDataSourceUID takes a list of UIDs. It adds the nth UID to the nth query in the alert (same index).
+// If there are not enough queries, it adds an empty one with the given data source UID.
+func (a *AlertRuleMutators) WithDataSourceUID(dsUIDs ...string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		for i, uid := range dsUIDs {
+			if i >= len(rule.Data) {
+				rule.Data = append(rule.Data, AlertQuery{
+					DatasourceUID: uid,
+				})
+				continue
+			}
+			rule.Data[i].DatasourceUID = uid
+		}
+	}
+}
+
 // WithUniqueUID returns AlertRuleMutator that generates a random UID if it is among UIDs known by the instance of mutator.
 // NOTE: two instances of the mutator do not share known UID.
 // Example #1 reuse mutator instance:
