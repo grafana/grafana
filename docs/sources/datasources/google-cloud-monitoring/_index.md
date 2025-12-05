@@ -103,11 +103,11 @@ To configure basic settings for the data source, complete the following steps:
 
 1. Set the data source's basic configuration options:
 
-   | Name             | Description                                                              |
-   | ---------------- | ------------------------------------------------------------------------ |
-   | **Name**         | Sets the name you use to refer to the data source in panels and queries. |
-   | **Default**      | Sets whether the data source is pre-selected for new panels.             |
-   | **Universe Domain** | The universe domain to connect to. For more information, see [Documentation on universe domains](https://documentation.s3ns.fr/docs/get-started-tpc/use-client-libraries?hl=en). |
+   | Name                | Description                                                                                                                                                                                                    |
+   | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                                                                       |
+   | **Default**         | Sets whether the data source is pre-selected for new panels.                                                                                                                                                   |
+   | **Universe Domain** | The universe domain to connect to. For more information, see [Documentation on universe domains](https://documentation.s3ns.fr/docs/get-started-tpc/use-client-libraries?hl=en). Defaults to `googleapis.com`. |
 
 ### Provision the data source
 
