@@ -102,6 +102,7 @@ export function PanelDataSidebar({
     return selectedQueryTransform;
   }, [transformPickerIndex, selectedQueryTransform, allItems]);
   const selectedItem = useMemo(() => allItems.find((item) => item.id === selectedId), [allItems, selectedId]);
+  const shouldShowAlerting = useMemo(() => tabs.some((tab) => tab.tabId === TabId.Alert), [tabs]);
 
   const updateQuerySelectionOnStateChange = useCallback(
     (index: number) => {
@@ -329,6 +330,7 @@ export function PanelDataSidebar({
         transformItems={transformItems}
         selectedId={selectedId}
         sidebarSize={sidebarState.size}
+        hasAlerting={shouldShowAlerting}
         onResizeSidebar={(size: SidebarSize) => setSidebarState((prevState) => ({ ...prevState, size }))}
         onCollapseSidebar={() => setSidebarState((prevState) => ({ ...prevState, collapsed: true }))}
         onSelect={(id) => {

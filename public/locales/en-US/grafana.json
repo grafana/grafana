@@ -6005,6 +6005,7 @@
       "hide-response": "Hide response",
       "input-data": "Input data",
       "output-data": "Output data",
+      "query-inspector": "Query inspector",
       "remove-query": "Remove",
       "remove-transform": "Remove",
       "run-query": "RUN QUERY",
@@ -6325,8 +6326,9 @@
       "debug-mode-enter": "Step through your pipeline",
       "debug-mode-exit": "Exit debug mode",
       "debug-position": "Debug position",
-      "header": "Pipeline flow",
+      "header": "Pipeline",
       "nodes": "nodes",
+      "notifications-tooltip": "Alerts (coming soon)",
       "queries-expressions": "Queries & Expressions",
       "transformations": "Transformations"
     },
@@ -6630,10 +6632,6 @@
     "visualization-button": {
       "aria-label-change-visualization": "Change visualization",
       "text": "Change"
-    },
-    "viz-and-data-pane": {
-      "aria-label-open-query-pane": "Open query pane",
-      "tooltip-open-query-pane": "Open query pane"
     },
     "viz-panel-links-renderer": {
       "aria-label-panel-links": "Panel links"

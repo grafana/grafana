@@ -4,7 +4,7 @@ import { HTMLAttributes, memo, useCallback, useEffect, useMemo, useRef, useState
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Icon, ScrollContainer, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Icon, IconButton, ScrollContainer, Stack, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { AddDataItemMenu } from './AddDataItemMenu';
@@ -25,6 +25,7 @@ interface QueryTransformListProps {
   sidebarSize: SidebarSize;
   transformItems: TransformItem[];
   selectedId: string | null;
+  hasAlerting?: boolean;
   onSelect: (id: string) => void;
   onAddQuery: (index?: number) => void;
   onAddFromSavedQueries: (index?: number) => void;
@@ -50,6 +51,7 @@ export const QueryTransformList = memo(
     allItems,
     selectedId,
     sidebarSize,
+    hasAlerting,
     onSelect,
     onAddQuery,
     onAddFromSavedQueries,
@@ -357,17 +359,30 @@ export const QueryTransformList = memo(
       <div className={styles.container} onMouseLeave={() => setHovered(null)}>
         <div className={styles.header}>
           <Stack justifyContent="space-between" alignItems="center" gap={2}>
-            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-            <div
-              className={styles.headerTitle}
-              onClick={() => onResizeSidebar(sidebarSize === SidebarSize.Mini ? SidebarSize.Full : SidebarSize.Mini)}
-            >
-              <Stack direction="row" alignItems="center" gap={1}>
-                <Icon name={sidebarSize === SidebarSize.Mini ? 'expand-arrows' : 'compress-arrows'} />
-                <span>{t('dashboard-scene.query-transform-list.header', 'Pipeline flow')}</span>
-              </Stack>
-            </div>
+            <Stack direction="row" alignItems="center" gap={1}>
+              <IconButton
+                tooltip={
+                  sidebarSize === SidebarSize.Mini
+                    ? t('dashboard-scene.query-transform-list.expand-sidebar', 'Expand sidebar')
+                    : t('dashboard-scene.query-transform-list.collapse-sidebar', 'Collapse sidebar')
+                }
+                onClick={() => onResizeSidebar(sidebarSize === SidebarSize.Mini ? SidebarSize.Full : SidebarSize.Mini)}
+                className={styles.rotate90}
+                name={sidebarSize === SidebarSize.Mini ? 'expand-alt' : 'compress-alt'}
+              />
+              <span className={styles.headerTitle}>{t('dashboard-scene.query-transform-list.header', 'Pipeline')}</span>
+            </Stack>
             <Stack direction="row" gap={0.5}>
+              {hasAlerting && (
+                <Button
+                  variant="secondary"
+                  fill="text"
+                  size="sm"
+                  tooltip={t('dashboard-scene.query-transform-list.notifications-tooltip', 'Alerts (coming soon)')}
+                >
+                  <Icon name="bell" size="sm" />
+                </Button>
+              )}
               <Button
                 variant="secondary"
                 fill="text"
@@ -821,7 +836,6 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       fontFamily: theme.typography.fontFamilyMonospace,
       textTransform: 'uppercase',
       color: theme.colors.text.primary,
-      cursor: 'pointer',
     }),
     sectionLabel: css({
       cursor: 'pointer',
@@ -1062,6 +1076,9 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       '&:active': {
         cursor: 'grabbing',
       },
+    }),
+    rotate90: css({
+      transform: 'rotate(90deg)',
     }),
   };
 };
