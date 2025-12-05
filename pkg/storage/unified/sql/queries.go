@@ -376,6 +376,22 @@ func (r sqlResourceUpdateRVRequest) Validate() error {
 	return nil // TODO
 }
 
+func (r sqlResourceUpdateRVRequest) SlashFunc() string {
+	if r.SQLTemplate.DialectName() == "postgres" {
+		return "CHR(47)"
+	}
+
+	return "CHAR(47)"
+}
+
+func (r sqlResourceUpdateRVRequest) TildeFunc() string {
+	if r.SQLTemplate.DialectName() == "postgres" {
+		return "CHR(126)"
+	}
+
+	return "CHAR(126)"
+}
+
 // resource_version table requests.
 type resourceVersionResponse struct {
 	ResourceVersion int64
