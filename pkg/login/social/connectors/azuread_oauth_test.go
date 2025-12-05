@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
@@ -1492,7 +1493,7 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 			"access_token":  "new-access-token",
 			"token_type":    "Bearer",
 			"refresh_token": "new-refresh-token",
-			"expires_in":    time.Now().Add(time.Hour).Unix(),
+			"expires_in":    3600,
 		})
 	}))
 	defer server.Close()
@@ -1514,6 +1515,7 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 	ts := s.TokenSource(ctx, token)
 	newToken, err := ts.Token()
 	require.NoError(t, err)
-	require.Equal(t, "new-access-token", newToken.AccessToken)
-	require.Equal(t, "new-refresh-token", newToken.RefreshToken)
+	assert.Equal(t, "new-access-token", newToken.AccessToken)
+	assert.Equal(t, "new-refresh-token", newToken.RefreshToken)
+	assert.EqualValues(t, 3600, newToken.ExpiresIn)
 }
