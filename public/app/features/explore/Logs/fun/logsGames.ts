@@ -36,8 +36,8 @@ const playerY = 23;
 const userMissile = '╫';
 const userMissileRegex = new RegExp(userMissile, 'g');
 const missileSpeed = 0.06;
-const enemySpeed = 0.0000001;
-const ufoSpeed = 0.0000095;
+const enemySpeed = 0.001;
+const ufoSpeed = 0.0095;
 
 type Missile = {
   x: number;
