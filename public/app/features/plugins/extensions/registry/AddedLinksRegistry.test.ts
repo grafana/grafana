@@ -623,8 +623,10 @@ describe('AddedLinksRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const plugin = getAppPluginMeta(pluginId);
-    const config = { ...plugin, extensions: { ...plugin.extensions, addedLinks: [] } };
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const config = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [] } };
     setAppPluginMetas({ [pluginId]: config });
 
     registry.register({
@@ -676,8 +678,10 @@ describe('AddedLinksRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const plugin = getAppPluginMeta(pluginId);
-    const config = { ...plugin, extensions: { ...plugin.extensions, addedLinks: [] } };
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const config = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [] } };
     setAppPluginMetas({ [pluginId]: config });
 
     registry.register({
@@ -705,8 +709,10 @@ describe('AddedLinksRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    const plugin = getAppPluginMeta(pluginId);
-    const config = { ...plugin, extensions: { ...plugin.extensions, addedLinks: [linkConfig] } };
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const config = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [linkConfig] } };
     setAppPluginMetas({ [pluginId]: config });
 
     registry.register({

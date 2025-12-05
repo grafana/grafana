@@ -332,8 +332,10 @@ describe('usePluginFunctions()', () => {
     };
 
     // The `AddedFunctionsRegistry` is validating if the function is registered in the plugin metadata.
-    const plugin = getAppPluginMeta(pluginId);
-    const config = { ...plugin, extensions: { ...plugin.extensions, addedFunctions: [functionConfig] } };
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const config = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [functionConfig] } };
     setAppPluginMetas({ [pluginId]: config });
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
