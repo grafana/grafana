@@ -1945,7 +1945,7 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 
 	// Verify snowflake calculation
 	expectedSnowflake := (((resourceVersion / 1000) - 1288834974657) << 22) + (resourceVersion % 1000)
-	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake), fmt.Sprintf("key %s does not contain the expected snowflake %d. Original RV: %d", keyPath, expectedSnowflake, actualRV))
+	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake), fmt.Sprintf("actual RV: %d", actualRV))
 
 	// Verify folder if specified
 	if expectedFolder != "" {
