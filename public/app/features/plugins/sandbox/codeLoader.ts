@@ -1,5 +1,5 @@
 import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getAppPluginMetas } from '@grafana/runtime';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolvePluginUrlWithCache } from '../loader/pluginInfoCache';
@@ -138,7 +138,7 @@ export function getPluginLoadData(pluginId: string): SandboxPluginMeta {
 
   //find it in apps
   //the information inside the apps object is more limited
-  for (const app of Object.values(config.apps)) {
+  for (const app of Object.values(getAppPluginMetas())) {
     if (app.id === pluginId) {
       return {
         id: pluginId,

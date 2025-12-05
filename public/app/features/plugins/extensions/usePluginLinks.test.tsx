@@ -8,7 +8,8 @@ import {
   PluginMeta,
   PluginType,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { getAppPluginMeta } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
@@ -107,31 +108,33 @@ describe('usePluginLinks()', () => {
       },
     };
 
-    config.apps[pluginId] = {
-      id: pluginId,
-      path: '',
-      version: '',
-      preload: false,
-      angular: {
-        detected: false,
-        hideDeprecation: false,
-      },
-      loadingStrategy: PluginLoadingStrategy.fetch,
-      dependencies: {
-        grafanaVersion: '8.0.0',
-        plugins: [],
+    setAppPluginMetas({
+      [pluginId]: {
+        id: pluginId,
+        path: '',
+        version: '',
+        preload: false,
+        angular: {
+          detected: false,
+          hideDeprecation: false,
+        },
+        loadingStrategy: PluginLoadingStrategy.fetch,
+        dependencies: {
+          grafanaVersion: '8.0.0',
+          plugins: [],
+          extensions: {
+            exposedComponents: [],
+          },
+        },
         extensions: {
+          addedLinks: [],
+          addedComponents: [],
+          addedFunctions: [],
           exposedComponents: [],
+          extensionPoints: [],
         },
       },
-      extensions: {
-        addedLinks: [],
-        addedComponents: [],
-        addedFunctions: [],
-        exposedComponents: [],
-        extensionPoints: [],
-      },
-    };
+    });
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider meta={pluginMeta}>
@@ -266,7 +269,9 @@ describe('usePluginLinks()', () => {
     };
 
     // The `AddedLinksRegistry` is validating if the link is registered in the plugin metadata (config.apps).
-    config.apps[pluginId].extensions.addedLinks = [linkConfig];
+    const plugin = getAppPluginMeta(pluginId);
+    const config = { ...plugin, extensions: { ...plugin.extensions, addedLinks: [linkConfig] } };
+    setAppPluginMetas({ [pluginId]: config });
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider

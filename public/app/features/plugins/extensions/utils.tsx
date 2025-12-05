@@ -16,7 +16,7 @@ import {
   PluginExtensionPoints,
   ExtensionInfo,
 } from '@grafana/data';
-import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
+import { reportInteraction, config, AppPluginConfig, getAppPluginMetas, getAppPluginMeta } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -607,7 +607,7 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
 export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 
 export const getAppPluginConfigs = (pluginIds: string[] = []) =>
-  Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
+  Object.values(getAppPluginMetas()).filter((app) => pluginIds.includes(app.id));
 
 export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string) => {
   return exposedComponentId.split('/')[0];
@@ -617,7 +617,7 @@ export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string)
 // (These plugins are necessary to be loaded to use the extension point.)
 // (The function also returns the plugin ids that the plugins - that extend the extension point - depend on.)
 export const getExtensionPointPluginDependencies = (extensionPointId: string): string[] => {
-  return Object.values(config.apps)
+  return Object.values(getAppPluginMetas())
     .filter(
       (app) =>
         app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
@@ -646,7 +646,7 @@ export const getExtensionPointPluginMeta = (extensionPointId: string): Extension
   return new Map(
     getExtensionPointPluginDependencies(extensionPointId)
       .map((pluginId) => {
-        const app = config.apps[pluginId];
+        const app = getAppPluginMeta(pluginId);
         // if the plugin does not exist or does not expose any components or links to the extension point, return undefined
         if (
           !app ||
@@ -683,7 +683,7 @@ export const getExposedComponentPluginDependencies = (exposedComponentId: string
 // metadata field. (For example the plugins that expose components that the app depends on.)
 // Heads up! This is a recursive function.
 export const getAppPluginDependencies = (pluginId: string, visited: string[] = []): string[] => {
-  if (!config.apps[pluginId]) {
+  if (!getAppPluginMeta(pluginId)) {
     return [];
   }
 
@@ -692,7 +692,7 @@ export const getAppPluginDependencies = (pluginId: string, visited: string[] = [
     return [];
   }
 
-  const pluginIdDependencies = config.apps[pluginId].dependencies.extensions.exposedComponents.map(
+  const pluginIdDependencies = getAppPluginMeta(pluginId).dependencies.extensions.exposedComponents.map(
     getAppPluginIdFromExposedComponentId
   );
 
@@ -713,7 +713,7 @@ export const getAppPluginsToAwait = () => {
     'cloud-home-app',
   ];
 
-  return Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
+  return Object.values(getAppPluginMetas()).filter((app) => pluginIds.includes(app.id));
 };
 
 // Returns a list of app plugins that has to be preloaded in parallel with the core Grafana initialization.
@@ -723,7 +723,7 @@ export const getAppPluginsToPreload = () => {
   const awaitedPluginIds = getAppPluginsToAwait().map((app) => app.id);
   const isNotAwaited = (app: AppPluginConfig) => !awaitedPluginIds.includes(app.id);
 
-  return Object.values(config.apps).filter((app) => {
+  return Object.values(getAppPluginMetas()).filter((app) => {
     return isNotAwaited(app) && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
   });
 };
