@@ -4,8 +4,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Stack, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { useSelector } from 'app/types/store';
 
-import { Branding } from '../../Branding/Branding';
+import { Branding, HomeLink } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
@@ -21,13 +23,13 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
-
+  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const styles = getStyles(theme);
 
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>
-        <Branding.MenuLogo className={styles.img} />
+        <HomeLink homeNav={homeNav} inMegaMenuOverlay={!state.megaMenuDocked} />
         <OrganizationSwitcher />
       </Stack>
       <div className={css({ flexGrow: 1 })} />
