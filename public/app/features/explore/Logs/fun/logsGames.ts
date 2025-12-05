@@ -236,7 +236,7 @@ function update(
       return missile;
     })
     .filter((missile) => {
-      if (missile.gridY === playerY && missile.x >= playerX && missile.x <= playerX + 2) {
+      if (missile.gridY === playerY && missile.x >= playerX - 2 && missile.x <= playerX) {
         missile.hit = true;
         lives--;
         return false;
@@ -352,7 +352,7 @@ function newUserMissile(x: number, y: number): Missile {
 
 function newEnemyMissile(x: number, y: number): Missile {
   return {
-    x: x - 2,
+    x: x + 2,
     y,
     get gridY() {
       return Math.ceil(this.y);
