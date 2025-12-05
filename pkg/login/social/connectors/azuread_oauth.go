@@ -249,6 +249,11 @@ func (s *AzureADTokenSource) Token() (*oauth2.Token, error) {
 		return s.token, nil
 	}
 
+	if s.token.RefreshToken == "" {
+		log.Warn("AzureADToken fetchToken failed: no refresh token available")
+		return nil, fmt.Errorf("no refresh token available to refresh the access token")
+	}
+
 	// refresh the expired token using the refresh token
 	federatedToken, err := os.ReadFile(s.workloadIdentityTokenFile)
 	if err != nil {
