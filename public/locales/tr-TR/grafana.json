@@ -5824,14 +5824,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Listeye geri dön",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Sil",
       "description-color-annotation-event-markers": "Ek açıklama olay işaretçileri için kullanılacak renk",
       "description-enabled-annotation-query-issued-every-dashboard": "Etkinleştirildiğinde her pano yenilemesinde açıklama sorgusu çalıştırılır",
-      "description-hidden": "Ek açıklama sorguları, panonun üst kısmından açılabilir veya kapatılabilir. Bu seçenek işaretlendiğinde bu açma/kapama gizlenecektir.",
+      "label-annotation-controls-display": "",
       "label-color": "Renk",
       "label-data-source": "Veri kaynağı",
       "label-enabled": "Etkin",
-      "label-hidden": "Gizli",
       "label-name": "Ad",
       "label-show-in": "Şurada göster:",
       "placeholder-choose-panels": "Panel seçin",
@@ -5887,6 +5899,7 @@
       "label-open-link-in-new-tab": "Bağlantıyı yeni sekmede aç",
       "label-options": "Seçenekler",
       "label-show-as-dropdown": "Açılır menü olarak göster",
+      "label-show-in-controls-menu": "",
       "label-title": "Başlık",
       "label-tooltip": "Araç ipucu",
       "label-type": "Tür",
@@ -6448,6 +6461,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Değişken düzenleyici formu",
       "back-to-list": "Listeye geri dön",
@@ -6762,8 +6794,8 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "Veya uğraşmadan {{mainDS}} (ve {{extraDS}}) veri kaynaklarını Grafana Labs'tan tamamen yönetilen, ölçeklenebilir ve barındırılan <6>daima ücretsiz Grafana Cloud planıyla</6> edinin.",
-      "title-alert": "Aşağıdan {{mainDS}} veri kaynağınızı yapılandırın"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Panoyu sil",
