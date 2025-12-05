@@ -25,7 +25,6 @@ export function getAppPluginMetas(): AppPluginMetas {
 
 export function getAppPluginMeta(id: string): AppPluginConfig | undefined {
   if (!apps[id]) {
-    console.error(`Plugin meta missing for plugin with id: ${id}`);
     return undefined;
   }
 
