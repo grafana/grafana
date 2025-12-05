@@ -7,14 +7,14 @@ SET {{ .Ident "resource_version" }} = (
     END
 ), {{ .Ident "key_path" }} = (
     CASE
-    {{ range $guid, $rv := .GUIDToRV }}
+    {{ range $guid, $snowflakeRv := .GUIDToSnowflakeRV }}
     WHEN {{ $.Ident "guid" }} = {{ $.Arg $guid }} THEN CONCAT(
       'unified', {{ $.SlashFunc }}, 'data', {{ $.SlashFunc }},
       {{ $.Ident "group" }}, {{ $.SlashFunc }},
       {{ $.Ident "resource" }}, {{ $.SlashFunc }},
       {{ $.Ident "namespace" }}, {{ $.SlashFunc }},
       {{ $.Ident "name" }}, {{ $.SlashFunc }},
-      CAST(((({{ if eq $.DialectName "postgres" }}(CAST({{ $.Arg $rv }} AS BIGINT) / 1000)::BIGINT{{ else if eq $.DialectName "mysql" }}(CAST({{ $.Arg $rv }} AS SIGNED) DIV 1000){{ else }}(CAST({{ $.Arg $rv }} AS SIGNED) / 1000){{ end }} - 1288834974657) << 22) + (CAST({{ $.Arg $rv }} AS {{ if eq $.DialectName "postgres" }}BIGINT{{ else }}SIGNED{{ end }}) % 1000 )) AS {{ if eq $.DialectName "postgres" }}BIGINT{{ else }}SIGNED{{ end }}),
+      CAST({{ $.Arg $snowflakeRv }} AS {{ if eq $.DialectName "postgres" }}BIGINT{{ else }}SIGNED{{ end }}),
       {{ $.TildeFunc }},
       CASE {{ $.Ident "action" }}
         WHEN 1 THEN 'created'

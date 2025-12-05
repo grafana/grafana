@@ -370,6 +370,7 @@ func (r sqlResourceBlobQueryRequest) Validate() error {
 type sqlResourceUpdateRVRequest struct {
 	sqltemplate.SQLTemplate
 	GUIDToRV map[string]int64
+	GUIDToSnowflakeRV map[string]int64
 }
 
 func (r sqlResourceUpdateRVRequest) Validate() error {
