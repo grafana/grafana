@@ -1,8 +1,6 @@
-import { css, cx } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { DataTransformerConfig, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { DataTransformerConfig, SelectableValue } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneDataQuery,
@@ -13,7 +11,6 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
@@ -22,11 +19,10 @@ import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
-import { DetailView, QueryLibraryMode } from './DetailView';
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
-import { PanelDataSidebarRendered } from './PanelDataSidebar';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
+import { QueryTransformDetailView, QueryLibraryMode } from './QueryTransformDetailView';
 import { useQueryTransformItems } from './hooks';
 import { PanelDataPaneTab, TabId } from './types';
 import { isDataTransformerConfig, queryItemId, transformItemId } from './utils';
@@ -34,7 +30,6 @@ import { isDataTransformerConfig, queryItemId, transformItemId } from './utils';
 export interface PanelDataPaneState extends SceneObjectState {
   tabs: PanelDataPaneTab[];
   tab: TabId;
-  sidebarCollapsed: boolean;
   selectedQueryTransform: string | null;
   panelRef: SceneObjectRef<VizPanel>;
   transformPickerIndex?: number | null;
@@ -45,7 +40,6 @@ export interface PanelDataPaneState extends SceneObjectState {
 
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
-  static FooterComponent = PanelDataSidebarRendered;
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab', 'selectedQueryTransform'] });
 
@@ -67,7 +61,6 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       panelRef,
       tabs,
       tab,
-      sidebarCollapsed: false,
       queryLibraryMode: {
         active: false,
         mode: 'browse',
@@ -84,10 +77,6 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
   public onChangeSelected = (selectedId: string | null) => {
     this.setState({ selectedQueryTransform: selectedId });
-  };
-
-  public onCollapseSidebar = (newState: boolean) => {
-    this.setState({ sidebarCollapsed: newState });
   };
 
   public onTransformPicker = (index?: number | null) => {
@@ -130,7 +119,6 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     isDebugMode = false,
     debugPosition = 0,
   } = model.useState();
-  const styles = useStyles2(getStyles);
 
   // Subscribe to query runner and tab state changes
   const panel = panelRef.resolve();
@@ -325,30 +313,26 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const series = sourceData?.data?.series || [];
 
   return (
-    <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
-      <div className={cx(styles.unifiedLayout)}>
-        <DetailView
-          selectedItem={selectedItem}
-          panel={panel}
-          tabs={tabs}
-          onRemoveTransform={handleRemoveTransform}
-          onToggleTransformVisibility={handleToggleTransformVisibility}
-          isAddingTransform={transformPickerIndex != null}
-          onAddTransformation={handleAddTransform}
-          onCancelAddTransform={() => model.onTransformPicker(null)}
-          transformationData={series}
-          onGoToQueries={handleGoToQueries}
-          queryLibraryMode={queryLibraryMode}
-          onQueryLibrarySelect={handleQueryLibrarySelect}
-          onQueryLibrarySave={handleQueryLibrarySave}
-          onQueryLibraryClose={handleQueryLibraryClose}
-          onOpenQueryLibrary={handleOpenQueryLibrary}
-          onOpenQueryInspector={handleOpenQueryInspector}
-          isDebugMode={isDebugMode}
-          debugPosition={debugPosition}
-        />
-      </div>
-    </div>
+    <QueryTransformDetailView
+      selectedItem={selectedItem}
+      panel={panel}
+      tabs={tabs}
+      onRemoveTransform={handleRemoveTransform}
+      onToggleTransformVisibility={handleToggleTransformVisibility}
+      isAddingTransform={transformPickerIndex != null}
+      onAddTransformation={handleAddTransform}
+      onCancelAddTransform={() => model.onTransformPicker(null)}
+      transformationData={series}
+      onGoToQueries={handleGoToQueries}
+      queryLibraryMode={queryLibraryMode}
+      onQueryLibrarySelect={handleQueryLibrarySelect}
+      onQueryLibrarySave={handleQueryLibrarySave}
+      onQueryLibraryClose={handleQueryLibraryClose}
+      onOpenQueryLibrary={handleOpenQueryLibrary}
+      onOpenQueryInspector={handleOpenQueryInspector}
+      isDebugMode={isDebugMode}
+      debugPosition={debugPosition}
+    />
   );
 }
 
@@ -364,24 +348,4 @@ export function shouldShowAlertingTab(pluginId: string) {
   const isTimeseries = pluginId === 'timeseries';
 
   return isGraph || isTimeseries;
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    dataPane: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
-      minHeight: 0,
-      height: '100%',
-      width: '100%',
-      paddingLeft: theme.spacing(2),
-    }),
-    unifiedLayout: css({
-      flex: 1,
-      minHeight: 0,
-      background: theme.colors.background.primary,
-      overflow: 'hidden',
-    }),
-  };
 }

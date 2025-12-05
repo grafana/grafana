@@ -10,6 +10,7 @@ import { ExpressionQueryType } from 'app/features/expressions/types';
 import { AddDataItemMenu } from './AddDataItemMenu';
 import { AiModeCard } from './AiModeCard';
 import { ConnectionLines } from './ConnectionLines';
+import { SidebarSize } from './PanelDataSidebar';
 import { QueryTransformCard } from './QueryTransformCard';
 import { getItemHiddenState, restoreItemStates, syncItemsToDebugState } from './debugModeHelpers';
 import { usePanelDataPaneColors } from './theme';
@@ -21,6 +22,7 @@ const CARD_HEIGHT = 70;
 interface QueryTransformListProps {
   allItems: QueryTransformItem[];
   dataSourceItems: QueryItem[];
+  sidebarSize: SidebarSize;
   transformItems: TransformItem[];
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -36,6 +38,7 @@ interface QueryTransformListProps {
   onReorderDataSources?: (startIndex: number, endIndex: number) => void;
   onReorderTransforms?: (startIndex: number, endIndex: number) => void;
   onAddOrganizeFieldsTransform?: () => void;
+  onResizeSidebar: (size: SidebarSize) => void;
   onCollapseSidebar: () => void;
   onDebugStateChange?: (isDebugMode: boolean, debugPosition: number) => void;
 }
@@ -46,6 +49,7 @@ export const QueryTransformList = memo(
     transformItems,
     allItems,
     selectedId,
+    sidebarSize,
     onSelect,
     onAddQuery,
     onAddFromSavedQueries,
@@ -59,6 +63,7 @@ export const QueryTransformList = memo(
     onReorderDataSources,
     onReorderTransforms,
     onAddOrganizeFieldsTransform,
+    onResizeSidebar,
     onCollapseSidebar,
     onDebugStateChange,
   }: QueryTransformListProps) => {
@@ -353,9 +358,12 @@ export const QueryTransformList = memo(
         <div className={styles.header}>
           <Stack justifyContent="space-between" alignItems="center" gap={2}>
             {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-            <div className={styles.headerTitle} onClick={onCollapseSidebar}>
+            <div
+              className={styles.headerTitle}
+              onClick={() => onResizeSidebar(sidebarSize === SidebarSize.Mini ? SidebarSize.Full : SidebarSize.Mini)}
+            >
               <Stack direction="row" alignItems="center" gap={1}>
-                <Icon name="angle-down" />
+                <Icon name={sidebarSize === SidebarSize.Mini ? 'expand-arrows' : 'compress-arrows'} />
                 <span>{t('dashboard-scene.query-transform-list.header', 'Pipeline flow')}</span>
               </Stack>
             </div>
