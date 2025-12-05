@@ -95,6 +95,42 @@ const numbers = [
  ▀██▄▄██▀ 
    ▀▀▀▀   
          `,
+  `
+ ▄▄▄▄▄▄▄▄ 
+ ▀▀▀▀▀███ 
+     ▄██  
+     ██   
+    ██    
+   ██     
+  ▀▀      
+          `,
+  `
+   ▄▄▄▄   
+ ▄██▀▀██▄ 
+ ██▄  ▄██ 
+  ██████  
+ ██▀  ▀██ 
+ ▀██▄▄██▀ 
+   ▀▀▀▀   
+          `,
+  `
+   ▄▄▄▄   
+ ▄██▀▀██▄ 
+ ██    ██ 
+ ▀██▄▄███ 
+   ▀▀▀ ██ 
+  █▄▄▄██  
+   ▀▀▀▀   
+          `,
+  `
+   ▄▄▄       ▄▄▄▄   
+  █▀██      ██▀▀██  
+    ██     ██    ██ 
+    ██     ██ ██ ██ 
+    ██     ██    ██ 
+ ▄▄▄██▄▄▄   ██▄▄██  
+ ▀▀▀▀▀▀▀▀    ▀▀▀▀   
+                    `,
 ];
 
 const gameOver = `
@@ -234,11 +270,17 @@ export function useLogsGames() {
     enemySpeed += 0.001;
     levelRef.current += 1;
 
+    if (levelRef.current > 10) {
+      setGameStatus('ended');
+      updateBestScore(score);
+      return;
+    }
+
     setGameStatus('next-level');
     setGameState(undefined);
     setScore(0);
     setLives(4);
-  }, []);
+  }, [score]);
 
   useEffect(() => {
     function loop(t: number) {
@@ -326,6 +368,9 @@ export function useLogsGames() {
         return;
       } else if (e.code === 'KeyN') {
         newGame();
+      } else if (e.code === 'KeyG') {
+        nextLevel();
+        return;
       }
 
       if (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight' && e.code !== 'Space' && e.code !== 'KeyN') {
