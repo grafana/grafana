@@ -97,6 +97,7 @@ export const availableIconsIndex = {
   cube: true,
   dashboard: true,
   database: true,
+  'debug-handle': true,
   'dice-three': true,
   docker: true,
   'document-info': true,

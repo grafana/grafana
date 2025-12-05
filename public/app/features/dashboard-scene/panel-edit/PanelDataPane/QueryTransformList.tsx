@@ -557,7 +557,7 @@ export const QueryTransformList = memo(
                                               }}
                                             >
                                               <div className={styles.debugLineHandle}>
-                                                <Icon name="draggabledots" size="sm" />
+                                                <Icon name="debug-handle" size="sm" />
                                               </div>
                                             </div>
                                           )}
@@ -713,7 +713,7 @@ export const QueryTransformList = memo(
                                               }}
                                             >
                                               <div className={styles.debugLineHandle}>
-                                                <Icon name="draggabledots" size="sm" />
+                                                <Icon name="debug-handle" size="sm" />
                                               </div>
                                             </div>
                                           )}
@@ -1042,7 +1042,8 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       top: '50%',
       transform: 'translate(-50%, -50%)',
       background: colors.query.accent,
-      borderRadius: theme.shape.radius.circle,
+      borderRadius: theme.shape.radius.default,
+      height: theme.spacing(2),
       padding: theme.spacing(0.5),
       display: 'flex',
       alignItems: 'center',
