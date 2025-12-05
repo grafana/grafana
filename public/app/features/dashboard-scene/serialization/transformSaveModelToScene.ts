@@ -26,6 +26,7 @@ import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
   getDashboardComponentInteractionCallback,
+  isPanelProfilingEnabled,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -313,9 +314,10 @@ export function createDashboardSceneFromDashboardModel(
   // Create profiler once and reuse to avoid duplicate metadata setting
   const dashboardProfiler = getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title);
 
-  // HACK always on
+  // Check if profiling should be enabled (global toggle or config)
   const enableProfiling =
-    config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1 || true;
+    isPanelProfilingEnabled() ||
+    config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1;
   const queryController = new behaviors.SceneQueryController(
     {
       enableProfiling,

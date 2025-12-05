@@ -8,6 +8,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
+import { enablePanelProfilingForDashboard, togglePanelProfiling } from '../../dashboard/services/DashboardProfiler';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -128,6 +129,18 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'd r',
     onTrigger: () => sceneGraph.getTimeRange(scene).onRefresh(),
+  });
+
+  // Toggle performance metrics
+  keybindings.addBinding({
+    key: 'd p',
+    onTrigger: () => {
+      const newState = togglePanelProfiling();
+      // If toggling on, enable profiling for the current dashboard
+      if (newState && scene.state.uid) {
+        enablePanelProfilingForDashboard(scene, scene.state.uid);
+      }
+    },
   });
 
   if (config.featureToggles.newTimeRangeZoomShortcuts) {

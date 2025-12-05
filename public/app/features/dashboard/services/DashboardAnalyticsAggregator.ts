@@ -137,13 +137,11 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
 
   // Panel-level events
   onPanelOperationStart = (data: performanceUtils.PanelPerformanceData): void => {
-    console.log('onPanelOperationStart', data.operation);
     // Start events don't need aggregation, just ensure panel exists
     this.ensurePanelExists(data.panelKey, data.panelId, data.pluginId, data.pluginVersion);
   };
 
   onPanelOperationComplete = (data: performanceUtils.PanelPerformanceData): void => {
-    console.log('onPanelOperationComplete', data.operation);
     // Aggregate panel metrics without verbose logging (handled by ScenePerformanceLogger)
     // Ensure panel exists - it may not have been created by onPanelOperationStart if the panel
     // was loaded from saved state or if start events were missed

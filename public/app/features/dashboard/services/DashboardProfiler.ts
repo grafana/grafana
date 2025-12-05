@@ -10,6 +10,7 @@ interface SceneInteractionProfileEvent {
 }
 
 let dashboardSceneProfiler: performanceUtils.SceneRenderProfiler | undefined;
+let isProfilingEnabled = false;
 
 export function getDashboardSceneProfiler() {
   if (!dashboardSceneProfiler) {
@@ -21,6 +22,23 @@ export function getDashboardSceneProfiler() {
     dashboardSceneProfiler = new performanceUtils.SceneRenderProfiler(panelProfilingConfig);
   }
   return dashboardSceneProfiler;
+}
+
+/**
+ * Toggle panel profiling on/off globally
+ * @returns The new profiling state (true if enabled, false if disabled)
+ */
+export function togglePanelProfiling(): boolean {
+  isProfilingEnabled = !isProfilingEnabled;
+  return isProfilingEnabled;
+}
+
+/**
+ * Get the current panel profiling state
+ * @returns true if profiling is enabled, false otherwise
+ */
+export function isPanelProfilingEnabled(): boolean {
+  return isProfilingEnabled;
 }
 
 export function getDashboardComponentInteractionCallback(uid: string, title: string) {
@@ -61,10 +79,11 @@ export function getDashboardSceneProfilerWithMetadata(uid: string, title: string
 
 // Function to enable panel profiling for a specific dashboard
 export function enablePanelProfilingForDashboard(dashboard: SceneObject, uid: string) {
-  // Check if panel profiling should be enabled for this dashboard
-  // HACK always on
+  // Check if panel profiling should be enabled
+  // First check the global toggle state, then fall back to config
   const shouldEnablePanelProfiling =
-    config.dashboardPerformanceMetrics.findIndex((configUid) => configUid === '*' || configUid === uid) !== -1 || true; // HACK always on
+    isProfilingEnabled ||
+    config.dashboardPerformanceMetrics.findIndex((configUid) => configUid === '*' || configUid === uid) !== -1;
 
   if (shouldEnablePanelProfiling) {
     const profiler = getDashboardSceneProfiler();

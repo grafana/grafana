@@ -9,6 +9,7 @@ import {
   getDashboardAnalyticsAggregator,
   PanelAnalyticsMetrics,
 } from '../../dashboard/services/DashboardAnalyticsAggregator';
+import { isPanelProfilingEnabled } from '../../dashboard/services/DashboardProfiler';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 interface PanelPerformanceMetricsState extends SceneObjectState {
@@ -68,8 +69,26 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
   const styles = useStyles2(getStyles);
   const { metrics } = model.useState();
   const [fakeQueryTime, setFakeQueryTime] = useState(0);
+  const [isProfilingEnabled, setIsProfilingEnabled] = useState(isPanelProfilingEnabled());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
+
+  // Watch for profiling state changes (when toggled via hotkey)
+  useEffect(() => {
+    // Poll for profiling state changes - this allows the component to react when profiling is toggled
+    const checkProfilingState = () => {
+      const currentState = isPanelProfilingEnabled();
+      if (currentState !== isProfilingEnabled) {
+        setIsProfilingEnabled(currentState);
+      }
+    };
+
+    // Check immediately and then periodically
+    checkProfilingState();
+    const interval = setInterval(checkProfilingState, 100);
+
+    return () => clearInterval(interval);
+  }, [isProfilingEnabled]);
 
   // Get last operation times (most recent operation in each array)
   const lastQueryTime =
@@ -124,15 +143,17 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
   const displayQueryTime = lastQueryTime > 0 ? lastQueryTime : fakeQueryTime;
   const lastTotalTime = displayQueryTime + lastRenderTime + lastTransformTime;
 
-  // Don't render if panel or metrics are not available (and no fake timer running)
-  if (!panel || (!metrics && fakeQueryTime === 0)) {
+  // Don't render if panel is not available
+  if (!panel) {
     return null;
   }
 
-  // Show component if we have any metrics or fake query time is running
-  if (lastTotalTime === 0 && fakeQueryTime === 0) {
+  // If profiling is disabled, don't show the component at all
+  if (!isProfilingEnabled) {
     return null;
   }
+
+  // If profiling is enabled, always show the component (even with 0 values)
 
   const renderMetricRow = (label: string, current: number) => {
     return (
@@ -143,11 +164,14 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
     );
   };
 
+  // Check if there are any transformation operations
+  const hasTransformations = metrics && metrics.transformationOperations.length > 0;
+
   const tooltipContent = (
     <div>
       {renderMetricRow('Query', displayQueryTime)}
+      {hasTransformations && renderMetricRow('Transform', lastTransformTime)}
       {renderMetricRow('Render', lastRenderTime)}
-      {renderMetricRow('Transform', lastTransformTime)}
       <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
         {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <strong>Total:</strong> {formatDuration(lastTotalTime)}
@@ -155,13 +179,24 @@ function PanelPerformanceMetricsRenderer({ model }: SceneComponentProps<PanelPer
     </div>
   );
 
-  const metricsText = [
-    displayQueryTime > 0 && `Q:${formatDuration(displayQueryTime)}`,
-    lastRenderTime > 0 && `R:${formatDuration(lastRenderTime)}`,
-    lastTransformTime > 0 && `T:${formatDuration(lastTransformTime)}`,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  // Show metrics text - if profiling is enabled, show all metrics even if 0
+  // Transform is only shown if there are transformation operations
+  // Otherwise, only show non-zero metrics
+  const metricsText = isProfilingEnabled
+    ? [
+        `Q:${formatDuration(displayQueryTime)}`,
+        hasTransformations && `T:${formatDuration(lastTransformTime)}`,
+        `R:${formatDuration(lastRenderTime)}`,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : [
+        displayQueryTime > 0 && `Q:${formatDuration(displayQueryTime)}`,
+        lastTransformTime > 0 && `T:${formatDuration(lastTransformTime)}`,
+        lastRenderTime > 0 && `R:${formatDuration(lastRenderTime)}`,
+      ]
+        .filter(Boolean)
+        .join(' ');
 
   return (
     <Tooltip content={tooltipContent}>
