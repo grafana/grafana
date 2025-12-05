@@ -1924,7 +1924,7 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 	} else {
 		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = ? AND name = ? AND resource_version = ?"
 	}
-	rows, err := db.QueryContext(ctx,query, key.Namespace, key.Name, resourceVersion)
+	rows, err := db.QueryContext(ctx, query, key.Namespace, key.Name, resourceVersion)
 	require.NoError(t, err)
 
 	require.True(t, rows.Next())
