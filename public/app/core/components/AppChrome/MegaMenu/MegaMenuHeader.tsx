@@ -7,7 +7,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types/store';
 
-import { Branding, HomeLink } from '../../Branding/Branding';
+import { HomeLink } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
