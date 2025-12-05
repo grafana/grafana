@@ -1,0 +1,77 @@
+name: Usability Review Agent
+description: Runs AI-powered usability testing using OpenAI Computer Use with Playwright
+
+inputs:
+  target_url:
+    description: The URL to test for usability
+    required: true
+  openai_api_key:
+    description: OpenAI API key with Computer Use access
+    required: true
+  openai_org:
+    description: OpenAI organization ID
+    required: false
+  grafana_username:
+    description: Grafana username for authentication
+    required: false
+  grafana_password:
+    description: Grafana password for authentication
+    required: false
+  workflow_name:
+    description: The workflow or feature to test
+    required: false
+    default: "the application interface"
+  prompt_file:
+    description: Custom prompt file to use (relative to action directory)
+    required: false
+    default: "prompt.txt"
+  output_text_path:
+    description: Path to save the review output text
+    required: false
+    default: "usability-review.txt"
+  screenshot_path:
+    description: Path to save the final screenshot
+    required: false
+    default: "usability-screenshot.png"
+
+outputs:
+  review_output:
+    description: Path to the review output file
+    value: ${{ inputs.output_text_path }}
+  screenshot_output:
+    description: Path to the screenshot file
+    value: ${{ inputs.screenshot_path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        python -m pip install -U pip
+        pip install -r requirements.txt
+        python -m playwright install --with-deps chromium
+        echo "System info:"
+        free -h || echo "free command not available"
+        df -h | head -5
+
+    - name: Run usability review agent
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+        OPENAI_ORG: ${{ inputs.openai_org }}
+        TARGET_URL: ${{ inputs.target_url }}
+        GRAFANA_USERNAME: ${{ inputs.grafana_username }}
+        GRAFANA_PASSWORD: ${{ inputs.grafana_password }}
+        OUTPUT_TEXT_PATH: ${{ github.workspace }}/${{ inputs.output_text_path }}
+        SCREENSHOT_PATH: ${{ github.workspace }}/${{ inputs.screenshot_path }}
+        PROMPT_FILE: ${{ github.action_path }}/${{ inputs.prompt_file }}
+      run: |
+        python run_agent.py

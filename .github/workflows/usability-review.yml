@@ -1,0 +1,584 @@
+name: Usability Review Agent
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+
+env:
+  OUTPUT_TEXT_PATH: usability-review.txt
+  SCREENSHOT_PATH: usability-screenshot.png
+
+jobs:
+  usability-review:
+    # Run when either: (1) someone comments '/test-me-baby-one-more-time' on a PR, or (2) 'usability-review' label is added
+    if: ${{ (github.event.issue.pull_request && startsWith(github.event.comment.body, '/test-me-baby-one-more-time')) || github.event.label.name == 'usability-review' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: React to comment
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+      - name: Post acknowledgment
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh pr comment $PR_NUMBER --body "🤖 Starting usability review... This may take a few minutes."
+
+      - name: Set PR number
+        id: pr-number
+        run: |
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          else
+            echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract target URL from ephemeral instance comment
+        id: extract-url
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr-number.outputs.number }}
+        run: |
+          # Extract ephemeral instance URL from PR comments
+          # Looks for the most recent comment containing: https://ephemeral{alphanumeric}.grafana-dev.net
+          #
+          # TODO: Future improvement - auto-trigger deployment if no URL found:
+          #   1. Comment /deploy-to-hg on the PR
+          #   2. Wait ~20 minutes for build to complete
+          #   3. Retry extracting URL
+          #   4. Continue with usability review
+
+          # Get all PR comments, newest first
+          COMMENTS=$(gh pr view $PR_NUMBER --json comments --jq '.comments | reverse | .[].body')
+
+          # Find the most recent comment with ephemeral instance URL (alphanumeric subdomain)
+          TARGET_URL=$(echo "$COMMENTS" | grep -oE 'https://ephemeral[a-zA-Z0-9]+\.grafana-dev\.net' | head -1)
+
+          if [ -z "$TARGET_URL" ]; then
+            echo "::error::No ephemeral instance URL found in PR comments"
+            echo "::notice::Please deploy an ephemeral instance first by commenting /deploy-to-hg"
+            exit 1
+          fi
+
+          echo "Found target URL: $TARGET_URL"
+          echo "TARGET_URL=$TARGET_URL" >> $GITHUB_ENV
+
+      - name: "Get vault secrets (dev)"
+        id: vault-secrets-dev
+        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0
+        with:
+          vault_instance: "dev"
+          repo_secrets: |
+            GCOM_HOST=usability-review-agent:GCOM_HOST
+            GCOM_TOKEN=usability-review-agent:GCOM_TOKEN
+            OPENAI_API_KEY=usability-review-agent:OPENAI_API_KEY
+            GRAFANA_USERNAME=usability-review-agent:GRAFANA_USERNAME
+            GRAFANA_PASSWORD=usability-review-agent:GRAFANA_PASSWORD
+            SLACK_WEBHOOK_URL=usability-review-agent:SLACK_WEBHOOK_URL
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install OpenAI package
+        run: |
+          python -m pip install -U pip
+          pip install openai
+
+      - name: Get PR details
+        id: pr-details
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr-number.outputs.number }}
+        run: |
+          # Get PR title, body, and changed files
+          PR_DATA=$(gh pr view $PR_NUMBER --json title,body,files)
+
+          PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
+          PR_BODY=$(echo "$PR_DATA" | jq -r '.body // ""')
+
+          # Get list of changed files
+          CHANGED_FILES=$(echo "$PR_DATA" | jq -r '.files[].path' | head -20)
+
+          # Save to files for next step
+          echo "$PR_TITLE" > pr_title.txt
+          echo "$PR_BODY" > pr_body.txt
+          echo "$CHANGED_FILES" > changed_files.txt
+
+          echo "PR Title: $PR_TITLE"
+          echo "Changed files count: $(echo "$CHANGED_FILES" | wc -l)"
+
+      - name: Generate PR summary
+        id: pr-summary
+        env:
+          OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+          from openai import OpenAI
+
+          client = OpenAI()
+
+          # Read PR details
+          with open("pr_title.txt", "r") as f:
+              pr_title = f.read().strip()
+
+          with open("pr_body.txt", "r") as f:
+              pr_body = f.read().strip()
+
+          with open("changed_files.txt", "r") as f:
+              changed_files = f.read().strip()
+
+          # Generate summary of what the PR does
+          system = "You are a technical analyst summarizing pull request changes."
+          user = f"""Analyze this PR and provide a 2-3 sentence summary of what feature/change is being implemented:
+
+          PR Title: {pr_title}
+
+          PR Description: {pr_body if pr_body else "(No description provided)"}
+
+          Changed Files:
+          {changed_files}
+
+          Focus on what the user-facing impact is and what functionality is being added or modified."""
+
+          resp = client.chat.completions.create(
+              model="gpt-4o-mini",
+              messages=[
+                  {"role": "system", "content": system},
+                  {"role": "user", "content": user},
+              ],
+          )
+          pr_summary = resp.choices[0].message.content.strip()
+
+          with open("pr_summary.txt", "w") as f:
+              f.write(pr_summary)
+
+          print(f"PR Summary: {pr_summary}")
+          PY
+
+      - name: Build dynamic prompt
+        id: build-prompt
+        run: |
+          # Read the PR summary
+          PR_SUMMARY=$(cat pr_summary.txt)
+
+          # Read base prompt template from action
+          BASE_PROMPT=$(cat .github/actions/usability-review-agent/prompt.txt)
+
+          # Build dynamic prompt with PR context
+          cat > dynamic_prompt.txt <<EOF
+          ## Context
+          You are reviewing a pull request that makes the following changes:
+
+          $PR_SUMMARY
+
+          Your task is to test the workflow and provide usability feedback.
+
+          ## Instructions
+          $BASE_PROMPT
+          EOF
+
+          # Copy to action directory so it can be used
+          cp dynamic_prompt.txt .github/actions/usability-review-agent/dynamic_prompt.txt
+
+          echo "Dynamic prompt created"
+
+      - name: Extract instance slug from URL
+        run: |
+          INSTANCE_SLUG=$(echo "${{ env.TARGET_URL }}" | sed -E 's|https?://([^.]+)\..*|\1|')
+          echo "Instance slug: $INSTANCE_SLUG"
+          echo "INSTANCE_SLUG=$INSTANCE_SLUG" >> $GITHUB_ENV
+
+      - name: Enable basic auth on instance
+        env:
+          GCOM_HOST: ${{ env.GCOM_HOST }}
+          GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
+          INSTANCE_SLUG: ${{ env.INSTANCE_SLUG }}
+        run: |
+          # Check current config
+          CURRENT_CONFIG=$(curl -s "${GCOM_HOST}/api/instances/${INSTANCE_SLUG}/config" \
+            -H "Authorization: Bearer ${GCOM_TOKEN}")
+
+          DISABLE_LOGIN_FORM=$(echo "$CURRENT_CONFIG" | jq -r '.auth.disable_login_form // true')
+          echo "Current disable_login_form: $DISABLE_LOGIN_FORM"
+
+          if [ "$DISABLE_LOGIN_FORM" != "false" ]; then
+            echo "Enabling basic auth..."
+            curl -X POST "${GCOM_HOST}/api/instances/${INSTANCE_SLUG}/config" \
+              -H "Authorization: Bearer ${GCOM_TOKEN}" \
+              -H "Content-Type: application/x-www-form-urlencoded" \
+              -d 'config[auth][disable_login_form]=false'
+
+            echo "Waiting for pod restart..."
+            sleep 300
+
+            # Verify instance is ready
+            for i in {1..10}; do
+              if curl -sf https://${INSTANCE_SLUG}.grafana-dev.net/api/health; then
+                echo "Instance ready!"
+                break
+              fi
+              echo "Attempt $i failed, waiting..."
+              sleep 10
+            done
+          else
+            echo "Basic auth already enabled, skipping..."
+          fi
+
+      - name: Create test user for playwright
+        # Using system realm token with stack-users:write scope
+        env:
+          GCOM_HOST: ${{ env.GCOM_HOST }}
+          GCOM_TOKEN: ${{ env.GCOM_TOKEN }}
+          INSTANCE_SLUG: ${{ env.INSTANCE_SLUG }}
+          GRAFANA_USERNAME: ${{ env.GRAFANA_USERNAME }}
+          GRAFANA_PASSWORD: ${{ env.GRAFANA_PASSWORD }}
+        run: |
+          pip install requests
+          python3 <<'PYTHON'
+          import os, requests, json
+
+          gcom_host = os.environ['GCOM_HOST']
+          gcom_token = os.environ['GCOM_TOKEN']
+          instance = os.environ['INSTANCE_SLUG']
+          username = os.environ['GRAFANA_USERNAME']
+          password = os.environ['GRAFANA_PASSWORD']
+
+          # Create user via GCOM API (proxies to instance /api/admin/users)
+          resp = requests.post(
+              f"{gcom_host}/api/instances/{instance}/api/admin/users",
+              headers={"Authorization": f"Bearer {gcom_token}"},
+              json={"name": "Usability Review Agent", "login": username, "password": password}
+          )
+
+          if resp.status_code == 412:
+              print(f"Test user already exists (412), skipping creation")
+          elif resp.status_code >= 400:
+              print(f"Error creating user: {resp.status_code} {resp.text}")
+              resp.raise_for_status()
+          else:
+              user_id = resp.json()['id']
+              print(f"Created new test user (id: {user_id})")
+
+              # Make user admin via GCOM API (proxies to instance)
+              perm_resp = requests.put(
+                  f"{gcom_host}/api/instances/{instance}/api/admin/users/{user_id}/permissions",
+                  headers={"Authorization": f"Bearer {gcom_token}"},
+                  json={"isGrafanaAdmin": True}
+              )
+
+              if perm_resp.status_code >= 400:
+                  print(f"Warning: Failed to set admin permissions: {perm_resp.status_code}")
+              else:
+                  print(f"Set admin permissions for test user")
+
+          print(f"Test user setup complete")
+          PYTHON
+
+      - name: Run usability review agent
+        uses: ./.github/actions/usability-review-agent
+        with:
+          target_url: ${{ env.TARGET_URL }}
+          openai_api_key: ${{ env.OPENAI_API_KEY }}
+          grafana_username: ${{ env.GRAFANA_USERNAME }}
+          grafana_password: ${{ env.GRAFANA_PASSWORD }}
+          workflow_name: "the application interface"
+          prompt_file: "dynamic_prompt.txt"
+          output_text_path: ${{ env.OUTPUT_TEXT_PATH }}
+          screenshot_path: ${{ env.SCREENSHOT_PATH }}
+
+      - name: Upload review artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: usability-review-results
+          path: |
+            ${{ env.OUTPUT_TEXT_PATH }}
+            ${{ env.SCREENSHOT_PATH }}
+            login_page.png
+            login_error.png
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Post review results to PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr-number.outputs.number }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          COMMENT_FILE=$(mktemp)
+
+          echo "## 🔍 Usability Review Results" > "$COMMENT_FILE"
+          echo "" >> "$COMMENT_FILE"
+          echo "**Target URL:** ${{ env.TARGET_URL }}" >> "$COMMENT_FILE"
+          echo "" >> "$COMMENT_FILE"
+          echo "---" >> "$COMMENT_FILE"
+          echo "" >> "$COMMENT_FILE"
+
+          if [ -s ${{ env.OUTPUT_TEXT_PATH }} ]; then
+            cat ${{ env.OUTPUT_TEXT_PATH }} >> "$COMMENT_FILE"
+          else
+            echo "⚠️ No review output was generated." >> "$COMMENT_FILE"
+          fi
+
+          echo "" >> "$COMMENT_FILE"
+          echo "---" >> "$COMMENT_FILE"
+          echo "" >> "$COMMENT_FILE"
+          echo "📸 [View screenshot and full artifacts](https://github.com/${{ github.repository }}/actions/runs/$RUN_ID)" >> "$COMMENT_FILE"
+
+          gh pr comment $PR_NUMBER --body-file "$COMMENT_FILE"
+          rm "$COMMENT_FILE"
+
+      - name: Post individual suggestions as separate comments
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr-number.outputs.number }}
+          OUTPUT_TEXT_PATH: ${{ env.OUTPUT_TEXT_PATH }}
+        run: |
+          python3 <<'PYTHON'
+          import os
+          import subprocess
+          import re
+          import json
+
+          # Read the AI output
+          output_path = os.environ['OUTPUT_TEXT_PATH']
+          if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+              print("No output file found, skipping individual comments")
+              exit(0)
+
+          with open(output_path, 'r') as f:
+              content = f.read()
+
+          # Extract table rows (skip header and separator)
+          # New format: | Issue | Severity | Impact | Confidence | Suggestion |
+          table_pattern = r'\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|'
+          matches = re.findall(table_pattern, content)
+
+          if len(matches) < 3:
+              print(f"Not enough table rows found ({len(matches)}), skipping individual comments")
+              exit(0)
+
+          # Skip first 2 matches (header + separator)
+          issue_rows = matches[2:]  # Get all issues after header
+
+          pr_number = os.environ['PR_NUMBER']
+
+          # Get changed files in the PR to attach comments to
+          pr_files_result = subprocess.run(
+              ['gh', 'pr', 'view', pr_number, '--json', 'files'],
+              capture_output=True,
+              text=True,
+              check=True
+          )
+          pr_data = json.loads(pr_files_result.stdout)
+          changed_files = [f['path'] for f in pr_data.get('files', [])]
+
+          # Prefer frontend files for UI issues
+          frontend_files = [f for f in changed_files if any(ext in f for ext in ['.tsx', '.ts', '.jsx', '.js', '.vue', '.css', '.scss'])]
+          target_files = frontend_files if frontend_files else changed_files
+
+          if not target_files:
+              print("No changed files found, posting as general comments instead")
+              target_files = [None] * len(issue_rows)
+
+          for idx, (issue, severity, impact, confidence, suggestion) in enumerate(issue_rows):
+              # Clean up whitespace
+              issue = issue.strip()
+              severity = severity.strip()
+              impact = impact.strip()
+              confidence = confidence.strip()
+              suggestion = suggestion.strip()
+
+              # Extract issue title from markdown (bold text before <br />)
+              issue_title_match = re.search(r'\*\*(.+?)\*\*', issue)
+              issue_title = issue_title_match.group(1) if issue_title_match else issue
+
+              # Create individual comment
+              comment = f"""### {severity} {issue_title}
+
+              **Confidence:** {confidence}
+
+              **Impact:** {impact}
+
+              **Suggestion:** {suggestion}
+
+              ---
+              _Posted by BabyBot 🍼 - Usability Review Agent_"""
+
+              # Try to post as review comment (resolvable) on a changed file
+              target_file = target_files[idx % len(target_files)] if target_files[0] is not None else None
+
+              if target_file:
+                  # Post as review comment on the file (resolvable!)
+                  try:
+                      # Create a review comment on line 1 of the file
+                      subprocess.run(
+                          ['gh', 'pr', 'review', pr_number, '--comment', '--body', comment, '--file', target_file, '--line', '1'],
+                          check=True,
+                          capture_output=True
+                      )
+                      print(f"Posted resolvable comment for: {issue_title} (on {target_file})")
+                  except subprocess.CalledProcessError as e:
+                      # Fallback to general comment if review comment fails
+                      print(f"Failed to post review comment, falling back to general comment: {e}")
+                      subprocess.run(
+                          ['gh', 'pr', 'comment', pr_number, '--body', comment],
+                          check=True
+                      )
+                      print(f"Posted general comment for: {issue_title}")
+              else:
+                  # Post as general comment
+                  subprocess.run(
+                      ['gh', 'pr', 'comment', pr_number, '--body', comment],
+                      check=True
+                  )
+                  print(f"Posted general comment for: {issue_title}")
+
+          PYTHON
+
+      - name: Send Slack notification on success
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr-number.outputs.number }}
+          OUTPUT_TEXT_PATH: ${{ env.OUTPUT_TEXT_PATH }}
+        run: |
+          # Check if Slack webhook is configured
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "Slack webhook not configured, skipping notification"
+            exit 0
+          fi
+
+          # Check if review was successful
+          if [ ! -s ${{ env.OUTPUT_TEXT_PATH }} ]; then
+            echo "No review output found, skipping success notification"
+            exit 0
+          fi
+
+          # Fetch PR details and export for Python
+          PR_DATA=$(gh pr view $PR_NUMBER --json title,url,author)
+          export PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
+          export PR_URL=$(echo "$PR_DATA" | jq -r '.url')
+          export PR_AUTHOR=$(echo "$PR_DATA" | jq -r '.author.login')
+
+          python3 <<'PYTHON'
+          import os
+          import json
+          import subprocess
+          import re
+
+          # Read the AI output to extract issues
+          with open(os.environ['OUTPUT_TEXT_PATH'], 'r') as f:
+              content = f.read()
+
+          # Extract table rows for issues
+          # New format: | Issue | Severity | Impact | Confidence | Suggestion |
+          table_pattern = r'\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|'
+          matches = re.findall(table_pattern, content)
+
+          # Build issues text
+          issues_text = ""
+          if len(matches) >= 3:
+              issue_rows = matches[2:]  # Skip header rows
+              for issue, severity, impact, confidence, suggestion in issue_rows:
+                  issue = issue.strip()
+                  severity = severity.strip()
+                  suggestion = suggestion.strip()
+
+                  # Extract issue title from markdown
+                  issue_title_match = re.search(r'\*\*(.+?)\*\*', issue)
+                  issue_title = issue_title_match.group(1) if issue_title_match else issue
+
+                  issues_text += f"• *{severity}* {issue_title}\n  → {suggestion}\n"
+          else:
+              issues_text = "No specific issues found"
+
+          pr_number = os.environ['PR_NUMBER']
+          pr_title = os.environ['PR_TITLE']
+          pr_url = os.environ['PR_URL']
+          pr_author = os.environ['PR_AUTHOR']
+
+          # Build Slack message
+          slack_payload = {
+              "channel": "#hackathon15-agentic-usability-review",
+              "username": "Usability Review Agent",
+              "icon_emoji": ":mag:",
+              "blocks": [
+                  {
+                      "type": "header",
+                      "text": {
+                          "type": "plain_text",
+                          "text": f"✅ Usability Review Complete: PR #{pr_number}",
+                          "emoji": True
+                      }
+                  },
+                  {
+                      "type": "section",
+                      "text": {
+                          "type": "mrkdwn",
+                          "text": f"*<{pr_url}|{pr_title}>*\nby @{pr_author}"
+                      }
+                  },
+                  {
+                      "type": "section",
+                      "text": {
+                          "type": "mrkdwn",
+                          "text": f"*Issues & Suggestions*\n{issues_text}"
+                      }
+                  },
+                  {
+                      "type": "actions",
+                      "elements": [
+                          {
+                              "type": "button",
+                              "text": {
+                                  "type": "plain_text",
+                                  "text": "View Full Review",
+                                  "emoji": True
+                              },
+                              "url": pr_url
+                          }
+                      ]
+                  }
+              ]
+          }
+
+          # Send to Slack
+          webhook_url = os.environ['SLACK_WEBHOOK_URL']
+          subprocess.run(
+              ['curl', '-X', 'POST', '-H', 'Content-type: application/json',
+               '--data', json.dumps(slack_payload), webhook_url],
+              check=True
+          )
+          print("Slack notification sent successfully")
+          PYTHON
