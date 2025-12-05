@@ -12,6 +12,7 @@ import { metricValueItem } from './elements/metricValue';
 import { parallelogramItem } from './elements/parallelogram';
 import { rectangleItem } from './elements/rectangle';
 import { serverItem } from './elements/server/server';
+import { svgItem } from './elements/svg';
 import { textItem } from './elements/text';
 import { triangleItem } from './elements/triangle';
 import { windTurbineItem } from './elements/windTurbine';
@@ -33,6 +34,7 @@ export const defaultElementItems = [
   triangleItem,
   cloudItem,
   parallelogramItem,
+  svgItem,
 ];
 
 export const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];

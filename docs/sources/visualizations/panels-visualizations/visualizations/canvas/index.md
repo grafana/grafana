@@ -128,6 +128,20 @@ The server element lets you easily represent a single server, a stack of servers
 
 {{< figure src="/media/docs/grafana/canvas-server-element-9-4-0.png" max-width="650px" alt="Canvas server element" >}}
 
+#### SVG
+
+The SVG element lets you add custom SVG graphics to the canvas. You can enter raw SVG markup in the content field, and the element will render it with proper sanitization to prevent XSS attacks. This element is useful for creating custom icons, logos, or complex graphics that aren't available in the standard shape elements.
+
+SVG element features:
+
+- **Sanitized content**: All SVG content is automatically sanitized for security
+- **Data binding**: SVG content can be bound to field data using template variables
+- **Scalable**: SVG graphics scale cleanly at any size
+
+The SVG element supports the following configuration options:
+
+- **SVG Content**: Enter raw SVG markup. Content will be sanitized automatically.
+
 #### Button
 
 The button element lets you add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
