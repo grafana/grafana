@@ -2067,9 +2067,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 3
-    },
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/features/dashboard-scene/v2schema/ImportDashboardOverviewV2.tsx": {
