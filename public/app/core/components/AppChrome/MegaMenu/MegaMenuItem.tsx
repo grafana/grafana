@@ -96,12 +96,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
             onPin={() => onPin(link)}
             isPinned={isPinned(link.url)}
           >
-            <div
-              className={cx(styles.labelWrapper, {
-                [styles.hasActiveChild]: hasActiveChild,
-                [styles.labelWrapperWithIcon]: Boolean(level === 0 && iconElement),
-              })}
-            >
+            <div className={styles.labelWrapper}>
               {level === 0 && iconElement && <FeatureHighlightWrapper>{iconElement}</FeatureHighlightWrapper>}
               <Text truncate element="p">
                 {link.text}
@@ -209,16 +204,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   labelWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(0.75),
-    minWidth: 0,
-    paddingLeft: theme.spacing(1),
-  }),
-  labelWrapperWithIcon: css({
-    paddingLeft: theme.spacing(0),
     gap: theme.spacing(1),
-  }),
-  hasActiveChild: css({
-    color: theme.colors.text.primary,
+    minWidth: 0,
   }),
   children: css({
     display: 'flex',
