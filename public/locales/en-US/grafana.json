@@ -12396,7 +12396,8 @@
         "bar-glow": "Bar glow",
         "center-glow": "Center glow",
         "rounded-bars": "Rounded bars",
-        "spotlight": "Spotlight"
+        "spotlight": "Spotlight",
+        "spotlight-tooltip": "Only visible in dark themes"
       },
       "gradient": "Gradient",
       "gradient-auto": "Auto",
