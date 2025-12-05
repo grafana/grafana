@@ -64,9 +64,19 @@ var _ Service = (*LibraryPanelService)(nil)
 
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
 func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error {
-	panels := dash.Data.Get("panels").MustArray()
+	var panels []any
+	isV2 := dash.Data.Get("elements").Interface() != nil
+	if isV2 {
+		elementsMap := dash.Data.Get("elements").MustMap()
+		panels = make([]any, 0, len(elementsMap))
+		for _, element := range elementsMap {
+			panels = append(panels, element)
+		}
+	} else {
+		panels = dash.Data.Get("panels").MustArray()
+	}
 	libraryPanels := make(map[string]string)
-	err := connectLibraryPanelsRecursively(c, panels, libraryPanels)
+	err := connectLibraryPanelsRecursively(c, panels, libraryPanels, isV2)
 	if err != nil {
 		return err
 	}
@@ -83,10 +93,13 @@ func isLibraryPanelOrRow(panel *simplejson.Json, panelType string) bool {
 	return panel.Interface() != nil || panelType == "row"
 }
 
-func connectLibraryPanelsRecursively(c context.Context, panels []any, libraryPanels map[string]string) error {
+func connectLibraryPanelsRecursively(c context.Context, panels []any, libraryPanels map[string]string, isV2 bool) error {
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")
+		if isV2 {
+			libraryPanel = panelAsJSON.Get("spec").Get("libraryPanel")
+		}
 		panelType := panelAsJSON.Get("type").MustString()
 		if !isLibraryPanelOrRow(libraryPanel, panelType) {
 			continue
@@ -95,7 +108,7 @@ func connectLibraryPanelsRecursively(c context.Context, panels []any, libraryPan
 		// we have a row
 		if panelType == "row" {
 			rowPanels := panelAsJSON.Get("panels").MustArray()
-			err := connectLibraryPanelsRecursively(c, rowPanels, libraryPanels)
+			err := connectLibraryPanelsRecursively(c, rowPanels, libraryPanels, isV2)
 			if err != nil {
 				return err
 			}

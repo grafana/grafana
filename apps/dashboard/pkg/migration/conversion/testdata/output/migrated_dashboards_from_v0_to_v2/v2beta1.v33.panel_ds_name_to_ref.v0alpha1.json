@@ -1,0 +1,344 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "v33.panel_ds_name_to_ref.v42"
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "liveNow": false,
+    "panels": [
+      {
+        "description": "Tests v33 migration behavior when panel datasource is explicitly null. Should remain null after migration (returnDefaultAsNull: true).",
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "non-default-test-ds-uid"
+            },
+            "description": "Target with UID reference should migrate to full object",
+            "refId": "A"
+          }
+        ],
+        "title": "Panel Datasource: null → should stay null",
+        "type": "stat"
+      },
+      {
+        "description": "Tests v33 migration behavior when panel datasource is already a proper object reference. Should remain unchanged.",
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "elasticsearch",
+              "uid": "existing-target-uid"
+            },
+            "description": "Target with existing object should remain unchanged",
+            "refId": "A"
+          }
+        ],
+        "title": "Panel Datasource: existing object → should stay unchanged",
+        "type": "stat"
+      },
+      {
+        "description": "Tests v33 migration when panel datasource is a string name. Should convert to proper object with uid, type, apiVersion.",
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 3,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "non-default-test-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Panel Datasource: string name → should migrate to object",
+        "type": "table"
+      },
+      {
+        "description": "Tests v33 migration when panel has datasource string but empty targets array. Panel datasource should still migrate.",
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 4,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Panel Datasource: string name with empty targets → should migrate",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
+        "description": "Tests v33 target migration with various edge cases: null target (unchanged), valid string (migrated), non-existing string (preserved), missing datasource field (unchanged).",
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 5,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "non-default-test-ds-uid"
+            },
+            "description": "Null target datasource should remain null",
+            "refId": "A"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "description": "Valid string should migrate to object",
+            "refId": "B"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "non-existing-ds"
+            },
+            "description": "Non-existing datasource should be preserved as-is (migration returns nil)",
+            "refId": "C"
+          },
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "non-default-test-ds-uid"
+            },
+            "description": "Target without datasource field should remain unchanged",
+            "refId": "D"
+          }
+        ],
+        "title": "Target Datasources: mixed null/string/non-existing scenarios",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
+        "description": "Tests v33 migration when panel datasource is null but targets have mixed reference types (object, string). Panel should stay null, targets should migrate appropriately.",
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 6,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "existing-ref"
+            },
+            "description": "Existing object target should remain unchanged",
+            "refId": "A"
+          },
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "non-default-test-ds-uid"
+            },
+            "description": "String target should migrate to object",
+            "refId": "B"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
+            "description": "Default datasource string should migrate to object",
+            "refId": "C"
+          }
+        ],
+        "title": "Panel: null datasource with mixed target types",
+        "type": "timeseries"
+      },
+      {
+        "description": "Tests v33 migration behavior with empty string datasource. Should migrate to empty object {} based on MigrateDatasourceNameToRef logic.",
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 7,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
+          {
+            "description": "Empty string target should also migrate to empty object {}",
+            "refId": "A"
+          }
+        ],
+        "title": "Empty string datasource → should return empty object {}",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
+        "description": "Tests v33 migration with completely unknown datasource names. Since migration returns nil for unknown datasources, they should be preserved unchanged.",
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 8,
+        "options": {},
+        "pluginVersion": "",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "also-missing-ds"
+            },
+            "description": "Unknown target datasource should remain unchanged (migration returns nil)",
+            "refId": "A"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "completely-missing-ds"
+            },
+            "description": "Empty string target should migrate to {}",
+            "refId": "B"
+          }
+        ],
+        "title": "Non-existing datasources → should be preserved as-is",
+        "type": "table"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 3
+        },
+        "id": -1,
+        "panels": [
+          {
+            "description": "Nested panel with string datasource should migrate to proper object reference, proving row panel recursion works.",
+            "gridPos": {
+              "h": 3,
+              "w": 6,
+              "x": 0,
+              "y": 4
+            },
+            "id": 10,
+            "options": {},
+            "pluginVersion": "",
+            "targets": [
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "default-ds-uid"
+                },
+                "description": "Nested target should also migrate from string to object",
+                "refId": "A"
+              }
+            ],
+            "title": "Nested Panel: string datasource → should migrate to object",
+            "type": "timeseries"
+          }
+        ],
+        "title": "Row Panel: nested panels should also migrate",
+        "type": "row"
+      }
+    ],
+    "preload": false,
+    "refresh": "",
+    "schemaVersion": 42,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
+    "timezone": "",
+    "title": "V33 Panel Datasource Name to Ref Test"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v2beta1"
+    }
+  }
+}

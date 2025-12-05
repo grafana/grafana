@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -48,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -62,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -114,8 +117,10 @@ type DashboardsAPIBuilder struct {
 	folderClientProvider         client.K8sHandlerProvider
 	libraryPanels                libraryelements.Service // for legacy library panels
 	publicDashboardService       publicdashboards.Service
-
-	isStandalone bool // skips any handling including anything to do with legacy storage
+	snapshotService              dashboardsnapshots.Service
+	snapshotOptions              dashv0.SnapshotSharingOptions
+	namespacer                   request.NamespaceMapper
+	isStandalone                 bool // skips any handling including anything to do with legacy storage
 }
 
 func RegisterAPIService(
@@ -143,11 +148,19 @@ func RegisterAPIService(
 	userService user.Service,
 	libraryPanels libraryelements.Service,
 	publicDashboardService publicdashboards.Service,
+	snapshotService dashboardsnapshots.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
+
+	snapshotOptions := dashv0.SnapshotSharingOptions{
+		SnapshotsEnabled:     cfg.SnapshotEnabled,
+		ExternalSnapshotURL:  cfg.ExternalSnapshotUrl,
+		ExternalSnapshotName: cfg.ExternalSnapshotName,
+		ExternalEnabled:      cfg.ExternalEnabled,
+	}
 
 	builder := &DashboardsAPIBuilder{
 		dashboardService:             dashboardService,
@@ -167,7 +180,9 @@ func RegisterAPIService(
 		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
 		libraryPanels:                libraryPanels,
 		publicDashboardService:       publicDashboardService,
-
+		snapshotService:              snapshotService,
+		snapshotOptions:              snapshotOptions,
+		namespacer:                   namespacer,
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
@@ -244,6 +259,7 @@ func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{
 		dashv0.DashboardKind().Plural(),
 		dashv0.LIBRARY_PANEL_RESOURCE,
+		dashv0.SNAPSHOT_RESOURCE,
 	}
 }
 
@@ -266,6 +282,8 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		}
 
 	case dashv0.LIBRARY_PANEL_RESOURCE:
+		return nil // OK for now
+	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
 	}
 
@@ -514,11 +532,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		RequireDeprecatedInternalID: true,
 	}
 
-	// TODO: merge this into one option
 	if b.isStandalone {
-		// TODO: Sets default root permissions
+		storageOpts.Permissions = b.setDefaultDashboardPermissions
 	} else {
-		// Sets default root permissions
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
 
@@ -535,6 +551,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashv0.DashboardResourceInfo,
 		&dashv0.LibraryPanelResourceInfo,
+		&dashv0.SnapshotResourceInfo,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashv0.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashv0.Dashboard)
@@ -553,6 +570,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashv1.DashboardResourceInfo,
 		nil, // do not register library panel
+		nil,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashv1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashv1.Dashboard)
@@ -571,6 +589,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashv2alpha1.DashboardResourceInfo,
 		nil, // do not register library panel
+		nil,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashv2alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashv2alpha1.Dashboard)
@@ -588,6 +607,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashv2beta1.DashboardResourceInfo,
 		nil, // do not register library panel
+		nil,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashv2beta1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashv2beta1.Dashboard)
@@ -611,6 +631,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	largeObjects apistore.LargeObjectSupport,
 	dashboards utils.ResourceInfo,
 	libraryPanels *utils.ResourceInfo,
+	snapshots *utils.ResourceInfo,
 	newDTOFunc dtoBuilder,
 ) error {
 	// Register the versioned storage
@@ -624,6 +645,18 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		}
 		unified.AfterDelete = b.afterDelete
 		storage[dashboards.StoragePath()] = unified
+
+		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
+			unified,
+			largeObjects,
+			b.unified,
+			b.accessClient,
+			newDTOFunc,
+			nil, // no publicDashboardService in standalone mode
+		)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	}
@@ -653,10 +686,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 		storage[dashboards.StoragePath()].(rest.Getter),
 		largeObjects,
-		b.legacy.Access,
 		b.unified,
-		b.accessControl,
-		opts.Scheme,
+		b.accessClient,
 		newDTOFunc,
 		b.publicDashboardService,
 	)
@@ -685,6 +716,20 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		}
 	}
 
+	// Legacy only (for now) and only v0alpha1
+	if snapshots != nil && dashboards.GroupVersion().Version == "v0alpha1" {
+		snapshotLegacyStore := &snapshot.SnapshotLegacyStore{
+			ResourceInfo: *snapshots,
+			Service:      b.snapshotService,
+			Namespacer:   b.namespacer,
+			Options:      b.snapshotOptions,
+		}
+		storage[snapshots.StoragePath()] = snapshotLegacyStore
+		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(dashboards, b.snapshotService)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -708,6 +753,88 @@ func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 	if err != nil && !apierrors.IsNotFound(err) {
 		log.Error("failed to delete dashboard permissions", "error", err)
 	}
+}
+
+var defaultDashboardPermissions = []map[string]any{
+	{
+		"kind": "BasicRole",
+		"name": "Admin",
+		"verb": "admin",
+	},
+	{
+		"kind": "BasicRole",
+		"name": "Editor",
+		"verb": "edit",
+	},
+	{
+		"kind": "BasicRole",
+		"name": "Viewer",
+		"verb": "view",
+	},
+}
+
+func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	if b.resourcePermissionsSvc == nil {
+		return nil
+	}
+
+	if obj.GetFolder() != "" {
+		return nil
+	}
+
+	log := logging.FromContext(ctx)
+	log.Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
+
+	client := (*b.resourcePermissionsSvc).Namespace(obj.GetNamespace())
+	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
+
+	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
+		_, err := client.Update(ctx, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]any{
+					"name":      name,
+					"namespace": obj.GetNamespace(),
+				},
+				"spec": map[string]any{
+					"resource": map[string]any{
+						"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
+						"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
+						"name":     obj.GetName(),
+					},
+					"permissions": defaultDashboardPermissions,
+				},
+			},
+		}, metav1.UpdateOptions{})
+		if err != nil {
+			log.Error("failed to update dashboard permissions", "error", err)
+			return fmt.Errorf("update dashboard permissions: %w", err)
+		}
+
+		return nil
+	}
+
+	_, err := client.Create(ctx, &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": obj.GetNamespace(),
+			},
+			"spec": map[string]any{
+				"resource": map[string]any{
+					"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
+					"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
+					"name":     obj.GetName(),
+				},
+				"permissions": defaultDashboardPermissions,
+			},
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		log.Error("failed to create dashboard permissions", "error", err)
+		return fmt.Errorf("create dashboard permissions: %w", err)
+	}
+
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
@@ -782,7 +909,12 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 	}
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	return b.search.GetAPIRoutes(defs)
+	searchAPIRoutes := b.search.GetAPIRoutes(defs)
+	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, defs)
+
+	return &builder.APIRoutes{
+		Namespace: append(searchAPIRoutes.Namespace, snapshotAPIRoutes.Namespace...),
+	}
 }
 
 // The default authorizer is fine because authorization happens in storage where we know the parent folder
