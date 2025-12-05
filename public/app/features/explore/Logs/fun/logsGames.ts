@@ -1,4 +1,7 @@
+/* eslint-disable @grafana/no-unreduced-motion */
+import { css, keyframes } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { LogLevel, LogRowModel } from '@grafana/data';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
@@ -86,6 +89,10 @@ export function useLogsGames() {
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(4);
   const pausedRef = useRef(false);
+  const prevLives = usePrevious(lives);
+  const effectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevScore = usePrevious(score);
+  const prevEnemies = usePrevious(enemies);
 
   const lastTime = useRef(0);
   const frame = useRef<number | null>(null);
@@ -182,6 +189,38 @@ export function useLogsGames() {
       document.removeEventListener('keydown', handleKeyPress);
     };
   }, [playerX, userMissiles]);
+
+  useEffect(() => {
+    if (prevLives && prevLives > lives) {
+      if (effectRef.current) {
+        clearTimeout(effectRef.current);
+        effectRef.current = null;
+      }
+      const node = document.querySelectorAll('main section');
+      node[node.length-1]?.classList.add(styles.hitFlash);
+      effectRef.current = setTimeout(() => {
+        node[node.length-1]?.classList.remove(styles.hitFlash);
+        node[node.length-1]?.classList.remove(styles.attack);
+        node[node.length-1]?.classList.remove(styles.destroy);
+      }, 300);
+    } else if (prevEnemies && prevEnemies.length < enemies.length && enemies.length < 33) {
+      const node = document.querySelectorAll('main section');
+      node[node.length-1]?.classList.add(styles.destroy);
+      effectRef.current = setTimeout(() => {
+        node[node.length-1]?.classList.remove(styles.hitFlash);
+        node[node.length-1]?.classList.remove(styles.attack);
+        node[node.length-1]?.classList.remove(styles.destroy);
+      }, 300);
+    } else if (prevScore && prevScore < score) {
+      const node = document.querySelectorAll('main section');
+      node[node.length-1]?.classList.add(styles.attack);
+      effectRef.current = setTimeout(() => {
+        node[node.length-1]?.classList.remove(styles.hitFlash);
+        node[node.length-1]?.classList.remove(styles.attack);
+        node[node.length-1]?.classList.remove(styles.destroy);
+      }, 300);
+    }
+  }, [enemies.length, lives, prevEnemies, prevLives, prevScore, score]);
 
   return gameState;
 }
@@ -449,3 +488,47 @@ function render(row: string, enemies: Enemy[], userMissiles: Missile[], enemyMis
 function renderScoreAndLives(score: number, lives: number) {
   return `Score: ${score.toString().padStart(6, '0')}                              Lives: ${new Array(lives).fill('♥').join('')}`;
 }
+
+const hitFlash = keyframes({
+  "0%": {
+    filter: "brightness(2) saturate(2) hue-rotate(-20deg)",
+    backgroundColor: "rgba(255, 0, 0, 0.3)"
+  },
+  "50%": {
+    filter: "brightness(0.4) saturate(0.5) hue-rotate(20deg)",
+    backgroundColor: "rgba(255, 0, 0, 0.1)"
+  },
+  "100%": {
+    filter: "none",
+    backgroundColor: "transparent"
+  }
+});
+
+const hitShake = keyframes({
+  "0%":   { transform: "translate3d(0, 0, 0) rotateZ(0deg)" },
+  "20%":  { transform: "translate3d(-2px, 0, 4px) rotateZ(-2deg)" },
+  "40%":  { transform: "translate3d(3px, 0, -6px) rotateZ(2deg)" },
+  "60%":  { transform: "translate3d(-3px, 0, 3px) rotateZ(-1deg)" },
+  "80%":  { transform: "translate3d(2px, 0, -4px) rotateZ(1deg)" },
+  "100%": { transform: "translate3d(0, 0, 0) rotateZ(0deg)" }
+});
+const hitShakeSoft = keyframes({
+  "0%":   { transform: "translate3d(0, 0, 0) rotateZ(0deg)" },
+  "20%":  { transform: "translate3d(-1px, 0, 2px) rotateZ(-1deg)" },
+  "40%":  { transform: "translate3d(1.5px, 0, -3px) rotateZ(1deg)" },
+  "60%":  { transform: "translate3d(-1px, 0, 1px) rotateZ(-0.5deg)" },
+  "80%":  { transform: "translate3d(1px, 0, -2px) rotateZ(0.5deg)" },
+  "100%": { transform: "translate3d(0, 0, 0) rotateZ(0deg)" }
+});
+
+const styles = {
+  hitFlash: css({
+    animation: `${hitFlash} 180ms ease-out, ${hitShake} 150ms cubic-bezier(.36,.07,.19,.97)`
+  }),
+  attack: css({
+    animation: `${hitShakeSoft} 150ms cubic-bezier(.36,.07,.19,.97)`
+  }),
+  destroy: css({
+    animation: `${hitShake} 150ms cubic-bezier(.36,.07,.19,.97)`
+  }),
+};
