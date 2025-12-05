@@ -1454,9 +1454,9 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 
 func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 	info := &social.OAuthInfo{
-		ClientId:                    "client-id",
-		ClientAuthentication:        social.WorkloadIdentity,
-		ManagedIdentityClientID:     "mi-client-id",
+		ClientId:             "some-client-id",
+		ClientAuthentication: social.WorkloadIdentity,
+		//	ManagedIdentityClientID:     "mi-client-id",
 		FederatedCredentialAudience: "api://AzureADTokenExchange",
 		TokenUrl:                    "https://login.microsoftonline.com/token",
 	}
@@ -1482,6 +1482,9 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 		}
 		if r.FormValue("grant_type") != "refresh_token" {
 			t.Errorf("expected grant_type to be 'refresh_token', got '%s'", r.FormValue("grant_type"))
+		}
+		if r.FormValue("client_id") != "some-client-id" {
+			t.Errorf("expected client_id to be 'client-id', got '%s'", r.FormValue("client_id"))
 		}
 
 		w.Header().Set("Content-Type", "application/json")
