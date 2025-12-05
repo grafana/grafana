@@ -9,6 +9,7 @@ import { Editor, EventHook, Plugin } from 'slate-react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { ClearPlugin } from '../../slate-plugins/clear';
 import { ClipboardPlugin } from '../../slate-plugins/clipboard';
@@ -25,6 +26,7 @@ import { makeValue, SCHEMA } from '../../utils/slate';
 
 export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
+  ['aria-label']?: string;
   cleanText?: (text: string) => string;
   disabled?: boolean;
   // We have both value and local state. This is usually an antipattern but we need to keep local state
@@ -201,7 +203,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
   }
 
   render() {
-    const { disabled, theme } = this.props;
+    const { disabled, theme, ['aria-label']: ariaLabel } = this.props;
     const wrapperClassName = classnames('slate-query-field__wrapper', {
       'slate-query-field__wrapper--disabled': disabled,
     });
@@ -214,6 +216,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
             ref={(editor) => {
               this.editor = editor;
             }}
+            aria-label={ariaLabel ?? t('grafana-ui.components.queryField.ariaLabel', 'Query input field')}
             schema={SCHEMA}
             autoCorrect={false}
             readOnly={this.props.disabled}
