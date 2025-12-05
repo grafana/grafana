@@ -208,6 +208,8 @@ jobs:
             > base_prompt.txt
 
           echo "Fetched prompt from external repo"
+          echo "Prompt size: $(wc -c < base_prompt.txt) bytes"
+          echo "First 100 chars: $(head -c 100 base_prompt.txt)"
 
       - name: Build dynamic prompt
         id: build-prompt
