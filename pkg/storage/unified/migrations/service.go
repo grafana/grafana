@@ -3,7 +3,6 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -48,12 +47,7 @@ func ProvideUnifiedStorageMigrationService(
 	}
 }
 
-func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
-	// TODO: temporary skip migrations in test environments to prevent integration test timeouts.
-	if os.Getenv("GRAFANA_TEST_DB") != "" {
-		return nil
-	}
-
+func (p *UnifiedStorageMigrationServiceImpl) Run(_ context.Context) error {
 	// skip migrations if disabled in config
 	if p.cfg.DisableDataMigrations {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
