@@ -197,27 +197,27 @@ export function useLogsGames() {
         effectRef.current = null;
       }
       const node = document.querySelectorAll('main section');
-      node[node.length-1]?.classList.add(styles.hitFlash);
+      node[node.length - 1]?.classList.add(styles.hitFlash);
       effectRef.current = setTimeout(() => {
-        node[node.length-1]?.classList.remove(styles.hitFlash);
-        node[node.length-1]?.classList.remove(styles.attack);
-        node[node.length-1]?.classList.remove(styles.destroy);
+        node[node.length - 1]?.classList.remove(styles.hitFlash);
+        node[node.length - 1]?.classList.remove(styles.attack);
+        node[node.length - 1]?.classList.remove(styles.destroy);
       }, 300);
     } else if (prevEnemies && prevEnemies.length < enemies.length && enemies.length < 33) {
       const node = document.querySelectorAll('main section');
-      node[node.length-1]?.classList.add(styles.destroy);
+      node[node.length - 1]?.classList.add(styles.destroy);
       effectRef.current = setTimeout(() => {
-        node[node.length-1]?.classList.remove(styles.hitFlash);
-        node[node.length-1]?.classList.remove(styles.attack);
-        node[node.length-1]?.classList.remove(styles.destroy);
+        node[node.length - 1]?.classList.remove(styles.hitFlash);
+        node[node.length - 1]?.classList.remove(styles.attack);
+        node[node.length - 1]?.classList.remove(styles.destroy);
       }, 300);
     } else if (prevScore && prevScore < score) {
       const node = document.querySelectorAll('main section');
-      node[node.length-1]?.classList.add(styles.attack);
+      node[node.length - 1]?.classList.add(styles.attack);
       effectRef.current = setTimeout(() => {
-        node[node.length-1]?.classList.remove(styles.hitFlash);
-        node[node.length-1]?.classList.remove(styles.attack);
-        node[node.length-1]?.classList.remove(styles.destroy);
+        node[node.length - 1]?.classList.remove(styles.hitFlash);
+        node[node.length - 1]?.classList.remove(styles.attack);
+        node[node.length - 1]?.classList.remove(styles.destroy);
       }, 300);
     }
   }, [enemies.length, lives, prevEnemies, prevLives, prevScore, score]);
@@ -287,11 +287,23 @@ function update(
   const shieldStart = gameState.findIndex((row) => row.entry.includes('#'));
   const formationCanMoveDown = shieldStart === -1 || lowestEnemyY + 1 < shieldStart;
 
+  // Calculate the actual formation boundaries (excluding UFOs from formation)
+  const formationEnemies = enemies.filter((e) => e.type !== enemyTypeUfo && e.health > 3);
+  const rightmostEnemy = formationEnemies.reduce((max, enemy) => Math.max(max, enemy.gridX), 0);
+  const leftmostEnemy = formationEnemies.reduce(
+    (min, enemy) => Math.min(min, enemy.gridX),
+    formationEnemies.length > 0 ? formationEnemies[0].gridX : 0
+  );
+
   const newEnemies = enemies
     .map((enemy) => {
       const speed = enemy.type === enemyTypeUfo ? ufoSpeed : enemySpeed;
 
-      if ((enemy.y === lowestEnemyY || enemy.type === enemyTypeUfo) && Math.random() > 0.92 && enemyMissiles.length <= 1) {
+      if (
+        (enemy.y === lowestEnemyY || enemy.type === enemyTypeUfo) &&
+        Math.random() > 0.92 &&
+        enemyMissiles.length <= 1
+      ) {
         newEnemyMissiles.push(newEnemyMissile(enemy.gridX, enemy.y));
       }
 
@@ -303,7 +315,8 @@ function update(
           if (enemy.gridX >= 74) {
             enemy.direction = 'l';
           }
-        } else if (enemy.gridX - enemy.sourceX >= 5) {
+        } else if (rightmostEnemy + 4 >= 79) {
+          // +4 accounts for enemy sprite width, 79 is right boundary
           enemy.direction = 'l';
           if (formationCanMoveDown) {
             enemy.y += 1;
@@ -315,7 +328,7 @@ function update(
           if (enemy.gridX <= 0) {
             enemy.direction = 'r';
           }
-        } else if (enemy.gridX - enemy.sourceX <= -5) {
+        } else if (leftmostEnemy <= 0) {
           enemy.direction = 'r';
           if (formationCanMoveDown) {
             enemy.y += 1;
@@ -490,45 +503,45 @@ function renderScoreAndLives(score: number, lives: number) {
 }
 
 const hitFlash = keyframes({
-  "0%": {
-    filter: "brightness(2) saturate(2) hue-rotate(-20deg)",
-    backgroundColor: "rgba(255, 0, 0, 0.3)"
+  '0%': {
+    filter: 'brightness(2) saturate(2) hue-rotate(-20deg)',
+    backgroundColor: 'rgba(255, 0, 0, 0.3)',
   },
-  "50%": {
-    filter: "brightness(0.4) saturate(0.5) hue-rotate(20deg)",
-    backgroundColor: "rgba(255, 0, 0, 0.1)"
+  '50%': {
+    filter: 'brightness(0.4) saturate(0.5) hue-rotate(20deg)',
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
   },
-  "100%": {
-    filter: "none",
-    backgroundColor: "transparent"
-  }
+  '100%': {
+    filter: 'none',
+    backgroundColor: 'transparent',
+  },
 });
 
 const hitShake = keyframes({
-  "0%":   { transform: "translate3d(0, 0, 0) rotateZ(0deg)" },
-  "20%":  { transform: "translate3d(-2px, 0, 4px) rotateZ(-2deg)" },
-  "40%":  { transform: "translate3d(3px, 0, -6px) rotateZ(2deg)" },
-  "60%":  { transform: "translate3d(-3px, 0, 3px) rotateZ(-1deg)" },
-  "80%":  { transform: "translate3d(2px, 0, -4px) rotateZ(1deg)" },
-  "100%": { transform: "translate3d(0, 0, 0) rotateZ(0deg)" }
+  '0%': { transform: 'translate3d(0, 0, 0) rotateZ(0deg)' },
+  '20%': { transform: 'translate3d(-2px, 0, 4px) rotateZ(-2deg)' },
+  '40%': { transform: 'translate3d(3px, 0, -6px) rotateZ(2deg)' },
+  '60%': { transform: 'translate3d(-3px, 0, 3px) rotateZ(-1deg)' },
+  '80%': { transform: 'translate3d(2px, 0, -4px) rotateZ(1deg)' },
+  '100%': { transform: 'translate3d(0, 0, 0) rotateZ(0deg)' },
 });
 const hitShakeSoft = keyframes({
-  "0%":   { transform: "translate3d(0, 0, 0) rotateZ(0deg)" },
-  "20%":  { transform: "translate3d(-1px, 0, 2px) rotateZ(-1deg)" },
-  "40%":  { transform: "translate3d(1.5px, 0, -3px) rotateZ(1deg)" },
-  "60%":  { transform: "translate3d(-1px, 0, 1px) rotateZ(-0.5deg)" },
-  "80%":  { transform: "translate3d(1px, 0, -2px) rotateZ(0.5deg)" },
-  "100%": { transform: "translate3d(0, 0, 0) rotateZ(0deg)" }
+  '0%': { transform: 'translate3d(0, 0, 0) rotateZ(0deg)' },
+  '20%': { transform: 'translate3d(-1px, 0, 2px) rotateZ(-1deg)' },
+  '40%': { transform: 'translate3d(1.5px, 0, -3px) rotateZ(1deg)' },
+  '60%': { transform: 'translate3d(-1px, 0, 1px) rotateZ(-0.5deg)' },
+  '80%': { transform: 'translate3d(1px, 0, -2px) rotateZ(0.5deg)' },
+  '100%': { transform: 'translate3d(0, 0, 0) rotateZ(0deg)' },
 });
 
 const styles = {
   hitFlash: css({
-    animation: `${hitFlash} 180ms ease-out, ${hitShake} 150ms cubic-bezier(.36,.07,.19,.97)`
+    animation: `${hitFlash} 180ms ease-out, ${hitShake} 150ms cubic-bezier(.36,.07,.19,.97)`,
   }),
   attack: css({
-    animation: `${hitShakeSoft} 150ms cubic-bezier(.36,.07,.19,.97)`
+    animation: `${hitShakeSoft} 150ms cubic-bezier(.36,.07,.19,.97)`,
   }),
   destroy: css({
-    animation: `${hitShake} 150ms cubic-bezier(.36,.07,.19,.97)`
+    animation: `${hitShake} 150ms cubic-bezier(.36,.07,.19,.97)`,
   }),
 };
