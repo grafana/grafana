@@ -3560,6 +3560,20 @@
     },
     {
       "metadata": {
+        "name": "useMTPlugins",
+        "resourceVersion": "1764913709691",
+        "creationTimestamp": "2025-12-05T05:48:29Z"
+      },
+      "spec": {
+        "description": "Enables plugins decoupling from bootdata",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "useMultipleScopeNodesEndpoint",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2025-08-29T14:46:39Z",
