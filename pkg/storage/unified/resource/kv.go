@@ -113,8 +113,9 @@ type TxnResponse struct {
 
 // Maximum limits for transaction operations
 const (
-	MaxTxnCompares = 8
-	MaxTxnOps      = 8
+	MaxTxnCompares  = 8
+	MaxTxnOps       = 8
+	MaxTxnValueSize = 100 * 1024 // 100KB per value
 )
 
 // ValidateTxnRequest validates the transaction request parameters.
@@ -133,6 +134,24 @@ func ValidateTxnRequest(section string, cmps []Compare, successOps []TxnOp, fail
 
 	if len(failureOps) > MaxTxnOps {
 		return fmt.Errorf("too many failure operations: %d > %d", len(failureOps), MaxTxnOps)
+	}
+
+	for i, cmp := range cmps {
+		if len(cmp.Value) > MaxTxnValueSize {
+			return fmt.Errorf("comparison %d value too large: %d > %d", i, len(cmp.Value), MaxTxnValueSize)
+		}
+	}
+
+	for i, op := range successOps {
+		if len(op.Value) > MaxTxnValueSize {
+			return fmt.Errorf("success operation %d value too large: %d > %d", i, len(op.Value), MaxTxnValueSize)
+		}
+	}
+
+	for i, op := range failureOps {
+		if len(op.Value) > MaxTxnValueSize {
+			return fmt.Errorf("failure operation %d value too large: %d > %d", i, len(op.Value), MaxTxnValueSize)
+		}
 	}
 
 	return nil
