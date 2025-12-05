@@ -1018,7 +1018,8 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       letterSpacing: '0.05em',
     }),
     debugButtonActive: css({
-      '&:focus, &:active, &:focus:active': {
+      background: '#441306',
+      '&:hover, &:focus, &:active, &:focus:active': {
         background: '#441306',
       },
     }),
