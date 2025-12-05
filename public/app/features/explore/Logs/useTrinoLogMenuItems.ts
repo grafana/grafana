@@ -240,8 +240,7 @@ export function useTrinoLogMenuItems({
   }, [logRows, onEnrichedDataReceived]);
   
   return useMemo(() => {
-    // Check if Trino is configured
-    const tableName = config.trino;
+    const tableName = config.trino?.logsArchiveTable;
     
     if (!tableName || datasourceType !== 'loki' || !trinoDataSource) {
       return [];

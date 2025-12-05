@@ -223,7 +223,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
   const [enrichedTrinoData, setEnrichedTrinoData] = useState<LogRowModel[] | null>(null);
 
-  const trinoDataSource = useTrinoDataSource();
+  const trinoDataSource = useTrinoDataSource(config.trino?.datasourceUid);
 
   const trinoLogMenuItems = useTrinoLogMenuItems({
     datasourceType: props.datasourceType,

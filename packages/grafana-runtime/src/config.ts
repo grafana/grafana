@@ -236,7 +236,10 @@ export class GrafanaBootConfig {
     maxIdleConns: 100,
     connMaxLifetime: 14400,
   };
-  trino?: string;
+  trino = {
+    logsArchiveTable: '',
+    datasourceUid: '',
+  };
   defaultDatasourceManageAlertsUiToggle = true;
   defaultAllowRecordingRulesTargetAlertsUiToggle = true;
   tokenExpirationDayLimit?: number;

@@ -303,7 +303,7 @@ type FrontendSettingsDTO struct {
 
 	SqlConnectionLimits FrontendSettingsSqlConnectionLimitsDTO `json:"sqlConnectionLimits"`
 
-	Trino string `json:"trino,omitempty"`
+	Trino setting.TrinoSettings `json:"trino"`
 
 	// Enterprise
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`

@@ -356,7 +356,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			MaxIdleConns:    hs.Cfg.SqlDatasourceMaxIdleConnsDefault,
 			ConnMaxLifetime: hs.Cfg.SqlDatasourceMaxConnLifetimeDefault,
 		},
-		Trino:              hs.Cfg.Trino.LogsArchiveTable,
+		Trino:              hs.Cfg.Trino,
 		OpenFeatureContext: hs.Cfg.OpenFeature.ContextAttrs,
 	}
 
