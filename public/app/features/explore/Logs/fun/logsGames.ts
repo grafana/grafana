@@ -33,9 +33,12 @@ const player = '/A\\';
 const initialPlayerX = 39;
 const playerY = 23;
 
-const userMissile = '╫';
-const userMissileRegex = new RegExp(userMissile, 'g');
+const userMissileSprite = '╫';
+const userMissileRegex = new RegExp(userMissileSprite, 'g');
+const enemyMissileSprite = '¦';
+const enemyMissileRegex = new RegExp(enemyMissileSprite, 'g');
 const missileSpeed = 0.06;
+const enemyMissileSpeed = 0.01;
 const enemySpeed = 0.001;
 const ufoSpeed = 0.0095;
 
@@ -77,6 +80,7 @@ export function useLogsGames() {
   const [gameState, setGameState] = useState<LogRowModel[] | undefined>(undefined);
   const [playerX, setPlayerX] = useState(initialPlayerX);
   const [userMissiles, setUserMisiles] = useState<Missile[]>([]);
+  const [enemyMissiles, setEnemyMissiles] = useState<Missile[]>([]);
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [gameEnded, setGameEnded] = useState(false);
   const [score, setScore] = useState(0);
@@ -91,11 +95,12 @@ export function useLogsGames() {
       const dt = Math.min(t - lastTime.current, 50);
       lastTime.current = t;
 
-      const { newGameState, newUserMissiles, newEnemies, newScore, newLives } = update(
+      const { newGameState, newUserMissiles, newEnemies, newScore, newLives, newEnemyMissiles } = update(
         dt,
         gameState,
         playerX,
         userMissiles,
+        enemyMissiles,
         enemies,
         score,
         lives
@@ -103,11 +108,12 @@ export function useLogsGames() {
 
       setGameState(newGameState);
       setUserMisiles(newUserMissiles);
+      setEnemyMissiles(newEnemyMissiles);
       setEnemies(newEnemies);
       setScore(newScore);
       setLives(newLives);
 
-      if (newEnemies.length === 0) {
+      if (newEnemies.length === 0 || lives === 0) {
         setGameEnded(true);
       }
 
@@ -123,7 +129,7 @@ export function useLogsGames() {
         cancelAnimationFrame(frame.current);
       }
     };
-  }, [enemies, gameEnded, gameState, lives, playerX, score, userMissiles]);
+  }, [enemies, enemyMissiles, gameEnded, gameState, lives, playerX, score, userMissiles]);
 
   useEffect(() => {
     function handlePause() {
@@ -185,6 +191,7 @@ function update(
   gameState: LogRowModel[] | undefined,
   playerX: number,
   userMissiles: Missile[],
+  enemyMissiles: Missile[],
   enemies: Enemy[],
   score: number,
   lives: number
@@ -209,6 +216,7 @@ function update(
     return {
       newGameState: logs,
       newUserMissiles: userMissiles,
+      newEnemyMissiles: enemyMissiles,
       newEnemies: newEnemies,
       newScore: score,
       newLives: lives,
@@ -222,6 +230,20 @@ function update(
     })
     .filter((missile) => missile.y >= 2);
 
+  let newEnemyMissiles = enemyMissiles
+    .map((missile) => {
+      missile.y = missile.y + enemyMissileSpeed * dt;
+      return missile;
+    })
+    .filter((missile) => {
+      if (missile.gridY === playerY && missile.x >= playerX && missile.x <= playerX + 2) {
+        missile.hit = true;
+        lives--;
+        return false;
+      }
+      return missile.gridY <= playerY;
+    });
+
   const lowestEnemyY = enemies.reduce((max, enemy) => Math.max(max, enemy.y), 0);
   const shieldStart = gameState.findIndex((row) => row.entry.includes('#'));
   const formationCanMoveDown = shieldStart === -1 || lowestEnemyY + 1 < shieldStart;
@@ -229,6 +251,10 @@ function update(
   const newEnemies = enemies
     .map((enemy) => {
       const speed = enemy.type === enemyTypeUfo ? ufoSpeed : enemySpeed;
+
+      if (enemy.y === lowestEnemyY && Math.random() > 0.92 && enemyMissiles.length <= 1) {
+        newEnemyMissiles.push(newEnemyMissile(enemy.gridX, enemy.y));
+      }
 
       if (enemy.health <= 3) {
         enemy.health -= 1;
@@ -285,10 +311,11 @@ function update(
     } else if (index === playerY) {
       entry = player.padStart(playerX, ' ');
     } else if (row.entry.includes(shield)) {
-      entry = handleEnvironmentCollisions(row.entry, newUserMissiles, index);
+      entry = handleEnvironmentCollisions(row.entry, newUserMissiles, newEnemyMissiles, index);
       newUserMissiles = newUserMissiles.filter((missile) => missile.hit === false);
+      newEnemyMissiles = newEnemyMissiles.filter((missile) => missile.hit === false);
     } else {
-      entry = render(row.entry, newEnemies, newUserMissiles, index);
+      entry = render(row.entry, newEnemies, newUserMissiles, newEnemyMissiles, index);
     }
 
     if (entry !== row.entry) {
@@ -306,13 +333,24 @@ function update(
   });
 
   if (!hasChanges) {
-    return { newGameState: gameState, newUserMissiles, newEnemies, newScore: score, newLives: lives };
+    return { newGameState: gameState, newUserMissiles, newEnemies, newScore: score, newLives: lives, newEnemyMissiles };
   }
 
-  return { newGameState, newUserMissiles, newEnemies, newScore: score, newLives: lives };
+  return { newGameState, newUserMissiles, newEnemies, newScore: score, newLives: lives, newEnemyMissiles };
 }
 
 function newUserMissile(x: number, y: number): Missile {
+  return {
+    x: x - 2,
+    y,
+    get gridY() {
+      return Math.ceil(this.y);
+    },
+    hit: false,
+  };
+}
+
+function newEnemyMissile(x: number, y: number): Missile {
   return {
     x: x - 2,
     y,
@@ -349,23 +387,38 @@ function createEnemies(row: string, y: number) {
   return enemies.length ? enemies : undefined;
 }
 
-function handleEnvironmentCollisions(row: string, userMissiles: Missile[], y: number) {
+function handleEnvironmentCollisions(row: string, userMissiles: Missile[], enemyMissiles: Missile[], y: number) {
+  row = row.replace(userMissileRegex, ' ');
+  row = row.replace(enemyMissileRegex, ' ');
   const missiles = userMissiles.filter((missile) => missile.gridY === y);
   missiles.forEach((missile) => {
     if (row.charAt(missile.x) === shield) {
       row = row.substring(0, missile.x) + ' ' + row.substring(missile.x + 1);
       missile.hit = true;
+    } else {
+      row = row.substring(0, missile.x) + userMissileSprite + row.substring(missile.x + 1);
+    }
+  });
+  enemyMissiles = enemyMissiles.filter((missile) => missile.gridY === y);
+  enemyMissiles.forEach((missile) => {
+    if (row.charAt(missile.x) === shield) {
+      row = row.substring(0, missile.x) + ' ' + row.substring(missile.x + 1);
+      missile.hit = true;
+    } else {
+      row = row.substring(0, missile.x) + enemyMissileSprite + row.substring(missile.x + 1);
     }
   });
   return row;
 }
 
-function render(row: string, enemies: Enemy[], userMissiles: Missile[], y: number) {
+function render(row: string, enemies: Enemy[], userMissiles: Missile[], enemyMissiles: Missile[], y: number) {
   row = row.replace(userMissileRegex, ' ');
+  row = row.replace(enemyMissileRegex, ' ');
   enemies = enemies.filter((enemy) => enemy.y === y);
   userMissiles = userMissiles.filter((missile) => missile.gridY === y);
+  enemyMissiles = enemyMissiles.filter((missile) => missile.gridY === y);
 
-  if (!enemies.length && !userMissiles.length) {
+  if (!enemies.length && !userMissiles.length && !enemyMissiles.length) {
     return '';
   }
 
@@ -373,12 +426,16 @@ function render(row: string, enemies: Enemy[], userMissiles: Missile[], y: numbe
 
   for (let i = 0; i < 80; ) {
     const enemy = enemies.find((enemy) => enemy.gridX === i);
-    const missile = userMissiles.find((missile) => missile.x === i);
+    const missileFromUser = userMissiles.find((missile) => missile.x === i);
+    const missileFromEnemy = enemyMissiles.find((missile) => missile.x === i);
     if (enemy) {
       newRow += enemySprites[enemy.type][enemy.health];
       i += 5;
-    } else if (missile) {
-      newRow += userMissile;
+    } else if (missileFromUser) {
+      newRow += userMissileSprite;
+      i++;
+    } else if (missileFromEnemy) {
+      newRow += enemyMissileSprite;
       i++;
     } else {
       newRow += ' ';
