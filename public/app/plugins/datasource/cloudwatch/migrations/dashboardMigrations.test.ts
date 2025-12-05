@@ -1,6 +1,7 @@
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 
-import { CloudWatchMetricsQuery, LegacyAnnotationQuery, MetricEditorMode, MetricQueryType } from '../types';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../dataquery.gen';
+import { LegacyAnnotationQuery } from '../types';
 
 import {
   migrateCloudWatchQuery,

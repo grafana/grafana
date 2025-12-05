@@ -62,13 +62,13 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	// v2alpha1 conversions
 	if err := s.AddConversionFunc((*dashv2alpha1.Dashboard)(nil), (*dashv0.Dashboard)(nil),
 		withConversionMetrics(dashv2alpha1.APIVERSION, dashv0.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V2alpha1_to_V0(a.(*dashv2alpha1.Dashboard), b.(*dashv0.Dashboard), scope)
+			return Convert_V2alpha1_to_V0(a.(*dashv2alpha1.Dashboard), b.(*dashv0.Dashboard), scope, dsIndexProvider)
 		})); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv2alpha1.Dashboard)(nil), (*dashv1.Dashboard)(nil),
 		withConversionMetrics(dashv2alpha1.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V2alpha1_to_V1beta1(a.(*dashv2alpha1.Dashboard), b.(*dashv1.Dashboard), scope)
+			return Convert_V2alpha1_to_V1beta1(a.(*dashv2alpha1.Dashboard), b.(*dashv1.Dashboard), scope, dsIndexProvider)
 		})); err != nil {
 		return err
 	}
@@ -82,13 +82,13 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	// v2beta1 conversions
 	if err := s.AddConversionFunc((*dashv2beta1.Dashboard)(nil), (*dashv0.Dashboard)(nil),
 		withConversionMetrics(dashv2beta1.APIVERSION, dashv0.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V2beta1_to_V0(a.(*dashv2beta1.Dashboard), b.(*dashv0.Dashboard), scope)
+			return Convert_V2beta1_to_V0(a.(*dashv2beta1.Dashboard), b.(*dashv0.Dashboard), scope, dsIndexProvider)
 		})); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv2beta1.Dashboard)(nil), (*dashv1.Dashboard)(nil),
 		withConversionMetrics(dashv2beta1.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-			return Convert_V2beta1_to_V1beta1(a.(*dashv2beta1.Dashboard), b.(*dashv1.Dashboard), scope)
+			return Convert_V2beta1_to_V1beta1(a.(*dashv2beta1.Dashboard), b.(*dashv1.Dashboard), scope, dsIndexProvider)
 		})); err != nil {
 		return err
 	}

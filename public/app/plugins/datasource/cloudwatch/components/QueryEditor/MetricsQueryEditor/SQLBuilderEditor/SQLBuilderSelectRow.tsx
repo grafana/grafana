@@ -5,10 +5,10 @@ import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/plugin-ui'
 import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
+import { CloudWatchMetricsQuery } from '../../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../../datasource';
 import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces } from '../../../../hooks';
 import { STATISTICS } from '../../../../language/cloudwatch-sql/language';
-import { CloudWatchMetricsQuery } from '../../../../types';
 import { appendTemplateVariables } from '../../../../utils/utils';
 import { Account } from '../../../shared/Account';
 

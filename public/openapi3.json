@@ -7612,7 +7612,7 @@
             "type": "integer"
           },
           "key": {
-            "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
+            "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697",
             "type": "string"
           },
           "name": {
@@ -15008,7 +15008,7 @@
         },
         "summary": "Returns the current state of the LDAP background sync integration.",
         "tags": [
-          "ldap_debug",
+          "admin_ldap",
           "enterprise"
         ]
       }
@@ -15166,7 +15166,8 @@
         },
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
         "tags": [
-          "access_control_provisioning",
+          "admin_provisioning",
+          "access_control",
           "enterprise"
         ]
       }

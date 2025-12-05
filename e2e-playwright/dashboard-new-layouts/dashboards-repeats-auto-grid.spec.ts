@@ -464,6 +464,5 @@ test.describe(
 );
 
 async function switchToAutoGrid(page: Page) {
-  await page.getByLabel('Expand Panel layout category').click();
   await page.getByLabel('layout-selection-option-Auto grid').click();
 }
