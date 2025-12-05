@@ -5824,14 +5824,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Retour à la liste",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Supprimer",
       "description-color-annotation-event-markers": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
       "description-enabled-annotation-query-issued-every-dashboard": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
-      "description-hidden": "Les requêtes d’annotation peuvent être activées ou désactivées en haut du tableau de bord. Lorsque cette option est cochée, ce bouton sera masqué.",
+      "label-annotation-controls-display": "",
       "label-color": "Couleur",
       "label-data-source": "Source de données",
       "label-enabled": "Activé",
-      "label-hidden": "Masqué",
       "label-name": "Nom",
       "label-show-in": "Afficher dans",
       "placeholder-choose-panels": "Choisir des panneaux",
@@ -5887,6 +5899,7 @@
       "label-open-link-in-new-tab": "Ouvrir le lien dans un nouvel onglet",
       "label-options": "Options",
       "label-show-as-dropdown": "Afficher sous forme de menu déroulant",
+      "label-show-in-controls-menu": "",
       "label-title": "Titre",
       "label-tooltip": "Infobulle",
       "label-type": "Type",
@@ -6448,6 +6461,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulaire de l’éditeur de variables",
       "back-to-list": "Retour à la liste",
@@ -6762,8 +6794,8 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "Ou simplifiez-vous la tâche et obtenez {{mainDS}} (et {{extraDS}}) sous forme de sources de données entièrement gérées, évolutives et hébergées par Grafana Labs avec le <6>plan Grafana Cloud gratuit à vie</6>.",
-      "title-alert": "Configurer la source de données {{mainDS}} ci-dessous"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Supprimer le tableau de bord",
