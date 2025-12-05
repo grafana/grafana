@@ -58,7 +58,7 @@ jest.mock('app/features/plugins/extensions/getPluginExtensions', () => ({
   createPluginExtensionsGetter: () => getPluginExtensionsMock,
 }));
 
-function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
+async function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
   const context = getGrafanaContextMock();
   const defaultRouteProps = getRouteComponentProps();
   const props: Props = {
@@ -66,21 +66,29 @@ function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps
     ...routeProps,
   };
 
-  const renderResult = render(
-    <TestProvider grafanaContext={context}>
-      <LocationServiceProvider service={locationService}>
-        <DashboardScenePage {...props} />
-      </LocationServiceProvider>
-    </TestProvider>
-  );
-
-  const rerender = (newProps: Props) => {
-    renderResult.rerender(
+  // react 19 changed how suspense rendering works
+  // RTL hasn't caught up yet
+  // see https://github.com/testing-library/react-testing-library/issues/1375
+  // TODO remove this hack when RTL is updated. probably `render` itself will become async
+  const renderResult = await act(async () =>
+    render(
       <TestProvider grafanaContext={context}>
         <LocationServiceProvider service={locationService}>
-          <DashboardScenePage {...newProps} />
+          <DashboardScenePage {...props} />
         </LocationServiceProvider>
       </TestProvider>
+    )
+  );
+
+  const rerender = async (newProps: Props) => {
+    await act(async () =>
+      renderResult.rerender(
+        <TestProvider grafanaContext={context}>
+          <LocationServiceProvider service={locationService}>
+            <DashboardScenePage {...newProps} />
+          </LocationServiceProvider>
+        </TestProvider>
+      )
     );
   };
 
@@ -163,7 +171,7 @@ describe('DashboardScenePage', () => {
   });
 
   it('Can render dashboard', async () => {
-    setup();
+    await setup();
 
     await waitForDashboardToRender();
 
@@ -175,7 +183,7 @@ describe('DashboardScenePage', () => {
   });
 
   it('routeReloadCounter should trigger reload', async () => {
-    const { rerender, props } = setup();
+    const { rerender, props } = await setup();
 
     await waitForDashboardToRender();
 
@@ -190,13 +198,13 @@ describe('DashboardScenePage', () => {
 
     props.location.state = { routeReloadCounter: 1 };
 
-    rerender(props);
+    await rerender(props);
 
     expect(await screen.findByTitle('Updated title')).toBeInTheDocument();
   });
 
   it('Can inspect panel', async () => {
-    setup();
+    await setup();
 
     await waitForDashboardToRender();
 
@@ -218,7 +226,7 @@ describe('DashboardScenePage', () => {
   });
 
   it('Can view panel in fullscreen', async () => {
-    setup();
+    await setup();
 
     await waitForDashboardToRender();
 
@@ -238,7 +246,7 @@ describe('DashboardScenePage', () => {
         interval: {} as SystemDateFormatsState['interval'],
         useBrowserLocale: true,
       });
-      setup();
+      await setup();
 
       await waitForDashboardToRenderWithTimeRange({
         from: '03/11/2025, 02:09:37 AM',
@@ -257,7 +265,7 @@ describe('DashboardScenePage', () => {
         interval: {} as SystemDateFormatsState['interval'],
         useBrowserLocale: true,
       });
-      setup();
+      await setup();
 
       await waitForDashboardToRenderWithTimeRange({
         from: '11.03.2025, 02:09:37',
@@ -269,13 +277,13 @@ describe('DashboardScenePage', () => {
   describe('empty state', () => {
     it('Shows empty state when dashboard is empty', async () => {
       loadDashboardMock.mockResolvedValue({ dashboard: { uid: 'my-dash-uid', panels: [] }, meta: {} });
-      setup();
+      await setup();
 
       expect(await screen.findByText('Start your new dashboard by adding a visualization')).toBeInTheDocument();
     });
 
     it('shows and hides empty state when panels are added and removed', async () => {
-      setup();
+      await setup();
 
       await waitForDashboardToRender();
 
@@ -308,7 +316,7 @@ describe('DashboardScenePage', () => {
   describe('home page', () => {
     it('should render the dashboard when the route is home', async () => {
       (useParams as jest.Mock).mockReturnValue({});
-      setup({
+      await setup({
         routeProps: {
           route: {
             ...getRouteComponentProps().route,
@@ -331,7 +339,7 @@ describe('DashboardScenePage', () => {
       loadDashboardMock.mockClear();
       loadDashboardMock.mockResolvedValue({ dashboard: { uid: 'my-dash-uid', panels: [] }, meta: {} });
 
-      setup();
+      await setup();
 
       await waitFor(() => expect(screen.queryByText('Refresh')).toBeInTheDocument());
       await waitFor(() => expect(screen.queryByText('Last 6 hours')).toBeInTheDocument());
@@ -363,7 +371,7 @@ describe('DashboardScenePage', () => {
         isHandled: true,
       });
 
-      setup();
+      await setup();
 
       expect(await screen.findByTestId(selectors.components.EntityNotFound.container)).toBeInTheDocument();
     });
@@ -387,7 +395,7 @@ describe('DashboardScenePage', () => {
         isHandled: true,
       });
 
-      setup();
+      await setup();
 
       expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
       expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Internal server error');
@@ -396,7 +404,7 @@ describe('DashboardScenePage', () => {
     it('should render error alert for runtime errors', async () => {
       setupLoadDashboardRuntimeErrorMock();
 
-      setup();
+      await setup();
 
       expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
       expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Runtime error');
@@ -411,7 +419,7 @@ describe('DashboardScenePage', () => {
       const manager = getDashboardScenePageStateManager();
       manager.setActiveManager('v2');
 
-      const { unmount } = setup();
+      const { unmount } = await setup();
 
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
       unmount();
