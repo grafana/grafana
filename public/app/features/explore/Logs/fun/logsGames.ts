@@ -3,7 +3,7 @@ import { css, keyframes } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { LogLevel, LogRowModel } from '@grafana/data';
+import { LogLevel, LogRowModel, store } from '@grafana/data';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
 const splash = `
@@ -153,6 +153,7 @@ export function useLogsGames() {
 
       if (newEnemies.length === 0 || lives === 0) {
         setGameEnded(true);
+        updateBestScore(score);
       }
 
       frame.current = requestAnimationFrame(loop);
@@ -211,7 +212,7 @@ export function useLogsGames() {
         setGameState(undefined);
       }
 
-      if (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight' && e.code !== 'Space' && e.code !== 'KeyR') {
+      if (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight' && e.code !== 'Space' && e.code !== 'KeyN') {
         return;
       }
 
@@ -552,7 +553,27 @@ function render(row: string, enemies: Enemy[], userMissiles: Missile[], enemyMis
 }
 
 function renderScoreAndLives(score: number, lives: number) {
-  return `Score: ${score.toString().padStart(6, '0')}                              Lives: ${new Array(lives).fill('♥').join('')}`;
+  const best = getBestScore();
+  if (Number.isNaN(best)) {
+    return `Score: ${score.toString().padStart(6, '0')}                              Lives: ${new Array(lives).fill('♥').join('')}`;
+  }
+
+  return `Score: ${score.toString().padStart(6, '0')}           Best: ${best.toString().padStart(6, '0')}              Lives: ${new Array(lives).fill('♥').join('')}`;
+}
+
+function updateBestScore(score: number) {
+  if (!store.exists('logging_invaders_best')) {
+    store.set('logging_invaders_best', score.toString());
+    return;
+  }
+  const currentBest = getBestScore();
+  if (Number.isNaN(currentBest) || score > currentBest) {
+    store.set('logging_invaders_best', score.toString());
+    return;
+  }
+}
+function getBestScore() {
+  return parseInt(store.get('logging_invaders_best'), 10);
 }
 
 const hitFlash = keyframes({
