@@ -820,8 +820,6 @@ const getStyles = (theme: GrafanaTheme2, colors: ReturnType<typeof usePanelDataP
       width: '100%',
       maxWidth: '100%',
       overflow: 'auto',
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderLeft: 'none',
     }),
     header: css({
       ...barBase,

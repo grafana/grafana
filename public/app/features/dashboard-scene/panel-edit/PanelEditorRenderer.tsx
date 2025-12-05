@@ -17,6 +17,7 @@ import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { PanelDataSidebar, SidebarSize, SidebarState } from './PanelDataPane/PanelDataSidebar';
 import { PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
+import { useHorizontalResize, useVerticalResize } from './hooks';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
 
@@ -26,10 +27,6 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   const styles = useStyles2(getWrapperStyles);
   const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
   const [containerRef, { height: containerHeight }] = useMeasure<HTMLDivElement>();
-
-  useEffect(() => {
-    console.log('PanelEditorRenderer containerHeight', containerHeight);
-  }, [containerHeight]);
 
   const isScrollingLayout = useScrollReflowLimit();
 
@@ -96,11 +93,30 @@ function VizAndDataPane({
   const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
   const [sidebarState, setSidebarState] = useState<SidebarState>({ size: SidebarSize.Mini, collapsed: false });
-  const [vizRef, { height: vizHeight }] = useMeasure<HTMLDivElement>();
 
   const styles = useStyles2(getStyles, sidebarState);
 
   const isScrollingLayout = useScrollReflowLimit();
+
+  // drag-resize hooks
+  const {
+    handleRef: sidebarHandleRef,
+    width: sidebarWidth,
+    className: sidebarResizerClassName,
+  } = useHorizontalResize({
+    initialWidth: 285,
+    minWidth: 285,
+    maxWidth: 380,
+  });
+  const {
+    handleRef: vizHandleRef,
+    height: vizHeight,
+    className: vizResizerClassName,
+  } = useVerticalResize({
+    initialHeight: Math.max(containerHeight / 2, 200),
+    minHeight: 200,
+    maxHeight: containerHeight - 80,
+  });
 
   const gridStyles = useMemo(() => {
     const rows = [];
@@ -146,10 +162,17 @@ function VizAndDataPane({
 
       <div
         className={cx(styles.viz, isScrollingLayout && styles.fixedSizeViz)}
-        ref={vizRef}
-        style={{ height: containerHeight / 2, maxHeight: containerHeight - 80 }}
+        style={{ height: vizHeight, maxHeight: containerHeight - 80 }}
       >
         {tableView ? <tableView.Component model={tableView} /> : <panel.Component model={panel} />}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, width: '100%' }}>
+          <div
+            style={{ height: 2, width: '100%' }}
+            ref={vizHandleRef}
+            className={vizResizerClassName}
+            data-testid="viz-resizer"
+          />
+        </div>
       </div>
 
       {dataPane && (
@@ -157,8 +180,17 @@ function VizAndDataPane({
           <div className={cx(styles.dataPane, isScrollingLayout && styles.fullSizeEditor)}>
             <dataPane.Component model={dataPane} />
           </div>
-          <div className={styles.sidebar}>
+
+          <div className={styles.sidebar} style={{ width: sidebarWidth }}>
             <PanelDataSidebar model={dataPane} sidebarState={sidebarState} setSidebarState={setSidebarState} />
+            <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, height: '100%' }}>
+              <div
+                style={{ height: '100%', width: 2 }}
+                ref={sidebarHandleRef}
+                className={sidebarResizerClassName}
+                data-testid="sidebar-resizer"
+              />
+            </div>
           </div>
         </>
       )}
@@ -239,20 +271,18 @@ function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
     }),
     sidebar: css({
       gridArea: 'sidebar',
-      overflow: 'auto',
-      resize: 'horizontal',
-      minWidth: 285,
-      maxWidth: 400,
+      overflow: 'visible',
+      position: 'relative',
       ...(sidebarState.size === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
     }),
     viz: css({
       gridArea: 'viz',
-      overflow: 'auto',
-      resize: 'vertical',
+      overflow: 'visible',
       height: '100%',
       minHeight: 100,
+      position: 'relative',
       ...(sidebarState.size === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
@@ -269,6 +299,7 @@ function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
         paddingLeft: theme.spacing(2),
       }),
     }),
+
     openDataPaneButton: css({
       width: theme.spacing(8),
       justifyContent: 'center',
