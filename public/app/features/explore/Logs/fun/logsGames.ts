@@ -39,7 +39,7 @@ const nextLevelSplash = `
  ██▄▄▄▄▄▄  ▀██▄▄▄▄█    ████    ▀██▄▄▄▄█    ██▄▄▄             
  ▀▀▀▀▀▀▀▀    ▀▀▀▀▀      ▀▀       ▀▀▀▀▀      ▀▀▀▀             
 
- Press any key to start`;
+ Press Enter to start`;
 
 const numbers = [
   `
@@ -180,7 +180,7 @@ const userMissileRegex = new RegExp(userMissileSprite, 'g');
 const enemyMissileSprite = '¦';
 const enemyMissileRegex = new RegExp(enemyMissileSprite, 'g');
 
-const initialMissileSpeed = 0.06;
+const initialMissileSpeed = 0.05;
 const initialEnemyMissileSpeed = 0.01;
 const initialEnemySpeed = 0.001;
 
@@ -278,7 +278,6 @@ export function useLogsGames() {
 
     setGameStatus('next-level');
     setGameState(undefined);
-    setScore(0);
     setLives(4);
   }, [score]);
 
@@ -360,7 +359,7 @@ export function useLogsGames() {
         e.preventDefault();
         e.stopPropagation();
         return;
-      } else if (gameStatus === 'next-level') {
+      } else if (gameStatus === 'next-level' && e.code === 'Enter') {
         setGameState(undefined);
         setGameStatus('playing');
         e.preventDefault();
@@ -392,7 +391,7 @@ export function useLogsGames() {
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [gameState, gameStatus, newGame, playerX, userMissiles]);
+  }, [gameState, gameStatus, newGame, nextLevel, playerX, userMissiles]);
 
   useEffect(() => {
     if (prevLives && prevLives > lives) {
@@ -569,7 +568,7 @@ function update(
       if (missile && enemy.health > 0) {
         missile.hit = true;
         enemy.health -= 1;
-        score += enemyScores[enemy.type];
+        score += enemyScores[enemy.type] * level;
       }
       return enemy;
     })
