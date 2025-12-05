@@ -6,6 +6,30 @@ import { usePrevious } from 'react-use';
 import { LogLevel, LogRowModel } from '@grafana/data';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
+const splash = `
+ ▄▄                                         ██                                  
+ ██                                         ▀▀                                  
+ ██         ▄████▄    ▄███▄██   ▄███▄██   ████     ██▄████▄   ▄███▄██           
+ ██        ██▀  ▀██  ██▀  ▀██  ██▀  ▀██     ██     ██▀   ██  ██▀  ▀██           
+ ██        ██    ██  ██    ██  ██    ██     ██     ██    ██  ██    ██           
+ ██▄▄▄▄▄▄  ▀██▄▄██▀  ▀██▄▄███  ▀██▄▄███  ▄▄▄██▄▄▄  ██    ██  ▀██▄▄███           
+ ▀▀▀▀▀▀▀▀    ▀▀▀▀     ▄▀▀▀ ██   ▄▀▀▀ ██  ▀▀▀▀▀▀▀▀  ▀▀    ▀▀   ▄▀▀▀ ██           
+                      ▀████▀▀   ▀████▀▀                       ▀████▀▀           
+                                                                                                                              
+  ▄▄▄▄▄▄                                       ▄▄                               
+  ▀▀██▀▀                                       ██                               
+    ██     ██▄████▄  ██▄  ▄██   ▄█████▄   ▄███▄██   ▄████▄    ██▄████  ▄▄█████▄ 
+    ██     ██▀   ██   ██  ██    ▀ ▄▄▄██  ██▀  ▀██  ██▄▄▄▄██   ██▀      ██▄▄▄▄ ▀ 
+    ██     ██    ██   ▀█▄▄█▀   ▄██▀▀▀██  ██    ██  ██▀▀▀▀▀▀   ██        ▀▀▀▀██▄ 
+  ▄▄██▄▄   ██    ██    ████    ██▄▄▄███  ▀██▄▄███  ▀██▄▄▄▄█   ██       █▄▄▄▄▄██ 
+  ▀▀▀▀▀▀   ▀▀    ▀▀     ▀▀      ▀▀▀▀ ▀▀    ▀▀▀ ▀▀    ▀▀▀▀▀    ▀▀        ▀▀▀▀▀▀  
+
+                        A game made of log lines
+                 Observability Logs squad / Grafana Labs
+
+Keyboard arrows: move - Space: attack
+Press any key to start`;
+
 const map = `Score: 000000                              Lives: ♥♥♥♥
 ================================================================================
                                                                                 
@@ -88,7 +112,8 @@ export function useLogsGames() {
   const [gameEnded, setGameEnded] = useState(false);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(4);
-  const pausedRef = useRef(false);
+  const newGameRef = useRef(true);
+  const pausedRef = useRef(true);
   const prevLives = usePrevious(lives);
   const effectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevScore = usePrevious(score);
@@ -96,6 +121,12 @@ export function useLogsGames() {
 
   const lastTime = useRef(0);
   const frame = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (newGameRef.current) {
+      setGameState(getSplashScreen());
+    }
+  }, [gameState]);
 
   useEffect(() => {
     function loop(t: number) {
@@ -169,6 +200,13 @@ export function useLogsGames() {
 
   useEffect(() => {
     function handleKeyPress(e: KeyboardEvent) {
+      if (newGameRef.current) {
+        newGameRef.current = false;
+        pausedRef.current = false;
+        setGameState(undefined);
+        return;
+      }
+
       if (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight' && e.code !== 'Space') {
         return;
       }
@@ -223,6 +261,17 @@ export function useLogsGames() {
   }, [enemies.length, lives, prevEnemies, prevLives, prevScore, score]);
 
   return gameState;
+}
+
+function getSplashScreen() {
+  return splash.split('\n').map((row, index) => {
+    return createLogRow({
+      uid: index.toString(),
+      entry: row.padEnd(80),
+      timeEpochMs: 0,
+      logLevel: LogLevel.unknown,
+    });
+  });
 }
 
 function update(
