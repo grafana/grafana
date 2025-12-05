@@ -96,11 +96,16 @@ func (dc *dataSourceConnectionClient) GetByUID(ctx context.Context, uid string) 
 		return nil, err
 	}
 
+	// use the list endpoint with a fieldSelector so that can get multiple results
+	// in the case of a non-unique "uid". This should not be possible when we are
+	// backed by the legacy database, but wont be guaranteed when we are using
+	// uniStore as the names will not be guaranteed unique across apiGroups. We
+	// error below if more than one result is returned.
 	result := client.RESTClient().Get().
 		Prefix("apis", "query.grafana.app", "v0alpha1").
 		Namespace("default"). // TODO do something about namespace
 		Resource("connections").
-		Name(uid).
+		Param("fieldSelector", "metadata.name="+uid).
 		Do(ctx)
 
 	if err = result.Error(); err != nil {
@@ -114,12 +119,21 @@ func (dc *dataSourceConnectionClient) GetByUID(ctx context.Context, uid string) 
 		return nil, errors.New("not found")
 	}
 
-	fullDS := datasourcev0alpha1.DataSource{}
-	err = result.Into(&fullDS)
+	dsList := datasourcev0alpha1.DataSourceList{}
+	err = result.Into(&dsList)
 	if err != nil {
 		return nil, err
 	}
 
+	if len(dsList.Items) == 0 {
+		return nil, errors.New("not found")
+	}
+
+	if len(dsList.Items) > 1 {
+		return nil, errors.New("multiple connections found")
+	}
+
+	fullDS := dsList.Items[0]
 	dsConnection := &queryv0alpha1.DataSourceConnection{
 		Title: fullDS.Spec.Title(),
 		Datasource: queryv0alpha1.DataSourceConnectionRef{

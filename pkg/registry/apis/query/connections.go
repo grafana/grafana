@@ -15,6 +15,7 @@ import (
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"k8s.io/apimachinery/pkg/fields"
 )
 
 var (
@@ -31,8 +32,8 @@ type DataSourceConnectionProvider interface {
 	// The name is the legacy datasource UID.
 	GetConnection(ctx context.Context, namespace string, name string) (*queryV0.DataSourceConnection, error)
 
-	// List lists all data sources the user in context can see
-	ListConnections(ctx context.Context, namespace string) (*queryV0.DataSourceConnectionList, error)
+	// List lists all data sources the user in context can see. Optional field selectors can filter the results.
+	ListConnections(ctx context.Context, namespace string, fieldSelector fields.Selector) (*queryV0.DataSourceConnectionList, error)
 }
 
 type connectionAccess struct {
@@ -74,7 +75,11 @@ func (s *connectionAccess) Get(ctx context.Context, name string, options *metav1
 }
 
 func (s *connectionAccess) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.connections.ListConnections(ctx, request.NamespaceValue(ctx))
+	var fs fields.Selector
+	if options != nil && options.FieldSelector != nil {
+		fs = options.FieldSelector
+	}
+	return s.connections.ListConnections(ctx, request.NamespaceValue(ctx), fs)
 }
 
 type connectionsProvider struct {
@@ -103,19 +108,47 @@ func (q *connectionsProvider) GetConnection(ctx context.Context, namespace strin
 	return q.asConnection(ds, namespace)
 }
 
-func (q *connectionsProvider) ListConnections(ctx context.Context, namespace string) (*queryV0.DataSourceConnectionList, error) {
+func (q *connectionsProvider) ListConnections(ctx context.Context, namespace string, fieldSelector fields.Selector) (*queryV0.DataSourceConnectionList, error) {
 	ns, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	dss, err := q.dsService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
-		OrgID:           ns.OrgID,
-		DataSourceLimit: 10000,
-	})
-	if err != nil {
-		return nil, err
+	var dss []*datasources.DataSource
+	// if fieldSelector is not nil, find any uids in the metadata.name field and
+	// use them in the query
+	if fieldSelector != nil && !fieldSelector.Empty() {
+		uids := []string{}
+		for _, req := range fieldSelector.Requirements() {
+			if req.Field == "metadata.name" {
+				uids = append(uids, req.Value)
+			}
+		}
+
+		// We don't have a way to fetch a subset of datasources by UID in the legacy
+		// datasource service, so fetch them one by one.
+		if len(uids) > 0 {
+			for _, uid := range uids {
+				ds, err := q.dsService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+					UID:   uid,
+					OrgID: ns.OrgID,
+				})
+				if err != nil {
+					return nil, err
+				}
+				dss = append(dss, ds)
+			}
+		}
+	} else {
+		dss, err = q.dsService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
+			OrgID:           ns.OrgID,
+			DataSourceLimit: 10000,
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	result := &queryV0.DataSourceConnectionList{
 		Items: []queryV0.DataSourceConnection{},
 	}
@@ -137,7 +170,7 @@ func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string
 
 	v = &queryV0.DataSourceConnection{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              ds.UID,
+			Name:              queryV0.DataSourceConnectionName(gv.Group, ds.UID),
 			Namespace:         ns,
 			CreationTimestamp: metav1.NewTime(ds.Created),
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
