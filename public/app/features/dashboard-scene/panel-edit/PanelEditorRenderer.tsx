@@ -25,6 +25,11 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   const { optionsPane } = model.useState();
   const styles = useStyles2(getWrapperStyles);
   const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  const [containerRef, { height: containerHeight }] = useMeasure<HTMLDivElement>();
+
+  useEffect(() => {
+    console.log('PanelEditorRenderer containerHeight', containerHeight);
+  }, [containerHeight]);
 
   const isScrollingLayout = useScrollReflowLimit();
 
@@ -46,7 +51,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   }, [splitterState.collapsed, setIsCollapsed]);
 
   return (
-    <>
+    <div style={{ height: '100%' }} ref={containerRef}>
       <NavToolbarActions dashboard={dashboard} />
       <div
         {...containerProps}
@@ -54,7 +59,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
         data-testid={selectors.components.PanelEditor.General.content}
       >
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
-          <VizAndDataPane model={model} />
+          <VizAndDataPane model={model} containerHeight={Math.max(containerHeight, 500)} />
         </div>
         <div {...splitterProps} />
         <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>
@@ -77,18 +82,20 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           {!splitterState.collapsed && !optionsPane && <Spinner />}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
-function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
+function VizAndDataPane({
+  model,
+  containerHeight = 800,
+}: SceneComponentProps<PanelEditor> & { containerHeight?: number }) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal, tableView } = model.useState();
   const panel = model.getPanel();
   const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
   const [sidebarState, setSidebarState] = useState<SidebarState>({ size: SidebarSize.Mini, collapsed: false });
-  const [containerRef, { height: containerHeight }] = useMeasure<HTMLDivElement>();
   const [vizRef, { height: vizHeight }] = useMeasure<HTMLDivElement>();
 
   const styles = useStyles2(getStyles, sidebarState);
@@ -100,15 +107,14 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
     const grid = [];
 
     if (controls) {
-      rows.push('auto');
+      rows.push('32px');
       grid.push(['controls', 'controls']);
     }
 
     grid.push(['viz', 'viz']);
-    rows.push('1fr');
+    rows.push(`${vizHeight}px`);
 
     if (dataPane) {
-      // rows.push(`${(containerHeight - vizHeight) + 40}px`);
       rows.push('auto');
       grid.push(['sidebar', 'data-pane']);
       if (sidebarState.size === SidebarSize.Full) {
@@ -119,20 +125,30 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
     }
 
     return {
+      height: containerHeight,
+      maxHeight: containerHeight,
       gridTemplateAreas: '\n' + grid.map((row) => `"${row.join(' ')}"`).join('\n'),
-      // gridTemplateRows: rows.map((r) => r).join(' '),
+      gridTemplateRows: rows.map((r) => r).join(' '),
     };
-  }, [controls, dataPane, sidebarState.size]);
+  }, [controls, dataPane, sidebarState.size, vizHeight, containerHeight]);
+
+  if (!containerHeight) {
+    return null;
+  }
 
   return (
-    <div ref={containerRef} className={styles.pageContainer} style={gridStyles}>
+    <div className={styles.pageContainer} style={gridStyles}>
       {controls && (
         <div className={styles.controlsWrapper}>
           <controls.Component model={controls} />
         </div>
       )}
 
-      <div ref={vizRef} className={cx(styles.viz, isScrollingLayout && styles.fixedSizeViz)}>
+      <div
+        className={cx(styles.viz, isScrollingLayout && styles.fixedSizeViz)}
+        ref={vizRef}
+        style={{ height: containerHeight / 2, maxHeight: containerHeight - 80 }}
+      >
         {tableView ? <tableView.Component model={tableView} /> : <panel.Component model={panel} />}
       </div>
 
@@ -216,10 +232,6 @@ function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
       display: 'grid',
       gap: theme.spacing(2),
       gridTemplateColumns: `auto 1fr`,
-      gridTemplateRows: `auto 0.7fr 0.3fr`,
-      height: '100%',
-      minHeight: '100%',
-      maxHeight: '100%',
       overflow: 'hidden',
       [scrollReflowMediaQuery]: {
         gridTemplateColumns: `100%`,
@@ -239,14 +251,15 @@ function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
       gridArea: 'viz',
       overflow: 'auto',
       resize: 'vertical',
-      minHeight: 200,
-      maxHeight: 700, // FIXME: needs a dynamic height
+      height: '100%',
+      minHeight: 100,
       ...(sidebarState.size === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
     }),
     dataPane: css({
       gridArea: 'data-pane',
+      overflow: 'hidden',
     }),
     controlsWrapper: css({
       gridArea: 'controls',
