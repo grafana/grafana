@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -357,9 +357,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			"spec": {
 			  "title": "Test",
 			  "description": ""
-			},
-			"status": {}
-		  }`
+			}}`
 
 		// Get should return the same result
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
