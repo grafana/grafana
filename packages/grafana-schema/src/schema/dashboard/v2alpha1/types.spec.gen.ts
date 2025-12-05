@@ -19,6 +19,8 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?: Record<string, AnnotationEventFieldMapping>;
 	// Catch-all field for datasource-specific properties
 	legacyOptions?: Record<string, any>;
 }
@@ -62,6 +64,20 @@ export interface AnnotationPanelFilter {
 export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 	exclude: false,
 	ids: [],
+});
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+export interface AnnotationEventFieldMapping {
+	// Source type for the field value
+	source?: string;
+	// Constant value to use when source is "text"
+	value?: string;
+	// Regular expression to apply to the field value
+	regex?: string;
+}
+
+export const defaultAnnotationEventFieldMapping = (): AnnotationEventFieldMapping => ({
+	source: "field",
 });
 
 // "Off" for no shared crosshair or tooltip (default).

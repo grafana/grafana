@@ -85,6 +85,7 @@ import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { useTrinoDataSource } from './hooks/useTrinoDataSource';
 import { useTrinoLogMenuItems } from './useTrinoLogMenuItems';
 import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { getExploreBaseUrl } from './utils/url';
 
 interface Props extends Themeable2 {
   width: number;
@@ -330,6 +331,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         refId: undefined,
         displayedFields: undefined,
         sortOrder: undefined,
+        tableSortBy: undefined,
+        tableSortDir: undefined,
       })
     );
   });
@@ -346,6 +349,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
             displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
+            tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
+            tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
           })
         );
       }
@@ -356,6 +361,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       panelState?.logs?.columns,
       panelState?.logs?.displayedFields,
       panelState?.logs?.refId,
+      panelState?.logs?.tableSortBy,
+      panelState?.logs?.tableSortDir,
       visualisationType,
     ]
   );
@@ -633,7 +640,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
       // append changed urlState to baseUrl
       const serializedState = serializeStateToUrlParam(urlState);
-      const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
+      const baseUrl = getExploreBaseUrl();
       const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
       await createAndCopyShortLink(url);
 
@@ -1017,6 +1024,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 panelState={panelState?.logs}
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
+                displayedFields={displayedFields}
+                exploreId={props.exploreId}
+                absoluteRange={props.absoluteRange}
+                logRows={props.logRows}
               />
             </div>
           )}
@@ -1072,6 +1083,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   filterLevels={filterLevels}
                   timeRange={props.range}
                   logLineMenuCustomItems={trinoLogMenuItems}
+                  exploreId={props.exploreId}
+                  absoluteRange={props.absoluteRange}
                 />
               </div>
             )}
