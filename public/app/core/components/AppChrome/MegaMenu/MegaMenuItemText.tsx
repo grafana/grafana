@@ -71,7 +71,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     justifyContent: 'space-between',
     width: '100%',
     height: '100%',
-    paddingLeft: theme.spacing(0.5),
     '.pin-icon': {
       visibility: 'hidden',
     },
