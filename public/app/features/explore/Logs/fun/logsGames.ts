@@ -1,6 +1,6 @@
 /* eslint-disable @grafana/no-unreduced-motion */
 import { css, keyframes } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { LogLevel, LogRowModel, store } from '@grafana/data';
@@ -148,10 +148,10 @@ const initialMissileSpeed = 0.06;
 const initialEnemyMissileSpeed = 0.01;
 const initialEnemySpeed = 0.001;
 
-const missileSpeed = initialMissileSpeed;
-const enemyMissileSpeed = initialEnemyMissileSpeed;
-const enemySpeed = initialEnemySpeed;
-const ufoSpeed = 0.0095;
+let missileSpeed = initialMissileSpeed;
+let enemyMissileSpeed = initialEnemyMissileSpeed;
+let enemySpeed = initialEnemySpeed;
+let ufoSpeed = 0.0095;
 
 type Missile = {
   x: number;
@@ -216,6 +216,28 @@ export function useLogsGames() {
     }
   }, [gameStatus]);
 
+  const newGame = useCallback(() => {
+    missileSpeed = initialMissileSpeed;
+    enemyMissileSpeed = initialEnemyMissileSpeed;
+    enemySpeed = initialEnemySpeed;
+
+    setGameStatus('new-game');
+    setGameState(undefined);
+    setScore(0);
+    setLives(4);
+  }, []);
+
+  const nextLevel = useCallback(() => {
+    missileSpeed += 0.001;
+    enemyMissileSpeed += 0.001;
+    enemySpeed += 0.001;
+
+    setGameStatus('next-level');
+    setGameState(undefined);
+    setScore(0);
+    setLives(4);
+  }, []);
+
   useEffect(() => {
     function loop(t: number) {
       const dt = Math.min(t - lastTime.current, 50);
@@ -239,9 +261,13 @@ export function useLogsGames() {
       setScore(newScore);
       setLives(newLives);
 
-      if (newEnemies.length === 0 || lives === 0) {
+      if (lives === 0) {
         setGameStatus('ended');
         updateBestScore(score);
+        return;
+      } else if (newEnemies.length === 0) {
+        nextLevel();
+        return;
       }
 
       frame.current = requestAnimationFrame(loop);
@@ -256,7 +282,7 @@ export function useLogsGames() {
         cancelAnimationFrame(frame.current);
       }
     };
-  }, [enemies, enemyMissiles, gameState, gameStatus, lives, playerX, score, userMissiles]);
+  }, [enemies, enemyMissiles, gameState, gameStatus, lives, nextLevel, playerX, score, userMissiles]);
 
   useEffect(() => {
     function handlePause() {
@@ -296,10 +322,7 @@ export function useLogsGames() {
         e.stopPropagation();
         return;
       } else if (e.code === 'KeyN') {
-        setGameStatus('new-game');
-        setGameState(undefined);
-        setScore(0);
-        setLives(4);
+        newGame();
       }
 
       if (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight' && e.code !== 'Space' && e.code !== 'KeyN') {
@@ -321,7 +344,7 @@ export function useLogsGames() {
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [gameState, gameStatus, playerX, userMissiles]);
+  }, [gameState, gameStatus, newGame, playerX, userMissiles]);
 
   useEffect(() => {
     if (prevLives && prevLives > lives) {
