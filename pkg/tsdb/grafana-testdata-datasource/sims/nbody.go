@@ -28,12 +28,13 @@ type nbodyConfig struct {
 }
 
 type circle struct {
-	x      float64 // x position
-	y      float64 // y position
-	vx     float64 // x velocity
-	vy     float64 // y velocity
-	radius float64 // radius
-	mass   float64 // mass (proportional to radius^2 for simplicity)
+	x        float64 // x position
+	y        float64 // y position
+	vx       float64 // x velocity
+	vy       float64 // y velocity
+	radius   float64 // radius
+	mass     float64 // mass (proportional to radius^2 for simplicity)
+	rotation float64 // current rotation angle in degrees (0-360)
 }
 
 type nbodyState struct {
@@ -84,13 +85,20 @@ func (s *nbodySim) initialize() {
 		// Mass proportional to area (radius squared)
 		mass := radius * radius
 
+		// Initial rotation based on initial velocity
+		rotation := math.Atan2(vy, vx) * 180.0 / math.Pi
+		if rotation < 0 {
+			rotation += 360.0
+		}
+
 		s.state.circles[i] = circle{
-			x:      x,
-			y:      y,
-			vx:     vx,
-			vy:     vy,
-			radius: radius,
-			mass:   mass,
+			x:        x,
+			y:        y,
+			vx:       vx,
+			vy:       vy,
+			radius:   radius,
+			mass:     mass,
+			rotation: rotation,
 		}
 	}
 }
@@ -159,14 +167,6 @@ func (s *nbodySim) GetValues(t time.Time) map[string]any {
 		// Calculate velocity magnitude: sqrt(vx^2 + vy^2)
 		velocity := math.Sqrt(c.vx*c.vx + c.vy*c.vy)
 		
-		// Calculate rotation angle from velocity vector (in degrees, 0-360)
-		// atan2(vy, vx) gives angle in radians, convert to degrees
-		rotation := math.Atan2(c.vy, c.vx) * 180.0 / math.Pi
-		// Normalize to 0-360 range
-		if rotation < 0 {
-			rotation += 360.0
-		}
-		
 		// Center position
 		result[fmt.Sprintf("circle_%d_x", i)] = c.x
 		result[fmt.Sprintf("circle_%d_y", i)] = c.y
@@ -175,10 +175,10 @@ func (s *nbodySim) GetValues(t time.Time) map[string]any {
 		result[fmt.Sprintf("circle_%d_left", i)] = c.x - c.radius
 		result[fmt.Sprintf("circle_%d_top", i)] = c.y - c.radius
 		
-		// Size, velocity, and rotation
+		// Size, velocity, and rotation (smoothed rotation from simulate)
 		result[fmt.Sprintf("circle_%d_diameter", i)] = c.radius * 2.0
 		result[fmt.Sprintf("circle_%d_velocity", i)] = velocity
-		result[fmt.Sprintf("circle_%d_rotation", i)] = rotation
+		result[fmt.Sprintf("circle_%d_rotation", i)] = c.rotation
 	}
 
 	return result
@@ -316,6 +316,46 @@ func (s *nbodySim) simulate(dt float64) {
 					c2.vx -= impulse * nx / c2.mass
 					c2.vy -= impulse * ny / c2.mass
 				}
+			}
+		}
+
+		// Update rotations smoothly based on velocity direction
+		// Maximum rotation change per sub-step (in degrees)
+		// At 60 sub-steps/sec, 1.5 degrees/step = 90 degrees/second max
+		const maxRotationChange = 5
+
+		for i := range s.state.circles {
+			c := &s.state.circles[i]
+
+			// Calculate target rotation from velocity vector
+			targetRotation := math.Atan2(c.vy, c.vx) * 180.0 / math.Pi
+			if targetRotation < 0 {
+				targetRotation += 360.0
+			}
+
+			// Calculate the shortest angular difference (handles wrap-around)
+			diff := targetRotation - c.rotation
+			if diff > 180.0 {
+				diff -= 360.0
+			} else if diff < -180.0 {
+				diff += 360.0
+			}
+
+			// Clamp the rotation change
+			if diff > maxRotationChange {
+				diff = maxRotationChange
+			} else if diff < -maxRotationChange {
+				diff = -maxRotationChange
+			}
+
+			// Apply the clamped rotation change
+			c.rotation += diff
+
+			// Keep rotation in 0-360 range
+			if c.rotation >= 360.0 {
+				c.rotation -= 360.0
+			} else if c.rotation < 0 {
+				c.rotation += 360.0
 			}
 		}
 	}
