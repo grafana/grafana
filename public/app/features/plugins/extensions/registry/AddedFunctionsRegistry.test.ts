@@ -644,8 +644,8 @@ describe('addedFunctionsRegistry', () => {
     const meta = getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
-    const config = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [] } };
-    setAppPluginMetas({ [pluginId]: config });
+    const app = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,
@@ -697,8 +697,8 @@ describe('addedFunctionsRegistry', () => {
     const meta = getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
-    const config = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [] } };
-    setAppPluginMetas({ [pluginId]: config });
+    const app = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,
@@ -727,8 +727,8 @@ describe('addedFunctionsRegistry', () => {
     const meta = getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
-    const config = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [fnConfig] } };
-    setAppPluginMetas({ [pluginId]: config });
+    const app = { ...meta!, extensions: { ...meta!.extensions, addedFunctions: [fnConfig] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,

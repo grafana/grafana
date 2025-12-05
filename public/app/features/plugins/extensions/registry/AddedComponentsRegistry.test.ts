@@ -452,8 +452,8 @@ describe('AddedComponentsRegistry', () => {
     const meta = getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
-    const config = { ...meta!, extensions: { ...meta!.extensions, addedComponents: [] } };
-    setAppPluginMetas({ [pluginId]: config });
+    const app = { ...meta!, extensions: { ...meta!.extensions, addedComponents: [] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,
@@ -505,8 +505,8 @@ describe('AddedComponentsRegistry', () => {
     const meta = getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
-    const config = { ...meta!, extensions: { ...meta!.extensions, addedComponents: [] } };
-    setAppPluginMetas({ [pluginId]: config });
+    const app = { ...meta!, extensions: { ...meta!.extensions, addedComponents: [] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,
@@ -535,8 +535,8 @@ describe('AddedComponentsRegistry', () => {
     const meta = getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
-    const config = { ...meta!, extensions: { ...meta!.extensions, addedComponents: [componentConfig] } };
-    setAppPluginMetas({ [pluginId]: config });
+    const app = { ...meta!, extensions: { ...meta!.extensions, addedComponents: [componentConfig] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,
