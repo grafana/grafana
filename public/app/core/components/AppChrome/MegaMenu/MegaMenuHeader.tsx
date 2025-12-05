@@ -32,7 +32,7 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
         <HomeLink homeNav={homeNav} inMegaMenuOverlay={!state.megaMenuDocked} />
         <OrganizationSwitcher />
       </Stack>
-      <div className={css({ flexGrow: 1 })} />
+      <div className={styles.flexGrow} />
       <IconButton
         id={DOCK_MENU_BUTTON_ID}
         className={styles.dockMenuButton}
@@ -76,9 +76,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: getChromeHeaderLevelHeight(),
     flexShrink: 0,
   }),
-  img: css({
-    alignSelf: 'center',
-    height: theme.spacing(3),
-    width: theme.spacing(3),
-  }),
+  flexGrow: css({ flexGrow: 1 }),
 });
