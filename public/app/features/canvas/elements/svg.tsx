@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -7,6 +8,34 @@ import { CodeEditor, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps } from '../element';
+
+// Simple hash function to generate unique scope IDs
+function hashString(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+// Scope CSS classes to avoid conflicts between multiple SVG elements
+function scopeSvgClasses(content: string, scopeId: string): string {
+  // Replace class definitions in style blocks (.classname)
+  let scoped = content.replace(/\.([a-zA-Z_-][\w-]*)/g, (match, className) => {
+    return `.${className}-${scopeId}`;
+  });
+
+  // Replace class attributes (class="name1 name2")
+  scoped = scoped.replace(/class="([^"]+)"/g, (match, classNames) => {
+    const scopedNames = classNames
+      .split(/\s+/)
+      .map((name: string) => (name ? `${name}-${scopeId}` : ''))
+      .join(' ');
+    return `class="${scopedNames}"`;
+  });
+
+  return scoped;
+}
 
 export interface SvgConfig {
   content?: TextDimensionConfig;
@@ -20,6 +49,14 @@ export function SvgDisplay(props: CanvasElementProps<SvgConfig, SvgData>) {
   const { data } = props;
   const styles = useStyles2(getStyles);
 
+  // Generate unique scope ID based on content hash
+  const scopeId = useMemo(() => {
+    if (!data?.content) {
+      return '';
+    }
+    return hashString(data.content);
+  }, [data?.content]);
+
   if (!data?.content) {
     return (
       <div className={styles.placeholder}>{t('canvas.svg-element.placeholder', 'Double click to add SVG content')}</div>
@@ -29,16 +66,17 @@ export function SvgDisplay(props: CanvasElementProps<SvgConfig, SvgData>) {
   // Check if content already has an SVG wrapper
   const hasSvgWrapper = data.content.trim().toLowerCase().startsWith('<svg');
 
-  let sanitizedContent: string;
-
-  if (hasSvgWrapper) {
-    // Content already has SVG wrapper, sanitize as-is
-    sanitizedContent = textUtil.sanitizeSVGContent(data.content);
-  } else {
-    // Content is a fragment - wrap in SVG before sanitizing
-    const wrappedContent = `<svg width="100%" height="100%">${data.content}</svg>`;
-    sanitizedContent = textUtil.sanitizeSVGContent(wrappedContent);
+  // Prepare content (wrap if needed)
+  let contentToScope = data.content;
+  if (!hasSvgWrapper) {
+    contentToScope = `<svg width="100%" height="100%">${data.content}</svg>`;
   }
+
+  // Scope class names to prevent conflicts
+  const scopedContent = scopeSvgClasses(contentToScope, scopeId);
+
+  // Sanitize the scoped content
+  const sanitizedContent = textUtil.sanitizeSVGContent(scopedContent);
 
   return <div className={styles.container} dangerouslySetInnerHTML={{ __html: sanitizedContent }} />;
 }
