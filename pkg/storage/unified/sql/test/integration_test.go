@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	sqlbackend "github.com/grafana/grafana/pkg/storage/unified/sql"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
