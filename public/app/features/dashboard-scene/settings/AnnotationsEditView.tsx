@@ -119,6 +119,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
       name: annotation.name,
       isEnabled: Boolean(annotation.enable),
       isHidden: Boolean(annotation.hide),
+      placement: annotation.placement,
       query: annotation,
     });
 

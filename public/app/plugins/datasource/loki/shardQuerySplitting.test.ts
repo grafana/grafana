@@ -3,12 +3,13 @@ import { of } from 'rxjs';
 import { DataQueryRequest, DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';
 import { LokiDatasource } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
 import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils';
 import { runShardSplitQuery } from './shardQuerySplitting';
-import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LokiQuery } from './types';
 
 jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('uuid'),
