@@ -71,7 +71,7 @@ func (s *nbodySim) initialize() {
 	// Generate random circles
 	for i := 0; i < s.cfg.N; i++ {
 		// Random radius between 5 and 30 pixels
-		radius := 5.0 + s.random.Float64()*25.0
+		radius := 2.0 + s.random.Float64()*15.0
 
 		// Random position ensuring the circle is within bounds
 		x := radius + s.random.Float64()*(s.cfg.Width-2*radius)
