@@ -9070,9 +9070,6 @@
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
     },
-    "query-field": {
-      "aria-label": "Query input field"
-    },
     "range-slider": {
       "drag-handle-aria-label": "Use arrow keys to change the value"
     },
