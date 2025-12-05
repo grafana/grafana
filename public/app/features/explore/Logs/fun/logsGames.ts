@@ -27,7 +27,7 @@ const splash = `
                         A game made of log lines
                  Observability Logs squad / Grafana Labs
 
-Keyboard arrows: move - Space: attack
+Keyboard arrows: move - Space: attack - N: new game
 Press any key to start`;
 
 const map = `Score: 000000                              Lives: ♥♥♥♥
@@ -205,9 +205,13 @@ export function useLogsGames() {
         pausedRef.current = false;
         setGameState(undefined);
         return;
+      } else if (e.code === 'KeyN') {
+        newGameRef.current = true;
+        pausedRef.current = true;
+        setGameState(undefined);
       }
 
-      if (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight' && e.code !== 'Space') {
+      if (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight' && e.code !== 'Space' && e.code !== 'KeyR') {
         return;
       }
 
