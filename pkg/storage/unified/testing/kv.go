@@ -1170,4 +1170,94 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 		err = reader.Close()
 		require.NoError(t, err)
 	})
+
+	t.Run("txn concurrent compare and swap", func(t *testing.T) {
+		// Test that when multiple goroutines try to compare-and-swap the same key,
+		// only one succeeds. All goroutines see the same initial value and try to
+		// update it atomically. This verifies serializable isolation.
+		//
+		// Expected behavior:
+		// - All goroutines read the initial value and their compare succeeds
+		// - All try to write, but only one can commit successfully
+		// - Others get either Succeeded=false (if compare ran after winner committed)
+		//   or ErrConflict (if they tried to commit after winner but read before)
+
+		const numGoroutines = 10
+		casKey := "concurrent-cas-key"
+		initialValue := "initial-value"
+
+		// Create the key with an initial value
+		saveKVHelper(t, kv, ctx, section, casKey, strings.NewReader(initialValue))
+
+		type result struct {
+			id        int
+			succeeded bool
+			err       error
+		}
+
+		results := make(chan result, numGoroutines)
+		start := make(chan struct{})
+
+		// Launch goroutines that all try to compare-and-swap simultaneously
+		for i := 0; i < numGoroutines; i++ {
+			go func(id int) {
+				<-start // Wait for signal to start simultaneously
+
+				// Compare that the value is still the initial value, then update it
+				cmps := []resource.Compare{
+					resource.CompareKeyValue(casKey, resource.CompareEqual, []byte(initialValue)),
+				}
+				successOps := []resource.TxnOp{
+					resource.TxnPut(casKey, []byte(fmt.Sprintf("owner-%d", id))),
+				}
+
+				resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+				succeeded := err == nil && resp != nil && resp.Succeeded
+				results <- result{id: id, succeeded: succeeded, err: err}
+			}(i)
+		}
+
+		// Start all goroutines at once
+		close(start)
+
+		// Collect results
+		successCount := 0
+		conflictCount := 0
+		compareFailedCount := 0
+		winnerId := -1
+		for i := 0; i < numGoroutines; i++ {
+			r := <-results
+			if r.err != nil {
+				// ErrConflict is expected when multiple transactions race
+				conflictCount++
+				t.Logf("goroutine %d got conflict: %v", r.id, r.err)
+			} else if r.succeeded {
+				successCount++
+				winnerId = r.id
+			} else {
+				// Compare failed (saw updated value after winner committed)
+				compareFailedCount++
+			}
+		}
+
+		t.Logf("Results: %d succeeded, %d conflicts, %d compare-failed", successCount, conflictCount, compareFailedCount)
+
+		// Exactly one goroutine should have succeeded in the compare-and-swap
+		assert.Equal(t, 1, successCount, "exactly one transaction should succeed, but %d succeeded", successCount)
+		require.NotEqual(t, -1, winnerId, "should have a winner")
+
+		// All other goroutines should have either got a conflict or had their compare fail
+		assert.Equal(t, numGoroutines-1, conflictCount+compareFailedCount,
+			"all non-winners should have either conflict or compare-failed")
+
+		// Verify the key has the winner's value
+		reader, err := kv.Get(ctx, section, casKey)
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		expectedValue := fmt.Sprintf("owner-%d", winnerId)
+		assert.Equal(t, expectedValue, string(value), "value should match the winner's id")
+		err = reader.Close()
+		require.NoError(t, err)
+	})
 }
