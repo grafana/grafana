@@ -4080,11 +4080,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/loki/types.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
   "public/app/plugins/datasource/mixed/module.ts": {
     "no-barrel-files/no-barrel-files": {
       "count": 2
@@ -4108,11 +4103,6 @@
   "public/app/plugins/datasource/mysql/configuration/ConfigurationEditor.tsx": {
     "no-restricted-syntax": {
       "count": 10
-    }
-  },
-  "public/app/plugins/datasource/opentsdb/components/AnnotationEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/plugins/datasource/opentsdb/components/OpenTsdbDetails.tsx": {
