@@ -62,10 +62,6 @@ export const MegaMenu = memo(
 
     const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
 
-    const handleMegaMenu = () => {
-      chrome.setMegaMenuOpen(!state.megaMenuOpen);
-    };
-
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
       if (state.megaMenuDocked) {
