@@ -19,7 +19,7 @@ jest.mock('@grafana/llm', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getAppPluginMeta: (id: string) => ({ [id]: {} }),
+  getAppPluginMeta: () => ({}),
 }));
 
 describe('getDashboardChanges', () => {
