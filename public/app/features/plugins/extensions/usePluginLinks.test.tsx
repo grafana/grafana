@@ -272,8 +272,8 @@ describe('usePluginLinks()', () => {
     const meta = getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
-    const config = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [linkConfig] } };
-    setAppPluginMetas({ [pluginId]: config });
+    const app = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [linkConfig] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider

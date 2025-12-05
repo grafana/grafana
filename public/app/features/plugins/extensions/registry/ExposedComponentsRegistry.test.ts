@@ -425,8 +425,8 @@ describe('ExposedComponentsRegistry', () => {
     const meta = getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
-    const config = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [] } };
-    setAppPluginMetas({ [pluginId]: config });
+    const app = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,
@@ -478,8 +478,8 @@ describe('ExposedComponentsRegistry', () => {
     const meta = getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
-    const config = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [] } };
-    setAppPluginMetas({ [pluginId]: config });
+    const app = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,
@@ -507,8 +507,8 @@ describe('ExposedComponentsRegistry', () => {
     const meta = getAppPluginMeta(pluginId);
     expect(meta).toBeDefined();
 
-    const config = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [componentConfig] } };
-    setAppPluginMetas({ [pluginId]: config });
+    const app = { ...meta!, extensions: { ...meta!.extensions, exposedComponents: [componentConfig] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,

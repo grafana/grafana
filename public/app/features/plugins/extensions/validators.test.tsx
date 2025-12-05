@@ -267,11 +267,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, addedLinks: [extensionConfig] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
 
@@ -292,11 +292,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the link has no meta-info in the plugin.json', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, addedLinks: [] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
 
@@ -309,11 +309,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the "targets" do not match', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, addedLinks: [extensionConfig] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isAddedLinkMetaInfoMissing(
         pluginId,
@@ -333,11 +333,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE and log a warning if the "description" does not match', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, addedLinks: [extensionConfig] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isAddedLinkMetaInfoMissing(
         pluginId,
@@ -359,11 +359,11 @@ describe('Plugin Extension Validators', () => {
         ...extensionConfig,
         targets: [PluginExtensionPoints.ExploreToolbarAction],
       };
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, addedLinks: [extensionConfig, extensionConfig2] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig2, log);
 
@@ -417,11 +417,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, addedComponents: [extensionConfig] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
 
@@ -442,11 +442,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the Component has no meta-info in the plugin.json', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, addedComponents: [] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
 
@@ -459,11 +459,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the "targets" do not match', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, addedComponents: [extensionConfig] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isAddedComponentMetaInfoMissing(
         pluginId,
@@ -482,11 +482,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE and log a warning if the "description" does not match', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, addedComponents: [extensionConfig] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isAddedComponentMetaInfoMissing(
         pluginId,
@@ -508,11 +508,11 @@ describe('Plugin Extension Validators', () => {
         ...extensionConfig,
         targets: [PluginExtensionPoints.ExploreToolbarAction],
       };
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, addedComponents: [extensionConfig, extensionConfig2] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig2, log);
 
@@ -566,11 +566,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, exposedComponents: [exposedComponentConfig] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
 
@@ -591,11 +591,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the exposed component has no meta-info in the plugin.json', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, exposedComponents: [] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
 
@@ -608,11 +608,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the title does not match', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, exposedComponents: [exposedComponentConfig] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isExposedComponentMetaInfoMissing(
         pluginId,
@@ -632,11 +632,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE and log a warning if the "description" does not match', () => {
       const log = createLogMock();
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: { ...appPluginConfig.extensions, exposedComponents: [exposedComponentConfig] },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isExposedComponentMetaInfoMissing(
         pluginId,
@@ -658,14 +658,14 @@ describe('Plugin Extension Validators', () => {
         ...exposedComponentConfig,
         targets: [PluginExtensionPoints.ExploreToolbarAction],
       };
-      const config = {
+      const app = {
         ...appPluginConfig,
         extensions: {
           ...appPluginConfig.extensions,
           exposedComponents: [exposedComponentConfig, exposedComponentConfig2],
         },
       };
-      setAppPluginMetas({ [pluginId]: config });
+      setAppPluginMetas({ [pluginId]: app });
 
       const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig2, log);
 
