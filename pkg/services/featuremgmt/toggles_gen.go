@@ -259,10 +259,6 @@ const (
 	// Enables experimental new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
-	// FlagKubernetesDashboardsV2
-	// Use the v2 kubernetes API in the frontend for dashboards
-	FlagKubernetesDashboardsV2 = "kubernetesDashboardsV2"
-
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
