@@ -220,6 +220,7 @@ export function useLogsGames() {
     missileSpeed = initialMissileSpeed;
     enemyMissileSpeed = initialEnemyMissileSpeed;
     enemySpeed = initialEnemySpeed;
+    levelRef.current = 1;
 
     setGameStatus('new-game');
     setGameState(undefined);
@@ -231,6 +232,7 @@ export function useLogsGames() {
     missileSpeed += 0.001;
     enemyMissileSpeed += 0.001;
     enemySpeed += 0.001;
+    levelRef.current += 1;
 
     setGameStatus('next-level');
     setGameState(undefined);
@@ -251,7 +253,8 @@ export function useLogsGames() {
         enemyMissiles,
         enemies,
         score,
-        lives
+        lives,
+        levelRef.current
       );
 
       setGameState(newGameState);
@@ -409,7 +412,8 @@ function update(
   enemyMissiles: Missile[],
   enemies: Enemy[],
   score: number,
-  lives: number
+  lives: number,
+  level: number
 ) {
   if (gameState === undefined) {
     const newEnemies: Enemy[] = [];
@@ -533,7 +537,7 @@ function update(
   const newGameState = gameState.map((row, index) => {
     let entry = row.entry;
     if (index === 0) {
-      entry = renderScoreAndLives(score, lives);
+      entry = renderScoreAndLives(score, lives, level);
     } else if (index <= 2 || index > playerY) {
       return row;
     } else if (index === playerY) {
@@ -674,13 +678,13 @@ function render(row: string, enemies: Enemy[], userMissiles: Missile[], enemyMis
   return newRow;
 }
 
-function renderScoreAndLives(score: number, lives: number) {
+function renderScoreAndLives(score: number, lives: number, level: number) {
   const best = getBestScore();
   if (Number.isNaN(best)) {
-    return `Score: ${score.toString().padStart(6, '0')}                              Lives: ${new Array(lives).fill('♥').join('')}`;
+    return `Score: ${score.toString().padStart(6, '0')}                       Level: ${level}                             Lives: ${new Array(lives).fill('♥').join('')}`;
   }
 
-  return `Score: ${score.toString().padStart(6, '0')}           Best: ${best.toString().padStart(6, '0')}              Lives: ${new Array(lives).fill('♥').join('')}`;
+  return `Score: ${score.toString().padStart(6, '0')}          Best: ${best.toString().padStart(6, '0')}           Level: ${level}               Lives: ${new Array(lives).fill('♥').join('')}`;
 }
 
 function updateBestScore(score: number) {
