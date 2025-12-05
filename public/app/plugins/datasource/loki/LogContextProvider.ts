@@ -19,6 +19,7 @@ import {
 import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
 
 import { LokiContextUi } from './components/LokiContextUi';
+import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
 import { escapeLabelValueInExactSelector, getLabelTypeFromFrame } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
@@ -29,7 +30,7 @@ import {
   isQueryWithParser,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
-import { ContextFilter, LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { ContextFilter, LabelType, LokiQuery } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
 export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';
