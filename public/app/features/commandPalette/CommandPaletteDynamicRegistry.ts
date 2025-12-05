@@ -73,7 +73,10 @@ export class CommandPaletteDynamicRegistry {
         continue;
       }
 
-      // Use index to differentiate multiple providers from same plugin
+      // Use index to differentiate multiple providers from same plugin.
+      // Note: Provider IDs are index-based, so changing the order of configs
+      // in addCommandPaletteDynamicProvider calls could affect result tracking.
+      // Plugins should maintain consistent ordering of their providers.
       const providerId = `${pluginId}/${index}`;
 
       if (!(providerId in registry)) {

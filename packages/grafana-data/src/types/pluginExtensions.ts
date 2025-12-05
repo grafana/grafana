@@ -419,8 +419,6 @@ export type PluginExtensionCommandPaletteDynamicConfig = {
   /**
    * Search provider function that returns results.
    * Return an empty array to skip results for the current search.
-   * To conditionally disable the provider, simply return an empty array
-   * based on your own logic instead of using a separate isActive filter.
    */
   searchProvider: CommandPaletteDynamicSearchProvider;
 };
