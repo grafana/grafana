@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	sqlbackend "github.com/grafana/grafana/pkg/storage/unified/sql"
+	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -35,10 +37,16 @@ import (
 // This prevents race conditions where multiple tests try to alter the same table simultaneously.
 var initMutex = &sync.Mutex{}
 
+// TestBackendWithDB wraps a backend with database access for testing
+type TestBackendWithDB struct {
+	resource.StorageBackend
+	DB sqldb.DB
+}
+
 // newTestBackend creates a fresh database and backend for a test.
 // It uses a mutex to ensure the entire initialization and migration
 // process is atomic and does not race with other parallel tests.
-func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration) resource.StorageBackend {
+func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration) (resource.StorageBackend, sqldb.DB) {
 	// Lock to ensure the entire init block is atomic.
 	initMutex.Lock()
 	// Unlock once the function returns the initialized backend.
@@ -61,7 +69,11 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	// Use a context with a reasonable timeout for migrations.
 	err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
 	require.NoError(t, err)
-	return backend
+
+	sqlDB, err := eDB.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
+	require.NoError(t, err)
+
+	return backend, sqlDB
 }
 
 func TestMain(m *testing.M) {
@@ -73,7 +85,8 @@ func TestIntegrationStorageServer(t *testing.T) {
 	t.Cleanup(db.CleanupTestDB)
 
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
-		return newTestBackend(t, true, 0)
+		backend, _ := newTestBackend(t, true, 0)
+		return backend
 	})
 }
 
@@ -84,12 +97,31 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, true, 0)
+			backend, _ := newTestBackend(t, true, 0)
+			return backend
 		}, nil)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			backend, _ := newTestBackend(t, false, 0)
+			return backend
+		}, nil)
+	})
+}
+
+func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
+			return newTestBackend(t, true, 0)
+		}, nil)
+	})
+
+	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
 			return newTestBackend(t, false, 0)
 		}, nil)
 	})
@@ -110,7 +142,7 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	t.Cleanup(search.Stop)
 
 	// Create a new resource backend
-	storage := newTestBackend(t, false, 0)
+	storage, _ := newTestBackend(t, false, 0)
 	require.NotNil(t, storage)
 
 	// Run the shared storage and search tests
@@ -131,7 +163,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
+	svc, err := sqlbackend.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 
@@ -201,3 +233,4 @@ func resourceKey(name string) *resourcepb.ResourceKey {
 		Name:      name,
 	}
 }
+
