@@ -31,7 +31,7 @@ export class PanelPerformanceMetrics extends SceneObjectBase<PanelPerformanceMet
     }
 
     const panelId = getPanelIdForVizPanel(panel);
-    if (!panelId) {
+    if (panelId == null || isNaN(panelId)) {
       return;
     }
 
