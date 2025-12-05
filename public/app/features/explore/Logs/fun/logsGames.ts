@@ -146,6 +146,22 @@ const gameOver = `
 Press N to try again
 `;
 
+const success = `
+                                                         
+▄▄▄    ▄▄▄   ▄▄▄▄    ▄▄    ▄▄           ▄▄      ▄▄   ▄▄▄▄    ▄▄▄   ▄▄ 
+ ██▄  ▄██   ██▀▀██   ██    ██           ██      ██  ██▀▀██   ███   ██ 
+  ██▄▄██   ██    ██  ██    ██           ▀█▄ ██ ▄█▀ ██    ██  ██▀█  ██ 
+   ▀██▀    ██    ██  ██    ██            ██ ██ ██  ██    ██  ██ ██ ██ 
+    ██     ██    ██  ██    ██            ███▀▀███  ██    ██  ██  █▄██ 
+    ██      ██▄▄██   ▀██▄▄██▀            ███  ███   ██▄▄██   ██   ███ 
+    ▀▀       ▀▀▀▀      ▀▀▀▀              ▀▀▀  ▀▀▀    ▀▀▀▀    ▀▀   ▀▀▀ 
+                         Congratulations!
+                    You survived the incident
+                             Score: {score}
+
+Press N to try again
+`;
+
 const map = `Score: 000000                              Lives: ♥♥♥♥
 ================================================================================
                                                                                 
@@ -206,7 +222,7 @@ type Enemy = {
   body: string;
   health: number;
 };
-type GameStatus = 'new-game' | 'paused' | 'playing' | 'ended' | 'next-level';
+type GameStatus = 'new-game' | 'paused' | 'playing' | 'ended' | 'won' | 'next-level';
 const ufo = '[=U=]';
 const enemyTypes = ['<@_@>', '<^_^>', '[-_-]', '<o_o>', ufo];
 const enemyScores = [10, 20, 30, 40, 100];
@@ -250,6 +266,8 @@ export function useLogsGames() {
       setGameState(getLevelScreen(levelRef.current));
     } else if (gameStatus === 'ended') {
       setGameState(getGameOverScreen(score));
+    } else if (gameStatus === 'won') {
+      setGameState(getSuccessScreen(score));
     }
   }, [gameStatus, score]);
 
@@ -272,7 +290,7 @@ export function useLogsGames() {
     levelRef.current += 1;
 
     if (levelRef.current > 10) {
-      setGameStatus('ended');
+      setGameStatus('won');
       updateBestScore(score);
       return;
     }
@@ -451,6 +469,10 @@ function getLevelScreen(level: number) {
 
 function getGameOverScreen(score: number) {
   return getSplashScreen(gameOver.replace('{score}', score.toString()));
+}
+
+function getSuccessScreen(score: number) {
+  return getSplashScreen(success.replace('{score}', score.toString()));
 }
 
 function update(
