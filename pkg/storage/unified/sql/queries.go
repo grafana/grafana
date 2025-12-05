@@ -377,7 +377,7 @@ func (r sqlResourceUpdateRVRequest) Validate() error {
 }
 
 func (r sqlResourceUpdateRVRequest) SlashFunc() string {
-	if r.SQLTemplate.DialectName() == "postgres" {
+	if r.DialectName() == "postgres" {
 		return "CHR(47)"
 	}
 
@@ -385,7 +385,7 @@ func (r sqlResourceUpdateRVRequest) SlashFunc() string {
 }
 
 func (r sqlResourceUpdateRVRequest) TildeFunc() string {
-	if r.SQLTemplate.DialectName() == "postgres" {
+	if r.DialectName() == "postgres" {
 		return "CHR(126)"
 	}
 
