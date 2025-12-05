@@ -14,7 +14,7 @@ SET {{ .Ident "resource_version" }} = (
       {{ $.Ident "resource" }}, {{ $.SlashFunc }},
       {{ $.Ident "namespace" }}, {{ $.SlashFunc }},
       {{ $.Ident "name" }}, {{ $.SlashFunc }},
-      CAST(((((CAST({{ $.Arg $rv }} AS BIGINT) / 1000) - 1288834974657) << 22) + (CAST({{ $.Arg $rv }} AS BIGINT) % 1000 )) AS BIGINT),
+      CAST(((((CAST({{ $.Arg $rv }} AS {{ if eq $.DialectName "postgres" }}BIGINT{{ else }}SIGNED{{ end }}) / 1000) - 1288834974657) << 22) + (CAST({{ $.Arg $rv }} AS {{ if eq $.DialectName "postgres" }}BIGINT{{ else }}SIGNED{{ end }}) % 1000 )) AS {{ if eq $.DialectName "postgres" }}BIGINT{{ else }}SIGNED{{ end }}),
       {{ $.TildeFunc }},
       CASE {{ $.Ident "action" }}
         WHEN 1 THEN 'created'
