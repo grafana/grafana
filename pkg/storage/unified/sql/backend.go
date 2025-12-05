@@ -85,11 +85,13 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	if opts.WatchBufferSize == 0 {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
+	l := logging.DefaultLogger.With("logger", "sql-resource-server")
+	l.Debug("initializing unifie storge sql backend", "lastImportTimeMaxAge", opts.LastImportTimeMaxAge)
 	return &backend{
 		isHA:                    opts.IsHA,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
-		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
+		log:                     l,
 		tracer:                  opts.Tracer,
 		reg:                     opts.Reg,
 		dbProvider:              opts.DBProvider,
@@ -979,10 +981,13 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 	// Delete old entries, if configured, and if enough time has passed since last deletion.
 	if b.lastImportTimeMaxAge > 0 && time.Since(b.lastImportTimeDeletionTime.Load()) > limitLastImportTimesDeletion {
 		now := time.Now()
+		threshold := now.Add(-b.lastImportTimeMaxAge)
+
+		b.log.Debug("Deleting old last import times", "threshold", threshold)
 
 		res, err := dbutil.Exec(ctx, b.db, sqlResourceLastImportTimeDelete, &sqlResourceLastImportTimeDeleteRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
-			Threshold:   now.Add(-b.lastImportTimeMaxAge),
+			Threshold:   threshold,
 		})
 
 		if err != nil {
