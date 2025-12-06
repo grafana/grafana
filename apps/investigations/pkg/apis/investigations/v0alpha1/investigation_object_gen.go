@@ -21,8 +21,6 @@ type Investigation struct {
 
 	// Spec is the spec of the Investigation
 	Spec InvestigationSpec `json:"spec" yaml:"spec"`
-
-	Status InvestigationStatus `json:"status" yaml:"status"`
 }
 
 func (o *Investigation) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *Investigation) SetSpec(spec any) error {
 }
 
 func (o *Investigation) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *Investigation) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *Investigation) GetSubresource(name string) (any, bool) {
 
 func (o *Investigation) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(InvestigationStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type InvestigationStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *Investigation) DeepCopyInto(dst *Investigation) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *InvestigationSpec) DeepCopy() *InvestigationSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *InvestigationSpec) DeepCopyInto(dst *InvestigationSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of InvestigationStatus
-func (s *InvestigationStatus) DeepCopy() *InvestigationStatus {
-	cpy := &InvestigationStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies InvestigationStatus into another InvestigationStatus object
-func (s *InvestigationStatus) DeepCopyInto(dst *InvestigationStatus) {
 	resource.CopyObjectInto(dst, s)
 }
