@@ -12,6 +12,22 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, ListDeletedDashboardsOptions } from './types';
 
+interface HistoryResult {
+  continueToken?: string;
+  versions: RevisionsModel[];
+}
+interface RevisionsModel {
+  id: number;
+  checked: boolean;
+  uid: string;
+  parentVersion: number;
+  version: number;
+  created: Date;
+  createdBy: string;
+  message: string;
+  data: Dashboard;
+}
+
 export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   constructor() {}
 
@@ -51,6 +67,30 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
     }
 
     return result;
+  }
+
+  async listDashboardHistory(uid: string): Promise<ResourceList<Dashboard, Dashboard, string>> {
+    const result = await getBackendSrv().get<HistoryResult>(`/api/dashboards/uid/${uid}/versions`);
+    return {
+      apiVersion: 'v0alpha1',
+      kind: 'DashboardList',
+      metadata: { resourceVersion: '0' },
+      items: result.versions.map((v) => ({
+        apiVersion: 'v0alpha1',
+        kind: 'Dashboard',
+        metadata: {
+          name: v.uid,
+          resourceVersion: v.version.toString(),
+          generation: v.version,
+          creationTimestamp: v.created ? v.created.toISOString() : new Date().toISOString(),
+          annotations: {
+            'grafana.app/updatedBy': v.createdBy,
+            'grafana.app/message': v.message,
+          },
+        },
+        spec: v.data,
+      })),
+    };
   }
 
   /**
