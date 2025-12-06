@@ -831,8 +831,16 @@ export interface TableBarGaugeCellOptions {
  */
 export interface TableSparklineCellOptions extends GraphFieldConfig {
   hideValue?: boolean;
+  /**
+   * Enable interactive hover to inspect values along the sparkline
+   */
+  interactionEnabled?: boolean;
   type: TableCellDisplayMode.Sparkline;
 }
+
+export const defaultTableSparklineCellOptions: Partial<TableSparklineCellOptions> = {
+  interactionEnabled: true,
+};
 
 /**
  * Colored background cell options

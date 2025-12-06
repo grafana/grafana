@@ -12,6 +12,7 @@ import { TableCellEditorProps } from '../TableCellOptionEditor';
 type OptionKey = keyof TableSparklineCellOptions;
 
 const optionIds: Array<keyof TableSparklineCellOptions> = [
+  'interactionEnabled',
   'hideValue',
   'drawStyle',
   'lineInterpolation',
@@ -31,6 +32,12 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
     ...graphFieldConfig,
     useCustomConfig: (builder) => {
       graphFieldConfig.useCustomConfig?.(builder);
+      builder.addBooleanSwitch({
+        path: 'interactionEnabled',
+        name: 'Enable hover interaction',
+        description: 'Allow users to hover over the sparkline to inspect values',
+        defaultValue: true,
+      });
       builder.addBooleanSwitch({
         path: 'hideValue',
         name: 'Hide value',
