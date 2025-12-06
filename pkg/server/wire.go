@@ -91,6 +91,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/exploremap/exploremapimpl"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	extsvcreg "github.com/grafana/grafana/pkg/services/extsvcauth/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -374,6 +375,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.ReceiverPermissionsService), new(*ossaccesscontrol.ReceiverPermissionsService)),
 	starimpl.ProvideService,
 	playlistimpl.ProvideService,
+	exploremapimpl.ProvideService,
 	apikeyimpl.ProvideService,
 	dashverimpl.ProvideService,
 	publicdashboardsService.ProvideService,
