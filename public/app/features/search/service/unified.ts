@@ -391,7 +391,8 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       tags: (hit.tags || []).sort(),
       folder: hit.folder || 'general',
       location,
-      name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
+      // keep backend-provided name as the identifier (uid/k8s name)
+      //will be the display name
       kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
       ...field,
     };
