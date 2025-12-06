@@ -22,4 +22,32 @@ v0alpha1: {
 		serviceaccountv0alpha1,
 		externalGroupMappingv0alpha1
 	]
+	routes: {
+		namespaced: {
+			"/searchTeams": {
+				"GET": {
+					request: {
+						query: { 
+							query?: string
+						}
+					}
+					response: {
+						#TeamHit: {
+							name: string
+							title: string
+							email: string
+							provisioned: bool
+							externalUID: string
+						}
+						offset: int64
+						totalHits: int64
+						hits: [...#TeamHit]
+						queryCost: float64
+						maxScore: float64
+					}
+					responseMetadata: objectMeta: false
+				}
+			}
+		}
+	}
 }
