@@ -221,6 +221,8 @@ export const TooltipPlugin2 = ({
     let pendingRender = false;
     let pendingPinned = false;
 
+    let prevCursorStyle = '';
+
     const scheduleRender = (setPinned = false) => {
       if (!pendingRender) {
         // defer unrender for 100ms to reduce flickering in small gaps
@@ -292,8 +294,27 @@ export const TooltipPlugin2 = ({
 
       setState(state);
 
-      // TODO: set u.over.style.cursor = 'pointer' if we hovered a oneClick point
-      // else revert to default...but only when the new pointer is different from prev
+      // Update cursor style when hovering over points with data links
+      if (_plot != null) {
+        let newCursorStyle = '';
+
+        if (_isHovering && !_isPinned && closestSeriesIdx != null && closestSeriesIdx > 0) {
+          // Check if the hovered point has data links
+          const dataIdx = seriesIdxs[closestSeriesIdx];
+          if (dataIdx != null) {
+            const links = getLinksRef.current(closestSeriesIdx, dataIdx);
+            if (links && links.length > 0) {
+              newCursorStyle = 'pointer';
+            }
+          }
+        }
+
+        // Only update if cursor style changed to avoid unnecessary DOM updates
+        if (newCursorStyle !== prevCursorStyle) {
+          _plot.over.style.cursor = newCursorStyle;
+          prevCursorStyle = newCursorStyle;
+        }
+      }
 
       selectedRange = null;
     };
@@ -305,6 +326,12 @@ export const TooltipPlugin2 = ({
       _plot!.setCursor({ left: -10, top: -10 });
       dataLinks = [];
       adHocFilters = [];
+
+      // Reset cursor style when dismissing
+      if (_plot!.over.style.cursor !== '') {
+        _plot!.over.style.cursor = '';
+        prevCursorStyle = '';
+      }
 
       scheduleRender(prevIsPinned);
     };
