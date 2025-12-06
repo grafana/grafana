@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
 import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
-import { config, AppPluginConfig } from '@grafana/runtime';
+import { config, AppPluginConfig, getAppPluginMetas, getAppPluginMeta } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -997,7 +998,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getAppPluginConfigs()', () => {
-    const originalApps = config.apps;
+    const originalApps = getAppPluginMetas();
     const genereicAppPluginConfig = {
       path: '',
       version: '',
@@ -1024,11 +1025,11 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     afterEach(() => {
-      config.apps = originalApps;
+      setAppPluginMetas(originalApps);
     });
 
     test('should return the app plugin configs based on the provided plugin ids', () => {
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1041,16 +1042,16 @@ describe('Plugin Extensions / Utils', () => {
           ...genereicAppPluginConfig,
           id: 'myorg-third-app',
         },
-      };
+      });
 
       expect(getAppPluginConfigs(['myorg-first-app', 'myorg-third-app'])).toEqual([
-        config.apps['myorg-first-app'],
-        config.apps['myorg-third-app'],
+        getAppPluginMeta('myorg-first-app'),
+        getAppPluginMeta('myorg-third-app'),
       ]);
     });
 
     test('should simply ignore the app plugin ids that do not belong to a config', () => {
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1063,9 +1064,9 @@ describe('Plugin Extensions / Utils', () => {
           ...genereicAppPluginConfig,
           id: 'myorg-third-app',
         },
-      };
+      });
 
-      expect(getAppPluginConfigs(['myorg-first-app', 'unknown-app-id'])).toEqual([config.apps['myorg-first-app']]);
+      expect(getAppPluginConfigs(['myorg-first-app', 'unknown-app-id'])).toEqual([getAppPluginMeta('myorg-first-app')]);
     });
   });
 
@@ -1076,7 +1077,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getExtensionPointPluginDependencies()', () => {
-    const originalApps = config.apps;
+    const originalApps = getAppPluginMetas();
     const genereicAppPluginConfig = {
       path: '',
       version: '',
@@ -1103,13 +1104,13 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     afterEach(() => {
-      config.apps = originalApps;
+      setAppPluginMetas(originalApps);
     });
 
     test('should return the app plugin ids that register extensions to a link extension point', () => {
       const extensionPointId = 'myorg-first-app/link/v1';
 
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1135,7 +1136,7 @@ describe('Plugin Extensions / Utils', () => {
           ...genereicAppPluginConfig,
           id: 'myorg-third-app',
         },
-      };
+      });
 
       const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
 
@@ -1145,7 +1146,7 @@ describe('Plugin Extensions / Utils', () => {
     test('should return the app plugin ids that register extensions to a component extension point', () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1171,7 +1172,7 @@ describe('Plugin Extensions / Utils', () => {
             addedFunctions: [],
           },
         },
-      };
+      });
 
       const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
 
@@ -1182,7 +1183,7 @@ describe('Plugin Extensions / Utils', () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
       // None of the apps are extending the extension point
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1195,7 +1196,7 @@ describe('Plugin Extensions / Utils', () => {
           ...genereicAppPluginConfig,
           id: 'myorg-third-app',
         },
-      };
+      });
 
       const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
 
@@ -1205,7 +1206,7 @@ describe('Plugin Extensions / Utils', () => {
     test('should also return (recursively) the app plugin ids that the apps which extend the extension-point depend on', () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1281,7 +1282,7 @@ describe('Plugin Extensions / Utils', () => {
           ...genereicAppPluginConfig,
           id: 'myorg-sixth-app',
         },
-      };
+      });
 
       const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
 
@@ -1290,7 +1291,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getExposedComponentPluginDependencies()', () => {
-    const originalApps = config.apps;
+    const originalApps = getAppPluginMetas();
     const genereicAppPluginConfig = {
       path: '',
       version: '',
@@ -1317,13 +1318,13 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     afterEach(() => {
-      config.apps = originalApps;
+      setAppPluginMetas(originalApps);
     });
 
     test('should only return the app plugin id that exposes the component, if that component does not depend on anything', () => {
       const exposedComponentId = 'myorg-second-app/component/v1';
 
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1348,7 +1349,7 @@ describe('Plugin Extensions / Utils', () => {
           ...genereicAppPluginConfig,
           id: 'myorg-third-app',
         },
-      };
+      });
 
       const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
 
@@ -1358,7 +1359,7 @@ describe('Plugin Extensions / Utils', () => {
     test('should also return the list of app plugin ids that the plugin - which exposes the component - is depending on', () => {
       const exposedComponentId = 'myorg-second-app/component/v1';
 
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1427,7 +1428,7 @@ describe('Plugin Extensions / Utils', () => {
             addedFunctions: [],
           },
         },
-      };
+      });
 
       const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
 
@@ -1436,7 +1437,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getAppPluginDependencies()', () => {
-    const originalApps = config.apps;
+    const originalApps = getAppPluginMetas();
     const genereicAppPluginConfig = {
       path: '',
       version: '',
@@ -1463,11 +1464,11 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     afterEach(() => {
-      config.apps = originalApps;
+      setAppPluginMetas(originalApps);
     });
 
     test('should not end up in an infinite loop if there are circular dependencies', () => {
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1492,7 +1493,7 @@ describe('Plugin Extensions / Utils', () => {
             },
           },
         },
-      };
+      });
 
       const appPluginIds = getAppPluginDependencies('myorg-second-app');
 
@@ -1500,7 +1501,7 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     test('should not end up in an infinite loop if a plugin depends on itself', () => {
-      config.apps = {
+      setAppPluginMetas({
         'myorg-first-app': {
           ...genereicAppPluginConfig,
           id: 'myorg-first-app',
@@ -1517,7 +1518,7 @@ describe('Plugin Extensions / Utils', () => {
             },
           },
         },
-      };
+      });
 
       const appPluginIds = getAppPluginDependencies('myorg-second-app');
 
@@ -1526,7 +1527,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('getExtensionPointPluginMeta()', () => {
-    const originalApps = config.apps;
+    const originalApps = getAppPluginMetas();
     const mockExtensionPointId = 'test-extension-point';
     const mockApp1: AppPluginConfig = {
       id: 'app1',
@@ -1581,28 +1582,28 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      config.apps = {};
+      setAppPluginMetas({});
     });
 
     afterEach(() => {
-      config.apps = originalApps;
+      setAppPluginMetas(originalApps);
     });
 
     it('should return empty map when no plugins have extensions for the point', () => {
-      config.apps = {
+      setAppPluginMetas({
         app1: { ...mockApp1, extensions: { ...mockApp1.extensions, addedComponents: [], addedLinks: [] } },
         app2: { ...mockApp2, extensions: { ...mockApp2.extensions, addedComponents: [], addedLinks: [] } },
-      };
+      });
 
       const result = getExtensionPointPluginMeta(mockExtensionPointId);
       expect(result.size).toBe(0);
     });
 
     it('should return map with plugins that have components for the extension point', () => {
-      config.apps = {
+      setAppPluginMetas({
         app1: mockApp1,
         app2: mockApp2,
-      };
+      });
 
       const result = getExtensionPointPluginMeta(mockExtensionPointId);
 
@@ -1618,7 +1619,7 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should filter out plugins that do not have any extensions for the point', () => {
-      config.apps = {
+      setAppPluginMetas({
         app1: mockApp1,
         app2: { ...mockApp2, extensions: { ...mockApp2.extensions, addedComponents: [], addedLinks: [] } },
         app3: {
@@ -1630,7 +1631,7 @@ describe('Plugin Extensions / Utils', () => {
             addedLinks: [{ title: 'Link 3', targets: ['other-point'] }],
           },
         },
-      };
+      });
 
       const result = getExtensionPointPluginMeta(mockExtensionPointId);
 

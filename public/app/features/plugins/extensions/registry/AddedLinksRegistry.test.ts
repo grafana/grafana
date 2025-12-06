@@ -1,7 +1,8 @@
 import { firstValueFrom, take } from 'rxjs';
 
 import { PluginLoadingStrategy } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { getAppPluginMeta, getAppPluginMetas } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
@@ -29,7 +30,7 @@ jest.mock('../logs/log', () => {
 });
 
 describe('AddedLinksRegistry', () => {
-  const originalApps = config.apps;
+  const originalApps = getAppPluginMetas();
   const pluginId = 'grafana-basic-app';
   const appPluginConfig = {
     id: pluginId,
@@ -60,13 +61,11 @@ describe('AddedLinksRegistry', () => {
   beforeEach(() => {
     resetLogMock(log);
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-    config.apps = {
-      [pluginId]: appPluginConfig,
-    };
+    setAppPluginMetas({ [pluginId]: appPluginConfig });
   });
 
   afterEach(() => {
-    config.apps = originalApps;
+    setAppPluginMetas(originalApps);
   });
 
   it('should return empty registry when no extensions registered', async () => {
@@ -624,7 +623,11 @@ describe('AddedLinksRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedLinks = [];
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const app = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,
@@ -675,7 +678,11 @@ describe('AddedLinksRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedLinks = [];
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const app = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,
@@ -702,7 +709,11 @@ describe('AddedLinksRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedLinks = [linkConfig];
+    const meta = getAppPluginMeta(pluginId);
+    expect(meta).toBeDefined();
+
+    const app = { ...meta!, extensions: { ...meta!.extensions, addedLinks: [linkConfig] } };
+    setAppPluginMetas({ [pluginId]: app });
 
     registry.register({
       pluginId,

@@ -10,7 +10,7 @@ import {
   PluginExtensionPointPatterns,
 } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc } from '@grafana/data/internal';
-import { config, isPluginExtensionLink } from '@grafana/runtime';
+import { getAppPluginMeta, isPluginExtensionLink } from '@grafana/runtime';
 
 import * as errors from './errors';
 import { ExtensionsLog } from './logs/log';
@@ -151,7 +151,7 @@ export const isAddedLinkMetaInfoMissing = (
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register link extension. Reason:';
-  const app = config.apps[pluginId];
+  const app = getAppPluginMeta(pluginId);
   const pluginJsonMetaInfo = app ? app.extensions.addedLinks.filter(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
@@ -183,7 +183,7 @@ export const isAddedFunctionMetaInfoMissing = (
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register function extension. Reason:';
-  const app = config.apps[pluginId];
+  const app = getAppPluginMeta(pluginId);
   const pluginJsonMetaInfo = app ? app.extensions.addedFunctions.filter(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
@@ -215,7 +215,7 @@ export const isAddedComponentMetaInfoMissing = (
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register component extension. Reason:';
-  const app = config.apps[pluginId];
+  const app = getAppPluginMeta(pluginId);
   const pluginJsonMetaInfo = app
     ? app.extensions.addedComponents.filter(({ title }) => title === metaInfo.title)
     : null;
@@ -249,7 +249,7 @@ export const isExposedComponentMetaInfoMissing = (
   log: ExtensionsLog
 ) => {
   const logPrefix = 'Could not register exposed component extension. Reason:';
-  const app = config.apps[pluginId];
+  const app = getAppPluginMeta(pluginId);
   const pluginJsonMetaInfo = app ? app.extensions.exposedComponents.filter(({ id }) => id === metaInfo.id) : null;
 
   if (!app) {
