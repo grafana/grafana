@@ -19,6 +19,8 @@ function getPluginIcon(pluginId?: string): string {
       return 'book';
     case 'grafana-investigations-app':
       return 'eye';
+    case 'grafana-extensionsdevtools-app':
+      return 'plug';
     default:
       return 'ai-sparkle';
   }
