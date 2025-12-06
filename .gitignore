@@ -135,6 +135,10 @@ profile.cov
 /pkg/operators/enterprise_*
 /pkg/operators/**/enterprise_*
 
+# Enterprise apiextensions server
+pkg/registry/apis/apiextensions/*
+!pkg/registry/apis/apiextensions/register.go
+
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
