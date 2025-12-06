@@ -19,6 +19,7 @@ export interface Options {
   enableLogDetails: boolean;
   fontSize?: ('default' | 'small');
   isFilterLabelActive?: unknown;
+  listStyle?: ('inline-columns' | 'inline' | 'wrapped' | 'wrapped-json');
   logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
   logRowMenuIconsBefore?: unknown;
@@ -34,6 +35,9 @@ export interface Options {
   onClickShowField?: unknown;
   onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
+  /**
+   * @deprecated use listStyle
+   */
   prettifyLogMessage: boolean;
   setDisplayedFields?: unknown;
   showCommonLabels: boolean;
@@ -46,6 +50,9 @@ export interface Options {
   sortOrder: common.LogsSortOrder;
   syntaxHighlighting?: boolean;
   timestampResolution?: ('ms' | 'ns');
+  /**
+   * @deprecated use listStyle
+   */
   wrapLogMessage: boolean;
 }
 

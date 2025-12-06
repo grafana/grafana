@@ -6,6 +6,7 @@ import {
   CoreApp,
   EventBus,
   LogLevel,
+  LogListStyle,
   LogsDedupDescription,
   LogsDedupStrategy,
   LogsSortOrder,
@@ -22,6 +23,7 @@ import { DownloadFormat } from '../../utils';
 import { useLogListContext } from './LogListContext';
 import { LogListControlsOption, LogListControlsSelectOption } from './LogListControlsOption';
 import { useLogListSearchContext } from './LogListSearchContext';
+import { prettifyJSON, wrapLogMessage } from './panel';
 import { LOG_LIST_CONTROLS_WIDTH, ScrollToLogsEvent } from './virtualization';
 
 type Props = {
@@ -57,24 +59,22 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     fontSize,
     forceEscape,
     hasUnescapedContent,
+    listStyle,
     logOptionsStorageKey,
-    prettifyJSON,
     setControlsExpanded,
     setDedupStrategy,
     setFilterLevels,
     setFontSize,
     setForceEscape,
-    setPrettifyJSON,
+    setListStyle,
     setShowTime,
     setShowUniqueLabels,
     setSortOrder,
     setSyntaxHighlighting,
-    setWrapLogMessage,
     showTime,
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
-    wrapLogMessage,
   } = useLogListContext();
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
 
@@ -155,11 +155,12 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
   }, [setSortOrder, sortOrder]);
 
   const onSetPrettifyJSONClick = useCallback(() => {
+    const state = !prettifyJSON(listStyle);
     reportInteraction('logs_log_list_controls_prettify_json_clicked', {
-      state: !prettifyJSON,
+      state,
     });
-    setPrettifyJSON(!prettifyJSON);
-  }, [prettifyJSON, setPrettifyJSON]);
+    setListStyle(state ? LogListStyle.WrappedWithPrettyJSON : LogListStyle.Wrapped);
+  }, [listStyle, setListStyle]);
 
   const onSyntaxHightlightingClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_syntax_clicked', {
@@ -171,12 +172,13 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
   const onWrapLogMessageClick = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
+      const state = !wrapLogMessage(listStyle);
       reportInteraction('logs_log_list_controls_wrap_clicked', {
-        state: !wrapLogMessage,
+        state,
       });
-      setWrapLogMessage(!wrapLogMessage);
+      setListStyle(state ? LogListStyle.Wrapped : LogListStyle.InlineWithColumns);
     },
-    [setWrapLogMessage, wrapLogMessage]
+    [listStyle, setListStyle]
   );
 
   const deduplicationMenu = useMemo(
@@ -395,26 +397,26 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                 <LogListControlsOption
                   expanded={controlsExpanded}
                   name="wrap-text"
-                  className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
-                  aria-pressed={wrapLogMessage}
+                  className={wrapLogMessage(listStyle) ? styles.controlButtonActive : styles.controlButton}
+                  aria-pressed={wrapLogMessage(listStyle)}
                   onClick={onWrapLogMessageClick}
                   tooltip={
-                    wrapLogMessage
+                    wrapLogMessage(listStyle)
                       ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
                       : t('logs.logs-controls.wrap-lines', 'Wrap lines')
                   }
                   size="lg"
                 />
               )}
-              {prettifyJSON !== undefined && !config.featureToggles.newLogsPanel && (
+              {!config.featureToggles.newLogsPanel && (
                 <LogListControlsOption
                   expanded={controlsExpanded}
                   name="brackets-curly"
-                  aria-pressed={prettifyJSON}
-                  className={prettifyJSON ? styles.controlButtonActive : styles.controlButton}
+                  aria-pressed={prettifyJSON(listStyle)}
+                  className={prettifyJSON(listStyle) ? styles.controlButtonActive : styles.controlButton}
                   onClick={onSetPrettifyJSONClick}
                   tooltip={
-                    prettifyJSON
+                    prettifyJSON(listStyle)
                       ? t('logs.logs-controls.disable-prettify-json', 'Collapse JSON logs')
                       : t('logs.logs-controls.prettify-json', 'Expand JSON logs')
                   }
@@ -657,73 +659,76 @@ const TimestampResolutionButton = ({ expanded }: LogSelectOptionProps) => {
 };
 const WrapLogMessageButton = ({ expanded }: LogSelectOptionProps) => {
   const styles = useStyles2(getWrapButtonStyles, expanded);
-  const { prettifyJSON, setPrettifyJSON, setWrapLogMessage, wrapLogMessage } = useLogListContext();
+  const { listStyle, setListStyle } = useLogListContext();
 
-  /**
-   * This component currently controls two internal states: line wrapping and JSON formatting.
-   * The state transition is as follows:
-   * - Line wrapping and JSON formatting disabled.
-   * - Line wrapping enabled.
-   * - Line wrapping and JSON formatting enabled.
-   *
-   * Line wrapping also controls JSON formatting, because with line wrapping disabled,
-   * JSON formatting has no effect, so one is related with the other.
-   */
-  const disable = useCallback(() => {
-    setWrapLogMessage(false);
-    setPrettifyJSON(false);
+  const unwrapWithColumns = useCallback(() => {
+    setListStyle(LogListStyle.InlineWithColumns);
     reportInteraction('logs_log_list_controls_wrap_clicked', {
-      state: false,
-      prettify: false,
+      style: LogListStyle.InlineWithColumns,
     });
-  }, [setPrettifyJSON, setWrapLogMessage]);
+  }, [setListStyle]);
+
+  const unwrapWithoutColumns = useCallback(() => {
+    setListStyle(LogListStyle.Inline);
+    reportInteraction('logs_log_list_controls_wrap_clicked', {
+      style: LogListStyle.Inline,
+    });
+  }, [setListStyle]);
 
   const wrap = useCallback(() => {
-    setWrapLogMessage(true);
-    setPrettifyJSON(false);
+    setListStyle(LogListStyle.Wrapped);
     reportInteraction('logs_log_list_controls_wrap_clicked', {
-      state: true,
-      prettify: false,
+      style: LogListStyle.Wrapped,
     });
-  }, [setPrettifyJSON, setWrapLogMessage]);
+  }, [setListStyle]);
 
   const wrapAndPrettify = useCallback(() => {
-    setWrapLogMessage(true);
-    setPrettifyJSON(true);
+    setListStyle(LogListStyle.WrappedWithPrettyJSON);
     reportInteraction('logs_log_list_controls_wrap_clicked', {
-      state: true,
-      prettify: true,
+      style: LogListStyle.WrappedWithPrettyJSON,
     });
-  }, [setPrettifyJSON, setWrapLogMessage]);
+  }, [setListStyle]);
 
   const wrappingMenu = useMemo(
     () => (
       <Menu>
         <Menu.Item
-          label={t('logs.logs-controls.line-wrapping.hide', 'Disable line wrapping')}
-          className={!wrapLogMessage ? styles.menuItemActive : undefined}
-          onClick={disable}
+          label={t('logs.logs-controls.line-wrapping.disable', 'Disable line wrapping')}
+          className={listStyle === LogListStyle.InlineWithColumns ? styles.menuItemActive : undefined}
+          onClick={unwrapWithColumns}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.line-wrapping.disable-no-columns', 'Disable line wrapping and columns')}
+          className={listStyle === LogListStyle.Inline ? styles.menuItemActive : undefined}
+          onClick={unwrapWithoutColumns}
         />
         <Menu.Item
           label={t('logs.logs-controls.line-wrapping.enable', 'Enable line wrapping')}
-          className={wrapLogMessage && !prettifyJSON ? styles.menuItemActive : undefined}
+          className={listStyle === LogListStyle.Wrapped ? styles.menuItemActive : undefined}
           onClick={wrap}
         />
         <Menu.Item
           label={t('logs.logs-controls.line-wrapping.enable-prettify', 'Enable line wrapping and prettify JSON')}
-          className={wrapLogMessage && prettifyJSON ? styles.menuItemActive : undefined}
+          className={listStyle === LogListStyle.WrappedWithPrettyJSON ? styles.menuItemActive : undefined}
           onClick={wrapAndPrettify}
         />
       </Menu>
     ),
-    [disable, prettifyJSON, styles.menuItemActive, wrap, wrapAndPrettify, wrapLogMessage]
+    [listStyle, styles.menuItemActive, unwrapWithColumns, unwrapWithoutColumns, wrap, wrapAndPrettify]
   );
 
-  const wrapStateText = !wrapLogMessage
-    ? t('logs.logs-controls.line-wrapping.state.hide', 'Wrap disabled')
-    : wrapLogMessage && !prettifyJSON
-      ? t('logs.logs-controls.line-wrapping.state.wrap', 'Wrap lines')
-      : t('logs.logs-controls.line-wrapping.state.json', 'Wrap JSON');
+  const wrapStateText = useMemo(() => {
+    if (listStyle === LogListStyle.InlineWithColumns) {
+      return t('logs.logs-controls.line-wrapping.state.unwrapped-columns', 'Unwrapped columns');
+    }
+    if (listStyle === LogListStyle.Inline) {
+      return t('logs.logs-controls.line-wrapping.state.unwrapped-inline', 'Unwrapped inline');
+    }
+    if (listStyle === LogListStyle.Wrapped) {
+      return t('logs.logs-controls.line-wrapping.state.wrap', 'Wrap lines');
+    }
+    return t('logs.logs-controls.line-wrapping.state.json', 'Wrap JSON');
+  }, [listStyle]);
 
   const tooltip = t('logs.logs-controls.line-wrapping.tooltip', 'Set line wrap');
 
@@ -731,12 +736,12 @@ const WrapLogMessageButton = ({ expanded }: LogSelectOptionProps) => {
     <LogListControlsSelectOption
       expanded={expanded}
       name={'wrap-text'}
-      isActive={wrapLogMessage}
+      isActive={wrapLogMessage(listStyle)}
       dropdown={wrappingMenu}
       tooltip={tooltip}
       label={wrapStateText}
       buttonAriaLabel={tooltip}
-      customTagText={prettifyJSON ? '+' : ''}
+      customTagText={prettifyJSON(listStyle) ? '+' : ''}
     />
   );
 };

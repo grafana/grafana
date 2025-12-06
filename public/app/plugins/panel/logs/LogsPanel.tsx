@@ -53,6 +53,7 @@ import {
   isCoreApp,
   isIsFilterLabelActive,
   isLogLineMenuCustomItems,
+  isLogListStyle,
   isOnClickFilterLabel,
   isOnClickFilterOutLabel,
   isOnClickFilterOutString,
@@ -153,8 +154,14 @@ export const LogsPanel = ({
     controlsStorageKey,
     showLabels,
     showTime,
+    /**
+     * @deprecated use listStyle
+     */
     wrapLogMessage,
     showCommonLabels,
+    /**
+     * @deprecated use listStyle
+     */
     prettifyLogMessage,
     sortOrder,
     dedupStrategy,
@@ -177,6 +184,7 @@ export const LogsPanel = ({
     noInteractions,
     timestampResolution,
     showLogAttributes,
+    listStyle,
     ...options
   },
   height,
@@ -593,6 +601,7 @@ export const LogsPanel = ({
               getFieldLinks={getFieldLinks}
               isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
               initialScrollPosition={initialScrollPosition}
+              listStyle={isLogListStyle(listStyle) ? listStyle : undefined}
               loading={infiniteScrolling}
               logLineMenuCustomItems={
                 isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined

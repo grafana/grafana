@@ -12,6 +12,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
+import { wrapLogMessage } from './panel';
 import { LogListModel } from './processing';
 
 interface Props {
@@ -25,6 +26,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
   const {
     displayedFields,
     getRowContextQuery,
+    listStyle,
     logOptionsStorageKey,
     logSupportsContext,
     noInteractions,
@@ -34,13 +36,12 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     onPermalinkClick,
     onPinLine,
     onUnpinLine,
-    wrapLogMessage,
     isAssistantAvailable,
     openAssistantByLog,
   } = useLogListContext();
   const { closeDetails, detailsMode, setDetailsMode } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
-  const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
+  const styles = useStyles2(getStyles, detailsMode, wrapLogMessage(listStyle));
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const searchUsedRef = useRef(false);

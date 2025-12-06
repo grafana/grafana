@@ -17,10 +17,12 @@ import {
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
+  LogListStyle,
   LogsMetaItem,
   LogsSortOrder,
   shallowCompare,
   store,
+  deprecationWarning,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
@@ -35,9 +37,11 @@ import { LogLineTimestampResolution } from './LogLine';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListOptions, LogListFontSize } from './LogList';
 import { reportInteractionOnce } from './analytics';
+import { getLogListStyleFromOldProps, prettifyJSON, wrapLogMessage } from './panel';
 import { LogListModel } from './processing';
 
-export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
+export interface LogListContextData
+  extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'prettifyJSON' | 'showControls' | 'wrapLogMessage'> {
   controlsExpanded: boolean;
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
@@ -51,15 +55,14 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setFilterLevels: (filterLevels: LogLevel[]) => void;
   setFontSize: (size: LogListFontSize) => void;
   setForceEscape: (forceEscape: boolean) => void;
+  setListStyle: (listStyle: LogListStyle) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
-  setPrettifyJSON: (prettifyJSON: boolean) => void;
   setSyntaxHighlighting: (syntaxHighlighting: boolean) => void;
   setShowTime: (showTime: boolean) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   setTimestampResolution: (format: LogLineTimestampResolution) => void;
-  setWrapLogMessage: (showTime: boolean) => void;
   timestampResolution: LogLineTimestampResolution;
   isAssistantAvailable: boolean;
   openAssistantByLog: ((log: LogListModel) => void) | undefined;
@@ -75,26 +78,25 @@ export const LogListContext = createContext<LogListContextData>({
   forceEscape: false,
   fontSize: 'default',
   hasUnescapedContent: false,
+  listStyle: LogListStyle.InlineWithColumns,
   noInteractions: false,
   setControlsExpanded: () => {},
   setDedupStrategy: () => {},
   setFilterLevels: () => {},
   setFontSize: () => {},
   setForceEscape: () => {},
+  setListStyle: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
-  setPrettifyJSON: () => {},
   setShowTime: () => {},
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setTimestampResolution: () => {},
-  setWrapLogMessage: () => {},
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
   timestampResolution: 'ns',
-  wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
 });
@@ -143,6 +145,7 @@ export interface Props {
   fontSize: LogListFontSize;
   getRowContextQuery?: GetRowContextQueryFn;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+  listStyle: LogListStyle;
   logs: LogRowModel[];
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logsMeta?: LogsMetaItem[];
@@ -155,7 +158,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[] | number) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -173,7 +176,7 @@ export interface Props {
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
   timestampResolution?: LogLineTimestampResolution;
-  wrapLogMessage: boolean;
+  wrapLogMessage?: boolean;
 }
 
 export const LogListContextProvider = ({
@@ -187,6 +190,7 @@ export const LogListContextProvider = ({
   fontSize,
   isLabelFilterActive,
   getRowContextQuery,
+  listStyle: listStyleProp,
   logs,
   logLineMenuCustomItems,
   logsMeta,
@@ -234,8 +238,11 @@ export const LogListContextProvider = ({
     timestampResolution,
   });
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
-  const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
-  const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
+  const [listStyle, setListStyleState] = useState(
+    listStyleProp
+      ? listStyleProp
+      : getLogListStyleFromOldProps(wrapLogMessageProp, prettifyJSONProp, logOptionsStorageKey)
+  );
 
   useEffect(() => {
     if (noInteractions) {
@@ -246,11 +253,10 @@ export const LogListContextProvider = ({
       fontSize,
       forceEscape: logListState.forceEscape,
       fieldSelectorOpen: getSidebarState(logOptionsStorageKey),
+      listStyle,
       showTime,
       showUniqueLabels,
       syntaxHighlighting,
-      wrapLogMessage,
-      prettifyJSON,
       detailsWidth: getDetailsWidth(containerElement, logOptionsStorageKey),
       detailsMode: logOptionsStorageKey
         ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? getDefaultDetailsMode(containerElement))
@@ -329,17 +335,26 @@ export const LogListContextProvider = ({
     }
   }, [logListState, pinnedLogs]);
 
-  // Sync prettifyJSON
+  // Sync listStyle
   useEffect(() => {
-    if (prettifyJSONProp !== undefined) {
-      setPrettifyJSONState(prettifyJSONProp);
-    }
-  }, [prettifyJSONProp]);
+    setListStyleState(listStyleProp);
+  }, [listStyleProp]);
 
-  // Sync wrapLogMessage
+  // Sync prettifyJSON and wrapLogMessage
   useEffect(() => {
-    setWrapLogMessageState(wrapLogMessageProp);
-  }, [wrapLogMessageProp]);
+    setListStyleState((listStyle) => {
+      if (listStyle && (wrapLogMessageProp !== undefined || prettifyJSONProp !== undefined)) {
+        if (wrapLogMessageProp) {
+          deprecationWarning('LogsPanel', 'wrapLogMessage', 'listStyle');
+        }
+        if (prettifyJSONProp) {
+          deprecationWarning('LogsPanel', 'prettifyJSON', 'listStyle');
+        }
+        return getLogListStyleFromOldProps(wrapLogMessageProp, prettifyJSONProp, undefined);
+      }
+      return listStyle;
+    });
+  }, [wrapLogMessageProp, prettifyJSONProp]);
 
   // Sync timestamp resolution
   useEffect(() => {
@@ -397,6 +412,25 @@ export const LogListContextProvider = ({
     [logListState, onLogOptionsChange]
   );
 
+  const setListStyle = useCallback(
+    (newStyle: LogListStyle) => {
+      setListStyleState((prevStyle: LogListStyle) => {
+        if (wrapLogMessage(prevStyle) !== wrapLogMessage(newStyle)) {
+          onLogOptionsChange?.('wrapLogMessage', wrapLogMessage(newStyle));
+        }
+        if (prettifyJSON(prevStyle) !== prettifyJSON(newStyle)) {
+          onLogOptionsChange?.('prettifyLogMessage', prettifyJSON(newStyle));
+        }
+        return newStyle;
+      });
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.listStyle`, newStyle);
+      }
+      onLogOptionsChange?.('listStyle', newStyle);
+    },
+    [logOptionsStorageKey, onLogOptionsChange]
+  );
+
   const setPinnedLogs = useCallback(
     (pinnedLogs: string[]) => {
       setLogListState({ ...logListState, pinnedLogs });
@@ -433,17 +467,6 @@ export const LogListContextProvider = ({
     [logListState, logOptionsStorageKey, onLogOptionsChange]
   );
 
-  const setPrettifyJSON = useCallback(
-    (prettifyJSON: boolean) => {
-      setPrettifyJSONState(prettifyJSON);
-      if (logOptionsStorageKey) {
-        store.set(`${logOptionsStorageKey}.prettifyLogMessage`, prettifyJSON);
-      }
-      onLogOptionsChange?.('prettifyLogMessage', prettifyJSON);
-    },
-    [logOptionsStorageKey, onLogOptionsChange]
-  );
-
   const setSyntaxHighlighting = useCallback(
     (syntaxHighlighting: boolean) => {
       setLogListState({ ...logListState, syntaxHighlighting });
@@ -464,17 +487,6 @@ export const LogListContextProvider = ({
       }
     },
     [logListState, logOptionsStorageKey, onLogOptionsChange]
-  );
-
-  const setWrapLogMessage = useCallback(
-    (wrapLogMessage: boolean) => {
-      setWrapLogMessageState(wrapLogMessage);
-      if (logOptionsStorageKey) {
-        store.set(`${logOptionsStorageKey}.wrapLogMessage`, wrapLogMessage);
-      }
-      onLogOptionsChange?.('wrapLogMessage', wrapLogMessage);
-    },
-    [logOptionsStorageKey, onLogOptionsChange]
   );
 
   const downloadLogs = useCallback(
@@ -531,6 +543,7 @@ export const LogListContextProvider = ({
         hasUnescapedContent,
         isLabelFilterActive,
         getRowContextQuery,
+        listStyle,
         logSupportsContext,
         logLineMenuCustomItems,
         logOptionsStorageKey,
@@ -549,28 +562,25 @@ export const LogListContextProvider = ({
         permalinkedLogId,
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
-        prettifyJSON,
         setControlsExpanded,
         setDedupStrategy,
         setDisplayedFields,
         setFilterLevels,
         setFontSize,
         setForceEscape,
+        setListStyle,
         setLogListState,
         setPinnedLogs,
-        setPrettifyJSON,
         setShowTime,
         setShowUniqueLabels,
         setSortOrder,
         setSyntaxHighlighting,
         setTimestampResolution,
-        setWrapLogMessage,
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
         timestampResolution: logListState.timestampResolution,
-        wrapLogMessage,
         isAssistantAvailable,
         openAssistantByLog,
       }}

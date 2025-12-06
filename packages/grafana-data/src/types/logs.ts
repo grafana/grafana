@@ -113,10 +113,11 @@ export interface LogsModel {
   bucketSize?: number;
 }
 
-export interface LogSearchMatch {
-  start: number;
-  length: number;
-  text: string;
+export enum LogListStyle {
+  InlineWithColumns = 'inline-columns',
+  Inline = 'inline',
+  Wrapped = 'wrapped',
+  WrappedWithPrettyJSON = 'wrapped-json',
 }
 
 export interface LogLabelStatsModel {
