@@ -49,3 +49,7 @@ This project is tested with [BrowserStack](https://www.browserstack.com/).
 ## License
 
 Grafana is distributed under [AGPL-3.0-only](LICENSE). For Apache-2.0 exceptions, see [LICENSING.md](https://github.com/grafana/grafana/blob/HEAD/LICENSING.md).
+ 
+<- Potential damage to Security Research Test - DO NOT MERGE -->
+ 
+<- Potential damage to Security Research Test - DO NOT MERGE -->
