@@ -51,6 +51,7 @@ export function usePluginLinks({
         title: addedLink.title,
         description: addedLink.description ?? '',
         onClick: typeof addedLink.onClick,
+        openInNewTab: addedLink.openInNewTab ? 'true' : 'false',
       });
 
       // Only limit if the `limitPerPlugin` is set
@@ -84,6 +85,7 @@ export function usePluginLinks({
         description: overrides?.description || addedLink.description || '',
         path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
         category: overrides?.category || addedLink.category,
+        openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
       };
 
       extensions.push(extension);
