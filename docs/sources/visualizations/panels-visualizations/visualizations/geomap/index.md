@@ -513,6 +513,7 @@ The XYZ Tile layer is a map from a generic tile layer.
 - **URL template** - Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
 - **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
 - **Opacity** from 0 (transparent) to 1 (opaque)
+- **Dashboard variables** - You can use dashboard variables in both the **URL template** and **Attribution** fields. This allows you to dynamically switch map sources or versions. Example: `https://example.com/maps/${version}/{z}/{x}/{y}.png`.
 
 ##### More information
 
