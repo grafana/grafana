@@ -68,6 +68,8 @@ export abstract class BigValueLayout {
     const styles: CSSProperties = {
       fontSize: `${this.titleFontSize}px`,
       lineHeight: LINE_HEIGHT,
+      position: 'relative',
+      zIndex: 1,
     };
 
     if (
@@ -283,6 +285,7 @@ export abstract class BigValueLayout {
       position: 'absolute',
       right: 0,
       bottom: 0,
+      zIndex: 0,
     };
   }
 }
