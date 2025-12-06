@@ -1,14 +1,15 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { UseComboboxPropGetters } from 'downshift';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
+import { Subject } from 'rxjs';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Checkbox } from '../Forms/Checkbox';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
-import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import { DESCRIPTION_HEIGHT, getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
 import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
@@ -24,6 +25,7 @@ interface ComboboxListProps<T extends string | number> {
   isMultiSelect?: boolean;
   error?: boolean;
   loading?: boolean;
+  scrollToIndexObservable?: Subject<number>;
 }
 
 export const ComboboxList = <T extends string | number>({
@@ -36,6 +38,7 @@ export const ComboboxList = <T extends string | number>({
   isMultiSelect = false,
   error = false,
   loading = false,
+  scrollToIndexObservable,
 }: ComboboxListProps<T>) => {
   const styles = useStyles2(getComboboxStyles);
 
@@ -46,8 +49,11 @@ export const ComboboxList = <T extends string | number>({
       const hasGroup = 'group' in options[index];
 
       let itemHeight = MENU_OPTION_HEIGHT;
+      if (typeof options[index].label === 'object') {
+        itemHeight = options[index].label.size;
+      }
       if (hasDescription) {
-        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
+        itemHeight += DESCRIPTION_HEIGHT;
       }
       if (firstGroupItem && hasGroup) {
         itemHeight += MENU_OPTION_HEIGHT;
@@ -63,6 +69,19 @@ export const ComboboxList = <T extends string | number>({
     estimateSize,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   });
+
+  useEffect(() => {
+    if (scrollToIndexObservable) {
+      const subscription = scrollToIndexObservable.subscribe((index) => {
+        rowVirtualizer.scrollToIndex(index);
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+    return undefined;
+  }, [scrollToIndexObservable, rowVirtualizer]);
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
@@ -89,6 +108,8 @@ export const ComboboxList = <T extends string | number>({
           // If we're rendering the group header, this is the ID for it. Otherwise its used on
           // the option for aria-describedby.
           const groupHeaderId = groupHeaderItem ? `combobox-option-group-${groupHeaderItem.value}` : undefined;
+
+          const label = typeof item.label === 'object' ? item.label.node : (item.label ?? item.value);
 
           return (
             // Wrapping div should have no styling other than virtual list positioning.
@@ -151,7 +172,7 @@ export const ComboboxList = <T extends string | number>({
                 )}
 
                 <div className={styles.optionBody}>
-                  <div className={styles.optionLabel}>{item.label ?? item.value}</div>
+                  <div className={styles.optionLabel}>{label}</div>
 
                   {item.description && <div className={styles.optionDescription}>{item.description}</div>}
                 </div>
