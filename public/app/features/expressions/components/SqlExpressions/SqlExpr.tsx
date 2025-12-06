@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useMemo, useRef, useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useMeasure } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -349,7 +349,7 @@ LIMIT
 
   const renderStandaloneEditor = () => (
     <AutoSizer>
-      {({ width, height }) => (
+      {({ width, height }: Size) => (
         <SQLEditor
           query={query.expression || initialQuery}
           onChange={onEditorChange}

@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { PureComponent } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import {
   applyFieldOverrides,
@@ -292,7 +292,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         </div>
         <div className={styles.content}>
           <AutoSizer>
-            {({ width, height }) => {
+            {({ width, height }: Size) => {
               if (width === 0) {
                 return null;
               }

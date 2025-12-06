@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -197,7 +197,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
         <div className={styles.subView}>
           <AutoSizer>
-            {({ width, height }) =>
+            {({ width, height }: Size) =>
               isSearching ? (
                 <SearchView
                   permissions={permissions}

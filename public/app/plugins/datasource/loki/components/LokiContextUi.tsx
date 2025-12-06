@@ -331,7 +331,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
           >
             Widen the search
           </Label>
-          <MultiSelect
+          <MultiSelect<string>
             isLoading={loading}
             options={realLabels.map(contextFilterToSelectFilter)}
             value={realLabelsEnabled.map(contextFilterToSelectFilter)}
@@ -372,7 +372,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               >
                 Refine the search
               </Label>
-              <MultiSelect
+              <MultiSelect<string>
                 isLoading={loading}
                 options={parsedLabels.map(contextFilterToSelectFilter)}
                 value={parsedLabelsEnabled.map(contextFilterToSelectFilter)}
