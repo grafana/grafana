@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
@@ -95,12 +96,16 @@ func (s *PluginsService) IsDisabled() bool {
 	return !s.enabled
 }
 
-func (s *PluginsService) Run(ctx context.Context) error {
+// checkAndUpdate checks for updates and applies them if auto-update is enabled.
+func (s *PluginsService) checkAndUpdate(ctx context.Context) {
 	s.instrumentedCheckForUpdates(ctx)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
 		s.updateAll(ctx)
 	}
+}
+
+func (s *PluginsService) Run(ctx context.Context) error {
+	s.checkAndUpdate(ctx)
 
 	ticker := time.NewTicker(time.Minute * 10)
 	run := true
@@ -108,11 +113,7 @@ func (s *PluginsService) Run(ctx context.Context) error {
 	for run {
 		select {
 		case <-ticker.C:
-			s.instrumentedCheckForUpdates(ctx)
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
-				s.updateAll(ctx)
-			}
+			s.checkAndUpdate(ctx)
 		case <-ctx.Done():
 			run = false
 		}
@@ -226,8 +227,7 @@ func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugi
 		return false
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
 		return s.updateChecker.CanUpdate(plugin.ID, plugin.Info.Version, gcomVersion, s.updateStrategy == setting.PluginUpdateStrategyMinor)
 	}
 
