@@ -395,7 +395,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   public removeAllScopes = () => {
     this.applyScopes([], false);
-    this.dashboardsService.setNavigationScope(undefined);
+    this.dashboardsService.setNavigationScope(undefined, undefined, undefined);
   };
 
   private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode) => {

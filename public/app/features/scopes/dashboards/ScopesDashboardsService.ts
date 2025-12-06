@@ -7,7 +7,7 @@ import { config, locationService } from '@grafana/runtime';
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
-import { isCurrentPath } from './scopeNavgiationUtils';
+import { buildSubScopePath, isCurrentPath } from './scopeNavgiationUtils';
 import { ScopeNavigation, SuggestedNavigationsFoldersMap, SuggestedNavigationsMap } from './types';
 
 interface ScopesDashboardsServiceState {
@@ -24,6 +24,8 @@ interface ScopesDashboardsServiceState {
   loading: boolean;
   searchQuery: string;
   navigationScope?: string;
+  // Path of subScopes which should be expanded
+  navScopePath?: string[];
 }
 
 export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsServiceState> {
@@ -38,6 +40,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       forScopeNames: [],
       loading: false,
       searchQuery: '',
+      navScopePath: undefined,
     });
 
     // Add/ remove location subscribtion based on the drawer opened state
@@ -57,9 +60,45 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     });
   }
 
+  private openSubScopeFolder = (subScopePath: string[]) => {
+    const subScope = subScopePath[subScopePath.length - 1];
+    const path = buildSubScopePath(subScope, this.state.folders);
+
+    console.log('openSubScopeFolder', subScopePath, path);
+    // Get path to the folder - path can now be undefined
+    if (path && path.length > 0) {
+      this.updateFolder(path, true);
+    }
+  };
+
+  public setNavScopePath = async (navScopePath?: string[]) => {
+    console.log('setNavScopePath', navScopePath);
+    const navScopePathArray = navScopePath ?? [];
+
+    if (!isEqual(navScopePathArray, this.state.navScopePath)) {
+      this.updateState({ navScopePath: navScopePathArray });
+
+      for (const subScope of navScopePathArray) {
+        console.log('setNavScopePath', subScope);
+        // Find the actual path to the folder with this subScopeName
+        const folderPath = buildSubScopePath(subScope, this.state.folders);
+        console.log('folderPath', subScope, folderPath);
+        if (folderPath && folderPath.length > 0) {
+          console.log('setNavScopePath', folderPath);
+          await this.fetchSubScopeItems(folderPath, subScope);
+          this.openSubScopeFolder([subScope]); // This will look up the path again
+        }
+      }
+    }
+  };
+
   // The fallbackScopeNames is used to fetch the ScopeNavigations for the current dashboard when the navigationScope is not set.
   // You only need to awaut this function if you need to wait for the dashboards to be fetched before doing something else.
-  public setNavigationScope = async (navigationScope?: string, fallbackScopeNames?: string[]) => {
+  public setNavigationScope = async (
+    navigationScope?: string,
+    fallbackScopeNames?: string[],
+    navScopePath?: string[]
+  ) => {
     if (this.state.navigationScope === navigationScope) {
       return;
     }
@@ -67,6 +106,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     const forScopeNames = navigationScope ? [navigationScope] : (fallbackScopeNames ?? []);
     this.updateState({ navigationScope, drawerOpened: forScopeNames.length > 0 });
     await this.fetchDashboards(forScopeNames);
+    await this.setNavScopePath(navScopePath);
   };
 
   // Expand the group that matches the current path, if it is not already expanded
