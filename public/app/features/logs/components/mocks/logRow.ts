@@ -5,7 +5,7 @@ import { LogListModel, preProcessLogs, PreProcessOptions } from '../panel/proces
 export const createLogRow = (overrides?: Partial<LogRowModel>): LogRowModel => {
   const uid = overrides?.uid || '1';
   const timeEpochMs = overrides?.timeEpochMs || 1;
-  const entry = overrides?.entry || `log message ${uid}`;
+  const entry = overrides?.entry !== undefined ? overrides?.entry : `log message ${uid}`;
 
   return {
     entryFieldIndex: 0,
