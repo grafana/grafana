@@ -12,8 +12,8 @@ import {
   VizTooltipItem,
 } from '@grafana/ui/internal';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
+import { getFieldActions } from 'app/features/actions/utils';
 
-import { getFieldActions } from '../status-history/utils';
 import { TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
 import { isTooltipScrollable } from '../timeseries/utils';
 

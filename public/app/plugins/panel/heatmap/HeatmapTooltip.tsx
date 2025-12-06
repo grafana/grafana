@@ -25,12 +25,13 @@ import {
   ColorPlacement,
 } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { getFieldActions } from 'app/features/actions/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getDataLinks } from 'app/features/datalinks/utils';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
-import { getDataLinks, getFieldActions } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
 
 import { HeatmapData } from './fields';
