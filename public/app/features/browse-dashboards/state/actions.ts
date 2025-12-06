@@ -5,6 +5,7 @@ import { createAsyncThunk } from 'app/types/store';
 import { listDashboards, listFolders, PAGE_SIZE } from '../api/services';
 import { DashboardViewItemWithUIItems, UIDashboardViewItem } from '../types';
 
+import { setItemSelectionState } from './slice';
 import { findItem } from './utils';
 
 interface FetchNextChildrenPageArgs {
@@ -85,6 +86,69 @@ export const refetchChildren = createAsyncThunk(
       page,
       kind: fetchKind,
     };
+  }
+);
+
+export const selectFolderWithAllDashboards = createAsyncThunk(
+  'browseDashboards/selectFolderWithAllDashboards',
+  async ({ folderUID, isSelected }: { folderUID: string; isSelected: boolean }, { dispatch, getState }) => {
+    const state = getState().browseDashboards;
+
+    // Find the folder item to get its parentUID and managedBy
+    const folderItem = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, folderUID);
+
+    if (!isSelected) {
+      // When deselecting, use the normal action - it will handle deselecting all children recursively
+      dispatch(
+        setItemSelectionState({
+          item: {
+            kind: 'folder',
+            uid: folderUID,
+            parentUID: folderItem?.parentUID,
+            managedBy: folderItem?.managedBy,
+          },
+          isSelected: false,
+        })
+      );
+      return;
+    }
+
+    // When selecting, collect all dashboards recursively
+    const { collectAllDashboardsUnderFolder } = await import('app/features/provisioning/utils/collectFolderDashboards');
+    const dashboardUIDs = await collectAllDashboardsUnderFolder(folderUID);
+
+    // First, select the folder itself
+    dispatch(
+      setItemSelectionState({
+        item: {
+          kind: 'folder',
+          uid: folderUID,
+          parentUID: folderItem?.parentUID,
+          managedBy: folderItem?.managedBy,
+        },
+        isSelected: true,
+      })
+    );
+
+    // Then select all dashboards found
+    // We need to get the parentUID for each dashboard from the state
+    // If a dashboard isn't in state yet, we still need to select it
+    for (const dashboardUID of dashboardUIDs) {
+      const dashboardItem = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, dashboardUID);
+      // Even if dashboard isn't in state, we can still select it by UID
+      // The reducer will handle setting selectedItems.dashboard[dashboardUID] = true
+      dispatch(
+        setItemSelectionState({
+          item: {
+            kind: 'dashboard',
+            uid: dashboardUID,
+            parentUID: dashboardItem?.parentUID ?? folderUID, // Fallback to folderUID if not found
+            managedBy: dashboardItem?.managedBy,
+          },
+          isSelected: true,
+        })
+      );
+    }
   }
 );
 

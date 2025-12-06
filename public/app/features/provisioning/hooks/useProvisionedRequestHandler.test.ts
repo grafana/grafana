@@ -7,9 +7,21 @@ import { ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useProvisionedRequestHandler, RequestHandlers } from './useProvisionedRequestHandler';
 
-jest.mock('@grafana/runtime', () => ({
-  getAppEvents: jest.fn(),
-}));
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    getAppEvents: jest.fn(),
+    config: {
+      ...original.config,
+      bootData: {
+        user: {},
+        settings: {},
+        navTree: [],
+      },
+    },
+  };
+});
 
 jest.mock('@grafana/i18n', () => ({
   t: jest.fn((key: string, defaultValue: string) => defaultValue),

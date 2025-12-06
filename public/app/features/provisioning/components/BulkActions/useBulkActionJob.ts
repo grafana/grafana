@@ -24,7 +24,17 @@ export interface MoveJobSpec {
   };
 }
 
-export type BulkJobSpec = DeleteJobSpec | MoveJobSpec;
+export interface ExportJobSpec {
+  action: 'push';
+  push: {
+    message?: string;
+    branch?: string;
+    path?: string;
+    resources: ResourceRef[];
+  };
+}
+
+export type BulkJobSpec = DeleteJobSpec | MoveJobSpec | ExportJobSpec;
 
 interface UseBulkActionJobResult {
   createBulkJob: (
