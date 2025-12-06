@@ -23,6 +23,7 @@ type StaticRequester struct {
 	OrgRole         RoleType
 	Login           string
 	Name            string
+	Groups          []string
 	Email           string
 	EmailVerified   bool
 	AuthID          string
@@ -113,6 +114,9 @@ func (u *StaticRequester) GetExtra() map[string][]string {
 }
 
 func (u *StaticRequester) GetGroups() []string {
+	if u.Groups != nil {
+		return u.Groups
+	}
 	return []string{}
 }
 
