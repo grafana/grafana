@@ -4791,7 +4791,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "以逗号分隔的值"
         },
@@ -12343,7 +12345,8 @@
         "bar-glow": "",
         "center-glow": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
       "gradient": "",
       "gradient-auto": "",

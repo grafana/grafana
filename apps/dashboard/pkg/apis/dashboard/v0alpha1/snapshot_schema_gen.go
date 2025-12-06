@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaSnapshot = resource.NewSimpleSchema("dashboard.grafana.app", "v0alpha1", &Snapshot{}, &SnapshotList{}, resource.WithKind("Snapshot"),
+	schemaSnapshot = resource.NewSimpleSchema("dashboard.grafana.app", "v0alpha1", NewSnapshot(), &SnapshotList{}, resource.WithKind("Snapshot"),
 		resource.WithPlural("snapshots"), resource.WithScope(resource.NamespacedScope))
 	kindSnapshot = resource.Kind{
 		Schema: schemaSnapshot,
