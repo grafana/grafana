@@ -17,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     auth: {
       disableLogin: false,
+      disableForgotPassword: false,
     },
     loginError: false,
     buildInfo: {
@@ -163,5 +164,22 @@ describe('Login Page', () => {
     expect(alert).toHaveTextContent(
       'You have exceeded the number of login attempts for this user. Please try again later.'
     );
+  });
+
+  it('hides forgot password link when disableForgotPassword is true', () => {
+    runtimeMock.config.auth.disableForgotPassword = true;
+
+    render(<LoginPage />);
+
+    expect(screen.queryByRole('link', { name: 'Forgot your password?' })).not.toBeInTheDocument();
+  });
+
+  it('hides forgot password link when disableLogin is true', () => {
+    runtimeMock.config.auth.disableLogin = true;
+    runtimeMock.config.auth.disableForgotPassword = false;
+
+    render(<LoginPage />);
+
+    expect(screen.queryByRole('link', { name: 'Forgot your password?' })).not.toBeInTheDocument();
   });
 });
