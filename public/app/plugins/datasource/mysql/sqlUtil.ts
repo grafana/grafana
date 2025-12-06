@@ -13,7 +13,10 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
   rawQuery += createSelectClause(sql.columns);
 
   if (dataset && table) {
-    rawQuery += `FROM ${dataset}.${table} `;
+    // Quote dataset and table identifiers when necessary (for example names with hyphens)
+    const ds = quoteIdentifierIfNecessary(dataset);
+    const tbl = quoteIdentifierIfNecessary(table);
+    rawQuery += `FROM ${ds}.${tbl} `;
   }
 
   if (sql.whereString) {
