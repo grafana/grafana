@@ -1283,6 +1283,10 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		return nil, dashboards.ErrDashboardFolderNameExists
 	}
 
+	if dash.FolderUID == folder.GeneralFolderUID {
+		dash.FolderUID = "" // general is the same as root
+	}
+
 	if dash.FolderUID != "" {
 		if _, err := s.dashboardFolderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID); err != nil {
 			return nil, err
@@ -1380,7 +1384,7 @@ func SplitFullpath(s string) []string {
 func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.nestedFolderCreate")
 	defer span.End()
-	if cmd.ParentUID != "" {
+	if !folder.IsRootFolder(cmd.ParentUID) {
 		if err := s.validateParent(ctx, cmd.OrgID, cmd.ParentUID, cmd.UID); err != nil {
 			return nil, err
 		}

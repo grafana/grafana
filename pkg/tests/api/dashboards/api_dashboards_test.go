@@ -1089,13 +1089,13 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 
 		resp, err := postDashboard(t, grafanaListedAddr, "viewer", "viewer", dashboardPayload)
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+		require.Equal(t, http.StatusForbidden, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
 
 		resp, err = postDashboard(t, grafanaListedAddr, "editor", "editor", dashboardPayload)
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
 	})
