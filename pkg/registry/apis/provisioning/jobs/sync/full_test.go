@@ -754,3 +754,124 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 		})
 	}
 }
+
+func TestFullSync_ParentFolderCreationSkipChildren(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-repo",
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Test Repo",
+		},
+	})
+
+	// Set up changes: monitoring folder, infrastructure folder (will fail), cpu-dashboard.json (will fail),
+	// applications folder (will succeed), app-dashboard.json (will succeed)
+	changes := []ResourceFileChange{
+		{
+			Action: repository.FileActionCreated,
+			Path:   "monitoring/infrastructure/cpu-dashboard.json",
+		},
+		{
+			Action: repository.FileActionCreated,
+			Path:   "monitoring/applications/app-dashboard.json",
+		},
+		{
+			Action: repository.FileActionCreated,
+			Path:   "monitoring/infrastructure/",
+		},
+		{
+			Action: repository.FileActionCreated,
+			Path:   "monitoring/applications/",
+		},
+		{
+			Action: repository.FileActionCreated,
+			Path:   "monitoring/",
+		},
+	}
+
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, len(changes)).Return()
+
+	// Track the number of errors recorded via Record() calls
+	var errorCount int64 = 0
+	// TooManyErrors should return an error after 2 errors are recorded
+	progress.On("TooManyErrors").Return(func() error {
+		if atomic.LoadInt64(&errorCount) > 1 {
+			return fmt.Errorf("too many errors")
+		}
+		return nil
+	})
+
+	// Mock folder creation: monitoring/ succeeds
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "monitoring/").
+		Return("monitoring-folder", nil)
+	progress.On("Record", mock.Anything, jobs.JobResourceResult{
+		Action: repository.FileActionCreated,
+		Path:   "monitoring/",
+		Name:   "monitoring-folder",
+		Kind:   "Folder",
+		Group:  "folder.grafana.app",
+	}).Return()
+
+	// Mock folder creation: monitoring/infrastructure/ fails
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "monitoring/infrastructure/").
+		Return("", fmt.Errorf("infrastructure folder creation failed"))
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		if result.Action == repository.FileActionCreated &&
+			result.Path == "monitoring/infrastructure/" &&
+			result.Name == "" &&
+			result.Kind == "Folder" &&
+			result.Group == "folder.grafana.app" &&
+			result.Error != nil &&
+			result.Error.Error() == "ensuring folder exists at path monitoring/infrastructure/: infrastructure folder creation failed" {
+			atomic.AddInt64(&errorCount, 1)
+			return true
+		}
+		return false
+	})).Return()
+
+	// Mock file creation: cpu-dashboard.json fails because parent folder doesn't exist
+	// When WriteResourceFromFile is called, it will try to ensure the folder path exists
+	// Since the parent folder creation failed, this should return FolderAlreadyFailedError
+	// which should be deduplicated and not count toward the error count
+	repoResources.On("WriteResourceFromFile", mock.Anything, "monitoring/infrastructure/cpu-dashboard.json", "").
+		Return("", schema.GroupVersionKind{}, fmt.Errorf("failed to ensure folder path exists: %w", &resources.FolderAlreadyFailedError{Folder: "monitoring/infrastructure"}))
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Action == repository.FileActionCreated &&
+			result.Path == "monitoring/infrastructure/cpu-dashboard.json" &&
+			result.Error == nil
+	})).Return()
+
+	// Mock folder creation: monitoring/applications/ succeeds
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "monitoring/applications/").
+		Return("applications-folder", nil)
+	progress.On("Record", mock.Anything, jobs.JobResourceResult{
+		Action: repository.FileActionCreated,
+		Path:   "monitoring/applications/",
+		Name:   "applications-folder",
+		Kind:   "Folder",
+		Group:  "folder.grafana.app",
+	}).Return()
+
+	// Mock file creation: app-dashboard.json succeeds
+	repoResources.On("WriteResourceFromFile", mock.Anything, "monitoring/applications/app-dashboard.json", "").
+		Return("app-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+	progress.On("Record", mock.Anything, jobs.JobResourceResult{
+		Action: repository.FileActionCreated,
+		Path:   "monitoring/applications/app-dashboard.json",
+		Name:   "app-dashboard",
+		Kind:   "Dashboard",
+		Group:  "dashboards",
+	}).Return()
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	require.NoError(t, err)
+
+}

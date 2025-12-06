@@ -117,3 +117,88 @@ func TestFolderTree(t *testing.T) {
 		}, visited)
 	})
 }
+
+func TestFolderTreeFailedFolders(t *testing.T) {
+	newFid := func(kube, title string) Folder {
+		return Folder{ID: kube, Title: title}
+	}
+
+	t.Run("empty tree with no failed folders", func(t *testing.T) {
+		tree := &folderTree{
+			tree:           make(map[string]string),
+			folders:        make(map[string]Folder),
+			failed_folders: make(map[string]struct{}),
+		}
+
+		assert.False(t, tree.HasFailed("x"), "x should not be marked as failed")
+		assert.False(t, tree.HasFailed(""), "empty folder should not be marked as failed")
+	})
+
+	t.Run("add single failed folder", func(t *testing.T) {
+		tree := &folderTree{
+			tree:           make(map[string]string),
+			folders:        make(map[string]Folder),
+			failed_folders: make(map[string]struct{}),
+		}
+
+		assert.False(t, tree.HasFailed("x"), "x should not be marked as failed initially")
+		tree.AddFailed("x")
+		assert.True(t, tree.HasFailed("x"), "x should be marked as failed after AddFailed")
+	})
+
+	t.Run("add multiple failed folders", func(t *testing.T) {
+		tree := &folderTree{
+			tree:           make(map[string]string),
+			folders:        make(map[string]Folder),
+			failed_folders: make(map[string]struct{}),
+		}
+
+		tree.AddFailed("a")
+		tree.AddFailed("b")
+		tree.AddFailed("c")
+
+		assert.True(t, tree.HasFailed("a"), "a should be marked as failed")
+		assert.True(t, tree.HasFailed("b"), "b should be marked as failed")
+		assert.True(t, tree.HasFailed("c"), "c should be marked as failed")
+		assert.False(t, tree.HasFailed("x"), "x should not be marked as failed")
+	})
+
+	t.Run("failed folders independent of tree structure", func(t *testing.T) {
+		tree := &folderTree{
+			tree: map[string]string{"x": "", "y": "x"},
+			folders: map[string]Folder{
+				"x": newFid("x", "X!"),
+				"y": newFid("y", "Y!"),
+			},
+			failed_folders: make(map[string]struct{}),
+		}
+
+		// Add a folder that exists in the tree
+		tree.AddFailed("x")
+		assert.True(t, tree.HasFailed("x"), "x should be marked as failed")
+		assert.True(t, tree.In("x"), "x should still be in tree")
+
+		// Add a folder that doesn't exist in the tree
+		tree.AddFailed("z")
+		assert.True(t, tree.HasFailed("z"), "z should be marked as failed")
+		assert.False(t, tree.In("z"), "z should not be in tree")
+
+		// Verify other folders are not affected
+		assert.False(t, tree.HasFailed("y"), "y should not be marked as failed")
+		assert.True(t, tree.In("y"), "y should still be in tree")
+	})
+
+	t.Run("add same folder multiple times", func(t *testing.T) {
+		tree := &folderTree{
+			tree:           make(map[string]string),
+			folders:        make(map[string]Folder),
+			failed_folders: make(map[string]struct{}),
+		}
+
+		tree.AddFailed("x")
+		tree.AddFailed("x")
+		tree.AddFailed("x")
+
+		assert.True(t, tree.HasFailed("x"), "x should be marked as failed after multiple AddFailed calls")
+	})
+}

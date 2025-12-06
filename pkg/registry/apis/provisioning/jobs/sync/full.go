@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -134,7 +135,12 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 
 		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
 		if err != nil {
-			result.Error = fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err)
+			// Don't count this error if is a consequence of a previous failure.
+			var folderErr *resources.FolderAlreadyFailedError
+			if !errors.As(err, &folderErr) {
+				result.Error = fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err)
+			}
+
 			ensureFolderSpan.RecordError(err)
 			ensureFolderSpan.End()
 			progress.Record(ctx, result)
@@ -158,7 +164,10 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	}
 	if err != nil {
 		writeSpan.RecordError(err)
-		result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
+		var folderErr *resources.FolderAlreadyFailedError
+		if !errors.As(err, &folderErr) {
+			result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
+		}
 	}
 
 	progress.Record(writeCtx, result)

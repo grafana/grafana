@@ -20,6 +20,14 @@ import (
 
 const MaxNumberOfFolders = 10000
 
+type FolderAlreadyFailedError struct {
+	Folder string
+}
+
+func (e *FolderAlreadyFailedError) Error() string {
+	return fmt.Sprintf("folder %s has failed to be created previously", e.Folder)
+}
+
 type FolderManager struct {
 	repo   repository.ReaderWriter
 	tree   FolderTree
@@ -65,6 +73,10 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return f.ID, nil
 	}
 
+	if fm.tree.HasFailed(f.ID) {
+		return "", &FolderAlreadyFailedError{Folder: f.ID}
+	}
+
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
 		if fm.tree.In(f.ID) {
@@ -73,6 +85,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		}
 
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
+			fm.tree.AddFailed(f.ID)
 			return fmt.Errorf("ensure folder exists: %w", err)
 		}
 

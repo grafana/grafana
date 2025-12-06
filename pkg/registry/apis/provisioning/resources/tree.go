@@ -25,13 +25,16 @@ type FolderTree interface {
 	AddUnstructured(item *unstructured.Unstructured) error
 	Count() int
 	Walk(ctx context.Context, fn WalkFunc) error
+	HasFailed(folder string) bool
+	AddFailed(folder string)
 }
 
 type folderTree struct {
-	tree    map[string]string
-	folders map[string]Folder
-	count   int
-	mu      sync.RWMutex
+	tree           map[string]string
+	folders        map[string]Folder
+	failed_folders map[string]struct{}
+	count          int
+	mu             sync.RWMutex
 }
 
 // In determines if the given folder is in the tree at all. That is, it answers "does the folder even exist in the Grafana instance?"
@@ -40,6 +43,26 @@ func (t *folderTree) In(folder string) bool {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.in(folder)
+}
+
+// HasFailed determines if the given folder has failed to be created previously. Use this check to take different action for already failed folders.
+func (t *folderTree) HasFailed(folder string) bool {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.hasFailed(folder)
+}
+
+func (t *folderTree) hasFailed(folder string) bool {
+	_, ok := t.failed_folders[folder]
+	return ok
+}
+
+// AddFailed adds a folder to the failed folders list. This list contains folders that have failed to be created.
+// It is useful to have this list to avoid retrying the same folder again. It is also useful to have a different error path for already failed folders.
+func (t *folderTree) AddFailed(folder string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.failed_folders[folder] = struct{}{}
 }
 
 func (t *folderTree) in(folder string) bool {
