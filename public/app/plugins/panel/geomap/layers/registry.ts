@@ -26,6 +26,8 @@ export const defaultBaseLayer: MapLayerRegistryItem = {
   id: DEFAULT_BASEMAP_CONFIG.type,
   name: 'Default base layer',
   isBaseMap: true,
+  // Default uses CARTO which requires attribution
+  requiresAttribution: true,
 
   create: (map: OpenLayersMap, options: MapLayerOptions, eventBus: EventBus, theme: GrafanaTheme2) => {
     const serverLayerType = config?.geomapDefaultBaseLayerConfig?.type;
