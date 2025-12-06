@@ -19,7 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/promlib/utils"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) backend.DataResponse {
+// ✅ Added opts converter.Options to function signature
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response, opts converter.Options) backend.DataResponse {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
@@ -32,16 +33,22 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	statusCode := res.StatusCode
 
 	switch {
-	// Status codes that Prometheus might return
-	// so we want to parse the response
-	// https://prometheus.io/docs/prometheus/latest/querying/api/#format-overview
 	case statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices,
 		statusCode == http.StatusBadRequest,
 		statusCode == http.StatusUnprocessableEntity,
 		statusCode == http.StatusServiceUnavailable:
 
 		iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-		r := converter.ReadPrometheusStyleResult(iter, converter.Options{})
+
+		// ✅ Use opts passed in
+		r := converter.ReadPrometheusStyleResult(iter, opts)
+
+		// ✅ If warnings are hidden, clear them from frames
+		if opts.HideWarnings {
+			r.Frames = clearNotices(r.Frames)
+			r.Warnings = nil
+		}
+
 		r.Status = backend.Status(res.StatusCode)
 
 		// Add frame to attach metadata
@@ -58,8 +65,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 					frame.Meta.Custom = make(map[string]any)
 				}
 				if custom, ok := frame.Meta.Custom.(map[string]any); ok {
-					// This is required for incremental querying feature
-					// Knowing the calculated minStep is required for merging and caching the frames on frontend side
+					// Required for incremental querying feature
 					custom["calculatedMinStep"] = q.Step.Milliseconds()
 				}
 			}
@@ -70,8 +76,9 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 
 		return r
+
 	default:
-		// Unknown status code. We don't want to parse the response.
+		// Unknown status code. Do not parse response.
 		const maxBodySize = 1024
 		lr := io.LimitReader(res.Body, maxBodySize)
 		tb, _ := io.ReadAll(lr)
@@ -98,21 +105,14 @@ func (s *QueryData) processExemplars(ctx context.Context, q *models.Query, dr ba
 	sampler := s.exemplarSampler()
 	labelTracker := exemplar.NewLabelTracker()
 
-	// we are moving from a multi-frame response returned
-	// by the converter to a single exemplar frame,
-	// so we need to build a new frame array with the
-	// old exemplar frames filtered out
 	framer := exemplar.NewFramer(sampler, labelTracker)
 
 	for _, frame := range dr.Frames {
-		// we don't need to process non-exemplar frames
-		// so they can be added to the response
 		if !isExemplarFrame(frame) {
 			framer.AddFrame(frame)
 			continue
 		}
 
-		// copy the current exemplar frame metadata
 		framer.SetMeta(frame.Meta)
 		framer.SetRefID(frame.RefID)
 
@@ -158,8 +158,6 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
 		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName}
 	}
 
-	// For heatmap-cells type we don't want to set field name
-	// prometheus native histograms have their own field name structure
 	if frame.Meta.Type == "heatmap-cells" {
 		return
 	}
@@ -170,7 +168,6 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
 	}
 }
 
-// this is based on the logic from the String() function in github.com/prometheus/common/model.go
 func metricNameFromLabels(f *data.Field) string {
 	labels := f.Labels
 	metricName, hasName := labels["__name__"]
@@ -222,7 +219,6 @@ func getName(q *models.Query, field *data.Field) string {
 		legend = string(result)
 	}
 
-	// If legend is empty brackets, use query expression
 	if legend == "{}" {
 		return q.Expr
 	}
@@ -236,6 +232,14 @@ func isExemplarFrame(frame *data.Frame) bool {
 }
 
 func getSeriesLabels(frame *data.Frame) data.Labels {
-	// series labels are stored on the value field (index 1)
 	return frame.Fields[1].Labels.Copy()
+}
+
+func clearNotices(frames data.Frames) data.Frames {
+	for _, f := range frames {
+		if f.Meta != nil {
+			f.Meta.Notices = nil
+		}
+	}
+	return frames
 }
