@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
 
 import { createDataFrame, createTheme, Field, FieldType } from '@grafana/data';
 
@@ -292,7 +292,7 @@ describe('TableNG Cells renderers', () => {
         expect(container.childNodes).toHaveLength(1);
       });
 
-      it('should use AutoCell when attempting to render a field with an unsupported type', () => {
+      it('should use InvalidCell when attempting to render a field with an unsupported type', () => {
         // confirm that a real pill cell has spans.
         const stringField = createField(FieldType.string, ['42']);
         const { container: stringFieldContainer } = renderCell(stringField, { type: TableCellDisplayMode.Pill });
@@ -301,11 +301,12 @@ describe('TableNG Cells renderers', () => {
         expect(stringFieldContainer.querySelector('span')).toBeInTheDocument();
 
         // confirm that number pill cell doesn't actually render a pill cell.
-        const numberField = createField(FieldType.number, [42]);
-        const { container: numberFieldContainer } = renderCell(numberField, { type: TableCellDisplayMode.Pill });
-        expect(numberFieldContainer).toBeInTheDocument();
-        expect(numberFieldContainer.childNodes).toHaveLength(1);
-        expect(numberFieldContainer.querySelector('span')).toBeNull();
+        const objectField = createField(FieldType.other, [{ some: 'object' }]);
+        const { container: objectFieldContainer } = renderCell(objectField, { type: TableCellDisplayMode.Pill });
+        expect(objectFieldContainer).toBeInTheDocument();
+        expect(objectFieldContainer.childNodes).toHaveLength(1);
+        expect(objectFieldContainer.querySelector('span')).toBeNull();
+        expect(screen.getByText('Invalid data for Pill cell')).toBeInTheDocument();
       });
     });
 

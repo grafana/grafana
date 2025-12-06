@@ -9147,6 +9147,7 @@
         }
       },
       "inspect-drawer-title": "Inspect value",
+      "invalid-field": "Invalid data for {{displayMode}} cell",
       "nested-table": {
         "no-data": "No data"
       },

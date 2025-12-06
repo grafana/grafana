@@ -795,6 +795,10 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
       return {
         type: TableCellDisplayMode.Auto,
       };
+    case TableCellDisplayMode.Geo:
+      return {
+        type: TableCellDisplayMode.Auto,
+      };
     default:
       return {
         type: displayMode,
