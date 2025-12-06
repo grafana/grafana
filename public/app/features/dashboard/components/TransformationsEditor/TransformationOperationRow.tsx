@@ -10,6 +10,7 @@ import {
   getFrameMatchers,
   transformDataFrame,
   DataFrame,
+  getTransformationDynamicRefId,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -25,6 +26,7 @@ import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo
 import { TransformationEditor } from './TransformationEditor';
 import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 import { TransformationFilter } from './TransformationFilter';
+import { TransformationOperationRowHeader } from './TransformationOperationRowHeader';
 import { TransformationData } from './TransformationsEditor';
 import { TransformationsEditorTransformation } from './types';
 
@@ -58,6 +60,8 @@ export const TransformationOperationRow = ({
   const [output, setOutput] = useState<DataFrame[]>([]);
   // output of previous transformation
   const [prevOutput, setPrevOutput] = useState<DataFrame[]>([]);
+
+  const dynamicRefId = getTransformationDynamicRefId(uiConfig.id, data.series);
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -153,6 +157,20 @@ export const TransformationOperationRow = ({
     };
   }, [index, data, configs]);
 
+  const renderHeader = () => {
+    return (
+      <TransformationOperationRowHeader
+        index={index}
+        transformation={configs[index].transformation}
+        transformations={configs.map((config) => config.transformation)}
+        transformationTypeName={`${index + 1} - ${uiConfig.name}`}
+        disabled
+        onChange={onChange}
+        dynamicRefId={uiConfig.transformation.usesDynamicRefId ? dynamicRefId : undefined}
+      />
+    );
+  };
+
   const renderActions = () => {
     return (
       <>
@@ -222,10 +240,9 @@ export const TransformationOperationRow = ({
       <QueryOperationRow
         id={id}
         index={index}
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        title={`${index + 1} - ${uiConfig.name}`}
         draggable
         actions={renderActions}
+        headerElement={renderHeader}
         disabled={disabled}
         expanderMessages={{
           close: 'Collapse transformation row',
@@ -241,7 +258,6 @@ export const TransformationOperationRow = ({
             onChange={onChange}
           />
         )}
-
         <TransformationEditor
           input={input}
           output={output}
