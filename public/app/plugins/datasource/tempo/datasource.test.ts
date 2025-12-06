@@ -762,6 +762,18 @@ describe('Tempo service graph view', () => {
     ]);
   });
 
+  it('should escape span with multi line content correctly', () => {
+    const spanContent = [
+      `SELECT * from "my_table"
+      WHERE "data_enabled" = 1
+      ORDER BY "name" ASC`
+    ];
+    let escaped = getEscapedRegexValues(getEscapedValues(spanContent));
+    expect(escaped).toEqual([
+      'SELECT * from \\"my_table\\"\\nWHERE \\"data_enabled\\" = 1\\nORDER BY \\"name\\" ASC',
+    ]);
+  });
+
   it('should get field config correctly', () => {
     let datasourceUid = 's4Jvz8Qnk';
     let tempoDatasourceUid = 'EbPO1fYnz';

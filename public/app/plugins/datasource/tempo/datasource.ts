@@ -1168,7 +1168,7 @@ export function getEscapedRegexValues(values: string[]) {
 }
 
 export function getEscapedValues(values: string[]) {
-  return values.map((value: string) => value.replace(/["\\]/g, '\\$&'));
+  return values.map((value: string) => value.replace(/["\\]/g, '\\$&').replace(/[\n]/g, '\\n'));
 }
 
 export function getFieldConfig(
