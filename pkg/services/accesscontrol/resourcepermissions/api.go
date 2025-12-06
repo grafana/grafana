@@ -304,6 +304,16 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZHandlerRedirect) {
+		err := a.setUserPermissionToK8s(c.Req.Context(), c.Namespace, resourceID, userID, cmd.Permission)
+		if err == nil {
+			return permissionSetResponse(cmd)
+		}
+		logger := log.New("resource-permissions-api")
+		logger.Warn("Failed to set user permission in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+	}
+
 	_, err = a.service.SetUserPermission(c.Req.Context(), c.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
@@ -415,6 +425,16 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZHandlerRedirect) {
+		err := a.setBuiltInRolePermissionToK8s(c.Req.Context(), c.Namespace, resourceID, builtInRole, cmd.Permission)
+		if err == nil {
+			return permissionSetResponse(cmd)
+		}
+		logger := log.New("resource-permissions-api")
+		logger.Warn("Failed to set built-in role permission in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+	}
+
 	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.GetOrgID(), builtInRole, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
@@ -461,6 +481,16 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	cmd := setPermissionsCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data: "+err.Error(), err)
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZHandlerRedirect) {
+		err := a.setResourcePermissionsToK8s(c.Req.Context(), c.Namespace, resourceID, cmd.Permissions)
+		if err == nil {
+			return response.Success("Permissions updated")
+		}
+		logger := log.New("resource-permissions-api")
+		logger.Warn("Failed to set resource permissions in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 	}
 
 	_, err := a.service.SetPermissions(ctx, c.GetOrgID(), resourceID, cmd.Permissions...)
