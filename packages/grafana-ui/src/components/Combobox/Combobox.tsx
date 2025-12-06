@@ -54,8 +54,15 @@ interface ComboboxStaticProps<T extends string | number>
    * */
   width?: number | 'auto';
 
+  /**
+   * Data attribute for testing
+   */
   ['data-testid']?: string;
 
+  /**
+   * Data attribute for pathfinder
+   */
+  ['data-pathfinder']?: string;
   /**
    * Called when the input loses focus.
    */
@@ -139,6 +146,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     maxWidth,
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
+    'data-pathfinder': dataPathfinder,
     autoFocus,
     onBlur,
     disabled,
@@ -395,6 +403,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           placeholder,
           'data-testid': dataTestId,
+          'data-pathfinder': dataPathfinder,
         })}
       />
       <Portal root={portalContainer}>
