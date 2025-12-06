@@ -346,18 +346,28 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 		return nil, dashboards.ErrFolderNotFound
 	}
 
-	uid := hits.Hits[0].Name
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
-	if err != nil {
-		return nil, err
+	// iterate over hits to find a folder that actually exists
+	// this is needed because the search may return folders that were deleted in unified storage but still exist in the search index
+	for _, hit := range hits.Hits {
+		uid := hit.Name
+
+		f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
+		if err != nil {
+			// log the error and continue to the next hit
+			s.log.Error("failed to get folder by title", "title", title, "error", err)
+			continue
+		}
+
+		// found a valid folder
+		return f, nil
 	}
 
-	return f, nil
+	return nil, dashboards.ErrFolderNotFound
 }
 
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
