@@ -242,7 +242,7 @@ describe('ScopesSelectorService', () => {
       await service.filterNode('', '');
       await service.selectScope('test-scope-node');
       await service.apply();
-      await service.removeAllScopes();
+      service.removeAllScopes();
       expect(service.state.appliedScopes).toEqual([]);
     });
 
@@ -250,7 +250,7 @@ describe('ScopesSelectorService', () => {
       await service.filterNode('', '');
       await service.selectScope('test-scope-node');
       await service.apply();
-      await service.removeAllScopes();
+      service.removeAllScopes();
       expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith(undefined);
     });
   });
