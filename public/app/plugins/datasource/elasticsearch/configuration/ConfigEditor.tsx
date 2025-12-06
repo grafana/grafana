@@ -16,6 +16,7 @@ import { Alert, SecureSocksProxySettings, Divider, Stack } from '@grafana/ui';
 
 import { ElasticsearchOptions } from '../types';
 
+import { ApiKeyConfig } from './ApiKeyConfig';
 import { DataLinks } from './DataLinks';
 import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
@@ -48,6 +49,16 @@ export const ConfigEditor = (props: Props) => {
     authProps.selectedMethod = options.jsonData.sigV4Auth ? 'custom-sigv4' : authProps.selectedMethod;
   }
 
+  authProps.customMethods = [
+    {
+      id: 'custom-api-key',
+      label: 'API Key',
+      description: 'API Key authentication',
+      component: <ApiKeyConfig {...props} />,
+    },
+  ];
+  authProps.selectedMethod = options.jsonData.apiKeyAuth ? 'custom-api-key' : authProps.selectedMethod;
+
   return (
     <>
       {options.access === 'direct' && (
@@ -73,6 +84,7 @@ export const ConfigEditor = (props: Props) => {
             jsonData: {
               ...options.jsonData,
               sigV4Auth: method === 'custom-sigv4',
+              apiKeyAuth: method === 'custom-api-key',
               oauthPassThru: method === AuthMethod.OAuthForward,
             },
           });
