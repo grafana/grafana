@@ -7,6 +7,7 @@ import {
   MetricAggregationType,
   MovingAverageModelOption,
 } from './dataquery.gen';
+import type { QueryType } from './types';
 
 export const extendedStats: ExtendedStat[] = [
   { label: 'Avg', value: 'avg' },
@@ -40,6 +41,24 @@ export function defaultMetricAgg(id = '1'): MetricAggregation {
 
 export function defaultBucketAgg(id = '1'): DateHistogram {
   return { type: 'date_histogram', id, settings: { interval: 'auto' } };
+}
+
+export function queryTypeToMetricType(type?: QueryType): MetricAggregation['type'] {
+  if (!type) {
+    return 'count'; // Default fallback
+  }
+
+  switch (type) {
+    case 'logs':
+    case 'raw_data':
+    case 'raw_document':
+      return type;
+    case 'metrics':
+      return 'count';
+    default:
+      // should never happen
+      throw new Error(`invalid query type: ${type}`);
+  }
 }
 
 export const findMetricById = (metrics: MetricAggregation[], id: MetricAggregation['id']) =>
