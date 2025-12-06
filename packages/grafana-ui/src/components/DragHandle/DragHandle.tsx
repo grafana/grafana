@@ -71,6 +71,7 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
 
   const beforeHorizontal = {
     borderTop: '1px solid transparent',
+    width: '100%',
     top: horizontalOffset,
     transform: 'translateY(-50%)',
   };

@@ -3,8 +3,7 @@ import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
 import { useCallback, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -14,7 +13,7 @@ import {
   VizPanel,
   SceneObjectState,
 } from '@grafana/scenes';
-import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
+import { Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
@@ -25,7 +24,7 @@ import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
-import { findSqlExpression, scrollToQueryRow } from './utils';
+import { findSqlExpression, isDataTransformerConfig, scrollToQueryRow } from './utils';
 
 const SET_TIMEOUT = 750;
 
@@ -68,23 +67,19 @@ export class PanelDataTransformationsTab
   }
 }
 
-export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
-  const styles = useStyles2(getStyles);
+export function PanelDataTransformationsTabRendered({
+  model,
+  selectedIdx,
+}: SceneComponentProps<PanelDataTransformationsTab> & { selectedIdx?: number }) {
   const sourceData = model.getQueryRunner().useState();
-  const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
+  const { data, transformations: rawTransformations } = model.getDataTransformer().useState();
 
   // Type guard to ensure transformations are DataTransformerConfig[]
   const transformations = useMemo<DataTransformerConfig[]>(() => {
-    return Array.isArray(transformsWrongType)
-      ? transformsWrongType.filter(
-          (t): t is DataTransformerConfig =>
-            t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
-        )
-      : [];
-  }, [transformsWrongType]);
+    return Array.isArray(rawTransformations) ? rawTransformations.filter(isDataTransformerConfig) : [];
+  }, [rawTransformations]);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
-  const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
@@ -162,46 +157,11 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   return (
     <>
-      <TransformationsEditor data={sourceData.data} transformations={transformations} model={model} />
-      <ButtonGroup>
-        <Button
-          icon="plus"
-          variant="secondary"
-          onClick={openDrawer}
-          data-testid={selectors.components.Transforms.addTransformationButton}
-        >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
-            Add another transformation
-          </Trans>
-        </Button>
-        <Button
-          data-testid={selectors.components.Transforms.removeAllTransformationsButton}
-          className={styles.removeAll}
-          icon="times"
-          variant="secondary"
-          onClick={() => setConfirmModalOpen(true)}
-        >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
-            Delete all transformations
-          </Trans>
-        </Button>
-      </ButtonGroup>
-      <ConfirmModal
-        isOpen={confirmModalOpen}
-        title={t(
-          'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
-          'Delete all transformations?'
-        )}
-        body={t(
-          'dashboard-scene.panel-data-transformations-tab-rendered.body-delete-all-transformations',
-          'By deleting all transformations, you will go back to the main selection screen.'
-        )}
-        confirmText={t('dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all', 'Delete all')}
-        onConfirm={() => {
-          model.onChangeTransformations([]);
-          setConfirmModalOpen(false);
-        }}
-        onDismiss={() => setConfirmModalOpen(false)}
+      <TransformationsEditor
+        data={sourceData.data}
+        transformations={transformations}
+        model={model}
+        selectedIdx={selectedIdx}
       />
       {transformationsDrawer}
     </>
@@ -212,10 +172,12 @@ interface TransformationEditorProps {
   transformations: DataTransformerConfig[];
   model: PanelDataTransformationsTab;
   data: PanelData;
+  selectedIdx?: number;
 }
 
-function TransformationsEditor({ transformations, model, data }: TransformationEditorProps) {
+function TransformationsEditor({ transformations, model, data, selectedIdx }: TransformationEditorProps) {
   const transformationEditorRows = transformations.map((t, i) => ({ id: `${i} - ${t.id}`, transformation: t }));
+  const styles = useStyles2(getStyles);
 
   const onDragEnd = (result: DropResult) => {
     if (!result || !result.destination) {
@@ -234,37 +196,40 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId="transformations-list" direction="vertical">
-        {(provided) => {
-          return (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              <TransformationOperationRows
-                onChange={(index, transformation) => {
-                  const newTransformations = transformations.slice();
-                  newTransformations[index] = transformation;
-                  model.onChangeTransformations(newTransformations);
-                }}
-                onRemove={(index) => {
-                  const newTransformations = transformations.slice();
-                  newTransformations.splice(index, 1);
-                  model.onChangeTransformations(newTransformations);
-                }}
-                configs={transformationEditorRows}
-                data={data}
-              ></TransformationOperationRows>
-              {provided.placeholder}
-            </div>
-          );
-        }}
-      </Droppable>
-    </DragDropContext>
+    <div className={styles.container}>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="transformations-list" direction="vertical">
+          {(provided) => {
+            return (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                <TransformationOperationRows
+                  onChange={(index, transformation) => {
+                    const newTransformations = transformations.slice();
+                    newTransformations[index] = transformation;
+                    model.onChangeTransformations(newTransformations);
+                  }}
+                  onRemove={(index) => {
+                    const newTransformations = transformations.slice();
+                    newTransformations.splice(index, 1);
+                    model.onChangeTransformations(newTransformations);
+                  }}
+                  configs={transformationEditorRows}
+                  data={data}
+                  selectedIdx={selectedIdx}
+                ></TransformationOperationRows>
+                {provided.placeholder}
+              </div>
+            );
+          }}
+        </Droppable>
+      </DragDropContext>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  removeAll: css({
-    marginLeft: theme.spacing(2),
+  container: css({
+    padding: theme.spacing(2),
   }),
 });
 

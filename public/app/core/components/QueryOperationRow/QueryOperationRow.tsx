@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
+import { clsx } from 'clsx';
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { useUpdateEffect } from 'react-use';
@@ -24,6 +25,8 @@ export interface QueryOperationRowProps {
   collapsable?: boolean;
   disabled?: boolean;
   expanderMessages?: ExpanderMessages;
+  hideHeader?: boolean;
+  className?: string;
 }
 
 export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
@@ -48,9 +51,11 @@ export function QueryOperationRow({
   index,
   id,
   expanderMessages,
+  hideHeader = false,
+  className,
 }: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
-  const styles = useStyles2(getQueryOperationRowStyles);
+  const styles = useStyles2(getQueryOperationRowStyles, hideHeader);
   const onRowToggle = useCallback(() => {
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
@@ -112,23 +117,25 @@ export function QueryOperationRow({
         {(provided) => {
           return (
             <>
-              <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
-                <div>
-                  <QueryOperationRowHeader
-                    id={id}
-                    actionsElement={actionsElement}
-                    disabled={disabled}
-                    draggable
-                    collapsable={collapsable}
-                    dragHandleProps={provided.dragHandleProps}
-                    headerElement={headerElementRendered}
-                    isContentVisible={isContentVisible}
-                    onRowToggle={onRowToggle}
-                    reportDragMousePosition={reportDragMousePosition}
-                    title={title}
-                    expanderMessages={expanderMessages}
-                  />
-                </div>
+              <div ref={provided.innerRef} className={clsx(styles.wrapper, className)} {...provided.draggableProps}>
+                {!hideHeader && (
+                  <div>
+                    <QueryOperationRowHeader
+                      id={id}
+                      actionsElement={actionsElement}
+                      disabled={disabled}
+                      draggable
+                      collapsable={collapsable}
+                      dragHandleProps={provided.dragHandleProps}
+                      headerElement={headerElementRendered}
+                      isContentVisible={isContentVisible}
+                      onRowToggle={onRowToggle}
+                      reportDragMousePosition={reportDragMousePosition}
+                      title={title}
+                      expanderMessages={expanderMessages}
+                    />
+                  </div>
+                )}
                 {isContentVisible && <div className={styles.content}>{children}</div>}
               </div>
             </>
@@ -139,33 +146,35 @@ export function QueryOperationRow({
   }
 
   return (
-    <div className={styles.wrapper}>
-      <QueryOperationRowHeader
-        id={id}
-        actionsElement={actionsElement}
-        disabled={disabled}
-        draggable={false}
-        collapsable={collapsable}
-        headerElement={headerElementRendered}
-        isContentVisible={isContentVisible}
-        onRowToggle={onRowToggle}
-        reportDragMousePosition={reportDragMousePosition}
-        title={title}
-        expanderMessages={expanderMessages}
-      />
+    <div className={clsx(styles.wrapper, className)}>
+      {!hideHeader && (
+        <QueryOperationRowHeader
+          id={id}
+          actionsElement={actionsElement}
+          disabled={disabled}
+          draggable={false}
+          collapsable={collapsable}
+          headerElement={headerElementRendered}
+          isContentVisible={isContentVisible}
+          onRowToggle={onRowToggle}
+          reportDragMousePosition={reportDragMousePosition}
+          title={title}
+          expanderMessages={expanderMessages}
+        />
+      )}
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>
   );
 }
 
-const getQueryOperationRowStyles = (theme: GrafanaTheme2) => {
+const getQueryOperationRowStyles = (theme: GrafanaTheme2, hideHeader?: boolean) => {
   return {
     wrapper: css({
       marginBottom: theme.spacing(2),
     }),
     content: css({
-      marginTop: theme.spacing(0.5),
-      marginLeft: theme.spacing(3),
+      marginTop: hideHeader ? 0 : theme.spacing(0.5),
+      marginLeft: hideHeader ? 0 : theme.spacing(3),
     }),
   };
 };

@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, VizPanel } from '@grafana/scenes';
-import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { SceneComponentProps } from '@grafana/scenes';
+import { Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
@@ -13,16 +14,19 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
+import { PanelDataSidebar, SidebarSize, SidebarState } from './PanelDataPane/PanelDataSidebar';
 import { PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
+import { useHorizontalResize, useVerticalResize } from './hooks';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getWrapperStyles);
   const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  const [containerRef, { height: containerHeight }] = useMeasure<HTMLDivElement>();
 
   const isScrollingLayout = useScrollReflowLimit();
 
@@ -44,7 +48,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   }, [splitterState.collapsed, setIsCollapsed]);
 
   return (
-    <>
+    <div style={{ height: '100%' }} ref={containerRef}>
       <NavToolbarActions dashboard={dashboard} />
       <div
         {...containerProps}
@@ -52,7 +56,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
         data-testid={selectors.components.PanelEditor.General.content}
       >
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
-          <VizAndDataPane model={model} />
+          <VizAndDataPane model={model} containerHeight={Math.max(containerHeight, 500)} />
         </div>
         <div {...splitterProps} />
         <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>
@@ -75,144 +79,149 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           {!splitterState.collapsed && !optionsPane && <Spinner />}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
-function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
+function VizAndDataPane({
+  model,
+  containerHeight = 800,
+}: SceneComponentProps<PanelEditor> & { containerHeight?: number }) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal, tableView } = model.useState();
   const panel = model.getPanel();
   const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
-  const styles = useStyles2(getStyles);
+  const [sidebarState, setSidebarState] = useState<SidebarState>({ size: SidebarSize.Mini, collapsed: false });
+
+  const styles = useStyles2(getStyles, sidebarState);
 
   const isScrollingLayout = useScrollReflowLimit();
 
-  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
-    useSnappingSplitter({
-      direction: 'column',
-      dragPosition: 'start',
-      initialSize: 0.5,
-      collapseBelowPixels: 150,
-      disabled: isScrollingLayout,
-    });
+  // drag-resize hooks
+  const {
+    handleRef: sidebarHandleRef,
+    width: sidebarWidth,
+    className: sidebarResizerClassName,
+  } = useHorizontalResize({
+    initialWidth: 285,
+    minWidth: 285,
+    maxWidth: 380,
+  });
+  const {
+    handleRef: vizHandleRef,
+    height: vizHeight,
+    className: vizResizerClassName,
+  } = useVerticalResize({
+    initialHeight: Math.max(containerHeight / 2, 200),
+    minHeight: 200,
+    maxHeight: containerHeight - 80,
+  });
 
-  containerProps.className = cx(containerProps.className, styles.container);
+  const gridStyles = useMemo(() => {
+    const rows = [];
+    const grid = [];
 
-  if (!dataPane && !isScrollingLayout) {
-    primaryProps.style.flexGrow = 1;
+    if (controls) {
+      rows.push('32px');
+      grid.push(['controls', 'controls']);
+    }
+
+    grid.push(['viz', 'viz']);
+    rows.push(`${vizHeight}px`);
+
+    if (dataPane) {
+      rows.push('auto');
+      grid.push(['sidebar', 'data-pane']);
+      if (sidebarState.size === SidebarSize.Full) {
+        for (let i = 0; i < grid.length; i++) {
+          grid[i][0] = 'sidebar';
+        }
+      }
+    }
+
+    return {
+      height: containerHeight,
+      maxHeight: containerHeight,
+      gridTemplateAreas: '\n' + grid.map((row) => `"${row.join(' ')}"`).join('\n'),
+      gridTemplateRows: rows.map((r) => r).join(' '),
+    };
+  }, [controls, dataPane, sidebarState.size, vizHeight, containerHeight]);
+
+  if (!containerHeight) {
+    return null;
   }
 
   return (
-    <div className={cx(styles.pageContainer, controls && styles.pageContainerWithControls)}>
+    <div className={styles.pageContainer} style={gridStyles}>
       {controls && (
         <div className={styles.controlsWrapper}>
           <controls.Component model={controls} />
         </div>
       )}
-      <div {...containerProps}>
-        <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
-          <VizWrapper panel={panel} tableView={tableView} />
-        </div>
-        {showLibraryPanelSaveModal && libraryPanel && (
-          <SaveLibraryVizPanelModal
-            libraryPanel={libraryPanel}
-            onDismiss={model.onDismissLibraryPanelSaveModal}
-            onConfirm={model.onConfirmSaveLibraryPanel}
-            onDiscard={model.onDiscard}
-          ></SaveLibraryVizPanelModal>
-        )}
-        {showLibraryPanelUnlinkModal && libraryPanel && (
-          <UnlinkModal
-            onDismiss={model.onDismissUnlinkLibraryPanelModal}
-            onConfirm={model.onConfirmUnlinkLibraryPanel}
-            isOpen
+
+      <div
+        className={cx(styles.viz, isScrollingLayout && styles.fixedSizeViz)}
+        style={{ height: vizHeight, maxHeight: containerHeight - 80 }}
+      >
+        {tableView ? <tableView.Component model={tableView} /> : <panel.Component model={panel} />}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, width: '100%' }}>
+          <div
+            style={{ height: 2, width: '100%' }}
+            ref={vizHandleRef}
+            className={vizResizerClassName}
+            data-testid="viz-resizer"
           />
-        )}
-        {dataPane && (
-          <>
-            <div {...splitterProps} />
-            <div
-              {...secondaryProps}
-              className={cx(secondaryProps.className, isScrollingLayout && styles.fullSizeEditor)}
-            >
-              {splitterState.collapsed && (
-                <div className={styles.expandDataPane}>
-                  <Button
-                    tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
-                    icon={'arrow-to-right'}
-                    onClick={onToggleCollapse}
-                    variant="secondary"
-                    size="sm"
-                    className={styles.openDataPaneButton}
-                    aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
-                  />
-                </div>
-              )}
-              {!splitterState.collapsed && <dataPane.Component model={dataPane} />}
-            </div>
-          </>
-        )}
+        </div>
       </div>
+
+      {dataPane && (
+        <>
+          <div className={cx(styles.dataPane, isScrollingLayout && styles.fullSizeEditor)}>
+            <dataPane.Component model={dataPane} />
+          </div>
+
+          <div className={styles.sidebar} style={{ width: sidebarWidth }}>
+            <PanelDataSidebar model={dataPane} sidebarState={sidebarState} setSidebarState={setSidebarState} />
+            <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, height: '100%' }}>
+              <div
+                style={{ height: '100%', width: 2 }}
+                ref={sidebarHandleRef}
+                className={sidebarResizerClassName}
+                data-testid="sidebar-resizer"
+              />
+            </div>
+          </div>
+        </>
+      )}
+      {showLibraryPanelSaveModal && libraryPanel && (
+        <SaveLibraryVizPanelModal
+          libraryPanel={libraryPanel}
+          onDismiss={model.onDismissLibraryPanelSaveModal}
+          onConfirm={model.onConfirmSaveLibraryPanel}
+          onDiscard={model.onDiscard}
+        ></SaveLibraryVizPanelModal>
+      )}
+      {showLibraryPanelUnlinkModal && libraryPanel && (
+        <UnlinkModal
+          onDismiss={model.onDismissUnlinkLibraryPanelModal}
+          onConfirm={model.onConfirmUnlinkLibraryPanel}
+          isOpen
+        />
+      )}
     </div>
   );
 }
 
-interface VizWrapperProps {
-  panel: VizPanel;
-  tableView?: VizPanel;
-}
-
-function VizWrapper({ panel, tableView }: VizWrapperProps) {
-  const styles = useStyles2(getStyles);
-  const panelToShow = tableView ?? panel;
-
-  return (
-    <div className={styles.vizWrapper}>
-      <panelToShow.Component model={panelToShow} />
-    </div>
-  );
-}
-
-function getStyles(theme: GrafanaTheme2) {
+function getWrapperStyles(theme: GrafanaTheme2) {
   const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
   return {
-    pageContainer: css({
-      display: 'grid',
-      gridTemplateAreas: `
-        "panels"`,
-      gridTemplateColumns: `1fr`,
-      gridTemplateRows: '1fr',
-      height: '100%',
-      [scrollReflowMediaQuery]: {
-        gridTemplateColumns: `100%`,
-      },
-    }),
-    pageContainerWithControls: css({
-      gridTemplateAreas: `
-        "controls"
-        "panels"`,
-      gridTemplateRows: 'auto 1fr',
-    }),
-    container: css({
-      gridArea: 'panels',
-      height: '100%',
-    }),
-    canvasContent: css({
-      label: 'canvas-content',
-      display: 'flex',
-      flexDirection: 'column',
-      flexBasis: '100%',
-      flexGrow: 1,
-      minHeight: 0,
-      width: '100%',
-    }),
     content: css({
       position: 'absolute',
       width: '100%',
       height: '100%',
       overflow: 'unset',
+      paddingTop: theme.spacing(2),
       [scrollReflowMediaQuery]: {
         height: 'auto',
         display: 'grid',
@@ -234,7 +243,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
-      marginTop: theme.spacing(2),
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderTopLeftRadius: theme.shape.radius.default,
     }),
@@ -243,36 +251,61 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       padding: theme.spacing(2, 1),
     }),
-    expandDataPane: css({
-      display: 'flex',
-      flexDirection: 'row',
-      padding: theme.spacing(1),
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
-      flexGrow: 1,
-      justifyContent: 'space-around',
-    }),
     rotate180: css({
       rotate: '180deg',
     }),
+  };
+}
+
+function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
+  const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
+  return {
+    pageContainer: css({
+      display: 'grid',
+      gap: theme.spacing(2),
+      gridTemplateColumns: `auto 1fr`,
+      overflow: 'hidden',
+      [scrollReflowMediaQuery]: {
+        gridTemplateColumns: `100%`,
+      },
+    }),
+    sidebar: css({
+      gridArea: 'sidebar',
+      overflow: 'visible',
+      position: 'relative',
+      ...(sidebarState.size === SidebarSize.Mini && {
+        paddingLeft: theme.spacing(2),
+      }),
+    }),
+    viz: css({
+      gridArea: 'viz',
+      overflow: 'visible',
+      height: '100%',
+      minHeight: 100,
+      position: 'relative',
+      ...(sidebarState.size === SidebarSize.Mini && {
+        paddingLeft: theme.spacing(2),
+      }),
+    }),
+    dataPane: css({
+      gridArea: 'data-pane',
+      overflow: 'hidden',
+    }),
     controlsWrapper: css({
+      gridArea: 'controls',
       display: 'flex',
       flexDirection: 'column',
-      flexGrow: 0,
-      gridArea: 'controls',
+      ...(sidebarState.size === SidebarSize.Mini && {
+        paddingLeft: theme.spacing(2),
+      }),
     }),
+
     openDataPaneButton: css({
       width: theme.spacing(8),
       justifyContent: 'center',
       svg: {
         rotate: '-90deg',
       },
-    }),
-    vizWrapper: css({
-      height: '100%',
-      width: '100%',
-      paddingLeft: theme.spacing(2),
     }),
     fixedSizeViz: css({
       height: '100vh',
