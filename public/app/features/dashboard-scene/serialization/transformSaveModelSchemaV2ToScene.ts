@@ -72,6 +72,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
+import { RecommendedDrilldownsBehavior } from '../scene/RecommendedDrilldownsBehavior';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
@@ -235,6 +236,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
         addPanelsOnLoadBehavior,
+        new RecommendedDrilldownsBehavior({
+          enableRecommendations: config.featureToggles.drilldownRecommendations,
+        }),
         new DashboardReloadBehavior({
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
@@ -331,6 +335,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       baseFilters: variable.spec.baseFilters ?? [],
       defaultKeys: variable.spec.defaultKeys,
       useQueriesAsFilterForOptions: true,
+      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
@@ -458,6 +463,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       skipUrlSync: variable.spec.skipUrlSync,
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
+      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       // @ts-expect-error
       defaultOptions: variable.options,
     });

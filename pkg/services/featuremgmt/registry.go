@@ -601,6 +601,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "drilldownRecommendations",
+			Description:  "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "perPanelNonApplicableDrilldowns",
 			Description:  "Enables viewing non-applicable drilldowns on a panel level",
 			Stage:        FeatureStageExperimental,
