@@ -4811,7 +4811,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Valori separati da virgola"
         },
@@ -5824,14 +5826,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Torna all'elenco",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Elimina",
       "description-color-annotation-event-markers": "Colore da utilizzare per gli indicatori degli eventi di annotazione",
       "description-enabled-annotation-query-issued-every-dashboard": "Se abilitata, la query di annotazione viene emessa a ogni aggiornamento della dashboard",
-      "description-hidden": "Le query di annotazione possono essere attivate o disattivate nella parte superiore della dashboard. Se questa opzione è selezionata, il toggle verrà nascosto.",
+      "label-annotation-controls-display": "",
       "label-color": "Colore",
       "label-data-source": "Sorgente dati",
       "label-enabled": "Abilitato",
-      "label-hidden": "Nascosto",
       "label-name": "Nome",
       "label-show-in": "Mostra in",
       "placeholder-choose-panels": "Scegli i pannelli",
@@ -5887,6 +5901,7 @@
       "label-open-link-in-new-tab": "Apri link in un nuova scheda",
       "label-options": "Opzioni",
       "label-show-as-dropdown": "Mostra come menu a discesa",
+      "label-show-in-controls-menu": "",
       "label-title": "Titolo",
       "label-tooltip": "Suggerimento",
       "label-type": "Tipo",
@@ -6448,6 +6463,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Modulo di modifica delle variabili",
       "back-to-list": "Torna all'elenco",
@@ -6762,8 +6796,8 @@
       "test": "Prova"
     },
     "cloud-info-box": {
-      "body-alert": "Oppure puoi ignorare tutto e utilizzare {{mainDS}} (e {{extraDS}}) come origini dei dati completamente gestite, scalabili e ospitate da Grafana Labs con il <6>piano Grafana Cloud gratuito per sempre</6>.",
-      "title-alert": "Configura la tua origine dei dati {{mainDS}} qui sotto"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Elimina dashboard",
@@ -12364,7 +12398,8 @@
         "bar-glow": "",
         "center-glow": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
       "gradient": "",
       "gradient-auto": "",

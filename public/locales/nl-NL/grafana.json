@@ -4811,7 +4811,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Waarden gescheiden door komma"
         },
@@ -5824,14 +5826,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Terug naar lijst",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Verwijderen",
       "description-color-annotation-event-markers": "Te gebruiken kleur voor het markeren van gebeurtenisannotaties",
       "description-enabled-annotation-query-issued-every-dashboard": "Wanneer ingeschakeld, wordt de annotatiequery elke dashboardvernieuwing uitgegeven",
-      "description-hidden": "Annotatiequery's kunnen bovenaan het dashboard worden in- of uitgeschakeld. Als deze optie is aangevinkt, wordt deze schakelaar verborgen.",
+      "label-annotation-controls-display": "",
       "label-color": "Kleur",
       "label-data-source": "Gegevensbron",
       "label-enabled": "Ingeschakeld",
-      "label-hidden": "Verborgen",
       "label-name": "Naam",
       "label-show-in": "Weergeven in",
       "placeholder-choose-panels": "Panelen kiezen",
@@ -5887,6 +5901,7 @@
       "label-open-link-in-new-tab": "Koppeling openen in nieuw tabblad",
       "label-options": "Opties",
       "label-show-as-dropdown": "Weergeven als dropdown",
+      "label-show-in-controls-menu": "",
       "label-title": "Titel",
       "label-tooltip": "Tooltip",
       "label-type": "Type",
@@ -6448,6 +6463,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulier variabele bewerker",
       "back-to-list": "Terug naar lijst",
@@ -6762,8 +6796,8 @@
       "test": "Testen"
     },
     "cloud-info-box": {
-      "body-alert": "Of bespaar je de moeite en krijg {{mainDS}} (en {{extraDS}}) als volledig beheerde, schaalbare en gehoste gegevensbronnen van Grafana Labs met het <6>altijd gratis Grafana Cloud-abonnement</6>.",
-      "title-alert": "Configureer hieronder je gegevensbron voor {{mainDS}}"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Dashboard verwijderen",
@@ -12364,7 +12398,8 @@
         "bar-glow": "",
         "center-glow": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
       "gradient": "",
       "gradient-auto": "",

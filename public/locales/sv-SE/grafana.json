@@ -4811,7 +4811,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Värden åtskilda med kommatecken"
         },
@@ -5824,14 +5826,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Tillbaka till listan",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Ta bort",
       "description-color-annotation-event-markers": "Färg som ska användas för kommentarshändelsemarkörer",
       "description-enabled-annotation-query-issued-every-dashboard": "När aktiverat utfärdas kommentarsfrågan vid varje uppdatering av instrumentpanelen",
-      "description-hidden": "Frågor om kommentarer kan aktiveras eller inaktiveras högst upp på instrumentpanelen. Med det här alternativet markerat kommer denna växel att döljas.",
+      "label-annotation-controls-display": "",
       "label-color": "Färg",
       "label-data-source": "Datakälla",
       "label-enabled": "Aktiverad",
-      "label-hidden": "Dolt",
       "label-name": "Namn",
       "label-show-in": "Visa i",
       "placeholder-choose-panels": "Välj paneler",
@@ -5887,6 +5901,7 @@
       "label-open-link-in-new-tab": "Öppna länken i en ny flik",
       "label-options": "Alternativ",
       "label-show-as-dropdown": "Visa som rullgardinsmeny",
+      "label-show-in-controls-menu": "",
       "label-title": "Titel",
       "label-tooltip": "Verktygstips",
       "label-type": "Typ",
@@ -6448,6 +6463,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulär för variabelsredigering",
       "back-to-list": "Tillbaka till listan",
@@ -6762,8 +6796,8 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "Eller hoppa över ansträngningen och få {{mainDS}} (och {{extraDS}}) som fullt hanterade, skalbara och värdbaserade datakällor från Grafana Labs med <6>Grafana Cloud-prenumerationen gratis för alltid</6>.",
-      "title-alert": "Konfigurera din {{mainDS}}-datakälla nedan"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Ta bort instrumentpanel",
@@ -12364,7 +12398,8 @@
         "bar-glow": "",
         "center-glow": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
       "gradient": "",
       "gradient-auto": "",

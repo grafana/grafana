@@ -4811,7 +4811,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Werte werden durch Komma getrennt"
         },
@@ -5824,14 +5826,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Zurück zur Liste",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Löschen",
       "description-color-annotation-event-markers": "Farbe, die für Ereignismarkierungen von Anmerkungen verwendet werden soll",
       "description-enabled-annotation-query-issued-every-dashboard": "Wenn dies aktiviert ist, wird bei jeder Aktualisierung des Dashboards eine Anmerkungsabfrage ausgegeben",
-      "description-hidden": "Anmerkungsabfragen können im oberen Bereich des Dashboards ein- oder ausgeschaltet werden. Wenn diese Option aktiviert ist, wird dieser Schalter ausgeblendet.",
+      "label-annotation-controls-display": "",
       "label-color": "Farbe",
       "label-data-source": "Datenquelle",
       "label-enabled": "Aktiviert",
-      "label-hidden": "Ausgeblendet",
       "label-name": "Name",
       "label-show-in": "Anzeigen in",
       "placeholder-choose-panels": "Panels auswählen",
@@ -5887,6 +5901,7 @@
       "label-open-link-in-new-tab": "Link in neuem Tab öffnen",
       "label-options": "Optionen",
       "label-show-as-dropdown": "Als Dropdown anzeigen",
+      "label-show-in-controls-menu": "",
       "label-title": "Titel",
       "label-tooltip": "Tooltip",
       "label-type": "Typ",
@@ -6448,6 +6463,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variablen-Editor-Formular",
       "back-to-list": "Zurück zur Liste",
@@ -6762,8 +6796,8 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "Oder sparen Sie sich den Aufwand und erhalten Sie {{mainDS}} (und {{extraDS}}) als vollständig verwaltete, skalierbare und gehostete Datenquellen von Grafana Labs – mit dem <6>jederzeit kostenlosen Grafana-Cloud-Plan</6>.",
-      "title-alert": "Konfigurieren Sie unten Ihre {{mainDS}} Datenquelle"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Dashboard löschen",
@@ -12364,7 +12398,8 @@
         "bar-glow": "",
         "center-glow": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
       "gradient": "",
       "gradient-auto": "",
