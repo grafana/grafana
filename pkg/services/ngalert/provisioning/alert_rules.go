@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -407,6 +408,9 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 	if err := models.ValidateRuleGroupInterval(intervalSeconds, service.baseIntervalSeconds); err != nil {
 		return err
 	}
+	if err := service.ensureNamespace(ctx, user, user.GetOrgID(), namespaceUID); err != nil {
+		return err
+	}
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		query := &models.ListAlertRulesQuery{
 			OrgID:         user.GetOrgID(),
@@ -468,6 +472,10 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 
 func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user identity.Requester, group models.AlertRuleGroup, provenance models.Provenance, versionMessage string) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
+		return err
+	}
+
+	if err := service.ensureNamespace(ctx, user, user.GetOrgID(), group.FolderUID); err != nil {
 		return err
 	}
 
@@ -1025,6 +1033,7 @@ func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) e
 
 // ensureNamespace ensures that the rule has a valid namespace UID.
 // If the rule does not have a namespace UID or the namespace (folder) does not exist it will return an error.
+// If the folder is managed by a manager, it will also return an error.
 func (service *AlertRuleService) ensureNamespace(ctx context.Context, user identity.Requester, orgID int64, namespaceUID string) error {
 	if namespaceUID == "" {
 		return fmt.Errorf("%w: folderUID must be set", models.ErrAlertRuleFailedValidation)
@@ -1037,7 +1046,7 @@ func (service *AlertRuleService) ensureNamespace(ctx context.Context, user ident
 	}
 
 	// ensure the namespace exists
-	_, err := service.folderService.Get(ctx, &folder.GetFolderQuery{
+	f, err := service.folderService.Get(ctx, &folder.GetFolderQuery{
 		OrgID:        orgID,
 		UID:          &namespaceUID,
 		SignedInUser: user,
@@ -1047,6 +1056,11 @@ func (service *AlertRuleService) ensureNamespace(ctx context.Context, user ident
 			return fmt.Errorf("%w: folder does not exist", models.ErrAlertRuleFailedValidation)
 		}
 		return err
+	}
+
+	// check if the folder is managed by a manager
+	if f != nil && f.ManagedBy != utils.ManagerKindUnknown {
+		return fmt.Errorf("%w: folder is managed by %s", models.ErrAlertRuleFailedValidation, f.ManagedBy)
 	}
 
 	return nil
