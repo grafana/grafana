@@ -709,6 +709,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
   "version": 1,
+  "weekStart": "",
 }
 `;
 
