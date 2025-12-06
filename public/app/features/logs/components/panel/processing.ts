@@ -364,7 +364,7 @@ export function getNormalizedFieldName(field: string) {
   if (field === LOG_LINE_BODY_FIELD_NAME) {
     return t('logs.log-line-details.log-line-field', 'Log line');
   } else if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
-    return t('logs.log-line-details.log-attributes-field', 'OTel attributes');
+    return t('logs.log-line-details.log-attributes-field', 'Log attributes');
   }
   return field;
 }
