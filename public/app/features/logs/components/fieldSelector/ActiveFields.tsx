@@ -21,22 +21,6 @@ interface Props {
 export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFields, toggle }: Props) => {
   const styles = useStyles2(getLogsFieldsStyles);
 
-  const onDragEnd = useCallback(
-    (result: DropResult) => {
-      if (!result.destination) {
-        return;
-      }
-      const newActiveFields = [...activeFields];
-      const element = activeFields[result.source.index];
-
-      newActiveFields.splice(result.source.index, 1);
-      newActiveFields.splice(result.destination.index, 0, element);
-
-      reorder(newActiveFields);
-    },
-    [activeFields, reorder]
-  );
-
   const active = useMemo(
     () => [
       ...activeFields
@@ -46,6 +30,55 @@ export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFi
         .filter((field) => field !== undefined),
     ],
     [activeFields, fields, suggestedFields]
+  );
+
+  const onDragEnd = useCallback(
+    (result: DropResult) => {
+      if (!result.destination) {
+        return;
+      }
+
+      // Get the field names from the active array (what's actually rendered)
+      // The indices in result are based on the active array, not activeFields
+      const sourceFieldName = active[result.source.index]?.name;
+      if (!sourceFieldName) {
+        return;
+      }
+
+      // Create a new array with the reordered fields
+      const newActiveFields = [...activeFields];
+
+      // Find the actual index of the source field in activeFields
+      const sourceIndexInActiveFields = newActiveFields.indexOf(sourceFieldName);
+      if (sourceIndexInActiveFields === -1) {
+        return;
+      }
+
+      // Remove the source field from its current position
+      const [movedField] = newActiveFields.splice(sourceIndexInActiveFields, 1);
+
+      // Find where to insert it based on the destination in the active array
+      const destFieldName = active[result.destination.index]?.name;
+      if (destFieldName) {
+        // Find the destination field in activeFields
+        const destIndexInActiveFields = newActiveFields.indexOf(destFieldName);
+        if (destIndexInActiveFields !== -1) {
+          // If dragging down, insert after; if dragging up, insert before
+          const insertIndex =
+            result.source.index < result.destination.index ? destIndexInActiveFields + 1 : destIndexInActiveFields;
+          newActiveFields.splice(insertIndex, 0, movedField);
+        } else {
+          // Destination field not found in activeFields (shouldn't happen), append
+          newActiveFields.push(movedField);
+        }
+      } else {
+        // No destination field, append
+        newActiveFields.push(movedField);
+      }
+
+      reorder(newActiveFields);
+    },
+    [activeFields, active, reorder]
   );
 
   const suggested = useMemo(
