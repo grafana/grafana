@@ -66,7 +66,7 @@ You can use a service account to run automated workloads in Grafana, such as das
 A service account is not the same as a Grafana [user](/docs/grafana/latest/administration/user-management/). The role of a service account is primarily to automate work using the Grafana API.
 
 {{< admonition type="note" >}}
-Service accounts replace [API keys](ref:migrate-api-keys) as the primary way to authenticate applications that interact with Grafana.
+Service accounts replace [API keys](ref:migrate-api-keys) as the primary way to authenticate applications that interact with Grafana. Service accounts are **not** charged as active users in Grafana Enterprise or Grafana Cloud, so you can set up automation without incurring additional costs.
 {{< /admonition >}}
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
