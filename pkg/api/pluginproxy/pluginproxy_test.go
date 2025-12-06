@@ -61,7 +61,7 @@ func TestPluginProxy(t *testing.T) {
 					Req: httpReq,
 				},
 			},
-			&setting.Cfg{SendUserHeader: true},
+			&setting.Cfg{DataProxy: setting.DataProxySettings{SendUserHeader: true}},
 			route,
 		)
 
@@ -86,7 +86,7 @@ func TestPluginProxy(t *testing.T) {
 					Req: httpReq,
 				},
 			},
-			&setting.Cfg{SendUserHeader: true},
+			&setting.Cfg{DataProxy: setting.DataProxySettings{SendUserHeader: true}},
 			nil,
 		)
 
@@ -110,7 +110,7 @@ func TestPluginProxy(t *testing.T) {
 					Req: httpReq,
 				},
 			},
-			&setting.Cfg{SendUserHeader: false},
+			&setting.Cfg{DataProxy: setting.DataProxySettings{SendUserHeader: false}},
 			nil,
 		)
 		// Get will return empty string even if header is not set
@@ -131,7 +131,7 @@ func TestPluginProxy(t *testing.T) {
 					Req: httpReq,
 				},
 			},
-			&setting.Cfg{SendUserHeader: true},
+			&setting.Cfg{DataProxy: setting.DataProxySettings{SendUserHeader: true}},
 			nil,
 		)
 
@@ -164,7 +164,7 @@ func TestPluginProxy(t *testing.T) {
 					Req: httpReq,
 				},
 			},
-			&setting.Cfg{SendUserHeader: true},
+			&setting.Cfg{DataProxy: setting.DataProxySettings{SendUserHeader: true}},
 			route,
 		)
 		assert.Equal(t, "https://dynamic.grafana.com", req.URL.String())
@@ -192,7 +192,7 @@ func TestPluginProxy(t *testing.T) {
 					Req: httpReq,
 				},
 			},
-			&setting.Cfg{SendUserHeader: true},
+			&setting.Cfg{DataProxy: setting.DataProxySettings{SendUserHeader: true}},
 			route,
 		)
 		assert.Equal(t, "https://example.com", req.URL.String())
@@ -230,7 +230,7 @@ func TestPluginProxy(t *testing.T) {
 					Req: httpReq,
 				},
 			},
-			&setting.Cfg{SendUserHeader: true},
+			&setting.Cfg{DataProxy: setting.DataProxySettings{SendUserHeader: true}},
 			route,
 		)
 		content, err := io.ReadAll(req.Body)

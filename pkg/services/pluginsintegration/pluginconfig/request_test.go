@@ -191,7 +191,7 @@ func TestRequestConfigProvider_PluginRequestConfig_appURL(t *testing.T) {
 func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 	t.Run("Uses the configured values", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		cfg.DataProxyRowLimit = 23
+		cfg.DataProxy = setting.DataProxySettings{RowLimit: 23}
 		cfg.SqlDatasourceMaxOpenConnsDefault = 24
 		cfg.SqlDatasourceMaxIdleConnsDefault = 25
 		cfg.SqlDatasourceMaxConnLifetimeDefault = 26
