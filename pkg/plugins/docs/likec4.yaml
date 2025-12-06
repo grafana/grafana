@@ -1,0 +1,9 @@
+languageId: likec4
+title: Grafana Plugin System
+specification:
+  - _spec.c4
+model:
+  - model.c4
+views:
+  - views.c4
+
