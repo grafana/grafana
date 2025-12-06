@@ -767,6 +767,7 @@ func convertQueryVariableSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQuer
 	out.SkipUrlSync = in.SkipUrlSync
 	out.Description = in.Description
 	out.Regex = in.Regex
+	out.RegexApplyTo = (*dashv2beta1.DashboardVariableRegexApplyTo)(in.RegexApplyTo)
 	out.Sort = dashv2beta1.DashboardVariableSort(in.Sort)
 	out.Definition = in.Definition
 	out.Options = convertVariableOptions_V2alpha1_to_V2beta1(in.Options)

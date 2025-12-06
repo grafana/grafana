@@ -366,6 +366,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       sort: transformSortVariableToEnumV1(variable.spec.sort),
       refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
       regex: variable.spec.regex,
+      regexApplyTo: variable.spec.regexApplyTo,
       allValue: variable.spec.allValue || undefined,
       includeAll: variable.spec.includeAll,
       defaultToAll: Boolean(variable.spec.includeAll),

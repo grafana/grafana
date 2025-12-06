@@ -293,6 +293,7 @@ export const handyTestingSchema: Spec = {
         },
         refresh: 'onDashboardLoad',
         regex: 'regex1',
+        regexApplyTo: 'value',
         skipUrlSync: false,
         sort: 'disabled',
         allowCustomValue: true,
