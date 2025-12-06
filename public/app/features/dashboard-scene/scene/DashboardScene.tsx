@@ -1,6 +1,6 @@
 import * as H from 'history';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import { CoreApp, DataQueryRequest, locationUtil, NavIndex, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
@@ -32,7 +32,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardMeta, KioskMode, SaveDashboardResponseDTO, DashboardDTO } from 'app/types/dashboard';
+import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
@@ -325,10 +325,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: t('dashboard-scene.dashboard-scene.title.discard-changes-to-dashboard', 'Discard changes to dashboard?'),
-        text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
+        title: t('dashboard-scene.dashboard-scene.title.unsaved-changes', 'Unsaved changes'),
+        text: t('dashboard-scene.dashboard-scene.title.save-changes-question', 'Do you want to save your changes?'),
         icon: 'trash-alt',
+        altActionText: 'Save dashboard',
+        yesButtonVariant: 'destructive',
         yesText: 'Discard',
+        noText: 'Cancel',
+        onAltAction: () => {
+          this.openSaveDrawer({});
+        },
         onConfirm: () => {
           this.exitEditModeConfirmed();
         },
