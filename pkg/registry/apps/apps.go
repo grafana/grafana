@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
+	"github.com/grafana/grafana/pkg/registry/apps/history"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -42,6 +43,7 @@ func ProvideAppInstallers(
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
 	annotationAppInstaller *annotation.AnnotationAppInstaller,
 	exampleAppInstaller *example.ExampleAppInstaller,
+	historyAppInstaller *history.AppInstaller,
 	advisorAppInstaller *advisor.AdvisorAppInstaller,
 	alertingHistorianAppInstaller *historian.AlertingHistorianAppInstaller,
 ) []appsdkapiserver.AppInstaller {
@@ -49,6 +51,7 @@ func ProvideAppInstallers(
 		playlistAppInstaller,
 		pluginsApplInstaller,
 		exampleAppInstaller,
+		historyAppInstaller,
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {

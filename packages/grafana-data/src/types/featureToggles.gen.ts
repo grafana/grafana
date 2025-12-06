@@ -261,6 +261,10 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
+  * Adds support for Kubernetes query history
+  */
+  kubernetesHistory?: boolean;
+  /**
   * Adds support for Kubernetes logs drilldown
   */
   kubernetesLogsDrilldown?: boolean;
