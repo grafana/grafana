@@ -16,6 +16,11 @@ jest.mock('@grafana/runtime', () => ({
       dashboardNewLayouts: true,
     },
   },
+  getDataSourceSrv: () => ({
+    getInstanceSettings: () => {
+      return { apiVersion: 'v1', meta: { multiValueFilterOperators: true } };
+    },
+  }),
 }));
 
 // mock useSaveDashboardMutation
@@ -72,7 +77,7 @@ describe('dashboard tracking', () => {
         isScene: true,
         tabCount: 4,
         rowCount: 2,
-        templateVariableCount: 2,
+        templateVariableCount: 4,
         maxNestingLevel: 3,
         panel_type_timeseries_count: 6,
         panels_count: 6,
@@ -89,6 +94,22 @@ describe('dashboard tracking', () => {
         uid: 'dashboard-test',
         variable_type_custom_count: 1,
         variable_type_query_count: 1,
+        variable_type_datasource_count: 1,
+        variable_type_adhoc_count: 1,
+        varsWithDataSource: [
+          {
+            datasource: 'cloudwatch',
+            type: 'query',
+          },
+          {
+            datasource: 'opensearch',
+            type: 'adhoc',
+          },
+          {
+            datasource: 'bigquery',
+            type: 'datasource',
+          },
+        ],
         hasEditPermissions: true,
         hasSavePermissions: true,
       });
