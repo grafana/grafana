@@ -1,0 +1,30 @@
+{
+  "components": {
+    "simplePanel": {
+      "options": {
+        "showSeriesCount": "Número de series: {{numberOfSeries}}",
+        "textOptionValue": "Valor de opción de texto: {{optionValue}}"
+      }
+    }
+  },
+  "panel": {
+    "options": {
+      "seriesCountSize": {
+        "name": "Tamaño del contador de series",
+        "options": {
+          "lg": "Grande",
+          "md": "Mediano",
+          "sm": "Pequeño"
+        }
+      },
+      "showSeriesCount": {
+        "name": "Mostrar contador de series"
+      },
+      "text": {
+        "defaultValue": "Valor predeterminado de la opción de entrada de texto",
+        "description": "Descripción de la opción del panel",
+        "name": "Opción de texto simple"
+      }
+    }
+  }
+}
