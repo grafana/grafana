@@ -31,7 +31,7 @@ interface Options {
  */
 export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Options = {}): {
   state: State;
-  ref: RefObject<T>;
+  ref: RefObject<T | null>;
 } {
   const isMounted = useMountedState();
   const isPanning = useRef(false);

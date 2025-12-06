@@ -7,7 +7,7 @@ const CAUGHT_KEYS = ['ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter', 'Tab'];
 
 /** @internal */
 export interface UseListFocusProps {
-  localRef: RefObject<HTMLUListElement>;
+  localRef: RefObject<HTMLUListElement | null>;
   options: TimeOption[];
 }
 

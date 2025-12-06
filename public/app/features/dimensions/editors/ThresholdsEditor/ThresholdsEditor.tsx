@@ -25,7 +25,7 @@ interface State {
 }
 
 export class ThresholdsEditor extends PureComponent<Props, State> {
-  private latestThresholdInputRef: React.RefObject<HTMLInputElement>;
+  private latestThresholdInputRef: React.RefObject<HTMLInputElement | null>;
 
   constructor(props: Props) {
     super(props);
