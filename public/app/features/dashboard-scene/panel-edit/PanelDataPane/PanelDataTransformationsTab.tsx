@@ -25,7 +25,7 @@ import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
-import { findSqlExpression, scrollToQueryRow } from './utils';
+import { scrollToQueryRow } from './utils';
 
 const SET_TIMEOUT = 750;
 
@@ -100,23 +100,21 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
       return;
     }
 
-    const queries = queriesTab.getQueries();
-    const existingSqlQuery = findSqlExpression(queries);
-
-    if (!existingSqlQuery) {
-      // Create new SQL expression
-      queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
-    }
+    // Always create a new SQL expression (it will be added to the end of the queries array)
+    queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
 
     // Navigate to the Queries tab
     parent.onChangeTab(queriesTab);
 
-    // Scroll to SQL query after tab renders
+    // Scroll to the newly created SQL query after tab renders
     setTimeout(() => {
-      // If SQL already existed, use it; otherwise find the newly created one
-      const targetRefId = existingSqlQuery?.refId || findSqlExpression(queriesTab.getQueries())?.refId;
-      if (targetRefId) {
-        scrollToQueryRow(targetRefId);
+      const queries = queriesTab.getQueries();
+      // The newly added query is the last one in the array
+      if (queries.length > 0) {
+        const newQuery = queries[queries.length - 1];
+        if (newQuery?.refId) {
+          scrollToQueryRow(newQuery.refId);
+        }
       }
     }, SET_TIMEOUT);
   }, [model]);
