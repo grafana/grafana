@@ -34,17 +34,17 @@ composableKinds: PanelCfg: {
 					vertical?:   VerticalConstraint
 				} @cuetsy(kind="interface")
 
-				Placement: {
-					top?:    float64
-					left?:   float64
-					right?:  float64
-					bottom?: float64
+			Placement: {
+				top?:    ui.PositionDimensionConfig
+				left?:   ui.PositionDimensionConfig
+				right?:  ui.PositionDimensionConfig
+				bottom?: ui.PositionDimensionConfig
 
-					width?:  float64
-					height?: float64
+				width?:  ui.PositionDimensionConfig
+				height?: ui.PositionDimensionConfig
 
-					rotation?: float64
-				} @cuetsy(kind="interface")
+				rotation?: ui.ScalarDimensionConfig
+			} @cuetsy(kind="interface")
 
 				BackgroundImageSize: "original" | "contain" | "cover" | "fill" | "tile" @cuetsy(kind="enum", memberNames="Original|Contain|Cover|Fill|Tile")
 				BackgroundConfig: {

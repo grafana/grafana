@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { ScalarDimensionMode, PositionDimensionMode } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
@@ -101,11 +102,11 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
       },
     },
     placement: {
-      width: options?.placement?.width ?? 160,
-      height: options?.placement?.height ?? 138,
-      top: options?.placement?.top,
-      left: options?.placement?.left,
-      rotation: options?.placement?.rotation ?? 0,
+      width: options?.placement?.width ?? { fixed: 160, mode: PositionDimensionMode.Fixed },
+      height: options?.placement?.height ?? { fixed: 138, mode: PositionDimensionMode.Fixed },
+      top: options?.placement?.top ?? { fixed: 0, mode: PositionDimensionMode.Fixed },
+      left: options?.placement?.left ?? { fixed: 0, mode: PositionDimensionMode.Fixed },
+      rotation: options?.placement?.rotation ?? { fixed: 0, min: 0, max: 360, mode: ScalarDimensionMode.Clamped },
     },
     links: options?.links ?? [],
   }),

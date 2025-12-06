@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { PositionDimensionConfig, PositionDimensionMode } from '@grafana/schema';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { QuickPlacement } from 'app/features/canvas/types';
@@ -11,13 +12,24 @@ import { HorizontalConstraint, VerticalConstraint, Placement } from '../../panel
 import { CanvasEditorOptions } from './elementEditor';
 
 type Props = {
-  onPositionChange: (value: number | undefined, placement: keyof Placement) => void;
+  onPositionChange: (value: PositionDimensionConfig | undefined, placement: keyof Placement) => void;
   element: ElementState;
   settings: CanvasEditorOptions;
 };
 
 export const QuickPositioning = ({ onPositionChange, element, settings }: Props) => {
   const styles = useStyles2(getStyles);
+
+  // Helper to get numeric value from PositionDimensionConfig
+  const getPositionValue = (config: PositionDimensionConfig | undefined): number => {
+    return config?.fixed ?? 0;
+  };
+
+  // Helper to create a fixed PositionDimensionConfig
+  const fixedPosition = (value: number): PositionDimensionConfig => ({
+    fixed: value,
+    mode: PositionDimensionMode.Fixed,
+  });
 
   const onQuickPositioningChange = (position: QuickPlacement) => {
     const defaultConstraint = { vertical: VerticalConstraint.Top, horizontal: HorizontalConstraint.Left };
@@ -26,24 +38,27 @@ export const QuickPositioning = ({ onPositionChange, element, settings }: Props)
     element.options.constraint = defaultConstraint;
     element.setPlacementFromConstraint();
 
+    const height = getPositionValue(element.options.placement?.height);
+    const width = getPositionValue(element.options.placement?.width);
+
     switch (position) {
       case QuickPlacement.Top:
-        onPositionChange(0, 'top');
+        onPositionChange(fixedPosition(0), 'top');
         break;
       case QuickPlacement.Bottom:
-        onPositionChange(getRightBottomPosition(element.options.placement?.height ?? 0, 'bottom'), 'top');
+        onPositionChange(fixedPosition(getRightBottomPosition(height, 'bottom')), 'top');
         break;
       case QuickPlacement.VerticalCenter:
-        onPositionChange(getCenterPosition(element.options.placement?.height ?? 0, 'v'), 'top');
+        onPositionChange(fixedPosition(getCenterPosition(height, 'v')), 'top');
         break;
       case QuickPlacement.Left:
-        onPositionChange(0, 'left');
+        onPositionChange(fixedPosition(0), 'left');
         break;
       case QuickPlacement.Right:
-        onPositionChange(getRightBottomPosition(element.options.placement?.width ?? 0, 'right'), 'left');
+        onPositionChange(fixedPosition(getRightBottomPosition(width, 'right')), 'left');
         break;
       case QuickPlacement.HorizontalCenter:
-        onPositionChange(getCenterPosition(element.options.placement?.width ?? 0, 'h'), 'left');
+        onPositionChange(fixedPosition(getCenterPosition(width, 'h')), 'left');
         break;
     }
 

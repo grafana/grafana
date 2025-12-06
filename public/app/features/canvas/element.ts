@@ -81,6 +81,12 @@ export interface CanvasElementProps<TConfig = unknown, TData = unknown> {
   isSelected?: boolean;
 }
 
+/** Simple numeric size for element defaults - not persisted, just for initial sizing */
+export interface DefaultElementSize {
+  width?: number;
+  height?: number;
+}
+
 /**
  * Canvas item builder
  *
@@ -89,7 +95,7 @@ export interface CanvasElementProps<TConfig = unknown, TData = unknown> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryItem {
   /** The default width/height to use when adding  */
-  defaultSize?: Placement;
+  defaultSize?: DefaultElementSize;
 
   prepareData?: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<TConfig>) => TData;
 

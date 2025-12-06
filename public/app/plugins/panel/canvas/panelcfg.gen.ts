@@ -32,13 +32,13 @@ export interface Constraint {
 }
 
 export interface Placement {
-  bottom?: number;
-  height?: number;
-  left?: number;
-  right?: number;
-  rotation?: number;
-  top?: number;
-  width?: number;
+  bottom?: ui.PositionDimensionConfig;
+  height?: ui.PositionDimensionConfig;
+  left?: ui.PositionDimensionConfig;
+  right?: ui.PositionDimensionConfig;
+  rotation?: ui.ScalarDimensionConfig;
+  top?: ui.PositionDimensionConfig;
+  width?: ui.PositionDimensionConfig;
 }
 
 export enum BackgroundImageSize {
