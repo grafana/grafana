@@ -34,6 +34,7 @@ export default {
   updatedAt: '2021-08-25T15:03:49.000Z',
   version: '4.2.2',
   error: undefined,
+  insights: { id: 1, name: 'alexanderzobnin-zabbix-app', version: '4.2.2', insights: [] },
   details: {
     grafanaDependency: '>=8.0.0',
     pluginDependencies: [],
@@ -381,6 +382,7 @@ export const datasourcePlugin = {
   angularDetected: false,
   isFullyInstalled: true,
   latestVersion: '1.20.0',
+  insights: { id: 2, name: 'grafana-redshift-datasource', version: '1.20.0', insights: [] },
   details: {
     grafanaDependency: '>=8.0.0',
     pluginDependencies: [],
