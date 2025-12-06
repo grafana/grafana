@@ -273,7 +273,7 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
-const rootFolder = "general"
+const rootFolder = foldermodel.GeneralFolderUID
 
 var errEmptyResults = fmt.Errorf("empty results")
 

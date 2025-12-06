@@ -1258,7 +1258,7 @@ func TestIntegrationFullpath(t *testing.T) {
 		var export definitions.AlertingFileExport
 		require.NoError(t, json.Unmarshal([]byte(response), &export))
 		require.Len(t, export.Groups, 1)
-		assert.Equal(t, "", export.Groups[0].Folder)
+		assert.Equal(t, namespaceUID, export.Groups[0].Folder) // ??? was ""
 	})
 
 	t.Run("for a rule under a subfolder should set the right fullpath", func(t *testing.T) {

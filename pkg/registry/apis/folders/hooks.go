@@ -14,6 +14,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,7 +30,7 @@ func (b *FolderAPIBuilder) beginCreate(ctx context.Context, obj runtime.Object, 
 		return nil, err
 	}
 
-	if meta.GetFolder() == "" {
+	if meta.GetFolder() == folder.GeneralFolderUID {
 		// Zanzana only cares about parent-child folder relationships; nothing to do if folder is at root.
 		log.Info("Skipping Zanzana folder propagation for new root-level folder", "folder", meta.GetName())
 		return func(ctx context.Context, success bool) {}, nil
