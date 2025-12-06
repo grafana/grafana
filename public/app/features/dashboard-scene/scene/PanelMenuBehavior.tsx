@@ -1,3 +1,5 @@
+import { Subscription } from 'rxjs';
+
 import {
   getTimeZone,
   InterpolateFunction,
@@ -8,7 +10,6 @@ import {
   PluginExtensionLink,
   PluginExtensionPanelContext,
   PluginExtensionPoints,
-  PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -25,9 +26,7 @@ import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
-import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
-import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
+import { getObservablePluginLinks } from 'app/features/plugins/extensions/getPluginExtensions';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -45,18 +44,6 @@ import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
-let getPluginExtensions: GetPluginExtensions;
-
-function setupGetPluginExtensions() {
-  if (getPluginExtensions) {
-    return getPluginExtensions;
-  }
-
-  getPluginExtensions = createPluginExtensionsGetter(pluginExtensionRegistries);
-
-  return getPluginExtensions;
-}
-
 // Define the category for metrics drilldown links
 const METRICS_DRILLDOWN_CATEGORY = 'metrics-drilldown';
 
@@ -64,6 +51,8 @@ const METRICS_DRILLDOWN_CATEGORY = 'metrics-drilldown';
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
  */
 export function panelMenuBehavior(menu: VizPanelMenu) {
+  let extensionsSubscription: Subscription;
+
   const asyncFunc = async () => {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -300,20 +289,32 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    setupGetPluginExtensions();
-
-    const { extensions } = getPluginExtensions({
+    // Extensions
+    // --------------
+    extensionsSubscription = getObservablePluginLinks({
       extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
       context: createExtensionContext(panel, dashboard),
       limitPerPlugin: 3,
-    });
+    }).subscribe((extensions) => {
+      console.log('EXTENSIONS 1', extensions);
+      if (dashboard.state.isEditing) {
+        return;
+      }
 
-    if (extensions.length > 0 && !dashboard.state.isEditing) {
-      const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
+      const updatedItems = [...(menu.state.items ?? [])];
+      const metricsDrilldownText = t(
+        'dashboard-scene.panel-menu-behavior.async-func.text.metrics-drilldown',
+        'Metrics drilldown'
+      );
+      const extensionsText = t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions');
+      const metricsDrilldownItem = updatedItems.find((item) => item.text === metricsDrilldownText);
+      const extensionsItem = updatedItems.find((item) => item.text === extensionsText);
+      const extensionsItemIndex = extensionsItem ? updatedItems.indexOf(extensionsItem) : -1;
+      const metricsDrilldownItemIndex = metricsDrilldownItem ? updatedItems.indexOf(metricsDrilldownItem) : -1;
 
       // Separate metrics drilldown links from other links
-      const [metricsDrilldownLinks, otherLinks] = linkExtensions.reduce<[PluginExtensionLink[], PluginExtensionLink[]]>(
-        ([metricsDrilldownLinks, otherLinks], link) => {
+      const [metricsDrilldownLinks, otherLinks] = extensions.reduce<[PluginExtensionLink[], PluginExtensionLink[]]>(
+        ([metricsDrilldownLinks, otherLinks], link: PluginExtensionLink) => {
           if (link.category === METRICS_DRILLDOWN_CATEGORY) {
             metricsDrilldownLinks.push(link);
           } else {
@@ -324,26 +325,46 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         [[], []]
       );
 
-      // Add specific "Metrics drilldown" menu
       if (metricsDrilldownLinks.length > 0) {
-        items.push({
-          text: t('dashboard-scene.panel-menu-behavior.async-func.text.metrics-drilldown', 'Metrics drilldown'),
+        const newMetricsDrilldownItem: PanelMenuItem = {
+          text: metricsDrilldownText,
           iconClassName: 'code-branch',
           type: 'submenu',
           subMenu: createExtensionSubMenu(metricsDrilldownLinks),
-        });
+        };
+
+        // Replace existing menu item
+        if (metricsDrilldownItemIndex >= 0) {
+          updatedItems[metricsDrilldownItemIndex] = newMetricsDrilldownItem;
+          // Add new item
+        } else {
+          updatedItems.push(newMetricsDrilldownItem);
+        }
       }
 
-      // Add generic "Extensions" menu for other links
+      // Nit: this code does not take care of reactively removing the extensions submenu,
+      // in case all the related extensions would be removed from the registry during runtime.
       if (otherLinks.length > 0) {
-        items.push({
-          text: t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions'),
+        const newExtensionsItem: PanelMenuItem = {
+          text: extensionsText,
           iconClassName: 'plug',
           type: 'submenu',
           subMenu: createExtensionSubMenu(otherLinks),
-        });
+        };
+
+        // Replace existing menu item
+        if (extensionsItemIndex >= 0) {
+          updatedItems[extensionsItemIndex] = newExtensionsItem;
+          // Add new item
+        } else {
+          updatedItems.push(newExtensionsItem);
+        }
       }
-    }
+
+      console.log('EXTENSIONS 2', updatedItems);
+
+      menu.setState({ items: updatedItems });
+    });
 
     if (moreSubMenu.length) {
       items.push({
@@ -378,6 +399,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
   };
 
   asyncFunc();
+
+  // Deactivation
+  return () => {
+    extensionsSubscription.unsubscribe();
+  };
 }
 
 async function getExploreMenuItem(panel: VizPanel): Promise<PanelMenuItem | undefined> {
