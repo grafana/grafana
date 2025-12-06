@@ -65,4 +65,28 @@ describe('dashboard utils', () => {
 
     expect(url).toBe('/dashboard/new?orgId=1&filter=A');
   });
+
+  it('should remove time params (from/to) when set to null in updateQuery', () => {
+    const url = getDashboardUrl({
+      uid: 'dash-1',
+      currentQueryParams: '?orgId=1&from=2024-01-01T00:00:00Z&to=2024-01-01T06:00:00Z&theme=dark',
+      updateQuery: { from: null, to: null },
+    });
+
+    expect(url).toBe('/d/dash-1?orgId=1&theme=dark');
+    expect(url).not.toContain('from=');
+    expect(url).not.toContain('to=');
+  });
+
+  it('should remove time params even when other params are present', () => {
+    const url = getDashboardUrl({
+      uid: 'dash-1',
+      currentQueryParams: '?orgId=1&from=now-6h&to=now&var-datasource=prometheus',
+      updateQuery: { from: null, to: null },
+    });
+
+    expect(url).toBe('/d/dash-1?orgId=1&var-datasource=prometheus');
+    expect(url).not.toContain('from=');
+    expect(url).not.toContain('to=');
+  });
 });
