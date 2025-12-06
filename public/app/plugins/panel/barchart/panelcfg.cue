@@ -48,12 +48,18 @@ composableKinds: PanelCfg: {
 					xTickLabelSpacing?: int32 | *0
 					// Controls whether bars are stacked or not, either normally or in percent mode.
 					stacking: common.StackingMode & (*"none" | _)
+					// Controls whether clusters are stacked or not
+					isClusteredStacked: bool | *false
 					// This controls whether values are shown on top or to the left of bars.
 					showValue: common.VisibilityMode & (*"auto" | _)
 					// Controls the width of bars. 1 = Max width, 0 = Min width.
 					barWidth: float64 & >=0 & <=1 | *0.97
 					// Controls the width of groups. 1 = max with, 0 = min width.
 					groupWidth: float64 & >=0 & <=1 | *0.7
+					// Controls the width of the clusters. 1= max width, 0 = min width.
+					clusterWidth: float64 & >=0 & <=1 | *0.7
+					// What field is being grouped by.
+					groupByField?: string | *""
 					// Enables mode which highlights the entire bar area and shows tooltip when cursor
 					// hovers over highlighted area
 					fullHighlight: bool | *false
