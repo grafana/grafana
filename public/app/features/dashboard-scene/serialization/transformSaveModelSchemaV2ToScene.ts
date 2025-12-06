@@ -60,6 +60,7 @@ import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
   getDashboardComponentInteractionCallback,
+  isPanelProfilingEnabled,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardMeta } from 'app/types/dashboard';
 
@@ -184,7 +185,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   // Create profiler once and reuse to avoid duplicate metadata setting
   const dashboardProfiler = getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title);
 
+  // Check if profiling should be enabled (global toggle or config)
   const enableProfiling =
+    isPanelProfilingEnabled() ||
     config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1;
   const queryController = new behaviors.SceneQueryController(
     {
