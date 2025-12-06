@@ -7,8 +7,9 @@ type OpenTsdbQuery struct {
 }
 
 type OpenTsdbCommon struct {
-	Metric string            `json:"metric"`
-	Tags   map[string]string `json:"tags"`
+	Metric        string            `json:"metric"`
+	Tags          map[string]string `json:"tags"`
+	AggregateTags []string          `json:"aggregateTags"`
 }
 
 type OpenTsdbResponse struct {
