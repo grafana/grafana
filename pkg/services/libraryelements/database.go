@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -122,6 +123,20 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 			return model.LibraryElementDTO{}, model.ErrLibraryElementInvalidUID
 		} else if util.IsShortUIDTooLong(createUID) {
 			return model.LibraryElementDTO{}, model.ErrLibraryElementUIDTooLong
+		}
+	}
+
+	if cmd.FolderUID != nil {
+		f, err := l.folderService.Get(c, &folder.GetFolderQuery{
+			OrgID:        signedInUser.GetOrgID(),
+			UID:          cmd.FolderUID,
+			SignedInUser: signedInUser,
+		})
+		if err != nil {
+			return model.LibraryElementDTO{}, err
+		}
+		if f.ManagedBy == utils.ManagerKindRepo {
+			return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
 		}
 	}
 
