@@ -4782,6 +4782,8 @@
       "remove": "Remove {{typeName}}",
       "row-title": "Change row title",
       "switch-layout": "Switch layout",
+      "switch-layout-row": "Switch layout",
+      "switch-layout-tab": "Switch layout",
       "tab-title": "Change tab title"
     },
     "edit-pane": {
