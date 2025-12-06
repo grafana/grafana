@@ -7234,9 +7234,9 @@
             "type": "elasticsearch",
             "uid": "gdev-elasticsearch"
           },
-          "baseFilters": null,
+          "baseFilters": [],
           "filters": [],
-          "defaultKeys": null,
+          "defaultKeys": [],
           "hide": "dontHide",
           "skipUrlSync": false,
           "allowCustomValue": true
