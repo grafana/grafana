@@ -33,6 +33,7 @@ import {
   MockDataSourceSrv,
 } from './mocks/useCorrelations.mocks';
 import { Correlation, CreateCorrelationParams, OmitUnion } from './types';
+import { useCorrelations } from './useCorrelations';
 
 // Set app events up, otherwise plugin modules will fail to load
 setAppEvents(appEvents);
@@ -110,9 +111,17 @@ const renderWithContext = async (
 
   setDataSourceSrv(dsServer);
 
+  const { remove, get } = useCorrelations();
+
   const renderResult = render(
     <TestProvider store={configureStore({})} grafanaContext={grafanaContext}>
-      <CorrelationsPage />
+      <CorrelationsPage
+        fetchCorrelations={get.execute}
+        correlations={get.value}
+        isLoading={get.loading}
+        error={get.error}
+        removeFn={remove.execute}
+      />
     </TestProvider>,
     {
       queries: {
