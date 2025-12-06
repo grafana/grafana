@@ -58,6 +58,7 @@ export function ScopesDashboardsTree({ subScope, folders, folderPath, onFolderUp
           to={urlUtil.renderUrl(navigation.url, queryParams)}
           title={navigation.title}
           id={navigation.id}
+          folderPath={folderPath}
         />
       ))}
 

@@ -1,5 +1,4 @@
 import { Location } from 'history';
-import { Subject } from 'rxjs';
 
 import { config, locationService } from '@grafana/runtime';
 
@@ -7,7 +6,12 @@ import { ScopesApiClient } from '../ScopesApiClient';
 // Import mock data for subScope tests
 import { navigationWithSubScope, navigationWithSubScope2, navigationWithSubScopeAndGroups } from '../tests/utils/mocks';
 
-import { ScopesDashboardsService, filterItemsWithSubScopesInPath } from './ScopesDashboardsService';
+import {
+  ScopesDashboardsService,
+  filterItemsWithSubScopesInPath,
+  serializeFolderPath,
+  deserializeFolderPath,
+} from './ScopesDashboardsService';
 import { ScopeNavigation } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -20,10 +24,7 @@ jest.mock('@grafana/runtime', () => ({
   },
   locationService: {
     getLocation: jest.fn(),
-    // Mock getLocationObservable to return a mock observable
-    getLocationObservable: jest.fn().mockReturnValue({
-      subscribe: jest.fn(),
-    }),
+    partial: jest.fn(),
   },
 }));
 
@@ -71,101 +72,6 @@ describe('ScopesDashboardsService', () => {
 
       // Verify that the folder is expanded because the current dashboard ID matches
       expect(service.state.folders[''].folders['group1'].expanded).toBe(true);
-    });
-
-    it('should expand folder when location changes and matches a navigation URL', async () => {
-      config.featureToggles.useScopesNavigationEndpoint = true;
-
-      // Mock initial location
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
-
-      const mockNavigations: ScopeNavigation[] = [
-        {
-          spec: {
-            scope: 'scope1',
-            url: '/test-url',
-          },
-          status: {
-            title: 'Test URL',
-            groups: ['group1'],
-          },
-          metadata: {
-            name: 'url1',
-          },
-        },
-      ];
-
-      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
-
-      // Set up mock observable to emit location changes
-      const locationSubject = new Subject<Location>();
-      (locationService.getLocationObservable as jest.Mock).mockReturnValue(locationSubject);
-
-      // Create a new service instance that will subscribe to our mocked observable
-      const testService = new ScopesDashboardsService(mockApiClient);
-      await testService.fetchDashboards(['scope1']);
-
-      // Initially, folder should not be expanded since we're at '/'
-      expect(testService.state.folders[''].folders['group1'].expanded).toBe(false);
-
-      // Simulate location change to a URL that matches a navigation
-      locationSubject.next({ pathname: '/test-url' } as Location);
-
-      // Now the folder should be expanded because the location matches a navigation URL
-      expect(testService.state.folders[''].folders['group1'].expanded).toBe(true);
-
-      // Reset the feature toggle
-      config.featureToggles.useScopesNavigationEndpoint = false;
-    });
-
-    it('should not expand folder when location changes, matches a navigation URL in a folder which is already expanded', async () => {
-      config.featureToggles.useScopesNavigationEndpoint = true;
-
-      // Mock initial location
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
-
-      const mockNavigations: ScopeNavigation[] = [
-        {
-          spec: {
-            scope: 'scope1',
-            url: '/test-url',
-          },
-          status: {
-            title: 'Test URL',
-            groups: ['group1', 'group2'],
-          },
-          metadata: {
-            name: 'url1',
-          },
-        },
-      ];
-
-      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
-
-      // Set up mock observable to emit location changes
-      const locationSubject = new Subject<Location>();
-      (locationService.getLocationObservable as jest.Mock).mockReturnValue(locationSubject);
-
-      // Create a new service instance that will subscribe to our mocked observable
-      const testService = new ScopesDashboardsService(mockApiClient);
-      await testService.fetchDashboards(['scope1']);
-
-      // Initially, folder should not be expanded since we're at '/'
-      expect(testService.state.folders[''].folders['group1'].expanded).toBe(false);
-
-      // Manually expand group1 to simulate it being already expanded
-      testService.updateFolder(['', 'group2'], true);
-      expect(testService.state.folders[''].folders['group2'].expanded).toBe(true);
-
-      // Simulate location change to a URL that matches a navigation
-      locationSubject.next({ pathname: '/test-url' } as Location);
-
-      // The folder should still be expanded (no change since it was already expanded)
-      expect(testService.state.folders[''].folders['group1'].expanded).toBe(false);
-      expect(testService.state.folders[''].folders['group2'].expanded).toBe(true);
-
-      // Reset the feature toggle
-      config.featureToggles.useScopesNavigationEndpoint = false;
     });
 
     it('should not expand folders when current location does not match any navigation', async () => {
@@ -796,6 +702,113 @@ describe('ScopesDashboardsService', () => {
       expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['navScope2']);
     });
 
+    it('should clear nav_scope_path when navigation scope changes', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+
+      await service.setNavigationScope('navScope1');
+
+      expect(locationService.partial).toHaveBeenCalledWith({ nav_scope_path: null });
+    });
+
+    it('should clear nav_scope_path when clearing navigation scope', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+
+      await service.setNavigationScope('navScope1');
+      (locationService.partial as jest.Mock).mockClear();
+
+      await service.setNavigationScope(undefined);
+
+      expect(locationService.partial).toHaveBeenCalledWith({ nav_scope_path: null });
+    });
+
+    it('should clear expandedFolderPath in state when navigation scope changes', async () => {
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+
+      // Set an initial path (simulating a previous navigation with nested folders)
+      const testService = new ScopesDashboardsService(mockApiClient, ['', 'group1', 'subfolder']);
+      expect(testService.state.expandedFolderPath).toEqual(['', 'group1', 'subfolder']);
+
+      // Set navigation scope for the first time (initial load from URL)
+      await testService.setNavigationScope('navScope1');
+
+      // expandedFolderPath should be PRESERVED on initial load (from URL)
+      expect(testService.state.expandedFolderPath).toEqual(['', 'group1', 'subfolder']);
+
+      // Now change to a different navigation scope
+      await testService.setNavigationScope('navScope2');
+
+      // expandedFolderPath should NOW be cleared when scope changes
+      expect(testService.state.expandedFolderPath).toEqual([]);
+    });
+
+    it('should auto-expand folders after clearing navigation scope and selecting new scope', async () => {
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' } as Location);
+
+      // Step 1: Set a navigation scope with nested folders (initial load)
+      const testService = new ScopesDashboardsService(mockApiClient, ['', 'group1', 'subfolder']);
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
+      await testService.setNavigationScope('navScope1');
+
+      // expandedFolderPath should be preserved on initial load
+      expect(testService.state.expandedFolderPath).toEqual(['', 'group1', 'subfolder']);
+
+      // Step 2: Clear navigation scope (scope is changing)
+      await testService.setNavigationScope(undefined);
+
+      // expandedFolderPath should NOW be cleared when scope changes
+      expect(testService.state.expandedFolderPath).toEqual([]);
+
+      // Step 3: Select a new scope (without navigation scope) with a dashboard that matches current URL
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'Test Dashboard', groups: ['group2'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await testService.fetchDashboards(['scope1']);
+
+      // group2 should be auto-expanded because it contains the active dashboard
+      expect(testService.state.folders[''].folders['group2'].expanded).toBe(true);
+    });
+
+    it('should clear expandedFolderPath when scopes change via fetchDashboards', async () => {
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard2' } as Location);
+
+      // Start with an initial expanded path from URL
+      const testService = new ScopesDashboardsService(mockApiClient, ['', 'group1', 'subfolder']);
+
+      // Step 1: Fetch dashboards for scope1
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'Test Dashboard', groups: ['group1'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ]);
+      await testService.fetchDashboards(['scope1']);
+
+      // Path from URL should still be set after first fetch (initial load)
+      expect(testService.state.expandedFolderPath).toEqual(['', 'group1', 'subfolder']);
+
+      // Step 2: Fetch dashboards for a different scope (scope2) - simulating scope change
+      mockApiClient.fetchScopeNavigations.mockResolvedValue([
+        {
+          spec: { scope: 'scope2', url: '/d/dashboard2' },
+          status: { title: 'Another Dashboard', groups: ['group2'] },
+          metadata: { name: 'dashboard2' },
+        },
+      ]);
+      await testService.fetchDashboards(['scope2']);
+
+      // expandedFolderPath should be cleared because scopes changed
+      expect(testService.state.expandedFolderPath).toEqual([]);
+
+      // group2 should be auto-expanded because path was cleared and it contains active item
+      expect(testService.state.folders[''].folders['group2'].expanded).toBe(true);
+    });
+
     it('should update navigation scope when clearing an existing scope', async () => {
       mockApiClient.fetchScopeNavigations.mockResolvedValue([]);
 
@@ -837,6 +850,119 @@ describe('ScopesDashboardsService', () => {
       await service.setNavigationScope(undefined, ['fallbackScope']);
 
       expect(service.state.drawerOpened).toBe(true);
+    });
+  });
+
+  describe('expandedFolderPath URL sync', () => {
+    it('should initialize with provided expandedFolderPath', () => {
+      const initialPath = ['', 'group1', 'subfolder'];
+      const testService = new ScopesDashboardsService(mockApiClient, initialPath);
+
+      expect(testService.state.expandedFolderPath).toEqual(initialPath);
+    });
+
+    it('should apply expandedFolderPath on initial load from URL', async () => {
+      const initialPath = ['', 'group1'];
+      const testService = new ScopesDashboardsService(mockApiClient, initialPath);
+
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' } as Location);
+
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'Test Dashboard', groups: ['group1'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await testService.fetchDashboards(['scope1']);
+
+      // Folder should be expanded based on initialPath
+      expect(testService.state.folders[''].folders['group1'].expanded).toBe(true);
+    });
+
+    it('should fetch items for subScope folders when applying expandedPath on initial load', async () => {
+      const subScopeNavigation = navigationWithSubScope;
+      const initialPath = ['', `${subScopeNavigation.spec.subScope}-${subScopeNavigation.metadata.name}`];
+      const testService = new ScopesDashboardsService(mockApiClient, initialPath);
+
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+
+      // Mock the initial scope navigations (includes subScope folder)
+      mockApiClient.fetchScopeNavigations.mockResolvedValueOnce([subScopeNavigation]);
+
+      // Mock the subScope items fetch
+      const subScopeItems: ScopeNavigation[] = [
+        {
+          spec: { scope: subScopeNavigation.spec.subScope!, url: '/d/subscope-dashboard' },
+          status: { title: 'SubScope Dashboard', groups: [] },
+          metadata: { name: 'subscope-dashboard' },
+        },
+      ];
+      mockApiClient.fetchScopeNavigations.mockResolvedValueOnce(subScopeItems);
+
+      await testService.fetchDashboards(['scope1']);
+
+      // Wait for async subScope fetch to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const folderKey = `${subScopeNavigation.spec.subScope}-${subScopeNavigation.metadata.name}`;
+      const subScopeFolder = testService.state.folders[''].folders[folderKey];
+
+      // Folder should be expanded
+      expect(subScopeFolder.expanded).toBe(true);
+      // SubScope items should have been fetched and added
+      expect(Object.keys(subScopeFolder.suggestedNavigations).length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('serializeFolderPath and deserializeFolderPath', () => {
+    it('should serialize folder path correctly (excluding root)', () => {
+      const path = ['', 'group1', 'subfolder'];
+      const serialized = serializeFolderPath(path);
+
+      expect(serialized).toBe('group1,subfolder');
+    });
+
+    it('should serialize folder path with special characters (excluding root)', () => {
+      const path = ['', 'group/1', 'sub folder'];
+      const serialized = serializeFolderPath(path);
+
+      expect(serialized).toBe('group%2F1,sub%20folder');
+    });
+
+    it('should serialize root-only path as empty string', () => {
+      const path = [''];
+      const serialized = serializeFolderPath(path);
+
+      expect(serialized).toBe('');
+    });
+
+    it('should deserialize folder path correctly (prepending root)', () => {
+      const serialized = 'group1,subfolder';
+      const path = deserializeFolderPath(serialized);
+
+      expect(path).toEqual(['', 'group1', 'subfolder']);
+    });
+
+    it('should deserialize folder path with special characters (prepending root)', () => {
+      const serialized = 'group%2F1,sub%20folder';
+      const path = deserializeFolderPath(serialized);
+
+      expect(path).toEqual(['', 'group/1', 'sub folder']);
+    });
+
+    it('should return empty array for null path string', () => {
+      const path = deserializeFolderPath(null);
+
+      expect(path).toEqual([]);
+    });
+
+    it('should return empty array for empty path string', () => {
+      const path = deserializeFolderPath('');
+
+      expect(path).toEqual([]);
     });
   });
 });
