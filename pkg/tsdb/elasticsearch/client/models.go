@@ -32,7 +32,6 @@ func (r *SearchRequest) MarshalJSON() ([]byte, error) {
 		return json.Marshal(r.RawBody)
 	}
 
-	// Otherwise, build the request using the builder pattern
 	root := make(map[string]interface{})
 
 	root["size"] = r.Size

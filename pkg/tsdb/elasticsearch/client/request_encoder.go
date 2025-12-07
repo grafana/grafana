@@ -38,11 +38,10 @@ func (e *requestEncoder) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		}
 		payload.WriteString(string(reqHeader) + "\n")
 
-		reqBody := []byte{}
 		body := ""
 		switch r.body.(type) {
 		case *SearchRequest:
-			reqBody, err = json.Marshal(r.body)
+			reqBody, err := json.Marshal(r.body)
 			if err != nil {
 				return nil, err
 			}
