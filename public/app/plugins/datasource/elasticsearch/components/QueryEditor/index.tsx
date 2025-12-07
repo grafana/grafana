@@ -114,7 +114,7 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
           <QueryTypeSelector />
         </div>
       </div>
-            <div className={styles.root}>
+      <div className={styles.root}>
         <InlineLabel width={17}>Editor type</InlineLabel>
         <div className={styles.queryItem}>
           <EditorTypeSelector />

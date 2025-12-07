@@ -14,14 +14,17 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
   const styles = useStyles2(getStyles);
   const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor | null>(null);
 
-  const handleEditorDidMount = useCallback((editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
-    editorRef.current = editor;
+  const handleEditorDidMount = useCallback(
+    (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
+      editorRef.current = editor;
 
-    // Add keyboard shortcut for running query (Ctrl/Cmd+Enter)
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      onRunQuery();
-    });
-  }, [onRunQuery]);
+      // Add keyboard shortcut for running query (Ctrl/Cmd+Enter)
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+        onRunQuery();
+      });
+    },
+    [onRunQuery]
+  );
 
   const handleFormat = useCallback(() => {
     if (editorRef.current) {
@@ -29,12 +32,15 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
     }
   }, []);
 
-  const handleQueryChange = useCallback((newValue: string) => {
-    if (!newValue) {
-      return;
-    }
-    onChange(newValue);
-  }, [onChange]);
+  const handleQueryChange = useCallback(
+    (newValue: string) => {
+      if (!newValue) {
+        return;
+      }
+      onChange(newValue);
+    },
+    [onChange]
+  );
 
   return (
     <div className={styles.container}>
@@ -49,19 +55,13 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
           >
             Format
           </Button>
-          <Button
-            size="sm"
-            variant="primary"
-            icon="play"
-            onClick={onRunQuery}
-            tooltip="Run query (Ctrl/Cmd+Enter)"
-          >
+          <Button size="sm" variant="primary" icon="play" onClick={onRunQuery} tooltip="Run query (Ctrl/Cmd+Enter)">
             Run
           </Button>
         </Stack>
       </div>
       <CodeEditor
-        value={value ?? ""}
+        value={value ?? ''}
         language="json"
         height={200}
         width="100%"

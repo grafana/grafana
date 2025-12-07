@@ -16,7 +16,9 @@ export const changeAliasPattern = createAction<ElasticsearchDataQuery['alias']>(
 
 export const changeEditorType = createAction<ElasticsearchDataQuery['editorType']>('change_editor_type');
 
-export const changeEditorTypeAndResetQuery = createAction<ElasticsearchDataQuery['editorType']>('change_editor_type_and_reset_query');
+export const changeEditorTypeAndResetQuery = createAction<ElasticsearchDataQuery['editorType']>(
+  'change_editor_type_and_reset_query'
+);
 
 export const queryReducer = (prevQuery: ElasticsearchDataQuery['query'], action: Action) => {
   if (changeQuery.match(action)) {

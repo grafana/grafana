@@ -23,5 +23,7 @@ export const EditorTypeSelector = () => {
     dispatch(changeEditorTypeAndResetQuery(newEditorType));
   };
 
-  return <RadioButtonGroup<EditorType> fullWidth={false} options={BASE_OPTIONS} value={editorType} onChange={onChange} />;
+  return (
+    <RadioButtonGroup<EditorType> fullWidth={false} options={BASE_OPTIONS} value={editorType} onChange={onChange} />
+  );
 };
