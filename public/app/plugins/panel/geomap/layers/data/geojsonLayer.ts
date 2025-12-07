@@ -211,7 +211,8 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             description: 'The style to apply when no rules above match',
             editor: StyleEditor,
             settings: {
-              simpleFixedValues: true,
+              simpleFixedValues: false,
+              displayRotation: true,
               layerInfo,
             },
             defaultValue: defaultOptions.style,
