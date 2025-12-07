@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { GrafanaTheme2, RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -29,11 +29,49 @@ export const QueryOptions = ({
 
   const [showOptions, setShowOptions] = useState(false);
 
+  // Add refs to capture input values
+  const maxDataPointsRef = useRef<HTMLInputElement>(null);
+  const minIntervalRef = useRef<HTMLInputElement>(null);
+
+  // Handler to save input values when tooltip closes
+  const handleTooltipClose = () => {
+    // Get current values from inputs
+    const maxDataPointsValue = maxDataPointsRef.current?.value;
+    const minIntervalValue = minIntervalRef.current?.value;
+
+    const updatedOptions = { ...queryOptions };
+    let hasChanges = false;
+
+    // Parse and save max data points
+    if (maxDataPointsValue !== undefined) {
+      const maxDataPointsNumber = parseInt(maxDataPointsValue, 10);
+      const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
+
+      if (maxDataPoints !== queryOptions.maxDataPoints) {
+        updatedOptions.maxDataPoints = maxDataPoints;
+        hasChanges = true;
+      }
+    }
+
+    // Save min interval
+    if (minIntervalValue !== undefined && minIntervalValue !== queryOptions.minInterval) {
+      updatedOptions.minInterval = minIntervalValue || undefined;
+      hasChanges = true;
+    }
+
+    // Only call onChange if there are actual changes
+    if (hasChanges) {
+      console.log('🐛 Saving changes on tooltip close:', updatedOptions);
+      onChangeQueryOptions(updatedOptions, index);
+    }
+  };
+
   const separator = <span>, </span>;
 
   return (
     <>
       <Toggletip
+        onClose={handleTooltipClose}
         content={
           <div className={styles.queryOptions}>
             {onChangeTimeRange && (
@@ -44,8 +82,16 @@ export const QueryOptions = ({
                 />
               </InlineField>
             )}
-            <MaxDataPointsOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
-            <MinIntervalOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
+            <MaxDataPointsOption
+              options={queryOptions}
+              onChange={(options) => onChangeQueryOptions(options, index)}
+              inputRef={maxDataPointsRef}
+            />
+            <MinIntervalOption
+              options={queryOptions}
+              onChange={(options) => onChangeQueryOptions(options, index)}
+              inputRef={minIntervalRef}
+            />
           </div>
         }
         closeButton={true}

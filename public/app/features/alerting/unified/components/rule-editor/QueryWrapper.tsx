@@ -235,11 +235,18 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
 export function MaxDataPointsOption({
   options,
   onChange,
+  inputRef,
 }: {
   options: AlertQueryOptions;
   onChange: (options: AlertQueryOptions) => void;
+  inputRef?: React.RefObject<HTMLInputElement>;
 }) {
-  const value = options.maxDataPoints ?? '';
+  const [currentValue, setCurrentValue] = useState(options.maxDataPoints?.toString() ?? '');
+
+  const onMaxDataPointsChange = (event: ChangeEvent<HTMLInputElement>) => {
+    // Only update local state for UI, don't save to parent yet
+    setCurrentValue(event.target.value);
+  };
 
   const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
     const maxDataPointsNumber = parseInt(event.target.value, 10);
@@ -264,12 +271,14 @@ export function MaxDataPointsOption({
       )}
     >
       <Input
+        ref={inputRef}
         type="number"
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
+        onChange={onMaxDataPointsChange}
         onBlur={onMaxDataPointsBlur}
-        defaultValue={value}
+        value={currentValue}
       />
     </InlineField>
   );
@@ -278,15 +287,26 @@ export function MaxDataPointsOption({
 export function MinIntervalOption({
   options,
   onChange,
+  inputRef,
 }: {
   options: AlertQueryOptions;
   onChange: (options: AlertQueryOptions) => void;
+  inputRef?: React.RefObject<HTMLInputElement>;
 }) {
-  const value = options.minInterval ?? '';
+  const [currentValue, setCurrentValue] = useState(options.minInterval ?? '');
+
+  const onMinIntervalChange = (event: ChangeEvent<HTMLInputElement>) => {
+    //debugger; // BREAKPOINT: MinInterval onChange triggered
+    console.log('🐛 MinIntervalOption onChange triggered with value:', event.target.value);
+
+    // Only update local state for UI, don't save to parent yet
+    setCurrentValue(event.target.value);
+  };
 
   const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    console.log('🐛 MinIntervalOption onBlur triggered with value:', event.target.value);
     const minInterval = event.target.value;
-    if (minInterval !== value) {
+    if (minInterval !== options.minInterval) {
       onChange({
         ...options,
         minInterval,
@@ -306,12 +326,14 @@ export function MinIntervalOption({
       }
     >
       <Input
+        ref={inputRef}
         type="text"
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
+        onChange={onMinIntervalChange}
         onBlur={onMinIntervalBlur}
-        defaultValue={value}
+        value={currentValue}
       />
     </InlineField>
   );
