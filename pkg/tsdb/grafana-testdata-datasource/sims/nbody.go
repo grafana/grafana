@@ -69,16 +69,26 @@ func (s *nbodySim) initialize() {
 	s.state.circles = make([]circle, s.cfg.N)
 	s.state.lastTime = time.Time{}
 
-	// Generate random circles
+	const maxRadius = 30.0
+	const bossRadius = maxRadius * 2.0 // Boss is twice the max radius (60 pixels)
+
+	// Generate random circles (first one is the boss, rest are normal)
 	for i := 0; i < s.cfg.N; i++ {
-		// Random radius between 5 and 30 pixels
-		radius := 5.0 + s.random.Float64()*30.0
+		var radius float64
+		
+		// First circle is always the "boss" with double radius
+		if i == 0 || i == 1  {
+			radius = bossRadius
+		} else {
+			// Random radius between 5 and 30 pixels for normal circles
+			radius = 5.0 + s.random.Float64()*25.0
+		}
 
 		// Random position ensuring the circle is within bounds
 		x := radius + s.random.Float64()*(s.cfg.Width-2*radius)
 		y := radius + s.random.Float64()*(s.cfg.Height-2*radius)
 
-		// Random velocity between -50 and 50 pixels/second
+		// Random velocity between -250 and 250 pixels/second
 		vx := (s.random.Float64()*2.0 - 1.0) * 250.0
 		vy := (s.random.Float64()*2.0 - 1.0) * 250.0
 
