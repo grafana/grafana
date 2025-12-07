@@ -1,4 +1,4 @@
-import { FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { FieldType, LogLevel, LogRowModel, LogsSortOrder, textUtil, toDataFrame } from '@grafana/data';
 
 import { LogListModel, preProcessLogs, PreProcessOptions } from '../panel/processing';
 
@@ -25,7 +25,7 @@ export const createLogRow = (overrides?: Partial<LogRowModel>): LogRowModel => {
     uid,
     logLevel: LogLevel.info,
     entry,
-    hasAnsi: false,
+    hasAnsi: textUtil.hasAnsiCodes(entry),
     hasUnescapedContent: false,
     labels: {},
     raw: entry,
