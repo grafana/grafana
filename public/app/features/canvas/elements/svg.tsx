@@ -1,13 +1,19 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, textUtil } from '@grafana/data';
+import { FieldNamePickerConfigSettings, GrafanaTheme2, StandardEditorsRegistryItem, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { PositionDimensionMode, ScalarDimensionMode, TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
-import { CodeEditor, useStyles2 } from '@grafana/ui';
+import { CodeEditor, InlineField, InlineFieldRow, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { FieldNamePicker } from '@grafana/ui/internal';
 import { DimensionContext } from 'app/features/dimensions/context';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps } from '../element';
+
+// eslint-disable-next-line
+const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+  settings: {},
+} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
 // Simple hash function to generate unique scope IDs
 function hashString(str: string): string {
@@ -163,34 +169,89 @@ export const svgItem: CanvasElementItem<SvgConfig, SvgData> = {
       id: 'svgContent',
       path: 'config.content',
       name: t('canvas.svg-element.content', 'SVG Content'),
-      description: t('canvas.svg-element.content-description', 'Enter SVG content.'),
-      editor: ({ value, onChange }) => {
-        const currentValue = value?.fixed || '';
+      description: t('canvas.svg-element.content-description', 'Enter SVG content or select a field.'),
+      editor: ({ value, onChange, context }) => {
+        const mode = value?.mode ?? TextDimensionMode.Fixed;
+        const labelWidth = 9;
+
+        const modeOptions = [
+          {
+            label: t('canvas.svg-element.mode-fixed', 'Fixed'),
+            value: TextDimensionMode.Fixed,
+            description: t('canvas.svg-element.mode-fixed-description', 'Manually enter SVG content'),
+          },
+          {
+            label: t('canvas.svg-element.mode-field', 'Field'),
+            value: TextDimensionMode.Field,
+            description: t('canvas.svg-element.mode-field-description', 'SVG content from data source field'),
+          },
+        ];
+
+        const onModeChange = (newMode: TextDimensionMode) => {
+          onChange({
+            ...value,
+            mode: newMode,
+          });
+        };
+
+        const onFieldChange = (field?: string) => {
+          onChange({
+            ...value,
+            field,
+          });
+        };
+
+        const onFixedChange = (newValue: string) => {
+          onChange({
+            ...value,
+            mode: TextDimensionMode.Fixed,
+            fixed: newValue,
+          });
+        };
 
         return (
-          <CodeEditor
-            value={currentValue}
-            language="xml"
-            height="200px"
-            onBlur={(newValue) => {
-              onChange({
-                ...value,
-                mode: TextDimensionMode.Fixed,
-                fixed: newValue,
-              });
-            }}
-            monacoOptions={{
-              minimap: { enabled: false },
-              lineNumbers: 'on',
-              wordWrap: 'on',
-              scrollBeyondLastLine: false,
-              folding: false,
-              renderLineHighlight: 'none',
-              overviewRulerBorder: false,
-              hideCursorInOverviewRuler: true,
-              overviewRulerLanes: 0,
-            }}
-          />
+          <>
+            <InlineFieldRow>
+              <InlineField label={t('canvas.svg-element.source', 'Source')} labelWidth={labelWidth} grow={true}>
+                <RadioButtonGroup value={mode} options={modeOptions} onChange={onModeChange} fullWidth />
+              </InlineField>
+            </InlineFieldRow>
+
+            {mode === TextDimensionMode.Field && (
+              <InlineFieldRow>
+                <InlineField label={t('canvas.svg-element.field', 'Field')} labelWidth={labelWidth} grow={true}>
+                  <FieldNamePicker
+                    context={context}
+                    value={value?.field ?? ''}
+                    onChange={onFieldChange}
+                    item={dummyFieldSettings}
+                  />
+                </InlineField>
+              </InlineFieldRow>
+            )}
+
+            {mode === TextDimensionMode.Fixed && (
+              <div style={{ marginTop: '8px' }}>
+                <CodeEditor
+                  value={value?.fixed || ''}
+                  language="xml"
+                  height="200px"
+                  onBlur={onFixedChange}
+                  monacoOptions={{
+                    minimap: { enabled: false },
+                    lineNumbers: 'on',
+                    wordWrap: 'on',
+                    scrollBeyondLastLine: false,
+                    folding: false,
+                    renderLineHighlight: 'none',
+                    overviewRulerBorder: false,
+                    hideCursorInOverviewRuler: true,
+                    overviewRulerLanes: 0,
+                  }}
+                />
+              </div>
+            )}
+          </>
         );
       },
       settings: {},
