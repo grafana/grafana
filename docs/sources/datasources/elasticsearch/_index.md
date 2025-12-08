@@ -42,7 +42,7 @@ The following resources help you get started with Elasticsearch and Grafana:
 - [Elasticsearch template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/)
 - [Elasticsearch annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/annotations/)
 - [Elasticsearch alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/alerting/)
-- [Troubleshoot the Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/troubleshooting/)
+- [Troubleshooting issues with the Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/troubleshooting/)
 
 ## Key capabilities
 
