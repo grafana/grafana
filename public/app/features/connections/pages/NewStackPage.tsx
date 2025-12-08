@@ -4,7 +4,7 @@ import { StackForm } from 'app/features/datasources/components/new-stack-form/St
 export function NewStackPage() {
   return (
     <Page
-      navId={'connections-datasources'}
+      navId="connections-stacks"
       pageNav={{
         text: 'New Data Source Stack',
         subTitle: 'Add a new data source stack',

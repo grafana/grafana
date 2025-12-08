@@ -108,7 +108,7 @@ export function DataSourceStacksPage() {
   };
 
   return (
-    <Page navId="connections-datasources" pageNav={pageNav} actions={actions}>
+    <Page navId="connections-stacks" pageNav={pageNav} actions={actions}>
       <Page.Contents>
         <DataSourceStacksListContent
           stacks={filteredStacks}

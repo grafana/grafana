@@ -63,7 +63,7 @@ export function EditStackPage() {
   };
 
   return (
-    <Page navId="connections-datasources" pageNav={pageNav}>
+    <Page navId="connections-stacks" pageNav={pageNav}>
       <Page.Contents>
         <EditStackContent loading={loading} error={error} formValues={formValues} />
       </Page.Contents>

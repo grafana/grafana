@@ -574,6 +574,15 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 			Url:      baseUrl + "/datasources",
 			Children: []*navtree.NavLink{},
 		})
+
+		// Stacks
+		children = append(children, &navtree.NavLink{
+			Id:       "connections-stacks",
+			Text:     "Stacks",
+			SubTitle: "Manage data source stacks for different environments",
+			Url:      baseUrl + "/stacks",
+			Children: []*navtree.NavLink{},
+		})
 	}
 
 	if len(children) > 0 {

@@ -1,12 +1,16 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { FormProvider, SubmitErrorHandler, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
+import { GroupVersionResource } from 'app/features/apiserver/types';
+import { ROUTES } from 'app/features/connections/constants';
 import { DataSourceStackSpec } from 'app/features/connections/pages/DataSourceStacksPage';
 
 import { StackModes } from './StackModes';
@@ -24,9 +28,21 @@ const defaultValues: StackFormValues = {
   modes: [],
 };
 
+// GroupVersionResource for datasourcestacks
+const datasourceStacksGVR: GroupVersionResource = {
+  group: 'collections.grafana.app',
+  version: 'v1alpha1',
+  resource: 'datasourcestacks',
+};
+
+const datasourceStacksClient = new ScopedResourceClient<DataSourceStackSpec>(datasourceStacksGVR);
+
 export const StackForm = ({ existing }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
+  const navigate = useNavigate();
+
+  const isEditing = !!existing;
 
   const initialValues: StackFormValues = useMemo(() => {
     if (existing) {
@@ -47,10 +63,32 @@ export const StackForm = ({ existing }: Props) => {
   } = formAPI;
 
   const submit = async (values: StackFormValues): Promise<void> => {
-    const payload = prepareCreateStackPayload(values);
-    console.log('Form submitted with payload:', payload);
-    // TODO: Call API to save the stack using payload
-    notifyApp.success('Stack saved successfully!');
+    const spec = prepareCreateStackPayload(values);
+
+    try {
+      if (isEditing) {
+        // Update existing stack
+        const existingStack = await datasourceStacksClient.get(values.name);
+        await datasourceStacksClient.update({
+          ...existingStack,
+          spec,
+        });
+        notifyApp.success('Stack updated successfully!');
+      } else {
+        // Create new stack
+        await datasourceStacksClient.create({
+          metadata: { name: values.name },
+          spec,
+        });
+        notifyApp.success('Stack created successfully!');
+      }
+
+      // Navigate to stacks list page
+      navigate(ROUTES.Stacks);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      notifyApp.error(`Failed to save stack: ${message}`);
+    }
   };
 
   const onInvalid: SubmitErrorHandler<StackFormValues> = () => {
