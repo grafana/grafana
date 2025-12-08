@@ -45,6 +45,7 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu }: Props) {
       target={link.targetBlank ? '_blank' : undefined}
       rel="noreferrer"
       data-testid={selectors.components.DashboardLinks.link}
+      className={styles.linkButton}
     >
       {linkInfo.title}
     </DashboardLinkButton>
@@ -65,6 +66,10 @@ function getStyles(theme: GrafanaTheme2) {
       verticalAlign: 'middle',
       marginBottom: theme.spacing(1),
       marginRight: theme.spacing(1),
+      maxWidth: '100%',
+    }),
+    linkButton: css({
+      maxWidth: '100%',
     }),
   };
 }
