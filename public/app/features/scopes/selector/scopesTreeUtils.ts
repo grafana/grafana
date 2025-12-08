@@ -136,9 +136,9 @@ export const insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
         children: undefined,
         childrenLoaded: false,
       };
+      treeNode.childrenLoaded = false;
       return treeNode;
     });
   }
-  newTree.childrenLoaded = true;
   return newTree;
 };

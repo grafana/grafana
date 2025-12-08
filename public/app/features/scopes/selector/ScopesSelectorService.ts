@@ -218,6 +218,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           children: undefined,
         };
       }
+      // Set loaded to true if node is a container
       treeNode.childrenLoaded = true;
     });
 
@@ -451,7 +452,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    * Opens the scopes selector drawer and loads the root nodes if they are not loaded yet.
    */
   public open = async () => {
-    if (!this.state.tree.children || Object.keys(this.state.tree.children).length === 0) {
+    if (
+      !this.state.tree.children ||
+      Object.keys(this.state.tree.children).length === 0 ||
+      !this.state.tree.childrenLoaded
+    ) {
       await this.filterNode('', '');
     }
 
@@ -480,13 +485,13 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       if (parentNodeAtPath && !parentNodeAtPath.childrenLoaded) {
         // This will update the tree with the children
-        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(path, parentNodeAtPath, '');
+        const { newTree: newTreeWithChildren } = await this.loadNodeChildren(parentPath, parentNodeAtPath, '');
         newTree = newTreeWithChildren;
       }
 
       // Expand the nodes to the selected scope - must be done after loading children
       try {
-        newTree = expandNodes(newTree, path);
+        newTree = expandNodes(newTree, parentPath);
       } catch (error) {
         console.error('Failed to expand nodes', error);
       }
