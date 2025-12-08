@@ -1,14 +1,15 @@
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { isV2StoredVersion } from 'app/features/dashboard/api/utils';
-import { DashboardMeta } from 'app/types/dashboard';
+
+import { DashboardScene } from '../scene/DashboardScene';
 
 interface DashboardConversionWarningBannerProps {
-  meta?: DashboardMeta;
-  isEditing?: boolean;
+  dashboard: DashboardScene;
 }
 
-export function DashboardConversionWarningBanner({ meta, isEditing }: DashboardConversionWarningBannerProps) {
+export function DashboardConversionWarningBanner({ dashboard }: DashboardConversionWarningBannerProps) {
+  const { meta, isEditing } = dashboard.useState();
   const conversionStatus = meta?.conversionStatus;
 
   // Show banner if:
