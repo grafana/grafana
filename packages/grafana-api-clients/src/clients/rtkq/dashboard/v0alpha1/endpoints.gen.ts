@@ -248,6 +248,7 @@ const injectedRtkApi = api
             permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
+            ownerReference: queryArg.ownerReference,
             explain: queryArg.explain,
           },
         }),
@@ -673,6 +674,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   sort?: string;
   /** number of results to return */
   limit?: number;
+  /** filter by owner reference in the format {Group}/{Kind}/{Name} */
+  ownerReference?: string;
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
 };
