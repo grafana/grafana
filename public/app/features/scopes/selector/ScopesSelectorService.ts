@@ -365,7 +365,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
       const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
 
-      this.addRecentScopes(fetchedScopes, parentNode);
+      this.addRecentScopes(fetchedScopes, parentNode, scopes[0]?.scopeNodeId);
       this.updateState({ scopes: newScopesState, loading: false });
     }
   };
@@ -408,15 +408,18 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.dashboardsService.setNavigationScope(undefined);
   };
 
-  private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode) => {
+  private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode, scopeNodeId?: string) => {
     if (scopes.length === 0) {
       return;
     }
 
     const newScopes: RecentScope[] = structuredClone(scopes);
-    // Set parent node for the first scope. We don't currently support multiple parent nodes being displayed, hence we only add for the first one
+    // Set parent node and scopeNodeId for the first scope. We don't currently support multiple parent nodes being displayed, hence we only add for the first one
     if (parentNode) {
       newScopes[0].parentNode = parentNode;
+    }
+    if (scopeNodeId) {
+      newScopes[0].scopeNodeId = scopeNodeId;
     }
 
     const RECENT_SCOPES_MAX_LENGTH = 5;

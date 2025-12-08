@@ -23,6 +23,7 @@ export interface TreeNode {
 
 export interface RecentScope extends Scope {
   parentNode?: ScopeNode;
+  scopeNodeId?: string;
 }
 
 // Zod schemas for type validation
@@ -66,4 +67,5 @@ export const ScopeNodeSchema = z.object({
 
 export const RecentScopeSchema = ScopeSchema.extend({
   parentNode: ScopeNodeSchema.optional(),
+  scopeNodeId: z.string().optional(),
 });
