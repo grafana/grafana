@@ -23,6 +23,12 @@ type TemplateGroup struct {
 	Spec TemplateGroupSpec `json:"spec" yaml:"spec"`
 }
 
+func NewTemplateGroup() *TemplateGroup {
+	return &TemplateGroup{
+		Spec: *NewTemplateGroupSpec(),
+	}
+}
+
 func (o *TemplateGroup) GetSpec() any {
 	return o.Spec
 }

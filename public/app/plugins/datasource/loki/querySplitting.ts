@@ -15,6 +15,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { combineResponses } from './mergeResponses';
@@ -22,7 +23,7 @@ import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { addQueryLimitsContext, isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { isRetriableError } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
-import { LokiGroupedRequest, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LokiGroupedRequest, LokiQuery } from './types';
 
 export function partitionTimeRange(
   isLogsQuery: boolean,

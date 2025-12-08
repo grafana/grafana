@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
@@ -55,8 +56,12 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 	// skip migrations if disabled in config
 	if p.cfg.DisableDataMigrations {
+		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping")
 		return nil
+	} else {
+		metrics.MUnifiedStorageMigrationStatus.Set(2)
+		logger.Info("Data migrations not yet enforced, skipping")
 	}
 
 	// TODO: Re-enable once migrations are ready
@@ -80,8 +85,13 @@ func RegisterMigrations(
 		logger.Warn("Failed to register migrator metrics", "error", err)
 	}
 
+	if err := validateRegisteredResources(); err != nil {
+		return err
+	}
+
 	// Register resource migrations
 	registerDashboardAndFolderMigration(mg, migrator, client)
+	registerPlaylistMigration(mg, migrator, client)
 
 	// Run all registered migrations (blocking)
 	sec := cfg.Raw.Section("database")
@@ -96,30 +106,54 @@ func RegisterMigrations(
 }
 
 func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
-	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
-	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	foldersDef := getResourceDefinition("folder.grafana.app", "folders")
+	dashboardsDef := getResourceDefinition("dashboard.grafana.app", "dashboards")
+	driverName := mg.Dialect.DriverName()
 
 	folderCountValidator := NewCountValidator(
 		client,
-		folders,
+		foldersDef.GroupResource,
 		"dashboard",
 		"org_id = ? and is_folder = true",
+		driverName,
 	)
 
 	dashboardCountValidator := NewCountValidator(
 		client,
-		dashboards,
+		dashboardsDef.GroupResource,
 		"dashboard",
 		"org_id = ? and is_folder = false",
+		driverName,
 	)
 
-	folderTreeValidator := NewFolderTreeValidator(client, folders)
+	folderTreeValidator := NewFolderTreeValidator(client, foldersDef.GroupResource, driverName)
 
 	dashboardsAndFolders := NewResourceMigration(
 		migrator,
-		[]schema.GroupResource{folders, dashboards},
+		[]schema.GroupResource{foldersDef.GroupResource, dashboardsDef.GroupResource},
 		"folders-dashboards",
 		[]Validator{folderCountValidator, dashboardCountValidator, folderTreeValidator},
 	)
 	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
+}
+
+func registerPlaylistMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
+	playlistsDef := getResourceDefinition("playlist.grafana.app", "playlists")
+	driverName := mg.Dialect.DriverName()
+
+	playlistCountValidator := NewCountValidator(
+		client,
+		playlistsDef.GroupResource,
+		"playlist",
+		"org_id = ?",
+		driverName,
+	)
+
+	playlistsMigration := NewResourceMigration(
+		migrator,
+		[]schema.GroupResource{playlistsDef.GroupResource},
+		"playlists",
+		[]Validator{playlistCountValidator},
+	)
+	mg.AddMigration("playlists migration", playlistsMigration)
 }

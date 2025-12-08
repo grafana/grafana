@@ -147,7 +147,7 @@ func InstallAPIs(
 		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
 		wrapper := &serverWrapper{
 			ctx:               ctx,
-			GenericAPIServer:  server,
+			GenericAPIServer:  appsdkapiserver.NewKubernetesGenericAPIServer(server),
 			installer:         installer,
 			storageOpts:       storageOpts,
 			restOptionsGetter: restOpsGetter,

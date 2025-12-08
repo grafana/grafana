@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 
 import { CustomVariableModel } from '@grafana/data';
 
+import { MetricKind, ValueTypes } from '../dataquery.gen';
 import { createMockMetricDescriptor } from '../mocks/cloudMonitoringMetricDescriptor';
 import { createMockTimeSeriesList } from '../mocks/cloudMonitoringQuery';
-import { MetricKind, ValueTypes } from '../types/query';
 
 import { Preprocessor } from './Preprocessor';
 

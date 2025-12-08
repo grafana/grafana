@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback } from 'react';
+import { useCallback, type JSX } from 'react';
 
 import { GrafanaTheme2, renderMarkdown, LinkModelSupplier, ScopedVars, IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

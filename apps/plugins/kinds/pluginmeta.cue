@@ -53,6 +53,7 @@ pluginMetaV0Alpha1: {
 	skipDataQuery?: bool
 	state?:         "alpha" | "beta"
 	streaming?:     bool
+	suggestions?:   bool
 	tracing?:       bool
 	iam?:           #IAM
 	// +listType=atomic
