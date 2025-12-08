@@ -14,7 +14,7 @@ export function FeedbackButtonNewLayout() {
       rel="noreferrer"
       className={styles.button}
       // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-      title="Leave feedback on the new layout"
+      title="Give feedback on the new layout"
     >
       <img src={feedbackImage} alt="Feedback button" width="32" height="32" />
     </a>
