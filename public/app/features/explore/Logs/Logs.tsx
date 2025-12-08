@@ -131,6 +131,8 @@ interface Props extends Themeable2 {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   loadMoreLogs?(range: AbsoluteTimeRange): void;
   onPinLineCallback?: () => void;
+  enrichedTrinoData?: LogRowModel[] | null;
+  onSetEnrichedTrinoData?: (data: LogRowModel[] | null) => void;
 }
 
 export type LogsVisualisationType = 'table' | 'logs';
@@ -222,7 +224,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
-  const [enrichedTrinoData, setEnrichedTrinoData] = useState<LogRowModel[] | null>(null);
+  
+  const [localEnrichedTrinoData, setLocalEnrichedTrinoData] = useState<LogRowModel[] | null>(null);
+  const enrichedTrinoData = props.enrichedTrinoData !== undefined ? props.enrichedTrinoData : localEnrichedTrinoData;
+  const setEnrichedTrinoData = props.onSetEnrichedTrinoData || setLocalEnrichedTrinoData;
 
   const trinoDataSource = useTrinoDataSource(config.trino?.datasourceUid);
 
@@ -235,6 +240,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     logsQueries: props.logsQueries,
     exploreId: exploreId,
   });
+
+  useEffect(() => {
+    setEnrichedTrinoData(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logRows]);
 
   const displayedLogRows = enrichedTrinoData || logRows;
   

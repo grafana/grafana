@@ -12,6 +12,7 @@ import {
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
+  LogRowModel,
   QueryFixAction,
   RawTimeRange,
   SplitOpenOptions,
@@ -114,6 +115,7 @@ export interface ExploreProps extends Themeable2 {
 
 interface ExploreState {
   contentOutlineVisible: boolean;
+  enrichedTrinoData: LogRowModel[] | null;
 }
 
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
@@ -143,6 +145,7 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
@@ -152,6 +155,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     super(props);
     this.state = {
       contentOutlineVisible: store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, true),
+      enrichedTrinoData: null,
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
@@ -160,6 +164,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
   onChangeTime = (rawRange: RawTimeRange) => {
     const { updateTimeRange, exploreId } = this.props;
     updateTimeRange({ exploreId, rawRange });
+  };
+
+  onSetEnrichedTrinoData = (data: LogRowModel[] | null) => {
+    this.setState({ enrichedTrinoData: data });
   };
 
   // Use this in help pages to set page to a single query
@@ -480,6 +488,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onClickFilterString={this.onClickFilterString}
           onClickFilterOutString={this.onClickFilterOutString}
           onPinLineCallback={this.onPinLineCallback}
+          enrichedTrinoData={this.state.enrichedTrinoData}
+          onSetEnrichedTrinoData={this.onSetEnrichedTrinoData}
         />
       </ContentOutlineItem>
     );
@@ -627,6 +637,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onChangeTime={this.onChangeTime}
           onContentOutlineToogle={this.onContentOutlineToogle}
           isContentOutlineOpen={contentOutlineVisible}
+          onSetEnrichedTrinoData={this.onSetEnrichedTrinoData}
         />
         <div
           style={{

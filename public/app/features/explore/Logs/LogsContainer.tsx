@@ -56,6 +56,8 @@ interface LogsContainerProps extends PropsFromRedux {
   onClickFilterString: (value: string, refId?: string) => void;
   onClickFilterOutString: (value: string, refId?: string) => void;
   onPinLineCallback?: () => void;
+  enrichedTrinoData?: LogRowModel[] | null;
+  onSetEnrichedTrinoData?: (data: LogRowModel[] | null) => void;
 }
 
 type DataSourceInstance =
@@ -67,6 +69,7 @@ interface LogsContainerState {
   dsInstances: Record<string, DataSourceInstance>;
 }
 
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
   state: LogsContainerState = {
     dsInstances: {},
@@ -350,6 +353,8 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             onPinLineCallback={onPinLineCallback}
             onClickFilterString={this.filterValueAvailable() ? this.props.onClickFilterString : undefined}
             onClickFilterOutString={this.filterOutValueAvailable() ? this.props.onClickFilterOutString : undefined}
+            enrichedTrinoData={this.props.enrichedTrinoData}
+            onSetEnrichedTrinoData={this.props.onSetEnrichedTrinoData}
           />
         </LogsCrossFadeTransition>
       </>
