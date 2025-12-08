@@ -119,6 +119,7 @@ export const getPluginExtensions: GetExtensions = ({
         title: addedLink.title,
         description: addedLink.description ?? '',
         onClick: typeof addedLink.onClick,
+        buildPathAsync: typeof addedLink.buildPathAsync,
       });
       // Run the configure() function with the current context, and apply the ovverides
       const overrides = getLinkExtensionOverrides(pluginId, addedLink, linkLog, frozenContext);
@@ -141,6 +142,7 @@ export const getPluginExtensions: GetExtensions = ({
         description: overrides?.description || addedLink.description || '',
         path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
         category: overrides?.category || addedLink.category,
+        buildPathAsync: overrides?.buildPathAsync || addedLink.buildPathAsync,
       };
 
       extensions.push(extension);
