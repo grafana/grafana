@@ -1,7 +1,6 @@
 ---
 aliases:
-  - ../data-sources/elasticsearch/
-  - ../features/datasources/elasticsearch/
+  - ../configure-elasticsearch-data-source/
 description: Guide for configuring the Elasticsearch data source in Grafana
 keywords:
   - grafana
@@ -34,9 +33,14 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
   provisioning-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/#provision-the-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/configure/#provision-the-data-source
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/elasticsearch/#provision-the-data-source
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/elasticsearch/configure/#provision-the-data-source
+  configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled
 ---
 
 # Configure the Elasticsearch data source
@@ -97,6 +101,21 @@ Select one of the following authentication methods from the dropdown menu.
 - **No authentication** - Make the data source available without authentication. Grafana recommends using some type of authentication method.
 
 <!-- - **With credentials** - Toggle to enable credentials such as cookies or auth headers to be sent with cross-site requests. -->
+
+### Amazon Elasticsearch Service
+
+If you use Amazon Elasticsearch Service, you can use Grafana's Elasticsearch data source to visualize data from it.
+
+If you use an AWS Identity and Access Management (IAM) policy to control access to your Amazon Elasticsearch Service domain, you must use AWS Signature Version 4 (AWS SigV4) to sign all requests to that domain.
+
+For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
+
+To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration](ref:configuration).
+
+Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.
+For more information about AWS authentication options, refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
+
+{{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
 
 ### TLS settings
 
@@ -205,3 +224,53 @@ If you use PDC with SIGv4 (AWS Signature Version 4 Authentication), the PDC agen
 - **Private data source connect** - Click in the box to set the default PDC connection from the dropdown menu or create a new connection.
 
 Once you have configured your Elasticsearch data source options, click **Save & test** at the bottom to test out your data source connection. You can also remove a connection by clicking **Delete**.
+
+## Provision the data source
+
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-grafana).
+
+{{< admonition type="note" >}}
+The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
+You should now use the `index` field in `jsonData` to store the index name.
+Please see the examples below.
+{{< /admonition >}}
+
+
+### Basic provisioning
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Elastic
+    type: elasticsearch
+    access: proxy
+    url: http://localhost:9200
+    jsonData:
+      index: '[metrics-]YYYY.MM.DD'
+      interval: Daily
+      timeField: '@timestamp'
+```
+
+**Provision for logs**
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: elasticsearch-v7-filebeat
+    type: elasticsearch
+    access: proxy
+    url: http://localhost:9200
+    jsonData:
+      index: '[filebeat-]YYYY.MM.DD'
+      interval: Daily
+      timeField: '@timestamp'
+      logMessageField: message
+      logLevelField: fields.level
+      dataLinks:
+        - datasourceUid: my_jaeger_uid # Target UID needs to be known
+          field: traceID
+          url: '$${__value.raw}' # Careful about the double "$$" because of env var expansion
+```
