@@ -171,6 +171,7 @@ Query expressions are different for each data source. For more information, refe
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
 
 1. (Optional) In the **Regex** field, type a regular expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with a regular expression](#filter-variables-with-regex).
+1. Under **Apply regex to**, select **Variable value** or **Display text** to choose where the regex pattern is applied. The default is **Variable value**.
 1. In the **Sort** drop-down list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query is used.
 1. Under **Refresh**, select when the variable should update options:
    - **On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
