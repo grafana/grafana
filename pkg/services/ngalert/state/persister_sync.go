@@ -89,6 +89,7 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 		instance := ngModels.AlertInstance{
 			AlertInstanceKey:  key,
 			Labels:            ngModels.InstanceLabels(s.Labels),
+			Annotations:       s.Annotations,
 			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
 			CurrentReason:     s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
