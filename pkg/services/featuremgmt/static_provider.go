@@ -1,6 +1,7 @@
 package featuremgmt
 
 import (
+	"fmt"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 )
@@ -38,10 +39,18 @@ func newStaticProvider(confFlags map[string]bool) (openfeature.FeatureProvider, 
 
 	// Add standard flags
 	for _, flag := range standardFeatureFlags {
-		if _, exists := flags[flag.Name]; !exists {
-			enabled := flag.Expression == "true"
-			flags[flag.Name] = createInMemoryFlag(flag.Name, enabled)
+		_, exists := flags[flag.Name]
+
+		if exists && flag.Type != Boolean {
+			return nil, fmt.Errorf("flag %s already exists", flag.Name)
 		}
+
+		inMemFlag, err := createFlag(flag)
+		if err != nil {
+			return nil, err
+		}
+
+		flags[flag.Name] = inMemFlag
 	}
 
 	return newInMemoryBulkProvider(flags), nil
@@ -62,3 +71,31 @@ func createInMemoryFlag(name string, enabled bool) memprovider.InMemoryFlag {
 		},
 	}
 }
+
+func createFlag(flag FeatureFlag) (memprovider.InMemoryFlag, error) {
+	defaultVariant := "default"
+
+	var value any
+	switch flag.Type {
+	case Boolean:
+		value = flag.Expression == "true"
+	case String:
+		value = flag.Expression
+	case Number:
+		value = f
+	case Object:
+		value = value
+	default:
+		return memprovider.InMemoryFlag{}, fmt.Errorf("unsupported flag type %s", flag.Type)
+	}
+
+	return memprovider.InMemoryFlag{
+		Key:            flag.Name,
+		DefaultVariant: defaultVariant,
+		Variants: map[string]any{
+			defaultVariant: value,
+		},
+	}, nil
+}
+
+func
