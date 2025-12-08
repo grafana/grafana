@@ -123,7 +123,10 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({ width: '100%', height: '100%', position: 'relative' }),
   draggedWrapper: css({
-    position: 'absolute',
+    // Unfortunately, we need to enforce position absolute here. Otherwise, the position will be overwritten with
+    //  a relative position by .dashboard-visible-hidden-element
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    position: 'absolute !important' as 'absolute',
     zIndex: 1000,
     top: `var(${DRAGGED_ITEM_TOP})`,
     left: `var(${DRAGGED_ITEM_LEFT})`,
