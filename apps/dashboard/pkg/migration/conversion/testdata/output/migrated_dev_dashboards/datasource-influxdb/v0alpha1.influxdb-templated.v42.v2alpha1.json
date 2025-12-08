@@ -307,9 +307,9 @@
         "kind": "AdhocVariable",
         "spec": {
           "name": "adhoc",
-          "baseFilters": null,
+          "baseFilters": [],
           "filters": [],
-          "defaultKeys": null,
+          "defaultKeys": [],
           "hide": "dontHide",
           "skipUrlSync": false,
           "allowCustomValue": true
