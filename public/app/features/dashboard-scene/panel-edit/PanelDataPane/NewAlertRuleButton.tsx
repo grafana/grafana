@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
 import { LogMessages, logInfo } from 'app/features/alerting/unified/Analytics';
@@ -45,40 +44,30 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
     );
   }
 
-  const { onContinueInAlertingFromDrawer, onButtonClick } = createPanelAlertRuleNavigation(
+  const { onContinueInAlertingFromDrawer } = createPanelAlertRuleNavigation(
     () => scenesPanelToRuleFormValues(panel),
     location
   );
 
-  const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
-
-  if (shouldUseDrawer) {
-    return (
-      <>
-        <Button
-          icon="bell"
-          className={className}
-          data-testid="create-alert-rule-button-drawer"
-          onClick={() => {
-            logInfo(LogMessages.alertRuleFromPanel);
-            setIsOpen(true);
-          }}
-        >
-          <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
-        </Button>
-        <AlertRuleDrawerForm
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          onContinueInAlerting={onContinueInAlertingFromDrawer}
-          prefill={formValues ?? undefined}
-        />
-      </>
-    );
-  }
-
   return (
-    <Button icon="bell" onClick={onButtonClick} className={className} data-testid="create-alert-rule-button">
-      <Trans i18nKey="dashboard-scene.scenes-new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
-    </Button>
+    <>
+      <Button
+        icon="bell"
+        className={className}
+        data-testid="create-alert-rule-button-drawer"
+        onClick={() => {
+          logInfo(LogMessages.alertRuleFromPanel);
+          setIsOpen(true);
+        }}
+      >
+        <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
+      </Button>
+      <AlertRuleDrawerForm
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        onContinueInAlerting={onContinueInAlertingFromDrawer}
+        prefill={formValues ?? undefined}
+      />
+    </>
   );
 };
