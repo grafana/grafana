@@ -368,7 +368,7 @@ func (s *Service) buildMetric(query backend.DataQuery) map[string]any {
 		downsampleInterval := model.DownsampleInterval
 		if downsampleInterval == "" {
 			if ms := query.Interval.Milliseconds(); ms > 0 {
-				downsampleInterval = formatDownsampleInterval(ms)
+				downsampleInterval = FormatDownsampleInterval(ms)
 			} else {
 				downsampleInterval = "1m"
 			}
@@ -448,27 +448,4 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 	}
 
 	return instance, nil
-}
-
-func formatDownsampleInterval(ms int64) string {
-	seconds := ms / 1000
-	if seconds < 60 {
-		if seconds < 1 {
-			return strconv.FormatInt(ms, 10) + "ms"
-		}
-		return strconv.FormatInt(seconds, 10) + "s"
-	}
-
-	minutes := seconds / 60
-	if minutes < 60 {
-		return strconv.FormatInt(minutes, 10) + "m"
-	}
-
-	hours := minutes / 60
-	if hours < 24 {
-		return strconv.FormatInt(hours, 10) + "h"
-	}
-
-	days := hours / 24
-	return strconv.FormatInt(days, 10) + "d"
 }
