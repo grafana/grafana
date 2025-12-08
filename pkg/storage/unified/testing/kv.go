@@ -1170,4 +1170,227 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 		err = reader.Close()
 		require.NoError(t, err)
 	})
+
+	t.Run("txn nested transaction success path", func(t *testing.T) {
+		// Test nested transaction: if key1 exists, then check key2 and write based on that
+		saveKVHelper(t, kv, ctx, section, "nested-key1", strings.NewReader("value1"))
+		saveKVHelper(t, kv, ctx, section, "nested-key2", strings.NewReader("value2"))
+
+		cmps := []resource.Compare{
+			resource.CompareKeyExists("nested-key1"),
+		}
+		successOps := []resource.TxnOp{
+			// Nested transaction: if key2 has expected value, write result
+			resource.TxnNested(
+				[]resource.Compare{
+					resource.CompareKeyValue("nested-key2", resource.CompareEqual, []byte("value2")),
+				},
+				[]resource.TxnOp{
+					resource.TxnPut("nested-result", []byte("both-conditions-met")),
+				},
+				[]resource.TxnOp{
+					resource.TxnPut("nested-result", []byte("only-key1-exists")),
+				},
+			),
+		}
+		failureOps := []resource.TxnOp{
+			resource.TxnPut("nested-result", []byte("key1-not-found")),
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, failureOps)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+
+		// Verify the nested transaction executed the success path
+		reader, err := kv.Get(ctx, section, "nested-result")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "both-conditions-met", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("txn nested transaction failure path", func(t *testing.T) {
+		// Test nested transaction where inner compare fails
+		saveKVHelper(t, kv, ctx, section, "nested-fail-key1", strings.NewReader("value1"))
+		saveKVHelper(t, kv, ctx, section, "nested-fail-key2", strings.NewReader("wrong-value"))
+
+		cmps := []resource.Compare{
+			resource.CompareKeyExists("nested-fail-key1"),
+		}
+		successOps := []resource.TxnOp{
+			// Nested transaction: key2 has wrong value, so inner failure ops execute
+			resource.TxnNested(
+				[]resource.Compare{
+					resource.CompareKeyValue("nested-fail-key2", resource.CompareEqual, []byte("expected-value")),
+				},
+				[]resource.TxnOp{
+					resource.TxnPut("nested-fail-result", []byte("inner-success")),
+				},
+				[]resource.TxnOp{
+					resource.TxnPut("nested-fail-result", []byte("inner-failure")),
+				},
+			),
+		}
+
+		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+		require.NoError(t, err)
+		assert.True(t, resp.Succeeded) // Outer succeeded, inner failed
+
+		// Verify the nested transaction executed the failure path
+		reader, err := kv.Get(ctx, section, "nested-fail-result")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "inner-failure", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("txn nested transaction max depth exceeded", func(t *testing.T) {
+		// Test that exceeding max depth (MaxTxnDepth=3) returns an error
+		// Create a 4-level deep nested transaction
+		deeplyNested := resource.TxnNested(
+			nil,
+			[]resource.TxnOp{
+				resource.TxnNested(
+					nil,
+					[]resource.TxnOp{
+						resource.TxnNested(
+							nil,
+							[]resource.TxnOp{
+								resource.TxnPut("deep-key", []byte("value")),
+							},
+							nil,
+						),
+					},
+					nil,
+				),
+			},
+			nil,
+		)
+
+		_, err := kv.Txn(ctx, section, nil, []resource.TxnOp{deeplyNested}, nil)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "nesting too deep")
+	})
+
+	t.Run("txn total payload size exceeded", func(t *testing.T) {
+		// Test that exceeding total payload size (1MB) returns an error
+		largeValue := make([]byte, 90*1024) // 90KB each
+		for i := range largeValue {
+			largeValue[i] = byte(i % 256)
+		}
+
+		// 8 compares + 8 success ops + 8 failure ops = 24 * 90KB = 2.16MB > 1MB limit
+		cmps := make([]resource.Compare, 8)
+		for i := range cmps {
+			cmps[i] = resource.CompareKeyValue(fmt.Sprintf("size-key-%d", i), resource.CompareEqual, largeValue)
+		}
+
+		successOps := make([]resource.TxnOp, 8)
+		for i := range successOps {
+			successOps[i] = resource.TxnPut(fmt.Sprintf("size-success-%d", i), largeValue)
+		}
+
+		failureOps := make([]resource.TxnOp, 8)
+		for i := range failureOps {
+			failureOps[i] = resource.TxnPut(fmt.Sprintf("size-failure-%d", i), largeValue)
+		}
+
+		_, err := kv.Txn(ctx, section, cmps, successOps, failureOps)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "total transaction payload too large")
+	})
+
+	t.Run("txn concurrent compare and swap", func(t *testing.T) {
+		// Test that when multiple goroutines try to compare-and-swap the same key,
+		// only one succeeds. All goroutines see the same initial value and try to
+		// update it atomically. This verifies serializable isolation.
+		//
+		// Expected behavior:
+		// - All goroutines read the initial value and their compare succeeds
+		// - All try to write, but only one can commit successfully
+		// - Others get either Succeeded=false (if compare ran after winner committed)
+		//   or ErrConflict (if they tried to commit after winner but read before)
+
+		const numGoroutines = 10
+		casKey := "concurrent-cas-key"
+		initialValue := "initial-value"
+
+		// Create the key with an initial value
+		saveKVHelper(t, kv, ctx, section, casKey, strings.NewReader(initialValue))
+
+		type result struct {
+			id        int
+			succeeded bool
+			err       error
+		}
+
+		results := make(chan result, numGoroutines)
+		start := make(chan struct{})
+
+		// Launch goroutines that all try to compare-and-swap simultaneously
+		for i := 0; i < numGoroutines; i++ {
+			go func(id int) {
+				<-start // Wait for signal to start simultaneously
+
+				// Compare that the value is still the initial value, then update it
+				cmps := []resource.Compare{
+					resource.CompareKeyValue(casKey, resource.CompareEqual, []byte(initialValue)),
+				}
+				successOps := []resource.TxnOp{
+					resource.TxnPut(casKey, []byte(fmt.Sprintf("owner-%d", id))),
+				}
+
+				resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
+				succeeded := err == nil && resp != nil && resp.Succeeded
+				results <- result{id: id, succeeded: succeeded, err: err}
+			}(i)
+		}
+
+		// Start all goroutines at once
+		close(start)
+
+		// Collect results
+		successCount := 0
+		conflictCount := 0
+		compareFailedCount := 0
+		winnerId := -1
+		for i := 0; i < numGoroutines; i++ {
+			r := <-results
+			if r.err != nil {
+				// ErrConflict is expected when multiple transactions race
+				conflictCount++
+				t.Logf("goroutine %d got conflict: %v", r.id, r.err)
+			} else if r.succeeded {
+				successCount++
+				winnerId = r.id
+			} else {
+				// Compare failed (saw updated value after winner committed)
+				compareFailedCount++
+			}
+		}
+
+		t.Logf("Results: %d succeeded, %d conflicts, %d compare-failed", successCount, conflictCount, compareFailedCount)
+
+		// Exactly one goroutine should have succeeded in the compare-and-swap
+		assert.Equal(t, 1, successCount, "exactly one transaction should succeed, but %d succeeded", successCount)
+		require.NotEqual(t, -1, winnerId, "should have a winner")
+
+		// All other goroutines should have either got a conflict or had their compare fail
+		assert.Equal(t, numGoroutines-1, conflictCount+compareFailedCount,
+			"all non-winners should have either conflict or compare-failed")
+
+		// Verify the key has the winner's value
+		reader, err := kv.Get(ctx, section, casKey)
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		expectedValue := fmt.Sprintf("owner-%d", winnerId)
+		assert.Equal(t, expectedValue, string(value), "value should match the winner's id")
+		err = reader.Close()
+		require.NoError(t, err)
+	})
 }
