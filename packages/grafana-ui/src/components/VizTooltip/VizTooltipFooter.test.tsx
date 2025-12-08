@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { Field, FieldType, LinkModel } from '@grafana/data';
 
 import { VizTooltipFooter, AdHocFilterModel } from './VizTooltipFooter';
+import { selectors } from '@grafana/e2e-selectors';
 
 describe('VizTooltipFooter', () => {
   it('should fire onclick', async () => {
@@ -147,7 +148,7 @@ describe('VizTooltipFooter', () => {
       </MemoryRouter>
     );
 
-    expect(screen.queryByRole('button', { name: /Apply as filter/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Apply as inverse filter/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.VizTooltipFooter.buttons.apply)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.VizTooltipFooter.buttons.applyInverse)).not.toBeInTheDocument();
   });
 });

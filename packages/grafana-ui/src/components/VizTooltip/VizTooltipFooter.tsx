@@ -12,6 +12,7 @@ import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 import { ResponsiveProp } from '../Layout/utils/responsiveness';
 import { AdHocFilterItem } from '../Table/TableNG/types';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;
@@ -127,7 +128,12 @@ export const VizTooltipFooter = ({
               size="sm"
               onClick={filterByGroupedLabels.onFilterForGroupedLabels}
             >
-              <Trans i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter">Apply as filter</Trans>
+              <Trans
+                i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter"
+                data-testid={selectors.components.VizTooltipFooter.buttons.apply}
+              >
+                Apply as filter
+              </Trans>
             </Button>
             <Button
               icon="filter"
@@ -135,7 +141,10 @@ export const VizTooltipFooter = ({
               size="sm"
               onClick={filterByGroupedLabels.onFilterOutGroupedLabels}
             >
-              <Trans i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-inverse-filter">
+              <Trans
+                i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-inverse-filter"
+                data-testid={selectors.components.VizTooltipFooter.buttons.applyInverse}
+              >
                 Apply as inverse filter
               </Trans>
             </Button>

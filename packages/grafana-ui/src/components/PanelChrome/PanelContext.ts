@@ -63,7 +63,7 @@ export interface PanelContext {
    *
    * Used to apply multiple filters at once
    */
-  onBulkAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
+  onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
   /**
    * Enables modifying thresholds directly from the panel
    *

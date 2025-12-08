@@ -158,7 +158,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       .filter((item) => item !== undefined);
   };
 
-  context.onBulkAddAdHocFilters = (items: AdHocFilterItem[]) => {
+  context.onAddAdHocFilters = (items: AdHocFilterItem[]) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
     const queryRunner = getQueryRunnerFor(vizPanel);

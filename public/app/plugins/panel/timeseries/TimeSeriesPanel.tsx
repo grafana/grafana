@@ -57,7 +57,7 @@ export const TimeSeriesPanel = ({
     eventBus,
     canExecuteActions,
     getFiltersBasedOnGrouping,
-    onBulkAddAdHocFilters,
+    onAddAdHocFilters,
   } = usePanelContext();
 
   const { dataLinkPostProcessor } = useDataLinksContext();
@@ -178,7 +178,7 @@ export const TimeSeriesPanel = ({
                   };
 
                   const groupingFilters =
-                    seriesIdx && config.featureToggles.perPanelFiltering && getFiltersBasedOnGrouping
+                    seriesIdx !== null && config.featureToggles.perPanelFiltering && getFiltersBasedOnGrouping
                       ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
                       : [];
 
@@ -197,11 +197,11 @@ export const TimeSeriesPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       filterByGroupedLabels={
-                        config.featureToggles.perPanelFiltering && groupingFilters.length && onBulkAddAdHocFilters
+                        config.featureToggles.perPanelFiltering && groupingFilters.length && onAddAdHocFilters
                           ? {
-                              onFilterForGroupedLabels: () => onBulkAddAdHocFilters(groupingFilters),
+                              onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
                               onFilterOutGroupedLabels: () =>
-                                onBulkAddAdHocFilters(
+                                onAddAdHocFilters(
                                   groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
                                 ),
                             }

@@ -242,7 +242,7 @@ describe('setDashboardPanelContext', () => {
     });
   });
 
-  describe('onBulkAddAdHocFilters', () => {
+  describe('onAddAdHocFilters', () => {
     it('should add adhoc filters', () => {
       const { scene, context } = buildTestScene({
         existingFilterVariable: true,
@@ -255,7 +255,7 @@ describe('setDashboardPanelContext', () => {
         { key: 'cluster', value: 'cluster', operator: '=' },
       ];
 
-      context.onBulkAddAdHocFilters?.(filters);
+      context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([
         { key: 'existing', value: 'val', operator: '=' },
         { key: 'cluster', value: 'cluster', operator: '=' },
@@ -278,7 +278,7 @@ describe('setDashboardPanelContext', () => {
         { key: 'id', value: 'id', operator: '=' },
       ];
 
-      context.onBulkAddAdHocFilters?.(filters);
+      context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([
         { key: 'existing', value: 'val', operator: '!=' },
         { key: 'cluster', value: 'cluster', operator: '=' },
@@ -296,7 +296,7 @@ describe('setDashboardPanelContext', () => {
 
       const filters: AdHocFilterItem[] = [];
 
-      context.onBulkAddAdHocFilters?.(filters);
+      context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([]);
     });
   });
