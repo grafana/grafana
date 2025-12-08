@@ -45,6 +45,10 @@ type grot3dConfig struct {
 	MaxAngleY      float64 `json:"maxAngleY"`      // Maximum rotation angle for Y axis (degrees)
 	MinAngleZ      float64 `json:"minAngleZ"`      // Minimum rotation angle for Z axis (degrees)
 	MaxAngleZ      float64 `json:"maxAngleZ"`      // Maximum rotation angle for Z axis (degrees)
+	LightX         float64 `json:"lightX"`         // Light direction X component
+	LightY         float64 `json:"lightY"`         // Light direction Y component
+	LightZ         float64 `json:"lightZ"`         // Light direction Z component
+	AmbientLight   float64 `json:"ambientLight"`   // Ambient light level (0-1)
 	ViewWidth      float64 `json:"viewWidth"`      // SVG viewBox width
 	ViewHeight     float64 `json:"viewHeight"`     // SVG viewBox height
 	Perspective    float64 `json:"perspective"`    // Perspective distance (larger = less perspective)
@@ -80,6 +84,7 @@ type triangleWithDepth struct {
 	depth            float64
 	visible          bool
 	idx0, idx1, idx2 int
+	normal           point3d
 }
 
 func (s *grot3dSim) GetState() simulationState {
@@ -358,6 +363,7 @@ func (s *grot3dSim) generateSVG() string {
 			idx0:    idx0,
 			idx1:    idx1,
 			idx2:    idx2,
+			normal:  normal,
 		})
 	}
 
@@ -389,14 +395,22 @@ func (s *grot3dSim) generateSVG() string {
 			continue
 		}
 
-		// Use depth for shading (closer = lighter)
-		intensity := 0.5 + (tri.depth+150)/300*0.5
-		if intensity < 0.5 {
-			intensity = 0.5
+		// Calculate lighting intensity
+		// Normalize light direction
+		lightDir := point3d{x: s.cfg.LightX, y: s.cfg.LightY, z: s.cfg.LightZ}
+		lightMag := math.Sqrt(lightDir.x*lightDir.x + lightDir.y*lightDir.y + lightDir.z*lightDir.z)
+		if lightMag > 0 {
+			lightDir.x /= lightMag
+			lightDir.y /= lightMag
+			lightDir.z /= lightMag
 		}
-		if intensity > 1.0 {
-			intensity = 1.0
-		}
+		
+		// Diffuse lighting (Lambert) - dot product of normal and light direction
+		diffuse := math.Max(0, -(tri.normal.x*lightDir.x + tri.normal.y*lightDir.y + tri.normal.z*lightDir.z))
+		
+		// Combine ambient and diffuse
+		intensity := s.cfg.AmbientLight + (1.0-s.cfg.AmbientLight)*diffuse
+		intensity = math.Max(0, math.Min(1, intensity))
 
 		// Get centroid UV
 		uv0 := s.uvs[tri.idx0]
@@ -494,6 +508,10 @@ func newGrot3dSimInfo() simulationInfo {
 			data.NewField("maxAngleY", nil, []float64{45}),
 			data.NewField("minAngleZ", nil, []float64{0}),
 			data.NewField("maxAngleZ", nil, []float64{0}),
+			data.NewField("lightX", nil, []float64{-1}),
+			data.NewField("lightY", nil, []float64{-1}),
+			data.NewField("lightZ", nil, []float64{1}),
+			data.NewField("ambientLight", nil, []float64{0.3}),
 			data.NewField("viewWidth", nil, []float64{800}),
 			data.NewField("viewHeight", nil, []float64{800}),
 			data.NewField("perspective", nil, []float64{1000}),
@@ -512,6 +530,10 @@ func newGrot3dSimInfo() simulationInfo {
 					MaxAngleY:      45,
 					MinAngleZ:      0,
 					MaxAngleZ:      0,
+					LightX:         -1,
+					LightY:         -1,
+					LightZ:         -1,
+					AmbientLight:   0.3,
 					ViewWidth:      800,
 					ViewHeight:     800,
 					Perspective:    1000,
