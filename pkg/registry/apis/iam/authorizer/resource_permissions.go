@@ -15,17 +15,31 @@ import (
 
 // TODO: Logs, Metrics, Traces?
 
+type ParentProvider interface {
+	HasParent(gr schema.GroupResource) bool
+	GetParent(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error)
+}
+
 // ResourcePermissionsAuthorizer
 type ResourcePermissionsAuthorizer struct {
-	accessClient types.AccessClient
+	accessClient   types.AccessClient
+	parentProvider ParentProvider
 }
 
 var _ storewrapper.ResourceStorageAuthorizer = (*ResourcePermissionsAuthorizer)(nil)
 
-func NewResourcePermissionsAuthorizer(accessClient types.AccessClient) *ResourcePermissionsAuthorizer {
+func NewResourcePermissionsAuthorizer(
+	accessClient types.AccessClient,
+	parentProvider ParentProvider,
+) *ResourcePermissionsAuthorizer {
 	return &ResourcePermissionsAuthorizer{
-		accessClient: accessClient,
+		accessClient:   accessClient,
+		parentProvider: parentProvider,
 	}
+}
+
+func isAccessPolicy(authInfo types.AuthInfo) bool {
+	return types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy)
 }
 
 // AfterGet implements ResourceStorageAuthorizer.
@@ -37,9 +51,18 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 	switch o := obj.(type) {
 	case *iamv0.ResourcePermission:
 		target := o.Spec.Resource
+		targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
 
-		// TODO: Fetch the resource to retrieve its parent folder.
 		parent := ""
+		// Fetch the parent of the resource
+		// Access Policies have global scope, so no parent check needed
+		if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
+			p, err := r.parentProvider.GetParent(ctx, targetGR, o.Namespace, target.Name)
+			if err != nil {
+				return err
+			}
+			parent = p
+		}
 
 		checkReq := types.CheckRequest{
 			Namespace: o.Namespace,
@@ -72,9 +95,18 @@ func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj run
 	switch o := obj.(type) {
 	case *iamv0.ResourcePermission:
 		target := o.Spec.Resource
+		targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
 
-		// TODO: Fetch the resource to retrieve its parent folder.
 		parent := ""
+		// Fetch the parent of the resource
+		// Access Policies have global scope, so no parent check needed
+		if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
+			p, err := r.parentProvider.GetParent(ctx, targetGR, o.Namespace, target.Name)
+			if err != nil {
+				return err
+			}
+			parent = p
+		}
 
 		checkReq := types.CheckRequest{
 			Namespace: o.Namespace,
@@ -153,8 +185,21 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 				canViewFuncs[gr] = canView
 			}
 
-			// TODO : Fetch the resource to retrieve its parent folder.
+			target := item.Spec.Resource
+			targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
+
 			parent := ""
+			// Fetch the parent of the resource
+			// Access Policies have global scope, so no parent check needed
+			if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
+				p, err := r.parentProvider.GetParent(ctx, targetGR, item.Namespace, target.Name)
+				if err != nil {
+					// TODO: Log error
+					// Skip item on error fetching parent
+					continue
+				}
+				parent = p
+			}
 
 			allowed := canView(item.Spec.Resource.Name, parent)
 			if allowed {
@@ -167,3 +212,16 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 		return nil, fmt.Errorf("expected ResourcePermissionList, got %T: %w", l, storewrapper.ErrUnexpectedType)
 	}
 }
+
+// func (r *ResourcePermissionsAuthorizer) client(ctx context.Context, namespace string, gr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+// 	restConfig, err := r.configProvider(ctx, gr.GroupResource())
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	client, err := dynamic.NewForConfig(restConfig)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return client.Resource(gr).Namespace(namespace), nil
+// }
