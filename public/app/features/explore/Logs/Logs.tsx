@@ -165,7 +165,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const {
     width,
     splitOpen,
-    logRows,
     logsMeta,
     logsVolumeEnabled,
     logsVolumeData,
@@ -191,6 +190,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     eventBus,
     onPinLineCallback,
   } = props;
+  let { logRows } = props;
   const [showLabels, setShowLabels] = useState<boolean>(store.getBool(SETTINGS_KEYS.showLabels, false));
   const [showTime, setShowTime] = useState<boolean>(store.getBool(SETTINGS_KEYS.showTime, true));
   const [wrapLogMessage, setWrapLogMessage] = useState<boolean>(store.getBool(SETTINGS_KEYS.wrapLogMessage, true));
@@ -225,6 +225,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const tableHeight = getLogsTableHeight();
   const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
   const styles = getStyles(theme, setWrapperLineWrapStyles, tableHeight);
+  const gameLogs = useLogsGames();
+  if (!logRows.length && gameLogs) {
+    logRows = gameLogs;
+  }
   const hasData = logRows && logRows.length > 0;
   const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
@@ -687,7 +691,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     },
     [getPinnedLogsCount, onOpenContext, onPinLineCallback, outlineItems, pinnedLogs, register, unregister, updateItem]
   );
-  const gameLogs = useLogsGames();
   const { dedupedRows, dedupCount } = useMemo(
     () => (gameLogs ? { dedupedRows: gameLogs, dedupCount: 0 } : dedupRows(logRows, dedupStrategy)),
     [dedupStrategy, gameLogs, logRows]
