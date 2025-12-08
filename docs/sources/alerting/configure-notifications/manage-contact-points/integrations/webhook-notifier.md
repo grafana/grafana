@@ -64,7 +64,7 @@ For more details on contact points, including how to test them and enable notifi
 
 | Option | Description                                                                                                                   |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| URL    | The Webhook URL. This field is [protected](ref:configure-contact-points#protected-fields) from modification in Grafana Cloud. |
+| URL    | The Webhook URL. This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud. |
 
 #### Optional settings
 
