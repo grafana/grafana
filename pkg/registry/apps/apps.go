@@ -2,6 +2,7 @@ package appregistry
 
 import (
 	"context"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -76,7 +77,11 @@ func ProvideAppInstallers(
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
 	//nolint:staticcheck
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
+	ctx := context.Background()
+	s := openfeature.NewDefaultClient().String(ctx, featuremgmt.FlagBlueFlag, "red", openfeature.TransactionContext(ctx))
+	println("@@@@@@", s)
+	if s == "blue" {
+		println("@@@@@@", "OH MY IS BLUE")
 		installers = append(installers, annotationAppInstaller)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
