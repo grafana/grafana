@@ -473,7 +473,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // If the scopeNode isn't avilable, fetch it and add it to the nodes cache
     if (
       config.featureToggles.useScopeSingleNodeEndpoint &&
-      this.state.selectedScopes[0].scopeNodeId &&
+      this.state.selectedScopes[0]?.scopeNodeId &&
       !this.state.nodes[this.state.selectedScopes[0].scopeNodeId]
     ) {
       const scopeNode = await this.apiClient.fetchScopeNode(this.state.selectedScopes[0].scopeNodeId);
