@@ -4851,7 +4851,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Hodnoty oddělené čárkou"
         },
@@ -12502,7 +12504,8 @@
         "bar-glow": "",
         "center-glow": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
       "gradient": "",
       "gradient-auto": "",

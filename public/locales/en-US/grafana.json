@@ -4811,7 +4811,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "Close",
+          "apply": "Apply",
+          "change-value": "Change variable value",
+          "discard": "Discard",
           "modal-title": "Custom Variable",
           "values": "Values separated by comma"
         },
