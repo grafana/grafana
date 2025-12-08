@@ -4,9 +4,9 @@ import selectEvent from 'react-select-event';
 
 import { config } from '@grafana/runtime';
 
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../../../dataquery.gen';
 import { setupMockedDataSource } from '../../../../mocks/CloudWatchDataSource';
 import { createArray, createGroupBy } from '../../../../mocks/sqlUtils';
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../../../types';
 
 import SQLGroupBy from './SQLGroupBy';
 
