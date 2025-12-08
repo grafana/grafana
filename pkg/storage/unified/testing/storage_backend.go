@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -48,7 +49,7 @@ const (
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
 
-// NewBackendWithDBFunc creates a backend with optional database access for testing
+// NewBackendWithDBFunc creates a backend with database access for testing
 type NewBackendWithDBFunc func(ctx context.Context) (resource.StorageBackend, sqldb.DB)
 
 // TestOptions configures which tests to run
@@ -1950,7 +1951,7 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 	require.Contains(t, keyPath, fmt.Sprintf("~%s~", action))
 
 	// Verify snowflake calculation
-	expectedSnowflake := (((resourceVersion / 1000) - 1288834974657) << 22) + (resourceVersion % 1000)
+	expectedSnowflake := (((resourceVersion / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (resourceVersion % 1000)
 	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake), fmt.Sprintf("actual RV: %d", actualRV))
 
 	// Verify folder if specified

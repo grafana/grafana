@@ -36,12 +36,6 @@ import (
 // This prevents race conditions where multiple tests try to alter the same table simultaneously.
 var initMutex = &sync.Mutex{}
 
-// TestBackendWithDB wraps a backend with database access for testing
-type TestBackendWithDB struct {
-	resource.StorageBackend
-	DB sqldb.DB
-}
-
 // newTestBackend creates a fresh database and backend for a test.
 // It uses a mutex to ensure the entire initialization and migration
 // process is atomic and does not race with other parallel tests.
