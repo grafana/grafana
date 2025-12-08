@@ -5888,6 +5888,10 @@
       "label-value": "Value",
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
+    "conversion-warning-banner": {
+      "message": "This dashboard was originally created in the v2 dashboard format and has been converted to the v1 dashboard format. Saving changes to this dashboard will lose v2 specific features, like tabs and show/hide rules.",
+      "title": "This dashboard was converted from the v2 dashboard format"
+    },
     "custom-variable-form": {
       "custom-options": "Custom options",
       "name-values-separated-comma": "Values separated by comma",
