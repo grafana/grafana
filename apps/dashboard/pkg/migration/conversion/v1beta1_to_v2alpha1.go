@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
@@ -50,6 +51,16 @@ func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemavers
 	}
 
 	return getDefaultDatasourceType(ctx, provider)
+}
+
+// resolveGrafanaDatasourceUID resolves the Grafana datasource UID when type is "datasource" and UID is empty.
+// The Grafana datasource has type "datasource" and UID "grafana". When a v1beta1 dashboard has
+// datasource: { type: "datasource" } with no UID, it should resolve to uid: "grafana".
+func resolveGrafanaDatasourceUID(dsType, dsUID string) string {
+	if dsType == "datasource" && dsUID == "" {
+		return dashboard.GrafanaDatasourceUID
+	}
+	return dsUID
 }
 
 // prepareV1beta1ConversionContext sets up the context with namespace and service identity
@@ -1528,25 +1539,37 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		},
 	}
 
-	// Transform baseFilters if they exist
+	// Transform baseFilters if they exist, otherwise default to empty array
 	if baseFilters, exists := varMap["baseFilters"]; exists {
 		if baseFiltersArray, ok := baseFilters.([]interface{}); ok {
 			adhocVar.Spec.BaseFilters = transformAdHocFilters(baseFiltersArray)
 		}
 	}
+	// Ensure baseFilters is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.BaseFilters == nil {
+		adhocVar.Spec.BaseFilters = []dashv2alpha1.DashboardAdHocFilterWithLabels{}
+	}
 
-	// Transform filters if they exist
+	// Transform filters if they exist, otherwise default to empty array
 	if filters, exists := varMap["filters"]; exists {
 		if filtersArray, ok := filters.([]interface{}); ok {
 			adhocVar.Spec.Filters = transformAdHocFilters(filtersArray)
 		}
 	}
+	// Ensure filters is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.Filters == nil {
+		adhocVar.Spec.Filters = []dashv2alpha1.DashboardAdHocFilterWithLabels{}
+	}
 
-	// Transform defaultKeys if they exist
+	// Transform defaultKeys if they exist, otherwise default to empty array
 	if defaultKeys, exists := varMap["defaultKeys"]; exists {
 		if defaultKeysArray, ok := defaultKeys.([]interface{}); ok {
 			adhocVar.Spec.DefaultKeys = transformMetricFindValues(defaultKeysArray)
 		}
+	}
+	// Ensure defaultKeys is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.DefaultKeys == nil {
+		adhocVar.Spec.DefaultKeys = []dashv2alpha1.DashboardMetricFindValue{}
 	}
 
 	// Only include datasource if datasourceUID exists (matching frontend behavior)
@@ -1674,6 +1697,9 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 			// If no UID and no type, use default
 			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
+
+		// Resolve Grafana datasource UID when type is "datasource" and UID is empty
+		datasourceUID = resolveGrafanaDatasourceUID(datasourceType, datasourceUID)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1929,22 +1955,45 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 
 	// Get panel datasource
 	var panelDatasource *dashv2alpha1.DashboardDataSourceRef
-	if ds, ok := panelMap["datasource"].(map[string]interface{}); ok {
-		dsUID := schemaversion.GetStringValue(ds, "uid")
-		dsType := schemaversion.GetStringValue(ds, "type")
+	ds, dsExists := panelMap["datasource"]
 
-		// If we have a UID, use it to get the correct type from the datasource service
-		// BUT: Don't try to resolve types for template variables
-		if dsUID != "" && dsType == "" && !isTemplateVariable(dsUID) {
-			dsType = getDatasourceTypeByUID(ctx, dsUID, dsIndexProvider)
-		} else if dsUID == "" && dsType == "" {
-			// If no UID and no type, use default
-			dsType = getDefaultDatasourceType(ctx, dsIndexProvider)
-		}
+	if dsExists && ds != nil {
+		if dsMap, ok := ds.(map[string]interface{}); ok {
+			// Handle panel datasource as object
+			dsUID := schemaversion.GetStringValue(dsMap, "uid")
+			dsType := schemaversion.GetStringValue(dsMap, "type")
 
-		panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
-			Type: &dsType,
-			Uid:  &dsUID,
+			// Check if datasource object is effectively empty (no uid and no type)
+			// Empty objects {} should be preserved as empty, not converted to defaults
+			isEmpty := dsUID == "" && dsType == ""
+
+			// If we have a UID, use it to get the correct type from the datasource service
+			// BUT: Don't try to resolve types for template variables
+			if dsUID != "" && dsType == "" && !isTemplateVariable(dsUID) {
+				dsType = getDatasourceTypeByUID(ctx, dsUID, dsIndexProvider)
+			} else if !isEmpty && dsUID == "" && dsType == "" {
+				// Only set default if datasource is missing (not empty object)
+				// Empty objects {} should remain empty
+				dsType = getDefaultDatasourceType(ctx, dsIndexProvider)
+			}
+
+			// Resolve Grafana datasource UID when type is "datasource" and UID is empty
+			// Only resolve if we have a type (not for empty objects)
+			if !isEmpty {
+				dsUID = resolveGrafanaDatasourceUID(dsType, dsUID)
+			}
+
+			// Only create panelDatasource if it's not empty after resolution
+			// Empty objects {} should result in nil panelDatasource
+			// After resolution, check if we have a type or UID (not just the original isEmpty)
+			// This ensures that type: "datasource" with empty UID gets resolved to uid: "grafana"
+			// and panelDatasource is created
+			if dsType != "" || dsUID != "" {
+				panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
+					Type: &dsType,
+					Uid:  &dsUID,
+				}
+			}
 		}
 	}
 
@@ -1971,12 +2020,24 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 		queryDatasourceUID = schemaversion.GetStringValue(ds, "uid")
 		queryDatasourceType = schemaversion.GetStringValue(ds, "type")
 
-		// If we have a UID, use it to get the correct type from the datasource service
-		// BUT: Don't try to resolve types for template variables
-		if queryDatasourceUID != "" && queryDatasourceType == "" && !isTemplateVariable(queryDatasourceUID) {
-			queryDatasourceType = getDatasourceTypeByUID(ctx, queryDatasourceUID, dsIndexProvider)
+		// If target datasource is empty object {} (no uid and no type), treat it as missing
+		// and fall through to use panel datasource (matches frontend behavior in v36 migration)
+		if queryDatasourceUID == "" && queryDatasourceType == "" {
+			// Empty datasource object - will use panel datasource below
+		} else {
+			// If we have a UID, use it to get the correct type from the datasource service
+			// BUT: Don't try to resolve types for template variables
+			if queryDatasourceUID != "" && queryDatasourceType == "" && !isTemplateVariable(queryDatasourceUID) {
+				queryDatasourceType = getDatasourceTypeByUID(ctx, queryDatasourceUID, dsIndexProvider)
+			}
+
+			// Resolve Grafana datasource UID when type is "datasource" and UID is empty
+			queryDatasourceUID = resolveGrafanaDatasourceUID(queryDatasourceType, queryDatasourceUID)
 		}
-	} else if panelDatasource != nil {
+	}
+
+	// Use panel datasource if target datasource is missing or empty
+	if queryDatasourceUID == "" && queryDatasourceType == "" && panelDatasource != nil {
 		// Only use panel datasource if it's not a mixed datasource
 		// Mixed datasources should not be propagated to individual queries
 		if panelDatasource.Uid != nil && *panelDatasource.Uid != "-- Mixed --" {
@@ -1984,6 +2045,10 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 				queryDatasourceType = *panelDatasource.Type
 			}
 			queryDatasourceUID = *panelDatasource.Uid
+		} else if panelDatasource.Type != nil && *panelDatasource.Type == "datasource" {
+			// Handle case where panel datasource has type "datasource" but no UID
+			queryDatasourceType = *panelDatasource.Type
+			queryDatasourceUID = resolveGrafanaDatasourceUID(*panelDatasource.Type, "")
 		}
 	}
 

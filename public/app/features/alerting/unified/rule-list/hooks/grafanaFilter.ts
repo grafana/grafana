@@ -14,6 +14,7 @@ import {
   groupMatches,
   groupNameFilter,
   labelsFilter,
+  mapDataSourceNamesToUids,
   namespaceFilter,
   pluginsFilter,
   ruleMatches,
@@ -63,6 +64,17 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
   // Build title search for backend filtering
   const titleSearch = buildTitleSearch(normalizedFilterState);
 
+  // Check if data source names were provided but none are valid.
+  let hasInvalidDataSourceNames = false;
+  let datasourceUids: string[] | undefined = undefined;
+
+  // Only map datasources if data source filter should be applied on backend (when ruleFilterConfig.dataSourceNames is null).
+  if (ruleFilterConfig.dataSourceNames === null && normalizedFilterState.dataSourceNames.length > 0) {
+    datasourceUids = mapDataSourceNamesToUids(normalizedFilterState.dataSourceNames);
+    // If names were provided but no valid UIDs were found, all names are invalid.
+    hasInvalidDataSourceNames = datasourceUids.length === 0;
+  }
+
   const backendFilter: GrafanaPromRulesOptions = {
     state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
     health: normalizedFilterState.ruleHealth ? [normalizedFilterState.ruleHealth] : [],
@@ -72,6 +84,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     type: ruleFilterConfig.ruleType ? undefined : normalizedFilterState.ruleType,
     dashboardUid: ruleFilterConfig.dashboardUid ? undefined : normalizedFilterState.dashboardUid,
     searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
+    datasources: ruleFilterConfig.dataSourceNames ? undefined : datasourceUids,
   };
 
   return {
@@ -80,6 +93,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
       groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, normalizedFilterState, groupFilterConfig),
       ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, normalizedFilterState, ruleFilterConfig),
     },
+    hasInvalidDataSourceNames,
   };
 }
 
@@ -100,7 +114,7 @@ function buildGrafanaFilterConfigs() {
     ruleName: useBackendFilters ? null : ruleNameFilter,
     ruleState: null,
     ruleType: useBackendFilters || useFullyCompatibleBackendFilters ? null : ruleTypeFilter,
-    dataSourceNames: dataSourceNamesFilter,
+    dataSourceNames: useBackendFilters || useFullyCompatibleBackendFilters ? null : dataSourceNamesFilter,
     labels: labelsFilter,
     ruleHealth: null,
     dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,

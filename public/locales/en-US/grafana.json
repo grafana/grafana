@@ -4811,7 +4811,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "Close",
+          "apply": "Apply",
+          "change-value": "Change variable value",
+          "discard": "Discard",
           "modal-title": "Custom Variable",
           "values": "Values separated by comma"
         },
@@ -5824,14 +5826,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": "Above dashboard"
+        },
+        "controls-menu": {
+          "description": "Can be accessed when the controls menu is open",
+          "label": "Controls menu"
+        },
+        "hidden": {
+          "description": "Hides the toggle for turning this annotation on or off",
+          "label": "Hidden"
+        }
+      },
       "delete": "Delete",
       "description-color-annotation-event-markers": "Color to use for the annotation event markers",
       "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
-      "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
+      "label-annotation-controls-display": "Show annotation controls in",
       "label-color": "Color",
       "label-data-source": "Data source",
       "label-enabled": "Enabled",
-      "label-hidden": "Hidden",
       "label-name": "Name",
       "label-show-in": "Show in",
       "placeholder-choose-panels": "Choose panels",
@@ -5887,6 +5901,7 @@
       "label-open-link-in-new-tab": "Open link in new tab",
       "label-options": "Options",
       "label-show-as-dropdown": "Show as dropdown",
+      "label-show-in-controls-menu": "Show in controls menu",
       "label-title": "Title",
       "label-tooltip": "Tooltip",
       "label-type": "Type",
@@ -6448,6 +6463,25 @@
     "variable-controls": {
       "add-variable": "Add variable"
     },
+    "variable-display-select": {
+      "label": "Display",
+      "options": {
+        "above-dashboard": {
+          "label": "Above dashboard"
+        },
+        "controls-menu": {
+          "description": "Visible when the controls menu is open",
+          "label": "Controls menu"
+        },
+        "hidden": {
+          "label": "Hidden"
+        },
+        "hidden-label": {
+          "description": "Above the dashboard, but without showing the name of variable",
+          "label": "Above dashboard, label hidden"
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
@@ -6762,8 +6796,8 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "Or skip the effort and get {{mainDS}} (and {{extraDS}}) as fully-managed, scalable, and hosted data sources from Grafana Labs with the <6>free-forever Grafana Cloud plan</6>.",
-      "title-alert": "Configure your {{mainDS}} data source below"
+      "body-alert": "Or skip the effort and get {{dsName}} as fully-managed, scalable, and hosted data source from Grafana Labs with the <4>free-forever Grafana Cloud plan</4>.",
+      "title-alert": "Configure your {{dsName}} data source below"
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Delete dashboard",
@@ -7301,6 +7335,14 @@
       },
       "title-failed-sample-query": "Failed to load logs sample for this query",
       "tooltip": "Show log lines that contributed to visualized metrics"
+    },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "Copy link to log line",
+        "copy-to-clipboard": "Copy to Clipboard",
+        "inspect-value": "Inspect value",
+        "view-log-line": "View log line"
+      }
     },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
@@ -12356,7 +12398,8 @@
         "bar-glow": "Bar glow",
         "center-glow": "Center glow",
         "rounded-bars": "Rounded bars",
-        "spotlight": "Spotlight"
+        "spotlight": "Spotlight",
+        "spotlight-tooltip": "Only visible in dark themes"
       },
       "gradient": "Gradient",
       "gradient-auto": "Auto",

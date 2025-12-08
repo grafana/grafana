@@ -4811,7 +4811,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Értékek vesszővel elválasztva"
         },
@@ -5085,10 +5087,7 @@
         "copy-or-duplicate": "Másolás vagy duplikálás",
         "delete": "Törlés",
         "duplicate": "Duplikálás",
-        "group-layout": "Csoport elrendezése",
-        "group-layout-disabled": "Ezen a szinten nincsenek csoportok",
-        "panel-layout": "Panel elrendezése",
-        "panel-layout-disabled": "Jelöljön ki egy sort vagy lapot a panel elrendezési beállításainak módosításához"
+        "layout": "Elrendezés"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -5827,14 +5826,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Vissza a listához",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Törlés",
       "description-color-annotation-event-markers": "A jegyzetesemény-jelölőkhöz használandó szín",
       "description-enabled-annotation-query-issued-every-dashboard": "Ha engedélyezve van, a jegyzetlekérdezés az irányítópult minden frissítésekor megjelenik",
-      "description-hidden": "A jegyzetlekérdezések be- és kikapcsolhatók az irányítópult tetején. Ha ez a lehetőség be van jelölve, ez a kapcsoló el lesz rejtve.",
+      "label-annotation-controls-display": "",
       "label-color": "Szín",
       "label-data-source": "Adatforrás",
       "label-enabled": "Engedélyezve",
-      "label-hidden": "Rejtett",
       "label-name": "Név",
       "label-show-in": "Megjelenítés itt:",
       "placeholder-choose-panels": "Válassza ki a paneleket",
@@ -5890,6 +5901,7 @@
       "label-open-link-in-new-tab": "Hivatkozás megnyitása új lapon",
       "label-options": "Beállítások",
       "label-show-as-dropdown": "Megjelenítés legördülő menüként",
+      "label-show-in-controls-menu": "",
       "label-title": "Cím",
       "label-tooltip": "Elemleírás",
       "label-type": "Típus",
@@ -6451,6 +6463,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Változószerkesztő űrlap",
       "back-to-list": "Vissza a listához",
@@ -6559,7 +6590,7 @@
       "delete-button": "Törlés",
       "title": "Törlés"
     },
-    "delete-modal-restore-dashboards-text": "Ez a művelet 30 napon belüli törlésre jelöli meg az irányítópultot. A szervezeti rendszergazda a 30 nap lejárta előtt bármikor visszaállíthatja.",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "Biztosan törli ezt az irányítópultot?",
     "general": {
       "auto-refresh-description": "Határozza meg az automatikus frissítési intervallumokat, amelyeknek elérhetőnek kell lenniük az automatikus frissítési listában. Használja az „5s” formátumot a másodpercekhez, az „1m” formátumot a percekhez, az „1h” formátumot az órákhoz és az „1d” formátumot a napokhoz (pl.: „5s ,10s ,30s ,1m,5m,15m,30m,1h,2h,1d”).",
@@ -6765,8 +6796,8 @@
       "test": "Teszt"
     },
     "cloud-info-box": {
-      "body-alert": "Vagy hagyja ki a próbálkozást, és szerezze be a(z) {{mainDS}} adatforrást (és {{extraDS}}) a Grafana Labs teljes körűen felügyelt, skálázható és hosztolt adatforrásait az <6>örökre ingyenes Grafana Cloud-előfizetéssel</6>.",
-      "title-alert": "Konfigurálja {{mainDS}} adatforrását alább"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Irányítópult törlése",
@@ -7304,6 +7335,14 @@
       },
       "title-failed-sample-query": "A lekérdezés naplómintájának betöltése nem sikerült",
       "tooltip": "A vizualizált metrikákhoz hozzájáruló naplósorok megjelenítése"
+    },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
     },
     "logs-table-empty-fields": {
       "no-fields": "Nincsenek mezők"
@@ -12359,7 +12398,8 @@
         "bar-glow": "",
         "center-glow": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
       "gradient": "",
       "gradient-auto": "",

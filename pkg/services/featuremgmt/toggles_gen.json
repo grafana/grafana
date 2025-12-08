@@ -2501,6 +2501,20 @@
     },
     {
       "metadata": {
+        "name": "opentsdbBackendMigration",
+        "resourceVersion": "1763456634837",
+        "creationTimestamp": "2025-11-18T09:03:54Z"
+      },
+      "spec": {
+        "description": "Run queries through the data source backend",
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "otelLogsFormatting",
         "resourceVersion": "1763734583253",
         "creationTimestamp": "2025-07-16T15:42:14Z"
@@ -3542,6 +3556,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "useMTPlugins",
+        "resourceVersion": "1764913709691",
+        "creationTimestamp": "2025-12-05T05:48:29Z"
+      },
+      "spec": {
+        "description": "Enables plugins decoupling from bootdata",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {

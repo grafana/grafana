@@ -1190,6 +1190,11 @@ export interface FeatureToggles {
   */
   transformationsEmptyPlaceholder?: boolean;
   /**
+  * Run queries through the data source backend
+  * @default false
+  */
+  opentsdbBackendMigration?: boolean;
+  /**
   * Enable TTL plugin instance manager
   */
   ttlPluginInstanceManager?: boolean;
@@ -1206,4 +1211,9 @@ export interface FeatureToggles {
   * Adds support for Kubernetes alerting historian APIs
   */
   kubernetesAlertingHistorian?: boolean;
+  /**
+  * Enables plugins decoupling from bootdata
+  * @default false
+  */
+  useMTPlugins?: boolean;
 }
