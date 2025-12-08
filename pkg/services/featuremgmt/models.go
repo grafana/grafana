@@ -128,6 +128,15 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+type FeatureFlagType string
+
+const (
+	Boolean = "boolean"
+	Number  = "number"
+	Object  = "object"
+	String  = "string"
+)
+
 // These are properties about the feature, but not the current state or value for it
 type FeatureFlag struct {
 	Name        string           `json:"name" yaml:"name"` // Unique name
@@ -145,6 +154,8 @@ type FeatureFlag struct {
 
 	// The server must be initialized with the value
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
+
+	Type FeatureFlagType `json:"type,omitempty"`
 }
 
 type FeatureToggleWebhookPayload struct {
