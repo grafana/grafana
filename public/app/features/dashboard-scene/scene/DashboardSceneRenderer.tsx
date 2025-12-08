@@ -96,8 +96,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return <body.Component model={body} />;
   }
 
-  console.log('*** config', config.featureToggles);
-
   return (
     <>
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
