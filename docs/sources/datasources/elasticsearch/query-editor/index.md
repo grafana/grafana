@@ -30,7 +30,7 @@ refs:
 # Elasticsearch query editor
 
 Grafana provides a query editor for Elasticsearch. Elasticsearch queries are in Lucene format.
-See [Lucene query syntax](https://www.elastic.co/guide/en/kibana/current/lucene-query.html) and [Query string syntax](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/query-dsl-query-string-query.html#query-string-syntax) if you are new to working with Lucene queries in Elasticsearch.
+For more information about query syntax, refer to [Lucene query syntax](https://www.elastic.co/guide/en/kibana/current/lucene-query.html) and [Query string syntax](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax).
 
 {{< admonition type="note" >}}
 When composing Lucene queries, ensure that you use uppercase boolean operators: `AND`, `OR`, and `NOT`. Lowercase versions of these operators are not supported by the Lucene query syntax.
@@ -48,7 +48,7 @@ Elasticsearch groups aggregations into three categories:
 
 - **Metrics** - Metrics aggregations perform calculations such as sum, average, min, etc. They can be single-value or multi-value. See [Metrics aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics.html) for additional information. Use metrics aggregations in the metrics query type in the query builder.
 
-- **Pipeline** - Elasticsearch pipeline aggregations work with inputs or metrics created from other aggregations (not documents or fields). There are parent and sibling and sibling pipeline aggregations. See [Pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-pipeline.html) for additional information.
+- **Pipeline** - Pipeline aggregations work on the output of other aggregations rather than on documents or fields. See [Pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline.html) for additional information.
 
 ## Select a query type
 
@@ -56,27 +56,34 @@ There are three types of queries you can create with the Elasticsearch query bui
 
 ### Metrics query type
 
-Metrics queries aggregate data and produce a variety of calculations such as count, min, max, etc. Click on the metric box to view a list of options in the dropdown menu. The default is `count`.
+Metrics queries aggregate data and produce calculations such as count, min, max, and more. Click the metric box to view options in the drop-down menu. The default is `count`.
 
 - **Alias** - Aliasing only applies to **time series queries**, where the last group is `date histogram`. This is ignored for any other type of query.
 
 - **Metric** - Metrics aggregations include:
-  - count - see [Value count aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-valuecount-aggregation.html)
-  - average - see [Avg aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-rate-aggregation.html)
+  - count - see [Value count aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-valuecount-aggregation.html)
+  - average - see [Avg aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-avg-aggregation.html)
   - sum - see [Sum aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-sum-aggregation.html)
-  - max - see [Max aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-max-aggregation.html)
-  - min - see [Min aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-min-aggregation.html)
+  - max - see [Max aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-max-aggregation.html)
+  - min - see [Min aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-min-aggregation.html)
   - extended stats - see [Extended stats aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-extendedstats-aggregation.html)
-  - percentiles - see [Percentiles aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-percentile-aggregation.html)
-  - unique count - see [Cardinality aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-cardinality-aggregation.html)
-  - top metrics - see [Top metrics aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-top-metrics.html)
-  - rate - see [Rate aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-rate-aggregation.html)
+  - percentiles - see [Percentiles aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-percentile-aggregation.html)
+  - unique count - see [Cardinality aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-cardinality-aggregation.html)
+  - top metrics - see [Top metrics aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-top-metrics.html)
+  - rate - see [Rate aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-rate-aggregation.html)
+
+- **Pipeline aggregations** - Pipeline aggregations work on the output of other aggregations rather than on documents. The following pipeline aggregations are available:
+  - moving function - Calculates a value based on a sliding window of aggregated values. See [Moving function aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-movfn-aggregation.html).
+  - derivative - Calculates the derivative of a metric. See [Derivative aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-derivative-aggregation.html).
+  - cumulative sum - Calculates the cumulative sum of a metric. See [Cumulative sum aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-cumulative-sum-aggregation.html).
+  - serial difference - Calculates the difference between values in a time series. See [Serial differencing aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-serialdiff-aggregation.html).
+  - bucket script - Executes a script on metric values from other aggregations. See [Bucket script aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html).
 
 You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
 
 Use the **+ sign** to the right to add multiple metrics to your query. Click on the **eye icon** next to **Metric** to hide metrics, and the **garbage can icon** to remove metrics.
 
-- **Group by options** - Create multiple group by options when constructing your Elasticsearch query. Date histogram is the default option. Below is a list of options in the dropdown menu.
+- **Group by options** - Create multiple group by options when constructing your Elasticsearch query. Date histogram is the default option. The following options are available in the drop-down menu:
   - terms - see [Terms aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html).
   - filter - see [Filter aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filter-aggregation.html).
   - geo hash grid - see [Geohash grid aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html).
@@ -88,12 +95,12 @@ Each group by option will have a different subset of options to further narrow y
 
 The following options are specific to the **date histogram** bucket aggregation option.
 
-- **Time field** - Depicts date data options. The default option can be specified when configuring the Elasticsearch data source in the **Time field name** under the [**Elasticsearch details**](/docs/grafana/latest/datasources/elasticsearch/configure-elasticsearch-data-source/#elasticsearch-details) section. Otherwise **@timestamp** field will be used as a default option.
-- **Interval** - Group by a type of interval. There are option to choose from the dropdown menu to select seconds, minutes, hours or day. You can also add a custom interval such as `30d` (30 days). `Auto` is the default option.
-- **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
-- **Thin edges** - Select to trim edges on the time series data points. The default is `0`.
-- **Offset** - Changes the start value of each bucket by the specified positive(+) or negative (-) offset duration. Examples include `1h` for 1 hour, `5s` for 5 seconds or `1d` for 1 day.
-- **Timezone** - Select a timezone from the dropdown menu. The default is `Coordinated universal time`.
+- **Time field** - The field used for time-based queries. The default can be set when configuring the data source in the **Time field name** setting under [Elasticsearch details](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/configure/#elasticsearch-details). The default is `@timestamp`.
+- **Interval** - The time interval for grouping data. Select from the drop-down menu or enter a custom interval such as `30d` (30 days). The default is `Auto`.
+- **Min doc count** - The minimum number of documents required to include a bucket. The default is `0`.
+- **Trim edges** - Removes partial buckets at the edges of the time range. The default is `0`.
+- **Offset** - Shifts the start of each bucket by the specified duration. Use positive (`+`) or negative (`-`) values. Examples: `1h`, `5s`, `1d`.
+- **Timezone** - The timezone for date calculations. The default is `Coordinated Universal Time`.
 
 Configure the following options for the **terms** bucket aggregation option:
 
@@ -114,8 +121,8 @@ Configure the following options for the **geo hash grid** bucket aggregation opt
 
 Configure the following options for the **histogram** bucket aggregation option:
 
-- **Interval** - Group by a type of interval. There are option to choose from the dropdown menu to select seconds, minutes, hours or day. You can also add a custom interval such as `30d` (30 days). `Auto` is the default option.
-- **Min doc count** - The minimum amount of data to include in your query. The default is `0`
+- **Interval** - The numeric interval for grouping values into buckets.
+- **Min doc count** - The minimum number of documents required to include a bucket. The default is `0`.
 
 The **nested** group by option is currently experimental, you can select a field and then settings specific to that field.
 
@@ -141,7 +148,7 @@ The option to run a **raw document query** is deprecated as of Grafana v10.1.
 
 ## Use template variables
 
-You can also augment queries by using [template variables](../template-variables/).
+You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/).
 
 Queries of `terms` have a 500-result limit by default.
 To set a custom limit, set the `size` property in your query.
