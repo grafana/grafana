@@ -42,7 +42,9 @@ func RegisterAppInstaller(
 
 			appSpecificConfig.Notification = historianAppConfig.NotificationConfig{
 				Enabled: nhCfg.Enabled,
-				Loki:    lokiConfig,
+				Loki: historianAppConfig.LokiConfig{
+					LokiConfig: lokiConfig,
+				},
 			}
 		}
 	}
