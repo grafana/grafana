@@ -494,7 +494,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // In the cases where nodes are not in the tree yet
       if (!nodeAtPath) {
         try {
-          newTree = (await this.resolvePathToRoot(this.state.selectedScopes[0].scopeNodeId, newTree)).tree;
+          const result = await this.resolvePathToRoot(this.state.selectedScopes[0].scopeNodeId, newTree);
+          newTree = result.tree;
+          // Update path to use the resolved path since nodes have been fetched
+          path = result.path.map((n) => n.metadata.name);
+          path.unshift('');
           nodeAtPath = treeNodeAtPath(newTree, path);
         } catch (error) {
           console.error('Failed to resolve path to root', error);

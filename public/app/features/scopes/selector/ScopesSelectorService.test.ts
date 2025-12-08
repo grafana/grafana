@@ -315,6 +315,15 @@ describe('ScopesSelectorService', () => {
         return Promise.resolve([]);
       });
 
+      apiClient.fetchScopeNode.mockImplementation((scopeNodeId: string) => {
+        if (scopeNodeId === 'child-2') {
+          return Promise.resolve(childNode2);
+        } else if (scopeNodeId === 'parent-container') {
+          return Promise.resolve(parentNode);
+        }
+        return Promise.resolve(undefined);
+      });
+
       await service.changeScopes(['scope-2'], 'parent-container', 'child-2');
       await service.open();
 
@@ -357,6 +366,15 @@ describe('ScopesSelectorService', () => {
           return Promise.resolve([childNode]);
         }
         return Promise.resolve([]);
+      });
+
+      apiClient.fetchScopeNode.mockImplementation((scopeNodeId: string) => {
+        if (scopeNodeId === 'child-1') {
+          return Promise.resolve(childNode);
+        } else if (scopeNodeId === 'parent-container') {
+          return Promise.resolve(parentNode);
+        }
+        return Promise.resolve(undefined);
       });
 
       await service.changeScopes(['scope-1'], 'parent-container', 'child-1');
