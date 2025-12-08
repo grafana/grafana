@@ -41,6 +41,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled
+  provisioning-grafana:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
 ---
 
 # Configure the Elasticsearch data source
@@ -49,13 +54,24 @@ Grafana ships with built-in support for Elasticsearch.
 You can create a variety of queries to visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events stored in Elasticsearch.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
-
-Only users with the organization `administrator` role can add data sources.
 Administrators can also [configure the data source via YAML](ref:provisioning-data-source) with Grafana's provisioning system.
 
-## Configuring permissions
+## Before you begin
 
-When Elasticsearch security features are enabled, it is essential to configure the necessary cluster privileges to ensure seamless operation. Below is a list of the required privileges along with their purposes:
+To configure the Elasticsearch data source, you need:
+
+- **Grafana administrator permissions:** Only users with the organization `administrator` role can add data sources.
+- **A supported Elasticsearch version:** v7.17 or later, v8.x, or v9.x. Elastic Cloud Serverless isn't supported.
+- **Elasticsearch server URL:** The HTTP or HTTPS endpoint for your Elasticsearch instance, including the port (default: `9200`).
+- **Authentication credentials:** Depending on your Elasticsearch security configuration, you need one of the following:
+  - Username and password for basic authentication
+  - API key
+  - No credentials (if Elasticsearch security is disabled)
+- **Network access:** Grafana must be able to reach your Elasticsearch server. For Grafana Cloud, consider using [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) if your Elasticsearch instance is in a private network.
+
+## Elasticsearch permissions
+
+When Elasticsearch security features are enabled, you must configure the following cluster privileges for the user or API key that Grafana uses to connect:
 
 - **monitor** - Necessary to retrieve the version information of the connected Elasticsearch instance.
 - **view_index_metadata** - Required for accessing mapping definitions of indices.
@@ -75,32 +91,35 @@ You will be taken to the **Settings** tab where you will set up your Elasticsear
 
 ## Configuration options
 
-The following is a list of configuration options for Elasticsearch.
+Configure the following basic settings for the Elasticsearch data source:
 
-The first option to configure is the name of your connection:
+- **Name** - The data source name. This is how you refer to the data source in panels and queries. Examples: `elastic-1`, `elasticsearch_metrics`.
 
-- **Name** - The data source name. This is how you refer to the data source in panels and queries. Examples: elastic-1, elasticsearch_metrics.
-
-- **Default** - Toggle to select as the default data source option. When you go to a dashboard panel or Explore, this will be the default selected data source.
+- **Default** - Toggle on to make this the default data source. New panels and Explore queries use the default data source.
 
 ## Connection
 
-Connect the Elasticsearch data source by specifying a URL.
-
-- **URL** - The URL of your Elasticsearch server. If your Elasticsearch server is local, use `http://localhost:9200`. If it is on a server within a network, this is the URL with the port where you are running Elasticsearch. Example: `http://elasticsearch.example.orgname:9200`.
+- **URL** - The URL of your Elasticsearch server, including the port. Examples: `http://localhost:9200`, `http://elasticsearch.example.com:9200`.
 
 ## Authentication
 
-There are several authentication methods you can choose in the Authentication section.
-Select one of the following authentication methods from the dropdown menu.
+Select an authentication method from the drop-down menu:
 
-- **Basic authentication** - The most common authentication method. Use your `data source` user name and `data source` password to connect.
+- **Basic authentication** - Enter the username and password for your Elasticsearch user.
 
 - **Forward OAuth identity** - Forward the OAuth access token (and the OIDC ID token if available) of the user querying the data source.
 
-- **No authentication** - Make the data source available without authentication. Grafana recommends using some type of authentication method.
+- **No authentication** - Connect without credentials. Only use this option if your Elasticsearch instance doesn't require authentication.
 
-<!-- - **With credentials** - Toggle to enable credentials such as cookies or auth headers to be sent with cross-site requests. -->
+### API key authentication
+
+To authenticate using an Elasticsearch API key, select **No authentication** and configure the API key using HTTP headers:
+
+1. In the **HTTP headers** section, click **+ Add header**.
+1. Set **Header** to `Authorization`.
+1. Set **Value** to `ApiKey <your-api-key>`, replacing `<your-api-key>` with your base64-encoded Elasticsearch API key.
+
+For information about creating API keys, refer to the [Elasticsearch API keys documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html).
 
 ### Amazon Elasticsearch Service
 
@@ -151,9 +170,12 @@ Additional settings are optional settings that can be configured for more contro
 
 The following settings are specific to the Elasticsearch data source.
 
-- **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, for example `[logstash-]YYYY.MM.DD`, or a wildcard for the index name. When specifying a time pattern, the fixed part(s) of the pattern should be wrapped in square brackets.
+- **Index name** - The name of your Elasticsearch index. You can use the following formats:
+  - **Wildcard patterns** - Use `*` to match multiple indices. Examples: `logs-*`, `metrics-*`, `filebeat-*`.
+  - **Time patterns** - Use date placeholders for time-based indices. Wrap the fixed portion in square brackets. Examples: `[logstash-]YYYY.MM.DD`, `[metrics-]YYYY.MM`.
+  - **Specific index** - Enter the exact index name. Example: `application-logs`.
 
-- **Pattern** - Select the matching pattern if using one in your index name. Options include:
+- **Pattern** - Select the matching pattern if you use a time pattern in your index name. Options include:
   - no pattern
   - hourly
   - daily
@@ -163,7 +185,7 @@ The following settings are specific to the Elasticsearch data source.
 
 Only select a pattern option if you have specified a time pattern in the Index name field.
 
-- **Time field name** - Name of the time field. The default value is @timestamp. You can enter a different name.
+- **Time field name** - Name of the time field. The default value is `@timestamp`. You can enter a different name.
 
 - **Max concurrent shard requests** - Sets the number of shards being queried at the same time. The default is `5`. For more information on shards see [Elasticsearch's documentation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/scalability.html#scalability).
 
@@ -185,7 +207,7 @@ For example, set this to `1m` if Elasticsearch writes data every minute.
 
 You can also override this setting in a dashboard panel under its data source options. The default is `10s`.
 
-- **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor](../query-editor/) with additional aggregations, such as `Rate` and `Top Metrics`.
+- **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/query-editor/) with additional aggregations, such as `Rate` and `Top Metrics`.
 
 - **Include frozen indices** - Toggle on when the `X-Pack enabled` setting is active. Includes frozen indices in searches. You can configure Grafana to include [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 
@@ -195,11 +217,11 @@ Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en
 
 ### Logs
 
-In this section you can configure which fields the data source uses for log messages and log levels.
+Configure which fields the data source uses for log messages and log levels.
 
-- **Message field name:** - Grabs the actual log message from the default source.
+- **Message field name** - The field that contains the log message content.
 
-- **Level field name:** - Name of the field with log level/severity information. When a level label is specified, the value of this label is used to determine the log level and update the color of each log line accordingly. If the log doesn’t have a specified level label, we try to determine if its content matches any of the [supported expressions](ref:supported-expressions). The first match always determines the log level. If Grafana cannot infer a log-level field, it will be visualized with an unknown log level.
+- **Level field name** - The field that contains log level or severity information. When specified, Grafana uses this field to determine the log level and color-code each log line. If the log doesn't have a level field, Grafana tries to match the content against [supported expressions](ref:supported-expressions). If Grafana can't determine the log level, it displays as unknown.
 
 ### Data links
 
@@ -219,11 +241,11 @@ Each data link configuration consists of:
 
 Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. See [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) for more information on how PDC works and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
 
-If you use PDC with SIGv4 (AWS Signature Version 4 Authentication), the PDC agent must allow internet egress to`sts.<region>.amazonaws.com:443`.
+If you use PDC with SigV4 (AWS Signature Version 4 Authentication), the PDC agent must allow internet egress to `sts.<region>.amazonaws.com:443`.
 
-- **Private data source connect** - Click in the box to set the default PDC connection from the dropdown menu or create a new connection.
+- **Private data source connect** - Click in the box to set the default PDC connection from the drop-down menu or create a new connection.
 
-Once you have configured your Elasticsearch data source options, click **Save & test** at the bottom to test out your data source connection. You can also remove a connection by clicking **Delete**.
+Once you have configured your Elasticsearch data source options, click **Save & test** to test the connection. A successful connection displays the message: **"Elasticsearch data source is healthy."**
 
 ## Provision the data source
 
@@ -232,8 +254,8 @@ For more information about provisioning, and for available configuration options
 
 {{< admonition type="note" >}}
 The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
-You should now use the `index` field in `jsonData` to store the index name.
-Please see the examples below.
+Use the `index` field in `jsonData` to store the index name.
+Refer to the examples below.
 {{< /admonition >}}
 
 
@@ -253,7 +275,7 @@ datasources:
       timeField: '@timestamp'
 ```
 
-**Provision for logs**
+### Provision for logs
 
 ```yaml
 apiVersion: 1
@@ -274,3 +296,81 @@ datasources:
           field: traceID
           url: '$${__value.raw}' # Careful about the double "$$" because of env var expansion
 ```
+
+## Provision the data source using Terraform
+
+You can provision the Elasticsearch data source using [Terraform](https://www.terraform.io/) with the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+
+For more information about provisioning resources with Terraform, refer to the [Grafana as code using Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/) documentation.
+
+### Basic Terraform example
+
+The following example creates a basic Elasticsearch data source for metrics:
+
+```hcl
+resource "grafana_data_source" "elasticsearch" {
+  name = "Elasticsearch"
+  type = "elasticsearch"
+  url  = "http://localhost:9200"
+
+  json_data_encoded = jsonencode({
+    index     = "[metrics-]YYYY.MM.DD"
+    interval  = "Daily"
+    timeField = "@timestamp"
+  })
+}
+```
+
+### Terraform example for logs
+
+The following example creates an Elasticsearch data source configured for logs with a data link to Jaeger:
+
+```hcl
+resource "grafana_data_source" "elasticsearch_logs" {
+  name = "Elasticsearch Logs"
+  type = "elasticsearch"
+  url  = "http://localhost:9200"
+
+  json_data_encoded = jsonencode({
+    index           = "[filebeat-]YYYY.MM.DD"
+    interval        = "Daily"
+    timeField       = "@timestamp"
+    logMessageField = "message"
+    logLevelField   = "fields.level"
+    dataLinks = [
+      {
+        datasourceUid = grafana_data_source.jaeger.uid
+        field         = "traceID"
+        url           = "$${__value.raw}"
+      }
+    ]
+  })
+}
+```
+
+### Terraform example with basic authentication
+
+The following example includes basic authentication:
+
+```hcl
+resource "grafana_data_source" "elasticsearch_auth" {
+  name = "Elasticsearch"
+  type = "elasticsearch"
+  url  = "http://localhost:9200"
+
+  basic_auth_enabled  = true
+  basic_auth_username = "elastic_user"
+
+  secure_json_data_encoded = jsonencode({
+    basicAuthPassword = var.elasticsearch_password
+  })
+
+  json_data_encoded = jsonencode({
+    index     = "[metrics-]YYYY.MM.DD"
+    interval  = "Daily"
+    timeField = "@timestamp"
+  })
+}
+```
+
+For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
