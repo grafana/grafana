@@ -317,7 +317,7 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 | ------ | ----------- |
 | GeoJSON URL | Provides a choice of GeoJSON files that are included with Grafana. You can also enter a URL manually, which supports variables. |
 | Default style | Controls the style to apply when no rules match. <br> **Properties include:** <ul><li>**Color** - Configures the base color.</li><li>**Opacity** - Configures the transparency.</li><li>**Size** - Sets the size of the marker.</li><li>**Symbol** - Selects the marker icon. Clear this field to display text only.</li><li>**Text label** - Select a property from the GeoJSON features (for example, `name`) to display as a label.</li><li>**Text styling** - Configures font size, weight (bold), style (italic), case (uppercase), and text outline (halo effect).</li></ul> |
-| Style Rules | Apply specific styles based on feature properties. <ul><li>**Rule** - Allows you to select a _feature_, _condition_, and _value_ to define a rule.</li><li>**Style** - Configures the full set of styles (color, icon, text settings) for features matching the rule.</li></ul> |
+| Style rules | Apply specific styles based on feature properties. <ul><li>**Rule** - Allows you to select a feature, condition, and value to define a rule.</li><li>**Style** - Configures the full set of styles (color, icon, text settings) for features matching the rule.</li></ul> |
 | Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
