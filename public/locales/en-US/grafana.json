@@ -2334,9 +2334,8 @@
       "label-tenant-sources": "Tenant sources"
     },
     "rule-details-matching-instances": {
-      "button-show-all_one": "Show all {{totalItems}} alert instances",
-      "button-show-all_other": "Show all {{totalItems}} alert instances",
-      "showing-count": "Showing {{visibleItems}} out of {{totalItems}} instances"
+      "button-show-all": "Show all {{totalItemsCount}} alert instances",
+      "showing-count": "Showing {{visibleItemsCount}} out of {{totalItemsCount}} instances"
     },
     "rule-editor": {
       "get-content": {
