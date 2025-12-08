@@ -304,6 +304,7 @@ const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title b
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"
 const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one
+const SEARCH_FIELD_OWNER_REFERENCES = "ownerReferences"
 
 const SEARCH_FIELD_FOLDER = "folder"
 const SEARCH_FIELD_CREATED = "created"

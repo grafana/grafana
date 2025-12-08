@@ -9,7 +9,16 @@
     "annotations": {
       "grafana.app/createdBy": "user:1",
       "grafana.app/repoName": "MyGIT"
-    }
+    },
+    "ownerReferences": [{
+        "apiVersion": "iam.grafana.app/v1alpha1",
+        "kind": "Team",
+        "name": "engineering"
+    }, {
+        "apiVersion": "iam.grafana.app/v1alpha1",
+        "kind": "User",
+        "name": "test"
+    }]
   },
   "spec": {
     "title": "test-aaa"
