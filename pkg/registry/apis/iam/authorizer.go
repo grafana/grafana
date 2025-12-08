@@ -44,7 +44,7 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = authorizer
-	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = allowAuthorizer // Handled at storage layer
+	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = allowAuthorizer // Handled by the backend wrapper
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
