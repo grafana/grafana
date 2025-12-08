@@ -5,16 +5,17 @@ import { usePrevious } from 'react-use';
 
 import { LogLevel, LogRowModel, store } from '@grafana/data';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
+import { Grammar } from 'prismjs';
 
 const splash = `
- ▄▄                                         ██                                  
- ██                                         ▀▀                                  
- ██         ▄████▄    ▄███▄██   ▄███▄██   ████     ██▄████▄   ▄███▄██           
- ██        ██▀  ▀██  ██▀  ▀██  ██▀  ▀██     ██     ██▀   ██  ██▀  ▀██           
- ██        ██    ██  ██    ██  ██    ██     ██     ██    ██  ██    ██           
- ██▄▄▄▄▄▄  ▀██▄▄██▀  ▀██▄▄███  ▀██▄▄███  ▄▄▄██▄▄▄  ██    ██  ▀██▄▄███           
- ▀▀▀▀▀▀▀▀    ▀▀▀▀     ▄▀▀▀ ██   ▄▀▀▀ ██  ▀▀▀▀▀▀▀▀  ▀▀    ▀▀   ▄▀▀▀ ██           
-                      ▀████▀▀   ▀████▀▀                       ▀████▀▀           
+     ▄▄                                         ██                                  
+     ██                                         ▀▀                                  
+     ██         ▄████▄    ▄███▄██   ▄███▄██   ████     ██▄████▄   ▄███▄██           
+     ██        ██▀  ▀██  ██▀  ▀██  ██▀  ▀██     ██     ██▀   ██  ██▀  ▀██           
+     ██        ██    ██  ██    ██  ██    ██     ██     ██    ██  ██    ██           
+     ██▄▄▄▄▄▄  ▀██▄▄██▀  ▀██▄▄███  ▀██▄▄███  ▄▄▄██▄▄▄  ██    ██  ▀██▄▄███           
+     ▀▀▀▀▀▀▀▀    ▀▀▀▀     ▄▀▀▀ ██   ▄▀▀▀ ██  ▀▀▀▀▀▀▀▀  ▀▀    ▀▀   ▄▀▀▀ ██           
+                          ▀████▀▀   ▀████▀▀                       ▀████▀▀           
                                                                                                                               
   ▄▄▄▄▄▄                                       ▄▄                               
   ▀▀██▀▀                                       ██                               
@@ -24,8 +25,8 @@ const splash = `
   ▄▄██▄▄   ██    ██    ████    ██▄▄▄███  ▀██▄▄███  ▀██▄▄▄▄█   ██       █▄▄▄▄▄██ 
   ▀▀▀▀▀▀   ▀▀    ▀▀     ▀▀      ▀▀▀▀ ▀▀    ▀▀▀ ▀▀    ▀▀▀▀▀    ▀▀        ▀▀▀▀▀▀  
 
-                        A game made of log lines
-                 Observability Logs squad / Grafana Labs
+                          A game made of log lines
+                   Observability Logs squad / Grafana Labs
 
 Keyboard arrows: move - Space: attack - N: new game
 Press any key to start`;
@@ -165,12 +166,12 @@ Press N to try again
 const map = `Score: 000000                              Lives: ♥♥♥♥
 ================================================================================
                                                                                 
-                                   [=U=]        
+                                   ≋◢█◣≋        
                                                                                                                                                             
-      <o_o>    <o_o>    <o_o>    <o_o>    <o_o>    <o_o>    <o_o>    <o_o>
-      [-_-]    [-_-]    [-_-]    [-_-]    [-_-]    [-_-]    [-_-]    [-_-]
-      <^_^>    <^_^>    <^_^>    <^_^>    <^_^>    <^_^>    <^_^>    <^_^>
-      <@_@>    <@_@>    <@_@>    <@_@>    <@_@>    <@_@>    <@_@>    <@_@>
+      ◉<█>◉    ◉<█>◉    ◉<█>◉    ◉<█>◉    ◉<█>◉    ◉<█>◉    ◉<█>◉    ◉<█>◉
+      ▓▀█▀▓    ▓▀█▀▓    ▓▀█▀▓    ▓▀█▀▓    ▓▀█▀▓    ▓▀█▀▓    ▓▀█▀▓    ▓▀█▀▓
+      «█╬█»    «█╬█»    «█╬█»    «█╬█»    «█╬█»    «█╬█»    «█╬█»    «█╬█»
+      ◠◡█◡◠    ◠◡█◡◠    ◠◡█◡◠    ◠◡█◡◠    ◠◡█◡◠    ◠◡█◡◠    ◠◡█◡◠    ◠◡█◡◠
                                                                                 
             
 
@@ -223,8 +224,8 @@ type Enemy = {
   health: number;
 };
 type GameStatus = 'new-game' | 'paused' | 'playing' | 'ended' | 'won' | 'next-level';
-const ufo = '[=U=]';
-const enemyTypes = ['<@_@>', '<^_^>', '[-_-]', '<o_o>', ufo];
+const ufo = '≋◢█◣≋';
+const enemyTypes = ['◠◡█◡◠', '«█╬█»', '▓▀█▀▓', '◉<█>◉', ufo];
 const enemyScores = [10, 20, 30, 40, 100];
 const enemyTypeUfo = enemyTypes.indexOf(ufo);
 const explosion1 = 'xX*Xx';
@@ -232,11 +233,11 @@ const explosion2 = '-X*X-';
 const explosion3 = '--*--';
 const explosion4 = '  *  ';
 const enemySprites = [
-  [explosion4, explosion3, explosion2, explosion1, '<@_@>'],
-  [explosion4, explosion3, explosion2, explosion1, ' ^_^ ', '<^_^>'],
-  [explosion4, explosion3, explosion2, explosion1, ' -_- ', '(-_-)', '[-_-]'],
-  [explosion4, explosion3, explosion2, explosion1, ' o_o ', 'co_oↄ', '<o_o>', '<o_o>'],
-  [explosion4, explosion3, explosion2, explosion1, ' =u= ', '(=u=)', ufo, ufo, ufo],
+  [explosion4, explosion3, explosion2, explosion1, '◠◡█◡◠'],
+  [explosion4, explosion3, explosion2, explosion1, '<█╬█>', '«█╬█»'],
+  [explosion4, explosion3, explosion2, explosion1, '░▀█▀░', '▒▀█▀▒', '▓▀█▀▓'],
+  [explosion4, explosion3, explosion2, explosion1, '·<█>·', '◌<█>◌', '◉<█>◉', '◉<█>◉'],
+  [explosion4, explosion3, explosion2, explosion1, '▁◢█◣▁', '∼◢█◣∼', ufo, ufo, ufo],
 ];
 
 const shield = '#';
