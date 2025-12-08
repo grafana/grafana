@@ -435,10 +435,10 @@ func (s *grot3dSim) generateSVG() string {
 		g := int(float64(c.G) * intensity)
 		b := int(float64(c.B) * intensity)
 
-		// Quantize colors to reduce palette (round to nearest 16)
-		r = (r / 16) * 16
-		g = (g / 16) * 16
-		b = (b / 16) * 16
+		// Quantize colors to reduce palette (round to nearest 8)
+		r = (r / 8) * 8
+		g = (g / 8) * 8
+		b = (b / 8) * 8
 
 		colorStr := fmt.Sprintf("#%02x%02x%02x", r, g, b)
 
