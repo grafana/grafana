@@ -343,12 +343,22 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     if (scopes.length > 0) {
       const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
+
+      // Fetch the scope node if it is not available
+      let newNodesState = { ...this.state.nodes };
+      let scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+
+      if (!scopeNode && config.featureToggles.useScopeSingleNodeEndpoint && scopes[0]?.scopeNodeId) {
+        scopeNode = await this.apiClient.fetchScopeNode(scopes[0]?.scopeNodeId);
+        if (scopeNode) {
+          newNodesState[scopeNode.metadata.name] = scopeNode;
+        }
+      }
+
       const newScopesState = { ...this.state.scopes };
       for (const scope of fetchedScopes) {
         newScopesState[scope.metadata.name] = scope;
       }
-
-      const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
 
       // If not provided, try to get the parent from the scope node
       // When selected from recent scopes, we don't have access to the scope node (if it hasn't been loaded), but we do have access to the parent node from local storage.
@@ -458,6 +468,18 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       !this.state.tree.childrenLoaded
     ) {
       await this.filterNode('', '');
+    }
+
+    // If the scopeNode isn't avilable, fetch it and add it to the nodes cache
+    if (
+      config.featureToggles.useScopeSingleNodeEndpoint &&
+      this.state.selectedScopes[0].scopeNodeId &&
+      !this.state.nodes[this.state.selectedScopes[0].scopeNodeId]
+    ) {
+      const scopeNode = await this.apiClient.fetchScopeNode(this.state.selectedScopes[0].scopeNodeId);
+      if (scopeNode) {
+        this.updateState({ nodes: { ...this.state.nodes, [scopeNode.metadata.name]: scopeNode } });
+      }
     }
 
     // First close all nodes

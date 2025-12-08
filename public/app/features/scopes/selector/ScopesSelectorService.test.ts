@@ -15,6 +15,14 @@ jest.mock('@grafana/runtime', () => ({
     push: jest.fn(),
     getLocation: jest.fn(),
   },
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+
+    featureToggles: {
+      ...jest.requireActual('@grafana/runtime').config.featureToggles,
+      useScopeSingleNodeEndpoint: true,
+    },
+  },
 }));
 
 describe('ScopesSelectorService', () => {
@@ -69,6 +77,7 @@ describe('ScopesSelectorService', () => {
       }),
       fetchDashboards: jest.fn().mockResolvedValue([]),
       fetchScopeNavigations: jest.fn().mockResolvedValue([]),
+      fetchScopeNode: jest.fn().mockResolvedValue(mockNode),
     } as unknown as jest.Mocked<ScopesApiClient>;
 
     dashboardsService = {
@@ -156,12 +165,12 @@ describe('ScopesSelectorService', () => {
       sub.unsubscribe();
     });
 
-    it('should set parent node for recent scopes when scopeNodeId is provided', async () => {
+    it('should set parent node for recent scopes', async () => {
       // Load mock node
       await service.filterNode('', '');
 
-      await service.changeScopes(['test-scope'], undefined, 'test-scope-node');
-      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope', scopeNodeId: 'test-scope-node' }]);
+      await service.changeScopes(['test-scope'], 'test-scope-node');
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope', parentNodeId: 'test-scope-node' }]);
       expect(service.state.nodes).toEqual({ 'test-scope-node': mockNode });
       expect(storeValue[RECENT_SCOPES_KEY]).toEqual(JSON.stringify([[{ ...mockScope, parentNode: mockNode }]]));
     });
@@ -171,23 +180,23 @@ describe('ScopesSelectorService', () => {
 
       expect(service.state.appliedScopes).toEqual([
         { scopeId: 'test-scope', scopeNodeId: 'scope-node-1', parentNodeId: 'parent-node' },
-        { scopeId: 'test-scope-2', scopeNodeId: undefined, parentNodeId: undefined },
+        { scopeId: 'test-scope-2', scopeNodeId: undefined, parentNodeId: 'parent-node' },
       ]);
     });
 
-    it('should handle explicit parentNodeId for recent scopes', async () => {
+    it('should handle scopeNodeId without parentNodeId', async () => {
+      await service.changeScopes(['test-scope'], undefined, 'scope-node-1');
+
+      expect(service.state.appliedScopes).toEqual([
+        { scopeId: 'test-scope', scopeNodeId: 'scope-node-1', parentNodeId: undefined },
+      ]);
+    });
+
+    it('should maintain backward compatibility when only parentNodeId is provided', async () => {
       await service.changeScopes(['test-scope'], 'parent-node');
 
       expect(service.state.appliedScopes).toEqual([
         { scopeId: 'test-scope', scopeNodeId: undefined, parentNodeId: 'parent-node' },
-      ]);
-    });
-
-    it('should handle both scopeNodeId and parentNodeId', async () => {
-      await service.changeScopes(['test-scope'], 'parent-node', 'scope-node');
-
-      expect(service.state.appliedScopes).toEqual([
-        { scopeId: 'test-scope', scopeNodeId: 'scope-node', parentNodeId: 'parent-node' },
       ]);
     });
   });
@@ -204,7 +213,7 @@ describe('ScopesSelectorService', () => {
         spec: {
           linkId: '',
           linkType: 'scope',
-          parentName: '',
+          //parentName: '',
           nodeType: 'container',
           title: 'Parent Container',
         },
@@ -229,6 +238,13 @@ describe('ScopesSelectorService', () => {
           return Promise.resolve([childNode]);
         }
         return Promise.resolve([]);
+      });
+
+      apiClient.fetchScopeNode.mockImplementation((scopeNodeId: string) => {
+        if (scopeNodeId === 'child-1') {
+          return Promise.resolve(childNode);
+        }
+        return Promise.resolve(undefined);
       });
 
       // Apply scope with scopeNodeId and parentNodeId set

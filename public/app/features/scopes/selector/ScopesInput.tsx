@@ -33,10 +33,11 @@ export function ScopesInput({
 }: ScopesInputProps) {
   const scopeNodeId = appliedScopes[0]?.scopeNodeId;
   const styles = useStyles2(getStyles);
+  const parentNodeIdFromRecentScopes = appliedScopes[0]?.parentNodeId; // This is only set from recent scopes TODO: remove after recent scopes refactor
   const { node: scopeNode, isLoading: scopeNodeLoading } = useScopeNode(scopeNodeId);
 
-  // Get parent from scope node if available
-  const parentNodeId = scopeNode?.spec.parentName;
+  // Get parent from scope node if available, otherwise fallback to parent
+  const parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromRecentScopes;
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
 
   // Prioritize scope node subtitle over parent node title
