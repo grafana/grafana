@@ -126,6 +126,7 @@ export const insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
       treeNode.children = { ...treeNode.children };
       if (!childNodeName) {
         console.warn('Failed to insert full path into tree. Did not find child to' + stringPath[index]);
+        treeNode.childrenLoaded = false;
         return treeNode;
       }
       treeNode.children[childNodeName] = {
@@ -133,8 +134,8 @@ export const insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
         scopeNodeId: childNodeName,
         query: '',
         children: undefined,
+        childrenLoaded: false,
       };
-      treeNode.childrenLoaded = false;
       return treeNode;
     });
   }
