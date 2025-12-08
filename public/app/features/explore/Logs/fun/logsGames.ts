@@ -326,7 +326,7 @@ export function useLogsGames() {
       setScore(newScore);
       setLives(newLives);
 
-      if (lives === 0) {
+      if (newLives === 0) {
         setGameStatus('ended');
         updateBestScore(score);
         return;
@@ -569,7 +569,7 @@ function update(
             Math.abs(otherEnemy.gridX - enemy.gridX) < 5
         );
 
-      if (canAttack && Math.random() > 0.92 && enemyMissiles.length <= 1) {
+      if (canAttack && Math.random() > 0.92 && newEnemyMissiles.length <= 1) {
         newEnemyMissiles.push(newEnemyMissile(enemy.gridX, enemy.y));
       }
 
