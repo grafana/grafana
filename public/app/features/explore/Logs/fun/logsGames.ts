@@ -186,10 +186,10 @@ const map = `Score: 000000                              Lives: ♥♥♥♥
                                                                                 
                                                                                 
                                                                       
-                                       /A\\
+                                       ╱▲╲
 ================================================================================`;
 
-const player = '/A\\';
+const player = '╱▲╲';
 const initialPlayerX = 39;
 const playerY = 23;
 
