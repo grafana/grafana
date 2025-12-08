@@ -178,11 +178,11 @@ const map = `Score: 000000                              Lives: ♥♥♥♥
       
 
 
-            ###              ###              ###              ###            
-           #####            #####            #####            #####           
-          #######          #######          #######          #######          
-           #####            #####            #####            #####           
-            ###              ###              ###              ###            
+            ▬▬▬              ▬▬▬              ▬▬▬              ▬▬▬            
+           ▬▬▬▬▬            ▬▬▬▬▬            ▬▬▬▬▬            ▬▬▬▬▬           
+          ▬▬▬▬▬▬▬          ▬▬▬▬▬▬▬          ▬▬▬▬▬▬▬          ▬▬▬▬▬▬▬          
+           ▬▬▬▬▬            ▬▬▬▬▬            ▬▬▬▬▬            ▬▬▬▬▬           
+            ▬▬▬              ▬▬▬              ▬▬▬              ▬▬▬            
                                                                                 
                                                                                 
                                                                       
@@ -240,7 +240,7 @@ const enemySprites = [
   [explosion4, explosion3, explosion2, explosion1, '▁◢█◣▁', '∼◢█◣∼', ufo, ufo, ufo],
 ];
 
-const shield = '#';
+const shield = '▬';
 
 export function useLogsGames() {
   const [gameState, setGameState] = useState<LogRowModel[] | undefined>(undefined);
@@ -506,6 +506,7 @@ function update(
         entry: row.padEnd(80),
         timeEpochMs: 0,
         logLevel: LogLevel.unknown,
+        grammar,
       });
     });
     return {
@@ -542,7 +543,7 @@ function update(
     });
 
   const lowestEnemyY = enemies.reduce((max, enemy) => Math.max(max, enemy.y), 0);
-  const shieldStart = gameState.findIndex((row) => row.entry.includes('#'));
+  const shieldStart = gameState.findIndex((row) => row.entry.includes(shield));
   const formationCanMoveDown = shieldStart === -1 || lowestEnemyY + 1 < shieldStart;
 
   const formationEnemies = enemies.filter((e) => e.type !== enemyTypeUfo && e.health > 3);
