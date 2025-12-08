@@ -128,7 +128,7 @@ func RegisterAPIService(
 				//nolint:staticcheck // not yet migrated to OpenFeature
 				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
 				UseDualWriter:          false,
-				UseShorterAPIGroupName: true,
+				UseShorterAPIGroupName: features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
 			},
 		)
 		if err != nil {
