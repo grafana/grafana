@@ -143,6 +143,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     description: state.description || undefined,
     uid: state.uid,
     id: state.id,
+    editable: state.editable,
     preload: state.preload,
     time: {
       from: timeRange.from,
@@ -158,7 +159,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     },
     version: state.version,
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
-    weekStart: timeRange.weekStart,
+    weekStart: timeRange.weekStart ?? '',
     tags: state.tags,
     links: state.links,
     graphTooltip,
@@ -170,10 +171,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   };
 
   // Only add optional fields if they are explicitly set (not default values)
-  if (state.editable !== undefined) {
-    dashboard.editable = state.editable;
-  }
-  if (timeRange.timeZone !== undefined && timeRange.timeZone !== '') {
+  if (timeRange.timeZone !== '') {
     dashboard.timezone = timeRange.timeZone;
   }
 
