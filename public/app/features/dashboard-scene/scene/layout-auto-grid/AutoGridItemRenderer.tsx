@@ -130,6 +130,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: `var(${DRAGGED_ITEM_WIDTH})`,
     height: `var(${DRAGGED_ITEM_HEIGHT})`,
     opacity: 0.8,
+
+    // Unfortunately, we need to re-enforce the absolute position here. Otherwise, the position will be overwritten with
+    //  a relative position by .dashboard-visible-hidden-element
+    '&.dashboard-visible-hidden-element': {
+      position: 'absolute',
+    },
   }),
   draggedRepeatWrapper: css({
     visibility: 'hidden',
