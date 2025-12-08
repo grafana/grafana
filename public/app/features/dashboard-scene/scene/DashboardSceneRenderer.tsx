@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { ScopesContext } from '@grafana/runtime';
+import { ScopesContext, config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -11,6 +11,7 @@ import { useSelector } from 'app/types/store';
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
 
 import { DashboardScene } from './DashboardScene';
+import { FeedbackButtonNewLayout } from './FeedbackButtonNewLayout';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
 
@@ -95,6 +96,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return <body.Component model={body} />;
   }
 
+  console.log('*** config', config.featureToggles);
+
   return (
     <>
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
@@ -109,6 +112,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           />
         )}
         {overlay && <overlay.Component model={overlay} />}
+        {config.featureToggles.dashboardNewLayouts && <FeedbackButtonNewLayout />}
       </Page>
     </>
   );
