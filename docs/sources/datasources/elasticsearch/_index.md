@@ -40,6 +40,8 @@ The following resources help you get started with Elasticsearch and Grafana:
 - [Configure the Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/configure/)
 - [Elasticsearch query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/query-editor/)
 - [Elasticsearch template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/)
+- [Elasticsearch annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/annotations/)
+- [Troubleshoot the Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/troubleshooting/)
 
 ## Key capabilities
 
