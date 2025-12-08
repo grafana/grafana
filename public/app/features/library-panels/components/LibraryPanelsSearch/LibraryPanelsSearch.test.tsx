@@ -252,7 +252,7 @@ describe('LibraryPanelsSearch', () => {
         }
       );
 
-      const card = () => screen.getByLabelText(/plugin visualization item time series/i);
+      const card = () => screen.getByTestId(/plugin visualization item time series/i);
 
       expect(screen.queryByText(/you haven\'t created any library panels yet/i)).not.toBeInTheDocument();
       expect(card()).toBeInTheDocument();
@@ -293,7 +293,7 @@ describe('LibraryPanelsSearch', () => {
         }
       );
 
-      const card = () => screen.getByLabelText(/plugin visualization item time series/i);
+      const card = () => screen.getByTestId(/plugin visualization item time series/i);
 
       expect(screen.queryByText(/you haven\'t created any library panels yet/i)).not.toBeInTheDocument();
       expect(card()).toBeInTheDocument();
