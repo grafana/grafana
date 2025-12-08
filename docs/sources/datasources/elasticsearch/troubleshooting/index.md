@@ -12,12 +12,12 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Troubleshoot
-title: Troubleshoot the Elasticsearch data source
+menuTitle: Troubleshooting
+title: Troubleshoot issues with the Elasticsearch data source
 weight: 600
 ---
 
-# Troubleshoot the Elasticsearch data source
+# Troubleshoot issues with the Elasticsearch data source
 
 This page provides troubleshooting information for common errors when using the Elasticsearch data source in Grafana.
 
