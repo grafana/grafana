@@ -85,14 +85,20 @@ type TxnOpType int
 const (
 	TxnOpPut TxnOpType = iota
 	TxnOpDelete
+	TxnOpTxn // Nested transaction
 )
 
 // TxnOp represents an operation in a transaction.
-// Use the constructor functions TxnPut and TxnDelete to create operations.
+// Use the constructor functions TxnPut, TxnDelete, and TxnNested to create operations.
 type TxnOp struct {
 	Type  TxnOpType
 	Key   string
 	Value []byte // For Put operations
+
+	// For nested transactions (Type == TxnOpTxn)
+	Compares   []Compare
+	SuccessOps []TxnOp
+	FailureOps []TxnOp
 }
 
 // TxnPut creates a Put operation that stores a value at the given key.
@@ -105,6 +111,16 @@ func TxnDelete(key string) TxnOp {
 	return TxnOp{Type: TxnOpDelete, Key: key}
 }
 
+// TxnNested creates a nested transaction operation.
+func TxnNested(compares []Compare, successOps []TxnOp, failureOps []TxnOp) TxnOp {
+	return TxnOp{
+		Type:       TxnOpTxn,
+		Compares:   compares,
+		SuccessOps: successOps,
+		FailureOps: failureOps,
+	}
+}
+
 // TxnResponse contains the result of a transaction
 type TxnResponse struct {
 	// Succeeded indicates whether the comparisons passed (true) or failed (false)
@@ -115,11 +131,58 @@ type TxnResponse struct {
 const (
 	MaxTxnCompares  = 8
 	MaxTxnOps       = 8
-	MaxTxnValueSize = 100 * 1024 // 100KB per value
+	MaxTxnTotalSize = 1 * 1024 * 1024 // 1MB total payload
+	MaxTxnDepth     = 3               // Maximum nesting depth for transactions
 )
 
 // ValidateTxnRequest validates the transaction request parameters.
 func ValidateTxnRequest(section string, cmps []Compare, successOps []TxnOp, failureOps []TxnOp) error {
+	// First validate structure
+	if err := validateTxnRequestWithDepth(section, cmps, successOps, failureOps, 1); err != nil {
+		return err
+	}
+
+	// Then check total payload size
+	totalSize := calculateTxnTotalSize(cmps, successOps, failureOps)
+	if totalSize > MaxTxnTotalSize {
+		return fmt.Errorf("total transaction payload too large: %d > %d", totalSize, MaxTxnTotalSize)
+	}
+
+	return nil
+}
+
+// calculateTxnTotalSize calculates the total size of all values in the transaction.
+func calculateTxnTotalSize(cmps []Compare, successOps []TxnOp, failureOps []TxnOp) int {
+	total := 0
+
+	for _, cmp := range cmps {
+		total += len(cmp.Value)
+	}
+
+	total += calculateOpsTotalSize(successOps)
+	total += calculateOpsTotalSize(failureOps)
+
+	return total
+}
+
+// calculateOpsTotalSize calculates the total size of values in operations, including nested transactions.
+func calculateOpsTotalSize(ops []TxnOp) int {
+	total := 0
+	for _, op := range ops {
+		total += len(op.Value)
+		if op.Type == TxnOpTxn {
+			total += calculateTxnTotalSize(op.Compares, op.SuccessOps, op.FailureOps)
+		}
+	}
+	return total
+}
+
+// validateTxnRequestWithDepth validates the transaction request with depth tracking.
+func validateTxnRequestWithDepth(section string, cmps []Compare, successOps []TxnOp, failureOps []TxnOp, depth int) error {
+	if depth > MaxTxnDepth {
+		return fmt.Errorf("transaction nesting too deep: %d > %d", depth, MaxTxnDepth)
+	}
+
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}
@@ -136,24 +199,26 @@ func ValidateTxnRequest(section string, cmps []Compare, successOps []TxnOp, fail
 		return fmt.Errorf("too many failure operations: %d > %d", len(failureOps), MaxTxnOps)
 	}
 
-	for i, cmp := range cmps {
-		if len(cmp.Value) > MaxTxnValueSize {
-			return fmt.Errorf("comparison %d value too large: %d > %d", i, len(cmp.Value), MaxTxnValueSize)
-		}
+	if err := validateOpsWithDepth(successOps, "success", section, depth); err != nil {
+		return err
 	}
 
-	for i, op := range successOps {
-		if len(op.Value) > MaxTxnValueSize {
-			return fmt.Errorf("success operation %d value too large: %d > %d", i, len(op.Value), MaxTxnValueSize)
-		}
+	if err := validateOpsWithDepth(failureOps, "failure", section, depth); err != nil {
+		return err
 	}
 
-	for i, op := range failureOps {
-		if len(op.Value) > MaxTxnValueSize {
-			return fmt.Errorf("failure operation %d value too large: %d > %d", i, len(op.Value), MaxTxnValueSize)
+	return nil
+}
+
+// validateOpsWithDepth validates operations including nested transactions.
+func validateOpsWithDepth(ops []TxnOp, opType string, section string, depth int) error {
+	for i, op := range ops {
+		if op.Type == TxnOpTxn {
+			if err := validateTxnRequestWithDepth(section, op.Compares, op.SuccessOps, op.FailureOps, depth+1); err != nil {
+				return fmt.Errorf("%s operation %d nested txn: %w", opType, i, err)
+			}
 		}
 	}
-
 	return nil
 }
 
@@ -500,6 +565,22 @@ func (k *badgerKV) Txn(ctx context.Context, section string, cmps []Compare, succ
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
 
+	// Execute the transaction (potentially with nested transactions)
+	succeeded, err := k.executeTxnOps(txn, section, cmps, successOps, failureOps)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := txn.Commit(); err != nil {
+		return nil, err
+	}
+
+	return &TxnResponse{Succeeded: succeeded}, nil
+}
+
+// executeTxnOps evaluates comparisons and executes operations, supporting nested transactions.
+// Returns whether the comparisons succeeded and any error encountered.
+func (k *badgerKV) executeTxnOps(txn *badger.Txn, section string, cmps []Compare, successOps []TxnOp, failureOps []TxnOp) (bool, error) {
 	// Evaluate all comparisons
 	succeeded := true
 	for _, cmp := range cmps {
@@ -507,7 +588,7 @@ func (k *badgerKV) Txn(ctx context.Context, section string, cmps []Compare, succ
 		item, err := txn.Get([]byte(keyWithSection))
 		keyExists := err == nil
 		if err != nil && !errors.Is(err, badger.ErrKeyNotFound) {
-			return nil, err
+			return false, err
 		}
 
 		switch cmp.Target {
@@ -525,7 +606,7 @@ func (k *badgerKV) Txn(ctx context.Context, section string, cmps []Compare, succ
 			} else {
 				itemValue, err := item.ValueCopy(nil)
 				if err != nil {
-					return nil, err
+					return false, err
 				}
 				if !compareBytes(itemValue, cmp.Value, cmp.Result) {
 					succeeded = false
@@ -533,7 +614,7 @@ func (k *badgerKV) Txn(ctx context.Context, section string, cmps []Compare, succ
 			}
 
 		default:
-			return nil, fmt.Errorf("unknown compare target: %d", cmp.Target)
+			return false, fmt.Errorf("unknown compare target: %d", cmp.Target)
 		}
 
 		if !succeeded {
@@ -548,26 +629,30 @@ func (k *badgerKV) Txn(ctx context.Context, section string, cmps []Compare, succ
 	}
 
 	for _, op := range ops {
-		keyWithSection := section + "/" + op.Key
 		switch op.Type {
 		case TxnOpPut:
+			keyWithSection := section + "/" + op.Key
 			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
-				return nil, err
+				return false, err
 			}
 		case TxnOpDelete:
+			keyWithSection := section + "/" + op.Key
 			if err := txn.Delete([]byte(keyWithSection)); err != nil {
-				return nil, err
+				return false, err
 			}
+		case TxnOpTxn:
+			// Execute nested transaction
+			_, err := k.executeTxnOps(txn, section, op.Compares, op.SuccessOps, op.FailureOps)
+			if err != nil {
+				return false, err
+			}
+			// Note: nested transaction's succeeded status doesn't affect parent's succeeded status
 		default:
-			return nil, fmt.Errorf("unknown operation type: %d", op.Type)
+			return false, fmt.Errorf("unknown operation type: %d", op.Type)
 		}
 	}
 
-	if err := txn.Commit(); err != nil {
-		return nil, err
-	}
-
-	return &TxnResponse{Succeeded: succeeded}, nil
+	return succeeded, nil
 }
 
 // compareBytes compares two byte slices based on the comparison result type
