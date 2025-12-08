@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -12,7 +13,6 @@ import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 import { ResponsiveProp } from '../Layout/utils/responsiveness';
 import { AdHocFilterItem } from '../Table/TableNG/types';
-import { selectors } from '@grafana/e2e-selectors';
 
 export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;

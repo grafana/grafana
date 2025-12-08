@@ -1,8 +1,9 @@
 import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
 import { LineInterpolation } from '@grafana/ui';
 
-import { getGroupedFilters, prepareGraphableFields } from './utils';
 import { AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
+
+import { getGroupedFilters, prepareGraphableFields } from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {

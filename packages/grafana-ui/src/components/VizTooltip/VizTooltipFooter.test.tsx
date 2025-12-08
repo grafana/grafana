@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { Field, FieldType, LinkModel } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { VizTooltipFooter, AdHocFilterModel } from './VizTooltipFooter';
-import { selectors } from '@grafana/e2e-selectors';
 
 describe('VizTooltipFooter', () => {
   it('should fire onclick', async () => {
