@@ -8,7 +8,7 @@ require (
 	github.com/google/go-github/v70 v70.0.0
 	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.48.4
+	github.com/grafana/grafana-app-sdk v0.48.5
 	github.com/grafana/grafana-app-sdk/logging v0.48.3
 	github.com/grafana/grafana-plugin-sdk-go v0.284.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
@@ -149,7 +149,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20251202151018-58fa500f3232 // indirect
+	github.com/grafana/alerting v0.0.0-20251204145817-de8c2bbf9eba // indirect
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // indirect

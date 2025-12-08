@@ -4791,7 +4791,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Nilai dipisahkan dengan koma"
         },
@@ -5802,14 +5804,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Kembali ke daftar",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Hapus",
       "description-color-annotation-event-markers": "Warna yang akan digunakan untuk penanda peristiwa anotasi",
       "description-enabled-annotation-query-issued-every-dashboard": "Ketika diaktifkan, kueri anotasi dikeluarkan setiap muat ulang dasbor",
-      "description-hidden": "Kueri anotasi dapat diaktifkan atau dinonaktifkan di bagian atas dasbor. Dengan mencentang opsi ini, tombol ini akan disembunyikan.",
+      "label-annotation-controls-display": "",
       "label-color": "Warna",
       "label-data-source": "Sumber data",
       "label-enabled": "Aktif",
-      "label-hidden": "Tersembunyi",
       "label-name": "Nama",
       "label-show-in": "Tampilkan di",
       "placeholder-choose-panels": "Pilih panel",
@@ -5865,6 +5879,7 @@
       "label-open-link-in-new-tab": "Buka tautan di tab baru",
       "label-options": "Opsi",
       "label-show-as-dropdown": "Tampilkan sebagai dropdown",
+      "label-show-in-controls-menu": "",
       "label-title": "Judul",
       "label-tooltip": "Tooltip",
       "label-type": "Jenis",
@@ -6424,6 +6439,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulir editor variabel",
       "back-to-list": "Kembali ke daftar",
@@ -6738,8 +6772,8 @@
       "test": "Tes"
     },
     "cloud-info-box": {
-      "body-alert": "Atau lewati proses dan dapatkan {{mainDS}} (dan {{extraDS}}) sebagai sumber data yang dikelola sepenuhnya, dapat diskalakan, dan di-host dari Grafana Labs dengan <6>paket Grafana Cloud gratis selamanya</6>.",
-      "title-alert": "Konfigurasikan sumber data {{mainDS}} Anda di bawah ini"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Hapus dasbor",
@@ -12311,7 +12345,8 @@
         "bar-glow": "",
         "center-glow": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
       "gradient": "",
       "gradient-auto": "",

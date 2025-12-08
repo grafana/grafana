@@ -4811,7 +4811,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Valores separados por vírgulas"
         },
@@ -5824,14 +5826,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Voltar à lista",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Eliminar",
       "description-color-annotation-event-markers": "Cor a utilizar para os marcadores de eventos de anotação",
       "description-enabled-annotation-query-issued-every-dashboard": "Quando esta opção está ativada, a consulta de anotação é emitida a cada atualização do painel de controlo",
-      "description-hidden": "As consultas de anotação podem ser ativadas ou desativadas na parte superior do painel de controlo. Com esta opção marcada, esta alternância ficará oculta.",
+      "label-annotation-controls-display": "",
       "label-color": "Cor",
       "label-data-source": "Origem dos dados",
       "label-enabled": "Ativado",
-      "label-hidden": "Oculto",
       "label-name": "Nome",
       "label-show-in": "Mostrar em",
       "placeholder-choose-panels": "Escolher painéis",
@@ -5887,6 +5901,7 @@
       "label-open-link-in-new-tab": "Abrir o link num novo separador",
       "label-options": "Opções",
       "label-show-as-dropdown": "Mostrar como menu suspenso",
+      "label-show-in-controls-menu": "",
       "label-title": "Título",
       "label-tooltip": "Descrição",
       "label-type": "Tipo",
@@ -6448,6 +6463,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulário do editor de variáveis",
       "back-to-list": "Voltar à lista",
@@ -6762,8 +6796,8 @@
       "test": "Teste"
     },
     "cloud-info-box": {
-      "body-alert": "Ou evite o esforço e obtenha {{mainDS}} (e {{extraDS}}) como origens de dados totalmente geridas, escaláveis e hospedadas da Grafana Labs com o <6>plano Grafana Cloud gratuito para sempre</6>.",
-      "title-alert": "Configurar a sua origem de dados {{mainDS}} abaixo"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Eliminar painel de controlo",
@@ -12364,7 +12398,8 @@
         "bar-glow": "",
         "center-glow": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
       "gradient": "",
       "gradient-auto": "",
