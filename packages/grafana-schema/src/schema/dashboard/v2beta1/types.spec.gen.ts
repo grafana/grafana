@@ -1335,6 +1335,7 @@ export interface CustomVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	valuesFormat?: "csv" | "json";
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({

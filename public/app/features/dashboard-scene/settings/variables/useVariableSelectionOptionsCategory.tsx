@@ -45,7 +45,11 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
             'A wildcard regex or other value to represent All'
           ),
           useShowIf: () => {
-            return variable.useState().includeAll ?? false;
+            const state = variable.useState();
+            const hasMultiProps =
+              ('valuesFormat' in state && state.valuesFormat === 'json') ||
+              state.options.every((o) => Boolean(o.properties));
+            return hasMultiProps ? false : (state.includeAll ?? false);
           },
           render: (descriptor) => <CustomAllValueInput id={descriptor.props.id} variable={variable} />,
         })
@@ -58,6 +62,13 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
             'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
             'Enables users to enter values'
           ),
+          useShowIf: () => {
+            const state = variable.useState();
+            const hasMultiProps =
+              ('valuesFormat' in state && state.valuesFormat === 'json') ||
+              state.options.every((o) => Boolean(o.properties));
+            return !hasMultiProps;
+          },
           render: (descriptor) => <AllowCustomSwitch id={descriptor.props.id} variable={variable} />,
         })
       );
