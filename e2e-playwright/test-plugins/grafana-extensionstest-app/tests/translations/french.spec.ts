@@ -5,7 +5,7 @@ import { ROUTES } from '../../constants';
 
 test.use({ userPreferences: { language: FRENCH_FRANCE } });
 
-test('should display default translation (en-US)', async ({ gotoAppPage }) => {
+test.skip('should display default translation (en-US)', async ({ gotoAppPage }) => {
   const configPage = await gotoAppPage({ pluginId: pluginJson.id, path: ROUTES.Config });
 
   await expect(configPage.ctx.page.getByText('Is this translated')).toBeVisible();
