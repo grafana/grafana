@@ -4,6 +4,10 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneObject, sceneGraph } from '@grafana/scenes';
 import { Combobox, ComboboxOption, Select } from '@grafana/ui';
+import { AutoGridItem } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItem';
+import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
+import { RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
+import { TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { useSelector } from 'app/types/store';
 
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
@@ -57,12 +61,15 @@ interface Props2 {
 export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2) => {
   const sceneVars = useMemo(() => sceneGraph.getVariables(sceneContext.getRoot()), [sceneContext]);
   const variables = sceneVars.useState().variables;
+  const existingRepeat = useExistingRepeat(sceneContext);
 
   const variableOptions = useMemo(() => {
-    const options: ComboboxOption[] = variables.map((item) => ({
-      label: item.state.name,
-      value: item.state.name,
-    }));
+    const options: ComboboxOption[] = variables
+      .filter((item) => item.state.name !== existingRepeat)
+      .map((item) => ({
+        label: item.state.name,
+        value: item.state.name,
+      }));
 
     options.unshift({
       label: t('dashboard.repeat-row-select2.variable-options.label.disable-repeating', 'Disable repeating'),
@@ -70,7 +77,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
     });
 
     return options;
-  }, [variables]);
+  }, [existingRepeat, variables]);
 
   const onSelectChange = useCallback((value: ComboboxOption | null) => value && onChange(value.value), [onChange]);
 
@@ -79,7 +86,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
   return (
     <Combobox
       id={id}
-      value={repeat}
+      value={repeat || ''}
       onChange={onSelectChange}
       options={variableOptions}
       disabled={isDisabled}
@@ -94,3 +101,43 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
     />
   );
 };
+
+function useExistingRepeat(sceneContext: SceneObject) {
+  return useMemo(() => {
+    // find repeated ancestor
+    let p = sceneContext.parent;
+
+    while (p) {
+      if ((p instanceof RowItem || p instanceof TabItem) && p.state.repeatByVariable) {
+        return p.state.repeatByVariable;
+      }
+      p = p.parent;
+    }
+
+    return findRepeatedDescendent(sceneContext);
+  }, [sceneContext]);
+}
+
+function findRepeatedDescendent(o: SceneObject) {
+  let variableName: string | undefined;
+
+  o.forEachChild((c) => {
+    if (variableName !== undefined) {
+      return;
+    }
+
+    if (c instanceof DashboardGridItem || c instanceof AutoGridItem) {
+      variableName = c.state.variableName;
+      return;
+    }
+
+    if ((c instanceof RowItem || c instanceof TabItem) && c.state.repeatByVariable) {
+      variableName = c.state.repeatByVariable;
+      return;
+    }
+
+    variableName = findRepeatedDescendent(c);
+  });
+
+  return variableName;
+}

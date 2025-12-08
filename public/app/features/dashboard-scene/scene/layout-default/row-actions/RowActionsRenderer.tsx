@@ -8,7 +8,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { getQueryRunnerFor, useDashboard, useDashboardState } from '../../../utils/utils';
+import { getQueryRunnerFor, useDashboardState } from '../../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 
@@ -18,7 +18,6 @@ import { RowOptionsButton } from './RowOptionsButton';
 export function RowActionsRenderer({ model }: SceneComponentProps<RowActions>) {
   const row = model.getParent();
   const { title, children } = row.useState();
-  const dashboard = useDashboard(model);
   const { meta, isEditing } = useDashboardState(model);
   const styles = useStyles2(getStyles);
 
@@ -53,7 +52,7 @@ export function RowActionsRenderer({ model }: SceneComponentProps<RowActions>) {
             <RowOptionsButton
               title={title}
               repeat={behaviour instanceof RowRepeaterBehavior ? behaviour.state.variableName : undefined}
-              parent={dashboard}
+              parent={row}
               onUpdate={(title, repeat) => model.onUpdate(title, repeat)}
               isUsingDashboardDS={isUsingDashboardDS}
             />
