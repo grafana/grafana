@@ -533,7 +533,7 @@ func newGrot3dSimInfo() simulationInfo {
 					LightX:         -1,
 					LightY:         -1,
 					LightZ:         -1,
-					AmbientLight:   0.3,
+					AmbientLight:   0.5,
 					ViewWidth:      800,
 					ViewHeight:     800,
 					Perspective:    1000,
