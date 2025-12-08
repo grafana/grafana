@@ -1,41 +1,46 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { defaultsDeep } from 'lodash';
+
+import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
-import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
 
-export class StatSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary: ds } = builder;
-
-    if (!ds.hasData) {
-      return;
-    }
-
-    const list = builder.getListAppender<Options, {}>({
-      name: SuggestionName.Stat,
-      pluginId: 'stat',
-      options: {},
-      fieldConfig: {
-        defaults: {
-          unit: 'short',
-          custom: {},
-        },
-        overrides: [],
+const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
+  defaultsDeep(s, {
+    fieldConfig: {
+      defaults: {
+        unit: 'short',
+        custom: {},
       },
-      cardOptions: {
-        previewModifier: (s) => {
-          if (s.options!.reduceOptions.values) {
-            s.options!.reduceOptions.limit = 1;
-          }
-        },
+      overrides: [],
+    },
+    cardOptions: {
+      previewModifier: (s) => {
+        if (s.options?.reduceOptions?.values) {
+          s.options.reduceOptions.limit = 1;
+        }
       },
-    });
+    },
+  } satisfies VisualizationSuggestion<Options>);
 
-    // String and number field with low row count show individual rows
-    if (ds.hasStringField && ds.hasNumberField && ds.frameCount === 1 && ds.rowCountTotal < 10) {
-      list.append({
-        name: SuggestionName.Stat,
+export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (ds) => {
+  if (!ds.hasData) {
+    return;
+  }
+
+  const suggestions: Array<VisualizationSuggestion<Options>> = [];
+
+  // String and number field with low row count show individual rows
+  if (
+    ds.hasFieldType(FieldType.string) &&
+    ds.hasFieldType(FieldType.number) &&
+    ds.frameCount === 1 &&
+    ds.rowCountTotal < 10
+  ) {
+    suggestions.push(
+      {
+        name: t('stat.suggestions.stat-discrete-values', 'Stat - discrete values'),
         options: {
           reduceOptions: {
             values: true,
@@ -43,9 +48,9 @@ export class StatSuggestionsSupplier {
             fields: '/.*/',
           },
         },
-      });
-      list.append({
-        name: SuggestionName.StatColoredBackground,
+      },
+      {
+        name: t('stat.suggestions.stat-discrete-values-color-background', 'Stat - discrete values - color background'),
         options: {
           reduceOptions: {
             values: true,
@@ -54,36 +59,38 @@ export class StatSuggestionsSupplier {
           },
           colorMode: BigValueColorMode.Background,
         },
-      });
-    }
+      }
+    );
+  }
 
-    // Just a single string field
-    if (ds.stringFieldCount === 1 && ds.frameCount === 1 && ds.rowCountTotal < 10 && ds.fieldCount === 1) {
-      list.append({
-        name: SuggestionName.Stat,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-            fields: '/.*/',
-          },
-          colorMode: BigValueColorMode.None,
+  // just a single string field
+  if (ds.fieldCount === 1 && ds.hasFieldType(FieldType.string)) {
+    suggestions.push({
+      name: t('stat.suggestions.stat-single-string', 'Stat - single string'),
+      options: {
+        reduceOptions: {
+          values: true,
+          calcs: [],
+          fields: '/.*/',
         },
-      });
-    }
+        colorMode: BigValueColorMode.None,
+      },
+    });
+  }
 
-    if (ds.hasNumberField && ds.hasTimeField) {
-      list.append({
+  // aggregated suggestions for number fields
+  if (ds.hasFieldType(FieldType.number) && ds.hasFieldType(FieldType.time)) {
+    suggestions.push(
+      {
         options: {
           reduceOptions: {
             values: false,
             calcs: ['lastNotNull'],
           },
         },
-      });
-
-      list.append({
-        name: SuggestionName.StatColoredBackground,
+      },
+      {
+        name: t('stat.suggestions.stat-color-background', 'Stat - color background'),
         options: {
           reduceOptions: {
             values: false,
@@ -92,7 +99,9 @@ export class StatSuggestionsSupplier {
           graphMode: BigValueGraphMode.None,
           colorMode: BigValueColorMode.Background,
         },
-      });
-    }
+      }
+    );
   }
-}
+
+  return suggestions.map(withDefaults);
+};

@@ -122,6 +122,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	b := r.builder
 
 	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
+		w.Header().Set("X-Ds-Querier", b.instanceProvider.GetMode())
+
 		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
@@ -336,8 +338,8 @@ func prepareQuery(
 	}, nil
 }
 
-func handlePreparedQuery(ctx context.Context, pq *preparedQuery) (*backend.QueryDataResponse, error) {
-	resp, err := service.QueryData(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers)
+func handlePreparedQuery(ctx context.Context, pq *preparedQuery, concurrentQueryLimit int) (*backend.QueryDataResponse, error) {
+	resp, err := service.QueryData(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers, concurrentQueryLimit)
 	pq.reportMetrics()
 	return resp, err
 }
@@ -355,7 +357,7 @@ func handleQuery(
 		responder.Error(err)
 		return nil, err
 	}
-	return handlePreparedQuery(ctx, pq)
+	return handlePreparedQuery(ctx, pq, b.concurrentQueryLimit)
 }
 
 type responderWrapper struct {

@@ -60,7 +60,7 @@ if (( ${#failed_packages[@]} > 0 )); then
 fi
 
 # Check if any files in packages/grafana-e2e-selectors were changed. If so, add a 'modified' tag to the package
-CHANGES_COUNT=$(git diff HEAD~1..HEAD --name-only -- packages/grafana-e2e-selectors | awk 'END{print NR}')
+CHANGES_COUNT=$(git show --name-only --format= HEAD -- packages/grafana-e2e-selectors | awk 'END{print NR}')
 if (( CHANGES_COUNT > 0 )); then
     # Wait a little bit to allow the package to be published to the registry
     sleep 5s

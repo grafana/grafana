@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // Store is an abstraction for the storage API.
@@ -28,13 +31,9 @@ type Store interface {
 	// The err may be ErrNoJobs if there are no jobs to claim.
 	Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error)
 
-	// Complete marks a job as completed and moves it to the historic job store.
-	// When in the historic store, there is no more claim on the job.
+	// Complete marks a job as completed and removes it from the active job store.
+	// Callers are responsible for writing the job to history after calling this.
 	Complete(ctx context.Context, job *provisioning.Job) error
-
-	// Cleanup should be called periodically to clean up abandoned jobs.
-	// An abandoned job is one that has been claimed by a worker, but the worker has not updated the job in a while.
-	Cleanup(ctx context.Context) error
 
 	// Update saves the job back to the store.
 	Update(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
@@ -45,6 +44,10 @@ type Store interface {
 
 	// Get retrieves a job by name for conflict resolution.
 	Get(ctx context.Context, namespace, name string) (*provisioning.Job, error)
+
+	// ListExpiredJobs lists jobs with expired leases (claim timestamp older than the given time).
+	// Returns jobs in batches up to the specified limit.
+	ListExpiredJobs(ctx context.Context, expiredBefore time.Time, limit int) ([]*provisioning.Job, error)
 }
 
 // jobDriver drives jobs to completion and manages the job queue.
@@ -74,6 +77,11 @@ type jobDriver struct {
 
 	// notifications channel for job create events
 	notifications chan struct{}
+
+	// Mutex to protect concurrent access to job processing
+	mu sync.Mutex
+	// currentJob is the job currently being processed
+	currentJob *provisioning.Job
 }
 
 func NewJobDriver(
@@ -99,6 +107,9 @@ func NewJobDriver(
 // Run drives jobs to completion. This is a blocking function.
 // It will run until the context is canceled or an error occurs.
 // This is a thread-safe function; it may be called from multiple goroutines.
+//
+// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
+// until shutdown. Individual job processing operations already have their own spans.
 func (d *jobDriver) Run(ctx context.Context) error {
 	jobTicker := time.NewTicker(d.jobInterval)
 	defer jobTicker.Stop()
@@ -116,7 +127,8 @@ func (d *jobDriver) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			logger.Info("job driver stopped")
+			return nil // Context cancellation is expected during shutdown
 		case <-jobTicker.C:
 			d.processJobsUntilDoneOrError(ctx)
 		case <-d.notifications:
@@ -128,6 +140,11 @@ func (d *jobDriver) Run(ctx context.Context) error {
 // This will keep processing jobs until there are none left (or we hit an error)
 func (d *jobDriver) processJobsUntilDoneOrError(ctx context.Context) {
 	for {
+		// Check if context is cancelled before attempting to claim jobs
+		if ctx.Err() != nil {
+			return
+		}
+
 		err := d.claimAndProcessOneJob(ctx)
 		if err != nil {
 			if !errors.Is(err, ErrNoJobs) {
@@ -139,25 +156,39 @@ func (d *jobDriver) processJobsUntilDoneOrError(ctx context.Context) {
 }
 
 func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim_and_process_one_job")
+	defer span.End()
+
 	logger := logging.FromContext(ctx)
 
 	// Claim a job to work on.
-	job, rollback, err := d.store.Claim(ctx)
+	claimedJob, rollback, err := d.store.Claim(ctx)
 	if err != nil {
+		if !errors.Is(err, ErrNoJobs) {
+			span.RecordError(err)
+		}
 		return apifmt.Errorf("failed to claim job: %w", err)
 	}
 	// Ensure that the job is cleaned up if we fail to complete it.
 	// The rollback function does not care about cancellations.
 	defer rollback()
 
-	logger = logger.With("job", job.GetName(), "namespace", job.GetNamespace())
+	namespace := claimedJob.GetNamespace()
+	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace)
 	ctx = logging.Context(ctx, logger)
-	logger.Debug("claimed a job")
+	d.currentJob = claimedJob
+
+	span.SetAttributes(
+		attribute.String("job.name", claimedJob.GetName()),
+		attribute.String("job.namespace", namespace),
+		attribute.String("job.repository", claimedJob.Spec.Repository),
+		attribute.String("job.action", string(claimedJob.Spec.Action)),
+	)
 
 	// Now that we have a job, we need to augment our namespace to grant ourselves permission to work on it.
 	// Incidentally, this also limits our permissions to only the namespace of the job.
-	ctx = request.WithNamespace(ctx, job.GetNamespace())
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
+	ctx = request.WithNamespace(ctx, namespace)
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
 		return apifmt.Errorf("failed to grant provisioning identity: %w", err)
 	}
@@ -169,50 +200,72 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	leaseRenewalCtx, cancelLeaseRenewal := context.WithCancel(jobctx)
 	leaseExpired := make(chan struct{})
 
-	go d.leaseRenewalLoop(leaseRenewalCtx, job, logger, leaseExpired)
+	go d.leaseRenewalLoop(leaseRenewalCtx, logger, leaseExpired)
 	defer cancelLeaseRenewal()
 
-	recorder := newJobProgressRecorder(d.onProgress(job))
+	recorder := newJobProgressRecorder(d.onProgress())
+	recorder.SetMessage(ctx, "start job")
 
 	// Process the job with lease loss detection
-	start := time.Now()
-	job.Status.Started = start.UnixMilli()
-	err = d.processJobWithLeaseCheck(jobctx, job, recorder, leaseExpired)
+	err = d.processJobWithLeaseCheck(jobctx, recorder, leaseExpired)
 	end := time.Now()
-	logger.Debug("job processed", "duration", end.Sub(start), "error", err)
+	logger.Debug("job processed", "duration", end.Sub(recorder.Started()), "error", err)
 
-	// Capture job timeout
-	if jobctx.Err() != nil && err == nil {
+	// Check if parent context was cancelled (graceful shutdown)
+	if ctx.Err() != nil {
+		logger.Debug("context cancel - job will retry")
+		// Don't complete the job - let it be retried by another worker
+		d.mu.Lock()
+		d.currentJob = nil
+		d.mu.Unlock()
+		return nil
+	}
+
+	// Capture job timeout (but not parent context cancellation)
+	if jobctx.Err() != nil && err == nil && ctx.Err() == nil {
 		err = jobctx.Err()
 	}
 
-	job.Status = recorder.Complete(ctx, err)
+	// Record job processing error on span
+	if err != nil {
+		span.RecordError(err)
+	}
+
+	// Complete the job
+	d.mu.Lock()
+	d.currentJob.Status = recorder.Complete(ctx, err)
+	defer func() {
+		d.currentJob = nil
+		d.mu.Unlock()
+	}()
 
 	// Save the finished job
-	err = d.historicJobs.WriteJob(ctx, job.DeepCopy())
+	err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy())
 	if err != nil {
 		// We're not going to return this as it is not critical. Not ideal, but not critical.
-		logger.Warn("failed to create historic job", "historic_job", *job, "error", err)
-	} else {
-		logger.Debug("created historic job", "historic_job", *job)
+		logger.Warn("failed to write historic job", "error", err)
 	}
 
 	// Mark the job as completed.
-	if err := d.store.Complete(ctx, job); err != nil {
-		return apifmt.Errorf("failed to complete job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+	if err := d.store.Complete(ctx, d.currentJob); err != nil {
+		span.RecordError(err)
+		return apifmt.Errorf("failed to complete job '%s' in '%s': %w", d.currentJob.GetName(), d.currentJob.GetNamespace(), err)
 	}
-	logger.Debug("job completed")
+	logger.Info("job complete")
 
 	return nil
 }
 
 // leaseRenewalLoop continuously renews the lease for a job until the context is cancelled.
 // If lease renewal fails persistently, it signals via the leaseExpired channel.
-func (d *jobDriver) leaseRenewalLoop(ctx context.Context, job *provisioning.Job, logger logging.Logger, leaseExpired chan struct{}) {
+//
+// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
+// for the lifetime of a job. Individual RenewLease calls already have their own spans.
+func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger, leaseExpired chan struct{}) {
 	ticker := time.NewTicker(d.leaseRenewalInterval)
 	defer ticker.Stop()
 
-	logger.Debug("starting lease renewal loop", "renewal_interval", d.leaseRenewalInterval)
+	logger.Debug("start lease renewal loop", "renewal_interval", d.leaseRenewalInterval)
 
 	consecutiveFailures := 0
 	maxFailures := 3 // Allow a few failures before giving up
@@ -220,10 +273,18 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, job *provisioning.Job,
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Debug("lease renewal loop stopping")
+			logger.Debug("lease renewal loop stopped")
 			return
 		case <-ticker.C:
-			err := d.store.RenewLease(ctx, job)
+			d.mu.Lock()
+			if d.currentJob == nil {
+				d.mu.Unlock()
+				return
+			}
+
+			err := d.store.RenewLease(ctx, d.currentJob)
+			d.mu.Unlock()
+
 			if err != nil {
 				consecutiveFailures++
 				if apierrors.IsNotFound(err) ||
@@ -246,18 +307,17 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, job *provisioning.Job,
 					logger.Debug("lease renewal recovered", "previous_failures", consecutiveFailures)
 				}
 				consecutiveFailures = 0
-				logger.Debug("lease renewed successfully")
 			}
 		}
 	}
 }
 
-// processJobWithLeaseCheck processes a job but aborts if the lease expires.
-func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, job *provisioning.Job, recorder JobProgressRecorder, leaseExpired <-chan struct{}) error {
+// processJobWithLeaseCheck processes a job but aborts if the lease expires or context is cancelled.
+func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobProgressRecorder, leaseExpired <-chan struct{}) error {
 	// Run the job processing in a goroutine so we can monitor lease expiry
 	resultChan := make(chan error, 1)
 	go func() {
-		resultChan <- d.processJob(ctx, job, recorder)
+		resultChan <- d.processJob(ctx, recorder)
 	}()
 
 	select {
@@ -266,25 +326,48 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, job *provision
 	case <-leaseExpired:
 		return apifmt.Errorf("job aborted due to lease expiry")
 	case <-ctx.Done():
+		// Return context error directly - caller will determine if this is due to graceful shutdown
+		// or job timeout based on which context was cancelled
 		return ctx.Err()
 	}
 }
 
-func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job, recorder JobProgressRecorder) error {
+func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder) error {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.process_job")
+	defer span.End()
+
 	logger := logging.FromContext(ctx)
+	d.mu.Lock()
+	if d.currentJob == nil {
+		d.mu.Unlock()
+		return nil
+	}
+
+	// Here it's safe to copy as only job spec is used for processing
+	job := d.currentJob.DeepCopy()
+	repoName := d.currentJob.Spec.Repository
+	namespace := d.currentJob.Namespace
+	d.mu.Unlock()
+
+	span.SetAttributes(
+		attribute.String("job.repository", repoName),
+		attribute.String("job.action", string(job.Spec.Action)),
+	)
+
 	for _, worker := range d.workers {
 		if !worker.IsSupported(ctx, *job) {
 			continue
 		}
 
-		repo, err := d.repoGetter.GetRepository(ctx, job.Namespace, job.Spec.Repository)
+		repo, err := d.repoGetter.GetRepository(ctx, namespace, repoName)
 		if err != nil {
-			return apifmt.Errorf("failed to get repository '%s': %w", job.Spec.Repository, err)
+			span.RecordError(err)
+			return apifmt.Errorf("failed to get repository '%s': %w", repoName, err)
 		}
 
 		r := repo.Config()
 		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
-			logger.Info("repository is marked for deletion, skipping processing job",
+			logger.Info("repository marked for deletion - skip job",
 				"name", r.Name,
 				"namespace", r.Namespace,
 				"deletionTimestamp", r.DeletionTimestamp,
@@ -292,51 +375,76 @@ func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job, recor
 			return nil
 		}
 
-		return worker.Process(ctx, repo, *job, recorder)
+		err = worker.Process(ctx, repo, *job, recorder)
+		if err != nil {
+			span.RecordError(err)
+		}
+		return err
 	}
 
-	return apifmt.Errorf("no workers were registered to handle the job")
+	err := apifmt.Errorf("no workers were registered to handle the job")
+	span.RecordError(err)
+	return err
 }
 
-func (d *jobDriver) onProgress(job *provisioning.Job) ProgressFn {
+func (d *jobDriver) onProgress() ProgressFn {
 	return func(ctx context.Context, status provisioning.JobStatus) error {
+		ctx, span := tracing.Start(ctx, "provisioning.jobs.update_progress")
+		defer span.End()
+
 		logging.FromContext(ctx).Debug("job progress", "status", status)
 
 		const maxRetries = 3
 		for attempt := 0; attempt < maxRetries; attempt++ {
-			// Use the current job for the first attempt, fetch fresh for retries
-			currentJob := job
+			d.mu.Lock()
+			if d.currentJob == nil {
+				d.mu.Unlock()
+				return nil
+			}
+
+			// Use the current job for the first attempt; on retry attempts, fetch fresh data from the store to resolve conflicts
 			if attempt > 0 {
 				// Fetch the latest version to resolve conflicts
-				latest, err := d.store.Get(ctx, job.GetNamespace(), job.GetName())
+				latest, err := d.store.Get(ctx, d.currentJob.GetNamespace(), d.currentJob.GetName())
 				if err != nil {
+					d.mu.Unlock()
 					if apierrors.IsNotFound(err) {
 						// Job was completed/deleted, nothing to update
 						return nil
 					}
 					return apifmt.Errorf("failed to fetch job for progress update: %w", err)
 				}
-				currentJob = latest
+
+				*d.currentJob = *latest
 			}
 
+			job := d.currentJob
 			// Update status on the current job
-			currentJob.Status = status
-
-			updated, err := d.store.Update(ctx, currentJob)
+			job.Status = status
+			updated, err := d.store.Update(ctx, job)
 			if err != nil {
 				if apierrors.IsConflict(err) && attempt < maxRetries-1 {
 					// Conflict detected, retry with fresh data
 					logging.FromContext(ctx).Debug("progress update conflict, retrying", "attempt", attempt+1)
 					continue
 				}
+				d.mu.Unlock()
 				return apifmt.Errorf("failed to update job progress: %w", err)
 			}
 
 			// Update succeeded, update our local copy
-			*job = *updated
+			*d.currentJob = *updated
+			d.mu.Unlock()
+
+			span.SetAttributes(
+				attribute.String("job.state", string(status.State)),
+				attribute.Int("attempt", attempt+1),
+			)
 			return nil
 		}
 
-		return apifmt.Errorf("failed to update job progress after %d attempts", maxRetries)
+		err := apifmt.Errorf("failed to update job progress after %d attempts", maxRetries)
+		span.RecordError(err)
+		return err
 	}
 }

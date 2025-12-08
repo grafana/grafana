@@ -8,12 +8,13 @@ This document describes the Grafana dashboard migration system, focusing on conv
   - [Conversion Flow](#conversion-flow-v0--v1--v2)
   - [v0 to v1 Conversion](#v0-to-v1-conversion)
   - [v1 to v2 Conversion](#v1-to-v2-conversion)
+  - [v2 to v0/v1 Conversion](#v2-to-v0v1-conversion)
 - [Conversion Matrix](#conversion-matrix)
 - [API Versions](#api-versions)
 - [Schema Versions](#schema-versions)
 - [Testing](#testing)
   - [Backend conversion tests](#backend-conversion-tests)
-  - [Frontend migration comparison tests](#frontend-migration-comparison-tests)
+  - [Backend and frontend conversion parity tests](#backend-and-frontend-conversion-parity-tests)
 - [Monitoring Migrations](#monitoring-migrations)
   - [Metrics](#metrics)
     - [Dashboard conversion success metric](#1-dashboard-conversion-success-metric)
@@ -52,6 +53,13 @@ v0alpha1 (Legacy JSON) → v1beta1 (Migrated JSON) → v2alpha1/v2beta1 (Structu
 - Transforms JSON dashboards to structured dashboard format
 - v2 schema is the stable, typed schema with proper type definitions
 - Handles modern dashboard features and Kubernetes-native storage
+- See [V2 to V1 Layout Conversion](./conversion/v2_to_v1_layout_conversion.md) for details on how V2 layouts are converted back to V1 panel arrays
+
+#### v2 to v0/v1 Conversion:
+- Converts structured v2 dashboards back to JSON format (v0alpha1 or v1beta1)
+- Chains through intermediate versions: v2 → v1beta1 → v0alpha1
+- v0alpha1 and v1beta1 share the same spec structure (only API version differs)
+- Enables backward compatibility when storing v2 dashboards in legacy format
 
 ## Conversion Matrix
 
@@ -112,25 +120,51 @@ go test ./apps/dashboard/pkg/migration/conversion/... -v
 go test ./apps/dashboard/pkg/migration/... -run TestSchemaMigrationMetrics
 ```
 
-### Frontend migration comparison tests
+### Backend and frontend conversion parity tests
 
-The frontend migration comparison tests validate that backend and frontend conversion logic produce consistent results:
+These tests ensure that backend (Go) and frontend (TypeScript) conversions produce identical outputs. This is critical because:
 
-- **Test methodology**: Compares backend vs frontend conversion outputs through DashboardModel integration
-- **Dataset coverage**: Tests run against curated test files covering various conversion scenarios
-- **Test location**: `public/app/features/dashboard/state/DashboardMigratorToBackend.test.ts`
-- **Test data**: Located in `apps/dashboard/pkg/migration/testdata/input/` and `testdata/output/`
+- **Dual implementation**: Both backend and frontend implement dashboard version conversions
+- **Consistency requirement**: Users should see the same dashboard regardless of which path is used
+- **API flexibility**: The API may return dashboards in different versions depending on context
+
+**Why normalize through Scene?**
+
+Both backend and frontend outputs are passed through the same Scene load/save cycle before comparison. This normalization:
+- Eliminates differences from default values added by Scene
+- Handles field ordering variations
+- Simulates the real-world flow: dashboard loaded → edited → saved
+
+**Test locations:**
+
+| Test File | Purpose |
+|-----------|---------|
+| `public/app/features/dashboard-scene/serialization/transformSaveModelV1ToV2.test.ts` | v1beta1 → v2beta1 conversion parity |
+| `public/app/features/dashboard-scene/serialization/transformSaveModelV2ToV1.test.ts` | v2beta1 → v1beta1/v0alpha1 conversion parity |
+| `public/app/features/dashboard/state/DashboardMigratorToBackend.test.ts` | Schema version migration parity |
 
 **Test execution:**
 ```bash
-# Frontend migration comparison tests
+# V1 to V2 conversion parity tests
+yarn test transformSaveModelV1ToV2.test.ts
+
+# V2 to V1 conversion parity tests
+yarn test transformSaveModelV2ToV1.test.ts
+
+# Schema migration parity tests  
 yarn test DashboardMigratorToBackend.test.ts
 ```
 
-**Test approach:**
-- **Frontend path**: `jsonInput → DashboardModel → DashboardMigrator → getSaveModelClone()`
-- **Backend path**: `jsonInput → Backend Conversion → backendOutput → DashboardModel → getSaveModelClone()`
-- **Comparison**: Direct comparison of final converted states from both paths
+**Test approach (v1 → v2):**
+- **Backend path**: `v1beta1 → Go conversion → v2beta1 → Scene → normalized output`
+- **Frontend path**: `v1beta1 → Scene → v2beta1 → Scene → normalized output`
+- **Test data**: Uses files from `apps/dashboard/pkg/migration/conversion/testdata/` and migrated dashboards
+
+**Test approach (v2 → v1/v0):**
+- **Backend path**: `v2beta1 → Go conversion → v1beta1/v0alpha1 → Scene → normalized output`
+- **Frontend path**: `v2beta1 → Scene → v1beta1 → Scene → normalized output`
+- **Target versions**: Tests both v0alpha1 and v1beta1 (they share the same spec structure)
+- **Test data**: Uses files from `apps/dashboard/pkg/migration/conversion/testdata/`
 
 For schema version migration testing details, see the [SchemaVersion Migration Guide](./schemaversion/README.md).
 
@@ -198,7 +232,7 @@ grafana_dashboard_migration_conversion_failure_total{
 
 ### Error Types
 
-The `error_type` label classifies failures into three categories:
+The `error_type` label classifies failures into four categories:
 
 #### 1. `conversion_error`
 - General conversion failures not related to schema migration
@@ -214,6 +248,12 @@ The `error_type` label classifies failures into three categories:
 - Dashboards with schema versions below the minimum supported version (< v13)
 - These are logged as warnings rather than errors
 - Indicates dashboards that cannot be migrated automatically
+
+#### 4. `conversion_data_loss_error`
+- Data loss detected during conversion
+- Automatically checks that panels, queries, annotations, and links are preserved
+- Triggered when target has fewer items than source
+- Includes detailed loss metrics in logs (see [Data Loss Detection](#data-loss-detection))
 
 ### Logging
 
@@ -235,6 +275,13 @@ All migration logs use structured logging with consistent field names:
 - `errorType` - Same classification as metrics error_type label
 - `erroredConversionFunc` - Name of the conversion function that failed
 - `error` - The actual error message
+
+**Data Loss Fields (conversion_data_loss_error only):**
+- `panelsLost` - Number of panels lost
+- `queriesLost` - Number of queries lost
+- `annotationsLost` - Number of annotations lost
+- `linksLost` - Number of links lost
+- `variablesLost` - Number of template variables lost
 
 #### Log levels
 
@@ -285,6 +332,55 @@ All migration logs use structured logging with consistent field names:
 }
 ```
 
+##### Data Loss Error (ERROR level)
+```json
+{
+  "level": "error",
+  "msg": "Dashboard conversion failed",
+  "sourceVersionAPI": "dashboard.grafana.app/v1beta1",
+  "targetVersionAPI": "dashboard.grafana.app/v2alpha1",
+  "erroredConversionFunc": "V1beta1_to_V2alpha1",
+  "dashboardUID": "abc123",
+  "sourceSchemaVersion": 42,
+  "targetSchemaVersion": 42,
+  "panelsLost": 0,
+  "queriesLost": 2,
+  "annotationsLost": 0,
+  "linksLost": 0,
+  "variablesLost": 0,
+  "errorType": "conversion_data_loss_error",
+  "error": "data loss detected: query count decreased from 7 to 5"
+}
+```
+
+### Data Loss Detection
+
+**Automatic Runtime Checks:**
+
+Every conversion automatically detects data loss by comparing:
+- **Panel count** - Visualization panels (regular + library panels)
+- **Query count** - Data source queries (excludes invalid row panel queries)
+- **Annotation count** - Dashboard-level annotations
+- **Link count** - Navigation links
+- **Variable count** - Template variables (from `templating.list` in v0/v1, `variables` in v2)
+
+**Detection Logic:**
+- ✅ **Allows additions**: Default annotations, enriched data
+- ❌ **Detects losses**: Any decrease in counts triggers `conversion_data_loss_error`
+
+**Testing:**
+
+Run comprehensive data loss tests on all conversion test files:
+
+```bash
+# Test all conversions for data loss
+go test ./apps/dashboard/pkg/migration/conversion/... -run TestDataLossDetectionOnAllInputFiles -v
+
+# Test shows detailed panel/query analysis when loss is detected
+```
+
+**Implementation:** See `conversion/conversion_data_loss_detection.go` and `conversion/README.md` for details.
+
 ### Implementation Details
 
 #### Automatic instrumentation
@@ -293,6 +389,7 @@ All dashboard conversions are automatically instrumented via the `withConversion
 
 ```go
 // All conversion functions are wrapped automatically
+// Includes metrics, logging, and data loss detection
 s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv1.Dashboard)(nil),
     withConversionMetrics(dashv0.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
         return Convert_V0_to_V1(a.(*dashv0.Dashboard), b.(*dashv1.Dashboard), scope)
@@ -318,6 +415,15 @@ type ConversionError struct {
     functionName      string
     currentAPIVersion string
     targetAPIVersion  string
+}
+
+// Data loss errors are detected when dashboard components (panels, queries, annotations, links, variables) 
+// are lost during conversion
+type ConversionDataLossError struct {
+    functionName     string  // Function where data loss was detected (e.g., "V1_to_V2alpha1")
+    message          string  // Detailed error message with loss statistics
+    sourceAPIVersion string  // Source API version (e.g., "dashboard.grafana.app/v1beta1")
+    targetAPIVersion string  // Target API version (e.g., "dashboard.grafana.app/v2alpha1")
 }
 ```
 
@@ -349,4 +455,5 @@ migration.MDashboardConversionFailureTotal
 ## Related Documentation
 
 - [Schema Migration Guide](./schemaversion/README.md) - Complete guide for creating new dashboard schema migrations
+- [V2 to V1 Layout Conversion](./conversion/v2_to_v1_layout_conversion.md) - How V2 layouts (GridLayout, RowsLayout, TabsLayout, AutoGridLayout) are converted to V1 panel arrays
 - [PR #110178 - Dashboard migration: Add missing metrics registration](https://github.com/grafana/grafana/pull/110178)

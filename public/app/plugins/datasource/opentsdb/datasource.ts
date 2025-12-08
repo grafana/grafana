@@ -20,20 +20,25 @@ import {
   AnnotationEvent,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   dateMath,
   DateTime,
   ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import {
+  config,
+  DataSourceWithBackend,
+  FetchResponse,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { prepareAnnotation } from './migrations';
 import { OpenTsdbFilter, OpenTsdbOptions, OpenTsdbQuery } from './types';
 
-export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenTsdbOptions> {
+export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuery, OpenTsdbOptions> {
   type: 'opentsdb';
   url: string;
   name: string;
@@ -398,7 +403,11 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     return Promise.resolve([]);
   }
 
-  testDatasource() {
+  async testDatasource() {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return await super.testDatasource();
+    }
+
     return lastValueFrom(
       this._performSuggestQuery('cpu', 'metrics').pipe(
         map(() => {

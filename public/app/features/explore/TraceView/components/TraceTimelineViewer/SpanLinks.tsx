@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useStyles2, MenuItem, Icon, ContextMenu } from '@grafana/ui';
+import { useStyles2, MenuItem, Icon, ContextMenu, useTheme2 } from '@grafana/ui';
 
 import { SpanLinkDef } from '../types/links';
 
@@ -18,7 +19,8 @@ const renderMenuItems = (
   closeMenu: () => void,
   datasourceType: string
 ) => {
-  links.sort(function (linkA, linkB) {
+  links.sort((linkA, linkB) => {
+    // eslint-disable-next-line no-restricted-syntax
     return (linkA.title || 'link').toLowerCase().localeCompare((linkB.title || 'link').toLowerCase());
   });
 
@@ -49,7 +51,8 @@ const renderMenuItems = (
 };
 
 export const SpanLinksMenu = ({ links, datasourceType, color }: SpanLinksProps) => {
-  const styles = useStyles2(() => getStyles(color));
+  const theme = useTheme2();
+  const styles = useStyles2(() => getStyles(theme, color));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
@@ -83,12 +86,11 @@ export const SpanLinksMenu = ({ links, datasourceType, color }: SpanLinksProps) 
   );
 };
 
-const getStyles = (color: string) => ({
+const getStyles = (theme: GrafanaTheme2, color: string) => ({
   wrapper: css({
     border: 'none',
-    background: `${color}10`,
-    borderBottom: `1px solid ${color}CF`,
-    paddingRight: '4px',
+    borderBottom: `2px solid ${color}CF`,
+    paddingInline: '4px',
   }),
   button: css({
     background: 'transparent',

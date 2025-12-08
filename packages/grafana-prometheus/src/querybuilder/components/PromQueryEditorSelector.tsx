@@ -118,16 +118,18 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         onAddQuery={onAddQuery}
       />
       <EditorHeader>
-        <Button
-          data-testid={selectors.components.QueryBuilder.queryPatterns}
-          variant="secondary"
-          size="sm"
-          onClick={handleOpenQueryPatternsModal}
-        >
-          <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
-            Kick start your query
-          </Trans>
-        </Button>
+        {!query.expr && (
+          <Button
+            data-testid={selectors.components.QueryBuilder.queryPatterns}
+            variant="secondary"
+            size="sm"
+            onClick={handleOpenQueryPatternsModal}
+          >
+            <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
+              Kick start your query
+            </Trans>
+          </Button>
+        )}
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.explain}>
           <QueryHeaderSwitch
             label={t('grafana-prometheus.querybuilder.prom-query-editor-selector.label-explain', 'Explain')}

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -128,6 +129,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		}
 
 		if include.Type == "page" {
+			if !middleware.PageIsFeatureToggleEnabled(c.Req.Context(), include.Path) {
+				s.log.Debug("Skipping page", "plugin", plugin.ID, "path", include.Path)
+				continue
+			}
 			link := &navtree.NavLink{
 				Text:     include.Name,
 				Icon:     include.Icon,
@@ -216,18 +221,13 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		// Add Service Center as a standalone nav item under Alerts & IRM
 		if alertsSection := treeRoot.FindById(navtree.NavIDAlertsAndIncidents); alertsSection != nil {
 			serviceLink := &navtree.NavLink{
-				Text:       "Service Center",
+				Text:       "Service center",
 				Id:         "standalone-plugin-page-slo-services",
 				Url:        s.cfg.AppSubURL + "/a/grafana-slo-app/services",
 				SortWeight: 1,
 				IsNew:      true,
 			}
 			alertsSection.Children = append(alertsSection.Children, serviceLink)
-
-			reportsNavLink := navtree.FindByURL(alertsSection.Children, "/a/grafana-slo-app/reports")
-			if reportsNavLink != nil {
-				reportsNavLink.IsNew = true
-			}
 		}
 	}
 
@@ -392,13 +392,11 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
-		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
 		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2},
 		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 3},
 		"grafana-adaptiveprofiles-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4},
-		"grafana-attributions-app":         {SectionID: navtree.NavIDCfg, Text: "Attributions"},
-		"grafana-logvolumeexplorer-app":    {SectionID: navtree.NavIDCfg, Text: "Log Volume Explorer"},
+		"grafana-cmab-app":                 {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCMAB, Icon: "cmab-logo", IsNew: true},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 	}

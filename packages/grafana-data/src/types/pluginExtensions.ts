@@ -30,6 +30,7 @@ export type PluginExtensionLink = PluginExtensionBase & {
   onClick?: (event?: React.MouseEvent) => void;
   icon?: IconName;
   category?: string;
+  openInNewTab?: boolean;
 };
 
 export type PluginExtensionComponentMeta = Omit<PluginExtensionComponent, 'component'>;
@@ -86,6 +87,7 @@ export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionCon
    */
   component: React.ComponentType<Props>;
 };
+
 export type PluginExtensionAddedFunctionConfig<Signature = unknown> = PluginExtensionConfigBase & {
   /**
    * The target extension points where the component will be added
@@ -106,6 +108,7 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
       icon: IconName;
       category: string;
+      openInNewTab: boolean;
     }>
   | undefined;
 
@@ -137,6 +140,10 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
 
   // (Optional) A category to be used when grouping the options in the ui
   category?: string;
+
+  // (Optional) If true, opens the link in a new tab (renders with target="_blank")
+  // (Important: this is not guaranteed, depends on the extension point if it implements it.)
+  openInNewTab?: boolean;
 };
 
 export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionConfigBase & {
@@ -218,13 +225,20 @@ export enum PluginExtensionPoints {
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
+  MegaMenuAction = 'grafana/megamenu/action',
+  SingleTopBarAction = 'grafana/singletopbar/action',
 }
 
 // Don't use directly in a plugin!
 // Extension point IDs that contain dynamic segments and are not valid as static values — they require runtime substitution of certain parts.
 // (They cannot be used as is. E.g. "grafana/nav-landing-page/.*/v1" becomes "grafana/nav-landing-page/observability/v1" during runtime.)
+//
+// IMPORTANT: NavLandingPage and NavLandingPageCards are mutually exclusive.
+// If a plugin extends NavLandingPage, it will replace the entire page content and any NavLandingPageCards extensions will be ignored.
+// Only use NavLandingPageCards if you want to add additional cards to the default landing page layout.
 export enum PluginExtensionPointPatterns {
   NavLandingPage = 'grafana/dynamic/nav-landing-page/nav-id-.*/v1',
+  NavLandingPageCards = 'grafana/dynamic/nav-landing-page/nav-id-.*/cards/v1',
 }
 
 // Extension Points available in plugins

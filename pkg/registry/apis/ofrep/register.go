@@ -248,21 +248,21 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 
 	r = r.WithContext(ctx)
 
-	valid := b.validateNamespace(r)
-	b.logger.Debug("validating namespace in oneFlagHandler handler", "valid", valid)
-	if !valid {
-		_ = tracing.Errorf(span, namespaceMismatchMsg)
-		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-		b.logger.Error(namespaceMismatchMsg)
-		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
-		return
-	}
-
 	flagKey := mux.Vars(r)["flagKey"]
 	if flagKey == "" {
 		_ = tracing.Errorf(span, "flagKey parameter is required")
 		span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
 		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	valid, ns := b.validateNamespace(r)
+	b.logger.Debug("validating namespace in oneFlagHandler handler", "namespace", ns, "valid", valid, "flag", flagKey)
+	if !valid {
+		_ = tracing.Errorf(span, namespaceMismatchMsg)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+		b.logger.Error(namespaceMismatchMsg)
+		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
 	}
 
@@ -294,8 +294,8 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 
 	r = r.WithContext(ctx)
 
-	valid := b.validateNamespace(r)
-	b.logger.Debug("validating namespace in allFlagsHandler handler", "valid", valid)
+	valid, ns := b.validateNamespace(r)
+	b.logger.Debug("validating namespace in allFlagsHandler handler", "namespace", ns, "valid", valid)
 
 	if !valid {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
@@ -359,14 +359,14 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 }
 
 // validateNamespace checks if the namespace in the evaluation context matches the namespace in the request
-func (b *APIBuilder) validateNamespace(r *http.Request) bool {
+func (b *APIBuilder) validateNamespace(r *http.Request) (bool, string) {
 	_, span := tracing.Start(r.Context(), "ofrep.validateNamespace")
 	defer span.End()
 
 	var namespace string
 	user, ok := types.AuthInfoFrom(r.Context())
 	if !ok {
-		return false
+		return false, ""
 	}
 
 	if user.GetNamespace() != "" {
@@ -381,7 +381,7 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 		_ = tracing.Errorf(span, "failed to read request body: %w", err)
 		b.logger.Error("Error reading evaluation request body", "error", err)
 		span.SetAttributes(attribute.Bool("validation.success", false))
-		return false
+		return false, ""
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
@@ -391,9 +391,9 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 	// "default" namespace case can only occur in on-prem grafana
 	if (namespace == "default" && evalCtxNamespace == "") || (evalCtxNamespace == namespace) {
 		span.SetAttributes(attribute.Bool("validation.success", true))
-		return true
+		return true, evalCtxNamespace
 	}
 
 	span.SetAttributes(attribute.Bool("validation.success", false))
-	return false
+	return false, evalCtxNamespace
 }

@@ -27,6 +27,7 @@ const dashboardToAppPlatform = (dashboard: (typeof mockTree)[number]['item']) =>
     },
     status: {},
     // TODO: Eventually add access properties, as required by tests
+    access: {},
   };
 };
 
