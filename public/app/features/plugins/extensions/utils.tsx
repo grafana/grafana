@@ -474,12 +474,14 @@ export function getLinkExtensionOverrides(
       return undefined;
     }
 
+    // Only allowing to override the following properties
     let {
       title = config.title,
       description = config.description,
       path = config.path,
       icon = config.icon,
       category = config.category,
+      openInNewTab = config.openInNewTab,
       ...rest
     } = overrides;
 
@@ -504,6 +506,7 @@ export function getLinkExtensionOverrides(
       path,
       icon,
       category,
+      openInNewTab,
     };
   } catch (error) {
     if (error instanceof Error) {
