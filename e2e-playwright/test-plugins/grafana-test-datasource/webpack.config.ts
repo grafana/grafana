@@ -34,6 +34,7 @@ const config = async (env: Env): Promise<Configuration> => {
         ],
       }),
     ],
+    externals: [...(baseConfig.externals as any), 'i18next'],
   };
 
   return mergeWithCustomize({
