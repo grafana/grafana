@@ -530,6 +530,15 @@ export const getStyles = (
         },
       },
       '& .log-syntax-highlight': {
+        '.log-token-shield': {
+          color: colors.info,
+        },
+        '.log-token-player': {
+          color: colors.debug,
+        },
+        '.log-token-ufo': {
+          color: colors.error,
+        },
         '.log-token-string': {
           color: colors.logLineBody,
         },

@@ -1,11 +1,11 @@
 /* eslint-disable @grafana/no-unreduced-motion */
 import { css, keyframes } from '@emotion/css';
+import { Grammar } from 'prismjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { LogLevel, LogRowModel, store } from '@grafana/data';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
-import { Grammar } from 'prismjs';
 
 const splash = `
      ▄▄                                         ██                                  
@@ -506,6 +506,7 @@ function update(
         entry: row.padEnd(80),
         timeEpochMs: 0,
         logLevel: LogLevel.unknown,
+        // @ts-expect-error
         grammar,
       });
     });
@@ -644,6 +645,8 @@ function update(
       entry: entry,
       timeEpochMs: 0,
       logLevel: LogLevel.unknown,
+      // @ts-expect-error
+      grammar,
     });
   });
 
@@ -827,4 +830,10 @@ const styles = {
   destroy: css({
     animation: `${hitShake} 150ms cubic-bezier(.36,.07,.19,.97)`,
   }),
+};
+
+const grammar: Grammar = {
+  'log-token-shield': new RegExp(shield, 'g'),
+  'log-token-player': new RegExp(player),
+  'log-token-ufo': new RegExp(['▁◢█◣▁', '∼◢█◣∼', ufo].join('|')),
 };

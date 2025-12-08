@@ -100,6 +100,7 @@ export interface LogRowModel {
   uniqueLabels?: Labels;
   datasourceType?: string;
   datasourceUid?: string;
+  grammar?: Record<string, unknown>;
 }
 
 export interface LogsModel {

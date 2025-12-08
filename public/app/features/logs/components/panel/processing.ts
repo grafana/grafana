@@ -102,7 +102,7 @@ export class LogListModel implements LogRowModel {
     // LogListModel
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
     this._getFieldLinks = getFieldLinks;
-    this._grammar = grammar;
+    this._grammar = grammar ?? log.grammar;
     this._prettifyJSON = Boolean(prettifyJSON);
     this.timestamp = dateTimeFormat(log.timeEpochMs, {
       timeZone,
