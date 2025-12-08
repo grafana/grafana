@@ -1,15 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
-  "type": "datasource",
-  "name": "Test",
-  "id": "grafana-e2etest-datasource",
-  "metrics": true,
+  "type": "panel",
+  "name": "Grafana E2ETest Panel",
+  "id": "grafana-e2etest-panel",
   "info": {
+    "keywords": ["panel"],
     "description": "",
     "author": {
       "name": "Grafana"
     },
-    "keywords": ["datasource"],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
