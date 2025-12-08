@@ -133,6 +133,43 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     updateAdHocFilterVariable(filterVar, newFilter);
   };
 
+  context.getFiltersBasedOnGrouping = (items: AdHocFilterItem[]) => {
+    const dashboard = getDashboardSceneFor(vizPanel);
+
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    if (!queryRunner) {
+      return [];
+    }
+
+    const groupByVar = getGroupByVariableFor(dashboard, queryRunner.state.datasource);
+
+    if (!groupByVar) {
+      return [];
+    }
+
+    const currentValues = Array.isArray(groupByVar.state.value)
+      ? groupByVar.state.value
+      : groupByVar.state.value
+        ? [groupByVar.state.value]
+        : [];
+
+    return items
+      .map((item) => (currentValues.find((key) => key === item.key) ? item : undefined))
+      .filter((item) => item !== undefined);
+  };
+
+  context.onAddAdHocFilters = (items: AdHocFilterItem[]) => {
+    const dashboard = getDashboardSceneFor(vizPanel);
+
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    if (!queryRunner) {
+      return;
+    }
+
+    const filterVar = getAdHocFilterVariableFor(dashboard, queryRunner.state.datasource);
+    bulkUpdateAdHocFiltersVariable(filterVar, items);
+  };
+
   context.canExecuteActions = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
     return dashboard.canEditDashboard();
@@ -167,6 +204,21 @@ function reRunBuiltInAnnotationsLayer(scene: DashboardScene) {
   }
 }
 
+function getGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+  const variables = sceneGraph.getVariables(scene);
+
+  for (const variable of variables.state.variables) {
+    if (sceneUtils.isGroupByVariable(variable)) {
+      const filtersDs = variable.state.datasource;
+      if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+        return variable;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
   const variables = sceneGraph.getVariables(scene);
 
@@ -193,6 +245,35 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   });
 
   return newVariable;
+}
+
+function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilters: AdHocFilterItem[]) {
+  if (!newFilters.length) {
+    return;
+  }
+
+  const updatedFilters = filterVar.state.filters.slice();
+  let hasChanges = false;
+
+  for (const newFilter of newFilters) {
+    const filterToReplaceIndex = updatedFilters.findIndex(
+      (filter) =>
+        filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
+    );
+
+    if (filterToReplaceIndex >= 0) {
+      updatedFilters.splice(filterToReplaceIndex, 1, newFilter);
+      hasChanges = true;
+      continue;
+    }
+
+    updatedFilters.push(newFilter);
+    hasChanges = true;
+  }
+
+  if (hasChanges) {
+    filterVar.updateFilters(updatedFilters);
+  }
 }
 
 function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: AdHocFilterItem) {

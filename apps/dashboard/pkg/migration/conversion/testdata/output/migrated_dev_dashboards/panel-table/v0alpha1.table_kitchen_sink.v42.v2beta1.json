@@ -2219,7 +2219,7 @@
           "name": "Filters",
           "baseFilters": [],
           "filters": [],
-          "defaultKeys": null,
+          "defaultKeys": [],
           "hide": "dontHide",
           "skipUrlSync": false,
           "allowCustomValue": true

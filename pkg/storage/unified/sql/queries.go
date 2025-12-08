@@ -84,6 +84,7 @@ type sqlResourceRequest struct {
 	WriteEvent resource.WriteEvent
 	Generation int64
 	Folder     string
+	KeyPath    string
 
 	// Useful when batch writing
 	ResourceVersion int64
