@@ -1914,6 +1914,13 @@ var (
 			Owner:       grafanaOSSBigTent,
 		},
 		{
+			Name:         "postgresVariableQueryEditor",
+			Description:  "Enable the new variable query editor for the PostgreSQL data source",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOSSBigTent,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "pluginStoreServiceLoading",
 			Description:  "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
 			Stage:        FeatureStageExperimental,

@@ -1161,6 +1161,10 @@ export interface FeatureToggles {
   */
   jaegerEnableGrpcEndpoint?: boolean;
   /**
+  * Enable the new variable query editor for the PostgreSQL data source
+  */
+  postgresVariableQueryEditor?: boolean;
+  /**
   * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
   * @default false
   */

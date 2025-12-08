@@ -3702,6 +3702,7 @@ __metadata:
     "@grafana/i18n": "npm:12.4.0-pre"
     "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "npm:12.4.0-pre"
+    "@grafana/schema": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
     "@react-awesome-query-builder/ui": "npm:6.6.15"
     "@testing-library/dom": "npm:10.4.1"

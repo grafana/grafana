@@ -2694,6 +2694,19 @@
     },
     {
       "metadata": {
+        "name": "postgresVariableQueryEditor",
+        "resourceVersion": "1765231394616",
+        "creationTimestamp": "2025-12-08T22:03:14Z"
+      },
+      "spec": {
+        "description": "Enable the new variable query editor for the PostgreSQL data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "preferLibraryPanelTitle",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-06-17T11:21:21Z"

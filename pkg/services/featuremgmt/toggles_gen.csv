@@ -260,6 +260,7 @@ newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
+postgresVariableQueryEditor,experimental,@grafana/oss-big-tent,false,false,true
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false

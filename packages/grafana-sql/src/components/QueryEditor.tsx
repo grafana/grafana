@@ -15,7 +15,7 @@ import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 export interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
-  queryHeaderProps?: Pick<QueryHeaderProps, 'dialect'>;
+  queryHeaderProps?: Pick<QueryHeaderProps, 'dialect' | 'hideRunButton' | 'hideFormatSelector'>;
 }
 
 export default function SqlQueryEditor({
@@ -99,6 +99,8 @@ export default function SqlQueryEditor({
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
         dialect={dialect}
+        hideRunButton={queryHeaderProps?.hideRunButton}
+        hideFormatSelector={queryHeaderProps?.hideFormatSelector}
       />
 
       <Space v={0.5} />

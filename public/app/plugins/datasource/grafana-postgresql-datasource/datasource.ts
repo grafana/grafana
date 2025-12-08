@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { DataSourceInstanceSettings, ScopedVars, VariableWithMultiSupport } from '@grafana/data';
 import { LanguageDefinition } from '@grafana/plugin-ui';
-import { TemplateSrv } from '@grafana/runtime';
+import { config, TemplateSrv } from '@grafana/runtime';
 import {
   COMMON_FNS,
   DB,
@@ -16,15 +16,23 @@ import {
 
 import { PostgresQueryModel } from './PostgresQueryModel';
 import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
+import { transformMetricFindResponse } from './responseParser';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getFieldConfig, toRawSql } from './sqlUtil';
 import { PostgresOptions } from './types';
+import { SQLVariableSupport } from './variables';
 
 export class PostgresDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined = undefined;
 
   constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>) {
     super(instanceSettings);
+    if (config.featureToggles.postgresVariableQueryEditor) {
+      this.variables = new SQLVariableSupport(this);
+      this.responseParser = {
+        transformMetricFindResponse: transformMetricFindResponse,
+      };
+    }
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): PostgresQueryModel {
