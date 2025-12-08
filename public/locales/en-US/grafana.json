@@ -5889,8 +5889,15 @@
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "conversion-warning-banner": {
-      "message": "This dashboard was originally created in the v2 dashboard format and has been converted to the v1 dashboard format. Saving changes to this dashboard will lose v2 specific features, like tabs and show/hide rules.",
-      "title": "This dashboard was converted from the v2 dashboard format"
+      "detail-conditional": "Show/hide rules will not work",
+      "detail-grids": "All auto-grids will be shown as custom grids",
+      "detail-tabs": "All tabs and rows will appear as classic rows",
+      "details": "During this period, please be aware of the following:",
+      "message": "The Dynamic Dashboard feature is temporarily disabled, any dashboard created as or converted to a Dynamic Dashboard will open as a classic dashboard.",
+      "read-less": "Read less",
+      "read-more": "Read more",
+      "recommendation": "Once the feature is enabled again, your dashboards will render normally in their Dynamic Dashboard format. Because of this, we strongly recommend not making changes to these dashboards until the feature is turned back on, as edits made in classic mode may lead to unexpected results. Alternatively, you can save a copy of the dashboard using the \"Save as copy\" option, in the save dashboard menu.",
+      "save-warning": "Saving the dashboard could lead to losing already set up Dynamic Dashboard features."
     },
     "custom-variable-form": {
       "custom-options": "Custom options",
