@@ -316,28 +316,26 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 | Option | Description |
 | ------ | ----------- |
 | GeoJSON URL | Provides a choice of GeoJSON files that are included with Grafana. You can also enter a URL manually, which supports variables. |
-| Default style | Controls the style to apply when no rules match. <br> **Properties include:** <ul><li>**Color** - Configures the base color.</li><li>**Opacity** - Configures the transparency.</li><li>**Size** - Sets the size of the marker.</li><li>**Symbol** - Selects the marker icon. Clear this field to display text only.</li><li>**Text label** - Select a property from the GeoJSON features (for example, `name`) to display as a label.</li><li>**Text styling** - Configures font size, weight (bold), style (italic), case (uppercase), and text outline (halo effect).</li></ul> |
-| Style rules | Apply specific styles based on feature properties. <ul><li>**Rule** - Allows you to select a feature, condition, and value to define a rule.</li><li>Rule styling - Configure color, opacity, size, symbol, text label, and text styling for matching features.</li></ul> |
+| Default style | Defines how features are rendered when no style rules match. |
+| Style rules | Apply styles conditionally based on feature properties. Each rule uses the same style editor as Default style. |
 | Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
-Styles can be set within the "properties" object of the GeoJSON with support for the following geometries:
+##### Style editor
 
-**Polygon, MultiPolygon**
+The style editor provides full control over how features are rendered:
 
-- **"fill"** - The color of the interior of the polygon(s)
-- **"fill-opacity"** - The opacity of the interior of the polygon(s)
-- **"stroke-width"** - The width of the line component of the polygon(s)
+- Fill and stroke styling: Applicable to polygon and line geometries
+- Symbol styling: Icon selection, size, color, rotation, vertical/horizontal alignment
+- Text labels: Select a feature property to display as text directly on the map
+- Text styling: Font size, weight, style, case, alignment, and optional text outline
 
-**Point, MultiPoint**
+##### Conditional visibility
 
-- **"marker-color"** - The color of the point(s)
-- **"marker-size"** - The size of the point(s)
+Some options only appear when relevant:
 
-**LineString, MultiLineString**
-
-- **"stroke"** - The color of the line(s)
-- **"stroke-width"** - The width of the line(s)
+- Text styling options appear only when a text label is selected
+- Outline color is shown only if outline width is greater than zero
 
 #### Night / Day layer
 
