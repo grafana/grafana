@@ -101,6 +101,11 @@ type IndexableDocument struct {
 	// metadata, annotations, or external data linked at index time
 	Fields map[string]any `json:"fields,omitempty"`
 
+	// The list of owner references,
+	// each value is of the form {group}/{kind}/{name}
+	// ex: iam.grafana.app/Team/abc-engineering
+	OwnerReferences []string `json:"ownerReferences,omitempty"`
+
 	// Maintain a list of resource references.
 	// Someday this will likely be part of https://github.com/grafana/gamma
 	References ResourceReferences `json:"references,omitempty"`
@@ -216,6 +221,10 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 	tt, err := obj.GetUpdatedTimestamp()
 	if err != nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
+	}
+	for _, owner := range obj.GetOwnerReferences() {
+		gv, _ := schema.ParseGroupVersion(owner.APIVersion)
+		doc.OwnerReferences = append(doc.OwnerReferences, fmt.Sprintf("%s/%s/%s", gv.Group, owner.Kind, owner.Name))
 	}
 	return doc.UpdateCopyFields()
 }
