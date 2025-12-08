@@ -12,6 +12,7 @@ import {
   LoadingState,
   LogLevel,
   LogRowModel,
+  LogsSortOrder,
   TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -210,6 +211,7 @@ interface UseRunTrinoArchiveQueryProps {
   logsQueries?: DataQuery[];
   exploreId: string;
   onDataReceived?: (data: LogRowModel[] | null) => void;
+  sortOrder?: LogsSortOrder;
 }
 
 export function useRunTrinoArchiveQuery({
@@ -218,6 +220,7 @@ export function useRunTrinoArchiveQuery({
   logsQueries,
   exploreId,
   onDataReceived,
+  sortOrder,
 }: UseRunTrinoArchiveQueryProps) {
   const dispatch = useDispatch();
   const isQueryingRef = useRef(false);
@@ -262,6 +265,8 @@ export function useRunTrinoArchiveQuery({
       ];
       
       const whereClause = whereConditions.join('\n              AND ');
+      
+      const orderDirection = sortOrder === LogsSortOrder.Ascending ? 'ASC' : 'DESC';
 
       const query = {
         refId: 'A',
@@ -275,6 +280,7 @@ export function useRunTrinoArchiveQuery({
           FROM
             ${tableName}
           WHERE ${whereClause}
+          ORDER BY timestamp ${orderDirection}
           LIMIT 1000
         `,
         format: 2,

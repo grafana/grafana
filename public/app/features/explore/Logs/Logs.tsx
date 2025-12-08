@@ -239,6 +239,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     logRows: props.logRows,
     logsQueries: props.logsQueries,
     exploreId: exploreId,
+    sortOrder: logsSortOrder,
   });
 
   useEffect(() => {

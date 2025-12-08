@@ -5,6 +5,7 @@ import {
   DataSourceInstanceSettings,
   TimeRange,
   LogRowModel,
+  LogsSortOrder,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -22,6 +23,7 @@ interface UseTrinoLogMenuItemsProps {
   logRows?: LogRowModel[];
   logsQueries?: DataQuery[];
   exploreId: string;
+  sortOrder?: LogsSortOrder;
 }
 
 // creates trino query menu item for logs lines if we are querying loki and trino is available
@@ -33,6 +35,7 @@ export function useTrinoLogMenuItems({
   logRows,
   logsQueries,
   exploreId,
+  sortOrder,
 }: UseTrinoLogMenuItemsProps): LogLineMenuCustomItem[] {
   const { runArchiveQuery } = useRunTrinoArchiveQuery({
     trinoDataSource,
@@ -40,6 +43,7 @@ export function useTrinoLogMenuItems({
     logsQueries,
     exploreId,
     onDataReceived: onEnrichedDataReceived,
+    sortOrder,
   });
   
   return useMemo(() => {

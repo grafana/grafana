@@ -3,7 +3,7 @@ import { pick } from 'lodash';
 import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
-import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
@@ -16,6 +16,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import store from 'app/core/store';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
@@ -27,6 +28,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { useRunTrinoArchiveQuery } from './Logs/hooks/useRunTrinoArchiveQuery';
 import { useTrinoDataSource } from './Logs/hooks/useTrinoDataSource';
+import { SETTINGS_KEYS } from './Logs/utils/logs';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
@@ -79,6 +81,12 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     }),
     shallowEqual
   );
+  
+  // Get panel state separately to access logs sort order
+  const panelsState = useSelector((state: StoreState) => state.explore.panes[exploreId]?.panelsState);
+  
+  // Get logs sort order from panel state or fallback to stored value or default
+  const logsSortOrder = panelsState?.logs?.sortOrder ?? store.get(SETTINGS_KEYS.logsSortOrder) ?? LogsSortOrder.Descending;
   const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
@@ -97,15 +105,17 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     config.trino?.logsArchiveTable &&
     isLokiDatasource &&
     trinoDataSource &&
-    !isLive
+    !isLive &&
+    range
   );
 
   const { runArchiveQuery } = useRunTrinoArchiveQuery({
     trinoDataSource,
-    timeRange: range,
+    timeRange: range!,
     logsQueries: queries,
     exploreId,
     onDataReceived: onSetEnrichedTrinoData,
+    sortOrder: logsSortOrder,
   });
 
   const shouldRotateSplitIcon = useMemo(
@@ -297,7 +307,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             timeZone={timeZone}
             extensionsToShow="basic"
           />,
-          !isLive && (
+          !isLive && range && (
             <ExploreTimeControls
               key="timeControls"
               exploreId={exploreId}
@@ -321,9 +331,9 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             text={showSmallTimePicker ? undefined : refreshPickerLabel}
             tooltip={showSmallTimePicker ? refreshPickerLabel : undefined}
             intervals={contextSrv.getValidIntervals(defaultIntervals)}
-            isLive={isLive}
+            isLive={!!isLive}
             onRefresh={() => onRunQuery(loading)}
-            noIntervalPicker={isLive}
+            noIntervalPicker={!!isLive}
             primary={true}
             width={(showSmallTimePicker ? 35 : 108) + 'px'}
           />,
@@ -353,8 +363,8 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
                 return (
                   <LiveTailButton
                     splitted={splitted}
-                    isLive={isLive}
-                    isPaused={isPaused}
+                    isLive={isLive!}
+                    isPaused={isPaused!}
                     start={controls.start}
                     pause={controls.pause}
                     resume={controls.resume}
