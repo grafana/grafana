@@ -3,7 +3,7 @@ import { expect, test } from '@grafana/plugin-e2e';
 
 test.use({ userPreferences: { language: SWEDISH_SWEDEN } });
 
-test.skip('should display correct translation', async ({ panelEditPage }) => {
+test('should display correct translation', async ({ panelEditPage }) => {
   panelEditPage.setVisualization('Grafana E2ETest Panel');
 
   await expect(panelEditPage.panel.locator.getByText('Textalternativ värde:')).toBeVisible();

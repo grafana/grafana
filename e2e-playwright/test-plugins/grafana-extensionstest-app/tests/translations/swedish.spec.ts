@@ -5,7 +5,7 @@ import { ROUTES } from '../../constants';
 
 test.use({ userPreferences: { language: SWEDISH_SWEDEN } });
 
-test.skip('should display correct translation', async ({ gotoAppPage }) => {
+test('should display correct translation', async ({ gotoAppPage }) => {
   const configPage = await gotoAppPage({ pluginId: pluginJson.id, path: ROUTES.Config });
 
   await expect(configPage.ctx.page.getByText('Det här är översatt')).toBeVisible();

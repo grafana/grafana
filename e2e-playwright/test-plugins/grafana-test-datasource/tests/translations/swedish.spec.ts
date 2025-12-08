@@ -4,7 +4,7 @@ import pluginJson from '../../plugin.json';
 
 test.use({ userPreferences: { language: SWEDISH_SWEDEN } });
 
-test.skip('should display correct translation', async ({ createDataSourceConfigPage }) => {
+test('should display correct translation', async ({ createDataSourceConfigPage }) => {
   const configPage = await createDataSourceConfigPage({ type: pluginJson.id });
 
   await expect(configPage.ctx.page.getByLabel('API-nyckel')).toBeVisible();
