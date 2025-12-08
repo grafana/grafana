@@ -256,3 +256,14 @@ http.cors.allow-credentials: true
 {{< admonition type="note" >}}
 Server (proxy) access mode is recommended for security and reliability.
 {{< /admonition >}}
+
+
+## Get additional help
+
+If you continue to experience issues after following this troubleshooting guide:
+
+1. Check the [Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html) for API-specific guidance.
+1. Review the [Grafana community forums](https://community.grafana.com/) for similar issues.
+1. Contact Grafana Support if you have an Enterprise license.
+
+

@@ -38,17 +38,17 @@ When composing Lucene queries, ensure that you use uppercase boolean operators: 
 
 {{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
 
-For general documentation on querying data sources in Grafana, including options and functions common to all query editors, see [Query and transform data](ref:query-and-transform-data).
+For general documentation on querying data sources in Grafana, including options and functions common to all query editors, refer to [Query and transform data](ref:query-and-transform-data).
 
 ## Aggregation types
 
 Elasticsearch groups aggregations into three categories:
 
-- **Bucket** - Bucket aggregations don't calculate metrics, they create buckets of documents based on field values, ranges and a variety of other criteria. See [Bucket aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket.html) for additional information. Use bucket aggregations under `Group by` when creating a metrics query in the query builder.
+- **Bucket** - Bucket aggregations don't calculate metrics, they create buckets of documents based on field values, ranges and a variety of other criteria. Refer to [Bucket aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket.html) for additional information. Use bucket aggregations under `Group by` when creating a metrics query in the query builder.
 
-- **Metrics** - Metrics aggregations perform calculations such as sum, average, min, etc. They can be single-value or multi-value. See [Metrics aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics.html) for additional information. Use metrics aggregations in the metrics query type in the query builder.
+- **Metrics** - Metrics aggregations perform calculations such as sum, average, min, etc. They can be single-value or multi-value. Refer to [Metrics aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics.html) for additional information. Use metrics aggregations in the metrics query type in the query builder.
 
-- **Pipeline** - Pipeline aggregations work on the output of other aggregations rather than on documents or fields. See [Pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline.html) for additional information.
+- **Pipeline** - Pipeline aggregations work on the output of other aggregations rather than on documents or fields. Refer to [Pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline.html) for additional information.
 
 ## Select a query type
 
@@ -61,35 +61,35 @@ Metrics queries aggregate data and produce calculations such as count, min, max,
 - **Alias** - Aliasing only applies to **time series queries**, where the last group is `date histogram`. This is ignored for any other type of query.
 
 - **Metric** - Metrics aggregations include:
-  - count - see [Value count aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-valuecount-aggregation.html)
-  - average - see [Avg aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-avg-aggregation.html)
-  - sum - see [Sum aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-sum-aggregation.html)
-  - max - see [Max aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-max-aggregation.html)
-  - min - see [Min aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-min-aggregation.html)
-  - extended stats - see [Extended stats aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-extendedstats-aggregation.html)
-  - percentiles - see [Percentiles aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-percentile-aggregation.html)
-  - unique count - see [Cardinality aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-cardinality-aggregation.html)
-  - top metrics - see [Top metrics aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-top-metrics.html)
-  - rate - see [Rate aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-rate-aggregation.html)
+  - count - refer to [Value count aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-valuecount-aggregation.html)
+  - average - refer to [Avg aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-avg-aggregation.html)
+  - sum - refer to [Sum aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-sum-aggregation.html)
+  - max - refer to [Max aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-max-aggregation.html)
+  - min - refer to [Min aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-min-aggregation.html)
+  - extended stats - refer to [Extended stats aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-extendedstats-aggregation.html)
+  - percentiles - refer to [Percentiles aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-percentile-aggregation.html)
+  - unique count - refer to [Cardinality aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-cardinality-aggregation.html)
+  - top metrics - refer to [Top metrics aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-top-metrics.html)
+  - rate - refer to [Rate aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-rate-aggregation.html)
 
 - **Pipeline aggregations** - Pipeline aggregations work on the output of other aggregations rather than on documents. The following pipeline aggregations are available:
-  - moving function - Calculates a value based on a sliding window of aggregated values. See [Moving function aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-movfn-aggregation.html).
-  - derivative - Calculates the derivative of a metric. See [Derivative aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-derivative-aggregation.html).
-  - cumulative sum - Calculates the cumulative sum of a metric. See [Cumulative sum aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-cumulative-sum-aggregation.html).
-  - serial difference - Calculates the difference between values in a time series. See [Serial differencing aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-serialdiff-aggregation.html).
-  - bucket script - Executes a script on metric values from other aggregations. See [Bucket script aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html).
+  - moving function - Calculates a value based on a sliding window of aggregated values. Refer to [Moving function aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-movfn-aggregation.html).
+  - derivative - Calculates the derivative of a metric. Refer to [Derivative aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-derivative-aggregation.html).
+  - cumulative sum - Calculates the cumulative sum of a metric. Refer to [Cumulative sum aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-cumulative-sum-aggregation.html).
+  - serial difference - Calculates the difference between values in a time series. Refer to [Serial differencing aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-serialdiff-aggregation.html).
+  - bucket script - Executes a script on metric values from other aggregations. Refer to [Bucket script aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html).
 
 You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
 
 Use the **+ sign** to the right to add multiple metrics to your query. Click on the **eye icon** next to **Metric** to hide metrics, and the **garbage can icon** to remove metrics.
 
 - **Group by options** - Create multiple group by options when constructing your Elasticsearch query. Date histogram is the default option. The following options are available in the drop-down menu:
-  - terms - see [Terms aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html).
-  - filter - see [Filter aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filter-aggregation.html).
-  - geo hash grid - see [Geohash grid aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html).
-  - date histogram - for time series queries. See [Date histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-datehistogram-aggregation.html).
-  - histogram - Depicts frequency distributions. See [Histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-histogram-aggregation.html).
-  - nested (experimental) - See [Nested aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html).
+  - terms - refer to [Terms aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html).
+  - filter - refer to [Filter aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filter-aggregation.html).
+  - geo hash grid - refer to [Geohash grid aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html).
+  - date histogram - for time series queries. Refer to [Date histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-datehistogram-aggregation.html).
+  - histogram - Depicts frequency distributions. Refer to [Histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-histogram-aggregation.html).
+  - nested (experimental) - Refer to [Nested aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html).
 
 Each group by option will have a different subset of options to further narrow your query.
 
@@ -108,7 +108,7 @@ Configure the following options for the **terms** bucket aggregation option:
 - **Size** - Limits the number of documents, or size of the data set. You can set a custom number or `no limit`.
 - **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
 - **Order by** - Order terms by `term value`, `doc count` or `count`.
-- **Missing** - Defines how documents missing a value should be treated. Missing values are ignored by default, but they can be treated as if they had a value. See [Missing value](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#_missing_value_5) in Elasticsearch's documentation for more information.
+- **Missing** - Defines how documents missing a value should be treated. Missing values are ignored by default, but they can be treated as if they had a value. Refer to [Missing value](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#_missing_value_5) in the Elasticsearch documentation for more information.
 
 Configure the following options for the **filters** bucket aggregation option:
 

@@ -73,7 +73,7 @@ The Elasticsearch data source supports two variable syntaxes for use in the **Qu
 - `[[varname]]`, such as `hostname:[[hostname]]`
 
 When the _Multi-value_ or _Include all value_ options are enabled, Grafana converts the labels from plain text to a Lucene-compatible condition.
-For details, see the [Multi-value variables](ref:add-template-variables-multi-value-variables) documentation.
+For details, refer to the [Multi-value variables](ref:add-template-variables-multi-value-variables) documentation.
 
 ## Use variables in queries
 

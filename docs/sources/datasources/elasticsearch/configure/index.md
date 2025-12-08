@@ -139,7 +139,7 @@ For more information about AWS authentication options, refer to [AWS authenticat
 ### TLS settings
 
 {{< admonition type="note" >}}
-Use TLS (Transport Layer Security) for an additional layer of security when working with Elasticsearch. For information on setting up TLS encryption with Elasticsearch see [Configure TLS](https://www.elastic.co/guide/en/elasticsearch/reference/8.8/configuring-tls.html#configuring-tls). You must add TLS settings to your Elasticsearch configuration file **prior** to setting these options in Grafana.
+Use TLS (Transport Layer Security) for an additional layer of security when working with Elasticsearch. For information on setting up TLS encryption with Elasticsearch, refer to [Configure TLS](https://www.elastic.co/guide/en/elasticsearch/reference/8.8/configuring-tls.html#configuring-tls). You must add TLS settings to your Elasticsearch configuration file **prior** to setting these options in Grafana.
 {{< /admonition >}}
 
 - **Add self-signed certificate** - Check the box to authenticate with a CA certificate. Follow the instructions of the CA (Certificate Authority) to download the certificate file. Required for verifying self-signed TLS certificates.
@@ -187,7 +187,7 @@ Only select a pattern option if you have specified a time pattern in the Index n
 
 - **Time field name** - Name of the time field. The default value is `@timestamp`. You can enter a different name.
 
-- **Max concurrent shard requests** - Sets the number of shards being queried at the same time. The default is `5`. For more information on shards see [Elasticsearch's documentation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/scalability.html#scalability).
+- **Max concurrent shard requests** - Sets the number of shards being queried at the same time. The default is `5`. For more information on shards, refer to the [Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/scalability.html#scalability).
 
 - **Min time interval** - Defines a lower limit for the auto group-by time interval. This value **must** be formatted as a number followed by a valid time identifier:
 
@@ -239,7 +239,7 @@ Each data link configuration consists of:
 
 ## Private data source connect (PDC) and Elasticsearch
 
-Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. See [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) for more information on how PDC works and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
+Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. Refer to [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) for more information on how PDC works and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
 
 If you use PDC with SigV4 (AWS Signature Version 4 Authentication), the PDC agent must allow internet egress to `sts.<region>.amazonaws.com:443`.
 
