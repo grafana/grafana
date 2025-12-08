@@ -10,10 +10,13 @@ import { CacheFeatureHighlightPage } from './pages/CacheFeatureHighlightPage';
 import ConnectionsHomePage from './pages/ConnectionsHomePage';
 import { DataSourceDashboardsPage } from './pages/DataSourceDashboardsPage';
 import { DataSourceDetailsPage } from './pages/DataSourceDetailsPage';
+import { DataSourceStacksPage } from './pages/DataSourceStacksPage';
 import { DataSourcesListPage } from './pages/DataSourcesListPage';
 import { EditDataSourcePage } from './pages/EditDataSourcePage';
+import { EditStackPage } from './pages/EditStackPage';
 import { InsightsFeatureHighlightPage } from './pages/InsightsFeatureHighlightPage';
 import { NewDataSourcePage } from './pages/NewDataSourcePage';
+import { NewStackPage } from './pages/NewStackPage';
 import { PermissionsFeatureHighlightPage } from './pages/PermissionsFeatureHighlightPage';
 
 function RedirectToAddNewConnection() {
@@ -41,6 +44,9 @@ export default function Connections() {
       {/* The route paths need to be relative to the parent path (ROUTES.Base), so we need to remove that part */}
       <Route caseSensitive path={ROUTES.DataSources.replace(ROUTES.Base, '')} element={<DataSourcesListPage />} />
       <Route caseSensitive path={ROUTES.DataSourcesNew.replace(ROUTES.Base, '')} element={<NewDataSourcePage />} />
+      <Route caseSensitive path={ROUTES.Stacks.replace(ROUTES.Base, '')} element={<DataSourceStacksPage />} />
+      <Route caseSensitive path={ROUTES.StacksNew.replace(ROUTES.Base, '')} element={<NewStackPage />} />
+      <Route caseSensitive path={ROUTES.StacksEdit.replace(ROUTES.Base, '')} element={<EditStackPage />} />
       <Route
         caseSensitive
         path={ROUTES.DataSourcesDetails.replace(ROUTES.Base, '')}

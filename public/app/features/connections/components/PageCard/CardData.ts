@@ -75,5 +75,11 @@ export function getOssCardData(): CardData[] {
       url: '/connections/datasources',
       icon: 'database',
     },
+    {
+      text: 'Stacks',
+      subTitle: 'Manage your data source stacks',
+      url: '/connections/stacks',
+      icon: 'layers',
+    },
   ];
 }

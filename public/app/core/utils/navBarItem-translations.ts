@@ -182,6 +182,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.connections.title', 'Connections');
     case 'connections-add-new-connection':
       return t('nav.add-new-connections.title', 'Add new connection');
+    case 'connections-stacks':
+      return t('nav.stacks.title', 'Stacks');
     case 'standalone-plugin-page-/connections/collector':
       return t('nav.collector.title', 'Collector');
     case 'connections-datasources':

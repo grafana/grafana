@@ -9,6 +9,10 @@ export const ROUTES = {
   DataSourcesNew: `/${ROUTE_BASE_ID}/datasources/new`,
   DataSourcesEdit: `/${ROUTE_BASE_ID}/datasources/edit/:uid`,
   DataSourcesDashboards: `/${ROUTE_BASE_ID}/datasources/edit/:uid/dashboards`,
+  // Stacks
+  Stacks: `/${ROUTE_BASE_ID}/stacks`,
+  StacksNew: `/${ROUTE_BASE_ID}/stacks/new`,
+  StacksEdit: `/${ROUTE_BASE_ID}/stacks/edit/:uid`,
 
   // Add new connection
   AddNewConnection: `/${ROUTE_BASE_ID}/add-new-connection`,
