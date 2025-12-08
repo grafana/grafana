@@ -284,7 +284,7 @@ func (s *grot3dSim) project3DTo2D(p point3d) point2d {
 
 	return point2d{
 		x: scaledP.x*scale + s.cfg.ViewWidth/2,
-		y: scaledP.y*scale + s.cfg.ViewHeight/2,
+		y: -scaledP.y*scale + s.cfg.ViewHeight/2, // Flip Y vertically (negative Y goes up)
 	}
 }
 
