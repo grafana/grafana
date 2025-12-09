@@ -93,7 +93,7 @@ export const Icon = React.memo(
           // this prevents content layout shift whilst the icon asynchronously loads
           // which happens even if the icon is in the cache(!)
           loader={
-            <span
+            <svg
               className={cx(
                 css({
                   width: svgWid,
