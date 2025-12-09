@@ -2334,9 +2334,8 @@
       "label-tenant-sources": "Sources du locataire"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Affichage de {{visibleItems}} sur {{totalItems}} instances",
-      "button-show-all_one": "Afficher toutes les {{totalItems}} instances d’alerte",
-      "button-show-all_other": "Afficher toutes les {{totalItems}} instances d’alerte"
+      "button-show-all": "",
+      "showing-count": ""
     },
     "rule-editor": {
       "get-content": {
@@ -8252,6 +8251,12 @@
         "nextNYears_other": ""
       }
     },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9252,6 +9257,8 @@
       "actions-confirmation-label": "Message de confirmation",
       "actions-confirmation-message": "Fournissez une invite descriptive pour confirmer ou annuler l'action.",
       "footer-add-annotation": "Ajouter une annotation",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Cliquez pour {{actionTitle}}",
       "footer-click-to-navigate": "Cliquez pour ouvrir {{linkTitle}}",
       "footer-filter-for-value": "Filtrer par « {{value}} »",

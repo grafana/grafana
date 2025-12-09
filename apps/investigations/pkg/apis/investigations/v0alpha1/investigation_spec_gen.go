@@ -84,7 +84,6 @@ func NewInvestigationViewMode() *InvestigationViewMode {
 	return &InvestigationViewMode{}
 }
 
-// spec is the schema of our resource
 // +k8s:openapi-gen=true
 type InvestigationSpec struct {
 	Title                 string              `json:"title"`

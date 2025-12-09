@@ -139,6 +139,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           version: dash.metadata.generation,
           created: dash.metadata.creationTimestamp,
           publicDashboardEnabled: dash.access.isPublic,
+          conversionStatus: dash.status?.conversion
+            ? {
+                storedVersion: dash.status.conversion.storedVersion,
+                failed: dash.status.conversion.failed,
+                error: dash.status.conversion.error,
+              }
+            : undefined,
         },
         dashboard: {
           ...dash.spec,

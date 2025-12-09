@@ -1490,6 +1490,16 @@ export const versionedComponents = {
       },
     },
   },
+  VizTooltipFooter: {
+    buttons: {
+      apply: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-filters-button',
+      },
+      applyInverse: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-inverse-filters-button',
+      },
+    },
+  },
 } satisfies VersionedSelectorGroup;
 
 export type VersionedComponents = typeof versionedComponents;
