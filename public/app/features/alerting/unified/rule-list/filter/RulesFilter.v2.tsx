@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, FormProvider, SubmitHandler, useForm, useFormContext } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
