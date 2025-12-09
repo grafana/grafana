@@ -251,6 +251,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 	} else {
+		// Read-only access to datasource connection info
 		storage[ds.StoragePath()] = &connectionAccess{
 			datasources:    b.datasources,
 			resourceInfo:   ds,

@@ -33,6 +33,17 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		return nil, err
 	}
 
+	// Set the operation ID for the query path
+	query := oas.Paths.Paths[root+"namespaces/{namespace}/datasources/{name}/query"]
+	if query != nil && query.Post != nil {
+		query.Post.OperationId = "queryDataSource"
+		for _, p := range query.Parameters {
+			if p.Name == "name" {
+				p.Description = "DataSource identifier"
+			}
+		}
+	}
+
 	// Hide the resource routes -- explicit ones will be added if defined below
 	prefix := root + "namespaces/{namespace}/datasources/{name}/resource"
 	r := oas.Paths.Paths[prefix]
@@ -57,7 +68,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 	// Mark connections as deprecated
 	delete(oas.Paths.Paths, root+"namespaces/{namespace}/connections/{name}")
-	query := oas.Paths.Paths[root+"namespaces/{namespace}/connections/{name}/query"]
+	query = oas.Paths.Paths[root+"namespaces/{namespace}/connections/{name}/query"]
 	for query == nil || query.Post == nil {
 		return nil, fmt.Errorf("missing temporary connection path")
 	}
