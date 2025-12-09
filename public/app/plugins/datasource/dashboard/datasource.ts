@@ -134,9 +134,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       }));
     }
 
-    // For regular queries, only return series data (not annotations).
-    // Annotations should come from the dashboard's annotation layers via the panel's dataLayerFilter,
-    // not from the source panel. This ensures annotation toggle controls work correctly on DashboardDS panels.
+    // For regular queries, only return series data
     const series = data.series.map((s) => {
       return {
         ...s,
