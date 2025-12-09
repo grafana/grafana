@@ -1084,10 +1084,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				return err
 			}
 
-			item := &resourcepb.ResourceWrapper{
-				ResourceVersion: iter.ResourceVersion(),
-				Value:           iter.Value(),
-			}
 			// Trash is only accessible to admins or the user who deleted the object
 			if req.Source == resourcepb.ListRequest_TRASH {
 				if !s.isTrashItemAuthorized(ctx, iter, trashChecker) {
@@ -1095,6 +1091,11 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				}
 			} else if !checker(iter.Name(), iter.Folder()) {
 				continue
+			}
+
+			item := &resourcepb.ResourceWrapper{
+				ResourceVersion: iter.ResourceVersion(),
+				Value:           iter.Value(),
 			}
 
 			pageBytes += len(item.Value)
