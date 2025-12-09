@@ -468,7 +468,11 @@ export function getGridTemplateColumns(dimensions: LogFieldDimension[], displaye
 }
 
 export type LogLineStyles = ReturnType<typeof getStyles>;
-export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtualization) => {
+export const getStyles = (
+  theme: GrafanaTheme2,
+  virtualization: LogLineVirtualization | undefined,
+  displayedFields: string[]
+) => {
   const base = tinycolor(theme.colors.background.primary);
 
   let maxContrast = theme.isDark
@@ -480,7 +484,10 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
   const contrast1 = tinycolor.readability(base, maxContrast);
   const contrast2 = tinycolor.readability(base, colorDefault);
 
-  if (contrast1 < contrast2) {
+  if (!displayedFields.length || (displayedFields.length === 1 && displayedFields.includes(LOG_LINE_BODY_FIELD_NAME))) {
+    colorDefault = theme.colors.text.primary;
+    maxContrast = theme.colors.text.primary;
+  } else if (contrast1 < contrast2) {
     colorDefault = maxContrast;
     maxContrast = theme.colors.text.primary;
   }
@@ -526,7 +533,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       },
       '& .log-syntax-highlight': {
         '.log-token-string': {
-          color: colors.default,
+          color: colors.logLineBody,
         },
         '.log-token-duration': {
           color: theme.colors.success.text,
