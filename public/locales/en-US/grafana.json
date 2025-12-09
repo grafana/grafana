@@ -5893,11 +5893,11 @@
       "detail-grids": "All auto-grids will be shown as custom grids",
       "detail-tabs": "All tabs and rows will appear as classic rows",
       "details": "During this period, please be aware of the following:",
-      "message": "The Dynamic Dashboard feature is temporarily disabled, any dashboard created as or converted to a Dynamic Dashboard will open as a classic dashboard.",
+      "message": "The Dynamic Dashboard feature is temporarily disabled",
       "read-less": "Read less",
       "read-more": "Read more",
       "recommendation": "Once the feature is enabled again, your dashboards will render normally in their Dynamic Dashboard format. Because of this, we strongly recommend not making changes to these dashboards until the feature is turned back on, as edits made in classic mode may lead to unexpected results. Alternatively, you can save a copy of the dashboard using the \"Save as copy\" option, in the save dashboard menu.",
-      "save-warning": "Saving the dashboard could lead to losing already set up Dynamic Dashboard features."
+      "save-warning": "Any dashboard created as or converted to a Dynamic Dashboard will open as a classic dashboard. Saving the dashboard could lead to losing already set up Dynamic Dashboard features."
     },
     "custom-variable-form": {
       "custom-options": "Custom options",

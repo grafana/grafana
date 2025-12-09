@@ -31,13 +31,14 @@ export function DashboardConversionWarningBanner({ dashboard }: DashboardConvers
       severity="warning"
       title={t(
         'dashboard-scene.conversion-warning-banner.message',
-        'The Dynamic Dashboard feature is temporarily disabled, any dashboard created as or converted to a Dynamic Dashboard will open as a classic dashboard.'
+        'The Dynamic Dashboard feature is temporarily disabled'
       )}
       style={{ flex: 0 }}
     >
       <div>
         <Trans i18nKey="dashboard-scene.conversion-warning-banner.save-warning">
-          Saving the dashboard could lead to losing already set up Dynamic Dashboard features.
+          Any dashboard created as or converted to a Dynamic Dashboard will open as a classic dashboard. Saving the
+          dashboard could lead to losing already set up Dynamic Dashboard features.
         </Trans>
         {!isExpanded && (
           <div className={styles.buttonContainer}>
@@ -104,6 +105,7 @@ function getStyles(theme: GrafanaTheme2) {
       marginTop: 0,
       marginLeft: 0,
       paddingLeft: 0,
+      paddingRight: 0,
       fontSize: '1rem',
       verticalAlign: 'baseline',
       color: theme.colors.text.link,
