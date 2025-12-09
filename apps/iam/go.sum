@@ -835,8 +835,8 @@ github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f h1:5xkjl5Y/j2QefJKO
 github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f/go.mod h1:+O5QxOwwgP10jedZHapzXY+IPKTnzHBtIs5UUb9G+kI=
 github.com/grafana/gomemcache v0.0.0-20250828162811-a96f6acee2fe h1:q+QaVANzNZxvTovycpQvDTfsNZ2rHh4XIIaccMnrIR4=
 github.com/grafana/gomemcache v0.0.0-20250828162811-a96f6acee2fe/go.mod h1:j/s0jkda4UXTemDs7Pgw/vMT06alWc42CHisvYac0qw=
-github.com/grafana/grafana-app-sdk v0.48.4 h1:t9r+Y6E7D832ZxQ2c1n0lp6cvsYKhhrAodVYzE1y0s0=
-github.com/grafana/grafana-app-sdk v0.48.4/go.mod h1:HJsMOSBmt/D/Ihs1SvagOwmXKi0coBMVHlfvdd+qe9Y=
+github.com/grafana/grafana-app-sdk v0.48.5 h1:MS8l9fTZz+VbTfgApn09jw27GxhQ6fNOWGhC4ydvZmM=
+github.com/grafana/grafana-app-sdk v0.48.5/go.mod h1:HJsMOSBmt/D/Ihs1SvagOwmXKi0coBMVHlfvdd+qe9Y=
 github.com/grafana/grafana-app-sdk/logging v0.48.3 h1:72NUpGNiJXCNQz/on++YSsl38xuVYYBKv5kKQaOClX4=
 github.com/grafana/grafana-app-sdk/logging v0.48.3/go.mod h1:Gh/nBWnspK3oDNWtiM5qUF/fardHzOIEez+SPI3JeHA=
 github.com/grafana/grafana-aws-sdk v1.3.0 h1:/bfJzP93rCel1GbWoRSq0oUo424MZXt8jAp2BK9w8tM=

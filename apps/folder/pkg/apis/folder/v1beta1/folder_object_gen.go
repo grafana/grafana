@@ -23,6 +23,12 @@ type Folder struct {
 	Spec FolderSpec `json:"spec" yaml:"spec"`
 }
 
+func NewFolder() *Folder {
+	return &Folder{
+		Spec: *NewFolderSpec(),
+	}
+}
+
 func (o *Folder) GetSpec() any {
 	return o.Spec
 }

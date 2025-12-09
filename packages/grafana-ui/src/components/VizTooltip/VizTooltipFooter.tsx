@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -17,10 +18,16 @@ export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;
 }
 
+export interface FilterByGroupedLabelsModel {
+  onFilterForGroupedLabels?: () => void;
+  onFilterOutGroupedLabels?: () => void;
+}
+
 interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
   actions?: Array<ActionModel<Field>>;
   adHocFilters?: AdHocFilterModel[];
+  filterByGroupedLabels?: FilterByGroupedLabelsModel;
   annotate?: () => void;
 }
 
@@ -85,7 +92,13 @@ const renderActions = makeRenderLinksOrActions<ActionModel>(
   (item, i) => <ActionButton key={i} action={item} variant="secondary" />
 );
 
-export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, adHocFilters = [] }: VizTooltipFooterProps) => {
+export const VizTooltipFooter = ({
+  dataLinks,
+  actions = [],
+  annotate,
+  adHocFilters = [],
+  filterByGroupedLabels,
+}: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
   const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
   const hasOneClickAction = useMemo(() => actions.some((action) => action.oneClick === true), [actions]);
@@ -103,6 +116,39 @@ export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, adHocFilte
               </Trans>
             </Button>
           ))}
+        </div>
+      )}
+
+      {!hasOneClickLink && !hasOneClickAction && filterByGroupedLabels && (
+        <div className={styles.footerSection}>
+          <Stack direction="column" gap={0.5} width="fit-content">
+            <Button
+              icon="filter"
+              variant="secondary"
+              size="sm"
+              onClick={filterByGroupedLabels.onFilterForGroupedLabels}
+            >
+              <Trans
+                i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter"
+                data-testid={selectors.components.VizTooltipFooter.buttons.apply}
+              >
+                Apply as filter
+              </Trans>
+            </Button>
+            <Button
+              icon="filter"
+              variant="secondary"
+              size="sm"
+              onClick={filterByGroupedLabels.onFilterOutGroupedLabels}
+            >
+              <Trans
+                i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-inverse-filter"
+                data-testid={selectors.components.VizTooltipFooter.buttons.applyInverse}
+              >
+                Apply as inverse filter
+              </Trans>
+            </Button>
+          </Stack>
         </div>
       )}
       {!hasOneClickLink && !hasOneClickAction && annotate != null && (

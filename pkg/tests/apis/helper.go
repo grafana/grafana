@@ -792,7 +792,7 @@ func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
 	return client
 }
 
-func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
+func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) (string, error) {
 	c.t.Helper()
 
 	disco := c.NewDiscoveryClient()
@@ -823,12 +823,11 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 		if item.Metadata.Name == group {
 			v, err := json.MarshalIndent(item.Versions, "", "  ")
 			require.NoError(c.t, err)
-			return string(v)
+			return string(v), nil
 		}
 	}
 
-	require.Failf(c.t, "could not find discovery info for: %s", group)
-	return ""
+	return "", goerrors.New("could not find discovery info for: " + group)
 }
 
 func (c *K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
