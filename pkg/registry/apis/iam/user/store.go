@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,18 +37,22 @@ var (
 
 var resource = iamv0alpha1.UserResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
 }
 
 type LegacyStore struct {
 	store               legacy.LegacyIdentityStore
 	ac                  claims.AccessClient
 	enableAuthnMutation bool
+	tracer              trace.Tracer
 }
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Update")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
 		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
 	}
@@ -105,6 +110,9 @@ func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 
 // Delete implements rest.GracefulDeleter.
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Delete")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
 		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
 	}
@@ -171,6 +179,9 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.List")
+	defer span.End()
+
 	res, err := common.List(
 		ctx, resource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.User], error) {
@@ -206,6 +217,9 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 }
 
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Get")
+	defer span.End()
+
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -229,6 +243,9 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 
 // Create implements rest.Creater.
 func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Create")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
 		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
 	}
