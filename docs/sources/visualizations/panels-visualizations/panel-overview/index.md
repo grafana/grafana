@@ -191,7 +191,7 @@ This feature is supported for the following visualizations:
 
 Click and drag on the panel to zoom in on a particular time range.
 
-The following screen recordings show this interaction in the time series and x visualizations:
+The following screen recordings show this interaction in the time series and Candlestick visualizations:
 
 Time series
 
@@ -211,7 +211,7 @@ For example, if the original time range is from 9:00 to 9:59, the time range cha
 - Next range: 8:30 - 10:29
 - Next range: 7:30 - 11:29
 
-The following screen recordings demonstrate the preceding example in the time series and x visualizations:
+The following screen recordings demonstrate the preceding example in the time series and heatmap visualizations:
 
 Time series
 
