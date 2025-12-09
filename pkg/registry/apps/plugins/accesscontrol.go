@@ -13,15 +13,15 @@ const (
 	ActionPluginsPluginsDelete = "plugins.plugins:delete" // DELETE.
 
 	// PluginMetas
-	ActionPluginsPluginsMetaCreate = "plugins.pluginsmeta:create" // CREATE.
-	ActionPluginsPluginsMetaWrite  = "plugins.pluginsmeta:write"  // UPDATE.
-	ActionPluginsPluginsMetaRead   = "plugins.pluginsmeta:read"   // GET + LIST.
-	ActionPluginsPluginsMetaDelete = "plugins.pluginsmeta:delete" // DELETE.
+	ActionPluginsPluginsMetaCreate = "plugins.metas:create" // CREATE.
+	ActionPluginsPluginsMetaWrite  = "plugins.metas:write"  // UPDATE.
+	ActionPluginsPluginsMetaRead   = "plugins.metas:read"   // GET + LIST.
+	ActionPluginsPluginsMetaDelete = "plugins.metas:delete" // DELETE.
 )
 
 var (
 	ScopeProviderPluginsPlugins     = accesscontrol.NewScopeProvider("plugins.plugins")
-	ScopeProviderPluginsPluginsMeta = accesscontrol.NewScopeProvider("plugins.pluginsmeta")
+	ScopeProviderPluginsPluginsMeta = accesscontrol.NewScopeProvider("plugins.metas")
 
 	ScopeAllPluginsPlugins     = ScopeProviderPluginsPlugins.GetResourceAllScope()
 	ScopeAllPluginsPluginsMeta = ScopeProviderPluginsPluginsMeta.GetResourceAllScope()
@@ -76,7 +76,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 	// PluginMetas
 	pluginsMetaReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:plugins.pluginsmeta:reader",
+			Name:        "fixed:plugins.metas:reader",
 			DisplayName: "Plugin Metas Reader",
 			Description: "Read and list plugin metadata.",
 			Group:       "Plugins",
@@ -92,7 +92,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 
 	pluginsMetaWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:plugins.pluginsmeta:writer",
+			Name:        "fixed:plugins.metas:writer",
 			DisplayName: "Plugin Metas Writer",
 			Description: "Create, update and delete plugin metadata.",
 			Group:       "Plugins",

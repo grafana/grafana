@@ -19,10 +19,10 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("successfully fetches plugin metadata", func(t *testing.T) {
-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
+		expectedMeta := pluginsv0alpha1.MetaJSONData{
 			Id:   "test-plugin",
 			Name: "Test Plugin",
-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -108,10 +108,10 @@ func TestCloudProvider_GetMeta(t *testing.T) {
 
 	t.Run("uses custom TTL when provided", func(t *testing.T) {
 		customTTL := 2 * time.Hour
-		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
+		expectedMeta := pluginsv0alpha1.MetaJSONData{
 			Id:   "test-plugin",
 			Name: "Test Plugin",
-			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
+			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
