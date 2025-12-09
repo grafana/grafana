@@ -29,7 +29,7 @@ Upgrading from Grafana v11.x to Grafana v12.x triggers a full-table rewrite of t
 
 Environments with large annotation datasets can experience significant temporary disk usage increase, which may lead to:
 
-- Rapid disk consumption on PostgreSQL's data volume
+- Rapid disk consumption on the PostgreSQL data volume
 - Database migration failures (for example, "could not extend file: No space left on device")
 - Grafana startup failures
 - Extended downtime during the upgrade process
@@ -55,7 +55,7 @@ Before you upgrade, take the following steps:
 
 1. **Verify available disk space**: Ensure you have at least 2-3 times the current `annotation` table size available as free disk space on your PostgreSQL data volume.
 
-2. **Review your annotation data**: Consider whether you need to retain all historical annotations. You can query annotation counts by time period:
+2. **Review your annotation data**: Consider whether you need to retain all historical annotations.
 
 3. **Clean up old annotations (optional)**: If you have annotations you don't need, remove them before upgrading.
 
