@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
-import SliderComponent from 'rc-slider';
+import SliderComponent from '@rc-component/slider';
 import { useState, useCallback, ChangeEvent, FocusEvent, useEffect } from 'react';
 import { usePrevious } from 'react-use';
 

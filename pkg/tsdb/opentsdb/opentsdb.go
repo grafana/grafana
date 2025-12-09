@@ -62,6 +62,7 @@ type QueryModel struct {
 	IsCounter            bool                   `json:"isCounter"`
 	CounterMax           string                 `json:"counterMax"`
 	CounterResetValue    string                 `json:"counterResetValue"`
+	ExplicitTags         bool                   `json:"explicitTags"`
 }
 
 func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -92,6 +93,66 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 
 		return model, nil
 	}
+}
+
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	logger := logger.FromContext(ctx)
+
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	u, err := url.Parse(dsInfo.URL)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	u.Path = path.Join(u.Path, "api/suggest")
+	query := u.Query()
+	query.Set("q", "cpu")
+	query.Set("type", "metrics")
+	u.RawQuery = query.Encode()
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	res, err := dsInfo.HTTPClient.Do(httpReq)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			logger.Error("Failed to close response body", "error", err)
+		}
+	}()
+
+	if res.StatusCode != 200 {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("OpenTSDB suggest endpoint returned status %d", res.StatusCode),
+		}, nil
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "Data source is working",
+	}, nil
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -176,8 +237,19 @@ func createInitialFrame(val OpenTsdbCommon, length int, refID string) *data.Fram
 		labels[label] = value
 	}
 
+	tagKeys := make([]string, 0, len(val.Tags)+len(val.AggregateTags))
+	for tagKey := range val.Tags {
+		tagKeys = append(tagKeys, tagKey)
+	}
+	sort.Strings(tagKeys)
+	tagKeys = append(tagKeys, val.AggregateTags...)
+
 	frame := data.NewFrameOfFieldTypes(val.Metric, length, data.FieldTypeTime, data.FieldTypeFloat64)
-	frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
+	frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+		Custom:      map[string]any{"tagKeys": tagKeys},
+	}
 	frame.RefID = refID
 	timeField := frame.Fields[0]
 	timeField.Name = data.TimeSeriesTimeFieldName
@@ -295,10 +367,19 @@ func (s *Service) buildMetric(query backend.DataQuery) map[string]any {
 	if !model.DisableDownsampling {
 		downsampleInterval := model.DownsampleInterval
 		if downsampleInterval == "" {
-			downsampleInterval = "1m" // default value for blank
+			if ms := query.Interval.Milliseconds(); ms > 0 {
+				downsampleInterval = FormatDownsampleInterval(ms)
+			} else {
+				downsampleInterval = "1m"
+			}
+		} else if strings.Contains(downsampleInterval, ".") && strings.HasSuffix(downsampleInterval, "s") {
+			if val, err := strconv.ParseFloat(strings.TrimSuffix(downsampleInterval, "s"), 64); err == nil {
+				downsampleInterval = strconv.FormatInt(int64(val*1000), 10) + "ms"
+			}
 		}
+
 		downsample := downsampleInterval + "-" + model.DownsampleAggregator
-		if model.DownsampleFillPolicy != "none" {
+		if model.DownsampleFillPolicy != "" && model.DownsampleFillPolicy != "none" {
 			metric["downsample"] = downsample + "-" + model.DownsampleFillPolicy
 		} else {
 			metric["downsample"] = downsample
@@ -346,6 +427,10 @@ func (s *Service) buildMetric(query backend.DataQuery) map[string]any {
 	// Setting filters
 	if len(model.Filters) > 0 {
 		metric["filters"] = model.Filters
+	}
+
+	if model.ExplicitTags {
+		metric["explicitTags"] = true
 	}
 
 	return metric

@@ -2334,9 +2334,8 @@
       "label-tenant-sources": "Fontes de locatários"
     },
     "rule-details-matching-instances": {
-      "showing-count": "Mostrando {{visibleItems}} de {{totalItems}} instâncias",
-      "button-show-all_one": "Exibir {{totalItems}} instância de alerta",
-      "button-show-all_other": "Exibir {{totalItems}} instância de alerta"
+      "button-show-all": "",
+      "showing-count": ""
     },
     "rule-editor": {
       "get-content": {
@@ -4811,7 +4810,9 @@
       },
       "variable": {
         "custom-options": {
-          "close": "",
+          "apply": "",
+          "change-value": "",
+          "discard": "",
           "modal-title": "",
           "values": "Valores separados por vírgula"
         },
@@ -5085,10 +5086,7 @@
         "copy-or-duplicate": "Copiar ou duplicar",
         "delete": "Excluir",
         "duplicate": "Duplicar",
-        "group-layout": "Layout de grupo",
-        "group-layout-disabled": "Não há grupos neste nível",
-        "panel-layout": "Layout do painel",
-        "panel-layout-disabled": "Selecione uma linha ou aba para alterar as opções de layout do painel"
+        "layout": "Layout"
       },
       "continue": "",
       "ungroup-nested-text": "",
@@ -5827,14 +5825,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Voltar para a lista",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "description": "",
+          "label": ""
+        }
+      },
       "delete": "Excluir",
       "description-color-annotation-event-markers": "Cor que será usada para os marcadores de evento de anotação",
       "description-enabled-annotation-query-issued-every-dashboard": "Quando ativada, a consulta de anotação é emitida a cada atualização do painel",
-      "description-hidden": "As consultas de anotação podem ser ativadas ou desativadas na parte superior do painel. Com esta opção marcada, este botão de alternância ficará oculto.",
+      "label-annotation-controls-display": "",
       "label-color": "Cor",
       "label-data-source": "Fonte de dados",
       "label-enabled": "Ativado",
-      "label-hidden": "Oculto",
       "label-name": "Nome",
       "label-show-in": "Exibir em",
       "placeholder-choose-panels": "Escolher painéis",
@@ -5890,6 +5900,7 @@
       "label-open-link-in-new-tab": "Abrir link em nova aba",
       "label-options": "Opções",
       "label-show-as-dropdown": "Exibir como menu suspenso",
+      "label-show-in-controls-menu": "",
       "label-title": "Título",
       "label-tooltip": "Dica de uso",
       "label-type": "Tipo",
@@ -6451,6 +6462,25 @@
     "variable-controls": {
       "add-variable": ""
     },
+    "variable-display-select": {
+      "label": "",
+      "options": {
+        "above-dashboard": {
+          "label": ""
+        },
+        "controls-menu": {
+          "description": "",
+          "label": ""
+        },
+        "hidden": {
+          "label": ""
+        },
+        "hidden-label": {
+          "description": "",
+          "label": ""
+        }
+      }
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulário do editor de variáveis",
       "back-to-list": "Voltar para a lista",
@@ -6559,7 +6589,7 @@
       "delete-button": "Excluir",
       "title": "Excluir"
     },
-    "delete-modal-restore-dashboards-text": "Esta ação marcará o painel de controle para exclusão em 30 dias. O administrador da sua organização pode restaurá-lo a qualquer momento antes do término do prazo de 30 dias.",
+    "delete-modal-restore-dashboards-text": "",
     "delete-modal-text": "Deseja excluir este painel de controle?",
     "general": {
       "auto-refresh-description": "Defina os intervalos de atualização automática disponíveis na lista de atualização automática. Use o formato '5s' para segundos, '1m' para minutos, '1h' para horas e '1d' para dias (por exemplo: '5s,10s,30s,1m,5m,15m,30m,1h,2h,1d').",
@@ -6765,8 +6795,8 @@
       "test": "Teste"
     },
     "cloud-info-box": {
-      "body-alert": "Ou evite essa tarefa e obtenha {{mainDS}} (e {{extraDS}}) como fontes de dados totalmente gerenciadas, escaláveis e hospedadas da Grafana Labs com o <6>plano gratuito vitalício da Grafana Cloud</6>.",
-      "title-alert": "Configure sua fonte de {{mainDS}} dados abaixo"
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "Excluir painel de controle",
@@ -7304,6 +7334,14 @@
       },
       "title-failed-sample-query": "Falha ao carregar a amostra de logs para esta consulta",
       "tooltip": "Exibir linhas de log que contribuíram para as métricas visualizadas"
+    },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "",
+        "copy-to-clipboard": "",
+        "inspect-value": "",
+        "view-log-line": ""
+      }
     },
     "logs-table-empty-fields": {
       "no-fields": "Sem campos"
@@ -8211,6 +8249,12 @@
         "nextNMonths_other": "",
         "nextNYears_one": "",
         "nextNYears_other": ""
+      }
+    },
+    "field": {
+      "fieldColor": {
+        "accessibleGroup": "",
+        "otherGroup": ""
       }
     },
     "valueFormats": {
@@ -9213,6 +9257,8 @@
       "actions-confirmation-label": "Mensagem de confirmação",
       "actions-confirmation-message": "Forneça um prompt descritivo para confirmar ou cancelar a ação.",
       "footer-add-annotation": "Adicionar anotação",
+      "footer-apply-series-as-filter": "",
+      "footer-apply-series-as-inverse-filter": "",
       "footer-click-to-action": "Clique para {{actionTitle}}",
       "footer-click-to-navigate": "Clique para abrir {{linkTitle}}",
       "footer-filter-for-value": "Filtrar por \"{{value}}\"",
@@ -12359,7 +12405,8 @@
         "bar-glow": "",
         "center-glow": "",
         "rounded-bars": "",
-        "spotlight": ""
+        "spotlight": "",
+        "spotlight-tooltip": ""
       },
       "gradient": "",
       "gradient-auto": "",
