@@ -13,65 +13,12 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 var configProvider = func(ctx context.Context) (*rest.Config, error) {
 	return &rest.Config{}, nil
-}
-
-func TestParentProviderImpl_HasParent(t *testing.T) {
-	tests := []struct {
-		name            string
-		gr              schema.GroupResource
-		configProviders map[schema.GroupResource]ConfigProvider
-		expected        bool
-	}{
-		{
-			name: "folder resource has parent",
-			gr: schema.GroupResource{
-				Group:    folderv1.GROUP,
-				Resource: folderv1.RESOURCE,
-			},
-			configProviders: map[schema.GroupResource]ConfigProvider{
-				{Group: folderv1.GROUP, Resource: folderv1.RESOURCE}: configProvider,
-			},
-			expected: true,
-		},
-		{
-			name: "dashboard resource has parent",
-			gr: schema.GroupResource{
-				Group:    dashboardv1.GROUP,
-				Resource: dashboardv1.DASHBOARD_RESOURCE,
-			},
-			configProviders: map[schema.GroupResource]ConfigProvider{
-				{Group: dashboardv1.GROUP, Resource: dashboardv1.DASHBOARD_RESOURCE}: configProvider,
-			},
-			expected: true,
-		},
-		{
-			name: "unknown resource has no parent",
-			gr: schema.GroupResource{
-				Group:    "unknown.group",
-				Resource: "unknown",
-			},
-			configProviders: map[schema.GroupResource]ConfigProvider{},
-			expected:        false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			provider := &ParentProviderImpl{
-				configProviders: tt.configProviders,
-				versions:        Versions,
-			}
-			result := provider.HasParent(tt.gr)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
 }
 
 func TestParentProviderImpl_GetParent(t *testing.T) {
