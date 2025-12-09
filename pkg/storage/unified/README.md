@@ -281,7 +281,7 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 - to compile all protobuf files in the repository run `make protobuf` at its top level
 
 ## Enable Quotas/Overrides
-Quotas will make unified storage impose resource limits on a tenant. By default, the limit is 1000, but it can be overridden. To enable, create an empty overrides.yaml file in the grafana root directory.
+Quotas will make unified storage impose resource limits on a namespace. By default, the limit is 1000, but it can be overridden. To enable, create an empty overrides.yaml file in the grafana root directory.
 
 Then add the following to your grafana ini:
 ```ini
@@ -295,11 +295,12 @@ overrides_reload_period = 5s
 
 To overrides the default quota for a tenant, add the following to the overrides.yaml file:
 ```yaml
-<TENANT_ID>:
+<NAMESPACE>:
   quotas:
     <GROUP>.<RESOURCE>:
       limit: 10
 ```
+Unless otherwise set, the NAMESPACE when running locally is `default`.
 
 To access quotas, use the following API endpoint:
 ```
