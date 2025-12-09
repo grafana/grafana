@@ -426,6 +426,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /public/locales/enterprise/i18next.config.ts @grafana/grafana-frontend-platform
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
+/e2e-playwright/alerting-suite/ @grafana/alerting-frontend
 /e2e-playwright/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
 /e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
