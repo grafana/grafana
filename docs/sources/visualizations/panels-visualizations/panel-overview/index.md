@@ -221,6 +221,35 @@ Heatmap
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/recording-heatmap-panel-time-zoom-out-mouse.mp4" >}}
 
+## Pan panel time range
+
+You can pan the panel time range left and right, which in turn, changes the dashboard time range.
+
+This feature is supported for the following visualizations:
+
+- Candlestick
+- Heatmap
+- State timeline
+- Status history
+- Time series
+
+### Pan
+
+Click and drag the x-axis area of the panel to pan the time range.
+
+The time range shifts by the distance you drag.
+For example, if the original time range is from 9:00 to 9:59 and you drag 30 minutes to the right, the time range changes to 9:30 to 10:29.
+
+The following screen recordings show this interaction in the time series and heatmap visualizations:
+
+Time series
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-ts-time-pan-mouse.mp4" >}}
+
+Heatmap
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-heatmap-panel-time-pan-mouse.mp4" >}}
+
 ## Add a panel
 
 To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard:
