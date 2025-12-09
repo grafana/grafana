@@ -804,7 +804,7 @@
         "tags": [
           "Route"
         ],
-        "operationId": "post_route_test_json",
+        "operationId": "post_route_test",
         "requestBody": {
           "content": {
             "application/json": {
@@ -852,7 +852,7 @@
       ]
     },
     "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/test/json": {
-      "summary": "Echo any request",
+      "summary": "Echo json request",
       "post": {
         "tags": [
           "Route"

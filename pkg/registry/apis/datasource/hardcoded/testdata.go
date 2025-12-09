@@ -215,6 +215,17 @@ func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error
 				},
 			},
 		},
+		"/test/json": {
+			PathProps: spec3.PathProps{
+				Summary: "Echo json request",
+				Post: &spec3.Operation{
+					OperationProps: spec3.OperationProps{
+						RequestBody: unstructuredRequest,
+						Responses:   unstructuredResponse,
+					},
+				},
+			},
+		},
 		"/sims": {
 			PathProps: spec3.PathProps{
 				Description: "Get list of simulations",
@@ -260,10 +271,5 @@ func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error
 			},
 		},
 	}
-
-	// Duplicate the test route (but with a new path)
-	testcopy := *oas.Routes["/test"]
-	oas.Routes["/test/json"] = &testcopy
-
 	return oas, nil
 }
