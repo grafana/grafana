@@ -127,6 +127,27 @@ func TestValidateCreate(t *testing.T) {
 			},
 			maxDepth: folder.MaxNestedFolderDepth,
 		},
+		{
+			name: "cannot create a circular reference",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "3",
+					Annotations: map[string]string{"grafana.app/folder": "2"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			expectedErr: "circular reference detected",
+			getter: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "2", Parent: "1"},
+					{Name: "1", Parent: "3"},
+					{Name: "3", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
