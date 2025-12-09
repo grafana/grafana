@@ -96,14 +96,6 @@ func (s *PluginsService) IsDisabled() bool {
 	return !s.enabled
 }
 
-// checkAndUpdate checks for updates and applies them if auto-update is enabled.
-func (s *PluginsService) checkAndUpdate(ctx context.Context) {
-	s.instrumentedCheckForUpdates(ctx)
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
-		s.updateAll(ctx)
-	}
-}
-
 func (s *PluginsService) Run(ctx context.Context) error {
 	s.checkAndUpdate(ctx)
 
@@ -139,6 +131,14 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 	}
 
 	return "", false
+}
+
+// checkAndUpdate checks for updates and applies them if auto-update is enabled.
+func (s *PluginsService) checkAndUpdate(ctx context.Context) {
+	s.instrumentedCheckForUpdates(ctx)
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
+		s.updateAll(ctx)
+	}
 }
 
 func (s *PluginsService) instrumentedCheckForUpdates(ctx context.Context) {
