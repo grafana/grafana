@@ -96,7 +96,7 @@ func normalizePath(pathStr string) string {
 
 	// If "to" is present and very close to now (within 5 minutes), use it as the reference point
 	// This handles the case where "to" represents "now" at the time the URL was created
-	var referenceTime time.Time = now
+	var referenceTime = now
 	if toVal, hasTo := values["to"]; hasTo && len(toVal) > 0 {
 		if toTime, err := time.Parse(time.RFC3339, toVal[0]); err == nil {
 			// Try with nanoseconds too
