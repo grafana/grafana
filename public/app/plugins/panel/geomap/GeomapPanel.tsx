@@ -79,7 +79,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.mapDiv && this.props.id === evt.payload) {
-          this.initMapRef(this.mapDiv);
+          this.initMapAsync(this.mapDiv);
         }
       })
     );
@@ -97,7 +97,7 @@ export class GeomapPanel extends Component<Props, State> {
           });
 
           if (hasDependencies) {
-            this.initMapRef(this.mapDiv);
+            this.initMapAsync(this.mapDiv);
           }
         }
       })
@@ -182,7 +182,7 @@ export class GeomapPanel extends Component<Props, State> {
 
     if (noRepeatChanged) {
       if (this.mapDiv) {
-        this.initMapRef(this.mapDiv);
+        this.initMapAsync(this.mapDiv);
       }
       // Skip other options processing
       return;
@@ -227,7 +227,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.setState({ legends: this.getLegends() });
   }
 
-  initMapRef = async (div: HTMLDivElement) => {
+  initMapAsync = async (div: HTMLDivElement | null) => {
     if (!div) {
       // Do not initialize new map or dispose old map
       return;
@@ -436,6 +436,10 @@ export class GeomapPanel extends Component<Props, State> {
 
     return legends;
   }
+
+  initMapRef = (div: HTMLDivElement | null) => {
+    this.initMapAsync(div);
+  };
 
   render() {
     let { ttip, ttipOpen, topRight1, legends, topRight2 } = this.state;
