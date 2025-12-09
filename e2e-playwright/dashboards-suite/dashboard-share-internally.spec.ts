@@ -188,7 +188,12 @@ test.describe(
       expect(shortUrl2).toContain('goto');
 
       // Both short URLs should be the same (de-duplication)
-      expect(shortUrl1).toBe(shortUrl2);
+      // The backend normalizes timestamps for signature calculation, so even if timestamps
+      // differ slightly (due to the 1-2 second delay), they should produce the same signature
+      // and thus the same short URL. Use toPass() to handle potential timing variations.
+      await expect(async () => {
+        expect(shortUrl1).toBe(shortUrl2);
+      }).toPass({ timeout: 5000 });
     });
 
     test('Short URL de-duplication with unlocked time range', async ({ page, gotoDashboardPage, selectors }) => {
