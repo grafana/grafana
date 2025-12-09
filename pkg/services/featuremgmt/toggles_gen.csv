@@ -266,7 +266,9 @@ panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false
 awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false
 transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
+opentsdbBackendMigration,GA,@grafana/oss-big-tent,false,true,false
 ttlPluginInstanceManager,experimental,@grafana/plugins-platform-backend,false,false,true
 lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
 kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
+useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true

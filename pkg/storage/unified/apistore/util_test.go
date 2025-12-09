@@ -118,6 +118,49 @@ func TestToListRequest(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "with field selector",
+			key: &resourcepb.ResourceKey{
+				Group:     "test",
+				Resource:  "test",
+				Namespace: "default",
+			},
+			opts: storage.ListOptions{
+				Predicate: storage.SelectionPredicate{
+					Label: labels.SelectorFromSet(labels.Set{"label": "A"}),
+					Field: fields.SelectorFromSet(fields.Set{"field": "B"}),
+				},
+			},
+			want: &resourcepb.ListRequest{
+				VersionMatchV2: 1,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Group:     "test",
+						Resource:  "test",
+						Namespace: "default",
+					},
+					Labels: []*resourcepb.Requirement{
+						{
+							Key:      "label",
+							Operator: string(selection.Equals),
+							Values:   []string{"A"},
+						},
+					},
+					Fields: []*resourcepb.Requirement{
+						{
+							Key:      "field",
+							Operator: string(selection.Equals),
+							Values:   []string{"B"},
+						},
+					},
+				},
+			},
+			wantPredicate: storage.SelectionPredicate{
+				Label: labels.SelectorFromSet(labels.Set{"label": "A"}),
+				Field: fields.SelectorFromSet(fields.Set{"field": "B"}),
+			},
+			wantErr: nil,
+		},
+		{
 			name: "with trash label",
 			key: &resourcepb.ResourceKey{
 				Group:     "test",
