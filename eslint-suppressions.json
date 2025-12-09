@@ -710,11 +710,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/QueryField/QueryField.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -1978,16 +1973,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/settings/annotations/AnnotationSettingsEdit.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
-    }
-  },
-  "public/app/features/dashboard-scene/settings/links/DashboardLinkForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 10
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4
@@ -2004,11 +1989,6 @@
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/QueryVariableForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/components/VariableHideSelect.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -2093,9 +2073,6 @@
     }
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
@@ -3665,11 +3642,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/cloud-monitoring/types/query.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
   "public/app/plugins/datasource/cloud-monitoring/types/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -3700,11 +3672,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/cloudwatch/expressions.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/cloudwatch/guards.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3718,9 +3685,6 @@
   "public/app/plugins/datasource/cloudwatch/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 7
-    },
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/cloudwatch/utils/datalinks.ts": {
@@ -4111,11 +4075,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/loki/types.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
   "public/app/plugins/datasource/mixed/module.ts": {
     "no-barrel-files/no-barrel-files": {
       "count": 2
@@ -4139,11 +4098,6 @@
   "public/app/plugins/datasource/mysql/configuration/ConfigurationEditor.tsx": {
     "no-restricted-syntax": {
       "count": 10
-    }
-  },
-  "public/app/plugins/datasource/opentsdb/components/AnnotationEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/plugins/datasource/opentsdb/components/OpenTsdbDetails.tsx": {

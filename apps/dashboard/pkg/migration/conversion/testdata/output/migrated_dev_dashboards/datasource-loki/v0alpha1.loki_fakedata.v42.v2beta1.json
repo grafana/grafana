@@ -616,9 +616,9 @@
         },
         "spec": {
           "name": "adhoc",
-          "baseFilters": null,
+          "baseFilters": [],
           "filters": [],
-          "defaultKeys": null,
+          "defaultKeys": [],
           "label": "Ad-hoc",
           "hide": "dontHide",
           "skipUrlSync": false,
