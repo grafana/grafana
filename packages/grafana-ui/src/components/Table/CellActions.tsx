@@ -9,6 +9,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { TooltipPlacement } from '../Tooltip/types';
 
 import { TableCellInspectorMode } from './TableCellInspector';
+import { buildInspectValue } from './TableNG/utils';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
 import { getTextAlign } from './utils';
 
@@ -63,7 +64,8 @@ export function CellActions({
             tooltip={t('grafana-ui.table.cell-inspect', 'Inspect value')}
             onClick={() => {
               if (setInspectCell) {
-                setInspectCell({ value: cell.value, mode: previewMode });
+                const [inspectValue, mode] = buildInspectValue(cell.value, field);
+                setInspectCell({ value: inspectValue, mode });
               }
             }}
             {...commonButtonProps}
