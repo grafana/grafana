@@ -101,6 +101,7 @@ The following documents will help you get started with the Azure Monitor data so
 - [Configure the Azure Monitor data source](configure/) - Set up authentication and connect to Azure
 - [Azure Monitor query editor](query-editor/) - Create and edit queries for Metrics, Logs, Traces, and Resource Graph
 - [Template variables](template-variables/) - Create dynamic dashboards with Azure Monitor variables
+- [Alerting](alerting/) - Create alert rules using Azure Monitor data
 - [Troubleshoot](troubleshoot/) - Solve common configuration and query errors
 
 ## Additional features
@@ -110,7 +111,7 @@ Once you have configured the Azure Monitor data source, you can:
 - Add [Annotations](annotations/) to overlay Azure log events on your graphs.
 - Configure and use [Template variables](template-variables/) for dynamic dashboards.
 - Add [Transformations](ref:transform-data) to manipulate query results.
-- Set up alerting and recording rules using Metrics and Logs queries.
+- Set up [Alerting](alerting/) and recording rules using Metrics, Logs, Traces, and Resource Graph queries.
 - Use [Explore](ref:explore) to investigate your Azure data without building a dashboard.
 
 ## Pre-built dashboards

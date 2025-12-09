@@ -13,8 +13,6 @@ keywords:
   - queries
   - traces
   - application insights
-  - alerting
-  - recording rules
 labels:
   products:
     - cloud
@@ -35,16 +33,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-  grafana-managed-recording-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
   configure-azure-monitor:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
@@ -424,33 +412,9 @@ You can also augment queries by using [template variables](../template-variables
 
 ## Use queries for alerting and recording rules
 
-Azure Monitor queries can be used with [Grafana Alerting](ref:alerting) and [Grafana-managed recording rules](ref:grafana-managed-recording-rules). Recording rules let you pre-compute frequently used or computationally expensive queries and save the results as new metrics, which can improve dashboard performance.
+All Azure Monitor query types (Metrics, Logs, Azure Resource Graph, and Traces) can be used with Grafana Alerting and recording rules.
 
-### Supported query types
-
-The following Azure Monitor query types support alerting and recording rules:
-
-| Query type           | Alerting | Recording rules |
-| -------------------- | -------- | --------------- |
-| Metrics              | ✓        | ✓               |
-| Logs                 | ✓        | ✓               |
-| Azure Resource Graph | ✓        | ✓               |
-| Traces               | ✓        | ✓               |
-
-### Authentication requirements
-
-Alerting and recording rules run as background processes without a user context. This means they require service-level authentication and don't work with all authentication methods.
-
-| Authentication method            | Supported |
-| -------------------------------- | --------- |
-| App Registration (client secret) | ✓         |
-| Managed Identity                 | ✓         |
-| Workload Identity                | ✓         |
-| Current User                     | ✗         |
-
-If you use **Current User** authentication, alerting and recording rules won't function because user credentials aren't available for background operations. To use these features, [configure the data source](ref:configure-azure-monitor) with App Registration, Managed Identity, or Workload Identity authentication.
-
-For more information about creating recording rules, refer to [Create Grafana-managed recording rules](ref:grafana-managed-recording-rules).
+For detailed information about creating alert rules, supported query types, authentication requirements, and examples, refer to [Azure Monitor alerting](../alerting/).
 
 ## Work with large Azure resource data sets
 
@@ -461,4 +425,5 @@ You can use filters to reduce the amount of records returned under that value.
 
 - [Use template variables](../template-variables/) to create dynamic, reusable dashboards
 - [Add annotations](../annotations/) to overlay events on your graphs
+- [Set up alerting](../alerting/) to create alert rules based on Azure Monitor data
 - [Troubleshoot](ref:troubleshoot-azure-monitor) common query and configuration issues
