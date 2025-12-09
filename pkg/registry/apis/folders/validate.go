@@ -59,16 +59,6 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
 	}
 
-	for i, parent := range parents.Items {
-		// skip the last item, which is itself
-		if i == len(parents.Items)-1 {
-			continue
-		}
-		if parent.Name == f.Name {
-			return folder.ErrCircularReference.Errorf("circular reference detected")
-		}
-	}
-
 	// Can not create a folder that will be too deep.
 	// We need to add +1 as we also have the root folder as part of the parents.
 	if len(parents.Items) > maxDepth+1 {
