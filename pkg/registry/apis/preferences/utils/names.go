@@ -1,6 +1,11 @@
 package utils
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+)
 
 // +enum
 type ResourceOwner string
@@ -41,4 +46,27 @@ func ParseOwnerFromName(name string) (OwnerReference, bool) {
 		return OwnerReference{Owner: NamespaceResourceOwner}, true
 	}
 	return OwnerReference{}, false
+}
+
+func (o OwnerReference) Validate(obj utils.GrafanaMetaAccessor) error {
+	// Make sure a team/root
+	refs := obj.GetOwnerReferences()
+	switch len(refs) {
+	case 0:
+		return fmt.Errorf("missing owner reference (%s)", o.AsName())
+	case 1: // OK
+	default:
+		return fmt.Errorf("multiple owner references (%s)", o.AsName())
+	}
+	ref := refs[0]
+	if ref.Name != o.Identifier {
+		return fmt.Errorf("owner reference must match the same name")
+	}
+	if strings.ToLower(ref.Kind) != string(o.Owner) {
+		return fmt.Errorf("owner reference kind must match the name")
+	}
+	if !strings.HasPrefix(ref.APIVersion, "iam.grafana.app/") {
+		return fmt.Errorf("owner reference should be iam.grafana.app")
+	}
+	return nil
 }
