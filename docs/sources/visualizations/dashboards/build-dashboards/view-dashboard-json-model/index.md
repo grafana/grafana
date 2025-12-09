@@ -11,6 +11,14 @@ aliases:
   - ../../../as-code/observability-as-code/schema-v2/links-schema/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/links-schema/
   - ../../../as-code/observability-as-code/schema-v2/timesettings-schema/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/timesettings-schema/
   - ../../../as-code/observability-as-code/schema-v2/variables-schema/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/variables-schema/
+  - ../../../observability-as-code/schema-v2/ # /docs/grafana/latest/observability-as-code/schema-v2/
+  - ../../../../next/observability-as-code/schema-v2/annotations-schema/ # /docs/grafana/next/observability-as-code/schema-v2/annotations-schema/
+  - ../../../../next/observability-as-code/schema-v2/panel-schema/ # /docs/grafana/next/observability-as-code/schema-v2/panel-schema/
+  - ../../../../next/observability-as-code/schema-v2/librarypanel-schema/ # /docs/grafana/next/observability-as-code/schema-v2/librarypanel-schema/
+  - ../../../../next/observability-as-code/schema-v2/layout-schema/ # /docs/grafana/next/observability-as-code/schema-v2/layout-schema/
+  - ../../../../next/observability-as-code/schema-v2/links-schema/ # /docs/grafana/next/observability-as-code/schema-v2/links-schema/
+  - ../../../../next/observability-as-code/schema-v2/timesettings-schema/ # /docs/grafana/next/observability-as-code/schema-v2/timesettings-schema/
+  - ../../../../next/observability-as-code/schema-v2/variables-schema/ # /docs/grafana/next/observability-as-code/schema-v2/variables-schema/
 keywords:
   - grafana
   - dashboard
@@ -40,25 +48,19 @@ A dashboard in Grafana is represented by a JSON object, which stores metadata of
 
 ## Difference between Resource v1, Resource v2, and Classic
 
+You're only gonna see this when exporting the dashboard
+
 blah blah blah
 
-## View JSON
+## Access and update the JSON model (#view-json)
 
-To view the JSON of a dashboard:
-
-1. Click **Edit** in the top-right corner of the dashboard.
-1. Click **Settings**.
-1. Go to the **JSON Model** tab.
-1. When you've finished viewing the JSON, click **Back to dashboard** and **Exit edit**.
-
-## Accessing the JSON Model
-
-To view the JSON representation of a dashboard:
+To access the JSON representation of a dashboard:
 
 1. Toggle on the edit mode switch in the top-right corner of the dashboard.
-1. Click the gear icon in the top navigation bar to go to **Settings**.
+1. Click the gear icon in the right sidebar and click **Settings** in the secondary sidebar.
 1. Select the **JSON Model** tab.
-1. Copy or edit the JSON structure as needed.
+1. Update the JSON structure as needed.
+1. Click **Save changes**.
 
 ## JSON Classic fields {#json-fields}
 
@@ -352,14 +354,3 @@ You’ll be unable to view or edit dashboards created or updated in the new sche
 From the UI, dashboards created on schema v2 can be exported and imported like other dashboards.
 When you export them to use in another instance, references of data sources are not persisted but data source types are.
 You’ll have the option to select the data source of your choice in the import UI.
-
-<!-- Aliases from other pages
-- ../../../observability-as-code/schema-v2/ # /docs/grafana/latest/observability-as-code/schema-v2/
-- ../../../observability-as-code/schema-v2/annotations-schema/ # /docs/grafana/next/observability-as-code/schema-v2/annotations-schema/
-- ../../../observability-as-code/schema-v2/layout-schema/ # /docs/grafana/next/observability-as-code/schema-v2/layout-schema/
-- ../../../observability-as-code/schema-v2/librarypanel-schema/ # /docs/grafana/next/observability-as-code/schema-v2/librarypanel-schema/
-- ../../../observability-as-code/schema-v2/links-schema/ # /docs/grafana/next/observability-as-code/schema-v2/links-schema/
-- ../../../observability-as-code/schema-v2/panel-schema/ # /docs/grafana/next/observability-as-code/schema-v2/panel-schema/
-- ../../../observability-as-code/schema-v2/timesettings-schema/ # /docs/grafana/next/observability-as-code/schema-v2/timesettings-schema/
-- ../../../observability-as-code/schema-v2/variables-schema/ # /docs/grafana/next/observability-as-code/schema-v2/variables-schema/
--->
