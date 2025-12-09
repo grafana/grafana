@@ -299,14 +299,5 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'auto',
       paddingBottom: theme.spacing(2),
     }),
-    paginationWrapper: css({
-      position: 'sticky',
-      bottom: 0,
-      backgroundColor: theme.colors.background.primary,
-      padding: theme.spacing(2),
-      display: 'flex',
-      justifyContent: 'flex-end',
-      zIndex: 2,
-    }),
   };
 }

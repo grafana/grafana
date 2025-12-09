@@ -86,36 +86,6 @@ describe('CommunityDashboardSection', () => {
     });
   });
 
-  it('should render pagination when there is more than one page', async () => {
-    const PAGES_COUNT = 5;
-    mockFetchCommunityDashboards.mockResolvedValue({
-      page: 1,
-      pages: PAGES_COUNT,
-      items: [createMockGnetDashboard()],
-    });
-
-    await setup();
-    const pagination = screen.getByRole('navigation');
-
-    expect(pagination).toBeInTheDocument();
-    for (let i = 1; i <= PAGES_COUNT; i++) {
-      expect(within(pagination).getByText(i.toString())).toBeInTheDocument();
-    }
-  });
-
-  it('should not render pagination when there is only one page', async () => {
-    mockFetchCommunityDashboards.mockResolvedValue({
-      page: 1,
-      pages: 1,
-      items: [createMockGnetDashboard()],
-    });
-
-    await setup();
-
-    const pagination = screen.queryByRole('navigation');
-    expect(pagination).not.toBeInTheDocument();
-  });
-
   it('should show error when fetching a specific community dashboard after clicking use dashboard button fails', async () => {
     mockFetchCommunityDashboards.mockResolvedValue({
       page: 1,
