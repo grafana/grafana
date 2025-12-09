@@ -36,6 +36,7 @@ const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDa
   description: 'Test Description',
   downloads: 2000,
   datasource: 'Prometheus',
+  slug: 'test-dashboard',
   ...overrides,
 });
 

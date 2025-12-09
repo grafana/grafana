@@ -29,5 +29,6 @@ export const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}):
   publishedAt: '',
   updatedAt: '',
   downloads: 0,
+  slug: 'test-dashboard',
   ...overrides,
 });

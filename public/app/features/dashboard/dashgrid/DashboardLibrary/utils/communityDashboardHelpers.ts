@@ -45,20 +45,10 @@ export function formatDate(dateString?: string): string {
 }
 
 /**
- * Create URL-friendly slug from dashboard name
- */
-export function createSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-/**
  * Build Grafana.com URL for a dashboard
  */
 export function buildGrafanaComUrl(dashboard: GnetDashboard): string {
-  return `https://grafana.com/grafana/dashboards/${dashboard.id}-${createSlug(dashboard.name)}/`;
+  return `https://grafana.com/grafana/dashboards/${dashboard.id}-${dashboard.slug}/`;
 }
 
 /**

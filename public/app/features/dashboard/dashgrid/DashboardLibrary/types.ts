@@ -24,6 +24,7 @@ export interface GnetDashboard {
   id: number;
   name: string;
   description: string;
+  slug: string;
   downloads: number;
   datasource: string;
   screenshots?: Screenshot[];

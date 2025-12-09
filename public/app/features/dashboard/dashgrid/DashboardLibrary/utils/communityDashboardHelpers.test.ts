@@ -11,7 +11,6 @@ import { InputMapping, tryAutoMapDatasources, parseConstantInputs } from './auto
 import {
   buildDashboardDetails,
   buildGrafanaComUrl,
-  createSlug,
   getLogoUrl,
   navigateToTemplate,
   onUseCommunityDashboard,
@@ -51,6 +50,7 @@ const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDa
   publishedAt: '',
   updatedAt: '2025-11-05T16:55:41.000Z',
   downloads: 0,
+  slug: 'test-dashboard',
   ...overrides,
 });
 
@@ -69,20 +69,6 @@ const createMockDashboardJson = (overrides: Partial<DashboardJson> = {}): Dashbo
   }) as DashboardJson;
 
 describe('communityDashboardHelpers', () => {
-  describe('createSlug', () => {
-    it('should convert to lower case', () => {
-      expect(createSlug('Test')).toBe('test');
-    });
-
-    it('should replace non-alphanumeric characters with hyphens', () => {
-      expect(createSlug('Test@#example')).toBe('test-example');
-    });
-
-    it('should remove leading and trailing hyphens', () => {
-      expect(createSlug('-test-')).toBe('test');
-    });
-  });
-
   describe('buildGrafanaComUrl', () => {
     it('should build a valid URL', () => {
       const gnetDashboard = createMockGnetDashboard({
