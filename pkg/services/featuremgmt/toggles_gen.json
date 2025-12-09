@@ -2261,6 +2261,19 @@
     },
     {
       "metadata": {
+        "name": "multiPropsVariables",
+        "resourceVersion": "1765293230587",
+        "creationTimestamp": "2025-12-09T15:13:50Z"
+      },
+      "spec": {
+        "description": "Enables support for variables whose values can have multiple properties",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "multiTenantTempCredentials",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-04-02T20:25:50Z"
