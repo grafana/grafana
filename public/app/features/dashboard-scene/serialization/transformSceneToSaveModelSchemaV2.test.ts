@@ -283,6 +283,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
             sort: VariableSortV1.alphabeticalDesc,
             refresh: VariableRefresh.onDashboardLoad,
             regex: 'regex1',
+            regexApplyTo: 'value',
             allValue: '*',
             includeAll: true,
             isMulti: true,

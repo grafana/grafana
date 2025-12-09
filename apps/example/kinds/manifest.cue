@@ -34,7 +34,7 @@ manifest: {
 
 v0alpha1: {
     kinds: [examplev0alpha1]
-    // This is explicitly set to false to keep the example app disabled by default. 
+    // This is explicitly set to false to keep the example app disabled by default.
     // It can be enabled via conf overrides, or by setting this value to true and regenerating.
     served: false
 }
@@ -48,14 +48,14 @@ v1alpha1: {
     // served indicates whether this particular version is served by the API server.
     // served should be set to false before a version is removed from the manifest entirely.
     // served defaults to true if not present.
-    // This is explicitly set to false to keep the example app disabled by default. 
+    // This is explicitly set to false to keep the example app disabled by default.
     // It can be enabled via conf overrides, or by setting this value to true and regenerating.
     served: false
     // routes contains resource routes for the version, which are split into 'namespaced' and 'cluster' scoped routes.
     // This allows you to add additional non-storage- and non-kind- based handlers for your app.
     // These should only be used if the behavior cannot be accomplished by reconciliation on storage events or subresource routes on a kind.
     routes: {
-        // namespaced contains namespace-scoped resource routes for the version, 
+        // namespaced contains namespace-scoped resource routes for the version,
         // which are exposed as HTTP handlers on '<version>/namespaces/<namespace>/<route>'.
         namespaced: {
             "/something": {
@@ -72,7 +72,7 @@ v1alpha1: {
                 }
             }
         }
-        // cluster contains cluster-scoped resource routes for the version, 
+        // cluster contains cluster-scoped resource routes for the version,
         // which are exposed as HTTP handlers on '<version>/<route>'.
         cluster: {
             "/other": {
